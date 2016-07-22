@@ -16,6 +16,10 @@ defmodule Appsignal.ErrorHandler do
 
   alias Appsignal.{Transaction,TransactionRegistry}
 
+  @doc """
+  Retrieve the last Appsignal.Transaction.t that the error logger picked up
+  """
+  @spec get_last_transaction :: Transaction.t | nil
   def get_last_transaction do
     GenEvent.call(:error_logger, Appsignal.ErrorHandler, :get_last_transaction)
   end
@@ -88,9 +92,7 @@ defmodule Appsignal.ErrorHandler do
   end
 
 
-  @doc """
-  Given an error report, retrieve the reason and the stack trace.
-  """
+  @doc false
   @spec match_event(term) :: {pid, atom, list} | :nomatch
   def match_event({:error, _gleader, {_pid, format, data}}) do
     match_error_format(format, data)

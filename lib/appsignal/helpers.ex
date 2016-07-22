@@ -1,12 +1,12 @@
 defmodule Appsignal.Helpers do
   @moduledoc """
-  Various helper functions to instrument your application
+  Helper functions to instrument your application
   """
 
   alias Appsignal.Transaction
   alias Plug.Conn
 
-  @type instrument_arg :: %Transaction{} | %Conn{}
+  @type instrument_arg :: Transaction.t | Conn.t
 
   @doc """
   Execute the given function in start / finish event calls. See `instrument/6`.

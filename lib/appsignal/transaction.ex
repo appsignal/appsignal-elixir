@@ -15,7 +15,7 @@ defmodule Appsignal.Transaction do
   @typedoc """
   Datatype which is used as a handle to the current Appsignal transaction.
   """
-  @type transaction :: %Transaction{}
+  @type t :: %Transaction{}
 
   @typedoc """
   The transaction's namespace
@@ -37,7 +37,7 @@ defmodule Appsignal.Transaction do
   The function returns a %Transaction{} struct for use with the the
   other transaction functions in this module.
   """
-  @spec start(String.t, namespace) :: transaction
+  @spec start(String.t, namespace) :: Transaction.t
   def start(transaction_id, namespace)
   when is_binary(transaction_id) and namespace in @valid_namespaces do
     {:ok, resource} = Nif.start_transaction(transaction_id, Atom.to_string(namespace))
@@ -55,7 +55,7 @@ defmodule Appsignal.Transaction do
   - `transaction`: The pointer to the transaction this event occurred in.
 
   """
-  @spec start_event(transaction) :: transaction
+  @spec start_event(Transaction.t) :: Transaction.t
   def start_event(%Transaction{} = transaction) do
     :ok = Nif.start_event(transaction.resource)
     transaction
@@ -72,7 +72,7 @@ defmodule Appsignal.Transaction do
   - `body`: Body of the event, should not contain unique information per specific event (`select * from users where id=?`)
   - `body_format` Format of the event's body which can be used for sanitization, 0 for general and 1 for sql currently.
   """
-  @spec finish_event(transaction, String.t, String.t, String.t, integer) :: transaction
+  @spec finish_event(Transaction.t, String.t, String.t, String.t, integer) :: Transaction.t
   def finish_event(%Transaction{} = transaction, name, title, body, body_format \\ 0) do
     :ok = Nif.finish_event(transaction.resource, name, title, body, body_format)
     transaction
@@ -88,7 +88,7 @@ defmodule Appsignal.Transaction do
   - `message`: Message of the error ('undefined method call for something')
   - `backtrace`: Backtrace of the error; will be JSON encoded
   """
-  @spec set_error(transaction, String.t, String.t, any) :: transaction
+  @spec set_error(Transaction.t, String.t, String.t, any) :: Transaction.t
   def set_error(%Transaction{} = transaction, error, message, backtrace) do
     :ok = Nif.set_error(transaction.resource, error, message, Poison.encode!(backtrace))
     transaction
@@ -103,7 +103,7 @@ defmodule Appsignal.Transaction do
   - `key`: Key of this piece of metadata (params, session_data)
   - `payload`: Metadata (e.g. `%{user_id: 1}`); will be JSON encoded
   """
-  @spec set_sample_data(transaction, String.t, any) :: transaction
+  @spec set_sample_data(Transaction.t, String.t, any) :: Transaction.t
   def set_sample_data(%Transaction{} = transaction, key, payload) do
     :ok = Nif.set_sample_data(transaction.resource, key, Poison.encode!(payload))
     transaction
@@ -117,7 +117,7 @@ defmodule Appsignal.Transaction do
   - `transaction`: The pointer to the transaction this event occurred in
   - `action`: This transactions action (`"HomepageController.show"`)
   """
-  @spec set_action(transaction, String.t) :: transaction
+  @spec set_action(Transaction.t, String.t) :: Transaction.t
   def set_action(%Transaction{} = transaction, action) do
     :ok = Nif.set_action(transaction.resource, action)
     transaction
@@ -131,7 +131,7 @@ defmodule Appsignal.Transaction do
   - `transaction`: The pointer to the transaction this event occurred in
   - `queue_start`: Transaction queue start time in ms if known, otherwise -1
   """
-  @spec set_queue_start(transaction, integer) :: transaction
+  @spec set_queue_start(Transaction.t, integer) :: Transaction.t
   def set_queue_start(%Transaction{} = transaction, start \\ -1) do
     :ok = Nif.set_queue_start(transaction.resource, start)
     transaction
@@ -146,7 +146,7 @@ defmodule Appsignal.Transaction do
   - `key`: Key of this piece of metadata (`"email"`)
   - `value`: Value of this piece of metadata (`"thijs@appsignal.com"`)
   """
-  @spec set_meta_data(transaction, String.t, String.t) :: transaction
+  @spec set_meta_data(Transaction.t, String.t, String.t) :: Transaction.t
   def set_meta_data(%Transaction{} = transaction, key, value) do
     :ok = Nif.set_meta_data(transaction.resource, key, value)
     transaction
@@ -162,7 +162,7 @@ defmodule Appsignal.Transaction do
   Returns `:sample` wether sample data for this transaction should be
   collected.
   """
-  @spec finish(transaction) :: :sample | :no_sample
+  @spec finish(Transaction.t) :: :sample | :no_sample
   def finish(%Transaction{} = transaction) do
     Nif.finish(transaction.resource)
   end
@@ -174,7 +174,7 @@ defmodule Appsignal.Transaction do
 
   - `transaction`: The pointer to the transaction this event occurred in
   """
-  @spec complete(transaction) :: :ok
+  @spec complete(Transaction.t) :: :ok
   def complete(%Transaction{} = transaction) do
     :ok = Nif.complete(transaction.resource)
   end
