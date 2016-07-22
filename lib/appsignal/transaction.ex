@@ -193,4 +193,29 @@ defmodule Appsignal.Transaction do
     end
   end
 
+
+  alias Plug.Conn
+
+  @doc """
+  Set the request metadata, given a Plug.Conn.t.
+  """
+  @spec set_request_metadata(Transaction.t, Plug.Conn.t) :: Transaction.t
+  def set_request_metadata(%Transaction{} = transaction, %Conn{} = conn) do
+
+    # preprocess conn
+    conn = conn
+    |> Conn.fetch_query_params
+
+    # collect sample data
+    transaction
+    |> Transaction.set_sample_data("params", conn.params)
+    |> Transaction.set_sample_data("environment", request_environment(conn))
+    transaction
+  end
+
+
+  defp request_environment(conn) do
+    %{:REQUEST_METHOD => conn.method}
+  end
+
 end

@@ -32,12 +32,11 @@ defmodule Appsignal.ErrorHandler do
   def handle_event(event, state) do
     state =
       case match_event(event) do
-        {origin, reason, message, stack} ->
-          #IO.inspect "==> ErrorHandler event: #{inspect reason}"
+        {origin, reason, message, stack, metadata} ->
           case supervisor_event?(reason) do
             false ->
               lookup_or_create_transaction(origin)
-              |> submit_transaction(reason, message, stack)
+              |> submit_transaction(reason, message, stack, metadata)
             true ->
               # ignore this event; we have already handled it.
               state
@@ -58,8 +57,11 @@ defmodule Appsignal.ErrorHandler do
     end
   end
 
-  defp submit_transaction(transaction, reason, message, stack) do
+  defp submit_transaction(transaction, reason, message, stack, metadata) do
     Transaction.set_error(transaction, "#{inspect reason}", message, stack)
+    if metadata[:conn] != nil do
+      Transaction.set_request_metadata(transaction, metadata[:conn])
+    end
     Transaction.finish(transaction)
     Transaction.complete(transaction)
     Logger.debug("Submitting #{inspect transaction}: #{message}")
@@ -93,7 +95,7 @@ defmodule Appsignal.ErrorHandler do
 
 
   @doc false
-  @spec match_event(term) :: {pid, atom, list} | :nomatch
+  @spec match_event(term) :: {pid, term, String.t, list, Map.t} | :nomatch
   def match_event({:error, _gleader, {_pid, format, data}}) do
     match_error_format(format, data)
   end
@@ -110,7 +112,7 @@ defmodule Appsignal.ErrorHandler do
                                     {:error_info, {kind, exception, stack}} | _], _linked]) do
     reason = {kind, exception}
     msg = "Process #{crash_name(pid, name)} terminating"
-    {origin, reason, msg, format_stack(stack)}
+    {origin, reason, msg, format_stack(stack), %{}}
   end
 
 
@@ -119,29 +121,34 @@ defmodule Appsignal.ErrorHandler do
   # TODO: Add crashes caused by gen_event handlers
   defp match_error_format('Error in process ' ++ _, [pid, {reason, stack}]) do
     msg = "Process #{inspect pid} raised an exception"
-    {pid, reason, msg, format_stack(stack)}
+    {pid, reason, msg, format_stack(stack), %{}}
   end
 
   defp match_error_format('** Generic server ' ++ _, [pid, _last, _state, reason]) do
     {reason, stack} = maybe_extract_stack(reason)
     msg = "GenServer #{inspect pid} terminating"
-    {pid, reason, msg, format_stack(stack)}
+    {pid, reason, msg, format_stack(stack), %{}}
   end
 
   defp match_error_format('** Task ' ++ _, [pid, starter, function, args, reason]) do
     {reason, stack} = maybe_extract_stack(reason)
     msg = "Task #{inspect pid} started from #{inspect starter} terminating. Function: #{inspect function}, args: #{inspect args}"
-    {pid, reason, msg, format_stack(stack)}
+    {pid, reason, msg, format_stack(stack), %{}}
   end
 
   # FIXME add test coverage for this one
-  defp match_error_format('Ranch listener ' ++ _, [_, _, pid, {{reason, stack}, _}]) do
+  defp match_error_format('Ranch listener ' ++ _, [_, _, pid, {{reason, stack}, initial}]) do
+    metadata = case extract_conn(initial) do
+                 nil -> %{}
+                 c -> %{conn: c}
+               end
     msg = "HTTP request #{inspect pid} crashed"
-    {pid, reason, msg, format_stack(stack)}
+    {pid, reason, msg, format_stack(stack), metadata}
   end
 
   # Format the stack trace as an array of strings
-  defp format_stack(stacktrace) do
+  @doc false
+  def format_stack(stacktrace) do
     for entry <- stacktrace do
       Exception.format_stacktrace_entry(entry)
     end
@@ -163,5 +170,8 @@ defmodule Appsignal.ErrorHandler do
 
   defp crash_name(pid, []), do: inspect(pid)
   defp crash_name(pid, name), do: "#{inspect(name)} (#{inspect(pid)})"
+
+  defp extract_conn({_, :call, [%Plug.Conn{} = conn, _params]}), do: conn
+  defp extract_conn(_), do: nil
 
 end

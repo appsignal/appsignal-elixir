@@ -16,10 +16,10 @@ defmodule AppsignalHelpersTest do
 
   test_with_mock "instrument %Plug.Conn{}", Appsignal.Transaction, [:passthrough], [] do
 
+    # Setup the plug
     conn = conn(:get, "/test/123")
+    |> Appsignal.Phoenix.call(%{})
 
-    # Invoke the plug
-    conn = Appsignal.Plug.call(conn, %{})
     call_instrument(conn)
     t = conn.assigns.appsignal_transaction
     assert called Transaction.start_event(t)

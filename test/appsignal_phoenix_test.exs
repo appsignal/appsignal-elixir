@@ -1,4 +1,4 @@
-defmodule Appsignal.PlugTest do
+defmodule Appsignal.PhoenixTest do
   use ExUnit.Case, async: true
   use Plug.Test
 
@@ -7,7 +7,7 @@ defmodule Appsignal.PlugTest do
     conn = conn(:get, "/test/123")
 
     # Invoke the plug
-    conn = Appsignal.Plug.call(conn, %{})
+    conn = Appsignal.Phoenix.call(conn, %{})
     |> Plug.Conn.resp(200, "ok")
     |> Plug.Conn.send_resp
 
