@@ -46,6 +46,7 @@ defmodule Appsignal.TransactionRegistry do
   ##
 
   defmodule State do
+    @moduledoc false
     defstruct table: nil
   end
 
