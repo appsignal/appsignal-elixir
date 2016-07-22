@@ -215,11 +215,19 @@ defmodule Appsignal.Transaction do
 
 
   @conn_fields ~w(host method path_info script_name request_path port schema query_string)a
-  # FIXME add remote_ip (needs formatting)
   defp request_environment(conn) do
     @conn_fields
     |> Enum.map(fn(k) -> {k, Map.get(conn, k)} end)
     |> Enum.into(%{})
+    |> Map.put(:request_uri, url(conn))
+    |> Map.put(:peer, peer(conn))
   end
+
+  defp url(%Plug.Conn{scheme: scheme, host: host, port: port} = conn), do:
+    "#{scheme}://#{host}:#{port}#{conn.request_path}"
+
+  defp peer(%Plug.Conn{peer: {host, port}}), do:
+    "#{:inet_parse.ntoa host}:#{port}"
+
 
 end
