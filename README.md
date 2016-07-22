@@ -1,4 +1,4 @@
-# AppSignal agent
+# AppSignal agent for Elixir / Phoenix
 
 This library collects error and performance data from your Elixir
 applications and sends it to [AppSignal](https://appsignal.com).
