@@ -27,12 +27,12 @@ applications and sends it to [AppSignal](https://appsignal.com).
     ```
 
   3. If you use the
-     [Phoenix framework](http://www.phoenixframework.org/), add the
-     `Appsignal.Plug` to your `endpoint.ex` file, just before your
+     [Phoenix framework](http://www.phoenixframework.org/), *use* the
+     `Appsignal.Phoenix` in your `endpoint.ex` file, just before your
      router:
 
      ```elixir
-     plug Appsignal.Plug
+     use Appsignal.Phoenix
      ```
 
 When the AppSignal OTP application starts, it looks for a valid
