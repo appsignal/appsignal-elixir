@@ -13,7 +13,7 @@ defmodule AppsignalTransactionRegistryTest do
 
 
   test "lookup returns nil after process has ended" do
-    transaction = %Transaction{}
+    transaction = %Transaction{id: "xx"}
 
     pid = spawn(fn() ->
       TransactionRegistry.register(transaction)
@@ -29,6 +29,15 @@ defmodule AppsignalTransactionRegistryTest do
     # by now the process is gone
     #assert nil == TransactionRegistry.lookup(pid)
 
+    :ok = TransactionRegistry.remove_transaction(transaction)
+  end
+
+
+  test "delete entry by transaction" do
+    transaction = %Transaction{id: "asdf"}
+    TransactionRegistry.register(transaction)
+    :ok = TransactionRegistry.remove_transaction(transaction)
+    {:error, :not_found} = TransactionRegistry.remove_transaction(transaction)
   end
 
 end

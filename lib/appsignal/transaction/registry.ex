@@ -42,6 +42,15 @@ defmodule Appsignal.TransactionRegistry do
     end
   end
 
+  def remove_transaction(%Transaction{} = transaction) do
+    case :ets.match(@table, {:'$1', transaction}) do
+      [[pid] | _] = p ->
+        true = :ets.delete(@table, pid)
+        :ok
+      [] ->
+        {:error, :not_found}
+    end
+  end
 
   ##
 
