@@ -184,7 +184,7 @@ defmodule Appsignal.Transaction do
   """
   @spec generate_id :: String.t
   def generate_id do
-    id = :crypto.rand_bytes(8) |> Base.hex_encode32(case: :lower, padding: false)
+    :crypto.rand_bytes(8) |> Base.hex_encode32(case: :lower, padding: false)
   end
 
   defimpl Inspect do
