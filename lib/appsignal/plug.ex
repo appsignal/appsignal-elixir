@@ -11,7 +11,7 @@ defmodule Appsignal.Plug do
   """
 
   @behaviour Plug
-  import Plug.Conn, only: [register_before_send: 2]
+  import Plug.Conn, only: [register_before_send: 2, assign: 3]
 
   require Logger
 
@@ -24,15 +24,12 @@ defmodule Appsignal.Plug do
     id = Logger.metadata()[:request_id] || Transaction.generate_id()
     transaction = Transaction.start(id, :http_request)
 
-    IO.inspect "plug self: #{inspect self}"
-
     conn
     |> register_before_send(fn conn ->
 
       try do
         action_str = "#{Controller.controller_module(conn)}##{Controller.action_name(conn)}"
         <<"Elixir.", action :: binary>> = action_str
-        IO.inspect "action: #{action}"
         Transaction.set_action(transaction, action)
       catch
         _, _ -> :ok
@@ -47,6 +44,7 @@ defmodule Appsignal.Plug do
 
       conn
     end)
+    |> assign(:appsignal_transaction, transaction)
   end
 
   defp collect_sample_data(transaction, conn) do

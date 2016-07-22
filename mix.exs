@@ -51,6 +51,7 @@ defmodule Appsignal.Mixfile do
 
       {:plug, "~> 1.0", only: [:test, :dev]},
       {:phoenix, "~> 1.2.0", only: [:test, :dev]},
+      {:mock, "~> 0.1.1", only: [:test]},
 
       {:ex_doc, "~> 0.12", only: :dev}
     ]

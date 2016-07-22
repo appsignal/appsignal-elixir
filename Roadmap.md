@@ -14,7 +14,9 @@ The roadmap looks like this, currently:
  - [x] Basic Phoenix integration
 
 ### Milestone 2 [BETA]
-- [ ] Deeper Phoenix integration
+- [ ] Extended Phoenix integration
+  - [ ] HTTP error reporting
+  - [ ] Channel instrumentation
 - [ ] Events / timing instrumentation within request
   - [ ] template compiles
   - [ ] outgoing HTTP requests
