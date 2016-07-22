@@ -1,0 +1,25 @@
+{
+    "version": "dacf2fb",
+    "triples": {
+        "x86_64-linux": {
+            "checksum": "8235bc62896c1b964bab745421b767bdb302ba10fad20aa763074efc50f26fc8",
+            "download_url": "https://appsignal-agent-releases.global.ssl.fastly.net/dacf2fb/appsignal-x86_64-linux-all-static.tar.gz",
+            "libname": "libappsignal.a"
+        },
+        "i686-linux": {
+            "checksum": "50804fbe4b88af855c0986598a36a13a9523b34ad6a98aa2d3dcac3459f79d65",
+            "download_url": "https://appsignal-agent-releases.global.ssl.fastly.net/dacf2fb/appsignal-i686-linux-all-static.tar.gz",
+            "libname": "libappsignal.a"
+        },
+        "x86-linux": {
+            "checksum": "50804fbe4b88af855c0986598a36a13a9523b34ad6a98aa2d3dcac3459f79d65",
+            "download_url": "https://appsignal-agent-releases.global.ssl.fastly.net/dacf2fb/appsignal-i686-linux-all-static.tar.gz",
+            "libname": "libappsignal.a"
+        },
+        "x86_64-darwin": {
+            "checksum": "599590da63f357efd5d86e4f1446682fcdd15f964d92aa5b87d447ce675f617b",
+            "download_url": "https://appsignal-agent-releases.global.ssl.fastly.net/dacf2fb/appsignal-x86_64-darwin-all-static.tar.gz",
+            "libname": "libappsignal.dylib"
+        }
+    }
+}
