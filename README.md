@@ -14,7 +14,7 @@ applications and sends it to [AppSignal](https://appsignal.com).
 
     ```elixir
     def deps do
-      [{:appsignal, "~> 0.0.1"}]
+      [{:appsignal, "~> 0.0.0"}]
     end
     ```
 
