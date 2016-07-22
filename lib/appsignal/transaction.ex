@@ -214,8 +214,12 @@ defmodule Appsignal.Transaction do
   end
 
 
+  @conn_fields ~w(host method path_info script_name request_path port schema query_string)a
+  # FIXME add remote_ip (needs formatting)
   defp request_environment(conn) do
-    %{:REQUEST_METHOD => conn.method}
+    @conn_fields
+    |> Enum.map(fn(k) -> {k, Map.get(conn, k)} end)
+    |> Enum.into(%{})
   end
 
 end

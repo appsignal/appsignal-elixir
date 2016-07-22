@@ -52,31 +52,41 @@ defmodule Appsignal.Phoenix do
   end
 
 
-  def submit_http_error(pid, conn, reason, message, stack) do
-    case Appsignal.TransactionRegistry.lookup(self) do
-      nil -> nil
-      transaction ->
-        Transaction.set_error(transaction, "#{inspect reason}", message, Appsignal.ErrorHandler.format_stack(stack))
-        if Transaction.finish(transaction) == :sample do
-          Transaction.set_request_metadata(transaction, conn)
-        end
-        Transaction.complete(transaction)
-        Logger.debug("Submitting #{inspect transaction}: #{message}")
-    end
+  @doc false
+  def maybe_submit_http_error(_e, nil) do
+    # transaction not found in registry
+    nil
+  end
+  def maybe_submit_http_error(r=%Phoenix.Router.NoRouteError{conn: conn}, transaction) do
+    submit_http_error(r.__struct__, r.message, transaction, conn)
+  end
+  def maybe_submit_http_error(_, _) do
+    # Unknown error
+    nil
   end
 
+  def submit_http_error(reason, message, transaction, conn) do
+    stack = System.stacktrace
+    Transaction.set_error(transaction, "#{inspect reason}", message, Appsignal.ErrorHandler.format_stack(stack))
+    if Transaction.finish(transaction) == :sample do
+      Transaction.set_request_metadata(transaction, conn)
+    end
+    Transaction.complete(transaction)
+    Logger.debug("Submitting #{inspect transaction}: #{message}")
+  end
+
+  @doc false
   defmacro __using__(_) do
-    IO.inspect "using Appsigna.plug"
 
     quote do
-      plug Appsignal.Plug
+      plug Appsignal.Phoenix
 
       def call(conn, opts) do
         try do
           super(conn, opts)
         rescue
           e ->
-            IO.inspect "e: #{inspect e}"
+            Appsignal.Phoenix.maybe_submit_http_error(e, Appsignal.TransactionRegistry.lookup(self))
             raise e
         end
       end
