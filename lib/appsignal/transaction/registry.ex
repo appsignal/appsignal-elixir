@@ -1,5 +1,5 @@
 defmodule Appsignal.TransactionRegistry do
-  @doc """
+  @moduledoc """
 
   Internal module which keeps a registry of the transaction handles
   linked to their originating process.

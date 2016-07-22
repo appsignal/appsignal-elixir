@@ -47,11 +47,10 @@ defmodule Appsignal.Mixfile do
 
   defp deps do
     [
-      {:plug, "~> 1.0"},
       {:poison, "~> 2.1"},
 
-      {:plug, "~> 1.0", only: :test},
-      {:phoenix, "~> 1.2.0", only: :test},
+      {:plug, "~> 1.0", only: [:test, :dev]},
+      {:phoenix, "~> 1.2.0", only: [:test, :dev]},
 
       {:ex_doc, "~> 0.12", only: :dev}
     ]

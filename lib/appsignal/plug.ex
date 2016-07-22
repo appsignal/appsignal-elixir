@@ -1,4 +1,15 @@
 defmodule Appsignal.Plug do
+  @moduledoc """
+  Plug for instrumentation of Phoenix requests
+
+  To integrate Appsignal with Phoenix, add the `Appsignal.Plug` to
+  your `endpoint.ex` file, just before your router:
+
+  ```
+  plug Appsignal.Plug
+  ```
+  """
+
   @behaviour Plug
   import Plug.Conn, only: [register_before_send: 2]
 
