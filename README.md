@@ -28,8 +28,8 @@ applications and sends it to [AppSignal](https://appsignal.com).
 
   3. If you use the
      [Phoenix framework](http://www.phoenixframework.org/), *use* the
-     `Appsignal.Phoenix` in your `endpoint.ex` file, just before your
-     router:
+     `Appsignal.Phoenix` module in your `endpoint.ex` file, just
+     before your router:
 
      ```elixir
      use Appsignal.Phoenix
