@@ -29,7 +29,8 @@ applications and sends it to [AppSignal](https://appsignal.com).
   3. If you use the
      [Phoenix framework](http://www.phoenixframework.org/), *use* the
      `Appsignal.Phoenix` module in your `endpoint.ex` file, just
-     before your router:
+     *before* the line where your router module gets called
+     (which should read something like `plug MyApp.Router`):
 
      ```elixir
      use Appsignal.Phoenix
