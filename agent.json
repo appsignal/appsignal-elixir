@@ -19,7 +19,7 @@
         "x86_64-darwin": {
             "checksum": "599590da63f357efd5d86e4f1446682fcdd15f964d92aa5b87d447ce675f617b",
             "download_url": "https://appsignal-agent-releases.global.ssl.fastly.net/dacf2fb/appsignal-x86_64-darwin-all-static.tar.gz",
-            "libname": "libappsignal.dylib"
+            "libname": "libappsignal.a"
         }
     }
 }
