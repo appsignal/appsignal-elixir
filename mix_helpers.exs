@@ -12,9 +12,8 @@ defmodule Mix.Appsignal.Helper do
     arch_config = info["triples"][arch]
 
     System.put_env("LIB_DIR", priv_dir())
-    System.put_env("LIB_NAME", arch_config["libname"])
 
-    unless has_file("appsignal-agent") and has_file("appsignal_extension.h") and has_file(arch_config["libname"]) do
+    unless has_file("appsignal-agent") and has_file("appsignal_extension.h") do
 
       Logger.info "Downloading agent release from #{arch_config["download_url"]}"
 
