@@ -63,7 +63,7 @@ defmodule Appsignal.Phoenix do
   def maybe_submit_http_error(%{plug_status: s} = r, transaction, conn) when s > 0 do
     submit_http_error(r.__struct__, r.message, transaction, Map.get(r, :conn, conn))
   end
-  def maybe_submit_http_error(_, _) do
+  def maybe_submit_http_error(_, _, _) do
     # Unknown error
     nil
   end
