@@ -2,18 +2,18 @@
 
 The roadmap looks like this, currently:
 
-### Milestone 0
+## Milestone 1 (pre release)
  - [x] Host metrics
  - [x] API coverage; errors / performance / events
 
-### Milestone 1 [ALPHA]
+## Milestone 2 (alpha)
  - [x] Agent installation and compilation
  - [x] Agent Configuration
  - [x] Basic API coverage (Header file)
  - [x] Travis CI
  - [x] Basic Phoenix integration
 
-### Milestone 2 [BETA]
+## Milestone 3 (beta, rc)
 - [ ] Extended Phoenix integration
   - [ ] HTTP error reporting
   - [ ] Channel instrumentation
@@ -22,6 +22,6 @@ The roadmap looks like this, currently:
   - [ ] outgoing HTTP requests
   - [ ] Ecto queries
 
-### Milestone 4 [1.X]
+## Milestone 4 (beyond 1.0)
 - [ ] Erlang VM metrics
 - [ ] Exometer integration
