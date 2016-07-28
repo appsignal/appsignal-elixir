@@ -1,4 +1,4 @@
-defmodule Appsignal.PhoenixTest do
+defmodule Appsignal.Phoenix.PlugTest do
   use ExUnit.Case, async: true
   use Plug.Test
 

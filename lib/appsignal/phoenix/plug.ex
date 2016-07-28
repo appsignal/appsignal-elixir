@@ -6,7 +6,7 @@ defmodule Appsignal.Phoenix.Plug do
   @behaviour Plug
   import Plug.Conn, only: [register_before_send: 2, assign: 3]
 
-  alias Appsignal.{Transaction,TransactionRegistry}
+  alias Appsignal.Transaction
   alias Phoenix.Controller
 
   def init(opts), do: opts

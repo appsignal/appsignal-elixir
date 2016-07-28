@@ -21,10 +21,10 @@ defmodule Appsignal.Mixfile do
      source_url: "https://github.com/appsignal/appsignal-elixir",
      homepage_url: "https://appsignal.com",
      elixir: "~> 1.0",
-     compilers: [:appsignal] ++ Mix.compilers,
+     compilers: compilers(Mix.env),
      deps: deps,
      docs: [logo: "logo.png",
-            extras: ["README.md", "Roadmap.md"]]
+            extras: ["README.md", "Phoenix.md", "Roadmap.md"]]
     ]
   end
 
@@ -34,7 +34,7 @@ defmodule Appsignal.Mixfile do
 
   defp package do
     %{files: ["lib", "c_src/*.[ch]", "mix.exs", "mix_helpers.exs",
-              "README.md", "Roadmap.md", "LICENSE", "Makefile", "agent.json"],
+              "*.md", "LICENSE", "Makefile", "agent.json"],
       maintainers: ["Arjan Scherpenisse"],
       licenses: ["MIT"],
       links: %{"GitHub" => "https://github.com/appsignal/appsignal-elixir"}}
@@ -45,10 +45,14 @@ defmodule Appsignal.Mixfile do
      applications: [:logger]]
   end
 
+  defp compilers(:test), do: [:phoenix] ++ compilers(:prod)
+  defp compilers(_), do: [:appsignal] ++ Mix.compilers
+
   defp deps do
     [
       {:poison, "~> 2.1"},
       {:phoenix, "~> 1.2.0"},
+      {:phoenix_html, "~> 2.6.0"},
 
       {:mock, "~> 0.1.1", only: :test},
       {:ex_doc, "~> 0.12", only: :dev}
