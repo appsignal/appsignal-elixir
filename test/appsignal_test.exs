@@ -13,4 +13,9 @@ defmodule AppsignalTest do
   test "add distribution value" do
     Appsignal.add_distribution_value("dist_key", 10.0)
   end
+
+  test "Agent environment variables" do
+    env = Appsignal.Config.get_system_env()
+    assert "test" = env["APPSIGNAL_ENVIRONMENT"]
+  end
 end

@@ -127,13 +127,18 @@ defmodule Appsignal.Config do
   defp true?(_), do: false
 
 
+  @env Mix.env
+  @agent_version Poison.decode!(File.read!("agent.json"))["version"]
+  @language_integration_version Mix.Project.config[:version]
+
+
   defp write_to_environment(config) do
     System.put_env("APPSIGNAL_ACTIVE", Atom.to_string(config[:active]))
     System.put_env("APPSIGNAL_APP_PATH", List.to_string(:code.priv_dir(:appsignal))) # FIXME - app_path should not be necessary
     System.put_env("APPSIGNAL_AGENT_PATH", List.to_string(:code.priv_dir(:appsignal)))
-    System.put_env("APPSIGNAL_ENVIRONMENT", Atom.to_string(env))
-    System.put_env("APPSIGNAL_AGENT_VERSION", agent_version)
-    System.put_env("APPSIGNAL_LANGUAGE_INTEGRATION_VERSION", language_integration_version())
+    System.put_env("APPSIGNAL_ENVIRONMENT", Atom.to_string(@env))
+    System.put_env("APPSIGNAL_AGENT_VERSION", @agent_version)
+    System.put_env("APPSIGNAL_LANGUAGE_INTEGRATION_VERSION", @language_integration_version)
     System.put_env("APPSIGNAL_DEBUG_LOGGING", Atom.to_string(config[:debug]))
     unless empty?(config[:log_path]) do
       System.put_env("APPSIGNAL_LOG_FILE_PATH", config[:log_path])
@@ -152,20 +157,10 @@ defmodule Appsignal.Config do
     System.put_env("APPSIGNAL_ENABLE_HOST_METRICS", Atom.to_string(config[:enable_host_metrics]))
   end
 
-
-  @attr Mix.env
-  defp env do
-    @attr
-  end
-
-  @attr Poison.decode!(File.read!("agent.json"))["version"]
-  defp agent_version do
-    @attr
-  end
-
-  @attr Mix.Project.config[:version]
-  defp language_integration_version() do
-    @attr
+  def get_system_env do
+    System.get_env
+    |> Enum.filter(fn({"APPSIGNAL_" <> _, _}) -> true; (_) -> false end)
+    |> Enum.into(%{})
   end
 
 end
