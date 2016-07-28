@@ -65,6 +65,7 @@ The full list of variables that can be configured is the following:
  - `APPSIGNAL_APP_NAME` (Elixir config key: `:name`)
  - `APPSIGNAL_PUSH_API_ENDPOINT` (Elixir config key: `:endpoint`)
  - `APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH` (Elixir config key: `:frontend_error_catching_path`)
+ - `APPSIGNAL_ENVIRONMENT` (Elixir config key: `:env`; defaults to `:dev`; other valid values are `:test` and `:prod`)
  - `APPSIGNAL_DEBUG` (Elixir config key: `:debug`)
  - `APPSIGNAL_LOG_PATH` (Elixir config key: `:log_path`)
  - `APPSIGNAL_IGNORE_ERRORS` (Elixir config key: `:ignore_errors`)

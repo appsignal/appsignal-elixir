@@ -5,6 +5,7 @@ defmodule Appsignal.Config do
     debug: false,
     ignore_errors: [],
     ignore_actions: [],
+    env: :dev,
     send_params: true,
     endpoint: "https://push.appsignal.com",
     enable_host_metrics: false
@@ -52,6 +53,7 @@ defmodule Appsignal.Config do
     "APPSIGNAL_ACTIVE" => :active,
     "APPSIGNAL_PUSH_API_KEY" => :push_api_key,
     "APPSIGNAL_APP_NAME" => :name,
+    "APPSIGNAL_ENVIRONMENT" => :env,
     "APPSIGNAL_PUSH_API_ENDPOINT" => :endpoint,
     "APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH" => :frontend_error_catching_path,
     "APPSIGNAL_DEBUG" => :debug,
@@ -97,7 +99,7 @@ defmodule Appsignal.Config do
 
     # Configuration with atom type
     config = Enum.reduce(
-      ~w(APPSIGNAL_APP_NAME),
+      ~w(APPSIGNAL_APP_NAME APPSIGNAL_ENVIRONMENT),
       config,
       fn(key, cfg) ->
         value = System.get_env(key)
@@ -127,7 +129,6 @@ defmodule Appsignal.Config do
   defp true?(_), do: false
 
 
-  @env Mix.env
   @agent_version Poison.decode!(File.read!("agent.json"))["version"]
   @language_integration_version Mix.Project.config[:version]
 
@@ -136,7 +137,7 @@ defmodule Appsignal.Config do
     System.put_env("APPSIGNAL_ACTIVE", Atom.to_string(config[:active]))
     System.put_env("APPSIGNAL_APP_PATH", List.to_string(:code.priv_dir(:appsignal))) # FIXME - app_path should not be necessary
     System.put_env("APPSIGNAL_AGENT_PATH", List.to_string(:code.priv_dir(:appsignal)))
-    System.put_env("APPSIGNAL_ENVIRONMENT", Atom.to_string(@env))
+    System.put_env("APPSIGNAL_ENVIRONMENT", Atom.to_string(config[:env]))
     System.put_env("APPSIGNAL_AGENT_VERSION", @agent_version)
     System.put_env("APPSIGNAL_LANGUAGE_INTEGRATION_VERSION", @language_integration_version)
     System.put_env("APPSIGNAL_DEBUG_LOGGING", Atom.to_string(config[:debug]))
