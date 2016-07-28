@@ -14,42 +14,29 @@ defmodule Appsignal.Phoenix do
 
   """
 
-  @behaviour Plug
-  import Plug.Conn, only: [register_before_send: 2, assign: 3]
-
   require Logger
 
   alias Appsignal.{Transaction,TransactionRegistry}
-  alias Phoenix.Controller
 
-  def init(opts), do: opts
+  @doc false
+  defmacro __using__(_) do
 
-  def call(conn, _config) do
-    id = Logger.metadata()[:request_id] || Transaction.generate_id()
-    transaction = Transaction.start(id, :http_request)
+    quote do
+      plug Appsignal.Phoenix.Plug
 
-    conn
-    |> register_before_send(fn conn ->
-
-      try do
-        action_str = "#{Controller.controller_module(conn)}##{Controller.action_name(conn)}"
-        <<"Elixir.", action :: binary>> = action_str
-        Transaction.set_action(transaction, action)
-      catch
-        _, _ -> :ok
-      end
-      resp = Transaction.finish(transaction)
-
-      if resp == :sample do
-        Transaction.set_request_metadata(transaction, conn)
+      def call(conn, opts) do
+        try do
+          super(conn, opts)
+        rescue
+          e ->
+            Appsignal.Phoenix.maybe_submit_http_error(e, Appsignal.TransactionRegistry.lookup(self), conn)
+            raise e
+        end
       end
 
-      :ok = Transaction.complete(transaction)
-
-      conn
-    end)
-    |> assign(:appsignal_transaction, transaction)
+    end
   end
+
 
 
   @doc false
@@ -82,23 +69,5 @@ defmodule Appsignal.Phoenix do
     Logger.debug("Submitting #{inspect transaction}: #{message}")
   end
 
-  @doc false
-  defmacro __using__(_) do
-
-    quote do
-      plug Appsignal.Phoenix
-
-      def call(conn, opts) do
-        try do
-          super(conn, opts)
-        rescue
-          e ->
-            Appsignal.Phoenix.maybe_submit_http_error(e, Appsignal.TransactionRegistry.lookup(self), conn)
-            raise e
-        end
-      end
-
-    end
-  end
 
 end

@@ -25,7 +25,7 @@ defmodule AppsignalHelpersTest do
 
     # Setup the plug
     conn = conn(:get, "/test/123")
-    |> Appsignal.Phoenix.call(%{})
+    |> Appsignal.Phoenix.Plug.call(%{})
 
     call_instrument(conn)
     t = conn.assigns.appsignal_transaction
