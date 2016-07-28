@@ -6,10 +6,17 @@ defmodule AppsignalHelpersTest do
 
   alias Appsignal.{Transaction, Helpers}
 
-  test_with_mock "instrument", Appsignal.Transaction, [:passthrough], [] do
+  test_with_mock "instrument with transaction", Appsignal.Transaction, [:passthrough], [] do
 
     t = Transaction.start("foo", :http_request)
     call_instrument(t)
+    assert called Transaction.start_event(t)
+    assert called Transaction.finish_event(t, "name", "title", "", 0)
+  end
+
+  test_with_mock "instrument with pid", Appsignal.Transaction, [:passthrough], [] do
+    t = Transaction.start("bar", :http_request)
+    call_instrument(self)
     assert called Transaction.start_event(t)
     assert called Transaction.finish_event(t, "name", "title", "", 0)
   end

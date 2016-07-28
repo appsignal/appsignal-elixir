@@ -3,10 +3,10 @@ defmodule Appsignal.Helpers do
   Helper functions to instrument your application
   """
 
-  alias Appsignal.Transaction
+  alias Appsignal.{Transaction, TransactionRegistry}
   alias Plug.Conn
 
-  @type instrument_arg :: Transaction.t | Conn.t
+  @type instrument_arg :: Transaction.t | Conn.t | pid()
 
   @doc """
   Execute the given function in start / finish event calls. See `instrument/6`.
@@ -44,6 +44,15 @@ defmodule Appsignal.Helpers do
 
   """
   @spec instrument(instrument_arg, String.t, String.t, String.t, integer, function) :: any
+  def instrument(pid, name, title, body, body_format, function) when is_pid(pid) do
+    case TransactionRegistry.lookup(pid) do
+      nil ->
+        function.()
+      t = %Transaction{} ->
+        instrument(t, name, title, body, body_format, function)
+    end
+  end
+
   def instrument(%Conn{} = conn, name, title, body, body_format, function) do
     instrument(conn.assigns.appsignal_transaction, name, title, body, body_format, function)
   end
