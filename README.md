@@ -28,13 +28,15 @@ applications and sends it to [AppSignal](https://appsignal.com).
 
   3. If you use the
      [Phoenix framework](http://www.phoenixframework.org/), *use* the
-     `Appsignal.Phoenix` module in your `endpoint.ex` file, just
-     *before* the line where your router module gets called
-     (which should read something like `plug MyApp.Router`):
+     `Appsignal.Phoenix` module in your `endpoint.ex` file, inside the :browser `pipeline` block:
 
-     ```elixir
-     use Appsignal.Phoenix
-     ```
+     ``` elixir
+     pipeline :browser do
+       use Appsignal.Phoenix
+       plug :accepts, ["html"]
+       plug :fetch_session
+       # ...
+     end
 
 When the AppSignal OTP application starts, it looks for a valid
 configuration (e.g. an AppSignal push key), and start the AppSignal agent.
