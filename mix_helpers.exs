@@ -5,6 +5,8 @@ defmodule Mix.Appsignal.Helper do
 
   require Logger
 
+  @max_retries 5
+
   def ensure_downloaded do
 
     info = Poison.decode!(File.read!("agent.json"))
@@ -13,19 +15,58 @@ defmodule Mix.Appsignal.Helper do
 
     System.put_env("LIB_DIR", priv_dir())
 
-    unless has_file("appsignal-agent") and has_file("appsignal_extension.h") do
+    unless has_file("appsignal-agent") and has_file("appsignal_extension.h") and has_file("appsignal_extension.so") do
 
       Logger.info "Downloading agent release from #{arch_config["download_url"]}"
 
-      File.mkdir_p(priv_dir())
-      cmd = "cd '#{priv_dir()}' && curl '#{arch_config["download_url"]}' | tar zxf -"
-      :os.cmd(String.to_char_list(cmd))
+      File.mkdir_p!(priv_dir())
 
-      :ok
+      download_file(arch_config["download_url"])
+      |> verify_checksum(arch_config["checksum"])
+      |> extract
     else
       :ok
     end
   end
+
+  defp download_file(url) do
+    filename = :filename.join("/tmp", :filename.basename(url))
+    case System.cmd("curl", ["-s", "-S", "--retry", Integer.to_string(@max_retries), "-f", "-o", filename, url], stderr_to_stdout: true) do
+      {_, 0} ->
+        filename
+      {result, exitcode} ->
+        IO.binwrite(result)
+        raise Mix.Error, message: """
+        Download failed with code #{exitcode}
+        """
+    end
+  end
+
+  defp verify_checksum(filename, expected) do
+    data = File.read!(filename)
+    calculated = :crypto.hash(:sha256, data) |> Base.encode16(case: :lower)
+    if calculated != expected do
+      raise Mix.Error, message: """
+      Checksum verification of #{filename} failed!
+      Calculated: #{calculated}
+        Expected: #{expected}
+      """
+    end
+    filename
+  end
+
+  defp extract(filename) do
+    case System.cmd("tar", ["zxf", filename], stderr_to_stdout: true, cd: priv_dir()) do
+      {_, 0} ->
+        :ok
+      {result, _exitcode} ->
+        IO.binwrite(result)
+        raise Mix.Error, message: """
+        Extracting of #{filename} failed!
+        """
+    end
+  end
+
 
   def compile do
     {result, error_code} = System.cmd("make", [])
