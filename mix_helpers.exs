@@ -17,8 +17,6 @@ defmodule Mix.Appsignal.Helper do
 
     unless has_file("appsignal-agent") and has_file("appsignal_extension.h") and has_file("appsignal_extension.so") do
 
-      Logger.info "Downloading agent release from #{arch_config["download_url"]}"
-
       File.mkdir_p!(priv_dir())
 
       download_file(arch_config["download_url"])
@@ -31,14 +29,20 @@ defmodule Mix.Appsignal.Helper do
 
   defp download_file(url) do
     filename = :filename.join("/tmp", :filename.basename(url))
-    case System.cmd("curl", ["-s", "-S", "--retry", Integer.to_string(@max_retries), "-f", "-o", filename, url], stderr_to_stdout: true) do
-      {_, 0} ->
+    case File.exists?(filename) do
+      true ->
         filename
-      {result, exitcode} ->
-        IO.binwrite(result)
-        raise Mix.Error, message: """
-        Download failed with code #{exitcode}
-        """
+      false ->
+        Logger.info "Downloading agent release from #{url}"
+        case System.cmd("curl", ["-s", "-S", "--retry", Integer.to_string(@max_retries), "-f", "-o", filename, url], stderr_to_stdout: true) do
+          {_, 0} ->
+            filename
+          {result, exitcode} ->
+            IO.binwrite(result)
+            raise Mix.Error, message: """
+            Download failed with code #{exitcode}
+            """
+        end
     end
   end
 
