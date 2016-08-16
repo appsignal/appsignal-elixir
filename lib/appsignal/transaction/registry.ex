@@ -4,7 +4,8 @@ defmodule Appsignal.TransactionRegistry do
   Internal module which keeps a registry of the transaction handles
   linked to their originating process.
 
-  This is used by the Appsignal.ErrorHandler module to be able to
+  This is used on various places to link a calling process to its transaction.
+  For instance, the `Appsignal.ErrorHandler` module uses it to be able to
   complete the transaction in case the originating process crashed.
 
   The transactions are stored in an ETS table (with
@@ -82,7 +83,6 @@ defmodule Appsignal.TransactionRegistry do
   end
 
   def handle_info(msg, state) do
-    Logger.warn "info: #{inspect msg}"
     {:noreply, state}
   end
 

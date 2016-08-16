@@ -34,8 +34,14 @@ defmodule Appsignal.Transaction do
   - `transaction_id` The unique identifier of this transaction
   - `namespace` The namespace of this transaction. Must be one of `:http_request`, `:background_job`.
 
-  The function returns a %Transaction{} struct for use with the the
+  The function returns a `%Transaction{}` struct for use with the
   other transaction functions in this module.
+
+  The returned transaction is also associated with the calling
+  process, so that processes / callbacks which don't get the
+  transaction passed in can still look it up through the
+  `Appsignal.TransactionRegistry`.
+
   """
   @spec start(String.t, namespace) :: Transaction.t
   def start(transaction_id, namespace)

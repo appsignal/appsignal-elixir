@@ -14,6 +14,10 @@ something like `plug PhoenixApp.Router`):
 use Appsignal.Phoenix
 ```
 
+This will record a transaction for every HTTP request which is
+performed on the endpoint.
+
+
 
 ## Phoenix instrumenter hooks
 
@@ -43,7 +47,21 @@ config :phoenix, :template_engines,
   exs: Appsignal.Phoenix.Template.ExsEngine
 ```
 
+## Queries
+
+To add query logging, add the following to you Repo configuration in `config.exs`:
+
+```
+config :my_app, MyApp.Repo,
+  loggers: [Appsignal.Ecto]
+```
+
+Note that this is not Phoenix-specific but works for all Ecto
+queries. However, the process that performs the query must have been
+associated with an `Appsignal.Transaction`, otherwise no event will be
+logged.
+
 
 ## Channels
 
-Currently, channels do not have hooks for instrumentation yet.
+Currently, channels do not have hooks for instrumentation yet. This is on the roadmap.
