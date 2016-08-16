@@ -7,7 +7,7 @@ applications and sends it to [AppSignal](https://appsignal.com).
 
 **NOTE: This library is alpha software, and still under development. Use at your own risk. API changes might occur without notice. Please refer to the [Roadmap](Roadmap.md) document for more information.**
 
-See [Getting started](GettingStarted.md) on how to use this library.
+See [Getting started](https://hexdocs.pm/appsignal/gettingstarted.html) on how to use this library.
 
 Full documentation: https://hexdocs.pm/appsignal/
 
