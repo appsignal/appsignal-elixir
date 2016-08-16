@@ -24,7 +24,7 @@ defmodule Appsignal.Mixfile do
      compilers: compilers(Mix.env),
      deps: deps,
      docs: [logo: "logo.png",
-            extras: ["README.md", "Phoenix.md", "Roadmap.md"]]
+            extras: ["GettingStarted.md", "Phoenix.md", "Roadmap.md"]]
     ]
   end
 

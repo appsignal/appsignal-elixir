@@ -7,70 +7,20 @@ applications and sends it to [AppSignal](https://appsignal.com).
 
 **NOTE: This library is alpha software, and still under development. Use at your own risk. API changes might occur without notice. Please refer to the [Roadmap](Roadmap.md) document for more information.**
 
+See [Getting started](GettingStarted.md) on how to use this library.
 
-## Installation
-
-  1. Add `appsignal` to your list of dependencies in `mix.exs`:
-
-    ```elixir
-    def deps do
-      [{:appsignal, "~> 0.0.0"}]
-    end
-    ```
-
-  2. Ensure `appsignal` is started before your application:
-
-    ```elixir
-    def application do
-      [applications: [:appsignal]]
-    end
-    ```
-
-  3. If you use the
-     [Phoenix framework](http://www.phoenixframework.org/), *use* the
-     `Appsignal.Phoenix` module in your `endpoint.ex` file, just
-     *before* the line where your router module gets called
-     (which should read something like `plug MyApp.Router`):
-
-     ```elixir
-     use Appsignal.Phoenix
-     ```
-
-When the AppSignal OTP application starts, it looks for a valid
-configuration (e.g. an AppSignal push key), and start the AppSignal agent.
-
-If it can't find a valid configuration, a warning will be logged. See
-the "Configuration" section below on how to fully configure the
-AppSignal agent.
+Full documentation: https://hexdocs.pm/appsignal/
 
 
-## Configuration
+## Branches and versions
 
-[Sign up on AppSignal](https://appsignal.com/users/sign_up) and put
-the hexadecimal key in your `config.exs`:
+The `master` branch corresponds to the current release of the
+library. The `develop` branch is used for development of features that
+will end up in the next minor release. If you fix a bug open a pull
+request on `master`, if it's a new feature on `develop`.
 
-    config :appsignal, :config,
-      name: :my_first_app,
-      push_api_key: "your-hex-appsignal-key"
 
-Alternatively, you can configure the agent using OS environment variables:
+## License
 
-    export APPSIGNAL_APP_NAME=my_first_app
-    export APPSIGNAL_PUSH_API_KEY=your-hex-appsignal-key
-
-The full list of variables that can be configured is the following:
-
- - `APPSIGNAL_ACTIVE` (Elixir config key: `:active`)
- - `APPSIGNAL_PUSH_API_KEY` (Elixir config key: `:push_api_key`)
- - `APPSIGNAL_APP_NAME` (Elixir config key: `:name`)
- - `APPSIGNAL_PUSH_API_ENDPOINT` (Elixir config key: `:endpoint`)
- - `APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH` (Elixir config key: `:frontend_error_catching_path`)
- - `APPSIGNAL_ENVIRONMENT` (Elixir config key: `:env`; defaults to `:dev`; other valid values are `:test` and `:prod`)
- - `APPSIGNAL_DEBUG` (Elixir config key: `:debug`)
- - `APPSIGNAL_LOG_PATH` (Elixir config key: `:log_path`)
- - `APPSIGNAL_IGNORE_ERRORS` (Elixir config key: `:ignore_errors`)
- - `APPSIGNAL_IGNORE_ACTIONS` (Elixir config key: `:ignore_actions`)
- - `APPSIGNAL_HTTP_PROXY` (Elixir config key: `:http_proxy`)
- - `APPSIGNAL_RUNNING_IN_CONTAINER` (Elixir config key: `:running_in_container`)
- - `APPSIGNAL_WORKING_DIR_PATH` (Elixir config key: `:working_dir_path`)
- - `APPSIGNAL_ENABLE_HOST_METRICS` (Elixir config key: `:enable_host_metric`)
+The Appsignal library source code is released under the MIT
+License. Check the [LICENSE](LICENSE) file for more information.
