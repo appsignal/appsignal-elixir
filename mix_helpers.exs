@@ -12,6 +12,7 @@ defmodule Mix.Appsignal.Helper do
     info = Poison.decode!(File.read!("agent.json"))
     arch = map_arch(:erlang.system_info(:system_architecture))
     arch_config = info["triples"][arch]
+    version = info["version"]
 
     System.put_env("LIB_DIR", priv_dir())
 
@@ -19,7 +20,7 @@ defmodule Mix.Appsignal.Helper do
 
       File.mkdir_p!(priv_dir())
 
-      download_file(arch_config["download_url"])
+      download_file(arch_config["download_url"], version)
       |> verify_checksum(arch_config["checksum"])
       |> extract
     else
@@ -27,8 +28,8 @@ defmodule Mix.Appsignal.Helper do
     end
   end
 
-  defp download_file(url) do
-    filename = :filename.join("/tmp", :filename.basename(url))
+  defp download_file(url, version) do
+    filename = :filename.join("/tmp", version <> :filename.basename(url))
     case File.exists?(filename) do
       true ->
         filename
