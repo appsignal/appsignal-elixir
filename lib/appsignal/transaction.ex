@@ -79,6 +79,27 @@ defmodule Appsignal.Transaction do
   end
 
   @doc """
+  Record a finished event
+
+  Call this when an event which you cannot track the start for
+  ends. This function can only be used for events that do not have
+  children such as database queries. GC metrics and allocation counts
+  will be tracked in the parent of this event.
+
+  - `transaction`: The pointer to the transaction this event occurred in
+  - `name`: Name of the category of the event (sql.query, net.http)
+  - `title`: Title of the event ('User load', 'Http request to google.com')
+  - `body`: Body of the event, should not contain unique information per specific event (`select * from users where id=?`)
+  - `duration`: Duration of this event in nanoseconds
+  - `body_format` Format of the event's body which can be used for sanitization, 0 for general and 1 for sql currently.
+  """
+  @spec record_event(Transaction.t, String.t, String.t, String.t, integer, integer) :: Transaction.t
+  def record_event(%Transaction{} = transaction, name, title, body, duration, body_format \\ 0) do
+    :ok = Nif.record_event(transaction.resource, name, title, body, duration, body_format)
+    transaction
+  end
+
+  @doc """
   Set an error for a transaction
 
   Call this when an error occurs within a transaction.
