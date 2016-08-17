@@ -27,9 +27,14 @@ defmodule AppsignalTransactionRegistryTest do
 
     :timer.sleep(100)
     # by now the process is gone
-    #assert nil == TransactionRegistry.lookup(pid)
 
     :ok = TransactionRegistry.remove_transaction(transaction)
+
+    assert nil == TransactionRegistry.lookup(pid)
+
+    # Lookup removed status
+    assert :removed == TransactionRegistry.lookup(pid, true)
+
   end
 
 

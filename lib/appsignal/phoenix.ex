@@ -20,43 +20,47 @@ defmodule Appsignal.Phoenix do
 
   @doc false
   defmacro __using__(_) do
-
     quote do
       plug Appsignal.Phoenix.Plug
+
 
       def call(conn, opts) do
         try do
           super(conn, opts)
         rescue
           e ->
-            Appsignal.Phoenix.maybe_submit_http_error(e, Appsignal.TransactionRegistry.lookup(self), conn)
+            import Appsignal.Phoenix
+            case {Appsignal.TransactionRegistry.lookup(self), extract_error_metadata(e, conn, System.stacktrace)} do
+              {nil, _} -> :skip
+              {_, nil} -> :skip
+              {transaction, {reason, message, stack, conn}} ->
+                submit_http_error(reason, message, stack, transaction, conn)
+            end
             raise e
         end
       end
-
     end
   end
 
 
+  @doc false
+  def extract_error_metadata(%Plug.Conn.WrapperError{reason: reason = %{}, conn: conn} = r, _conn, stack) do
+    extract_error_metadata(reason, conn, stack)
+  end
+  def extract_error_metadata(%{plug_status: s} = r, conn) when s < 500 do
+    # Do not submit regular HTTP errors which have a status code
+    nil
+  end
+  def extract_error_metadata(%Protocol.UndefinedError{value: {:error, {error = %{}, stack}}}, conn, _stack) do
+    extract_error_metadata(error, conn, stack)
+  end
+  def extract_error_metadata(r = %{}, conn, stack) do
+    # Submit error
+    {r.__struct__, Exception.message(r), stack, Map.get(r, :conn, conn)}
+  end
 
   @doc false
-  def maybe_submit_http_error(_e, nil) do
-    # transaction not found in registry
-    nil
-  end
-  def maybe_submit_http_error(%Plug.Conn.WrapperError{conn: conn, reason: reason}, transaction, _conn) do
-    maybe_submit_http_error(reason, transaction, conn)
-  end
-  def maybe_submit_http_error(%{plug_status: s} = r, transaction, conn) when s > 0 do
-    submit_http_error(r.__struct__, r.message, transaction, Map.get(r, :conn, conn))
-  end
-  def maybe_submit_http_error(_, _, _) do
-    # Unknown error
-    nil
-  end
-
-  def submit_http_error(reason, message, transaction, conn) do
-    stack = System.stacktrace
+  def submit_http_error(reason, message, stack, transaction, conn) do
     Transaction.set_error(transaction, "#{inspect reason}", message, Appsignal.ErrorHandler.format_stack(stack))
     if Transaction.finish(transaction) == :sample do
       Transaction.set_request_metadata(transaction, conn)
@@ -66,7 +70,7 @@ defmodule Appsignal.Phoenix do
     # explicitly remove the transaction here so the regular error handler doesn't submit it again
     :ok = TransactionRegistry.remove_transaction(transaction)
 
-    Logger.debug("Submitting #{inspect transaction}: #{message}")
+    Logger.debug("Submitting Phoenix error #{inspect transaction}: #{message}")
   end
 
 

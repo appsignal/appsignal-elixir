@@ -36,21 +36,20 @@ defmodule Appsignal.TransactionRegistry do
   end
 
   @spec register(Transaction.transaction) :: :ok
-  def lookup(pid) do
+  def lookup(pid, return_removed \\ false) do
     case :ets.lookup(@table, pid) do
+      [{^pid, :removed}] ->
+        case return_removed do
+          false -> nil
+          true -> :removed
+        end
       [{^pid, transaction}] -> transaction
       [] -> nil
     end
   end
 
   def remove_transaction(%Transaction{} = transaction) do
-    case :ets.match(@table, {:'$1', transaction}) do
-      [[pid] | _] ->
-        true = :ets.delete(@table, pid)
-        :ok
-      [] ->
-        {:error, :not_found}
-    end
+    GenServer.call(__MODULE__, {:remove, transaction})
   end
 
   ##
@@ -64,6 +63,20 @@ defmodule Appsignal.TransactionRegistry do
     table = :ets.new(@table, [:set, :named_table,
                               {:keypos, 1}, :public, {:write_concurrency, true}])
     {:ok, %State{table: table}}
+  end
+
+  def handle_call({:remove, transaction}, _from, state) do
+    reply =
+      case :ets.match(@table, {:'$1', transaction}) do
+        [[pid] | _] ->
+          true = :ets.delete(@table, pid)
+          true = :ets.insert(@table, {pid, :removed})
+          Process.send_after(self(), {:delete, pid}, 5000)
+          :ok
+        [] ->
+          {:error, :not_found}
+      end
+    {:reply, reply, state}
   end
 
   def handle_cast({:monitor, pid}, state) do

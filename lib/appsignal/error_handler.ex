@@ -35,8 +35,10 @@ defmodule Appsignal.ErrorHandler do
         {origin, reason, message, stack, metadata} ->
           case supervisor_event?(reason) do
             false ->
-              lookup_or_create_transaction(origin)
-              |> submit_transaction(reason, message, stack, metadata)
+              transaction = lookup_or_create_transaction(origin)
+              if transaction != nil do
+                submit_transaction(transaction, reason, message, stack, metadata)
+              end
             true ->
               # ignore this event; we have already handled it.
               state
@@ -48,7 +50,10 @@ defmodule Appsignal.ErrorHandler do
   end
 
   defp lookup_or_create_transaction(origin) do
-    case TransactionRegistry.lookup(origin) do
+    case TransactionRegistry.lookup(origin, true) do
+      :removed ->
+        # transaction existed but has already been submitted, on the timer to be removed
+        nil
       nil ->
         # could not find a linked transaction; start new transaction
         Transaction.start(generate_id(), :background_job)
