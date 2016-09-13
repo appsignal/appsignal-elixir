@@ -23,7 +23,6 @@ defmodule Appsignal.Phoenix do
     quote do
       plug Appsignal.Phoenix.Plug
 
-
       def call(conn, opts) do
         try do
           super(conn, opts)
@@ -36,7 +35,7 @@ defmodule Appsignal.Phoenix do
               {transaction, {reason, message, stack, conn}} ->
                 submit_http_error(reason, message, stack, transaction, conn)
             end
-            raise e
+            reraise e, System.stacktrace
         end
       end
     end
