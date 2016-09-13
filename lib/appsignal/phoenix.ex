@@ -31,7 +31,6 @@ defmodule Appsignal.Phoenix do
             import Appsignal.Phoenix
             case {Appsignal.TransactionRegistry.lookup(self), extract_error_metadata(e, conn, System.stacktrace)} do
               {nil, _} -> :skip
-              {_, nil} -> :skip
               {transaction, {reason, message, stack, conn}} ->
                 submit_http_error(reason, message, stack, transaction, conn)
             end
