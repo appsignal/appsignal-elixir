@@ -43,10 +43,10 @@ defmodule Appsignal.Phoenix do
 
 
   @doc false
-  def extract_error_metadata(%Plug.Conn.WrapperError{reason: reason = %{}, conn: conn} = r, _conn, stack) do
+  def extract_error_metadata(%Plug.Conn.WrapperError{reason: reason = %{}, conn: conn}, _conn, stack) do
     extract_error_metadata(reason, conn, stack)
   end
-  def extract_error_metadata(%{plug_status: s} = r, conn) when s < 500 do
+  def extract_error_metadata(%{plug_status: s}, _conn, _stack) when s < 500 do
     # Do not submit regular HTTP errors which have a status code
     nil
   end
