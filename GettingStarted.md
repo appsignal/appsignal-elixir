@@ -7,7 +7,7 @@
 
     ```elixir
     def deps do
-      [{:appsignal, "~> 0.0.0"}]
+      [{:appsignal, "~> 0.0"}]
     end
     ```
 
