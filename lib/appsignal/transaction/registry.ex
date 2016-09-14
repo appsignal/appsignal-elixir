@@ -28,14 +28,20 @@ defmodule Appsignal.TransactionRegistry do
     GenServer.start_link(__MODULE__, [], name: __MODULE__)
   end
 
-  @spec register(Transaction.transaction) :: :ok
+  @doc """
+  Register the current process as the owner of the given transaction.
+  """
+  @spec register(Transaction.t) :: :ok
   def register(transaction) do
     pid = self()
     true = :ets.insert(@table, {pid, transaction})
     GenServer.cast(__MODULE__, {:monitor, pid})
   end
 
-  @spec register(Transaction.transaction) :: :ok
+  @doc """
+  Given a process ID, return its associated transaction.
+  """
+  @spec lookup(pid, boolean) :: Transaction.t) | nil
   def lookup(pid, return_removed \\ false) do
     case :ets.lookup(@table, pid) do
       [{^pid, :removed}] ->
@@ -48,6 +54,10 @@ defmodule Appsignal.TransactionRegistry do
     end
   end
 
+  @doc """
+  Unregister the current process as the owner of the given transaction.
+  """
+  @spec remove_transaction(Transaction.t) :: :ok | {:error, :not_found}
   def remove_transaction(%Transaction{} = transaction) do
     GenServer.call(__MODULE__, {:remove, transaction})
   end
