@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <appsignal.h>
+#include <appsignal_extension.h>
 
 static ErlNifResourceType *appsignal_transaction_type = NULL;
 
