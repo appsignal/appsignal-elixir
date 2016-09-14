@@ -29,7 +29,7 @@ defmodule Mix.Appsignal.Helper do
   end
 
   defp download_file(url, version) do
-    filename = :filename.join("/tmp", version <> :filename.basename(url))
+    filename = "/tmp/appsignal-agent-#{version}.tar.gz"
     case File.exists?(filename) do
       true ->
         filename
