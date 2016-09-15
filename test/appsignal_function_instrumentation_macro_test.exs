@@ -57,4 +57,32 @@ defmodule AppsignalFunctionInstrumentationMacroTest do
 
   end
 
+
+
+  defmodule Foo3 do
+    import Appsignal.Helpers
+
+    def call_it() do
+      private_fun()
+    end
+
+    instrumented do
+
+      defp private_fun() do
+        123
+      end
+
+    end
+  end
+
+  test_with_mock "instrument module function with defp", Appsignal.Transaction, [:passthrough], [] do
+    t = Transaction.start("foo3", :http_request)
+
+    Foo3.call_it()
+
+    assert called Transaction.start_event(t)
+    assert called Transaction.finish_event(t, "private_fun", "Elixir.AppsignalFunctionInstrumentationMacroTest.Foo3.private_fun", "", 0)
+
+  end
+
 end

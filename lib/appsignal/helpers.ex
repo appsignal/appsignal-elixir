@@ -117,7 +117,7 @@ defmodule Appsignal.Helpers do
   end
 
 
-  defp expand_instrumented(postfix, [do: {:def, _meta, _rest} = deftuple]) do
+  defp expand_instrumented(postfix, [do: {tag, _meta, _rest} = deftuple]) when tag in [:def, :defp] do
     [do: instrument_def(deftuple, postfix)]
   end
 
@@ -125,9 +125,9 @@ defmodule Appsignal.Helpers do
     [do: {:__block__, arg, tuples |> Enum.map(&(instrument_def(&1, postfix)))}]
   end
 
-  defp instrument_def({:def, defmeta, [{name, _, _}=defname, [do: doblock]]}, postfix) do
+  defp instrument_def({tag, defmeta, [{name, _, _}=defname, [do: doblock]]}, postfix) when tag in [:def, :defp] do
     name = Atom.to_string(name)
-    {:def,
+    {tag,
      defmeta,
      [defname,
       [do: quote do
