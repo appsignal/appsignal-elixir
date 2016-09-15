@@ -57,6 +57,13 @@ defmodule Appsignal.Phoenix do
     # Submit error
     {r.__struct__, Exception.message(r), stack, Map.get(r, :conn, conn)}
   end
+  def extract_error_metadata(r, conn, stack) when is_binary(r) do
+    extract_error_metadata(RuntimeError.exception(r), conn, stack)
+  end
+  def extract_error_metadata(r, conn, stack) when is_atom(r) do
+    extract_error_metadata(r.exception([]), conn, stack)
+  end
+
 
   @doc false
   def submit_http_error(reason, message, stack, transaction, conn) do
