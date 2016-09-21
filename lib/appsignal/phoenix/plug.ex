@@ -7,7 +7,6 @@ defmodule Appsignal.Phoenix.Plug do
   import Plug.Conn, only: [register_before_send: 2, assign: 3]
 
   alias Appsignal.Transaction
-  alias Phoenix.Controller
 
   def init(opts), do: opts
 
@@ -17,22 +16,13 @@ defmodule Appsignal.Phoenix.Plug do
 
     conn
     |> register_before_send(fn conn ->
-
-      try do
-        action_str = "#{Controller.controller_module(conn)}##{Controller.action_name(conn)}"
-        <<"Elixir.", action :: binary>> = action_str
-        Transaction.set_action(transaction, action)
-      catch
-        _, _ -> :ok
-      end
+      Transaction.try_set_action(transaction, conn)
       resp = Transaction.finish(transaction)
-
       if resp == :sample do
         Transaction.set_request_metadata(transaction, conn)
       end
 
       :ok = Transaction.complete(transaction)
-
       conn
     end)
     |> assign(:appsignal_transaction, transaction)

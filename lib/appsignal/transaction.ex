@@ -250,11 +250,24 @@ defmodule Appsignal.Transaction do
     |> Map.put(:peer, peer(conn))
   end
 
-  defp url(%Plug.Conn{scheme: scheme, host: host, port: port} = conn), do:
+  defp url(%Plug.Conn{scheme: scheme, host: host, port: port} = conn) do
     "#{scheme}://#{host}:#{port}#{conn.request_path}"
+  end
 
-  defp peer(%Plug.Conn{peer: {host, port}}), do:
+  defp peer(%Plug.Conn{peer: {host, port}}) do
     "#{:inet_parse.ntoa host}:#{port}"
+  end
 
-
+  @doc """
+  Given the transaction and a %PlugConn{}, try to set the Phoenix controller module / action in the transaction.
+  """
+  def try_set_action(transaction, conn) do
+    try do
+      action_str = "#{Phoenix.Controller.controller_module(conn)}##{Phoenix.Controller.action_name(conn)}"
+      <<"Elixir.", action :: binary>> = action_str
+      Transaction.set_action(transaction, action)
+    catch
+      _, _ -> :ok
+    end
+  end
 end

@@ -43,12 +43,18 @@ defmodule Appsignal.Phoenix do
 
 
   @doc false
-  def extract_error_metadata(%Plug.Conn.WrapperError{reason: reason = %{}, conn: conn}, _conn, stack) do
+  def extract_error_metadata(r=%Plug.Conn.WrapperError{reason: reason = %{}, conn: conn}, _conn, stack) do
     extract_error_metadata(reason, conn, stack)
   end
   def extract_error_metadata(%{plug_status: s}, _conn, _stack) when s < 500 do
     # Do not submit regular HTTP errors which have a status code
     nil
+  end
+  def extract_error_metadata(r, conn, stack) when is_binary(r) do
+    extract_error_metadata(RuntimeError.exception(r), conn, stack)
+  end
+  def extract_error_metadata(r, conn, stack) when is_atom(r) do
+    extract_error_metadata(r.exception([]), conn, stack)
   end
   def extract_error_metadata(%Protocol.UndefinedError{value: {:error, {error = %{}, stack}}}, conn, _stack) do
     extract_error_metadata(error, conn, stack)
@@ -61,6 +67,7 @@ defmodule Appsignal.Phoenix do
   @doc false
   def submit_http_error(reason, message, stack, transaction, conn) do
     Transaction.set_error(transaction, "#{inspect reason}", message, Appsignal.ErrorHandler.format_stack(stack))
+    Transaction.try_set_action(transaction, conn)
     if Transaction.finish(transaction) == :sample do
       Transaction.set_request_metadata(transaction, conn)
     end
@@ -71,6 +78,5 @@ defmodule Appsignal.Phoenix do
 
     Logger.debug("Submitting Phoenix error #{inspect transaction}: #{message}")
   end
-
 
 end
