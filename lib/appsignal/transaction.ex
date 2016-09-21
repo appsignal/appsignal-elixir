@@ -241,7 +241,7 @@ defmodule Appsignal.Transaction do
   end
 
 
-  @conn_fields ~w(host method path_info script_name request_path port schema query_string)a
+  @conn_fields ~w(host method script_name request_path port schema query_string)a
   defp request_environment(conn) do
     @conn_fields
     |> Enum.map(fn(k) -> {k, Map.get(conn, k)} end)
