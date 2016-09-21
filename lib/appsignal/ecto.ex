@@ -18,6 +18,7 @@ defmodule Appsignal.Ecto do
   @nano_seconds :erlang.convert_time_unit(1, :nano_seconds, :native)
 
   def log(entry) do
+
     # See if we have a transaction registered for the current process
     case TransactionRegistry.lookup(self) do
       nil ->
@@ -25,7 +26,8 @@ defmodule Appsignal.Ecto do
         :ok
       %Transaction{} = transaction ->
         # record the event
-        duration = trunc((entry.queue_time + entry.query_time + entry.decode_time) / @nano_seconds)
+        total_time = (entry.queue_time || 0) + (entry.query_time || 0) + (entry.decode_time || 0)
+        duration = trunc(total_time / @nano_seconds)
         Transaction.record_event(transaction, "ecto.query", "", entry.query, duration, 1)
     end
     entry
