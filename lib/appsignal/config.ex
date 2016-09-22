@@ -35,8 +35,10 @@ defmodule Appsignal.Config do
     write_to_environment(config)
 
     case config[:valid] do
-      true -> :ok
-      false -> {:error, :invalid_config}
+      true ->
+        :ok
+      false ->
+        {:error, :invalid_config}
     end
   end
 
@@ -53,6 +55,7 @@ defmodule Appsignal.Config do
     "APPSIGNAL_ACTIVE" => :active,
     "APPSIGNAL_PUSH_API_KEY" => :push_api_key,
     "APPSIGNAL_APP_NAME" => :name,
+    "APP_REVISION" => :revision,
     "APPSIGNAL_ENVIRONMENT" => :env,
     "APPSIGNAL_PUSH_API_ENDPOINT" => :endpoint,
     "APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH" => :frontend_error_catching_path,
@@ -73,7 +76,7 @@ defmodule Appsignal.Config do
 
     # Configuration with string type
     config = Enum.reduce(
-      ~w(APPSIGNAL_PUSH_API_KEY APPSIGNAL_PUSH_API_ENDPOINT APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH APPSIGNAL_HTTP_PROXY APPSIGNAL_LOG_PATH APPSIGNAL_WORKING_DIR_PATH),
+      ~w(APPSIGNAL_PUSH_API_KEY APPSIGNAL_PUSH_API_ENDPOINT APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH APPSIGNAL_HTTP_PROXY APPSIGNAL_LOG_PATH APPSIGNAL_WORKING_DIR_PATH APP_REVISION),
       config,
       fn(key, cfg) ->
         value = System.get_env(key)
@@ -156,12 +159,18 @@ defmodule Appsignal.Config do
       System.put_env("APPSIGNAL_WORKING_DIR_PATH", config[:working_dir_path])
     end
     System.put_env("APPSIGNAL_ENABLE_HOST_METRICS", Atom.to_string(config[:enable_host_metrics]))
+    unless empty?(config[:revision]) do
+      System.put_env("APP_REVISION", config[:revision])
+    end
   end
 
   def get_system_env do
     System.get_env
-    |> Enum.filter(fn({"APPSIGNAL_" <> _, _}) -> true; (_) -> false end)
-    |> Enum.into(%{})
+    |> Enum.filter(
+    fn({"APPSIGNAL_" <> _, _}) -> true;
+      ({"APP_REVISION", _}) -> true;
+      (_) -> false end)
+      |> Enum.into(%{})
   end
 
 end

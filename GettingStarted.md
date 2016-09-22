@@ -54,11 +54,29 @@ Alternatively, you can configure the agent using OS environment variables:
     export APPSIGNAL_APP_NAME=my_first_app
     export APPSIGNAL_PUSH_API_KEY=your-hex-appsignal-key
 
+
+## Running in production: Adding environment and app version
+
+When you are running on a production system you typically want to let
+AppSignal know that you do that, and also include the version
+(revision) number of your application.  A typical `config/prod.exs`
+would thus contain:
+
+    config :appsignal, :config,
+      name: :my_first_app,
+      push_api_key: "your-hex-appsignal-key",
+      env: :prod,
+      revision: Mix.Project.config[:version]
+
+
+### Configuration keys
+
 The full list of variables that can be configured is the following:
 
  - `APPSIGNAL_ACTIVE` (Elixir config key: `:active`)
  - `APPSIGNAL_PUSH_API_KEY` (Elixir config key: `:push_api_key`)
  - `APPSIGNAL_APP_NAME` (Elixir config key: `:name`)
+ - `APP_REVISION` (Elixir config key: `:revision`)
  - `APPSIGNAL_PUSH_API_ENDPOINT` (Elixir config key: `:endpoint`)
  - `APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH` (Elixir config key: `:frontend_error_catching_path`)
  - `APPSIGNAL_ENVIRONMENT` (Elixir config key: `:env`; defaults to `:dev`; other valid values are `:test` and `:prod`)
