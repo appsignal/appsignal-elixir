@@ -85,6 +85,7 @@ defmodule Mix.Appsignal.Helper do
     :ok
   end
 
+  defp map_arch('x86_64-pc-linux-gnu' ++ _), do: "x86_64-linux"
   defp map_arch('x86_64-unknown-linux' ++ _), do: "x86_64-linux"
   defp map_arch('x86_64-apple-darwin' ++ _), do: "x86_64-darwin"
 
