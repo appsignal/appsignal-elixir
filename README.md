@@ -5,7 +5,7 @@ applications and sends it to [AppSignal](https://appsignal.com).
 
 [![Build Status](https://travis-ci.org/appsignal/appsignal-elixir.png?branch=master)](https://travis-ci.org/appsignal/appsignal-elixir)
 
-**NOTE: This library is alpha software, and still under development. Use at your own risk. API changes might occur without notice. Please refer to the [Roadmap](Roadmap.md) document for more information.**
+**NOTE: This library is beta software, and still under development. Use at your own risk. API changes might still occur without notice. Please refer to the [Roadmap](Roadmap.md) document for more information.**
 
 See [Getting started](https://hexdocs.pm/appsignal/gettingstarted.html) on how to use this library.
 
