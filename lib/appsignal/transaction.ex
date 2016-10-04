@@ -116,8 +116,8 @@ defmodule Appsignal.Transaction do
   - `backtrace`: Backtrace of the error; will be JSON encoded
   """
   @spec set_error(Transaction.t, String.t, String.t, any) :: Transaction.t
-  def set_error(%Transaction{} = transaction, error, message, backtrace) do
-    :ok = Nif.set_error(transaction.resource, error, message, Poison.encode!(backtrace))
+  def set_error(%Transaction{} = transaction, name, message, backtrace) do
+    :ok = Nif.set_error(transaction.resource, name, message, Poison.encode!(backtrace))
     transaction
   end
 
