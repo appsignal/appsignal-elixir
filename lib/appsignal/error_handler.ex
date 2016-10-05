@@ -210,7 +210,8 @@ defmodule Appsignal.ErrorHandler do
     extract_reason_and_message(reason, message)
   end
   def extract_reason_and_message(r = %{}, message) do
-    {"#{inspect r.__struct__}", message <> ": " <> Exception.message(r)}
+    msg = Exception.message(r)
+    {"#{inspect r.__struct__}", message <> ": " <> msg}
   end
   def extract_reason_and_message(any, message) do
     # inspect any term; truncate it
