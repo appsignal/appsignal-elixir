@@ -131,13 +131,14 @@ defmodule Appsignal.ErrorHandler do
 
   defp match_error_format('** Generic server ' ++ _, [pid, _last, _state, reason]) do
     {reason, stack} = maybe_extract_stack(reason)
-    msg = "GenServer #{inspect pid} terminating"
+    {reason, msg} = extract_reason_and_message(reason, "GenServer #{inspect pid} terminating")
     {pid, reason, msg, format_stack(stack), %{}}
   end
 
   defp match_error_format('** Task ' ++ _, [pid, starter, function, args, reason]) do
     {reason, stack} = maybe_extract_stack(reason)
     msg = "Task #{inspect pid} started from #{inspect starter} terminating. Function: #{inspect function}, args: #{inspect args}"
+    {reason, msg} = extract_reason_and_message(reason, msg)
     {pid, reason, msg, format_stack(stack), %{}}
   end
 
@@ -148,6 +149,7 @@ defmodule Appsignal.ErrorHandler do
                  c -> %{conn: c}
                end
     msg = "HTTP request #{inspect pid} crashed"
+    {reason, msg} = extract_reason_and_message(reason, msg)
     {pid, reason, msg, format_stack(stack), metadata}
   end
 
@@ -178,5 +180,36 @@ defmodule Appsignal.ErrorHandler do
 
   defp extract_conn({_, :call, [%Plug.Conn{} = conn, _params]}), do: conn
   defp extract_conn(_), do: nil
+
+
+  @doc """
+  Extract a consise reason from the given error reason, stripping it from long stack traces and the like.
+  Also returns a 'message' which is supposed to contain extra error information.
+  """
+  @spec extract_reason_and_message(any(), binary()) :: {any(), binary()}
+  def extract_reason_and_message(reason, message) when is_binary(reason) do
+    {reason, message}
+  end
+  def extract_reason_and_message(reason, message) when is_atom(reason) do
+    try do
+      {Exception.message(reason.exception([])), message}
+    rescue
+      UndefinedFunctionError -> {"#{inspect reason}", message}
+    end
+  end
+  def extract_reason_and_message(%Protocol.UndefinedError{value: {:error, {error = %{}, _stack}}}, message) do
+    extract_reason_and_message(error, message)
+  end
+  def extract_reason_and_message(%Phoenix.Template.UndefinedError{assigns: %{conn: %{assigns: %{kind: :error, reason: reason}}}}, message) do
+    extract_reason_and_message(reason, message)
+  end
+  def extract_reason_and_message(r = %{}, message) do
+    {"#{inspect r.__struct__}", message <> ": " <> Exception.message(r)}
+  end
+  def extract_reason_and_message(any, message) do
+    # inspect any term; truncate it
+    reason = String.split_at("#{inspect any}", 80) |> elem(0)
+    {reason, message}
+  end
 
 end

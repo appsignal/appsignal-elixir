@@ -17,6 +17,7 @@ defmodule Appsignal.Phoenix do
   require Logger
 
   alias Appsignal.{Transaction,TransactionRegistry}
+  alias Appsignal.ErrorHandler
 
   @doc false
   defmacro __using__(_) do
@@ -41,27 +42,20 @@ defmodule Appsignal.Phoenix do
     end
   end
 
+  @phoenix_message "HTTP request error"
 
   @doc false
   def extract_error_metadata(%Plug.Conn.WrapperError{reason: reason = %{}, conn: conn}, _conn, stack) do
-    extract_error_metadata(reason, conn, stack)
+    {reason, message} = ErrorHandler.extract_reason_and_message(reason, @phoenix_message)
+    {reason, message, stack, conn}
   end
   def extract_error_metadata(%{plug_status: s}, _conn, _stack) when s < 500 do
     # Do not submit regular HTTP errors which have a status code
     nil
   end
-  def extract_error_metadata(r, conn, stack) when is_binary(r) do
-    extract_error_metadata(RuntimeError.exception(r), conn, stack)
-  end
-  def extract_error_metadata(r, conn, stack) when is_atom(r) do
-    extract_error_metadata(r.exception([]), conn, stack)
-  end
-  def extract_error_metadata(%Protocol.UndefinedError{value: {:error, {error = %{}, stack}}}, conn, _stack) do
-    extract_error_metadata(error, conn, stack)
-  end
-  def extract_error_metadata(r = %{}, conn, stack) do
-    # Submit error
-    {r.__struct__, Exception.message(r), stack, Map.get(r, :conn, conn)}
+  def extract_error_metadata(reason, conn, stack) do
+    {reason, message} = ErrorHandler.extract_reason_and_message(reason, @phoenix_message)
+    {reason, message, stack, conn}
   end
 
   @doc false
