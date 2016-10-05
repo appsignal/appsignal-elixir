@@ -105,6 +105,9 @@ defmodule Appsignal.Transaction do
     transaction
   end
 
+
+  @max_name_size 120
+
   @doc """
   Set an error for a transaction
 
@@ -117,6 +120,7 @@ defmodule Appsignal.Transaction do
   """
   @spec set_error(Transaction.t, String.t, String.t, any) :: Transaction.t
   def set_error(%Transaction{} = transaction, name, message, backtrace) do
+    name = name |> String.split_at(@max_name_size) |> elem(0)
     :ok = Nif.set_error(transaction.resource, name, message, Poison.encode!(backtrace))
     transaction
   end

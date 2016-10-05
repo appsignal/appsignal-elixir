@@ -31,7 +31,7 @@ defmodule Appsignal.ErrorHandler do
 
   def handle_event(event, state) do
     state =
-      case match_event(event) do
+     case match_event(event) do
         {origin, reason, message, stack, metadata} ->
           case supervisor_event?(reason) do
             false ->
@@ -63,7 +63,7 @@ defmodule Appsignal.ErrorHandler do
   end
 
   defp submit_transaction(transaction, reason, message, stack, metadata) do
-    Transaction.set_error(transaction, "#{inspect reason}", message, stack)
+    Transaction.set_error(transaction, reason, message, stack)
     if metadata[:conn] != nil do
       Transaction.set_request_metadata(transaction, metadata[:conn])
     end
@@ -116,8 +116,13 @@ defmodule Appsignal.ErrorHandler do
                                     {:registered_name, name},
                                     {:error_info, {kind, exception, stack}} | _], _linked]) do
     reason = {kind, exception}
-    msg = "Process #{crash_name(pid, name)} terminating"
-    {origin, reason, msg, format_stack(stack), %{}}
+    case supervisor_event?(reason) do
+      false ->
+        msg = "Process #{crash_name(pid, name)} terminating"
+        {origin, "#{inspect reason}", msg, format_stack(stack), %{}}
+      true ->
+        :nomatch
+    end
   end
 
 
@@ -126,6 +131,7 @@ defmodule Appsignal.ErrorHandler do
   # TODO: Add crashes caused by gen_event handlers
   defp match_error_format('Error in process ' ++ _, [pid, {reason, stack}]) do
     msg = "Process #{inspect pid} raised an exception"
+    {reason, msg} = extract_reason_and_message(reason, msg)
     {pid, reason, msg, format_stack(stack), %{}}
   end
 
@@ -208,8 +214,7 @@ defmodule Appsignal.ErrorHandler do
   end
   def extract_reason_and_message(any, message) do
     # inspect any term; truncate it
-    reason = String.split_at("#{inspect any}", 80) |> elem(0)
-    {reason, message}
+    {"#{inspect any}", message}
   end
 
 end

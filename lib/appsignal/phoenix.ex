@@ -60,7 +60,7 @@ defmodule Appsignal.Phoenix do
 
   @doc false
   def submit_http_error(reason, message, stack, transaction, conn) do
-    Transaction.set_error(transaction, "#{inspect reason}", message, Appsignal.ErrorHandler.format_stack(stack))
+    Transaction.set_error(transaction, reason, message, ErrorHandler.format_stack(stack))
     Transaction.try_set_action(transaction, conn)
     if Transaction.finish(transaction) == :sample do
       Transaction.set_request_metadata(transaction, conn)

@@ -63,6 +63,7 @@ defmodule AppsignalErrorMatcherTest do
   defp assert_crash_caught(crasher) when is_pid(crasher) do
     assert {^crasher, reason, message, stacktrace, metadata} = get_last_crash()
     assert is_list(stacktrace)
+    assert is_binary(reason)
     assert is_binary(message)
     assert is_map(metadata)
 
@@ -88,7 +89,7 @@ defmodule AppsignalErrorMatcherTest do
       throw(:crash_bare_throw)
     end)
     |> assert_crash_caught
-    |> reason({:nocatch, :crash_bare_throw})
+    |> reason("{:nocatch, :crash_bare_throw}")
   end
 
   test "bare spawn + :erlang.error" do
@@ -96,7 +97,7 @@ defmodule AppsignalErrorMatcherTest do
       :erlang.error(:crash_bare_error)
     end)
     |> assert_crash_caught
-    |> reason(:crash_bare_error)
+    |> reason(":crash_bare_error")
   end
 
   test "bare spawn + function error" do
@@ -104,7 +105,7 @@ defmodule AppsignalErrorMatcherTest do
       String.length(:notastring)
     end)
     |> assert_crash_caught
-    |> reason(:function_clause)
+    |> reason(":function_clause")
   end
 
   test "bare spawn + badmatch error" do
@@ -112,7 +113,7 @@ defmodule AppsignalErrorMatcherTest do
       1 = 2
     end)
     |> assert_crash_caught
-    |> reason({:badmatch, 2})
+    |> reason("{:badmatch, 2}")
   end
 
 
@@ -122,7 +123,7 @@ defmodule AppsignalErrorMatcherTest do
       exit(:crash_proc_lib_spawn)
     end)
     |> assert_crash_caught
-    |> reason({:exit, :crash_proc_lib_spawn})
+    |> reason("{:exit, :crash_proc_lib_spawn}")
   end
 
   test "proc_lib.spawn + erlang.error" do
@@ -130,7 +131,7 @@ defmodule AppsignalErrorMatcherTest do
       :erlang.error(:crash_proc_lib_error)
     end)
     |> assert_crash_caught
-    |> reason({:error, :crash_proc_lib_error})
+    |> reason("{:error, :crash_proc_lib_error}")
   end
 
   test "proc_lib.spawn + function error" do
@@ -138,7 +139,7 @@ defmodule AppsignalErrorMatcherTest do
       String.length(:notastring)
     end)
     |> assert_crash_caught
-    |> reason({:error, :function_clause})
+    |> reason("{:error, :function_clause}")
   end
 
   test "proc_lib.spawn + badmatch error" do
@@ -146,7 +147,7 @@ defmodule AppsignalErrorMatcherTest do
       1 = 2
     end)
     |> assert_crash_caught
-    |> reason({:error, {:badmatch, 2}})
+    |> reason("{:error, {:badmatch, 2}}")
   end
 
 
@@ -154,19 +155,19 @@ defmodule AppsignalErrorMatcherTest do
     CrashingGenServer.start(:throw)
     |> assert_crash_caught
     # http://erlang.org/pipermail/erlang-bugs/2012-April/002862.html
-    |> reason({:bad_return_value, :crashed_gen_server_throw})
+    |> reason("{:bad_return_value, :crashed_gen_server_throw}")
   end
 
   test "Crashing GenServer with exit" do
     CrashingGenServer.start(:exit)
     |> assert_crash_caught
-    |> reason(:crashed_gen_server_exit)
+    |> reason(":crashed_gen_server_exit")
   end
 
   test "Crashing GenServer with function error" do
     CrashingGenServer.start(:function_error)
     |> assert_crash_caught
-    |> reason(:function_clause)
+    |> reason(":function_clause")
   end
 
   test "Task" do
@@ -174,7 +175,7 @@ defmodule AppsignalErrorMatcherTest do
       String.length(:notastring)
     end)
     |> assert_crash_caught
-    |> reason(:function_clause)
+    |> reason(":function_clause")
   end
 
   defp reason(reason, expected) do
