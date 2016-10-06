@@ -29,8 +29,8 @@
      use Appsignal.Phoenix
      ```
 
-See https://hexdocs.pm/appsignal/phoenix.html on how to integrate
-Appsignal fully into your Phoenix application.
+See [Phoenix integration](https://hexdocs.pm/appsignal/phoenix.html)
+on how to integrate Appsignal fully into your Phoenix application.
 
 When the AppSignal OTP application starts, it looks for a valid
 configuration (e.g. an AppSignal push key), and start the AppSignal agent.
