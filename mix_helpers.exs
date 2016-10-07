@@ -19,13 +19,32 @@ defmodule Mix.Appsignal.Helper do
     unless has_file("appsignal-agent") and has_file("appsignal_extension.h") and has_file("appsignal_extension.so") do
 
       File.mkdir_p!(priv_dir())
+      try do
+        download_and_extract(arch_config["download_url"], version, arch_config["checksum"])
+      catch
+        {:checksum_mismatch, filename, _, _} ->
+          File.rm!(filename)
+          try do
+            download_and_extract(arch_config["download_url"], version, arch_config["checksum"])
+          catch
+            {:checksum_mismatch, filename, calculated, expected} ->
+              raise Mix.Error, message: """
+              Checksum verification of #{filename} failed!
+              Calculated: #{calculated}
+              Expected: #{expected}
+              """
+          end
+      end
 
-      download_file(arch_config["download_url"], version)
-      |> verify_checksum(arch_config["checksum"])
-      |> extract
     else
       :ok
     end
+  end
+
+  defp download_and_extract(url, version, checksum) do
+      download_file(url, version)
+      |> verify_checksum(checksum)
+      |> extract
   end
 
   defp download_file(url, version) do
@@ -51,11 +70,7 @@ defmodule Mix.Appsignal.Helper do
     data = File.read!(filename)
     calculated = :crypto.hash(:sha256, data) |> Base.encode16(case: :lower)
     if calculated != expected do
-      raise Mix.Error, message: """
-      Checksum verification of #{filename} failed!
-      Calculated: #{calculated}
-        Expected: #{expected}
-      """
+      throw {:checksum_mismatch, filename, calculated, expected}
     end
     filename
   end
