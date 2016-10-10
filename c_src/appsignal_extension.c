@@ -291,7 +291,7 @@ static ERL_NIF_TERM _set_meta_data(ErlNifEnv* env, int argc, const ERL_NIF_TERM 
     if(!enif_inspect_iolist_as_binary(env, argv[1], &key)) {
         return enif_make_badarg(env);
     }
-    if(!enif_inspect_iolist_as_binary(env, argv[1], &value)) {
+    if(!enif_inspect_iolist_as_binary(env, argv[2], &value)) {
         return enif_make_badarg(env);
     }
 
