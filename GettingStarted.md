@@ -87,4 +87,4 @@ The full list of variables that can be configured is the following:
  - `APPSIGNAL_HTTP_PROXY` (Elixir config key: `:http_proxy`)
  - `APPSIGNAL_RUNNING_IN_CONTAINER` (Elixir config key: `:running_in_container`)
  - `APPSIGNAL_WORKING_DIR_PATH` (Elixir config key: `:working_dir_path`)
- - `APPSIGNAL_ENABLE_HOST_METRICS` (Elixir config key: `:enable_host_metric`)
+ - `APPSIGNAL_ENABLE_HOST_METRICS` (Elixir config key: `:enable_host_metrics`)
