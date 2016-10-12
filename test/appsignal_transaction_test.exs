@@ -18,4 +18,34 @@ defmodule AppsignalTransactionTest do
     assert [:sample, :no_sample] |> Enum.member?(Transaction.finish(transaction))
     assert :ok = Transaction.complete(transaction)
   end
+
+  describe "parameter filtering" do
+    test "filter_values" do
+      assert Transaction.filter_values(%{"foo" => "bar", "password" => "should_not_show"}, ["password"]) ==
+        %{"foo" => "bar", "password" => "[FILTERED]"}
+    end
+
+    test "filter_values when a map has secret key" do
+      assert Transaction.filter_values(%{"foo" => "bar", "map" => %{"password" => "should_not_show"}}, ["password"]) ==
+        %{"foo" => "bar", "map" => %{"password" => "[FILTERED]"}}
+    end
+
+    test "filter_values when a list has a map with secret" do
+      assert Transaction.filter_values(%{"foo" => "bar", "list" => [%{"password" => "should_not_show"}]}, ["password"]) ==
+        %{"foo" => "bar", "list" => [%{"password" => "[FILTERED]"}]}
+    end
+
+    test "filter_values does not filter structs" do
+      assert Transaction.filter_values(%{"foo" => "bar", "file" => %Plug.Upload{}}, ["password"]) ==
+        %{"foo" => "bar", "file" => %Plug.Upload{}}
+
+      assert Transaction.filter_values(%{"foo" => "bar", "file" => %{__struct__: "s"}}, ["password"]) ==
+        %{"foo" => "bar", "file" => %{:__struct__ => "s"}}
+    end
+
+    test "filter_values does not fail on atomic keys" do
+      assert Transaction.filter_values(%{:foo => "bar", "password" => "should_not_show"}, ["password"]) ==
+        %{:foo => "bar", "password" => "[FILTERED]"}
+    end
+  end
 end
