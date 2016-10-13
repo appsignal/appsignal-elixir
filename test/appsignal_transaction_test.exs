@@ -1,5 +1,6 @@
 defmodule AppsignalTransactionTest do
   use ExUnit.Case
+  alias Appsignal.Config
 
   alias Appsignal.Transaction
 
@@ -20,6 +21,12 @@ defmodule AppsignalTransactionTest do
   end
 
   describe "parameter filtering" do
+    test "uses parameter filters from the appsignal config" do
+      Application.put_env(:appsignal, :config, filter_parameters: ["password"])
+      Config.initialize()
+      assert Transaction.filter_parameters == ["password"]
+    end
+
     test "filter_values" do
       assert Transaction.filter_values(%{"foo" => "bar", "password" => "should_not_show"}, ["password"]) ==
         %{"foo" => "bar", "password" => "[FILTERED]"}

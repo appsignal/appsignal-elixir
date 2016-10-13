@@ -8,7 +8,8 @@ defmodule Appsignal.Config do
     env: :dev,
     send_params: true,
     endpoint: "https://push.appsignal.com",
-    enable_host_metrics: false
+    enable_host_metrics: false,
+    filter_parameters: []
   }
 
   @doc """

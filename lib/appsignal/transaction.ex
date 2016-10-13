@@ -239,7 +239,7 @@ defmodule Appsignal.Transaction do
 
     # collect sample data
     transaction
-    |> Transaction.set_sample_data("params", conn.params)
+    |> Transaction.set_sample_data("params", conn.params |> filter_values(filter_parameters))
     |> Transaction.set_sample_data("environment", request_environment(conn))
     transaction
   end
@@ -261,6 +261,10 @@ defmodule Appsignal.Transaction do
   defp peer(%Plug.Conn{peer: {host, port}}) do
     "#{:inet_parse.ntoa host}:#{port}"
   end
+
+   def filter_parameters do
+    Application.get_env(:appsignal, :config)[:filter_parameters]
+   end
 
   def filter_values(%{__struct__: mod} = struct, _filter_params) when is_atom(mod) do
     struct
