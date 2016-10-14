@@ -22,9 +22,33 @@ defmodule AppsignalTransactionTest do
 
   describe "parameter filtering" do
     test "uses parameter filters from the appsignal config" do
-      Application.put_env(:appsignal, :config, filter_parameters: ["password"])
+      with_app_config(:appsignal, :config, [filter_parameters: ["password"]], fn() ->
+        Config.initialize()
+        assert Transaction.filter_parameters == ["password"]
+      end)
+    end
+
+    test "uses parameter filters from the phoenix config" do
+      with_app_config(:phoenix, :config, [filter_parameters: ["secret1"]], fn() ->
+        Config.initialize()
+        assert Transaction.filter_parameters == ["secret1"]
+      end)
+    end
+
+    test "appsignal's paramter filters override Phoenix' parameter filters" do
+      with_app_config(:phoenix, :config, [filter_parameters: ["secret1"]], fn() ->
+        with_app_config(:appsignal, :config, [filter_parameters: ["secret2"]], fn() ->
+          Config.initialize()
+          assert Transaction.filter_parameters == ["secret2"]
+        end)
+      end)
+    end
+
+    test "uses filter parameters from the OS environment" do
+      System.put_env("APPSIGNAL_FILTER_PARAMETERS", "foo,bar")
       Config.initialize()
-      assert Transaction.filter_parameters == ["password"]
+      assert Transaction.filter_parameters == ["foo", "bar"]
+      System.delete_env("APPSIGNAL_FILTER_PARAMETERS")
     end
 
     test "filter_values" do
@@ -55,4 +79,13 @@ defmodule AppsignalTransactionTest do
         %{:foo => "bar", "password" => "[FILTERED]"}
     end
   end
+
+
+  defp with_app_config(app, key, value, function) do
+    old = Application.get_env(app, key)
+    Application.put_env(app, key, value)
+    function.()
+    Application.delete_env(app, key)
+  end
+
 end

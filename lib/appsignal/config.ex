@@ -9,7 +9,7 @@ defmodule Appsignal.Config do
     send_params: true,
     endpoint: "https://push.appsignal.com",
     enable_host_metrics: false,
-    filter_parameters: []
+    filter_parameters: nil
   }
 
   @doc """
@@ -60,6 +60,7 @@ defmodule Appsignal.Config do
     "APPSIGNAL_ENVIRONMENT" => :env,
     "APPSIGNAL_PUSH_API_ENDPOINT" => :endpoint,
     "APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH" => :frontend_error_catching_path,
+    "APPSIGNAL_FILTER_PARAMETERS" => :filter_parameters,
     "APPSIGNAL_DEBUG" => :debug,
     "APPSIGNAL_LOG_PATH" => :log_path,
     "APPSIGNAL_IGNORE_ERRORS" => :ignore_errors,
@@ -70,51 +71,32 @@ defmodule Appsignal.Config do
     "APPSIGNAL_ENABLE_HOST_METRICS" => :enable_host_metrics
   }
 
+  @string_keys ~w(APPSIGNAL_PUSH_API_KEY APPSIGNAL_PUSH_API_ENDPOINT APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH APPSIGNAL_HTTP_PROXY APPSIGNAL_LOG_PATH APPSIGNAL_WORKING_DIR_PATH APP_REVISION)
+  @bool_keys ~w(APPSIGNAL_ACTIVE APPSIGNAL_DEBUG APPSIGNAL_INSTRUMENT_NET_HTTP APPSIGNAL_SKIP_SESSION_DATA APPSIGNAL_ENABLE_FRONTEND_ERROR_CATCHING APPSIGNAL_ENABLE_ALLOCATION_TRACKING APPSIGNAL_ENABLE_GC_INSTRUMENTATION APPSIGNAL_RUNNING_IN_CONTAINER APPSIGNAL_ENABLE_HOST_METRICS)
+  @atom_keys ~w(APPSIGNAL_APP_NAME APPSIGNAL_ENVIRONMENT)
+  @string_list_keys ~w(APPSIGNAL_FILTER_PARAMETERS)
+
+  defp load_environment(config, list, converter) do
+    list |> Enum.reduce(
+      config,
+      fn(key, cfg) ->
+      value = System.get_env(key)
+      if !empty?(value) do
+        Map.put(cfg, @env_to_key_mapping[key], converter.(value))
+      else
+        cfg
+      end
+    end)
+  end
+
   defp load_from_environment() do
     config = %{}
     # Heroku is a container based system
     |> Map.put(:running_in_container, System.get_env("DYNO") != nil)
-
-    # Configuration with string type
-    config = Enum.reduce(
-      ~w(APPSIGNAL_PUSH_API_KEY APPSIGNAL_PUSH_API_ENDPOINT APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH APPSIGNAL_HTTP_PROXY APPSIGNAL_LOG_PATH APPSIGNAL_WORKING_DIR_PATH APP_REVISION),
-      config,
-      fn(key, cfg) ->
-        value = System.get_env(key)
-        if !empty?(value) do
-          Map.put(cfg, @env_to_key_mapping[key], value)
-        else
-          cfg
-        end
-      end)
-
-    # Configuration with boolean type
-    config = Enum.reduce(
-      ~w(APPSIGNAL_ACTIVE APPSIGNAL_DEBUG APPSIGNAL_INSTRUMENT_NET_HTTP APPSIGNAL_SKIP_SESSION_DATA APPSIGNAL_ENABLE_FRONTEND_ERROR_CATCHING APPSIGNAL_ENABLE_ALLOCATION_TRACKING APPSIGNAL_ENABLE_GC_INSTRUMENTATION APPSIGNAL_RUNNING_IN_CONTAINER APPSIGNAL_ENABLE_HOST_METRICS),
-      config,
-      fn(key, cfg) ->
-        value = System.get_env(key)
-        if !empty?(value) do
-          Map.put(cfg, @env_to_key_mapping[key], true?(value))
-        else
-          cfg
-        end
-      end)
-
-    # Configuration with atom type
-    config = Enum.reduce(
-      ~w(APPSIGNAL_APP_NAME APPSIGNAL_ENVIRONMENT),
-      config,
-      fn(key, cfg) ->
-        value = System.get_env(key)
-        if !empty?(value) do
-          Map.put(cfg, @env_to_key_mapping[key], String.to_atom(value))
-        else
-          cfg
-        end
-      end)
-
-    config
+    |> load_environment(@string_keys, &(&1))
+    |> load_environment(@bool_keys, &(true?(&1)))
+    |> load_environment(@atom_keys, &(String.to_atom(&1)))
+    |> load_environment(@string_list_keys, &(String.split(&1, ",")))
   end
 
   defp coerce_map(value) when is_list(value) do

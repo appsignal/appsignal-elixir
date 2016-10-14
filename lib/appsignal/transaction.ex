@@ -262,9 +262,11 @@ defmodule Appsignal.Transaction do
     "#{:inet_parse.ntoa host}:#{port}"
   end
 
-   def filter_parameters do
+  def filter_parameters do
     Application.get_env(:appsignal, :config)[:filter_parameters]
-   end
+    || Application.get_env(:phoenix, :config)[:filter_parameters]
+    || []
+  end
 
   def filter_values(%{__struct__: mod} = struct, _filter_params) when is_atom(mod) do
     struct
