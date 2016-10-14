@@ -90,7 +90,7 @@ defmodule Appsignal.Config do
   end
 
   defp load_from_environment() do
-    config = %{}
+    %{}
     # Heroku is a container based system
     |> Map.put(:running_in_container, System.get_env("DYNO") != nil)
     |> load_environment(@string_keys, &(&1))

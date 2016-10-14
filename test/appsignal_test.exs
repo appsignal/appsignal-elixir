@@ -15,6 +15,11 @@ defmodule AppsignalTest do
   end
 
   test "Agent environment variables" do
+    System.put_env("APPSIGNAL_ENVIRONMENT", "test")
+    Application.put_env(:appsignal, :config, env: :test)
+
+    Appsignal.Config.initialize()
+
     env = Appsignal.Config.get_system_env()
     assert "test" = env["APPSIGNAL_ENVIRONMENT"]
 

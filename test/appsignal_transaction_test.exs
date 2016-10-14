@@ -49,6 +49,7 @@ defmodule AppsignalTransactionTest do
       Config.initialize()
       assert Transaction.filter_parameters == ["foo", "bar"]
       System.delete_env("APPSIGNAL_FILTER_PARAMETERS")
+      Application.delete_env(:appsignal, :config)
     end
 
     test "filter_values" do
@@ -82,7 +83,6 @@ defmodule AppsignalTransactionTest do
 
 
   defp with_app_config(app, key, value, function) do
-    old = Application.get_env(app, key)
     Application.put_env(app, key, value)
     function.()
     Application.delete_env(app, key)
