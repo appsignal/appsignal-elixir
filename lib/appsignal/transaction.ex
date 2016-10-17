@@ -9,6 +9,13 @@ defmodule Appsignal.Transaction do
   Appsignal transaction, recording events and collecting metrics
   within a transaction, et cetera.
 
+  All functions take a `Transaction` as their first parameter. It is
+  possible to omit this parameter, in which case it is assumed that
+  the calling process has already an associated Transaction (the
+  "current" transaction). This is the case after `Transaction.start/2`
+  has been called from within the same process.
+
+
   """
 
   defstruct [:resource, :id]
@@ -47,12 +54,19 @@ defmodule Appsignal.Transaction do
 
   """
   @spec start(String.t, namespace) :: Transaction.t
-  def start(transaction_id, namespace)
-  when is_binary(transaction_id) and namespace in @valid_namespaces do
+  def start(transaction_id, namespace) when is_binary(transaction_id) and namespace in @valid_namespaces do
     {:ok, resource} = Nif.start_transaction(transaction_id, Atom.to_string(namespace))
     transaction = %Appsignal.Transaction{resource: resource, id: transaction_id}
     TransactionRegistry.register(transaction)
     transaction
+  end
+
+  @doc """
+  Start an event for the current transaction. See `start_event/1`
+  """
+  @spec start_event() :: Transaction.t
+  def start_event() do
+    start_event(lookup!)
   end
 
   @doc """
@@ -71,6 +85,14 @@ defmodule Appsignal.Transaction do
   end
 
   @doc """
+  Finish an event for the current transaction. See `finish_event/5`.
+  """
+  @spec finish_event(String.t, String.t, String.t, integer) :: Transaction.t
+  def finish_event(name, title, body, body_format \\ 0) do
+    finish_event(lookup!, name, title, body, body_format)
+  end
+
+  @doc """
   Finish an event
 
   Call this when an event ends.
@@ -82,9 +104,18 @@ defmodule Appsignal.Transaction do
   - `body_format` Format of the event's body which can be used for sanitization, 0 for general and 1 for sql currently.
   """
   @spec finish_event(Transaction.t, String.t, String.t, String.t, integer) :: Transaction.t
-  def finish_event(%Transaction{} = transaction, name, title, body, body_format \\ 0) do
+  def finish_event(%Transaction{} = transaction, name, title, body, body_format) do
     :ok = Nif.finish_event(transaction.resource, name, title, body, body_format)
     transaction
+  end
+
+
+  @doc """
+  Record a finished event for the current transaction. See `record_event/6`.
+  """
+  @spec record_event(String.t, String.t, String.t, integer, integer) :: Transaction.t
+  def record_event(name, title, body, duration, body_format \\ 0) do
+    record_event(lookup!, name, title, body, duration, body_format)
   end
 
   @doc """
@@ -103,11 +134,19 @@ defmodule Appsignal.Transaction do
   - `body_format` Format of the event's body which can be used for sanitization, 0 for general and 1 for sql currently.
   """
   @spec record_event(Transaction.t, String.t, String.t, String.t, integer, integer) :: Transaction.t
-  def record_event(%Transaction{} = transaction, name, title, body, duration, body_format \\ 0) do
+  def record_event(%Transaction{} = transaction, name, title, body, duration, body_format) do
     :ok = Nif.record_event(transaction.resource, name, title, body, duration, body_format)
     transaction
   end
 
+
+  @doc """
+  Set an error for a the current transaction. See `set_error/4`.
+  """
+  @spec set_error(String.t, String.t, any) :: Transaction.t
+  def set_error(name, message, backtrace) do
+    set_error(lookup!, name, message, backtrace)
+  end
 
   @max_name_size 120
 
@@ -129,6 +168,14 @@ defmodule Appsignal.Transaction do
   end
 
   @doc """
+  Set sample data for the current transaction. See `set_sample_data/3`.
+  """
+  @spec set_sample_data(String.t, any) :: Transaction.t
+  def set_sample_data(key, payload) do
+    set_sample_data(lookup!, key, payload)
+  end
+
+  @doc """
   Set sample data for a transaction
 
   Use this to add sample data if finish_transaction returns true.
@@ -141,6 +188,14 @@ defmodule Appsignal.Transaction do
   def set_sample_data(%Transaction{} = transaction, key, payload) do
     :ok = Nif.set_sample_data(transaction.resource, key, Poison.encode!(payload))
     transaction
+  end
+
+  @doc """
+  Set action of the current transaction. See `set_action/1`.
+  """
+  @spec set_action(String.t) :: Transaction.t
+  def set_action(action) do
+    set_action(lookup!, action)
   end
 
   @doc """
@@ -158,17 +213,46 @@ defmodule Appsignal.Transaction do
   end
 
   @doc """
+  Set queue start time of the current transaction. See `set_queue_start/2`.
+  """
+  @spec set_queue_start(integer) :: Transaction.t
+  def set_queue_start(start \\ -1) do
+    set_queue_start(lookup!, start)
+  end
+
+  @doc """
   Set queue start time of a transaction
 
   Call this when the queue start time in miliseconds is known.
 
   - `transaction`: The pointer to the transaction this event occurred in
-  - `queue_start`: Transaction queue start time in ms if known, otherwise -1
+  - `queue_start`: Transaction queue start time in ms if known
   """
   @spec set_queue_start(Transaction.t, integer) :: Transaction.t
-  def set_queue_start(%Transaction{} = transaction, start \\ -1) do
+  def set_queue_start(%Transaction{} = transaction, start) do
     :ok = Nif.set_queue_start(transaction.resource, start)
     transaction
+  end
+
+  @doc """
+  Set metadata for the current transaction from an enumerable.
+  The enumerable needs to be a keyword list or a map.
+  """
+  @spec set_meta_data(Enum.t) :: Transaction.t
+  def set_meta_data(values) do
+    transaction = lookup!
+    values |> Enum.each(fn({key, value}) ->
+      Transaction.set_meta_data(transaction, to_s(key), to_s(value))
+    end)
+    transaction
+  end
+
+  @doc """
+  Set metadata for the current transaction. See `set_meta_data/3`.
+  """
+  @spec set_meta_data(String.t, String.t) :: Transaction.t
+  def set_meta_data(key, value) do
+    set_meta_data(lookup!, key, value)
   end
 
   @doc """
@@ -187,6 +271,14 @@ defmodule Appsignal.Transaction do
   end
 
   @doc """
+  Finish the current transaction. See `finish/1`.
+  """
+  @spec finish() :: :sample | :no_sample
+  def finish() do
+    finish(lookup!)
+  end
+
+  @doc """
   Finish a transaction
 
   Call this when a transaction such as a http request or background job ends.
@@ -199,6 +291,14 @@ defmodule Appsignal.Transaction do
   @spec finish(Transaction.t) :: :sample | :no_sample
   def finish(%Transaction{} = transaction) do
     Nif.finish(transaction.resource)
+  end
+
+  @doc """
+  Complete the current transaction. See `complete/1`.
+  """
+  @spec complete() :: :ok
+  def complete() do
+    complete(lookup!)
   end
 
   @doc """
@@ -219,6 +319,15 @@ defmodule Appsignal.Transaction do
   @spec generate_id :: String.t
   def generate_id do
     :crypto.strong_rand_bytes(8) |> Base.hex_encode32(case: :lower, padding: false)
+  end
+
+
+  @doc """
+  Lookup the current Appsignal transaction in the transaction
+  registry; raises RuntimeError when no transaction found.
+  """
+  defp lookup! do
+    TransactionRegistry.lookup(self) || raise RuntimeError, "No Appsignal transaction in current process."
   end
 
   defimpl Inspect do
@@ -242,7 +351,7 @@ defmodule Appsignal.Transaction do
 
     # collect sample data
     transaction
-    |> Transaction.set_sample_data("params", conn.params |> filter_values(filter_parameters))
+    |> Transaction.set_sample_data("params", conn.params |> Appsignal.Utils.ParamsFilter.filter_values)
     |> Transaction.set_sample_data("environment", request_environment(conn))
 
     # Add session data
@@ -273,29 +382,6 @@ defmodule Appsignal.Transaction do
     "#{:inet_parse.ntoa host}:#{port}"
   end
 
-  def filter_parameters do
-    Application.get_env(:appsignal, :config)[:filter_parameters]
-    || Application.get_env(:phoenix, :config)[:filter_parameters]
-    || []
-  end
-
-  def filter_values(%{__struct__: mod} = struct, _filter_params) when is_atom(mod) do
-    struct
-  end
-  def filter_values(%{} = map, filter_params) do
-    Enum.into map, %{}, fn{k, v} ->
-      if is_binary(k) and String.contains?(k, filter_params) do
-        {k, "[FILTERED]"}
-      else
-        {k, filter_values(v, filter_params)}
-      end
-    end
-  end
-  def filter_values([_|_] = list, filter_params) do
-    Enum.map(list, &filter_values(&1, filter_params))
-  end
-  def filter_values(other, _filter_params), do: other
-
   @doc """
   Given the transaction and a %PlugConn{}, try to set the Phoenix controller module / action in the transaction.
   """
@@ -308,4 +394,9 @@ defmodule Appsignal.Transaction do
       _, _ -> :ok
     end
   end
+
+  defp to_s(value) when is_atom(value), do: Atom.to_string(value)
+  defp to_s(value) when is_integer(value), do: Integer.to_string(value)
+  defp to_s(value) when is_binary(value), do: value
+
 end

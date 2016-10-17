@@ -75,7 +75,7 @@ defmodule Appsignal.Phoenix.Instrumenter do
   def maybe_transaction_finish_event(_event, nil), do: nil
   def maybe_transaction_finish_event(event, {transaction, args}) do
     arg_str = Poison.encode!(args) |> IO.iodata_to_binary()
-    transaction |> Transaction.finish_event(event, event, arg_str)
+    transaction |> Transaction.finish_event(event, event, arg_str, 0)
   end
 
   @doc false
