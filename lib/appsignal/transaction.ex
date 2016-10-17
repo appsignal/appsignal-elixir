@@ -322,10 +322,8 @@ defmodule Appsignal.Transaction do
   end
 
 
-  @doc """
-  Lookup the current Appsignal transaction in the transaction
-  registry; raises RuntimeError when no transaction found.
-  """
+  # Lookup the current Appsignal transaction in the transaction
+  # registry; raises RuntimeError when no transaction found.
   defp lookup! do
     TransactionRegistry.lookup(self) || raise RuntimeError, "No Appsignal transaction in current process."
   end
