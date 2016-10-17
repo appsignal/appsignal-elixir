@@ -163,7 +163,8 @@ defmodule Appsignal.Transaction do
   @spec set_error(Transaction.t, String.t, String.t, any) :: Transaction.t
   def set_error(%Transaction{} = transaction, name, message, backtrace) do
     name = name |> String.split_at(@max_name_size) |> elem(0)
-    :ok = Nif.set_error(transaction.resource, name, message, Poison.encode!(backtrace))
+    encoded_backtrace = Appsignal.Utils.ParamsEncoder.encode(backtrace)
+    :ok = Nif.set_error(transaction.resource, name, message, encoded_backtrace)
     transaction
   end
 
@@ -186,7 +187,11 @@ defmodule Appsignal.Transaction do
   """
   @spec set_sample_data(Transaction.t, String.t, any) :: Transaction.t
   def set_sample_data(%Transaction{} = transaction, key, payload) do
-    :ok = Nif.set_sample_data(transaction.resource, key, Poison.encode!(payload))
+    encoded = case is_binary(payload) do
+                true -> payload
+                false -> Appsignal.Utils.ParamsEncoder.encode(payload)
+              end
+    :ok = Nif.set_sample_data(transaction.resource, key, encoded)
     transaction
   end
 

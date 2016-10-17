@@ -55,4 +55,22 @@ defmodule AppsignalTransactionTest do
 
   end
 
+  test "params encoding" do
+    transaction = Transaction.start("test3", :http_request)
+
+    # String
+    assert ^transaction = Transaction.set_sample_data("key", "{'user_id': 1}")
+
+    # Map
+    assert ^transaction = Transaction.set_sample_data("key", %{"user_id" => 1})
+
+    # Atom
+    assert ^transaction = Transaction.set_sample_data("key", %{user_id: 1})
+
+    # complex
+    assert ^transaction = Transaction.set_sample_data("key", %{values: %{1 => 2, 3 => 4}})
+
+  end
+
+
 end

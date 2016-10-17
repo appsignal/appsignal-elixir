@@ -6,3 +6,4 @@ priv
 mix.lock
 /config/dev.exs
 /doc
+/cover
