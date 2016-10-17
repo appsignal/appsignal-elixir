@@ -9,7 +9,8 @@ defmodule Appsignal.Config do
     send_params: true,
     endpoint: "https://push.appsignal.com",
     enable_host_metrics: false,
-    filter_parameters: nil
+    filter_parameters: nil,
+    skip_session_data: false
   }
 
   @doc """
@@ -68,11 +69,12 @@ defmodule Appsignal.Config do
     "APPSIGNAL_HTTP_PROXY" => :http_proxy,
     "APPSIGNAL_RUNNING_IN_CONTAINER" => :running_in_container,
     "APPSIGNAL_WORKING_DIR_PATH" => :working_dir_path,
-    "APPSIGNAL_ENABLE_HOST_METRICS" => :enable_host_metrics
+    "APPSIGNAL_ENABLE_HOST_METRICS" => :enable_host_metrics,
+    "APPSIGNAL_SKIP_SESSION_DATA" => :skip_session_data
   }
 
   @string_keys ~w(APPSIGNAL_PUSH_API_KEY APPSIGNAL_PUSH_API_ENDPOINT APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH APPSIGNAL_HTTP_PROXY APPSIGNAL_LOG_PATH APPSIGNAL_WORKING_DIR_PATH APP_REVISION)
-  @bool_keys ~w(APPSIGNAL_ACTIVE APPSIGNAL_DEBUG APPSIGNAL_INSTRUMENT_NET_HTTP APPSIGNAL_SKIP_SESSION_DATA APPSIGNAL_ENABLE_FRONTEND_ERROR_CATCHING APPSIGNAL_ENABLE_ALLOCATION_TRACKING APPSIGNAL_ENABLE_GC_INSTRUMENTATION APPSIGNAL_RUNNING_IN_CONTAINER APPSIGNAL_ENABLE_HOST_METRICS)
+  @bool_keys ~w(APPSIGNAL_ACTIVE APPSIGNAL_DEBUG APPSIGNAL_INSTRUMENT_NET_HTTP APPSIGNAL_ENABLE_FRONTEND_ERROR_CATCHING APPSIGNAL_ENABLE_ALLOCATION_TRACKING APPSIGNAL_ENABLE_GC_INSTRUMENTATION APPSIGNAL_RUNNING_IN_CONTAINER APPSIGNAL_ENABLE_HOST_METRICS APPSIGNAL_SKIP_SESSION_DATA)
   @atom_keys ~w(APPSIGNAL_APP_NAME APPSIGNAL_ENVIRONMENT)
   @string_list_keys ~w(APPSIGNAL_FILTER_PARAMETERS)
 
@@ -80,13 +82,13 @@ defmodule Appsignal.Config do
     list |> Enum.reduce(
       config,
       fn(key, cfg) ->
-      value = System.get_env(key)
-      if !empty?(value) do
-        Map.put(cfg, @env_to_key_mapping[key], converter.(value))
-      else
-        cfg
-      end
-    end)
+        value = System.get_env(key)
+        if !empty?(value) do
+          Map.put(cfg, @env_to_key_mapping[key], converter.(value))
+        else
+          cfg
+        end
+      end)
   end
 
   defp load_from_environment() do
@@ -154,6 +156,20 @@ defmodule Appsignal.Config do
       ({"APP_REVISION", _}) -> true;
       (_) -> false end)
       |> Enum.into(%{})
+  end
+
+  # When you use Appsignal.Config you get a handy config macro which
+  # can be used to read the application config.
+  defmacro __using__(_) do
+    quote do
+
+      defmacro config do
+        quote do
+          Application.get_env(:appsignal, :config, [])
+        end
+      end
+    end
+
   end
 
 end

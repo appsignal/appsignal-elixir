@@ -1,4 +1,7 @@
 defmodule Appsignal.Transaction do
+
+  use Appsignal.Config
+
   @moduledoc """
   Functions related to Appsignal transactions
 
@@ -241,7 +244,15 @@ defmodule Appsignal.Transaction do
     transaction
     |> Transaction.set_sample_data("params", conn.params |> filter_values(filter_parameters))
     |> Transaction.set_sample_data("environment", request_environment(conn))
-    transaction
+
+    # Add session data
+    if not config[:skip_session_data] and conn.private[:plug_session_fetch] == :done do
+      session_data = conn.private[:plug_session]
+      transaction
+      |> Transaction.set_sample_data("session_data", session_data)
+    else
+      transaction
+    end
   end
 
 
