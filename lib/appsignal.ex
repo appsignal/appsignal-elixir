@@ -30,7 +30,15 @@ defmodule Appsignal do
       {:ok, false} ->
         Logger.info("Appsignal disabled.")
       {{:error, :invalid_config}, _} ->
-        Logger.warn("Warning: No valid Appsignal configuration found, continuing with Appsignal metrics disabled.")
+
+        # show warning that Appsignal is not configured; but not when we run the tests.
+        spawn_link(fn ->
+          :timer.sleep 100 # FIXME, this timeout is kind of cludgy.
+          unless Process.whereis(ExUnit.Server) do
+            Logger.warn("Warning: No valid Appsignal configuration found, continuing with Appsignal metrics disabled.")
+          end
+        end)
+
     end
 
     :error_logger.add_report_handler(Appsignal.ErrorHandler)
