@@ -1,5 +1,31 @@
 defmodule Appsignal.Nif do
-  @moduledoc false
+  @moduledoc """
+
+  It's a NIF! Oh no!
+
+  While people generally think NIFs are a bad idea, the overhead of
+  this particular NIF is low. The C code that the NIF calls has been
+  designed to be as fast as possible and to do as little as possible
+  on the calling thread.
+
+  Internally, the Appsignal NIF works as follows: it fork/execs a
+  separate agent process, to which the NIF sends its data (protobuf)
+  over a unix socket. This agent process (which is a separate unix
+  process!) then takes care of sending the data the the server
+  periodically.
+
+  The C library that the NIF interfaces with, is specifically written
+  with performance in mind and is very robust and battle tested;
+  written in Rust and it is the same code that the Ruby AppSignal Gem
+  uses, which is used in production in thousands of sites.
+
+  While doing native Elixir protobufs to communicate directly with
+  this agent makes more sense from a BEAM standpoint, from a
+  maintainability point the NIF choice is more logical because
+  AppSignal is planning more language integrations in the future (PHP,
+  Java) which all will use this same C library and agent process.
+
+  """
 
   @on_load :init
 
