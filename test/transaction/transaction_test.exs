@@ -38,6 +38,27 @@ defmodule AppsignalTransactionTest do
 
   end
 
+
+  test "returns nil in simplified Transaction calls when no current transaction" do
+
+    assert nil == Transaction.start_event()
+    assert nil == Transaction.finish_event("sql.query", "Model load", "SELECT * FROM table;", 1)
+    assert nil == Transaction.record_event("sql.query", "Model load", "SELECT * FROM table;", 1000 * 1000 * 3, 1)
+    assert nil == Transaction.set_error("Error", "error message", "['backtrace']")
+    assert nil == Transaction.set_sample_data("key", "{'user_id': 1}")
+    assert nil == Transaction.set_action("GET:/")
+    assert nil == Transaction.set_queue_start(1000)
+
+    assert nil == Transaction.set_meta_data("email", "info@info.com")
+    assert nil == Transaction.set_meta_data(email: "email@email.com")
+    assert nil == Transaction.set_meta_data(%{"foo" => "bar", "value" => 123})
+
+    assert nil == Transaction.finish()
+    assert nil == Transaction.complete()
+
+  end
+
+
   test_with_mock "use shorthand set_meta_data function", Appsignal.Transaction, [:passthrough], [] do
 
     transaction = Transaction.start("test3", :http_request)

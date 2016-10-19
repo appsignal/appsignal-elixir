@@ -66,7 +66,7 @@ defmodule Appsignal.Transaction do
   """
   @spec start_event() :: Transaction.t
   def start_event() do
-    start_event(lookup!)
+    start_event(lookup())
   end
 
   @doc """
@@ -78,7 +78,8 @@ defmodule Appsignal.Transaction do
   - `transaction`: The pointer to the transaction this event occurred in.
 
   """
-  @spec start_event(Transaction.t) :: Transaction.t
+  @spec start_event(Transaction.t | nil) :: Transaction.t
+  def start_event(nil), do: nil
   def start_event(%Transaction{} = transaction) do
     :ok = Nif.start_event(transaction.resource)
     transaction
@@ -89,7 +90,7 @@ defmodule Appsignal.Transaction do
   """
   @spec finish_event(String.t, String.t, String.t, integer) :: Transaction.t
   def finish_event(name, title, body, body_format \\ 0) do
-    finish_event(lookup!, name, title, body, body_format)
+    finish_event(lookup(), name, title, body, body_format)
   end
 
   @doc """
@@ -103,7 +104,8 @@ defmodule Appsignal.Transaction do
   - `body`: Body of the event, should not contain unique information per specific event (`select * from users where id=?`)
   - `body_format` Format of the event's body which can be used for sanitization, 0 for general and 1 for sql currently.
   """
-  @spec finish_event(Transaction.t, String.t, String.t, String.t, integer) :: Transaction.t
+  @spec finish_event(Transaction.t | nil, String.t, String.t, String.t, integer) :: Transaction.t
+  def finish_event(nil, _name, _title, _body, _body_format), do: nil
   def finish_event(%Transaction{} = transaction, name, title, body, body_format) do
     :ok = Nif.finish_event(transaction.resource, name, title, body, body_format)
     transaction
@@ -115,7 +117,7 @@ defmodule Appsignal.Transaction do
   """
   @spec record_event(String.t, String.t, String.t, integer, integer) :: Transaction.t
   def record_event(name, title, body, duration, body_format \\ 0) do
-    record_event(lookup!, name, title, body, duration, body_format)
+    record_event(lookup(), name, title, body, duration, body_format)
   end
 
   @doc """
@@ -133,7 +135,8 @@ defmodule Appsignal.Transaction do
   - `duration`: Duration of this event in nanoseconds
   - `body_format` Format of the event's body which can be used for sanitization, 0 for general and 1 for sql currently.
   """
-  @spec record_event(Transaction.t, String.t, String.t, String.t, integer, integer) :: Transaction.t
+  @spec record_event(Transaction.t | nil, String.t, String.t, String.t, integer, integer) :: Transaction.t
+  def record_event(nil, _name, _title, _body, _duration, _body_format), do: nil
   def record_event(%Transaction{} = transaction, name, title, body, duration, body_format) do
     :ok = Nif.record_event(transaction.resource, name, title, body, duration, body_format)
     transaction
@@ -145,7 +148,7 @@ defmodule Appsignal.Transaction do
   """
   @spec set_error(String.t, String.t, any) :: Transaction.t
   def set_error(name, message, backtrace) do
-    set_error(lookup!, name, message, backtrace)
+    set_error(lookup(), name, message, backtrace)
   end
 
   @max_name_size 120
@@ -160,7 +163,8 @@ defmodule Appsignal.Transaction do
   - `message`: Message of the error ('undefined method call for something')
   - `backtrace`: Backtrace of the error; will be JSON encoded
   """
-  @spec set_error(Transaction.t, String.t, String.t, any) :: Transaction.t
+  @spec set_error(Transaction.t | nil, String.t, String.t, any) :: Transaction.t
+  def set_error(nil, _name, _message, _backtrace), do: nil
   def set_error(%Transaction{} = transaction, name, message, backtrace) do
     name = name |> String.split_at(@max_name_size) |> elem(0)
     encoded_backtrace = Appsignal.Utils.ParamsEncoder.encode(backtrace)
@@ -173,7 +177,7 @@ defmodule Appsignal.Transaction do
   """
   @spec set_sample_data(String.t, any) :: Transaction.t
   def set_sample_data(key, payload) do
-    set_sample_data(lookup!, key, payload)
+    set_sample_data(lookup(), key, payload)
   end
 
   @doc """
@@ -185,7 +189,8 @@ defmodule Appsignal.Transaction do
   - `key`: Key of this piece of metadata (params, session_data)
   - `payload`: Metadata (e.g. `%{user_id: 1}`); will be JSON encoded
   """
-  @spec set_sample_data(Transaction.t, String.t, any) :: Transaction.t
+  @spec set_sample_data(Transaction.t | nil, String.t, any) :: Transaction.t
+  def set_sample_data(nil, _key, _payload), do: nil
   def set_sample_data(%Transaction{} = transaction, key, payload) do
     encoded = case is_binary(payload) do
                 true -> payload
@@ -200,7 +205,7 @@ defmodule Appsignal.Transaction do
   """
   @spec set_action(String.t) :: Transaction.t
   def set_action(action) do
-    set_action(lookup!, action)
+    set_action(lookup(), action)
   end
 
   @doc """
@@ -211,7 +216,8 @@ defmodule Appsignal.Transaction do
   - `transaction`: The pointer to the transaction this event occurred in
   - `action`: This transactions action (`"HomepageController.show"`)
   """
-  @spec set_action(Transaction.t, String.t) :: Transaction.t
+  @spec set_action(Transaction.t | nil, String.t) :: Transaction.t
+  def set_action(nil, _action), do: nil
   def set_action(%Transaction{} = transaction, action) do
     :ok = Nif.set_action(transaction.resource, action)
     transaction
@@ -222,7 +228,7 @@ defmodule Appsignal.Transaction do
   """
   @spec set_queue_start(integer) :: Transaction.t
   def set_queue_start(start \\ -1) do
-    set_queue_start(lookup!, start)
+    set_queue_start(lookup(), start)
   end
 
   @doc """
@@ -233,7 +239,8 @@ defmodule Appsignal.Transaction do
   - `transaction`: The pointer to the transaction this event occurred in
   - `queue_start`: Transaction queue start time in ms if known
   """
-  @spec set_queue_start(Transaction.t, integer) :: Transaction.t
+  @spec set_queue_start(Transaction.t | nil, integer) :: Transaction.t
+  def set_queue_start(nil, _start), do: nil
   def set_queue_start(%Transaction{} = transaction, start) do
     :ok = Nif.set_queue_start(transaction.resource, start)
     transaction
@@ -245,7 +252,7 @@ defmodule Appsignal.Transaction do
   """
   @spec set_meta_data(Enum.t) :: Transaction.t
   def set_meta_data(values) do
-    transaction = lookup!
+    transaction = lookup()
     values |> Enum.each(fn({key, value}) ->
       Transaction.set_meta_data(transaction, to_s(key), to_s(value))
     end)
@@ -257,7 +264,7 @@ defmodule Appsignal.Transaction do
   """
   @spec set_meta_data(String.t, String.t) :: Transaction.t
   def set_meta_data(key, value) do
-    set_meta_data(lookup!, key, value)
+    set_meta_data(lookup(), key, value)
   end
 
   @doc """
@@ -269,7 +276,8 @@ defmodule Appsignal.Transaction do
   - `key`: Key of this piece of metadata (`"email"`)
   - `value`: Value of this piece of metadata (`"thijs@appsignal.com"`)
   """
-  @spec set_meta_data(Transaction.t, String.t, String.t) :: Transaction.t
+  @spec set_meta_data(Transaction.t | nil, String.t, String.t) :: Transaction.t
+  def set_meta_data(nil, _key, _value), do: nil
   def set_meta_data(%Transaction{} = transaction, key, value) do
     :ok = Nif.set_meta_data(transaction.resource, key, value)
     transaction
@@ -280,7 +288,7 @@ defmodule Appsignal.Transaction do
   """
   @spec finish() :: :sample | :no_sample
   def finish() do
-    finish(lookup!)
+    finish(lookup())
   end
 
   @doc """
@@ -293,7 +301,8 @@ defmodule Appsignal.Transaction do
   Returns `:sample` wether sample data for this transaction should be
   collected.
   """
-  @spec finish(Transaction.t) :: :sample | :no_sample
+  @spec finish(Transaction.t | nil) :: :sample | :no_sample
+  def finish(nil), do: nil
   def finish(%Transaction{} = transaction) do
     Nif.finish(transaction.resource)
   end
@@ -303,7 +312,7 @@ defmodule Appsignal.Transaction do
   """
   @spec complete() :: :ok
   def complete() do
-    complete(lookup!)
+    complete(lookup())
   end
 
   @doc """
@@ -313,7 +322,8 @@ defmodule Appsignal.Transaction do
 
   - `transaction`: The pointer to the transaction this event occurred in
   """
-  @spec complete(Transaction.t) :: :ok
+  @spec complete(Transaction.t | nil) :: :ok
+  def complete(nil), do: nil
   def complete(%Transaction{} = transaction) do
     :ok = Nif.complete(transaction.resource)
   end
@@ -327,10 +337,9 @@ defmodule Appsignal.Transaction do
   end
 
 
-  # Lookup the current Appsignal transaction in the transaction
-  # registry; raises RuntimeError when no transaction found.
-  defp lookup! do
-    TransactionRegistry.lookup(self) || raise RuntimeError, "No Appsignal transaction in current process."
+  # Lookup the current Appsignal transaction in the transaction registry.
+  defp lookup() do
+    TransactionRegistry.lookup(self)
   end
 
   defimpl Inspect do
@@ -345,7 +354,7 @@ defmodule Appsignal.Transaction do
   @doc """
   Set the request metadata, given a Plug.Conn.t.
   """
-  @spec set_request_metadata(Transaction.t, Plug.Conn.t) :: Transaction.t
+  @spec set_request_metadata(Transaction.t | nil, Plug.Conn.t) :: Transaction.t
   def set_request_metadata(%Transaction{} = transaction, %Conn{} = conn) do
 
     # preprocess conn
