@@ -14,6 +14,7 @@ The roadmap looks like this, currently:
    - [x] template render (phoenix)
    - [x] Ecto queries
    - [x] Auto-instrumentation of functions (using macros)
+ - [x] Channel instrumentation (one transaction per incoming event)
 
 
 ## Features planned after 1.0 release
