@@ -16,12 +16,14 @@ defmodule Appsignal.Utils.ParamsEncoder do
     Enum.map(value, fn({k, v}) ->
       {safe_key(k), preprocess(v)}
     end)
+    |> Enum.filter(fn({_, v}) -> v != nil end)
     |> Enum.into(%{})
   end
   def preprocess(value) when is_list(value) do
     Enum.map(value, &preprocess/1)
   end
   def preprocess(value) when is_tuple(value), do: "#{inspect value}"
+  def preprocess(nil), do: nil
   def preprocess(value), do: value
 
   defp safe_key(k) when is_integer(k), do: Integer.to_string(k)

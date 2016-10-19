@@ -64,4 +64,5 @@ logged.
 
 ## Channels
 
-Currently, channels do not have hooks for instrumentation yet. This is on the roadmap.
+See the `Appsignal.Phoenix.Channel` module on how to instrument
+channel requests.
