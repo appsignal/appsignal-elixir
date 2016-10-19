@@ -32,14 +32,14 @@ defmodule Appsignal.Helpers do
   following:
 
   ```
-    import Appsignal.Helpers, only: [instrument: 4]
+  import Appsignal.Helpers, only: [instrument: 4]
 
-    def index(conn, _params) do
-      result = instrument(conn, "net.http", "Some slow backend call", fn() ->
-        Backend.get_result()
-      end
-      json conn, result
-    end
+  def index(conn, _params) do
+  result = instrument(conn, "net.http", "Some slow backend call", fn() ->
+  Backend.get_result()
+  end
+  json conn, result
+  end
   ```
 
   """
@@ -64,6 +64,41 @@ defmodule Appsignal.Helpers do
     result
   end
 
+
+  @doc """
+  Instrument single functions
+
+  This macro allows you to define functions that are automatically
+  instrumented, by writing `instrument_def` instead of `def` when
+  defining the function:
+
+  defmodule SomeModule do
+    import Appsignal.Helpers, only: [instrument_def: 2]
+
+    instrument_def expensive_method(_arg) do
+      # calculations...
+    end
+  end
+
+  """
+
+  defmacro instrument_def(fn_call_ast, fn_opts_ast) do
+    {name, _, _} = fn_call_ast
+    [do: call] = fn_opts_ast
+    fn_opts_ast = [do: quote do
+                    Appsignal.Helpers.instrument(self(), unquote("#{name}"), Atom.to_string(__MODULE__) <> "." <> unquote("#{name}"), fn ->
+                      unquote(call)
+                    end)
+                  end]
+
+    quote do
+      Kernel.def(
+        unquote(fn_call_ast), unquote(fn_opts_ast))
+    end
+  end
+
+
+
   @doc """
   Automatically instrument all function definitions in the nested block using a given category
 
@@ -72,16 +107,16 @@ defmodule Appsignal.Helpers do
 
   ```
   defmodule MyInstrumentedModule do
-    import Appsignal.Helpers
+  import Appsignal.Helpers
 
-    instrumented do
+  instrumented do
 
-      def bar(arg) do
-        # code to be instrumented
-      end
+  def bar(arg) do
+  # code to be instrumented
+  end
 
-      # more functions...
-    end
+  # more functions...
+  end
   end
   ```
 
@@ -92,12 +127,12 @@ defmodule Appsignal.Helpers do
   following code:
 
   ```
-    instrumented :http do
+  instrumented :http do
 
-      def load_data(arg) do
-        # code to be instrumented
-      end
-    end
+  def load_data(arg) do
+  # code to be instrumented
+  end
+  end
   ```
 
   events will be recorded under the event name `load_data.http` whenever `load_data()` is called.
@@ -118,23 +153,23 @@ defmodule Appsignal.Helpers do
 
 
   defp expand_instrumented(postfix, [do: {tag, _meta, _rest} = deftuple]) when tag in [:def, :defp] do
-    [do: instrument_def(deftuple, postfix)]
+    [do: make_instrumented_def(deftuple, postfix)]
   end
 
   defp expand_instrumented(postfix, [do: {:__block__, arg, tuples}]) do
-    [do: {:__block__, arg, tuples |> Enum.map(&(instrument_def(&1, postfix)))}]
+    [do: {:__block__, arg, tuples |> Enum.map(&(make_instrumented_def(&1, postfix)))}]
   end
 
-  defp instrument_def({tag, defmeta, [{name, _, _}=defname, [do: doblock]]}, postfix) when tag in [:def, :defp] do
+  defp make_instrumented_def({tag, defmeta, [{name, _, _}=defname, [do: doblock]]}, postfix) when tag in [:def, :defp] do
     name = Atom.to_string(name)
     {tag,
      defmeta,
      [defname,
       [do: quote do
-         Appsignal.Helpers.instrument(self(), unquote(name) <> unquote(postfix), Atom.to_string(__MODULE__) <> "." <> unquote(name), fn() -> unquote(doblock) end)
-       end]]}
+        Appsignal.Helpers.instrument(self(), unquote(name) <> unquote(postfix), Atom.to_string(__MODULE__) <> "." <> unquote(name), fn() -> unquote(doblock) end)
+      end]]}
   end
-  defp instrument_def(code, _postfix) do
+  defp make_instrumented_def(code, _postfix) do
     code
   end
 

@@ -85,4 +85,27 @@ defmodule AppsignalFunctionInstrumentationMacroTest do
 
   end
 
+
+
+  defmodule Foo4 do
+    import Appsignal.Helpers, only: [instrument_def: 2]
+
+    instrument_def bar(_arg) do
+      nested(1 + 1, :atom)
+    end
+
+    instrument_def nested(_arg1, _arg2) do
+    end
+
+  end
+
+  test_with_mock "instrument_def macro", Appsignal.Transaction, [:passthrough], [] do
+    t = Transaction.start("bar", :http_request)
+    Foo4.bar(123)
+    assert called Transaction.start_event(t)
+    assert called Transaction.finish_event(t, "bar", "Elixir.AppsignalFunctionInstrumentationMacroTest.Foo4.bar", "", 0)
+    assert called Transaction.finish_event(t, "nested", "Elixir.AppsignalFunctionInstrumentationMacroTest.Foo4.nested", "", 0)
+  end
+
+
 end
