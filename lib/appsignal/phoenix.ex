@@ -29,6 +29,7 @@ defmodule Appsignal.Phoenix do
           super(conn, opts)
         rescue
           e ->
+            stacktrace = System.stacktrace
             import Appsignal.Phoenix
             case {Appsignal.TransactionRegistry.lookup(self), extract_error_metadata(e, conn, System.stacktrace)} do
               {nil, _} -> :skip
@@ -36,7 +37,7 @@ defmodule Appsignal.Phoenix do
               {transaction, {reason, message, stack, conn}} ->
                 submit_http_error(reason, message, stack, transaction, conn)
             end
-            reraise e, System.stacktrace
+            reraise e, stacktrace
         end
       end
     end
