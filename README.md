@@ -4,6 +4,7 @@ This library collects error and performance data from your Elixir
 applications and sends it to [AppSignal](https://appsignal.com).
 
 [![Build Status](https://travis-ci.org/appsignal/appsignal-elixir.png?branch=master)](https://travis-ci.org/appsignal/appsignal-elixir)
+[![Hex pm](http://img.shields.io/hexpm/v/appsignal.svg?style=flat)](https://hex.pm/packages/appsignal)
 
 **NOTE: This library is beta software, and still under development. Use at your own risk. API changes might still occur without notice. Please refer to the [Roadmap](Roadmap.md) document for more information.**
 
