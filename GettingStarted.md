@@ -68,8 +68,7 @@ would thus contain:
       env: :prod,
       revision: Mix.Project.config[:version]
 
-
-### Configuration keys
+## Configuration keys
 
 The full list of variables that can be configured is the following:
 
