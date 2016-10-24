@@ -4,7 +4,7 @@ defmodule AppsignalHelpersTest do
 
   import Mock
 
-  alias Appsignal.{Transaction, Helpers}
+  alias Appsignal.{Transaction, Instrumentation.Helpers}
 
   test_with_mock "instrument with transaction", Appsignal.Transaction, [:passthrough], [] do
 

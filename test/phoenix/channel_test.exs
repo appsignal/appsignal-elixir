@@ -7,12 +7,11 @@ defmodule Appsignal.Phoenix.ChannelTest do
 
   defmodule SomeApp.MyChannel do
 
-    use Appsignal.Phoenix.Channel
+    use Appsignal.Instrumentation.Decorators
 
+    @decorate channel_action
     def handle_in("ping", payload, socket) do
-      channel_action("ping", socket, fn ->
-        {:reply, {:ok, payload}, socket}
-      end)
+      {:reply, {:ok, payload}, socket}
     end
 
   end

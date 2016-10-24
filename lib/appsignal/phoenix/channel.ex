@@ -11,15 +11,15 @@ defmodule Appsignal.Phoenix.Channel do
   ```
   defmodule SomeApp.MyChannel do
 
-    use Appsignal.Phoenix.Channel
+  use Appsignal.Phoenix.Channel
 
-    def handle_in("ping" = action, _payload, socket) do
-      channel_action(action, socket, fn ->
-        # do some heave processing here...
-        reply = perform_work()
-        {:reply, {:ok, reply}, socket}
-      end)
-    end
+  def handle_in("ping" = action, _payload, socket) do
+  channel_action(action, socket, fn ->
+  # do some heave processing here...
+  reply = perform_work()
+  {:reply, {:ok, reply}, socket}
+  end)
+  end
 
   end
   ```
@@ -31,31 +31,29 @@ defmodule Appsignal.Phoenix.Channel do
 
   alias Appsignal.Transaction
 
-  defmacro __using__(_) do
-    quote do
+  @doc """
+  Record a channel action. Meant to be called from the 'channel_action' instrumentation decorator.
+  """
+  def channel_action(module, name, %Phoenix.Socket{} = socket, function) do
+    alias Appsignal.Transaction
 
-      def channel_action(name, %Phoenix.Socket{} = socket, function) do
-        alias Appsignal.Transaction
+    transaction = Transaction.start(Transaction.generate_id(), :background_job)
 
-        transaction = Transaction.start(Transaction.generate_id(), :background_job)
+    action_str = "#{module}##{name}"
+    <<"Elixir.", action :: binary>> = action_str
+    Transaction.set_action(transaction, action)
 
-        action_str = "#{__MODULE__}##{name}"
-        <<"Elixir.", action :: binary>> = action_str
-        Transaction.set_action(transaction, action)
+    result = function.()
 
-        result = function.()
-
-        resp = Transaction.finish(transaction)
-        if resp == :sample do
-          Appsignal.Phoenix.Channel.set_metadata(transaction, socket)
-        end
-        :ok = Transaction.complete(transaction)
-
-        result
-      end
-
+    resp = Transaction.finish(transaction)
+    if resp == :sample do
+      Appsignal.Phoenix.Channel.set_metadata(transaction, socket)
     end
+    :ok = Transaction.complete(transaction)
+
+    result
   end
+
 
   @doc """
   Given the `Appsignal.Transaction` and a `Phoenix.Socket`, add the
