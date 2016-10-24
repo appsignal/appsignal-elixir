@@ -68,6 +68,31 @@ would thus contain:
       env: :prod,
       revision: Mix.Project.config[:version]
 
+## Filtered parameters
+
+In most apps at least some of the data that might be posted to the app is
+sensitive information that should not leave the network. We support two ways of
+filtering parameters from being sent to AppSignal.
+
+## Using Phoenix's filter_parameters configuration
+
+You can use Phoenix's parameter filtering, which is used to keep sensitive
+information from the logs:
+
+    config :phoenix, :filter_parameters, ["password", "secret"]
+
+If `:filter_parameters` is not set, Phoenix will default to `["password"]`. This
+means that a Phoenix app will not send any passwords to AppSignal without any
+configuration.
+
+## Using AppSignal's built-in filtering
+
+If you're not using Phoenix, or want to filter parameters without changing the
+Phoenix.Logger's configuration, you can set up filtered parameters in the
+AppSignal configuration file:
+
+    config :appsignal, :filter_parameters, ["password", "secret"]
+
 ## Configuration keys
 
 The full list of variables that can be configured is the following:
