@@ -12,6 +12,11 @@ defmodule Appsignal.Utils.ParamsEncoder do
   @doc """
   Makes sure the keys are valid for JSON encoding
   """
+  def preprocess(value = %{__struct__: _}) do
+    value
+    |> Map.from_struct
+    |> preprocess
+  end
   def preprocess(value) when is_map(value) do
     Enum.map(value, fn({k, v}) ->
       {safe_key(k), preprocess(v)}
