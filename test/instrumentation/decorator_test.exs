@@ -2,7 +2,7 @@ defmodule Appsignal.Instrumentation.DecoratorsTest do
   use ExUnit.Case
   import Mock
 
-  alias Appsignal.Transaction
+  alias Appsignal.{Transaction, TransactionRegistry}
 
   defmodule Example do
     use Appsignal.Instrumentation.Decorators
@@ -47,6 +47,27 @@ defmodule Appsignal.Instrumentation.DecoratorsTest do
     assert called Transaction.start_event(t)
     assert called Transaction.finish_event(t, "bar.http", "Elixir.Appsignal.Instrumentation.DecoratorsTest.Example2.bar", "", 0)
     assert called Transaction.finish_event(t, "nested.db", "Elixir.Appsignal.Instrumentation.DecoratorsTest.Example2.nested", "", 0)
+  end
+
+
+
+  defmodule ChannelExample do
+    use Appsignal.Instrumentation.Decorators
+
+    @decorate channel_action
+    def handle_in(action, _payload, socket) do
+    end
+
+  end
+
+  test_with_mock "channel_action decorator", Appsignal.Transaction, [:passthrough], [] do
+    ChannelExample.handle_in("my_action", %{}, %Phoenix.Socket{})
+    t = %Transaction{} = TransactionRegistry.lookup(self())
+
+    assert called Transaction.start(t.id, :background_job)
+    assert called Transaction.set_action(t, "Appsignal.Instrumentation.DecoratorsTest.ChannelExample#my_action")
+    assert called Transaction.finish(t)
+    assert called Transaction.complete(t)
   end
 
 end
