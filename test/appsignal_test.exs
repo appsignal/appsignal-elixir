@@ -3,6 +3,7 @@ defmodule AppsignalTest do
 
   test "set gauge" do
     Appsignal.set_gauge("key", 10.0)
+    Appsignal.set_gauge("key", 10)
   end
 
   test "increment counter" do
@@ -12,6 +13,7 @@ defmodule AppsignalTest do
 
   test "add distribution value" do
     Appsignal.add_distribution_value("dist_key", 10.0)
+    Appsignal.add_distribution_value("dist_key", 10)
   end
 
   test "Agent environment variables" do

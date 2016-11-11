@@ -60,8 +60,11 @@ defmodule Appsignal do
   @doc """
   Set a gauge for a measurement of some metric.
   """
-  @spec set_gauge(String.t, float) :: :ok
-  def set_gauge(key, value) do
+  @spec set_gauge(String.t, float | integer) :: :ok
+  def set_gauge(key, value) when is_integer(value) do
+    set_gauge(key, value + 0.0)
+  end
+  def set_gauge(key, value) when is_float(value) do
     Appsignal.Nif.set_gauge(key, value)
   end
 
@@ -69,7 +72,7 @@ defmodule Appsignal do
   Increment a counter of some metric.
   """
   @spec increment_counter(String.t, integer) :: :ok
-  def increment_counter(key, count \\ 1) do
+  def increment_counter(key, count \\ 1) when is_integer(count) do
     Appsignal.Nif.increment_counter(key, count)
   end
 
@@ -79,8 +82,11 @@ defmodule Appsignal do
   Use this to collect multiple data points that will be merged into a
   graph.
   """
-  @spec add_distribution_value(String.t, float) :: :ok
-  def add_distribution_value(key, value) do
+  @spec add_distribution_value(String.t, float | integer) :: :ok
+  def add_distribution_value(key, value) when is_integer(value) do
+    add_distribution_value(key, value + 0.0)
+  end
+  def add_distribution_value(key, value) when is_float(value) do
     Appsignal.Nif.add_distribution_value(key, value)
   end
 
