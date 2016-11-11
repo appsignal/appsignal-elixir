@@ -14,7 +14,7 @@ defmodule Appsignal.ErrorHandler do
 
   require Logger
 
-  alias Appsignal.{Transaction,TransactionRegistry}
+  alias Appsignal.Transaction
 
   @doc """
   Retrieve the last Appsignal.Transaction.t that the error logger picked up

@@ -102,7 +102,7 @@ defmodule Appsignal do
     transaction = Appsignal.Transaction.lookup_or_create_transaction(self())
     if transaction != nil do
       {reason, message} = Appsignal.ErrorHandler.extract_reason_and_message(reason, message)
-      Appsignal.ErrorHandler.submit_transaction(transaction, reason, message, [], metadata)
+      Appsignal.ErrorHandler.submit_transaction(transaction, reason, message, stack, metadata)
     end
   end
 
