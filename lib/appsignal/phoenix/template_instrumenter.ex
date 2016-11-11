@@ -37,7 +37,7 @@ defmodule Appsignal.Phoenix.TemplateInstrumenter do
       def compile(path, name) do
         expr = unquote(opts[:engine]).compile(path, name)
         quote do
-          Appsignal.Helpers.instrument(self(), "template.render", unquote(name), fn() -> unquote(expr) end)
+          Appsignal.Instrumentation.Helpers.instrument(self(), "template.render", unquote(name), fn() -> unquote(expr) end)
         end
       end
 

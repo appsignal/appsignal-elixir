@@ -32,7 +32,7 @@ defmodule Appsignal.Instrumentation.Helpers do
   following:
 
   ```
-  import Appsignal.Helpers, only: [instrument: 4]
+  import Appsignal.Instrumentation.Helpers, only: [instrument: 4]
 
   def index(conn, _params) do
   result = instrument(conn, "net.http", "Some slow backend call", fn() ->
