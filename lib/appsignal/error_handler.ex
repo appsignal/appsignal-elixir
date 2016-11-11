@@ -35,7 +35,7 @@ defmodule Appsignal.ErrorHandler do
         {origin, reason, message, stack, metadata} ->
           case supervisor_event?(reason) do
             false ->
-              transaction = lookup_or_create_transaction(origin)
+              transaction = Transaction.lookup_or_create_transaction(origin)
               if transaction != nil do
                 submit_transaction(transaction, reason, message, stack, metadata)
               end
@@ -49,20 +49,7 @@ defmodule Appsignal.ErrorHandler do
     {:ok, state}
   end
 
-  defp lookup_or_create_transaction(origin) do
-    case TransactionRegistry.lookup(origin, true) do
-      :removed ->
-        # transaction existed but has already been submitted, on the timer to be removed
-        nil
-      nil ->
-        # could not find a linked transaction; start new transaction
-        Transaction.start(generate_id(), :background_job)
-      t ->
-        t
-    end
-  end
-
-  defp submit_transaction(transaction, reason, message, stack, metadata) do
+  def submit_transaction(transaction, reason, message, stack, metadata) do
     Transaction.set_error(transaction, reason, message, stack)
     if metadata[:conn] != nil do
       Transaction.set_request_metadata(transaction, metadata[:conn])
@@ -71,12 +58,6 @@ defmodule Appsignal.ErrorHandler do
     Transaction.complete(transaction)
     Logger.debug("Submitting #{inspect transaction}: #{message}")
     transaction
-  end
-
-  # Generate a transaction id for crashed processed that have no
-  # associated transaction. Prefixed with '_' to indicate a new transaction was createdk.
-  defp generate_id do
-    "_" <> Transaction.generate_id()
   end
 
   # inspect the 'reason' argument to see if it is a supervisor
@@ -211,11 +192,14 @@ defmodule Appsignal.ErrorHandler do
   end
   def extract_reason_and_message(r = %{}, message) do
     msg = Exception.message(r)
-    {"#{inspect r.__struct__}", message <> ": " <> msg}
+    {"#{inspect r.__struct__}", prefixed(message, msg)}
   end
   def extract_reason_and_message(any, message) do
     # inspect any term; truncate it
     {"#{inspect any}", message}
   end
 
+  defp prefixed(nil, msg), do: msg
+  defp prefixed("", msg), do: msg
+  defp prefixed(pre, msg), do: pre <> ": " <> msg
 end

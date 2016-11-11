@@ -411,4 +411,25 @@ defmodule Appsignal.Transaction do
   defp to_s(value) when is_integer(value), do: Integer.to_string(value)
   defp to_s(value) when is_binary(value), do: value
 
+
+  @doc """
+  Return the transaction for the given process
+
+  Creates a new one when not found. Can also return `nil`; in that
+  case, we should not continue submitting the transaction.
+  """
+  def lookup_or_create_transaction(origin \\ nil, namespace \\ :background_job) do
+    origin = origin || self()
+    case TransactionRegistry.lookup(origin, true) do
+      :removed ->
+        # transaction existed but has already been submitted, on the timer to be removed
+        nil
+      nil ->
+        # could not find a linked transaction; start new transaction
+        start("_" <> generate_id(), namespace)
+      t ->
+        t
+    end
+  end
+
 end

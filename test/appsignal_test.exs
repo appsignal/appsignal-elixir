@@ -1,5 +1,6 @@
 defmodule AppsignalTest do
   use ExUnit.Case
+  import Mock
 
   test "set gauge" do
     Appsignal.set_gauge("key", 10.0)
@@ -27,5 +28,18 @@ defmodule AppsignalTest do
 
     config = Application.get_env :appsignal, :config
     assert :test = config[:env]
+  end
+
+  alias Appsignal.{Transaction, TransactionRegistry}
+
+  test_with_mock "send_error", Appsignal.Transaction, [:passthrough], [] do
+    stack = System.stacktrace()
+    Appsignal.send_error(%RuntimeError{message: "Some bad stuff happened"}, "Oops", stack)
+
+    t = %Transaction{} = TransactionRegistry.lookup(self())
+
+    assert called Transaction.set_error(t, "RuntimeError", "Oops: Some bad stuff happened", stack)
+    assert called Transaction.finish(t)
+    assert called Transaction.complete(t)
   end
 end
