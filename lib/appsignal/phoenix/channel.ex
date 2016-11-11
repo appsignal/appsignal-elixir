@@ -29,10 +29,10 @@ defmodule Appsignal.Phoenix.Channel do
   executing in the channel handler:
 
       defmodule SomeApp.MyChannel do
-        import Appsignal.Phoenix.Channel, only: channel_action: 3
+        import Appsignal.Phoenix.Channel, only: [channel_action: 4]
 
         def handle_in("ping" = action, _payload, socket) do
-          channel_action(action, socket, fn ->
+          channel_action(__MODULE__, action, socket, fn ->
             # do some heave processing here...
             reply = perform_work()
             {:reply, {:ok, reply}, socket}

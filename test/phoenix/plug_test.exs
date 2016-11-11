@@ -1,5 +1,5 @@
 defmodule Appsignal.Phoenix.PlugTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case
   use Plug.Test
   import Mock
 
