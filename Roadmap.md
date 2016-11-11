@@ -15,7 +15,7 @@ The roadmap looks like this, currently:
    - [x] Ecto queries
    - [x] Auto-instrumentation of functions (using macros)
  - [x] Channel instrumentation (one transaction per incoming event)
-
+ - [ ] Task instrumentation (one `:background_job` transaction per task)
 
 ## Features planned after 1.0 release
  - [ ] Exometer backend
