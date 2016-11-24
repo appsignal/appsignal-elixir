@@ -68,6 +68,15 @@ would thus contain:
       env: :prod,
       revision: Mix.Project.config[:version]
 
+## Disable for tests
+
+When you are running your test suite, a large volume of events can be
+generated. If events created from the tests are not useful for you,
+you can disable them in your `config/test.exs`:
+
+    config :appsignal, :config,
+      active: false
+
 ## Filtered parameters
 
 In most apps at least some of the data that might be posted to the app is
