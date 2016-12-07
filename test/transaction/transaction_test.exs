@@ -58,22 +58,21 @@ defmodule AppsignalTransactionTest do
 
   end
 
-
   test_with_mock "use shorthand set_meta_data function", Appsignal.Transaction, [:passthrough], [] do
-
     transaction = Transaction.start("test3", :http_request)
     assert %Transaction{} = transaction
 
     Transaction.set_meta_data(email: "email@email.com")
-
     assert called Transaction.set_meta_data(transaction, "email", "email@email.com")
 
     Transaction.set_meta_data(%{"foo" => "bar", "value" => 123})
     assert called Transaction.set_meta_data(transaction, "foo", "bar")
     assert called Transaction.set_meta_data(transaction, "value", "123")
 
-    assert :ok = Transaction.complete()
+    Transaction.set_meta_data(%{"foo" => "bar", "value" => %{}})
+    assert called Transaction.set_meta_data(transaction, "foo", "bar")
 
+    assert :ok = Transaction.complete()
   end
 
   test "setting meta data" do

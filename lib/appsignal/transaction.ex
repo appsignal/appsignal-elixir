@@ -254,7 +254,7 @@ defmodule Appsignal.Transaction do
   def set_meta_data(values) do
     transaction = lookup()
     values |> Enum.each(fn({key, value}) ->
-      Transaction.set_meta_data(transaction, to_s(key), to_s(value))
+      Transaction.set_meta_data(transaction, key, value)
     end)
     transaction
   end
@@ -281,6 +281,9 @@ defmodule Appsignal.Transaction do
   def set_meta_data(%Transaction{} = transaction, key, value) when is_binary(key) and is_binary(value) do
     :ok = Nif.set_meta_data(transaction.resource, key, value)
     transaction
+  end
+  def set_meta_data(%Transaction{} = transaction, key, value) when is_atom(key) or is_integer(key) and is_atom(value) or is_integer(value) do
+    set_meta_data(transaction, to_s(key), to_s(value))
   end
   def set_meta_data(%Transaction{} = transaction, _key, _value), do: transaction
 
