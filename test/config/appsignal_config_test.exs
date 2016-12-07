@@ -55,6 +55,7 @@ defmodule AppsignalConfigTest do
       name: :ExampleApplication,
       http_proxy: "http://10.10.10.10:8888",
       ignore_actions: ["ExampleApplication.PageController#ignored"],
+      ignore_errors: ["VerySpecificError"],
       working_dir_path: "/tmp/appsignal",
       enable_host_metrics: true,
       revision: "03bd9e")
@@ -68,6 +69,7 @@ defmodule AppsignalConfigTest do
     assert "ExampleApplication" = System.get_env("APPSIGNAL_APP_NAME")
     assert "http://10.10.10.10:8888" = System.get_env("APPSIGNAL_HTTP_PROXY")
     assert "ExampleApplication.PageController#ignored" = System.get_env("APPSIGNAL_IGNORE_ACTIONS")
+    assert "VerySpecificError" = System.get_env("APPSIGNAL_IGNORE_ERRORS")
     assert "/tmp/appsignal" = System.get_env("APPSIGNAL_WORKING_DIR_PATH")
     assert "true" = System.get_env("APPSIGNAL_ENABLE_HOST_METRICS")
     assert "03bd9e" = System.get_env("APP_REVISION")
