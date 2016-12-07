@@ -74,6 +74,9 @@ defmodule AppsignalTransactionTest do
 
     Transaction.set_meta_data(%{"foo" => "bar", "value" => %{}})
     assert called Appsignal.Nif.set_meta_data(transaction.resource, "foo", "bar")
+
+    Transaction.set_meta_data(%{"foo" => "bar", :value => %{}})
+    assert called Appsignal.Nif.set_meta_data(transaction.resource, "foo", "bar")
   end
 
   test "setting meta data" do
