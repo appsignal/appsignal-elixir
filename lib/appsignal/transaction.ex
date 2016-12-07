@@ -278,10 +278,11 @@ defmodule Appsignal.Transaction do
   """
   @spec set_meta_data(Transaction.t | nil, String.t, String.t) :: Transaction.t
   def set_meta_data(nil, _key, _value), do: nil
-  def set_meta_data(%Transaction{} = transaction, key, value) do
+  def set_meta_data(%Transaction{} = transaction, key, value) when is_binary(key) and is_binary(value) do
     :ok = Nif.set_meta_data(transaction.resource, key, value)
     transaction
   end
+  def set_meta_data(%Transaction{} = transaction, _key, _value), do: transaction
 
   @doc """
   Finish the current transaction. See `finish/1`.

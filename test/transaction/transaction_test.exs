@@ -76,6 +76,13 @@ defmodule AppsignalTransactionTest do
 
   end
 
+  test "setting meta data" do
+    transaction = Transaction.start("test3", :http_request)
+    assert ^transaction = Transaction.set_meta_data(transaction, "foo", "bar")
+    assert ^transaction = Transaction.set_meta_data(transaction, "foo", %{})
+    assert ^transaction = Transaction.set_meta_data(transaction, %{}, "foo")
+  end
+
   test "params encoding" do
     transaction = Transaction.start("test3", :http_request)
 
