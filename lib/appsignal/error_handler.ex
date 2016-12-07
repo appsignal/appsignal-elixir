@@ -54,6 +54,7 @@ defmodule Appsignal.ErrorHandler do
     if metadata[:conn] != nil do
       Transaction.set_request_metadata(transaction, metadata[:conn])
     end
+    Transaction.set_meta_data(metadata)
     Transaction.finish(transaction)
     Transaction.complete(transaction)
     Logger.debug("Submitting #{inspect transaction}: #{message}")
