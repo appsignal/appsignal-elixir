@@ -70,9 +70,10 @@ would thus contain:
 
 ## Disable for tests
 
-When you are running your test suite, a large volume of events can be
-generated. If events created from the tests are not useful for you,
-you can disable them in your `config/test.exs`:
+If you put your entire Appsignal configuration in the `config.exs`
+instead of `prod.exs`, (e.g. for having Appsignal enabled during
+development), make sure to put `active: false` in your test config
+unless you want to submit all your test results:
 
     config :appsignal, :config,
       active: false
