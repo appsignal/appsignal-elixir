@@ -25,23 +25,25 @@ defmodule AppsignalConfigTest do
   end
 
   test "app revision" do
-    System.put_env("APP_REVISION", "123")
-    assert "123" = init_config()[:revision]
+    System.put_env("APP_REVISION", "0c497d")
+    assert "0c497d" = init_config()[:revision]
   end
 
   test "app revision from application env" do
+    System.delete_env("APP_REVISION")
     Application.put_env(:appsignal, :config,
       push_api_key: "-test",
-      revision: "123")
-    assert "123" = init_config()[:revision]
+      revision: "b5f2b9")
+    assert "b5f2b9" = init_config()[:revision]
   end
 
   test "app revision from application env gets put in system env" do
+    System.delete_env("APP_REVISION")
     Application.put_env(:appsignal, :config,
       push_api_key: "-test",
-      revision: "123")
+      revision: "03bd9e")
     init_config()
-    assert "123" = System.get_env("APP_REVISION")
+    assert "03bd9e" = System.get_env("APP_REVISION")
   end
 
   defp init_config do
