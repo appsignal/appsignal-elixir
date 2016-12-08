@@ -14,7 +14,7 @@ defmodule Appsignal.Mixfile do
 
   def project do
     [app: :appsignal,
-     version: "0.9.1",
+     version: "0.9.2",
      name: "AppSignal",
      description: description(),
      package: package(),
@@ -35,7 +35,7 @@ defmodule Appsignal.Mixfile do
   defp package do
     %{files: ["lib", "c_src/*.[ch]", "mix.exs", "mix_helpers.exs",
               "*.md", "LICENSE", "Makefile", "agent.json"],
-      maintainers: ["Arjan Scherpenisse"],
+      maintainers: ["Arjan Scherpenisse", "Jeff Kreeftmeijer"],
       licenses: ["MIT"],
       links: %{"GitHub" => "https://github.com/appsignal/appsignal-elixir"}}
   end
