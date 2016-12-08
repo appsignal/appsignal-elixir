@@ -71,19 +71,6 @@ defmodule AppsignalTransactionTest do
     Transaction.set_meta_data(%{"foo" => "bar", "value" => 123})
     assert called Appsignal.Nif.set_meta_data(transaction.resource, "foo", "bar")
     assert called Appsignal.Nif.set_meta_data(transaction.resource, "value", "123")
-
-    Transaction.set_meta_data(%{"foo" => "bar", "value" => %{}})
-    assert called Appsignal.Nif.set_meta_data(transaction.resource, "foo", "bar")
-
-    Transaction.set_meta_data(%{"foo" => "bar", :value => %{}})
-    assert called Appsignal.Nif.set_meta_data(transaction.resource, "foo", "bar")
-  end
-
-  test "setting meta data" do
-    transaction = Transaction.start("test3", :http_request)
-    assert ^transaction = Transaction.set_meta_data(transaction, "foo", "bar")
-    assert ^transaction = Transaction.set_meta_data(transaction, "foo", %{})
-    assert ^transaction = Transaction.set_meta_data(transaction, %{}, "foo")
   end
 
   test "params encoding" do

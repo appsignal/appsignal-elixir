@@ -282,10 +282,9 @@ defmodule Appsignal.Transaction do
     :ok = Nif.set_meta_data(transaction.resource, key, value)
     transaction
   end
-  def set_meta_data(%Transaction{} = transaction, key, value) when (is_atom(key) or is_integer(key) or is_binary(key)) and (is_atom(value) or is_integer(value) or is_binary(value)) do
+  def set_meta_data(%Transaction{} = transaction, key, value) do
     set_meta_data(transaction, to_s(key), to_s(value))
   end
-  def set_meta_data(%Transaction{} = transaction, _key, _value), do: transaction
 
   @doc """
   Finish the current transaction. See `finish/1`.
