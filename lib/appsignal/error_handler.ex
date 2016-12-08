@@ -32,12 +32,12 @@ defmodule Appsignal.ErrorHandler do
   def handle_event(event, state) do
     state =
      case match_event(event) do
-        {origin, reason, message, stack, metadata, conn} ->
+        {origin, reason, message, stack, conn} ->
           case supervisor_event?(reason) do
             false ->
               transaction = Transaction.lookup_or_create_transaction(origin)
               if transaction != nil do
-                submit_transaction(transaction, reason, message, stack, metadata, conn)
+                submit_transaction(transaction, reason, message, stack, %{}, conn)
               end
             true ->
               # ignore this event; we have already handled it.
@@ -101,7 +101,7 @@ defmodule Appsignal.ErrorHandler do
     case supervisor_event?(reason) do
       false ->
         msg = "Process #{crash_name(pid, name)} terminating"
-        {origin, "#{inspect reason}", msg, format_stack(stack), %{}, nil}
+        {origin, "#{inspect reason}", msg, format_stack(stack), nil}
       true ->
         :nomatch
     end
@@ -114,20 +114,20 @@ defmodule Appsignal.ErrorHandler do
   defp match_error_format('Error in process ' ++ _, [pid, {reason, stack}]) do
     msg = "Process #{inspect pid} raised an exception"
     {reason, msg} = extract_reason_and_message(reason, msg)
-    {pid, reason, msg, format_stack(stack), %{}, nil}
+    {pid, reason, msg, format_stack(stack), nil}
   end
 
   defp match_error_format('** Generic server ' ++ _, [pid, _last, _state, reason]) do
     {reason, stack} = maybe_extract_stack(reason)
     {reason, msg} = extract_reason_and_message(reason, "GenServer #{inspect pid} terminating")
-    {pid, reason, msg, format_stack(stack), %{}, nil}
+    {pid, reason, msg, format_stack(stack), nil}
   end
 
   defp match_error_format('** Task ' ++ _, [pid, starter, function, args, reason]) do
     {reason, stack} = maybe_extract_stack(reason)
     msg = "Task #{inspect pid} started from #{inspect starter} terminating. Function: #{inspect function}, args: #{inspect args}"
     {reason, msg} = extract_reason_and_message(reason, msg)
-    {pid, reason, msg, format_stack(stack), %{}, nil}
+    {pid, reason, msg, format_stack(stack), nil}
   end
 
   # FIXME add test coverage for this one
@@ -135,7 +135,7 @@ defmodule Appsignal.ErrorHandler do
     conn = extract_conn(initial)
     msg = "HTTP request #{inspect pid} crashed"
     {reason, msg} = extract_reason_and_message(reason, msg)
-    {pid, reason, msg, format_stack(stack), %{}, conn}
+    {pid, reason, msg, format_stack(stack), conn}
   end
 
   # Format the stack trace as an array of strings
