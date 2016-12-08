@@ -58,22 +58,19 @@ defmodule AppsignalTransactionTest do
 
   end
 
-
-  test_with_mock "use shorthand set_meta_data function", Appsignal.Transaction, [:passthrough], [] do
-
+  test_with_mock "use shorthand set_meta_data function", Appsignal.Nif, [], [
+    start_transaction: fn(_,_) -> {:ok, nil} end,
+    set_meta_data: fn(_,_,_) -> :ok end
+  ] do
     transaction = Transaction.start("test3", :http_request)
     assert %Transaction{} = transaction
 
     Transaction.set_meta_data(email: "email@email.com")
-
-    assert called Transaction.set_meta_data(transaction, "email", "email@email.com")
+    assert called Appsignal.Nif.set_meta_data(transaction.resource, "email", "email@email.com")
 
     Transaction.set_meta_data(%{"foo" => "bar", "value" => 123})
-    assert called Transaction.set_meta_data(transaction, "foo", "bar")
-    assert called Transaction.set_meta_data(transaction, "value", "123")
-
-    assert :ok = Transaction.complete()
-
+    assert called Appsignal.Nif.set_meta_data(transaction.resource, "foo", "bar")
+    assert called Appsignal.Nif.set_meta_data(transaction.resource, "value", "123")
   end
 
   test "params encoding" do

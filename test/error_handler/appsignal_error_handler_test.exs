@@ -3,7 +3,8 @@ defmodule AppsignalErrorHandlerTest do
   Test the actual Appsignal.ErrorHandler
   """
 
-  use ExUnit.Case
+  use ExUnit.Case, async: false
+  import Mock
 
   alias Appsignal.Transaction
 
@@ -45,5 +46,27 @@ defmodule AppsignalErrorHandlerTest do
 
   end
 
+  test_with_mock "submitting the transaction", Appsignal.Transaction, [:passthrough], [] do
+    transaction = Transaction.start("id", :http_request)
+    reason = "ArithmeticError"
+    message = "bad argument in arithmetic expression"
+    stacktrace = System.stacktrace
+    metadata = %{foo: "bar"}
+    conn = %Plug.Conn{peer: {{127, 0, 0, 1}, 12345}}
 
+    Appsignal.ErrorHandler.submit_transaction(
+      transaction,
+      reason,
+      message,
+      stacktrace,
+      metadata,
+      conn
+    )
+
+    assert called Transaction.set_error(transaction, reason, message, stacktrace)
+    assert called Transaction.set_request_metadata(transaction, conn)
+    assert called Transaction.set_meta_data(metadata)
+    assert called Transaction.finish(transaction)
+    assert called Transaction.complete(transaction)
+  end
 end

@@ -61,11 +61,11 @@ defmodule AppsignalErrorMatcherTest do
     assert_crash_caught(pid)
   end
   defp assert_crash_caught(crasher) when is_pid(crasher) do
-    assert {^crasher, reason, message, stacktrace, metadata} = get_last_crash()
+    assert {^crasher, reason, message, stacktrace, conn} = get_last_crash()
     assert is_list(stacktrace)
     assert is_binary(reason)
     assert is_binary(message)
-    assert is_map(metadata)
+    assert is_nil(conn)
 
     for s <- stacktrace do
       assert is_binary(s)
