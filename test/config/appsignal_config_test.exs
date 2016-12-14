@@ -7,9 +7,19 @@ defmodule AppsignalConfigTest do
 
   alias Appsignal.Config
 
+  setup do
+    Application.delete_env(:appsignal, :config)
+
+    System.delete_env("APPSIGNAL_ACTIVE")
+    System.delete_env("APPSIGNAL_ENVIRONMENT")
+    System.delete_env("APPSIGNAL_PUSH_API_KEY")
+    System.delete_env("APPSIGNAL_APP_NAME")
+    System.delete_env("APPSIGNAL_ENABLE_HOST_METRICS")
+    System.delete_env("APP_REVISION")
+  end
+
   test "unconfigured" do
     System.put_env("APPSIGNAL_PUSH_API_KEY", "")
-    Application.delete_env(:appsignal, :config)
     assert {:error, :invalid_config} = Config.initialize()
   end
 
@@ -30,7 +40,6 @@ defmodule AppsignalConfigTest do
   end
 
   test "app revision from application env" do
-    System.delete_env("APP_REVISION")
     Application.put_env(:appsignal, :config,
       push_api_key: "-test",
       revision: "b5f2b9")
@@ -38,12 +47,6 @@ defmodule AppsignalConfigTest do
   end
 
   test "app config from application env gets put in system env" do
-    System.delete_env("APPSIGNAL_ACTIVE")
-    System.delete_env("APPSIGNAL_ENVIRONMENT")
-    System.delete_env("APPSIGNAL_PUSH_API_KEY")
-    System.delete_env("APPSIGNAL_APP_NAME")
-    System.delete_env("APPSIGNAL_ENABLE_HOST_METRICS")
-    System.delete_env("APP_REVISION")
 
     Application.put_env(:appsignal, :config,
       active: true,
