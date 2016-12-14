@@ -25,9 +25,32 @@ defmodule Appsignal.Instrumentation.Decorators do
 
 
   use Decorator.Define,
+    transaction: 0,
+    transaction: 1,
     transaction_event: 0,
     transaction_event: 1,
     channel_action: 0
+
+  @doc false
+  def transaction(body, context) do
+    transaction(:http_request, body, context)
+  end
+
+  @doc false
+  def transaction(namespace, body, context) do
+    quote do
+      transaction = Appsignal.Transaction.start(
+        Appsignal.Transaction.generate_id,
+        unquote(namespace)
+      )
+      |> Appsignal.Transaction.set_action(unquote("#{context.name}"))
+
+      unquote(body)
+
+      Appsignal.Transaction.finish(transaction)
+      :ok = Appsignal.Transaction.complete(transaction)
+    end
+  end
 
   @doc false
   def transaction_event(category, body, context) do
