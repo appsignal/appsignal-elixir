@@ -10,12 +10,20 @@ defmodule AppsignalConfigTest do
   setup do
     Application.delete_env(:appsignal, :config)
 
-    System.delete_env("APPSIGNAL_ACTIVE")
-    System.delete_env("APPSIGNAL_ENVIRONMENT")
-    System.delete_env("APPSIGNAL_PUSH_API_KEY")
-    System.delete_env("APPSIGNAL_APP_NAME")
-    System.delete_env("APPSIGNAL_ENABLE_HOST_METRICS")
-    System.delete_env("APP_REVISION")
+    ~w(
+       APPSIGNAL_ACTIVE
+       APPSIGNAL_APP_NAME
+       APPSIGNAL_ENABLE_HOST_METRICS
+       APPSIGNAL_ENVIRONMENT
+       APPSIGNAL_HTTP_PROXY
+       APPSIGNAL_PUSH_API_ENDPOINT
+       APPSIGNAL_PUSH_API_KEY
+       APPSIGNAL_RUNNING_IN_CONTAINER
+       APPSIGNAL_WORKING_DIR_PATH
+       APP_REVISION
+     ) |> Enum.each(fn(key) ->
+         System.delete_env(key)
+       end)
   end
 
   test "unconfigured" do
@@ -32,6 +40,18 @@ defmodule AppsignalConfigTest do
     Application.put_env(:appsignal, :config,
       push_api_key: "-test")
     assert :ok = Config.initialize()
+  end
+
+  test "default configuration" do
+    assert default_configuration == init_config
+  end
+
+  test "valid configuration" do
+    Application.put_env(
+      :appsignal, :config,
+      push_api_key: "00000000-0000-0000-0000-000000000000"
+    )
+    assert valid_configuration == init_config
   end
 
   test "app revision" do
@@ -78,9 +98,32 @@ defmodule AppsignalConfigTest do
     assert "03bd9e" = System.get_env("APP_REVISION")
   end
 
+  defp default_configuration do
+    %{
+      active: false,
+      debug: false,
+      enable_host_metrics: false,
+      endpoint: "https://push.appsignal.com",
+      env: :dev,
+      filter_parameters: nil,
+      ignore_actions: [],
+      ignore_errors: [],
+      running_in_container: false,
+      send_params: true,
+      skip_session_data: false,
+      valid: false
+    }
+  end
+
+  defp valid_configuration do
+    default_configuration
+    |> Map.put(:active, true)
+    |> Map.put(:push_api_key, "00000000-0000-0000-0000-000000000000")
+    |> Map.put(:valid, true)
+  end
+
   defp init_config do
     Config.initialize()
     Application.get_all_env(:appsignal)[:config]
   end
-
 end
