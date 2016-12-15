@@ -21,6 +21,7 @@ defmodule AppsignalConfigTest do
        APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH
        APPSIGNAL_HTTP_PROXY
        APPSIGNAL_IGNORE_ACTIONS
+       APPSIGNAL_IGNORE_ERRORS
        APPSIGNAL_PUSH_API_ENDPOINT
        APPSIGNAL_PUSH_API_KEY
        APPSIGNAL_RUNNING_IN_CONTAINER
@@ -226,6 +227,13 @@ defmodule AppsignalConfigTest do
       )
       assert valid_configuration |> Map.put(:ignore_actions, actions) == init_config
       assert "ExampleApplication.PageController#ignored,ExampleApplication.PageController#also_ignored" == System.get_env("APPSIGNAL_IGNORE_ACTIONS")
+    end
+
+    test "ignore_errors" do
+      System.put_env("APPSIGNAL_IGNORE_ERRORS", "VerySpecificError,AnotherError")
+      errors = ~w(VerySpecificError AnotherError)
+      assert valid_configuration |> Map.put(:ignore_errors, errors) == init_config
+      assert "VerySpecificError,AnotherError" == System.get_env("APPSIGNAL_IGNORE_ERRORS")
     end
 
     test "enable_host_metrics" do
