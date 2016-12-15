@@ -118,6 +118,11 @@ defmodule AppsignalConfigTest do
       assert valid_configuration |> Map.put(:endpoint, "https://push.staging.lol") == init_config
     end
 
+    test "running_in_container" do
+      add_to_application_env(:running_in_container, true)
+      assert valid_configuration |> Map.put(:running_in_container, true) == init_config
+    end
+
     test "send_params" do
       add_to_application_env(:send_params, true)
       assert valid_configuration |> Map.put(:send_params, true) == init_config

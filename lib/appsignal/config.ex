@@ -3,13 +3,14 @@ defmodule Appsignal.Config do
 
   @default_config %{
     debug: false,
-    ignore_errors: [],
-    ignore_actions: [],
-    env: :dev,
-    send_params: true,
-    endpoint: "https://push.appsignal.com",
     enable_host_metrics: false,
+    endpoint: "https://push.appsignal.com",
+    env: :dev,
     filter_parameters: nil,
+    ignore_actions: [],
+    ignore_errors: [],
+    running_in_container: false,
+    send_params: true,
     skip_session_data: false
   }
 
@@ -93,8 +94,6 @@ defmodule Appsignal.Config do
 
   defp load_from_environment() do
     %{}
-    # Heroku is a container based system
-    |> Map.put(:running_in_container, System.get_env("DYNO") != nil)
     |> load_environment(@string_keys, &(&1))
     |> load_environment(@bool_keys, &(true?(&1)))
     |> load_environment(@atom_keys, &(String.to_atom(&1)))
