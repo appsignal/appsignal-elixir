@@ -15,6 +15,7 @@ defmodule AppsignalConfigTest do
        APPSIGNAL_APP_NAME
        APPSIGNAL_ENABLE_HOST_METRICS
        APPSIGNAL_ENVIRONMENT
+       APPSIGNAL_FILTER_PARAMETERS
        APPSIGNAL_HTTP_PROXY
        APPSIGNAL_PUSH_API_ENDPOINT
        APPSIGNAL_PUSH_API_KEY
@@ -80,8 +81,9 @@ defmodule AppsignalConfigTest do
     end
 
     test "filter_parameters" do
-      add_to_application_env(:filter_parameters, ~w(password))
-      assert valid_configuration |> Map.put(:filter_parameters, ~w(password)) == init_config
+      add_to_application_env(:filter_parameters, ~w(password secret))
+      assert valid_configuration |> Map.put(:filter_parameters, ~w(password secret)) == init_config
+      assert "password,secret" == System.get_env("APPSIGNAL_FILTER_PARAMETERS")
     end
 
     test "frontend_error_catching_path" do

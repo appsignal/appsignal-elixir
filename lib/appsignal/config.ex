@@ -137,6 +137,9 @@ defmodule Appsignal.Config do
     unless empty?(config[:http_proxy]) do
       System.put_env("APPSIGNAL_HTTP_PROXY", config[:http_proxy])
     end
+    unless empty?(config[:filter_parameters]) do
+      System.put_env("APPSIGNAL_FILTER_PARAMETERS", config[:filter_parameters] |> Enum.join(","))
+    end
     System.put_env("APPSIGNAL_IGNORE_ACTIONS", config[:ignore_actions] |> Enum.join(","))
     System.put_env("APPSIGNAL_IGNORE_ERRORS", config[:ignore_errors] |> Enum.join(","))
     System.put_env("APPSIGNAL_RUNNING_IN_CONTAINER", Atom.to_string(config[:running_in_container]))
