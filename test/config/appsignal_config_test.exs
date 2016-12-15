@@ -27,18 +27,21 @@ defmodule AppsignalConfigTest do
   end
 
   test "unconfigured" do
-    System.put_env("APPSIGNAL_PUSH_API_KEY", "")
     assert {:error, :invalid_config} = Config.initialize()
   end
 
   test "minimum config from OS env" do
-    System.put_env("APPSIGNAL_PUSH_API_KEY", "-test-")
+    System.put_env(
+      "APPSIGNAL_PUSH_API_KEY", "00000000-0000-0000-0000-000000000000"
+    )
     assert :ok = Config.initialize()
   end
 
   test "minimum config from application env" do
-    Application.put_env(:appsignal, :config,
-      push_api_key: "-test")
+    Application.put_env(
+      :appsignal, :config,
+      push_api_key: "00000000-0000-0000-0000-000000000000"
+    )
     assert :ok = Config.initialize()
   end
 
