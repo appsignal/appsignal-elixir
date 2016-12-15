@@ -49,7 +49,7 @@ defmodule AppsignalConfigTest do
     assert default_configuration == init_config
   end
 
-  describe "with a valid configuration" do
+  describe "using the application environment" do
     setup do
       Application.put_env(
         :appsignal, :config,
@@ -64,16 +64,19 @@ defmodule AppsignalConfigTest do
     test "active" do
       add_to_application_env(:active, false)
       assert valid_configuration |> Map.put(:active, false) == init_config
+      assert "false" == System.get_env("APPSIGNAL_ACTIVE")
     end
 
     test "name" do
       add_to_application_env(:name, :my_application)
       assert valid_configuration |> Map.put(:name, :my_application) == init_config
+      assert "my_application" == System.get_env("APPSIGNAL_APP_NAME")
     end
 
     test "debug" do
       add_to_application_env(:debug, true)
       assert valid_configuration |> Map.put(:debug, true) == init_config
+      assert "true" == System.get_env("APPSIGNAL_DEBUG_LOGGING")
     end
 
     test "filter_parameters" do
@@ -89,21 +92,30 @@ defmodule AppsignalConfigTest do
     test "http_proxy" do
       add_to_application_env(:http_proxy, "http://10.10.10.10:8888")
       assert valid_configuration |> Map.put(:http_proxy, "http://10.10.10.10:8888") == init_config
+      assert "http://10.10.10.10:8888" == System.get_env("APPSIGNAL_HTTP_PROXY")
     end
 
     test "ignore_actions" do
-      add_to_application_env(:ignore_actions, ~w(ExampleApplication.PageController#ignored))
-      assert valid_configuration |> Map.put(:ignore_actions, ~w(ExampleApplication.PageController#ignored)) == init_config
+      actions = ~w(
+          ExampleApplication.PageController#ignored
+          ExampleApplication.PageController#also_ignored
+      )
+      add_to_application_env(:ignore_actions, actions)
+      assert valid_configuration |> Map.put(:ignore_actions, actions) == init_config
+      assert "ExampleApplication.PageController#ignored,ExampleApplication.PageController#also_ignored" == System.get_env("APPSIGNAL_IGNORE_ACTIONS")
     end
 
     test "ignore_errors" do
-      add_to_application_env(:ignore_errors, ~w(VerySpecificError))
-      assert valid_configuration |> Map.put(:ignore_errors, ~w(VerySpecificError)) == init_config
+      errors = ~w(VerySpecificError AnotherError)
+      add_to_application_env(:ignore_errors, errors)
+      assert valid_configuration |> Map.put(:ignore_errors, errors) == init_config
+      assert "VerySpecificError,AnotherError" == System.get_env("APPSIGNAL_IGNORE_ERRORS")
     end
 
     test "enable_host_metrics" do
       add_to_application_env(:enable_host_metrics, true)
       assert valid_configuration |> Map.put(:enable_host_metrics, true) == init_config
+      assert "true" == System.get_env("APPSIGNAL_ENABLE_HOST_METRICS")
     end
 
     test "log" do
@@ -114,16 +126,19 @@ defmodule AppsignalConfigTest do
     test "log_path" do
       add_to_application_env(:log_path, "log/appsignal.log")
       assert valid_configuration |> Map.put(:log_path, "log/appsignal.log") == init_config
+      assert "log/appsignal.log" == System.get_env("APPSIGNAL_LOG_FILE_PATH")
     end
 
     test "endpoint" do
       add_to_application_env(:endpoint, "https://push.staging.lol")
       assert valid_configuration |> Map.put(:endpoint, "https://push.staging.lol") == init_config
+      assert "https://push.staging.lol" == System.get_env("APPSIGNAL_PUSH_API_ENDPOINT")
     end
 
     test "running_in_container" do
       add_to_application_env(:running_in_container, true)
       assert valid_configuration |> Map.put(:running_in_container, true) == init_config
+      assert "true" == System.get_env("APPSIGNAL_RUNNING_IN_CONTAINER")
     end
 
     test "send_params" do
@@ -139,11 +154,13 @@ defmodule AppsignalConfigTest do
     test "working_dir_path" do
       add_to_application_env(:working_dir_path, "/tmp/appsignal")
       assert valid_configuration |> Map.put(:working_dir_path, "/tmp/appsignal") == init_config
+      assert "/tmp/appsignal" == System.get_env("APPSIGNAL_WORKING_DIR_PATH")
     end
 
     test "revision" do
       add_to_application_env(:revision, "03bd9e")
       assert valid_configuration |> Map.put(:revision, "03bd9e") == init_config
+      assert "03bd9e" == System.get_env("APP_REVISION")
     end
   end
 
