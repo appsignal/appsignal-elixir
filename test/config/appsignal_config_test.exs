@@ -46,12 +46,97 @@ defmodule AppsignalConfigTest do
     assert default_configuration == init_config
   end
 
-  test "valid configuration" do
-    Application.put_env(
-      :appsignal, :config,
-      push_api_key: "00000000-0000-0000-0000-000000000000"
-    )
-    assert valid_configuration == init_config
+  describe "with a valid configuration" do
+    setup do
+      Application.put_env(
+        :appsignal, :config,
+        push_api_key: "00000000-0000-0000-0000-000000000000"
+      )
+    end
+
+    test "valid configuration" do
+      assert valid_configuration == init_config
+    end
+
+    test "active" do
+      add_to_application_env(:active, false)
+      assert valid_configuration |> Map.put(:active, false) == init_config
+    end
+
+    test "name" do
+      add_to_application_env(:name, :my_application)
+      assert valid_configuration |> Map.put(:name, :my_application) == init_config
+    end
+
+    test "debug" do
+      add_to_application_env(:debug, true)
+      assert valid_configuration |> Map.put(:debug, true) == init_config
+    end
+
+    test "filter_parameters" do
+      add_to_application_env(:filter_parameters, ~w(password))
+      assert valid_configuration |> Map.put(:filter_parameters, ~w(password)) == init_config
+    end
+
+    test "frontend_error_catching_path" do
+      add_to_application_env(:frontend_error_catching_path, "/appsignal_error_catcher")
+      assert valid_configuration |> Map.put(:frontend_error_catching_path, "/appsignal_error_catcher") == init_config
+    end
+
+    test "http_proxy" do
+      add_to_application_env(:http_proxy, "http://10.10.10.10:8888")
+      assert valid_configuration |> Map.put(:http_proxy, "http://10.10.10.10:8888") == init_config
+    end
+
+    test "ignore_actions" do
+      add_to_application_env(:ignore_actions, ~w(ExampleApplication.PageController#ignored))
+      assert valid_configuration |> Map.put(:ignore_actions, ~w(ExampleApplication.PageController#ignored)) == init_config
+    end
+
+    test "ignore_errors" do
+      add_to_application_env(:ignore_errors, ~w(VerySpecificError))
+      assert valid_configuration |> Map.put(:ignore_errors, ~w(VerySpecificError)) == init_config
+    end
+
+    test "enable_host_metrics" do
+      add_to_application_env(:enable_host_metrics, true)
+      assert valid_configuration |> Map.put(:enable_host_metrics, true) == init_config
+    end
+
+    test "log" do
+      add_to_application_env(:log, "stdout")
+      assert valid_configuration |> Map.put(:log, "stdout") == init_config
+    end
+
+    test "log_path" do
+      add_to_application_env(:log_path, "log/appsignal.log")
+      assert valid_configuration |> Map.put(:log_path, "log/appsignal.log") == init_config
+    end
+
+    test "endpoint" do
+      add_to_application_env(:endpoint, "https://push.staging.lol")
+      assert valid_configuration |> Map.put(:endpoint, "https://push.staging.lol") == init_config
+    end
+
+    test "send_params" do
+      add_to_application_env(:send_params, true)
+      assert valid_configuration |> Map.put(:send_params, true) == init_config
+    end
+
+    test "skip_session_data" do
+      add_to_application_env(:skip_session_data, true)
+      assert valid_configuration |> Map.put(:skip_session_data, true) == init_config
+    end
+
+    test "working_dir_path" do
+      add_to_application_env(:working_dir_path, "/tmp/appsignal")
+      assert valid_configuration |> Map.put(:working_dir_path, "/tmp/appsignal") == init_config
+    end
+
+    test "revision" do
+      add_to_application_env(:revision, "03bd9e")
+      assert valid_configuration |> Map.put(:revision, "03bd9e") == init_config
+    end
   end
 
   test "app revision" do
@@ -64,38 +149,6 @@ defmodule AppsignalConfigTest do
       push_api_key: "-test",
       revision: "b5f2b9")
     assert "b5f2b9" = init_config()[:revision]
-  end
-
-  test "app config from application env gets put in system env" do
-
-    Application.put_env(:appsignal, :config,
-      active: true,
-      env: :prod,
-      debug: true,
-      log_path: "log/appsignal.log",
-      push_api_endpoint: "https://push.appsignal.com",
-      push_api_key: "00000000-0000-0000-0000-000000000000",
-      name: :ExampleApplication,
-      http_proxy: "http://10.10.10.10:8888",
-      ignore_actions: ["ExampleApplication.PageController#ignored"],
-      ignore_errors: ["VerySpecificError"],
-      working_dir_path: "/tmp/appsignal",
-      enable_host_metrics: true,
-      revision: "03bd9e")
-    init_config()
-    assert "true" = System.get_env("APPSIGNAL_ACTIVE")
-    assert "prod" = System.get_env("APPSIGNAL_ENVIRONMENT")
-    assert "true" = System.get_env("APPSIGNAL_DEBUG_LOGGING")
-    assert "log/appsignal.log" = System.get_env("APPSIGNAL_LOG_FILE_PATH")
-    assert "https://push.appsignal.com" = System.get_env("APPSIGNAL_PUSH_API_ENDPOINT")
-    assert "00000000-0000-0000-0000-000000000000" = System.get_env("APPSIGNAL_PUSH_API_KEY")
-    assert "ExampleApplication" = System.get_env("APPSIGNAL_APP_NAME")
-    assert "http://10.10.10.10:8888" = System.get_env("APPSIGNAL_HTTP_PROXY")
-    assert "ExampleApplication.PageController#ignored" = System.get_env("APPSIGNAL_IGNORE_ACTIONS")
-    assert "VerySpecificError" = System.get_env("APPSIGNAL_IGNORE_ERRORS")
-    assert "/tmp/appsignal" = System.get_env("APPSIGNAL_WORKING_DIR_PATH")
-    assert "true" = System.get_env("APPSIGNAL_ENABLE_HOST_METRICS")
-    assert "03bd9e" = System.get_env("APP_REVISION")
   end
 
   defp default_configuration do
@@ -120,6 +173,12 @@ defmodule AppsignalConfigTest do
     |> Map.put(:active, true)
     |> Map.put(:push_api_key, "00000000-0000-0000-0000-000000000000")
     |> Map.put(:valid, true)
+  end
+
+  defp add_to_application_env(key, value) do
+    Application.put_env(:appsignal, :config,
+      Application.get_env(:appsignal, :config) ++ [{key, value}]
+    )
   end
 
   defp init_config do
