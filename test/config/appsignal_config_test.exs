@@ -13,13 +13,18 @@ defmodule AppsignalConfigTest do
     ~w(
        APPSIGNAL_ACTIVE
        APPSIGNAL_APP_NAME
+       APPSIGNAL_DEBUG
+       APPSIGNAL_DEBUG_LOGGING
        APPSIGNAL_ENABLE_HOST_METRICS
        APPSIGNAL_ENVIRONMENT
        APPSIGNAL_FILTER_PARAMETERS
+       APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH
        APPSIGNAL_HTTP_PROXY
+       APPSIGNAL_IGNORE_ACTIONS
        APPSIGNAL_PUSH_API_ENDPOINT
        APPSIGNAL_PUSH_API_KEY
        APPSIGNAL_RUNNING_IN_CONTAINER
+       APPSIGNAL_SKIP_SESSION_DATA
        APPSIGNAL_WORKING_DIR_PATH
        APP_REVISION
      ) |> Enum.each(fn(key) ->
@@ -162,6 +167,94 @@ defmodule AppsignalConfigTest do
 
     test "revision" do
       add_to_application_env(:revision, "03bd9e")
+      assert valid_configuration |> Map.put(:revision, "03bd9e") == init_config
+      assert "03bd9e" == System.get_env("APP_REVISION")
+    end
+  end
+
+  describe "using the system environment" do
+    setup do
+      System.put_env(
+        "APPSIGNAL_PUSH_API_KEY", "00000000-0000-0000-0000-000000000000"
+      )
+    end
+
+    test "valid configuration" do
+      assert valid_configuration == init_config
+    end
+
+    test "active" do
+      System.put_env("APPSIGNAL_ACTIVE", "false")
+      assert valid_configuration |> Map.put(:active, false) == init_config
+      assert "false" == System.get_env("APPSIGNAL_ACTIVE")
+    end
+
+    test "name" do
+      System.put_env("APPSIGNAL_APP_NAME", "my_application")
+      assert valid_configuration |> Map.put(:name, :my_application) == init_config
+      assert "my_application" == System.get_env("APPSIGNAL_APP_NAME")
+    end
+
+    test "debug" do
+      System.put_env("APPSIGNAL_DEBUG", "true")
+      assert valid_configuration |> Map.put(:debug, true) == init_config
+      assert "true" == System.get_env("APPSIGNAL_DEBUG_LOGGING")
+    end
+
+    test "filter_parameters" do
+      System.put_env("APPSIGNAL_FILTER_PARAMETERS", "password,secret")
+      assert valid_configuration |> Map.put(:filter_parameters, ~w(password secret)) == init_config
+      assert "password,secret" == System.get_env("APPSIGNAL_FILTER_PARAMETERS")
+    end
+
+    test "frontend_error_catching_path" do
+      System.put_env("APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH", "/appsignal_error_catcher")
+      assert valid_configuration |> Map.put(:frontend_error_catching_path, "/appsignal_error_catcher") == init_config
+    end
+
+    test "http_proxy" do
+      System.put_env("APPSIGNAL_HTTP_PROXY", "http://10.10.10.10:8888")
+      assert valid_configuration |> Map.put(:http_proxy, "http://10.10.10.10:8888") == init_config
+      assert "http://10.10.10.10:8888" == System.get_env("APPSIGNAL_HTTP_PROXY")
+    end
+
+    test "enable_host_metrics" do
+      System.put_env("APPSIGNAL_ENABLE_HOST_METRICS", "true")
+      assert valid_configuration |> Map.put(:enable_host_metrics, true) == init_config
+      assert "true" == System.get_env("APPSIGNAL_ENABLE_HOST_METRICS")
+    end
+
+    test "endpoint" do
+      System.put_env("APPSIGNAL_PUSH_API_ENDPOINT", "https://push.staging.lol")
+      assert valid_configuration |> Map.put(:endpoint, "https://push.staging.lol") == init_config
+      assert "https://push.staging.lol" == System.get_env("APPSIGNAL_PUSH_API_ENDPOINT")
+    end
+
+    test "running_in_container" do
+      System.put_env("APPSIGNAL_RUNNING_IN_CONTAINER", "true")
+      assert valid_configuration |> Map.put(:running_in_container, true) == init_config
+      assert "true" == System.get_env("APPSIGNAL_RUNNING_IN_CONTAINER")
+    end
+
+    test "send_params" do
+      System.put_env("APPSIGNAL_SEND_PARAMS", "true")
+      assert valid_configuration |> Map.put(:send_params, true) == init_config
+      assert "true" == System.get_env("APPSIGNAL_SEND_PARAMS")
+    end
+
+    test "skip_session_data" do
+      System.put_env("APPSIGNAL_SKIP_SESSION_DATA", "true")
+      assert valid_configuration |> Map.put(:skip_session_data, true) == init_config
+    end
+
+    test "working_dir_path" do
+      System.put_env("APPSIGNAL_WORKING_DIR_PATH", "/tmp/appsignal")
+      assert valid_configuration |> Map.put(:working_dir_path, "/tmp/appsignal") == init_config
+      assert "/tmp/appsignal" == System.get_env("APPSIGNAL_WORKING_DIR_PATH")
+    end
+
+    test "revision" do
+      System.put_env("APP_REVISION", "03bd9e")
       assert valid_configuration |> Map.put(:revision, "03bd9e") == init_config
       assert "03bd9e" == System.get_env("APP_REVISION")
     end
