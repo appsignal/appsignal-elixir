@@ -218,6 +218,16 @@ defmodule AppsignalConfigTest do
       assert "http://10.10.10.10:8888" == System.get_env("APPSIGNAL_HTTP_PROXY")
     end
 
+    test "ignore_actions" do
+      System.put_env("APPSIGNAL_IGNORE_ACTIONS", "ExampleApplication.PageController#ignored,ExampleApplication.PageController#also_ignored")
+      actions = ~w(
+          ExampleApplication.PageController#ignored
+          ExampleApplication.PageController#also_ignored
+      )
+      assert valid_configuration |> Map.put(:ignore_actions, actions) == init_config
+      assert "ExampleApplication.PageController#ignored,ExampleApplication.PageController#also_ignored" == System.get_env("APPSIGNAL_IGNORE_ACTIONS")
+    end
+
     test "enable_host_metrics" do
       System.put_env("APPSIGNAL_ENABLE_HOST_METRICS", "true")
       assert valid_configuration |> Map.put(:enable_host_metrics, true) == init_config
