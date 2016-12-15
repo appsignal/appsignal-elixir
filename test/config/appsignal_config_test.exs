@@ -23,6 +23,7 @@ defmodule AppsignalConfigTest do
        APPSIGNAL_IGNORE_ACTIONS
        APPSIGNAL_IGNORE_ERRORS
        APPSIGNAL_LOG
+       APPSIGNAL_LOG_PATH
        APPSIGNAL_PUSH_API_ENDPOINT
        APPSIGNAL_PUSH_API_KEY
        APPSIGNAL_RUNNING_IN_CONTAINER
@@ -246,6 +247,12 @@ defmodule AppsignalConfigTest do
     test "log" do
       System.put_env("APPSIGNAL_LOG", "stdout")
       assert valid_configuration |> Map.put(:log, "stdout") == init_config
+    end
+
+    test "log_path" do
+      System.put_env("APPSIGNAL_LOG_PATH", "log/appsignal.log")
+      assert valid_configuration |> Map.put(:log_path, "log/appsignal.log") == init_config
+      assert "log/appsignal.log" == System.get_env("APPSIGNAL_LOG_FILE_PATH")
     end
 
     test "endpoint" do
