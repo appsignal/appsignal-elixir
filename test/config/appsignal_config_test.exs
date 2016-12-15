@@ -291,6 +291,19 @@ defmodule AppsignalConfigTest do
     end
   end
 
+  test "system environment overwrites application environment configuration" do
+    Application.put_env(
+      :appsignal, :config,
+      push_api_key: "11111111-1111-1111-1111-111111111111"
+    )
+    System.put_env(
+      "APPSIGNAL_PUSH_API_KEY", "00000000-0000-0000-0000-000000000000"
+    )
+
+    assert valid_configuration == init_config
+    assert "00000000-0000-0000-0000-000000000000" == System.get_env("APPSIGNAL_PUSH_API_KEY")
+  end
+
   defp default_configuration do
     %{
       active: false,
