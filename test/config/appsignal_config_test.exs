@@ -291,18 +291,6 @@ defmodule AppsignalConfigTest do
     end
   end
 
-  test "app revision" do
-    System.put_env("APP_REVISION", "0c497d")
-    assert "0c497d" = init_config()[:revision]
-  end
-
-  test "app revision from application env" do
-    Application.put_env(:appsignal, :config,
-      push_api_key: "-test",
-      revision: "b5f2b9")
-    assert "b5f2b9" = init_config()[:revision]
-  end
-
   defp default_configuration do
     %{
       active: false,
