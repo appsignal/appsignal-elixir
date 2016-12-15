@@ -30,6 +30,7 @@ defmodule AppsignalConfigTest do
        APPSIGNAL_SKIP_SESSION_DATA
        APPSIGNAL_WORKING_DIR_PATH
        APP_REVISION
+       DYNO
      ) |> Enum.each(fn(key) ->
        System.delete_env(key)
      end)
@@ -302,6 +303,27 @@ defmodule AppsignalConfigTest do
 
     assert valid_configuration == init_config
     assert "00000000-0000-0000-0000-000000000000" == System.get_env("APPSIGNAL_PUSH_API_KEY")
+  end
+
+  describe "on Heroku" do
+    setup do
+      System.put_env("APPSIGNAL_PUSH_API_KEY", "00000000-0000-0000-0000-000000000000")
+      System.put_env("DYNO", "web.1")
+    end
+
+    test "running_in_container" do
+      assert valid_configuration |> Map.put(:running_in_container, true) == init_config
+      assert "true" == System.get_env("APPSIGNAL_RUNNING_IN_CONTAINER")
+    end
+
+    test "application environment overwrites :running_in_container config on Heroku" do
+      Application.put_env(
+	:appsignal, :config,
+	running_in_container: false
+      )
+      assert valid_configuration |> Map.put(:running_in_container, false) == init_config
+      assert "false" == System.get_env("APPSIGNAL_RUNNING_IN_CONTAINER")
+    end
   end
 
   defp default_configuration do

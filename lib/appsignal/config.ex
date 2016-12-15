@@ -21,10 +21,12 @@ defmodule Appsignal.Config do
   """
   @spec initialize() :: :ok | {:error, :invalid_config}
   def initialize() do
+    system_config = %{running_in_container: System.get_env("DYNO") != nil}
     app_config = Application.get_env(:appsignal, :config, []) |> coerce_map
     env_config = load_from_environment()
 
     config = @default_config
+    |> Map.merge(system_config)
     |> Map.merge(app_config)
     |> Map.merge(env_config)
 
