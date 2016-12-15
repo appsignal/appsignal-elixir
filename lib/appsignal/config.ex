@@ -142,6 +142,7 @@ defmodule Appsignal.Config do
     end
     System.put_env("APPSIGNAL_IGNORE_ACTIONS", config[:ignore_actions] |> Enum.join(","))
     System.put_env("APPSIGNAL_IGNORE_ERRORS", config[:ignore_errors] |> Enum.join(","))
+    System.put_env("APPSIGNAL_SEND_PARAMS", Atom.to_string(config[:send_params]))
     System.put_env("APPSIGNAL_RUNNING_IN_CONTAINER", Atom.to_string(config[:running_in_container]))
     unless empty?(config[:working_dir_path]) do
       System.put_env("APPSIGNAL_WORKING_DIR_PATH", config[:working_dir_path])

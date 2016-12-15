@@ -146,6 +146,7 @@ defmodule AppsignalConfigTest do
     test "send_params" do
       add_to_application_env(:send_params, true)
       assert valid_configuration |> Map.put(:send_params, true) == init_config
+      assert "true" == System.get_env("APPSIGNAL_SEND_PARAMS")
     end
 
     test "skip_session_data" do
