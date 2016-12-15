@@ -22,6 +22,7 @@ defmodule AppsignalConfigTest do
        APPSIGNAL_HTTP_PROXY
        APPSIGNAL_IGNORE_ACTIONS
        APPSIGNAL_IGNORE_ERRORS
+       APPSIGNAL_LOG
        APPSIGNAL_PUSH_API_ENDPOINT
        APPSIGNAL_PUSH_API_KEY
        APPSIGNAL_RUNNING_IN_CONTAINER
@@ -240,6 +241,11 @@ defmodule AppsignalConfigTest do
       System.put_env("APPSIGNAL_ENABLE_HOST_METRICS", "true")
       assert valid_configuration |> Map.put(:enable_host_metrics, true) == init_config
       assert "true" == System.get_env("APPSIGNAL_ENABLE_HOST_METRICS")
+    end
+
+    test "log" do
+      System.put_env("APPSIGNAL_LOG", "stdout")
+      assert valid_configuration |> Map.put(:log, "stdout") == init_config
     end
 
     test "endpoint" do
