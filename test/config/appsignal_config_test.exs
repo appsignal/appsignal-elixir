@@ -31,8 +31,8 @@ defmodule AppsignalConfigTest do
        APPSIGNAL_WORKING_DIR_PATH
        APP_REVISION
      ) |> Enum.each(fn(key) ->
-         System.delete_env(key)
-       end)
+       System.delete_env(key)
+     end)
   end
 
   test "unconfigured" do
