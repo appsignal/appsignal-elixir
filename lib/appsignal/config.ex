@@ -127,7 +127,7 @@ defmodule Appsignal.Config do
     System.put_env("APPSIGNAL_ACTIVE", Atom.to_string(config[:active]))
     System.put_env("APPSIGNAL_APP_PATH", List.to_string(:code.priv_dir(:appsignal))) # FIXME - app_path should not be necessary
     System.put_env("APPSIGNAL_AGENT_PATH", List.to_string(:code.priv_dir(:appsignal)))
-    System.put_env("APPSIGNAL_APP_ENV", Atom.to_string(config[:env]))
+    System.put_env("APPSIGNAL_ENVIRONMENT", Atom.to_string(config[:env]))
     System.put_env("APPSIGNAL_AGENT_VERSION", @agent_version)
     System.put_env("APPSIGNAL_LANGUAGE_INTEGRATION_VERSION", "elixir-" <> @language_integration_version)
     System.put_env("APPSIGNAL_DEBUG_LOGGING", Atom.to_string(config[:debug]))
