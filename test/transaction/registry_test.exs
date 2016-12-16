@@ -1,5 +1,6 @@
 defmodule AppsignalTransactionRegistryTest do
   use ExUnit.Case
+  import Mock
 
   alias Appsignal.{Transaction, TransactionRegistry}
 
@@ -37,6 +38,13 @@ defmodule AppsignalTransactionRegistryTest do
 
   end
 
+  test_with_mock "lookup returns nil if appsignal is not started", Appsignal, [], [
+    started?: fn() -> false end
+  ] do
+    transaction = %Transaction{id: "xx"}
+    TransactionRegistry.register(transaction)
+    assert nil == TransactionRegistry.lookup(self)
+  end
 
   test "delete entry by transaction" do
     transaction = %Transaction{id: "asdf"}

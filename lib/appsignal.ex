@@ -50,6 +50,10 @@ defmodule Appsignal do
     Supervisor.start_link(children, [strategy: :one_for_one, name: Appsignal.Supervisor])
   end
 
+  def started? do
+    Application.get_application(Appsignal) != nil
+  end
+
   @doc """
   Application callback function
   """
