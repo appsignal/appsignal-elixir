@@ -61,7 +61,7 @@ defmodule Appsignal.Config do
     "APPSIGNAL_PUSH_API_KEY" => :push_api_key,
     "APPSIGNAL_APP_NAME" => :name,
     "APP_REVISION" => :revision,
-    "APPSIGNAL_ENVIRONMENT" => :env,
+    "APPSIGNAL_APP_ENV" => :env,
     "APPSIGNAL_PUSH_API_ENDPOINT" => :endpoint,
     "APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH" => :frontend_error_catching_path,
     "APPSIGNAL_FILTER_PARAMETERS" => :filter_parameters,
@@ -79,7 +79,7 @@ defmodule Appsignal.Config do
 
   @string_keys ~w(APPSIGNAL_PUSH_API_KEY APPSIGNAL_PUSH_API_ENDPOINT APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH APPSIGNAL_HTTP_PROXY APPSIGNAL_LOG APPSIGNAL_LOG_PATH APPSIGNAL_WORKING_DIR_PATH APP_REVISION)
   @bool_keys ~w(APPSIGNAL_ACTIVE APPSIGNAL_DEBUG APPSIGNAL_INSTRUMENT_NET_HTTP APPSIGNAL_ENABLE_FRONTEND_ERROR_CATCHING APPSIGNAL_ENABLE_ALLOCATION_TRACKING APPSIGNAL_ENABLE_GC_INSTRUMENTATION APPSIGNAL_RUNNING_IN_CONTAINER APPSIGNAL_ENABLE_HOST_METRICS APPSIGNAL_SKIP_SESSION_DATA)
-  @atom_keys ~w(APPSIGNAL_APP_NAME APPSIGNAL_ENVIRONMENT)
+  @atom_keys ~w(APPSIGNAL_APP_NAME APPSIGNAL_APP_ENV)
   @string_list_keys ~w(APPSIGNAL_FILTER_PARAMETERS APPSIGNAL_IGNORE_ACTIONS APPSIGNAL_IGNORE_ERRORS)
 
   defp load_environment(config, list, converter) do
@@ -127,7 +127,7 @@ defmodule Appsignal.Config do
     System.put_env("APPSIGNAL_ACTIVE", Atom.to_string(config[:active]))
     System.put_env("APPSIGNAL_APP_PATH", List.to_string(:code.priv_dir(:appsignal))) # FIXME - app_path should not be necessary
     System.put_env("APPSIGNAL_AGENT_PATH", List.to_string(:code.priv_dir(:appsignal)))
-    System.put_env("APPSIGNAL_ENVIRONMENT", Atom.to_string(config[:env]))
+    System.put_env("APPSIGNAL_APP_ENV", Atom.to_string(config[:env]))
     System.put_env("APPSIGNAL_AGENT_VERSION", @agent_version)
     System.put_env("APPSIGNAL_LANGUAGE_INTEGRATION_VERSION", "elixir-" <> @language_integration_version)
     System.put_env("APPSIGNAL_DEBUG_LOGGING", Atom.to_string(config[:debug]))
