@@ -79,10 +79,12 @@ defmodule Appsignal.TransactionRegistry do
   def handle_call({:remove, transaction}, _from, state) do
     reply =
       case :ets.match(@table, {:'$1', transaction}) do
-        [[pid] | _] ->
-          true = :ets.delete(@table, pid)
-          true = :ets.insert(@table, {pid, :removed})
-          Process.send_after(self(), {:delete, pid}, 5000)
+        [[_pid] | _] = pids ->
+          for [pid] <- pids do
+            true = :ets.delete(@table, pid)
+            true = :ets.insert(@table, {pid, :removed})
+            Process.send_after(self(), {:delete, pid}, 5000)
+          end
           :ok
         [] ->
           {:error, :not_found}
