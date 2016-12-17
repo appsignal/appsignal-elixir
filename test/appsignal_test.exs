@@ -17,6 +17,10 @@ defmodule AppsignalTest do
     Appsignal.add_distribution_value("dist_key", 10)
   end
 
+  test "started?" do
+    assert Appsignal.started?
+  end
+
   test "Agent environment variables" do
     System.put_env("APPSIGNAL_ENVIRONMENT", "test")
     Application.put_env(:appsignal, :config, env: :test)

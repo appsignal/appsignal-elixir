@@ -1,5 +1,6 @@
 defmodule AppsignalTransactionRegistryTest do
   use ExUnit.Case
+  import Mock
 
   alias Appsignal.{Transaction, TransactionRegistry}
 
@@ -13,7 +14,7 @@ defmodule AppsignalTransactionRegistryTest do
 
 
   test "lookup returns nil after process has ended" do
-    transaction = %Transaction{id: "xx"}
+    transaction = %Transaction{id: Transaction.generate_id()}
 
     pid = spawn(fn() ->
       TransactionRegistry.register(transaction)
@@ -37,9 +38,16 @@ defmodule AppsignalTransactionRegistryTest do
 
   end
 
+  test_with_mock "lookup returns nil if appsignal is not started", Appsignal, [], [
+    started?: fn() -> false end
+  ] do
+    transaction = %Transaction{id: Transaction.generate_id()}
+    TransactionRegistry.register(transaction)
+    assert nil == TransactionRegistry.lookup(self)
+  end
 
   test "delete entry by transaction" do
-    transaction = %Transaction{id: "asdf"}
+    transaction = %Transaction{id: Transaction.generate_id()}
     TransactionRegistry.register(transaction)
     :ok = TransactionRegistry.remove_transaction(transaction)
     {:error, :not_found} = TransactionRegistry.remove_transaction(transaction)

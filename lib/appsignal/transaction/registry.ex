@@ -43,13 +43,14 @@ defmodule Appsignal.TransactionRegistry do
   """
   @spec lookup(pid, boolean) :: Transaction.t | nil
   def lookup(pid, return_removed \\ false) do
-    case :ets.lookup(@table, pid) do
+    case Appsignal.started? && :ets.lookup(@table, pid) do
       [{^pid, :removed}] ->
         case return_removed do
           false -> nil
           true -> :removed
         end
       [{^pid, transaction}] -> transaction
+      false -> nil
       [] -> nil
     end
   end
@@ -78,10 +79,12 @@ defmodule Appsignal.TransactionRegistry do
   def handle_call({:remove, transaction}, _from, state) do
     reply =
       case :ets.match(@table, {:'$1', transaction}) do
-        [[pid] | _] ->
-          true = :ets.delete(@table, pid)
-          true = :ets.insert(@table, {pid, :removed})
-          Process.send_after(self(), {:delete, pid}, 5000)
+        [[_pid] | _] = pids ->
+          for [pid] <- pids do
+            true = :ets.delete(@table, pid)
+            true = :ets.insert(@table, {pid, :removed})
+            Process.send_after(self(), {:delete, pid}, 5000)
+          end
           :ok
         [] ->
           {:error, :not_found}
