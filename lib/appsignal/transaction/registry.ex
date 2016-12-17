@@ -43,16 +43,15 @@ defmodule Appsignal.TransactionRegistry do
   """
   @spec lookup(pid, boolean) :: Transaction.t | nil
   def lookup(pid, return_removed \\ false) do
-    if Appsignal.started? do
-      case :ets.lookup(@table, pid) do
-        [{^pid, :removed}] ->
-          case return_removed do
-            false -> nil
-            true -> :removed
-          end
-        [{^pid, transaction}] -> transaction
-        [] -> nil
-      end
+    case Appsignal.started? && :ets.lookup(@table, pid) do
+      [{^pid, :removed}] ->
+        case return_removed do
+          false -> nil
+          true -> :removed
+        end
+      [{^pid, transaction}] -> transaction
+      false -> nil
+      [] -> nil
     end
   end
 
