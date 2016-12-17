@@ -57,7 +57,7 @@ defmodule Appsignal.Phoenix.PlugTest do
 
 
   defp get_session_conn() do
-    conn = conn(:get, "/")
+    conn(:get, "/")
     |> sign_conn()
     |> put_session("foo", "bar")
     |> Appsignal.Phoenix.Plug.call(%{})

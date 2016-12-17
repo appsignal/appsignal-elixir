@@ -2,7 +2,7 @@ defmodule Appsignal.Instrumentation.DecoratorsTest do
   use ExUnit.Case
   import Mock
 
-  alias Appsignal.{Transaction, TransactionRegistry}
+  alias Appsignal.Transaction
 
   defmodule Example do
     use Appsignal.Instrumentation.Decorators
