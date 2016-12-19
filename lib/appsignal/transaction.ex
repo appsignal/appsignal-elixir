@@ -351,18 +351,15 @@ defmodule Appsignal.Transaction do
     end
   end
 
-
-  alias Plug.Conn
-
   @doc """
   Set the request metadata, given a Plug.Conn.t.
   """
   @spec set_request_metadata(Transaction.t | nil, Plug.Conn.t) :: Transaction.t
-  def set_request_metadata(%Transaction{} = transaction, %Conn{} = conn) do
+  def set_request_metadata(%Transaction{} = transaction, %Plug.Conn{} = conn) do
 
     # preprocess conn
     conn = conn
-    |> Conn.fetch_query_params
+    |> Plug.Conn.fetch_query_params
 
     # collect sample data
     transaction
@@ -398,7 +395,7 @@ defmodule Appsignal.Transaction do
   end
 
   @doc """
-  Given the transaction and a %PlugConn{}, try to set the Phoenix controller module / action in the transaction.
+  Given the transaction and a %Plug.Conn{}, try to set the Phoenix controller module / action in the transaction.
   """
   def try_set_action(transaction, conn) do
     try do
