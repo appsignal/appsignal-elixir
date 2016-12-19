@@ -4,6 +4,7 @@ defmodule AppsignalErrorHandlerTest do
   """
 
   use ExUnit.Case, async: false
+  use Plug.Test
   import Mock
 
   alias Appsignal.Transaction
@@ -52,7 +53,7 @@ defmodule AppsignalErrorHandlerTest do
     message = "bad argument in arithmetic expression"
     stacktrace = System.stacktrace
     metadata = %{foo: "bar"}
-    conn = %Plug.Conn{peer: {{127, 0, 0, 1}, 12345}}
+    conn = conn(:get, "/test/123")
 
     Appsignal.ErrorHandler.submit_transaction(
       transaction,
