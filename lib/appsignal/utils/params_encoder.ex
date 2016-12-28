@@ -27,7 +27,8 @@ defmodule Appsignal.Utils.ParamsEncoder do
   def preprocess(value) when is_list(value) do
     Enum.map(value, &preprocess/1)
   end
-  def preprocess(value) when is_tuple(value), do: "#{inspect value}"
+  def preprocess(value) when is_tuple(value) or is_pid(value)
+                             or is_reference(value), do: "#{inspect value}"
   def preprocess(nil), do: nil
   def preprocess(value), do: value
 

@@ -22,6 +22,11 @@ defmodule Appsignal.Utils.ParamsEncoderTest do
   test "weird values" do
     assert %{"1" => "{}"} == ParamsEncoder.preprocess(%{1 => {} })
     assert %{:a => "{:error, :foo}"} == ParamsEncoder.preprocess(%{:a => {:error, :foo} })
+
+    assert %{:a => inspect self()} == ParamsEncoder.preprocess(%{:a => self()})
+
+    ref = make_ref()
+    assert %{:a => inspect ref} == ParamsEncoder.preprocess(%{:a => ref})
   end
 
 end
