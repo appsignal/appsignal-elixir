@@ -11,6 +11,7 @@
 #include <appsignal_extension.h>
 
 static ErlNifResourceType *appsignal_transaction_type = NULL;
+static ErlNifResourceType *appsignal_data_type = NULL;
 
 typedef struct {
   appsignal_transaction_t *transaction;
@@ -409,6 +410,7 @@ static ERL_NIF_TERM _add_distribution_value(ErlNifEnv* env, int argc, const ERL_
 static int on_load(ErlNifEnv* env, void** UNUSED(priv), ERL_NIF_TERM UNUSED(info))
 {
     ErlNifResourceType *transaction_resource_type;
+    ErlNifResourceType *data_resource_type;
 
     transaction_resource_type = enif_open_resource_type(
         env,
@@ -418,10 +420,21 @@ static int on_load(ErlNifEnv* env, void** UNUSED(priv), ERL_NIF_TERM UNUSED(info
         ERL_NIF_RT_CREATE,
         NULL
     );
-    if (!transaction_resource_type) {
+
+    data_resource_type = enif_open_resource_type(
+        env,
+        "appsignal_nif",
+        "appsignal_data_type",
+        NULL /* TODO: destruct */,
+        ERL_NIF_RT_CREATE,
+        NULL
+    );
+
+    if (!transaction_resource_type || !data_resource_type) {
       return -1;
     }
     appsignal_transaction_type = transaction_resource_type;
+    appsignal_data_type = data_resource_type;
 
     return 0;
 }
