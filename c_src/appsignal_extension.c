@@ -183,7 +183,8 @@ static ERL_NIF_TERM _record_event(ErlNifEnv* env, int argc, const ERL_NIF_TERM a
 static ERL_NIF_TERM _set_error(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     transaction_ptr *ptr;
-    ErlNifBinary error, message, backtrace;
+    ErlNifBinary error, message;
+    data_ptr *data_ptr;
 
     if (argc != 4) {
       return enif_make_badarg(env);
@@ -192,20 +193,20 @@ static ERL_NIF_TERM _set_error(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv
       return enif_make_badarg(env);
     }
     if(!enif_inspect_iolist_as_binary(env, argv[1], &error)) {
-        return enif_make_badarg(env);
+      return enif_make_badarg(env);
     }
     if(!enif_inspect_iolist_as_binary(env, argv[2], &message)) {
-        return enif_make_badarg(env);
+      return enif_make_badarg(env);
     }
-    if(!enif_inspect_iolist_as_binary(env, argv[3], &backtrace)) {
-        return enif_make_badarg(env);
+    if(!enif_get_resource(env, argv[3], appsignal_data_type, (void**) &data_ptr)) {
+      return enif_make_badarg(env);
     }
 
     appsignal_set_transaction_error(
         ptr->transaction,
         StringValueCStr(error),
         StringValueCStr(message),
-        StringValueCStr(backtrace)
+        data_ptr->data
     );
 
     return enif_make_atom(env, "ok");
