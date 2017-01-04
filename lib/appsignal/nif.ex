@@ -98,6 +98,10 @@ defmodule Appsignal.Nif do
     _add_distribution_value(key, value)
   end
 
+  def data_map_new do
+    _data_map_new
+  end
+
   def _start do
     exit(:nif_library_not_loaded)
   end
@@ -159,6 +163,10 @@ defmodule Appsignal.Nif do
   end
 
   def _add_distribution_value(_key, _value) do
+    exit(:nif_library_not_loaded)
+  end
+
+  def _data_map_new do
     exit(:nif_library_not_loaded)
   end
 end

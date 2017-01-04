@@ -17,6 +17,9 @@ typedef struct {
   appsignal_transaction_t *transaction;
 } transaction_ptr;
 
+typedef struct {
+  appsignal_data_t *data;
+} data_ptr;
 
 static ERL_NIF_TERM
 make_ok_tuple(ErlNifEnv *env, ERL_NIF_TERM value)
@@ -407,6 +410,22 @@ static ERL_NIF_TERM _add_distribution_value(ErlNifEnv* env, int argc, const ERL_
     return enif_make_atom(env, "ok");
 }
 
+static ERL_NIF_TERM _data_map_new(ErlNifEnv* env, int UNUSED(argc), const ERL_NIF_TERM UNUSED(argv[])) {
+  data_ptr *ptr;
+  ERL_NIF_TERM data_ref;
+
+  ptr = enif_alloc_resource(appsignal_data_type, sizeof(data_ptr));
+  if(!ptr)
+    return make_error_tuple(env, "no_memory");
+
+  ptr->data = appsignal_data_map_new();
+
+  data_ref = enif_make_resource(env, ptr);
+  enif_release_resource(ptr);
+
+  return make_ok_tuple(env, data_ref);
+}
+
 static int on_load(ErlNifEnv* env, void** UNUSED(priv), ERL_NIF_TERM UNUSED(info))
 {
     ErlNifResourceType *transaction_resource_type;
@@ -466,7 +485,8 @@ static ErlNifFunc nif_funcs[] =
     {"_complete", 1, _complete, 0},
     {"_set_gauge", 2, _set_gauge, 0},
     {"_increment_counter", 2, _increment_counter, 0},
-    {"_add_distribution_value", 2, _add_distribution_value, 0}
+    {"_add_distribution_value", 2, _add_distribution_value, 0},
+    {"_data_map_new", 0, _data_map_new, 0}
 };
 
 ERL_NIF_INIT(Elixir.Appsignal.Nif, nif_funcs, on_load, on_reload, on_upgrade, NULL)
