@@ -408,9 +408,9 @@ static ERL_NIF_TERM _add_distribution_value(ErlNifEnv* env, int argc, const ERL_
 
 static int on_load(ErlNifEnv* env, void** UNUSED(priv), ERL_NIF_TERM UNUSED(info))
 {
-    ErlNifResourceType *rt;
+    ErlNifResourceType *transaction_resource_type;
 
-    rt = enif_open_resource_type(
+    transaction_resource_type = enif_open_resource_type(
         env,
         "appsignal_nif",
         "appsignal_transaction_type",
@@ -418,10 +418,10 @@ static int on_load(ErlNifEnv* env, void** UNUSED(priv), ERL_NIF_TERM UNUSED(info
         ERL_NIF_RT_CREATE,
         NULL
     );
-    if (!rt) {
+    if (!transaction_resource_type) {
       return -1;
     }
-    appsignal_transaction_type = rt;
+    appsignal_transaction_type = transaction_resource_type;
 
     return 0;
 }
