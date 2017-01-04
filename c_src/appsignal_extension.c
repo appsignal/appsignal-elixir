@@ -75,7 +75,8 @@ static ERL_NIF_TERM _start_transaction(ErlNifEnv* env, int argc, const ERL_NIF_T
 
     ptr->transaction = appsignal_start_transaction(
         StringValueCStr(transaction_id),
-        StringValueCStr(namespace)
+        StringValueCStr(namespace),
+        0
     );
 
     transaction_ref = enif_make_resource(env, ptr);
@@ -95,7 +96,7 @@ static ERL_NIF_TERM _start_event(ErlNifEnv* env, int argc, const ERL_NIF_TERM ar
       return enif_make_badarg(env);
     }
 
-    appsignal_start_event(ptr->transaction);
+    appsignal_start_event(ptr->transaction, 0);
 
     return enif_make_atom(env, "ok");
 }
@@ -130,7 +131,8 @@ static ERL_NIF_TERM _finish_event(ErlNifEnv* env, int argc, const ERL_NIF_TERM a
         StringValueCStr(name),
         StringValueCStr(title),
         StringValueCStr(body),
-        bodyFormat
+        bodyFormat,
+        0
     );
 
     return enif_make_atom(env, "ok");
@@ -171,7 +173,8 @@ static ERL_NIF_TERM _record_event(ErlNifEnv* env, int argc, const ERL_NIF_TERM a
         StringValueCStr(title),
         StringValueCStr(body),
         duration,
-        bodyFormat
+        bodyFormat,
+        0
     );
 
     return enif_make_atom(env, "ok");
@@ -321,7 +324,7 @@ static ERL_NIF_TERM _finish(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
       return enif_make_badarg(env);
     }
 
-    sample = appsignal_finish_transaction(ptr->transaction);
+    sample = appsignal_finish_transaction(ptr->transaction, 0);
 
     if (sample == 1) {
       return enif_make_atom(env, "sample");
