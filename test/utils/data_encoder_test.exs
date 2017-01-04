@@ -31,6 +31,14 @@ defmodule Appsignal.Utils.DataEncoderTest do
     assert {:ok, '{"foo":3.14159}'} == Nif.data_to_json(resource)
   end
 
+  test "encode a map with a boolean atom" do
+    resource = DataEncoder.encode(%{foo: true})
+    assert {:ok, '{"foo":true}'} == Nif.data_to_json(resource)
+
+    resource = DataEncoder.encode(%{foo: false})
+    assert {:ok, '{"foo":false}'} == Nif.data_to_json(resource)
+  end
+
   test "encode a map with a non-string value" do
     resource = DataEncoder.encode(%{foo: :bar})
     assert {:ok, '{"foo":"bar"}'} == Nif.data_to_json(resource)
