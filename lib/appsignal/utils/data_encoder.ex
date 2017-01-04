@@ -11,10 +11,13 @@ defmodule Appsignal.Utils.DataEncoder do
     resource
   end
 
-  def encode(resource, {key, value}) when is_binary(key) do
+  def encode(resource, {key, value}) when not is_binary(key) do
+    encode(resource, {to_string(key), value})
+  end
+  def encode(resource, {key, value}) when is_binary(value) do
     Nif.data_set_string(resource, key, value)
   end
   def encode(resource, {key, value}) do
-    encode(resource, {to_string(key), value})
+    encode(resource, {key, to_string(value)})
   end
 end

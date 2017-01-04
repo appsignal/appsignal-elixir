@@ -20,4 +20,9 @@ defmodule Appsignal.Utils.DataEncoderTest do
     resource = DataEncoder.encode(%{1 => "bar"})
     assert {:ok, '{"1":"bar"}'} == Nif.data_to_json(resource)
   end
+
+  test "encode a map with a non-string value" do
+    resource = DataEncoder.encode(%{foo: :bar})
+    assert {:ok, '{"foo":"bar"}'} == Nif.data_to_json(resource)
+  end
 end
