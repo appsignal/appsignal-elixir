@@ -223,8 +223,7 @@ static ERL_NIF_TERM _set_sample_data(ErlNifEnv* env, int argc, const ERL_NIF_TER
     if(!enif_inspect_iolist_as_binary(env, argv[1], &key)) {
       return enif_make_badarg(env);
     }
-    if(!enif_get_resource(env, argv[2], appsignal_data_type, (void**) &data_ptr))
-    {
+    if(!enif_get_resource(env, argv[2], appsignal_data_type, (void**) &data_ptr)) {
       return enif_make_badarg(env);
     }
 
@@ -428,6 +427,28 @@ static ERL_NIF_TERM _data_map_new(ErlNifEnv* env, int UNUSED(argc), const ERL_NI
   return make_ok_tuple(env, data_ref);
 }
 
+static ERL_NIF_TERM _data_set_string(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
+  data_ptr *ptr;
+  ErlNifBinary key, value;
+
+  if (argc != 3) {
+    return enif_make_badarg(env);
+  }
+  if(!enif_get_resource(env, argv[0], appsignal_data_type, (void**) &ptr)) {
+    return enif_make_badarg(env);
+  }
+  if(!enif_inspect_iolist_as_binary(env, argv[1], &key)) {
+    return enif_make_badarg(env);
+  }
+  if(!enif_inspect_iolist_as_binary(env, argv[2], &value)) {
+    return enif_make_badarg(env);
+  }
+
+  appsignal_data_map_set_string(ptr->data, StringValueCStr(key), StringValueCStr(value));
+
+  return enif_make_atom(env, "ok");
+}
+
 static int on_load(ErlNifEnv* env, void** UNUSED(priv), ERL_NIF_TERM UNUSED(info))
 {
     ErlNifResourceType *transaction_resource_type;
@@ -488,7 +509,8 @@ static ErlNifFunc nif_funcs[] =
     {"_set_gauge", 2, _set_gauge, 0},
     {"_increment_counter", 2, _increment_counter, 0},
     {"_add_distribution_value", 2, _add_distribution_value, 0},
-    {"_data_map_new", 0, _data_map_new, 0}
+    {"_data_map_new", 0, _data_map_new, 0},
+    {"_data_set_string", 3, _data_set_string, 0}
 };
 
 ERL_NIF_INIT(Elixir.Appsignal.Nif, nif_funcs, on_load, on_reload, on_upgrade, NULL)
