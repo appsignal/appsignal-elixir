@@ -458,6 +458,29 @@ static ERL_NIF_TERM _data_set_string(ErlNifEnv* env, int argc, const ERL_NIF_TER
   return enif_make_atom(env, "ok");
 }
 
+static ERL_NIF_TERM _data_set_integer(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
+  data_ptr *ptr;
+  ErlNifBinary key;
+  long value;
+
+  if (argc != 3) {
+    return enif_make_badarg(env);
+  }
+  if(!enif_get_resource(env, argv[0], appsignal_data_type, (void**) &ptr)) {
+    return enif_make_badarg(env);
+  }
+  if(!enif_inspect_iolist_as_binary(env, argv[1], &key)) {
+    return enif_make_badarg(env);
+  }
+  if(!enif_get_int64(env, argv[2], &value)) {
+    return enif_make_badarg(env);
+  }
+
+  appsignal_data_map_set_integer(ptr->data, StringValueCStr(key), value);
+
+  return enif_make_atom(env, "ok");
+}
+
 static ERL_NIF_TERM _data_to_json(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
   data_ptr *ptr;
   appsignal_string_t json;
@@ -535,6 +558,7 @@ static ErlNifFunc nif_funcs[] =
     {"_add_distribution_value", 2, _add_distribution_value, 0},
     {"_data_map_new", 0, _data_map_new, 0},
     {"_data_set_string", 3, _data_set_string, 0},
+    {"_data_set_integer", 3, _data_set_integer, 0},
     {"_data_to_json", 1, _data_to_json, 0}
 };
 
