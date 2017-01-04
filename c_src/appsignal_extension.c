@@ -351,6 +351,11 @@ static void destruct_appsignal_transaction(ErlNifEnv *UNUSED(env), void *arg) {
   appsignal_free_transaction(ptr->transaction);
 }
 
+static void destruct_appsignal_data(ErlNifEnv *UNUSED(env), void *arg) {
+  data_ptr *ptr = (data_ptr *)arg;
+  appsignal_free_data(ptr->data);
+}
+
 static ERL_NIF_TERM _set_gauge(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     ErlNifBinary key;
@@ -467,7 +472,7 @@ static int on_load(ErlNifEnv* env, void** UNUSED(priv), ERL_NIF_TERM UNUSED(info
         env,
         "appsignal_nif",
         "appsignal_data_type",
-        NULL /* TODO: destruct */,
+        destruct_appsignal_data,
         ERL_NIF_RT_CREATE,
         NULL
     );
