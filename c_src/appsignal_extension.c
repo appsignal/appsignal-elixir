@@ -67,7 +67,7 @@ static ERL_NIF_TERM _start_transaction(ErlNifEnv* env, int argc, const ERL_NIF_T
 
     ptr = enif_alloc_resource(appsignal_transaction_type, sizeof(transaction_ptr));
     if(!ptr)
-	    return make_error_tuple(env, "no_memory");
+      return make_error_tuple(env, "no_memory");
 
     ptr->transaction = appsignal_start_transaction(
         StringValueCStr(transaction_id),
@@ -88,7 +88,7 @@ static ERL_NIF_TERM _start_event(ErlNifEnv* env, int argc, const ERL_NIF_TERM ar
       return enif_make_badarg(env);
     }
     if(!enif_get_resource(env, argv[0], appsignal_transaction_type, (void**) &ptr)) {
-	    return enif_make_badarg(env);
+      return enif_make_badarg(env);
     }
 
     appsignal_start_event(ptr->transaction);
@@ -106,7 +106,7 @@ static ERL_NIF_TERM _finish_event(ErlNifEnv* env, int argc, const ERL_NIF_TERM a
       return enif_make_badarg(env);
     }
     if(!enif_get_resource(env, argv[0], appsignal_transaction_type, (void**) &ptr)) {
-	    return enif_make_badarg(env);
+      return enif_make_badarg(env);
     }
     if(!enif_inspect_iolist_as_binary(env, argv[1], &name)) {
         return enif_make_badarg(env);
@@ -143,7 +143,7 @@ static ERL_NIF_TERM _record_event(ErlNifEnv* env, int argc, const ERL_NIF_TERM a
       return enif_make_badarg(env);
     }
     if(!enif_get_resource(env, argv[0], appsignal_transaction_type, (void**) &ptr)) {
-	    return enif_make_badarg(env);
+      return enif_make_badarg(env);
     }
     if(!enif_inspect_iolist_as_binary(env, argv[1], &name)) {
         return enif_make_badarg(env);
@@ -182,7 +182,7 @@ static ERL_NIF_TERM _set_error(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv
       return enif_make_badarg(env);
     }
     if(!enif_get_resource(env, argv[0], appsignal_transaction_type, (void**) &ptr)) {
-	    return enif_make_badarg(env);
+      return enif_make_badarg(env);
     }
     if(!enif_inspect_iolist_as_binary(env, argv[1], &error)) {
         return enif_make_badarg(env);
@@ -213,7 +213,7 @@ static ERL_NIF_TERM _set_sample_data(ErlNifEnv* env, int argc, const ERL_NIF_TER
       return enif_make_badarg(env);
     }
     if(!enif_get_resource(env, argv[0], appsignal_transaction_type, (void**) &ptr)) {
-	    return enif_make_badarg(env);
+      return enif_make_badarg(env);
     }
     if(!enif_inspect_iolist_as_binary(env, argv[1], &key)) {
         return enif_make_badarg(env);
@@ -240,7 +240,7 @@ static ERL_NIF_TERM _set_action(ErlNifEnv* env, int argc, const ERL_NIF_TERM arg
       return enif_make_badarg(env);
     }
     if(!enif_get_resource(env, argv[0], appsignal_transaction_type, (void**) &ptr)) {
-	    return enif_make_badarg(env);
+      return enif_make_badarg(env);
     }
     if(!enif_inspect_iolist_as_binary(env, argv[1], &action)) {
         return enif_make_badarg(env);
@@ -263,7 +263,7 @@ static ERL_NIF_TERM _set_queue_start(ErlNifEnv* env, int argc, const ERL_NIF_TER
       return enif_make_badarg(env);
     }
     if(!enif_get_resource(env, argv[0], appsignal_transaction_type, (void**) &ptr)) {
-	    return enif_make_badarg(env);
+      return enif_make_badarg(env);
     }
     if(!enif_get_long(env, argv[1], &start)) {
         return enif_make_badarg(env);
@@ -286,7 +286,7 @@ static ERL_NIF_TERM _set_meta_data(ErlNifEnv* env, int argc, const ERL_NIF_TERM 
       return enif_make_badarg(env);
     }
     if(!enif_get_resource(env, argv[0], appsignal_transaction_type, (void**) &ptr)) {
-	    return enif_make_badarg(env);
+      return enif_make_badarg(env);
     }
     if(!enif_inspect_iolist_as_binary(env, argv[1], &key)) {
         return enif_make_badarg(env);
@@ -313,7 +313,7 @@ static ERL_NIF_TERM _finish(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
       return enif_make_badarg(env);
     }
     if(!enif_get_resource(env, argv[0], appsignal_transaction_type, (void**) &ptr)) {
-	    return enif_make_badarg(env);
+      return enif_make_badarg(env);
     }
 
     sample = appsignal_finish_transaction(ptr->transaction);
@@ -333,7 +333,7 @@ static ERL_NIF_TERM _complete(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[
       return enif_make_badarg(env);
     }
     if(!enif_get_resource(env, argv[0], appsignal_transaction_type, (void**) &ptr)) {
-	    return enif_make_badarg(env);
+      return enif_make_badarg(env);
     }
 
     appsignal_complete_transaction(ptr->transaction);
@@ -414,12 +414,12 @@ static int on_load(ErlNifEnv* env, void** UNUSED(priv), ERL_NIF_TERM UNUSED(info
         env,
         "appsignal_nif",
         "appsignal_transaction_type",
-				destruct_appsignal_transaction,
+        destruct_appsignal_transaction,
         ERL_NIF_RT_CREATE,
         NULL
     );
     if (!rt) {
-	    return -1;
+      return -1;
     }
     appsignal_transaction_type = rt;
 
