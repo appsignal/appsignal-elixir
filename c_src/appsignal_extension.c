@@ -207,7 +207,8 @@ static ERL_NIF_TERM _set_error(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv
 static ERL_NIF_TERM _set_sample_data(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     transaction_ptr *ptr;
-    ErlNifBinary key, payload;
+    ErlNifBinary key;
+    appsignal_data_t *payload_data;
 
     if (argc != 3) {
       return enif_make_badarg(env);
@@ -218,14 +219,13 @@ static ERL_NIF_TERM _set_sample_data(ErlNifEnv* env, int argc, const ERL_NIF_TER
     if(!enif_inspect_iolist_as_binary(env, argv[1], &key)) {
         return enif_make_badarg(env);
     }
-    if(!enif_inspect_iolist_as_binary(env, argv[2], &payload)) {
-        return enif_make_badarg(env);
-    }
+
+    payload_data = appsignal_data_map_new();
 
     appsignal_set_transaction_sample_data(
         ptr->transaction,
         StringValueCStr(key),
-        StringValueCStr(payload)
+        payload_data
     );
 
     return enif_make_atom(env, "ok");
