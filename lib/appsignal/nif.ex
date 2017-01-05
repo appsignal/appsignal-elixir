@@ -118,6 +118,10 @@ defmodule Appsignal.Nif do
     _data_set_boolean(resource, key, value)
   end
 
+  def data_set_nil(resource, key) do
+    _data_set_nil(resource, key)
+  end
+
   def data_to_json(resource) do
     _data_to_json(resource)
   end
@@ -203,6 +207,10 @@ defmodule Appsignal.Nif do
   end
 
   def _data_set_boolean(_resource, _key, _value) do
+    exit(:nif_library_not_loaded)
+  end
+
+  def _data_set_nil(_resource, _key) do
     exit(:nif_library_not_loaded)
   end
 
