@@ -122,6 +122,10 @@ defmodule Appsignal.Nif do
     _data_set_float(resource, key, value)
   end
 
+  def data_set_float(resource, value) do
+    _data_set_float(resource, value)
+  end
+
   def data_set_boolean(resource, key, value) do
     _data_set_boolean(resource, key, value)
   end
@@ -227,6 +231,10 @@ defmodule Appsignal.Nif do
   end
 
   def _data_set_float(_resource, _key, _value) do
+    exit(:nif_library_not_loaded)
+  end
+
+  def _data_set_float(_resource, _value) do
     exit(:nif_library_not_loaded)
   end
 

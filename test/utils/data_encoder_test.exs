@@ -68,4 +68,9 @@ defmodule Appsignal.Utils.DataEncoderTest do
     resource = DataEncoder.encode([1])
     assert {:ok, '[1]'} == Nif.data_to_json(resource)
   end
+
+  test "encode a list with an float item" do
+    resource = DataEncoder.encode([3.14159])
+    assert {:ok, '[3.14159]'} == Nif.data_to_json(resource)
+  end
 end
