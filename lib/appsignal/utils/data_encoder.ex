@@ -28,7 +28,7 @@ defmodule Appsignal.Utils.DataEncoder do
   def encode(resource, {key, value}) when is_float(value) do
     Nif.data_set_float(resource, key, value)
   end
-  def encode(resource, {key, value}) when is_map(value) do
+  def encode(resource, {key, value}) when is_map(value) or is_list(value) do
     Nif.data_set_data(resource, key, encode(value))
   end
   def encode(resource, {key, true}) do
