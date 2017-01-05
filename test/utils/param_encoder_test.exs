@@ -1,4 +1,4 @@
-defmodule ExampleStruct do
+defmodule ParamsEncoderExampleStruct do
   defstruct a: "b"
 end
 
@@ -12,7 +12,7 @@ defmodule Appsignal.Utils.ParamsEncoderTest do
     assert %{"a" => "b"} == ParamsEncoder.preprocess(%{"a" => "b"})
     assert %{:a => "b"} == ParamsEncoder.preprocess(%{:a => "b"})
     assert %{"{:weird, :key}" => "b"} == ParamsEncoder.preprocess(%{{:weird, :key} => "b"})
-    assert %{:a => "b"} == ParamsEncoder.preprocess(%ExampleStruct{})
+    assert %{:a => "b"} == ParamsEncoder.preprocess(%ParamsEncoderExampleStruct{})
   end
 
   test "deep nesting" do

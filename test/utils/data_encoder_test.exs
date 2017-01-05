@@ -1,4 +1,4 @@
-defmodule ExampleStruct do
+defmodule DataEncoderExampleStruct do
   defstruct foo: "bar"
 end
 
@@ -33,8 +33,8 @@ defmodule Appsignal.Utils.DataEncoderTest do
   end
 
   test "encode a map with a struct key and string value" do
-    resource = DataEncoder.encode(%{%ExampleStruct{} => "baz"})
-    assert {:ok, '{"%ExampleStruct{foo: \\"bar\\"}":"baz"}'} == Nif.data_to_json(resource)
+    resource = DataEncoder.encode(%{%DataEncoderExampleStruct{} => "baz"})
+    assert {:ok, '{"%DataEncoderExampleStruct{foo: \\"bar\\"}":"baz"}'} == Nif.data_to_json(resource)
   end
 
   test "encode a map with an integer value" do
@@ -124,7 +124,7 @@ defmodule Appsignal.Utils.DataEncoderTest do
   end
 
   test "encode a struct" do
-    resource = DataEncoder.encode(%ExampleStruct{})
+    resource = DataEncoder.encode(%DataEncoderExampleStruct{})
     assert {:ok, '{"foo":"bar"}'} == Nif.data_to_json(resource)
   end
 end
