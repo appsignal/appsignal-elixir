@@ -54,6 +54,10 @@ defmodule Appsignal.Nif do
     _finish_event(transaction_resource, name, title, body, body_format)
   end
 
+  def finish_event_data(transaction_resource, name, title, body, body_format) do
+    _finish_event_data(transaction_resource, name, title, body, body_format)
+  end
+
   def record_event(transaction_resource, name, title, body, duration, body_format) do
     _record_event(transaction_resource, name, title, body, duration, body_format)
   end
@@ -175,6 +179,10 @@ defmodule Appsignal.Nif do
   end
 
   def _finish_event(_transaction_resource, _name, _title, _body, _body_format) do
+    exit(:nif_library_not_loaded)
+  end
+
+  def _finish_event_data(_transaction_resource, _name, _title, _body, _body_format) do
     exit(:nif_library_not_loaded)
   end
 

@@ -138,6 +138,44 @@ static ERL_NIF_TERM _finish_event(ErlNifEnv* env, int argc, const ERL_NIF_TERM a
     return enif_make_atom(env, "ok");
 }
 
+static ERL_NIF_TERM _finish_event_data(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    transaction_ptr *ptr;
+    ErlNifBinary name, title;
+    int bodyFormat;
+    data_ptr *body;
+
+    if (argc != 5) {
+      return enif_make_badarg(env);
+    }
+    if(!enif_get_resource(env, argv[0], appsignal_transaction_type, (void**) &ptr)) {
+      return enif_make_badarg(env);
+    }
+    if(!enif_inspect_iolist_as_binary(env, argv[1], &name)) {
+      return enif_make_badarg(env);
+    }
+    if(!enif_inspect_iolist_as_binary(env, argv[2], &title)) {
+      return enif_make_badarg(env);
+    }
+    if(!enif_get_resource(env, argv[3], appsignal_data_type, (void**) &body)) {
+      return enif_make_badarg(env);
+    }
+    if(!enif_get_int(env, argv[4], &bodyFormat)) {
+      return enif_make_badarg(env);
+    }
+
+    appsignal_finish_event_data(
+        ptr->transaction,
+        StringValueCStr(name),
+        StringValueCStr(title),
+        body,
+        bodyFormat,
+        0
+    );
+
+    return enif_make_atom(env, "ok");
+}
+
 static ERL_NIF_TERM _record_event(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     transaction_ptr *ptr;
@@ -722,6 +760,7 @@ static ErlNifFunc nif_funcs[] =
     {"_start_transaction", 2, _start_transaction, 0},
     {"_start_event", 1, _start_event, 0},
     {"_finish_event", 5, _finish_event, 0},
+    {"_finish_event_data", 5, _finish_event_data, 0},
     {"_record_event", 6, _record_event, 0},
     {"_set_error", 4, _set_error, 0},
     {"_set_sample_data", 3, _set_sample_data, 0},

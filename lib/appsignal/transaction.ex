@@ -104,10 +104,16 @@ defmodule Appsignal.Transaction do
   - `body`: Body of the event, should not contain unique information per specific event (`select * from users where id=?`)
   - `body_format` Format of the event's body which can be used for sanitization, 0 for general and 1 for sql currently.
   """
-  @spec finish_event(Transaction.t | nil, String.t, String.t, String.t, integer) :: Transaction.t
+  @spec finish_event(Transaction.t | nil, String.t, String.t, any, integer) :: Transaction.t
   def finish_event(nil, _name, _title, _body, _body_format), do: nil
-  def finish_event(%Transaction{} = transaction, name, title, body, body_format) do
+  def finish_event(%Transaction{} = transaction, name, title, body, body_format) when is_binary(body) do
     :ok = Nif.finish_event(transaction.resource, name, title, body, body_format)
+    transaction
+  end
+
+  def finish_event(%Transaction{} = transaction, name, title, body, body_format) do
+    encoded_body = Appsignal.Utils.DataEncoder.encode(body)
+    :ok = Nif.finish_event_data(transaction.resource, name, title, encoded_body, body_format)
     transaction
   end
 

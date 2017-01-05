@@ -85,4 +85,12 @@ defmodule AppsignalTransactionTest do
     # complex
     assert ^transaction = Transaction.set_sample_data("key", %{values: %{1 => 2, 3 => 4}})
   end
+
+  test "finishing an event with a non-string body" do
+    transaction = Transaction.start("test4", :http_request)
+    assert %Transaction{} = transaction
+
+    assert ^transaction = Transaction.start_event(transaction)
+    assert ^transaction = Transaction.finish_event(transaction, "phoenix_controller_render", "phoenix_controller_render", %{format: "html", template: "index.html"}, 0)
+  end
 end
