@@ -55,6 +55,9 @@ defmodule Appsignal.Utils.DataEncoder do
   def encode(resource, false) do
     Nif.data_set_boolean(resource, 0)
   end
+  def encode(resource, nil) do
+    Nif.data_set_nil(resource)
+  end
   def encode(resource, value) do
     Nif.data_set_string(resource, value)
   end
