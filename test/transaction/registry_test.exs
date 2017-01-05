@@ -9,7 +9,7 @@ defmodule AppsignalTransactionRegistryTest do
 
     TransactionRegistry.register(transaction)
 
-    assert ^transaction = TransactionRegistry.lookup(self)
+    assert ^transaction = TransactionRegistry.lookup(self())
   end
 
 
@@ -18,7 +18,7 @@ defmodule AppsignalTransactionRegistryTest do
 
     pid = spawn(fn() ->
       TransactionRegistry.register(transaction)
-      assert ^transaction = TransactionRegistry.lookup(self)
+      assert ^transaction = TransactionRegistry.lookup(self())
       :timer.sleep(50)
     end)
 
@@ -43,7 +43,7 @@ defmodule AppsignalTransactionRegistryTest do
   ] do
     transaction = %Transaction{id: Transaction.generate_id()}
     TransactionRegistry.register(transaction)
-    assert nil == TransactionRegistry.lookup(self)
+    assert nil == TransactionRegistry.lookup(self())
   end
 
   test "delete entry by transaction" do

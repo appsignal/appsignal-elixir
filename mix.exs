@@ -22,7 +22,7 @@ defmodule Appsignal.Mixfile do
      homepage_url: "https://appsignal.com",
      elixir: "~> 1.0",
      compilers: compilers(Mix.env),
-     deps: deps,
+     deps: deps(),
      docs: [logo: "logo.png",
             extras: ["GettingStarted.md", "Phoenix.md", "Roadmap.md"]]
     ]
