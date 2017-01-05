@@ -5,6 +5,9 @@ defmodule Appsignal.Utils.DataEncoder do
 
   alias Appsignal.Nif
 
+  def encode(%{__struct__: _} = data) do
+    data |> Map.from_struct |> encode
+  end
   def encode(data) when is_map(data) do
     {:ok, resource} = Nif.data_map_new
     Enum.each(data, fn(item) -> encode(resource, item) end)

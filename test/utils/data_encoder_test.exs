@@ -1,3 +1,7 @@
+defmodule ExampleStruct do
+  defstruct foo: "bar"
+end
+
 defmodule Appsignal.Utils.DataEncoderTest do
   use ExUnit.Case
 
@@ -112,5 +116,10 @@ defmodule Appsignal.Utils.DataEncoderTest do
   test "encode a list with a list item" do
     resource = DataEncoder.encode(["foo", ["bar"]])
     assert {:ok, '["foo",["bar"]]'} == Nif.data_to_json(resource)
+  end
+
+  test "encode a struct" do
+    resource = DataEncoder.encode(%ExampleStruct{})
+    assert {:ok, '{"foo":"bar"}'} == Nif.data_to_json(resource)
   end
 end
