@@ -16,6 +16,9 @@ defmodule Appsignal.Utils.DataEncoder do
     resource
   end
 
+  def encode(resource, {key, value}) when is_map(key) do
+    encode(resource, {inspect(key), value})
+  end
   def encode(resource, {key, value}) when not is_binary(key) do
     encode(resource, {to_string(key), value})
   end
