@@ -443,23 +443,29 @@ static ERL_NIF_TERM _data_set_string(ErlNifEnv* env, int argc, const ERL_NIF_TER
   if(!enif_get_resource(env, argv[0], appsignal_data_type, (void**) &ptr)) {
     return enif_make_badarg(env);
   }
-  if (argc == 3) {
-    if(!enif_inspect_iolist_as_binary(env, argv[1], &key)) {
-      return enif_make_badarg(env);
-    }
-    if(!enif_inspect_iolist_as_binary(env, argv[2], &value)) {
-      return enif_make_badarg(env);
-    }
 
-    appsignal_data_map_set_string(ptr->data, StringValueCStr(key), StringValueCStr(value));
-  } else if (argc == 2) {
-    if(!enif_inspect_iolist_as_binary(env, argv[1], &value)) {
-      return enif_make_badarg(env);
-    }
+  switch(argc) {
+    case 3:
+      if(!enif_inspect_iolist_as_binary(env, argv[1], &key)) {
+        return enif_make_badarg(env);
+      }
+      if(!enif_inspect_iolist_as_binary(env, argv[2], &value)) {
+        return enif_make_badarg(env);
+      }
 
-    appsignal_data_array_append_string(ptr->data, StringValueCStr(value));
-  } else {
-    return enif_make_badarg(env);
+      appsignal_data_map_set_string(ptr->data, StringValueCStr(key), StringValueCStr(value));
+      break;
+
+    case 2:
+      if(!enif_inspect_iolist_as_binary(env, argv[1], &value)) {
+        return enif_make_badarg(env);
+      }
+
+      appsignal_data_array_append_string(ptr->data, StringValueCStr(value));
+      break;
+
+    default:
+      return enif_make_badarg(env);
   }
 
   return enif_make_atom(env, "ok");
@@ -668,13 +674,13 @@ static ErlNifFunc nif_funcs[] =
     {"_add_distribution_value", 2, _add_distribution_value, 0},
     {"_data_map_new", 0, _data_map_new, 0},
     {"_data_set_string", 3, _data_set_string, 0},
+    {"_data_set_string", 2, _data_set_string, 0},
     {"_data_set_integer", 3, _data_set_integer, 0},
     {"_data_set_float", 3, _data_set_float, 0},
     {"_data_set_boolean", 3, _data_set_boolean, 0},
     {"_data_set_nil", 2, _data_set_nil, 0},
     {"_data_set_data", 3, _data_set_data, 0},
     {"_data_list_new", 0, _data_list_new, 0},
-    {"_data_set_string", 2, _data_set_string, 0},
     {"_data_to_json", 1, _data_to_json, 0}
 };
 

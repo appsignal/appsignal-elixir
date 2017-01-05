@@ -106,6 +106,10 @@ defmodule Appsignal.Nif do
     _data_set_string(resource, key, value)
   end
 
+  def data_set_string(resource, value) do
+    _data_set_string(resource, value)
+  end
+
   def data_set_integer(resource, key, value) do
     _data_set_integer(resource, key, value)
   end
@@ -124,10 +128,6 @@ defmodule Appsignal.Nif do
 
   def data_set_data(resource, key, value) do
     _data_set_data(resource, key, value)
-  end
-
-  def data_set_string(resource, value) do
-    _data_set_string(resource, value)
   end
 
   def data_to_json(resource) do
@@ -210,6 +210,10 @@ defmodule Appsignal.Nif do
     exit(:nif_library_not_loaded)
   end
 
+  def _data_set_string(_resource, _value) do
+    exit(:nif_library_not_loaded)
+  end
+
   def _data_set_integer(_resource, _key, _value) do
     exit(:nif_library_not_loaded)
   end
@@ -231,10 +235,6 @@ defmodule Appsignal.Nif do
   end
 
   def _data_list_new do
-    exit(:nif_library_not_loaded)
-  end
-
-  def _data_set_string(_resource, _value) do
     exit(:nif_library_not_loaded)
   end
 
