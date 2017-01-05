@@ -12,6 +12,7 @@ defmodule Appsignal.Utils.DataEncoder do
   end
   def encode(data) when is_list(data) do
     {:ok, resource} = Nif.data_list_new
+    Enum.each(data, fn(item) -> encode(resource, item) end)
     resource
   end
 
@@ -41,5 +42,8 @@ defmodule Appsignal.Utils.DataEncoder do
   end
   def encode(resource, {key, value}) do
     encode(resource, {key, to_string(value)})
+  end
+  def encode(resource, value) do
+    Nif.data_set_string(resource, value)
   end
 end
