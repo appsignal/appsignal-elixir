@@ -130,6 +130,10 @@ defmodule Appsignal.Nif do
     _data_to_json(resource)
   end
 
+  def data_list_new do
+    _data_list_new
+  end
+
   def _start do
     exit(:nif_library_not_loaded)
   end
@@ -219,6 +223,10 @@ defmodule Appsignal.Nif do
   end
 
   def _data_set_data(_resource, _key, _value) do
+    exit(:nif_library_not_loaded)
+  end
+
+  def _data_list_new do
     exit(:nif_library_not_loaded)
   end
 

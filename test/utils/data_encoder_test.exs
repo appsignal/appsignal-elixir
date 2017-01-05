@@ -53,4 +53,9 @@ defmodule Appsignal.Utils.DataEncoderTest do
     resource = DataEncoder.encode(%{foo: :bar})
     assert {:ok, '{"foo":"bar"}'} == Nif.data_to_json(resource)
   end
+
+  test "encode an empty list" do
+    resource = DataEncoder.encode([])
+    assert {:ok, '[]'} == Nif.data_to_json(resource)
+  end
 end

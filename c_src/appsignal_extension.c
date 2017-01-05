@@ -568,6 +568,22 @@ static ERL_NIF_TERM _data_set_data(ErlNifEnv* env, int argc, const ERL_NIF_TERM 
   return enif_make_atom(env, "ok");
 }
 
+static ERL_NIF_TERM _data_list_new(ErlNifEnv* env, int UNUSED(argc), const ERL_NIF_TERM UNUSED(argv[])) {
+  data_ptr *ptr;
+  ERL_NIF_TERM data_ref;
+
+  ptr = enif_alloc_resource(appsignal_data_type, sizeof(data_ptr));
+  if(!ptr)
+    return make_error_tuple(env, "no_memory");
+
+  ptr->data = appsignal_data_array_new();
+
+  data_ref = enif_make_resource(env, ptr);
+  enif_release_resource(ptr);
+
+  return make_ok_tuple(env, data_ref);
+}
+
 static ERL_NIF_TERM _data_to_json(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
   data_ptr *ptr;
   appsignal_string_t json;
@@ -650,6 +666,7 @@ static ErlNifFunc nif_funcs[] =
     {"_data_set_boolean", 3, _data_set_boolean, 0},
     {"_data_set_nil", 2, _data_set_nil, 0},
     {"_data_set_data", 3, _data_set_data, 0},
+    {"_data_list_new", 0, _data_list_new, 0},
     {"_data_to_json", 1, _data_to_json, 0}
 };
 

@@ -5,9 +5,13 @@ defmodule Appsignal.Utils.DataEncoder do
 
   alias Appsignal.Nif
 
-  def encode(data) do
+  def encode(data) when is_map(data) do
     {:ok, resource} = Nif.data_map_new
     Enum.each(data, fn(item) -> encode(resource, item) end)
+    resource
+  end
+  def encode(data) when is_list(data) do
+    {:ok, resource} = Nif.data_list_new
     resource
   end
 
