@@ -19,11 +19,11 @@ defmodule Appsignal.Utils.DataEncoder do
     resource
   end
 
-  def encode(resource, {key, value}) when is_map(key) do
-    encode(resource, {inspect(key), value})
+  def encode(resource, {key, value}) when is_atom(key) do
+    encode(resource, {to_string(key), value})
   end
   def encode(resource, {key, value}) when not is_binary(key) do
-    encode(resource, {to_string(key), value})
+    encode(resource, {inspect(key), value})
   end
   def encode(resource, {key, value}) when is_binary(value) do
     Nif.data_set_string(resource, key, value)
