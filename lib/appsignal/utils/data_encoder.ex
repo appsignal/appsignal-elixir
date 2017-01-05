@@ -49,6 +49,12 @@ defmodule Appsignal.Utils.DataEncoder do
   def encode(resource, value) when is_float(value) do
     Nif.data_set_float(resource, value)
   end
+  def encode(resource, true) do
+    Nif.data_set_boolean(resource, 1)
+  end
+  def encode(resource, false) do
+    Nif.data_set_boolean(resource, 0)
+  end
   def encode(resource, value) do
     Nif.data_set_string(resource, value)
   end

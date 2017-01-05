@@ -73,4 +73,12 @@ defmodule Appsignal.Utils.DataEncoderTest do
     resource = DataEncoder.encode([3.14159])
     assert {:ok, '[3.14159]'} == Nif.data_to_json(resource)
   end
+
+  test "encode a list with a boolean atom" do
+    resource = DataEncoder.encode([true])
+    assert {:ok, '[true]'} == Nif.data_to_json(resource)
+
+    resource = DataEncoder.encode([false])
+    assert {:ok, '[false]'} == Nif.data_to_json(resource)
+  end
 end
