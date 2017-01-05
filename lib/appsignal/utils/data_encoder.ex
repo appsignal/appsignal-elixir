@@ -43,6 +43,9 @@ defmodule Appsignal.Utils.DataEncoder do
   def encode(resource, {key, value}) do
     encode(resource, {key, to_string(value)})
   end
+  def encode(resource, value) when is_integer(value) do
+    Nif.data_set_integer(resource, value)
+  end
   def encode(resource, value) do
     Nif.data_set_string(resource, value)
   end
