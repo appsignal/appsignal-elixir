@@ -53,19 +53,16 @@ defmodule AppsignalErrorHandlerTest do
     message = "bad argument in arithmetic expression"
     stacktrace = System.stacktrace
     metadata = %{foo: "bar"}
-    conn = conn(:get, "/test/123")
 
     Appsignal.ErrorHandler.submit_transaction(
       transaction,
       reason,
       message,
       stacktrace,
-      metadata,
-      conn
+      metadata
     )
 
     assert called Transaction.set_error(transaction, reason, message, stacktrace)
-    assert called Transaction.set_request_metadata(transaction, conn)
     assert called Transaction.set_meta_data(metadata)
     assert called Transaction.finish(transaction)
     assert called Transaction.complete(transaction)
