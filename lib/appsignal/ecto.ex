@@ -20,7 +20,7 @@ defmodule Appsignal.Ecto do
   def log(entry) do
 
     # See if we have a transaction registered for the current process
-    case TransactionRegistry.lookup(self) do
+    case TransactionRegistry.lookup(self()) do
       nil ->
         # skip
         :ok

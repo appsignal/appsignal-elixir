@@ -342,7 +342,7 @@ defmodule Appsignal.Transaction do
 
   # Lookup the current Appsignal transaction in the transaction registry.
   defp lookup() do
-    TransactionRegistry.lookup(self)
+    TransactionRegistry.lookup(self())
   end
 
   defimpl Inspect do
@@ -367,7 +367,7 @@ defmodule Appsignal.Transaction do
     |> Transaction.set_sample_data("environment", request_environment(conn))
 
     # Add session data
-    if not config[:skip_session_data] and conn.private[:plug_session_fetch] == :done do
+    if not config()[:skip_session_data] and conn.private[:plug_session_fetch] == :done do
       session_data = conn.private[:plug_session]
       transaction
       |> Transaction.set_sample_data("session_data", session_data)

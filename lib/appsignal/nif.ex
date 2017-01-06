@@ -35,11 +35,11 @@ defmodule Appsignal.Nif do
   end
 
   def start do
-    _start
+    _start()
   end
 
   def stop do
-    _stop
+    _stop()
   end
 
   def start_transaction(transaction_id, namespace) do
