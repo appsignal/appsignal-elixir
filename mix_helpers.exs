@@ -16,7 +16,7 @@ defmodule Mix.Appsignal.Helper do
 
     System.put_env("LIB_DIR", priv_dir())
 
-    unless has_file("appsignal-agent") and has_file("appsignal_extension.h") and has_file("appsignal_extension.so") do
+    unless has_file("appsignal-agent") and has_file("appsignal.h") and has_file("appsignal_extension.so") do
 
       File.mkdir_p!(priv_dir())
       try do
