@@ -4,9 +4,8 @@ defmodule Appsignal.Instrumentation.Helpers do
   """
 
   alias Appsignal.{Transaction, TransactionRegistry}
-  alias Plug.Conn
 
-  @type instrument_arg :: Transaction.t | Conn.t | pid()
+  @type instrument_arg :: Transaction.t | Plug.Conn.t | pid()
 
   @doc """
   Execute the given function in start / finish event calls. See `instrument/6`.
@@ -53,8 +52,10 @@ defmodule Appsignal.Instrumentation.Helpers do
     end
   end
 
-  def instrument(%Conn{} = conn, name, title, body, body_format, function) do
-    instrument(conn.assigns.appsignal_transaction, name, title, body, body_format, function)
+  if Code.ensure_loaded?(Plug.Conn) do
+    def instrument(%Plug.Conn{} = conn, name, title, body, body_format, function) do
+      instrument(conn.assigns.appsignal_transaction, name, title, body, body_format, function)
+    end
   end
 
   def instrument(%Transaction{} = transaction, name, title, body, body_format, function) do
