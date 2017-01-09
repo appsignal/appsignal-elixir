@@ -1,48 +1,47 @@
-defmodule Appsignal.Phoenix.TemplateInstrumenter do
-  @moduledoc """
-  Instrument Phoenix template engines
+if Code.ensure_loaded?(Phoenix) do
+  defmodule Appsignal.Phoenix.TemplateInstrumenter do
+    @moduledoc """
+    Instrument Phoenix template engines
 
-  As documented in the [phoenix guidelines](phoenix.html), The Appsignal
-  Elixir library comes with default template engines to instrument
-  renders to `.eex` and `.exs` template files.
+    As documented in the [phoenix guidelines](phoenix.html), The Appsignal
+    Elixir library comes with default template engines to instrument
+    renders to `.eex` and `.exs` template files.
 
-  When you use another template engine in your Phoenix project, you
-  can create a module which wraps the template renderer to also
-  instrument those template files.
+    When you use another template engine in your Phoenix project, you
+    can create a module which wraps the template renderer to also
+    instrument those template files.
 
-  To instrument the
-  [phoenix_markdown](https://github.com/boydm/phoenix_markdown)
-  library, you would create the following renderer engine module:
+    To instrument the
+    [phoenix_markdown](https://github.com/boydm/phoenix_markdown)
+    library, you would create the following renderer engine module:
 
-  ```
-  defmodule MyApp.InstrumentedMarkdownEngine do
-    use Appsignal.Phoenix.TemplateInstrumenter, engine: PhoenixMarkdown.Engine
-  endmodule
-  ```
+    ```
+    defmodule MyApp.InstrumentedMarkdownEngine do
+      use Appsignal.Phoenix.TemplateInstrumenter, engine: PhoenixMarkdown.Engine
+    endmodule
+    ```
 
-  And then register the `.md` extension as a template as follows:
+    And then register the `.md` extension as a template as follows:
 
-  ```
-  config :phoenix, :template_engines,
-    md: MyApp.InstrumentedMarkdownEngine
-  ```
+    ```
+    config :phoenix, :template_engines,
+      md: MyApp.InstrumentedMarkdownEngine
+    ```
 
-  """
+    """
 
-  @doc false
-  defmacro __using__(opts) do
-    quote do
-      @behaviour Phoenix.Template.Engine
+    @doc false
+    defmacro __using__(opts) do
+      quote do
+        @behaviour Phoenix.Template.Engine
 
-      def compile(path, name) do
-        expr = unquote(opts[:engine]).compile(path, name)
-        quote do
-          Appsignal.Instrumentation.Helpers.instrument(self(), "template.render", unquote(name), fn() -> unquote(expr) end)
+        def compile(path, name) do
+          expr = unquote(opts[:engine]).compile(path, name)
+          quote do
+            Appsignal.Instrumentation.Helpers.instrument(self(), "template.render", unquote(name), fn() -> unquote(expr) end)
+          end
         end
       end
-
     end
-
   end
-
 end
