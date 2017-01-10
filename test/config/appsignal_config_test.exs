@@ -339,7 +339,8 @@ defmodule AppsignalConfigTest do
       running_in_container: false,
       send_params: true,
       skip_session_data: false,
-      valid: false
+      valid: false,
+      log: "file"
     }
   end
 
