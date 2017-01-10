@@ -21,7 +21,7 @@ defmodule Appsignal.Config do
   """
   @spec initialize() :: :ok | {:error, :invalid_config}
   def initialize() do
-    system_config = %{running_in_container: System.get_env("DYNO") != nil}
+    system_config = load_from_system()
     app_config = Application.get_env(:appsignal, :config, []) |> coerce_map
     env_config = load_from_environment()
 
@@ -93,6 +93,13 @@ defmodule Appsignal.Config do
           cfg
         end
       end)
+  end
+
+  defp load_from_system() do
+    case System.get_env("DYNO") do
+      nil -> %{}
+      _ -> %{running_in_container: true, log: "stdout"}
+    end
   end
 
   defp load_from_environment() do
