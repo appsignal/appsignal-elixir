@@ -58,7 +58,7 @@ defmodule Appsignal.ErrorHandler do
     Logger.debug("Submitting #{inspect transaction}: #{message}")
     transaction
   end
-  if Code.ensure_loaded?(Plug.Conn) do
+  if Appsignal.phoenix? do
     def submit_transaction(transaction, reason, message, stack, metadata, conn) do
       if conn do
         Transaction.set_request_metadata(transaction, conn)
@@ -169,7 +169,7 @@ defmodule Appsignal.ErrorHandler do
   defp crash_name(pid, []), do: inspect(pid)
   defp crash_name(pid, name), do: "#{inspect(name)} (#{inspect(pid)})"
 
-  if Code.ensure_loaded?(Plug.Conn) do
+  if Appsignal.phoenix? do
     defp extract_conn({_, :call, [%Plug.Conn{} = conn, _params]}), do: conn
   end
   defp extract_conn(_), do: nil
@@ -193,7 +193,8 @@ defmodule Appsignal.ErrorHandler do
   def extract_reason_and_message(%Protocol.UndefinedError{value: {:error, {error = %{}, _stack}}}, message) do
     extract_reason_and_message(error, message)
   end
-  if Code.ensure_loaded?(Phoenix.Template.UndefinedError) do
+
+  if Appsignal.phoenix? do
     def extract_reason_and_message(%Phoenix.Template.UndefinedError{assigns: %{conn: %{assigns: %{kind: :error, reason: reason}}}}, message) do
       extract_reason_and_message(reason, message)
     end

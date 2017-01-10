@@ -1,4 +1,4 @@
-if Code.ensure_loaded?(Phoenix) do
+if Appsignal.phoenix? do
   defmodule Appsignal.Phoenix.InstrumenterDSL do
     @moduledoc false
 

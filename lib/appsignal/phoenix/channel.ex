@@ -1,4 +1,4 @@
-if Code.ensure_loaded?(Phoenix) do
+if Appsignal.phoenix? do
   defmodule Appsignal.Phoenix.Channel do
     @moduledoc """
     Instrumentation for channel events

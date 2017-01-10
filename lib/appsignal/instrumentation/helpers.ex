@@ -52,7 +52,7 @@ defmodule Appsignal.Instrumentation.Helpers do
     end
   end
 
-  if Code.ensure_loaded?(Plug.Conn) do
+  if Appsignal.phoenix? do
     def instrument(%Plug.Conn{} = conn, name, title, body, body_format, function) do
       instrument(conn.assigns.appsignal_transaction, name, title, body, body_format, function)
     end

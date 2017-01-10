@@ -354,7 +354,7 @@ defmodule Appsignal.Transaction do
     end
   end
 
-  if Code.ensure_loaded?(Plug.Conn) do
+  if Appsignal.phoenix? do
     @doc """
     Set the request metadata, given a Plug.Conn.t.
     """
@@ -396,9 +396,7 @@ defmodule Appsignal.Transaction do
     defp peer(%Plug.Conn{peer: {host, port}}) do
       "#{:inet_parse.ntoa host}:#{port}"
     end
-  end
 
-  if Code.ensure_loaded?(Phoenix.Controller) do
     @doc """
     Given the transaction and a %Plug.Conn{}, try to set the Phoenix controller module / action in the transaction.
     """
