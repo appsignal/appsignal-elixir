@@ -1,6 +1,5 @@
 defmodule Appsignal.Config do
 
-
   @default_config %{
     debug: false,
     enable_host_metrics: false,
@@ -11,7 +10,8 @@ defmodule Appsignal.Config do
     ignore_errors: [],
     running_in_container: false,
     send_params: true,
-    skip_session_data: false
+    skip_session_data: false,
+    log: "file"
   }
 
   @doc """
