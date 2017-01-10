@@ -11,8 +11,8 @@ defmodule AppsignalTransactionTest do
     assert ^transaction = Transaction.start_event(transaction)
     assert ^transaction = Transaction.finish_event(transaction, "sql.query", "Model load", "SELECT * FROM table;", 1)
     assert ^transaction = Transaction.record_event(transaction, "sql.query", "Model load", "SELECT * FROM table;", 1000 * 1000 * 3, 1)
-    assert ^transaction = Transaction.set_error(transaction, "Error", "error message", "['backtrace']")
-    assert ^transaction = Transaction.set_sample_data(transaction, "key", "{'user_id': 1}")
+    assert ^transaction = Transaction.set_error(transaction, "Error", "error message", ['backtrace'])
+    assert ^transaction = Transaction.set_sample_data(transaction, "key", %{user_id: 1})
     assert ^transaction = Transaction.set_action(transaction, "GET:/")
     assert ^transaction = Transaction.set_queue_start(transaction, 1000)
     assert ^transaction = Transaction.set_meta_data(transaction, "email", "info@info.com")
@@ -28,8 +28,8 @@ defmodule AppsignalTransactionTest do
     assert ^transaction = Transaction.start_event()
     assert ^transaction = Transaction.finish_event("sql.query", "Model load", "SELECT * FROM table;", 1)
     assert ^transaction = Transaction.record_event("sql.query", "Model load", "SELECT * FROM table;", 1000 * 1000 * 3, 1)
-    assert ^transaction = Transaction.set_error("Error", "error message", "['backtrace']")
-    assert ^transaction = Transaction.set_sample_data("key", "{'user_id': 1}")
+    assert ^transaction = Transaction.set_error("Error", "error message", ['backtrace'])
+    assert ^transaction = Transaction.set_sample_data("key", %{user_id: 1})
     assert ^transaction = Transaction.set_action("GET:/")
     assert ^transaction = Transaction.set_queue_start(1000)
     assert ^transaction = Transaction.set_meta_data("email", "info@info.com")
@@ -73,11 +73,8 @@ defmodule AppsignalTransactionTest do
     assert called Appsignal.Nif.set_meta_data(transaction.resource, "value", "123")
   end
 
-  test "params encoding" do
+  test "data encoding" do
     transaction = Transaction.start("test3", :http_request)
-
-    # String
-    assert ^transaction = Transaction.set_sample_data("key", "{'user_id': 1}")
 
     # Map
     assert ^transaction = Transaction.set_sample_data("key", %{"user_id" => 1})
@@ -87,8 +84,13 @@ defmodule AppsignalTransactionTest do
 
     # complex
     assert ^transaction = Transaction.set_sample_data("key", %{values: %{1 => 2, 3 => 4}})
-
   end
 
+  test "finishing an event with a non-string body" do
+    transaction = Transaction.start("test4", :http_request)
+    assert %Transaction{} = transaction
 
+    assert ^transaction = Transaction.start_event(transaction)
+    assert ^transaction = Transaction.finish_event(transaction, "phoenix_controller_render", "phoenix_controller_render", %{format: "html", template: "index.html"}, 0)
+  end
 end

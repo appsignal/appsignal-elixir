@@ -74,13 +74,11 @@ defmodule Appsignal.Phoenix.Instrumenter do
   @doc false
   def maybe_transaction_finish_event(_event, nil), do: nil
   def maybe_transaction_finish_event(event, {transaction, args}) do
-    arg_str = Appsignal.Utils.ParamsEncoder.encode(args)
-    transaction |> Transaction.finish_event(event, event, arg_str, 0)
+    Transaction.finish_event(transaction, event, event, args, 0)
   end
 
   @doc false
   def cleanup_args(args) do
     Map.delete(args, :conn)
   end
-
 end

@@ -54,6 +54,10 @@ defmodule Appsignal.Nif do
     _finish_event(transaction_resource, name, title, body, body_format)
   end
 
+  def finish_event_data(transaction_resource, name, title, body, body_format) do
+    _finish_event_data(transaction_resource, name, title, body, body_format)
+  end
+
   def record_event(transaction_resource, name, title, body, duration, body_format) do
     _record_event(transaction_resource, name, title, body, duration, body_format)
   end
@@ -98,6 +102,66 @@ defmodule Appsignal.Nif do
     _add_distribution_value(key, value)
   end
 
+  def data_map_new do
+    _data_map_new
+  end
+
+  def data_set_string(resource, key, value) do
+    _data_set_string(resource, key, value)
+  end
+
+  def data_set_string(resource, value) do
+    _data_set_string(resource, value)
+  end
+
+  def data_set_integer(resource, key, value) do
+    _data_set_integer(resource, key, value)
+  end
+
+  def data_set_integer(resource, value) do
+    _data_set_integer(resource, value)
+  end
+
+  def data_set_float(resource, key, value) do
+    _data_set_float(resource, key, value)
+  end
+
+  def data_set_float(resource, value) do
+    _data_set_float(resource, value)
+  end
+
+  def data_set_boolean(resource, key, value) do
+    _data_set_boolean(resource, key, value)
+  end
+
+  def data_set_boolean(resource, value) do
+    _data_set_boolean(resource, value)
+  end
+
+  def data_set_nil(resource, key) do
+    _data_set_nil(resource, key)
+  end
+
+  def data_set_nil(resource) do
+    _data_set_nil(resource)
+  end
+
+  def data_set_data(resource, key, value) do
+    _data_set_data(resource, key, value)
+  end
+
+  def data_set_data(resource, value) do
+    _data_set_data(resource, value)
+  end
+
+  def data_to_json(resource) do
+    _data_to_json(resource)
+  end
+
+  def data_list_new do
+    _data_list_new
+  end
+
   def _start do
     exit(:nif_library_not_loaded)
   end
@@ -115,6 +179,10 @@ defmodule Appsignal.Nif do
   end
 
   def _finish_event(_transaction_resource, _name, _title, _body, _body_format) do
+    exit(:nif_library_not_loaded)
+  end
+
+  def _finish_event_data(_transaction_resource, _name, _title, _body, _body_format) do
     exit(:nif_library_not_loaded)
   end
 
@@ -159,6 +227,66 @@ defmodule Appsignal.Nif do
   end
 
   def _add_distribution_value(_key, _value) do
+    exit(:nif_library_not_loaded)
+  end
+
+  def _data_map_new do
+    exit(:nif_library_not_loaded)
+  end
+
+  def _data_set_string(_resource, _key, _value) do
+    exit(:nif_library_not_loaded)
+  end
+
+  def _data_set_string(_resource, _value) do
+    exit(:nif_library_not_loaded)
+  end
+
+  def _data_set_integer(_resource, _key, _value) do
+    exit(:nif_library_not_loaded)
+  end
+
+  def _data_set_integer(_resource, _value) do
+    exit(:nif_library_not_loaded)
+  end
+
+  def _data_set_float(_resource, _key, _value) do
+    exit(:nif_library_not_loaded)
+  end
+
+  def _data_set_float(_resource, _value) do
+    exit(:nif_library_not_loaded)
+  end
+
+  def _data_set_boolean(_resource, _key, _value) do
+    exit(:nif_library_not_loaded)
+  end
+
+  def _data_set_boolean(_resource, _value) do
+    exit(:nif_library_not_loaded)
+  end
+
+  def _data_set_nil(_resource, _key) do
+    exit(:nif_library_not_loaded)
+  end
+
+  def _data_set_nil(_resource) do
+    exit(:nif_library_not_loaded)
+  end
+
+  def _data_set_data(_resource, _key, _value) do
+    exit(:nif_library_not_loaded)
+  end
+
+  def _data_set_data(_resource, _value) do
+    exit(:nif_library_not_loaded)
+  end
+
+  def _data_list_new do
+    exit(:nif_library_not_loaded)
+  end
+
+  def _data_to_json(_resource) do
     exit(:nif_library_not_loaded)
   end
 end

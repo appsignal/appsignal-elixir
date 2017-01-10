@@ -104,10 +104,16 @@ defmodule Appsignal.Transaction do
   - `body`: Body of the event, should not contain unique information per specific event (`select * from users where id=?`)
   - `body_format` Format of the event's body which can be used for sanitization, 0 for general and 1 for sql currently.
   """
-  @spec finish_event(Transaction.t | nil, String.t, String.t, String.t, integer) :: Transaction.t
+  @spec finish_event(Transaction.t | nil, String.t, String.t, any, integer) :: Transaction.t
   def finish_event(nil, _name, _title, _body, _body_format), do: nil
-  def finish_event(%Transaction{} = transaction, name, title, body, body_format) do
+  def finish_event(%Transaction{} = transaction, name, title, body, body_format) when is_binary(body) do
     :ok = Nif.finish_event(transaction.resource, name, title, body, body_format)
+    transaction
+  end
+
+  def finish_event(%Transaction{} = transaction, name, title, body, body_format) do
+    encoded_body = Appsignal.Utils.DataEncoder.encode(body)
+    :ok = Nif.finish_event_data(transaction.resource, name, title, encoded_body, body_format)
     transaction
   end
 
@@ -167,8 +173,8 @@ defmodule Appsignal.Transaction do
   def set_error(nil, _name, _message, _backtrace), do: nil
   def set_error(%Transaction{} = transaction, name, message, backtrace) do
     name = name |> String.split_at(@max_name_size) |> elem(0)
-    encoded_backtrace = Appsignal.Utils.ParamsEncoder.encode(backtrace)
-    :ok = Nif.set_error(transaction.resource, name, message, encoded_backtrace)
+    backtrace_data = Appsignal.Utils.DataEncoder.encode(backtrace)
+    :ok = Nif.set_error(transaction.resource, name, message, backtrace_data)
     transaction
   end
 
@@ -192,11 +198,8 @@ defmodule Appsignal.Transaction do
   @spec set_sample_data(Transaction.t | nil, String.t, any) :: Transaction.t
   def set_sample_data(nil, _key, _payload), do: nil
   def set_sample_data(%Transaction{} = transaction, key, payload) do
-    encoded = case is_binary(payload) do
-                true -> payload
-                false -> Appsignal.Utils.ParamsEncoder.encode(payload)
-              end
-    :ok = Nif.set_sample_data(transaction.resource, key, encoded)
+    payload_data = Appsignal.Utils.DataEncoder.encode(payload)
+    :ok = Nif.set_sample_data(transaction.resource, key, payload_data)
     transaction
   end
 
