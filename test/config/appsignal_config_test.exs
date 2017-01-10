@@ -249,6 +249,7 @@ defmodule AppsignalConfigTest do
     test "log" do
       System.put_env("APPSIGNAL_LOG", "stdout")
       assert valid_configuration |> Map.put(:log, "stdout") == init_config
+      assert "stdout" == System.get_env("APPSIGNAL_LOG")
     end
 
     test "log_path" do
@@ -312,9 +313,10 @@ defmodule AppsignalConfigTest do
       System.put_env("DYNO", "web.1")
     end
 
-    test "running_in_container" do
-      assert valid_configuration |> Map.put(:running_in_container, true) == init_config
+    test ":running_in_container and :log" do
+      assert valid_heroku_configuration == init_config
       assert "true" == System.get_env("APPSIGNAL_RUNNING_IN_CONTAINER")
+      assert "stdout" == System.get_env("APPSIGNAL_LOG")
     end
 
     test "application environment overwrites :running_in_container config on Heroku" do
@@ -322,8 +324,17 @@ defmodule AppsignalConfigTest do
 	:appsignal, :config,
 	running_in_container: false
       )
-      assert valid_configuration |> Map.put(:running_in_container, false) == init_config
+      assert valid_heroku_configuration |> Map.put(:running_in_container, false) == init_config
       assert "false" == System.get_env("APPSIGNAL_RUNNING_IN_CONTAINER")
+    end
+
+    test "application environment overwrites :log config on Heroku" do
+      Application.put_env(
+	:appsignal, :config,
+	log: "file"
+      )
+      assert valid_heroku_configuration |> Map.put(:log, "file") == init_config
+      assert "file" == System.get_env("APPSIGNAL_LOG")
     end
   end
 
@@ -350,6 +361,12 @@ defmodule AppsignalConfigTest do
     |> Map.put(:active, true)
     |> Map.put(:push_api_key, "00000000-0000-0000-0000-000000000000")
     |> Map.put(:valid, true)
+  end
+
+  defp valid_heroku_configuration do
+    valid_configuration
+    |> Map.put(:running_in_container, true)
+    |> Map.put(:log, "stdout")
   end
 
   defp add_to_application_env(key, value) do
