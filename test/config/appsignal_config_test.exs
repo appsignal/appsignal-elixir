@@ -16,6 +16,7 @@ defmodule AppsignalConfigTest do
        APPSIGNAL_DEBUG
        APPSIGNAL_DEBUG_LOGGING
        APPSIGNAL_ENABLE_HOST_METRICS
+       APPSIGNAL_APP_ENV
        APPSIGNAL_ENVIRONMENT
        APPSIGNAL_FILTER_PARAMETERS
        APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH
@@ -121,6 +122,12 @@ defmodule AppsignalConfigTest do
       add_to_application_env(:ignore_errors, errors)
       assert valid_configuration |> Map.put(:ignore_errors, errors) == init_config
       assert "VerySpecificError,AnotherError" == System.get_env("APPSIGNAL_IGNORE_ERRORS")
+    end
+
+    test "env" do
+      add_to_application_env(:env, :prod)
+      assert valid_configuration |> Map.put(:env, :prod) == init_config
+      assert "prod" == System.get_env("APPSIGNAL_ENVIRONMENT")
     end
 
     test "enable_host_metrics" do
@@ -237,6 +244,13 @@ defmodule AppsignalConfigTest do
       errors = ~w(VerySpecificError AnotherError)
       assert valid_configuration |> Map.put(:ignore_errors, errors) == init_config
       assert "VerySpecificError,AnotherError" == System.get_env("APPSIGNAL_IGNORE_ERRORS")
+    end
+
+    test "env" do
+      System.put_env("APPSIGNAL_APP_ENV", "prod")
+      assert valid_configuration |> Map.put(:env, :prod) == init_config
+      assert "prod" == System.get_env("APPSIGNAL_APP_ENV")
+      assert "prod" == System.get_env("APPSIGNAL_ENVIRONMENT")
     end
 
     test "enable_host_metrics" do
