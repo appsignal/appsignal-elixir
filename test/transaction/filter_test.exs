@@ -70,6 +70,7 @@ defmodule AppsignalTransactionFilterTest do
     Application.put_env(app, key, value)
     function.()
     Application.delete_env(app, key)
+    System.delete_env("APPSIGNAL_FILTER_PARAMETERS")
   end
 
 end
