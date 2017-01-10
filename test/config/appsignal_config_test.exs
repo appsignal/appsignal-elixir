@@ -139,6 +139,7 @@ defmodule AppsignalConfigTest do
     test "log" do
       add_to_application_env(:log, "stdout")
       assert valid_configuration |> Map.put(:log, "stdout") == init_config
+      assert "stdout" == System.get_env("APPSIGNAL_LOG")
     end
 
     test "log_path" do
