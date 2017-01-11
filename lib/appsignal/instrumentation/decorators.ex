@@ -6,6 +6,13 @@ defmodule Appsignal.Instrumentation.Decorators do
   decorators](https://github.com/arjan/decorator) for instrumenting
   function calls.
 
+  `@decorate transaction` - when a function decorated like this is
+  called, a transaction is started in the `:http_request` namespace.
+
+  `@decorate transaction(:background_job)` - when a function decorated
+  like this is called, a transaction is started in the
+  `:background_job` namespace.
+
   `@decorate transaction_event` - when a function decorated like this
   is called, it will add an event onto the transaction's timeline. The
   name of the event will be the name of the function that's decorated.
@@ -20,14 +27,35 @@ defmodule Appsignal.Instrumentation.Decorators do
   before the `handle_in/3` function of a Phoenix.Channel. See
   `Appsignal.Phoenix.Channel` for more information on how to
   instrument channel events.
-
   """
 
-
   use Decorator.Define,
+    transaction: 0,
+    transaction: 1,
     transaction_event: 0,
     transaction_event: 1,
     channel_action: 0
+
+  @doc false
+  def transaction(body, context) do
+    transaction(:http_request, body, context)
+  end
+
+  @doc false
+  def transaction(namespace, body, context) do
+    quote do
+      transaction = Appsignal.Transaction.start(
+        Appsignal.Transaction.generate_id,
+        unquote(namespace)
+      )
+      |> Appsignal.Transaction.set_action(unquote("#{context.name}"))
+
+      unquote(body)
+
+      Appsignal.Transaction.finish(transaction)
+      :ok = Appsignal.Transaction.complete(transaction)
+    end
+  end
 
   @doc false
   def transaction_event(category, body, context) do
