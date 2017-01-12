@@ -34,10 +34,10 @@ defmodule Appsignal.Instrumentation.Helpers do
   import Appsignal.Instrumentation.Helpers, only: [instrument: 4]
 
   def index(conn, _params) do
-  result = instrument(conn, "net.http", "Some slow backend call", fn() ->
-  Backend.get_result()
-  end
-  json conn, result
+    result = instrument conn, "net.http", "Some slow backend call", fn() ->
+      Backend.get_result()
+    end
+    json conn, result
   end
   ```
 
