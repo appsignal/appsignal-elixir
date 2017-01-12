@@ -70,9 +70,14 @@ defmodule Appsignal.Utils.DataEncoderTest do
     assert {:ok, '{"foo":["bar"]}'} == Nif.data_to_json(resource)
   end
 
-  test "encode a map with a non-string value" do
+  test "encode a map with an atom value" do
     resource = DataEncoder.encode(%{foo: :bar})
     assert {:ok, '{"foo":"bar"}'} == Nif.data_to_json(resource)
+  end
+
+  test "encode a map with a tuple value" do
+    resource = DataEncoder.encode(%{foo: {"foo", "bar", "baz"}})
+    assert {:ok, '{"foo":["foo","bar","baz"]}'} == Nif.data_to_json(resource)
   end
 
   test "encode an empty list" do
@@ -121,6 +126,11 @@ defmodule Appsignal.Utils.DataEncoderTest do
   test "encode a list with a list item" do
     resource = DataEncoder.encode(["foo", ["bar"]])
     assert {:ok, '["foo",["bar"]]'} == Nif.data_to_json(resource)
+  end
+
+  test "encode a list with a tuple item" do
+    resource = DataEncoder.encode(["foo", {"foo","bar","baz"}])
+    assert {:ok, '["foo",["foo","bar","baz"]]'} == Nif.data_to_json(resource)
   end
 
   test "encode a struct" do
