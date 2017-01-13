@@ -34,8 +34,14 @@ defmodule Appsignal.TransactionRegistry do
   @spec register(Transaction.t) :: :ok
   def register(transaction) do
     pid = self()
-    true = :ets.insert(@table, {pid, transaction})
-    GenServer.cast(__MODULE__, {:monitor, pid})
+    case Appsignal.started? do
+      true ->
+        true = :ets.insert(@table, {pid, transaction})
+        GenServer.cast(__MODULE__, {:monitor, pid})
+      false ->
+        Logger.debug("Appsignal was not started, skipping transaction registration.")
+        nil
+    end
   end
 
   @doc """
@@ -50,7 +56,9 @@ defmodule Appsignal.TransactionRegistry do
           true -> :removed
         end
       [{^pid, transaction}] -> transaction
-      false -> nil
+      false ->
+        Logger.debug("Appsignal was not started, skipping transaction lookup.")
+        nil
       [] -> nil
     end
   end
