@@ -58,6 +58,13 @@ defmodule Appsignal.Phoenix do
     {reason, message} = ErrorHandler.extract_reason_and_message(reason, @phoenix_message)
     {reason, message, stack, conn}
   end
+  def extract_error_metadata(r, conn, stack) when is_binary(r) do
+    extract_error_metadata(RuntimeError.exception(r), conn, stack)
+  end
+  def extract_error_metadata(r, conn, stack) when is_atom(r) do
+    extract_error_metadata(r.exception([]), conn, stack)
+  end
+
 
   @doc false
   def submit_http_error(reason, message, stack, transaction, conn) do
