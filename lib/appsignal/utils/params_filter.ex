@@ -6,7 +6,7 @@ defmodule Appsignal.Utils.ParamsFilter do
 
   def get_filter_parameters do
     Application.get_env(:appsignal, :config)[:filter_parameters]
-    || Application.get_env(:phoenix, :config)[:filter_parameters]
+    || Application.get_env(:phoenix, :filter_parameters)
     || []
   end
 

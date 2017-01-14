@@ -13,7 +13,7 @@ defmodule AppsignalTransactionFilterTest do
     end
 
     test "uses parameter filters from the phoenix config" do
-      with_app_config(:phoenix, :config, [filter_parameters: ["secret1"]], fn() ->
+      with_app_config(:phoenix, :filter_parameters, ["secret1"], fn() ->
         Config.initialize()
         assert ParamsFilter.get_filter_parameters() == ["secret1"]
       end)
