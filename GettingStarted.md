@@ -101,7 +101,8 @@ If you're not using Phoenix, or want to filter parameters without changing the
 Phoenix.Logger's configuration, you can set up filtered parameters in the
 AppSignal configuration file:
 
-    config :appsignal, :filter_parameters, ["password", "secret"]
+    config :appsignal, :config,
+      filter_parameters: ["password", "secret"]
 
 ## Configuration keys
 
