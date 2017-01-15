@@ -1,10 +1,9 @@
-defmodule AppsignalErrorHandlerTest do
+defmodule Appsignal.ErrorHandlerTest do
   @moduledoc """
   Test the actual Appsignal.ErrorHandler
   """
 
   use ExUnit.Case, async: false
-  use Plug.Test
   import Mock
 
   alias Appsignal.Transaction

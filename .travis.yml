@@ -4,4 +4,6 @@ elixir:
 otp_release:
   - 19.0
   - 18.3
-script: MIX_ENV=test mix compile --warnings-as-errors && MIX_ENV=test mix test
+script:
+  - MIX_ENV=test mix compile --warnings-as-errors && MIX_ENV=test mix test
+  - MIX_ENV=test_phoenix mix compile --warnings-as-errors && MIX_ENV=test_phoenix mix test

@@ -1,4 +1,4 @@
-defmodule AppsignalTransactionRegistryTest do
+defmodule Appsignal.Transaction.RegistryTest do
   use ExUnit.Case
   import Mock
 
