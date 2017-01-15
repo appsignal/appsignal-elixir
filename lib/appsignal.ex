@@ -9,7 +9,7 @@ defmodule Appsignal do
   present. For transaction related-functions, see the
   [Appsignal.Transaction](Appsignal.Transaction.html) module.
 
- """
+  """
 
   use Application
 
@@ -23,23 +23,7 @@ defmodule Appsignal do
   def start(_type, _args) do
     import Supervisor.Spec, warn: false
 
-    case {Config.initialize, Config.active?} do
-      {:ok, true} ->
-        Logger.debug("Appsignal starting.")
-        Appsignal.Nif.start
-      {:ok, false} ->
-        Logger.info("Appsignal disabled.")
-      {{:error, :invalid_config}, _} ->
-
-        # show warning that Appsignal is not configured; but not when we run the tests.
-        spawn_link(fn ->
-          :timer.sleep 100 # FIXME, this timeout is kind of cludgy.
-          unless Process.whereis(ExUnit.Server) do
-            Logger.warn("Warning: No valid Appsignal configuration found, continuing with Appsignal metrics disabled.")
-          end
-        end)
-
-    end
+    initialize()
 
     :error_logger.add_report_handler(Appsignal.ErrorHandler)
 
@@ -60,6 +44,32 @@ defmodule Appsignal do
   def stop(_state) do
     Logger.debug("Appsignal stopping.")
   end
+
+  def config_change(_changed, _new, _removed) do
+    :ok = Appsignal.Nif.stop()
+    :ok = initialize()
+  end
+
+  defp initialize() do
+    case {Config.initialize, Config.active?} do
+      {:ok, true} ->
+        Logger.debug("Appsignal starting.")
+        Appsignal.Nif.start()
+      {:ok, false} ->
+        Logger.info("Appsignal disabled.")
+        :ok
+      {{:error, :invalid_config}, _} ->
+        # show warning that Appsignal is not configured; but not when we run the tests.
+        spawn_link(fn ->
+          :timer.sleep 100 # FIXME, this timeout is kind of cludgy.
+          unless Process.whereis(ExUnit.Server) do
+            Logger.warn("Warning: No valid Appsignal configuration found, continuing with Appsignal metrics disabled.")
+          end
+        end)
+        :ok
+    end
+  end
+
 
   @doc """
   Set a gauge for a measurement of some metric.
