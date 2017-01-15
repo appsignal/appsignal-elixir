@@ -8,6 +8,9 @@ defmodule Appsignal.Utils.DataEncoder do
   def encode(%{__struct__: _} = data) do
     data |> Map.from_struct |> encode
   end
+  def encode(data) when is_tuple(data) do
+    data |> Tuple.to_list |> encode
+  end
   def encode(data) when is_map(data) do
     {:ok, resource} = Nif.data_map_new
     Enum.each(data, fn(item) -> encode(resource, item) end)
@@ -34,7 +37,7 @@ defmodule Appsignal.Utils.DataEncoder do
   def encode(resource, {key, value}) when is_float(value) do
     Nif.data_set_float(resource, key, value)
   end
-  def encode(resource, {key, value}) when is_map(value) or is_list(value) do
+  def encode(resource, {key, value}) when is_map(value) or is_list(value) or is_tuple(value) do
     Nif.data_set_data(resource, key, encode(value))
   end
   def encode(resource, {key, true}) do
@@ -58,7 +61,7 @@ defmodule Appsignal.Utils.DataEncoder do
   def encode(resource, value) when is_float(value) do
     Nif.data_set_float(resource, value)
   end
-  def encode(resource, value) when is_map(value) or is_list(value) do
+  def encode(resource, value) when is_map(value) or is_list(value) or is_tuple(value) do
     Nif.data_set_data(resource, encode(value))
   end
   def encode(resource, true) do
@@ -70,7 +73,10 @@ defmodule Appsignal.Utils.DataEncoder do
   def encode(resource, nil) do
     Nif.data_set_nil(resource)
   end
-  def encode(resource, value) do
+  def encode(resource, value) when is_atom(value) do
     encode(resource, to_string(value))
+  end
+  def encode(resource, value) do
+    encode(resource, inspect(value))
   end
 end

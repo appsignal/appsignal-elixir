@@ -171,6 +171,14 @@ defmodule Appsignal.Transaction do
   """
   @spec set_error(Transaction.t | nil, String.t, String.t, any) :: Transaction.t
   def set_error(nil, _name, _message, _backtrace), do: nil
+  def set_error(%Transaction{} = transaction, name, message, [h|_] = backtrace) when is_tuple(h) do
+    set_error(
+      transaction,
+      name,
+      message,
+      Appsignal.ErrorHandler.format_stack(backtrace)
+    )
+  end
   def set_error(%Transaction{} = transaction, name, message, backtrace) do
     name = name |> String.split_at(@max_name_size) |> elem(0)
     backtrace_data = Appsignal.Utils.DataEncoder.encode(backtrace)

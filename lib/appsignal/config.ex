@@ -2,7 +2,7 @@ defmodule Appsignal.Config do
 
   @default_config %{
     debug: false,
-    enable_host_metrics: false,
+    enable_host_metrics: true,
     endpoint: "https://push.appsignal.com",
     env: :dev,
     filter_parameters: nil,

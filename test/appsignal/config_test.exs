@@ -131,9 +131,9 @@ defmodule Appsignal.ConfigTest do
     end
 
     test "enable_host_metrics" do
-      add_to_application_env(:enable_host_metrics, true)
-      assert valid_configuration |> Map.put(:enable_host_metrics, true) == init_config
-      assert "true" == System.get_env("APPSIGNAL_ENABLE_HOST_METRICS")
+      add_to_application_env(:enable_host_metrics, false)
+      assert valid_configuration |> Map.put(:enable_host_metrics, false) == init_config
+      assert "false" == System.get_env("APPSIGNAL_ENABLE_HOST_METRICS")
     end
 
     test "log" do
@@ -255,9 +255,9 @@ defmodule Appsignal.ConfigTest do
     end
 
     test "enable_host_metrics" do
-      System.put_env("APPSIGNAL_ENABLE_HOST_METRICS", "true")
-      assert valid_configuration |> Map.put(:enable_host_metrics, true) == init_config
-      assert "true" == System.get_env("APPSIGNAL_ENABLE_HOST_METRICS")
+      System.put_env("APPSIGNAL_ENABLE_HOST_METRICS", "false")
+      assert valid_configuration |> Map.put(:enable_host_metrics, false) == init_config
+      assert "false" == System.get_env("APPSIGNAL_ENABLE_HOST_METRICS")
     end
 
     test "log" do
@@ -356,7 +356,7 @@ defmodule Appsignal.ConfigTest do
     %{
       active: false,
       debug: false,
-      enable_host_metrics: false,
+      enable_host_metrics: true,
       endpoint: "https://push.appsignal.com",
       env: :dev,
       filter_parameters: nil,

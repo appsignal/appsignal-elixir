@@ -38,11 +38,16 @@ defmodule Appsignal.Transaction.RegistryTest do
 
   end
 
-  test_with_mock "lookup returns nil if appsignal is not started", Appsignal, [], [
+  test_with_mock "register returns nil if appsignal is not started", Appsignal, [], [
     started?: fn() -> false end
   ] do
     transaction = %Transaction{id: Transaction.generate_id()}
-    TransactionRegistry.register(transaction)
+    assert nil == TransactionRegistry.register(transaction)
+  end
+
+  test_with_mock "lookup returns nil if appsignal is not started", Appsignal, [], [
+    started?: fn() -> false end
+  ] do
     assert nil == TransactionRegistry.lookup(self())
   end
 
