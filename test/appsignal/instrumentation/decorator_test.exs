@@ -22,6 +22,7 @@ defmodule Appsignal.Instrumentation.DecoratorsTest do
       nested(arg, arg)
     end
 
+    @doc "A moduledoc attribute"
     @decorate transaction_event
     def nested(_arg1, _arg2) do
     end
@@ -53,6 +54,7 @@ defmodule Appsignal.Instrumentation.DecoratorsTest do
   defmodule Example2 do
     use Appsignal.Instrumentation.Decorators
 
+    @doc "A moduledoc attribute"
     @decorate transaction_event :http
     def bar(arg) do
       nested(arg, arg)

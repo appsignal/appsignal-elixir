@@ -1,4 +1,4 @@
-%{"decorator": {:hex, :decorator, "1.0.0", "9fbe2903956c477b2299093406f655ccb69f6c5527f056f41ca61fff77ca0d64", [:mix], []},
+%{"decorator": {:hex, :decorator, "1.1.0", "3832dff8285a97f28e9c7923ef8d28c24495522ced97f9f1ba2e314fc8f65425", [:mix], []},
   "earmark": {:hex, :earmark, "1.0.3", "89bdbaf2aca8bbb5c97d8b3b55c5dd0cff517ecc78d417e87f1d0982e514557b", [:mix], []},
   "ex_doc": {:hex, :ex_doc, "0.14.3", "e61cec6cf9731d7d23d254266ab06ac1decbb7651c3d1568402ec535d387b6f7", [:mix], [{:earmark, "~> 1.0", [hex: :earmark, optional: false]}]},
   "meck": {:hex, :meck, "0.8.4", "59ca1cd971372aa223138efcf9b29475bde299e1953046a0c727184790ab1520", [:make, :rebar], []},
