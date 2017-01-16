@@ -362,6 +362,11 @@ defmodule Appsignal.Transaction do
     end
   end
 
+  defp ensure_headers_map(nil), do: %{}
+  defp ensure_headers_map(headers) when is_list(headers) do
+    headers |> Enum.into(%{})
+  end
+
   if Appsignal.phoenix? do
     @doc """
     Set the request metadata, given a Plug.Conn.t.
@@ -388,13 +393,19 @@ defmodule Appsignal.Transaction do
       end
     end
 
-    @conn_fields ~w(host method script_name request_path port schema query_string)a
+    @conn_fields ~w(host method script_name request_path port query_string)a
     defp request_environment(conn) do
-      @conn_fields
-      |> Enum.map(fn(k) -> {k, Map.get(conn, k)} end)
-      |> Enum.into(%{})
-      |> Map.put(:request_uri, url(conn))
-      |> Map.put(:peer, peer(conn))
+      env =
+        @conn_fields
+        |> Enum.map(fn(k) -> {k, Map.get(conn, k)} end)
+        |> Enum.into(%{})
+        |> Map.put(:request_uri, url(conn))
+        |> Map.put(:peer, peer(conn))
+      # add all request headers
+      Enum.reduce(conn.req_headers || [], env,
+        fn({header, value}, env) ->
+          Map.put(env, "req_header.#{header}", value)
+        end)
     end
 
     defp url(%Plug.Conn{scheme: scheme, host: host, port: port} = conn) do

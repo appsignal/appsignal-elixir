@@ -1,6 +1,5 @@
 defmodule Appsignal.Phoenix.Transaction.FilterTest do
   use ExUnit.Case
-  alias Appsignal.Config
 
   alias Appsignal.Utils.ParamsFilter
 
