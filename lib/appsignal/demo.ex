@@ -39,8 +39,9 @@ defmodule Appsignal.Demo do
     )
     |> Appsignal.Transaction.set_action("DemoController#hello")
     |> Appsignal.Transaction.set_meta_data("demo_sample", "true")
-    |> Appsignal.Transaction.set_meta_data("path", "/hello")
-    |> Appsignal.Transaction.set_meta_data("method", "GET")
+    |> Appsignal.Transaction.set_sample_data(
+      "environment", %{request_path: "/hello", method: "GET"}
+    )
   end
 
   defp finish_demo_transaction(transaction) do
