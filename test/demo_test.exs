@@ -3,26 +3,6 @@ defmodule AppsignalDemoTest do
   import Mock
   alias Appsignal.{Transaction, TransactionRegistry}
 
-  test "starts and stops the AppSignal agent" do
-    with_mocks([
-      {Appsignal,
-       [],
-       [start: fn(_, _) -> nil end,
-        stop: fn(_) -> nil end,
-        started?: fn() -> true end]},
-      {Appsignal.Demo,
-       [:passthrough],
-       []}
-    ]) do
-      Appsignal.Demo.transmit
-
-      assert called Appsignal.start(nil, nil)
-      assert called Appsignal.Demo.create_transaction_performance_request
-      assert called Appsignal.Demo.create_transaction_error_request
-      assert called Appsignal.stop(nil)
-    end
-  end
-
   test_with_mock "sends a demonstration error", Appsignal.Transaction, [:passthrough], [] do
     Appsignal.Demo.create_transaction_error_request
 

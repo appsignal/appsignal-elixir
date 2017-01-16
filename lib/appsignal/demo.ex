@@ -2,13 +2,6 @@ defmodule Appsignal.Demo do
   alias Appsignal.ErrorHandler
   import Appsignal.Instrumentation.Helpers, only: [instrument: 4]
 
-  def transmit do
-    {:ok, _} = Application.ensure_all_started(:appsignal)
-    create_transaction_performance_request()
-    create_transaction_error_request()
-    Appsignal.stop(nil)
-  end
-
   @doc false
   def create_transaction_error_request do
     transaction = create_demo_transaction()
