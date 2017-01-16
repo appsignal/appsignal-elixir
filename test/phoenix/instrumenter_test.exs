@@ -10,6 +10,4 @@ defmodule Appsignal.Phoenix.InstrumenterTest do
 
   end
 
-
-
 end

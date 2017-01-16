@@ -362,59 +362,60 @@ defmodule Appsignal.Transaction do
     end
   end
 
-  @doc """
-  Set the request metadata, given a Plug.Conn.t.
-  """
-  @spec set_request_metadata(Transaction.t | nil, Plug.Conn.t) :: Transaction.t
-  def set_request_metadata(%Transaction{} = transaction, %Plug.Conn{} = conn) do
+  if Appsignal.phoenix? do
+    @doc """
+    Set the request metadata, given a Plug.Conn.t.
+    """
+    @spec set_request_metadata(Transaction.t | nil, Plug.Conn.t) :: Transaction.t
+    def set_request_metadata(%Transaction{} = transaction, %Plug.Conn{} = conn) do
 
-    # preprocess conn
-    conn = conn
-    |> Plug.Conn.fetch_query_params
+      # preprocess conn
+      conn = conn
+      |> Plug.Conn.fetch_query_params
 
-    # collect sample data
-    transaction
-    |> Transaction.set_sample_data("params", conn.params |> Appsignal.Utils.ParamsFilter.filter_values)
-    |> Transaction.set_sample_data("environment", request_environment(conn))
-
-    # Add session data
-    if not config()[:skip_session_data] and conn.private[:plug_session_fetch] == :done do
-      session_data = conn.private[:plug_session]
+      # collect sample data
       transaction
-      |> Transaction.set_sample_data("session_data", session_data)
-    else
-      transaction
+      |> Transaction.set_sample_data("params", conn.params |> Appsignal.Utils.ParamsFilter.filter_values)
+      |> Transaction.set_sample_data("environment", request_environment(conn))
+
+      # Add session data
+      if not config()[:skip_session_data] and conn.private[:plug_session_fetch] == :done do
+        session_data = conn.private[:plug_session]
+        transaction
+        |> Transaction.set_sample_data("session_data", session_data)
+      else
+        transaction
+      end
     end
-  end
 
+    @conn_fields ~w(host method script_name request_path port schema query_string)a
+    defp request_environment(conn) do
+      @conn_fields
+      |> Enum.map(fn(k) -> {k, Map.get(conn, k)} end)
+      |> Enum.into(%{})
+      |> Map.put(:request_uri, url(conn))
+      |> Map.put(:peer, peer(conn))
+    end
 
-  @conn_fields ~w(host method script_name request_path port schema query_string)a
-  defp request_environment(conn) do
-    @conn_fields
-    |> Enum.map(fn(k) -> {k, Map.get(conn, k)} end)
-    |> Enum.into(%{})
-    |> Map.put(:request_uri, url(conn))
-    |> Map.put(:peer, peer(conn))
-  end
+    defp url(%Plug.Conn{scheme: scheme, host: host, port: port} = conn) do
+      "#{scheme}://#{host}:#{port}#{conn.request_path}"
+    end
 
-  defp url(%Plug.Conn{scheme: scheme, host: host, port: port} = conn) do
-    "#{scheme}://#{host}:#{port}#{conn.request_path}"
-  end
+    defp peer(%Plug.Conn{peer: {host, port}}) do
+      "#{:inet_parse.ntoa host}:#{port}"
+    end
 
-  defp peer(%Plug.Conn{peer: {host, port}}) do
-    "#{:inet_parse.ntoa host}:#{port}"
-  end
-
-  @doc """
-  Given the transaction and a %Plug.Conn{}, try to set the Phoenix controller module / action in the transaction.
-  """
-  def try_set_action(transaction, conn) do
-    try do
-      action_str = "#{Phoenix.Controller.controller_module(conn)}##{Phoenix.Controller.action_name(conn)}"
-      <<"Elixir.", action :: binary>> = action_str
-      Transaction.set_action(transaction, action)
-    catch
-      _, _ -> :ok
+    @doc """
+    Given the transaction and a %Plug.Conn{}, try to set the Phoenix controller module / action in the transaction.
+    """
+    def try_set_action(transaction, conn) do
+      try do
+        action_str = "#{Phoenix.Controller.controller_module(conn)}##{Phoenix.Controller.action_name(conn)}"
+        <<"Elixir.", action :: binary>> = action_str
+        Transaction.set_action(transaction, action)
+      catch
+        _, _ -> :ok
+      end
     end
   end
 

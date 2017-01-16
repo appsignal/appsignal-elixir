@@ -1,4 +1,4 @@
-defmodule AppsignalTransactionFilterTest do
+defmodule Appsignal.Transaction.FilterTest do
   use ExUnit.Case
   alias Appsignal.Config
 
@@ -51,9 +51,13 @@ defmodule AppsignalTransactionFilterTest do
         %{"foo" => "bar", "list" => [%{"password" => "[FILTERED]"}]}
     end
 
+    defmodule SomeStruct do
+      defstruct foo: 1
+    end
+
     test "filter_values does not filter structs" do
-      assert ParamsFilter.filter_values(%{"foo" => "bar", "file" => %Plug.Upload{}}, ["password"]) ==
-        %{"foo" => "bar", "file" => %Plug.Upload{}}
+      assert ParamsFilter.filter_values(%{"foo" => "bar", "file" => %SomeStruct{}}, ["password"]) ==
+        %{"foo" => "bar", "file" => %SomeStruct{}}
 
       assert ParamsFilter.filter_values(%{"foo" => "bar", "file" => %{__struct__: "s"}}, ["password"]) ==
         %{"foo" => "bar", "file" => %{:__struct__ => "s"}}

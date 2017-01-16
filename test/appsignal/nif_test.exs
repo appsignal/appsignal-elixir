@@ -1,4 +1,4 @@
-defmodule AppsignalNifTest do
+defmodule Appsignal.NifTest do
   use ExUnit.Case
 
   test "whether the agent starts" do

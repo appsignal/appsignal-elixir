@@ -49,16 +49,22 @@ defmodule Appsignal.ErrorHandler do
     {:ok, state}
   end
 
-  def submit_transaction(transaction, reason, message, stack, metadata, conn \\ nil) do
+  def submit_transaction(transaction, reason, message, stack, metadata, conn \\ nil)
+  def submit_transaction(transaction, reason, message, stack, metadata, nil) do
     Transaction.set_error(transaction, reason, message, stack)
-    if conn do
-      Transaction.set_request_metadata(transaction, conn)
-    end
     Transaction.set_meta_data(metadata)
     Transaction.finish(transaction)
     Transaction.complete(transaction)
     Logger.debug("Submitting #{inspect transaction}: #{message}")
     transaction
+  end
+  if Appsignal.phoenix? do
+    def submit_transaction(transaction, reason, message, stack, metadata, conn) do
+      if conn do
+        Transaction.set_request_metadata(transaction, conn)
+      end
+      submit_transaction(transaction, reason, message, stack, metadata)
+    end
   end
 
   # inspect the 'reason' argument to see if it is a supervisor
@@ -163,7 +169,9 @@ defmodule Appsignal.ErrorHandler do
   defp crash_name(pid, []), do: inspect(pid)
   defp crash_name(pid, name), do: "#{inspect(name)} (#{inspect(pid)})"
 
-  defp extract_conn({_, :call, [%Plug.Conn{} = conn, _params]}), do: conn
+  if Appsignal.phoenix? do
+    defp extract_conn({_, :call, [%Plug.Conn{} = conn, _params]}), do: conn
+  end
   defp extract_conn(_), do: nil
 
 
@@ -185,8 +193,11 @@ defmodule Appsignal.ErrorHandler do
   def extract_reason_and_message(%Protocol.UndefinedError{value: {:error, {error = %{}, _stack}}}, message) do
     extract_reason_and_message(error, message)
   end
-  def extract_reason_and_message(%Phoenix.Template.UndefinedError{assigns: %{conn: %{assigns: %{kind: :error, reason: reason}}}}, message) do
-    extract_reason_and_message(reason, message)
+
+  if Appsignal.phoenix? do
+    def extract_reason_and_message(%Phoenix.Template.UndefinedError{assigns: %{conn: %{assigns: %{kind: :error, reason: reason}}}}, message) do
+      extract_reason_and_message(reason, message)
+    end
   end
   def extract_reason_and_message(r = %{}, message) do
     msg = Exception.message(r)

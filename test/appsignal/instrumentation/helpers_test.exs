@@ -1,6 +1,6 @@
 defmodule AppsignalHelpersTest do
   use ExUnit.Case
-  use Plug.Test
+  # use Plug.Test
 
   import Mock
 
@@ -20,19 +20,6 @@ defmodule AppsignalHelpersTest do
     assert called Transaction.start_event(t)
     assert called Transaction.finish_event(t, "name", "title", "", 0)
   end
-
-  test_with_mock "instrument %Plug.Conn{}", Appsignal.Transaction, [:passthrough], [] do
-
-    # Setup the plug
-    conn = conn(:get, "/test/123")
-    |> Appsignal.Phoenix.Plug.call(%{})
-
-    call_instrument(conn)
-    t = conn.assigns.appsignal_transaction
-    assert called Transaction.start_event(t)
-    assert called Transaction.finish_event(t, "name", "title", "", 0)
-  end
-
 
   defp call_instrument(arg) do
     r = Helpers.instrument(arg, "name", "title", fn() ->

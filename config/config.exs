@@ -1,6 +1,6 @@
 use Mix.Config
 
-if Mix.env == :test do
+if Mix.env in [:test, :test_phoenix] do
   config :logger,
     level: :warn,
     handle_otp_reports: false,

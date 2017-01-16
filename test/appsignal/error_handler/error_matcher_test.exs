@@ -1,4 +1,4 @@
-defmodule AppsignalErrorMatcherTest do
+defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
   @moduledoc """
   Covers most cases of Appsignal.ErrorHandler.match_event/1
   """
@@ -52,9 +52,11 @@ defmodule AppsignalErrorMatcherTest do
 
   end
 
+  @error_handler Appsignal.ErrorHandler.ErrorMatcherTest.CustomErrorHandler
+
   defp get_last_crash do
     :timer.sleep(20)
-    GenEvent.call(:error_logger, AppsignalErrorMatcherTest.CustomErrorHandler, :get_matched_crash)
+    GenEvent.call(:error_logger, @error_handler, :get_matched_crash)
   end
 
   defp assert_crash_caught({:ok, pid}) when is_pid(pid) do
@@ -76,9 +78,9 @@ defmodule AppsignalErrorMatcherTest do
 
 
   setup do
-    :error_logger.add_report_handler(CustomErrorHandler)
+    :error_logger.add_report_handler(@error_handler)
     on_exit(fn() ->
-      :error_logger.delete_report_handler(CustomErrorHandler)
+      :error_logger.delete_report_handler(@error_handler)
     end)
     :timer.sleep 100
   end

@@ -1,4 +1,4 @@
-defmodule AppsignalConfigTest do
+defmodule Appsignal.ConfigTest do
   @moduledoc """
   Test the configuratoin
   """
