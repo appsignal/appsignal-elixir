@@ -37,7 +37,7 @@ defmodule Appsignal.ErrorHandler do
             false ->
               transaction = Transaction.lookup_or_create_transaction(origin)
               if transaction != nil do
-                submit_transaction(transaction, reason, message, stack, %{}, conn)
+                submit_transaction(transaction, normalize_reason(reason), message, stack, %{}, conn)
               end
             true ->
               # ignore this event; we have already handled it.
@@ -211,4 +211,9 @@ defmodule Appsignal.ErrorHandler do
   defp prefixed(nil, msg), do: msg
   defp prefixed("", msg), do: msg
   defp prefixed(pre, msg), do: pre <> ": " <> msg
+
+  @pid_or_ref_regex ~r/\<(\d+\.)+\d+\>/
+  def normalize_reason(reason) do
+    Regex.replace(@pid_or_ref_regex, reason, "<...>")
+  end
 end
