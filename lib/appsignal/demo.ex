@@ -3,15 +3,13 @@ defmodule Appsignal.Demo do
 
   @doc false
   def create_transaction_error_request do
-    transaction = create_demo_transaction()
-    Appsignal.Transaction.set_error(
-      transaction,
+    create_demo_transaction
+    |> Appsignal.Transaction.set_error(
       "TestError",
       "Hello world! This is an error used for demonstration purposes.",
       System.stacktrace
     )
-
-    finish_demo_transaction(transaction)
+    |> finish_demo_transaction
   end
 
   @doc false
