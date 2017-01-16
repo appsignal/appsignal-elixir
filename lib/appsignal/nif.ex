@@ -103,7 +103,7 @@ defmodule Appsignal.Nif do
   end
 
   def data_map_new do
-    _data_map_new
+    _data_map_new()
   end
 
   def data_set_string(resource, key, value) do
@@ -159,7 +159,7 @@ defmodule Appsignal.Nif do
   end
 
   def data_list_new do
-    _data_list_new
+    _data_list_new()
   end
 
   def _start do
