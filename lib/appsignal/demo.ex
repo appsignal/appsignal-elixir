@@ -1,5 +1,4 @@
 defmodule Appsignal.Demo do
-  alias Appsignal.ErrorHandler
   import Appsignal.Instrumentation.Helpers, only: [instrument: 4]
 
   @doc false
@@ -9,7 +8,7 @@ defmodule Appsignal.Demo do
       transaction,
       "TestError",
       "Hello world! This is an error used for demonstration purposes.",
-      ErrorHandler.format_stack(System.stacktrace)
+      System.stacktrace
     )
 
     finish_demo_transaction(transaction)
