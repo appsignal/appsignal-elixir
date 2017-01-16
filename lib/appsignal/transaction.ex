@@ -362,11 +362,6 @@ defmodule Appsignal.Transaction do
     end
   end
 
-  defp ensure_headers_map(nil), do: %{}
-  defp ensure_headers_map(headers) when is_list(headers) do
-    headers |> Enum.into(%{})
-  end
-
   if Appsignal.phoenix? do
     @doc """
     Set the request metadata, given a Plug.Conn.t.
