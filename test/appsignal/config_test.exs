@@ -7,35 +7,13 @@ defmodule Appsignal.ConfigTest do
 
   alias Appsignal.Config
 
-  setup do
-    Application.delete_env(:appsignal, :config)
 
-    ~w(
-       APPSIGNAL_ACTIVE
-       APPSIGNAL_APP_NAME
-       APPSIGNAL_DEBUG
-       APPSIGNAL_DEBUG_LOGGING
-       APPSIGNAL_ENABLE_HOST_METRICS
-       APPSIGNAL_APP_ENV
-       APPSIGNAL_ENVIRONMENT
-       APPSIGNAL_FILTER_PARAMETERS
-       APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH
-       APPSIGNAL_HTTP_PROXY
-       APPSIGNAL_IGNORE_ACTIONS
-       APPSIGNAL_IGNORE_ERRORS
-       APPSIGNAL_LOG
-       APPSIGNAL_LOG_PATH
-       APPSIGNAL_PUSH_API_ENDPOINT
-       APPSIGNAL_PUSH_API_KEY
-       APPSIGNAL_RUNNING_IN_CONTAINER
-       APPSIGNAL_SKIP_SESSION_DATA
-       APPSIGNAL_WORKING_DIR_PATH
-       APP_REVISION
-       DYNO
-     ) |> Enum.each(fn(key) ->
-       System.delete_env(key)
-     end)
+  setup do
+    clear_env
+
+    on_exit &clear_env/0
   end
+
 
   test "unconfigured" do
     assert {:error, :invalid_config} = Config.initialize()
@@ -392,5 +370,35 @@ defmodule Appsignal.ConfigTest do
   defp init_config() do
     Config.initialize()
     Application.get_all_env(:appsignal)[:config]
+  end
+
+  defp clear_env() do
+    Application.delete_env(:appsignal, :config)
+
+    ~w(
+      APPSIGNAL_ACTIVE
+      APPSIGNAL_APP_NAME
+      APPSIGNAL_DEBUG
+      APPSIGNAL_DEBUG_LOGGING
+      APPSIGNAL_ENABLE_HOST_METRICS
+      APPSIGNAL_APP_ENV
+      APPSIGNAL_ENVIRONMENT
+      APPSIGNAL_FILTER_PARAMETERS
+      APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH
+      APPSIGNAL_HTTP_PROXY
+      APPSIGNAL_IGNORE_ACTIONS
+      APPSIGNAL_IGNORE_ERRORS
+      APPSIGNAL_LOG
+      APPSIGNAL_LOG_PATH
+      APPSIGNAL_PUSH_API_ENDPOINT
+      APPSIGNAL_PUSH_API_KEY
+      APPSIGNAL_RUNNING_IN_CONTAINER
+      APPSIGNAL_SKIP_SESSION_DATA
+      APPSIGNAL_WORKING_DIR_PATH
+      APP_REVISION
+      DYNO
+    ) |> Enum.each(fn(key) ->
+      System.delete_env(key)
+    end)
   end
 end
