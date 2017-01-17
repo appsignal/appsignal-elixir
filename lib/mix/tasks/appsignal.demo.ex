@@ -10,6 +10,6 @@ defmodule Mix.Tasks.Appsignal.Demo do
     Appsignal.Demo.create_transaction_error_request
     Appsignal.stop(nil)
     Logger.info("Demonstration sample data sent!")
-    Logger.info("It may take about a minute for the data to appear on AppSignal.com/accounts")
+    Logger.info("It may take about a minute for the data to appear on https://appsignal.com/accounts")
   end
 end
