@@ -48,7 +48,7 @@ defmodule Appsignal.Instrumentation.Decorators do
         Appsignal.Transaction.generate_id,
         unquote(namespace)
       )
-      |> Appsignal.Transaction.set_action(unquote("#{context.name}"))
+      |> Appsignal.Transaction.set_action(unquote("#{context.module}##{context.name}"))
 
       unquote(body)
 
