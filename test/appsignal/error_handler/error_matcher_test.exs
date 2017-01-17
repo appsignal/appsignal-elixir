@@ -180,8 +180,23 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     |> reason(":function_clause")
   end
 
+  test "Task await" do
+    :proc_lib.spawn(fn() ->
+      Task.async(fn() ->
+        Process.sleep(2)
+      end)
+      |> Task.await(1)
+    end)
+    |> assert_crash_caught
+    |> reason_regex(~r/^{:exit, {:timeout/)
+  end
+
   defp reason(reason, expected) do
     assert expected == reason
+  end
+
+  defp reason_regex(reason, expected) do
+    assert reason =~ expected
   end
 
 end
