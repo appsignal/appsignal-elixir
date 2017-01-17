@@ -35,7 +35,7 @@ defmodule Appsignal.Mixfile do
   defp package do
     %{files: ["lib", "c_src/*.[ch]", "mix.exs", "mix_helpers.exs",
               "*.md", "LICENSE", "Makefile", "agent.json"],
-      maintainers: ["Arjan Scherpenisse", "Jeff Kreeftmeijer"],
+      maintainers: ["Arjan Scherpenisse", "Jeff Kreeftmeijer", "Tom de Bruijn"],
       licenses: ["MIT"],
       links: %{"GitHub" => "https://github.com/appsignal/appsignal-elixir"}}
   end
