@@ -54,8 +54,8 @@ defmodule Appsignal.Mixfile do
   defp compilers(:test_phoenix), do: [:phoenix] ++ compilers(:prod)
   defp compilers(_), do: [:appsignal] ++ Mix.compilers
 
-  defp test_paths(:test_phoenix), do: ["test/appsignal", "test/phoenix"]
-  defp test_paths(_), do: ["test/appsignal"]
+  defp test_paths(:test_phoenix), do: ["test/appsignal", "test/mix", "test/phoenix"]
+  defp test_paths(_), do: ["test/appsignal", "test/mix"]
 
   defp elixirc_paths(env) do
     case test?(env) do
@@ -72,9 +72,11 @@ defmodule Appsignal.Mixfile do
   defp deps do
     [
       {:poison, "~> 2.1"},
+      {:httpoison, "~> 0.10.0"},
       {:decorator, "~> 1.0"},
       {:phoenix, "~> 1.2.0", optional: true, only: [:prod, :test_phoenix]},
       {:mock, "~> 0.2.1", only: [:test, :test_phoenix, :test_no_nif]},
+      {:bypass, "~> 0.5", only: [:test, :test_phoenix]},
       {:ex_doc, "~> 0.12", only: :dev}
     ]
   end
