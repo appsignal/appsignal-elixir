@@ -40,6 +40,7 @@ defmodule Appsignal.Instrumentation.DecoratorsTest do
   test_with_mock "instrument transaction", Appsignal.Transaction, [:passthrough], [] do
     Example.transaction
     assert called Transaction.start(:_, :http_request)
+    assert called Appsignal.Transaction.set_action(:_, "Elixir.Appsignal.Instrumentation.DecoratorsTest.Example#transaction")
     assert called Appsignal.Transaction.finish(:_)
     assert called Appsignal.Transaction.complete(:_)
   end
@@ -47,6 +48,7 @@ defmodule Appsignal.Instrumentation.DecoratorsTest do
   test_with_mock "instrument background transaction", Appsignal.Transaction, [:passthrough], [] do
     Example.background_transaction
     assert called Transaction.start(:_, :background_job)
+    assert called Appsignal.Transaction.set_action(:_, "Elixir.Appsignal.Instrumentation.DecoratorsTest.Example#background_transaction")
     assert called Appsignal.Transaction.finish(:_)
     assert called Appsignal.Transaction.complete(:_)
   end
