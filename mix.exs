@@ -8,7 +8,6 @@ defmodule Mix.Tasks.Compile.Appsignal do
   end
 end
 
-
 defmodule Appsignal.Mixfile do
   use Mix.Project
 
@@ -57,7 +56,6 @@ defmodule Appsignal.Mixfile do
       {:poison, "~> 2.1"},
       {:decorator, "~> 1.0"},
       {:phoenix, "~> 1.2.0", optional: true, only: :test_phoenix},
-
       {:mock, "~> 0.1.1", only: [:test, :test_phoenix]},
       {:ex_doc, "~> 0.12", only: :dev}
     ]
