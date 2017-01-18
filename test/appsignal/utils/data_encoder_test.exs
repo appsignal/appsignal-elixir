@@ -80,6 +80,11 @@ defmodule Appsignal.Utils.DataEncoderTest do
     assert {:ok, '{"foo":["foo","bar","baz"]}'} == Nif.data_to_json(resource)
   end
 
+  test "encode a map with a PID value" do
+    resource = DataEncoder.encode(%{foo: self()})
+    assert {:ok, '{"foo":"#{inspect self()}"}'} == Nif.data_to_json(resource)
+  end
+
   test "encode an empty list" do
     resource = DataEncoder.encode([])
     assert {:ok, '[]'} == Nif.data_to_json(resource)
@@ -131,6 +136,11 @@ defmodule Appsignal.Utils.DataEncoderTest do
   test "encode a list with a tuple item" do
     resource = DataEncoder.encode(["foo", {"foo","bar","baz"}])
     assert {:ok, '["foo",["foo","bar","baz"]]'} == Nif.data_to_json(resource)
+  end
+
+  test "encode a list with a PID item" do
+    resource = DataEncoder.encode([self()])
+    assert {:ok, '["#{inspect self()}"]'} == Nif.data_to_json(resource)
   end
 
   test "encode a struct" do
