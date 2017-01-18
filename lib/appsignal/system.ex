@@ -17,4 +17,8 @@ defmodule Appsignal.System do
       _ -> nil
     end
   end
+
+  def heroku? do
+    System.get_env("DYNO") != nil
+  end
 end

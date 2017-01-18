@@ -52,6 +52,9 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     IO.puts "  OTP version: #{System.otp_release}"
     IO.puts "  root user: TODO"
     IO.puts "  Process user: #{System.get_env("USER")}"
+    if Appsignal.System.heroku? do
+      IO.puts "  Heroku: yes"
+    end
   end
 
   defp start_appsignal_in_diagnose_mode do
