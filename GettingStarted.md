@@ -18,6 +18,8 @@
       [applications: [:appsignal]]
     end
     ```
+    
+    **Note:** If you're using Phoenix, make sure to load `appsignal` after `phoenix` but before your application.
 
   3. If you use the
      [Phoenix framework](http://www.phoenixframework.org/), *use* the
