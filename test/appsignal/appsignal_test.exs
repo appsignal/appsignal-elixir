@@ -58,4 +58,23 @@ defmodule AppsignalTest do
     assert called Transaction.finish(t)
     assert called Transaction.complete(t)
   end
+
+  test_with_mock "send_error with a passed function", Appsignal.Transaction, [:passthrough], [] do
+    stack = System.stacktrace()
+    Appsignal.send_error(
+      %RuntimeError{message: "Some bad stuff happened"},
+      "Oops",
+      stack,
+      %{},
+      nil,
+      fn(t) -> Transaction.set_sample_data(t, "key", %{foo: "bar"}) end
+    )
+
+    t = %Transaction{} = TransactionRegistry.lookup(self())
+
+    assert called Transaction.set_error(t, "RuntimeError", "Oops: Some bad stuff happened", stack)
+    assert called Transaction.set_sample_data(t, "key", %{foo: "bar"})
+    assert called Transaction.finish(t)
+    assert called Transaction.complete(t)
+  end
 end

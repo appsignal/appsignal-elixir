@@ -115,10 +115,11 @@ defmodule Appsignal do
   When there is no current transaction, this call starts one.
 
   """
-  def send_error(reason, message \\ "", stack \\ nil, metadata \\ %{}, conn \\ nil) do
+  def send_error(reason, message \\ "", stack \\ nil, metadata \\ %{}, conn \\ nil, fun \\ fn(t) -> t end) do
     stack = stack || System.stacktrace()
     transaction = Appsignal.Transaction.lookup_or_create_transaction(self())
     if transaction != nil do
+      fun.(transaction)
       {reason, message} = Appsignal.ErrorHandler.extract_reason_and_message(reason, message)
       Appsignal.ErrorHandler.submit_transaction(transaction, reason, message, stack, metadata, conn)
     end
