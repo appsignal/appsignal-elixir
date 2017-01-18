@@ -67,6 +67,21 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     assert String.contains? output, "Elixir version: #{System.version}"
     assert String.contains? output, "OTP version: #{System.otp_release}"
     assert String.contains? output, "Process user: #{System.get_env("USER")}"
+    refute String.contains? output, "Heroku:"
+  end
+
+  describe "when on Heroku" do
+    setup do
+      System.put_env "DYNO", "1"
+      on_exit fn ->
+        System.delete_env "DYNO"
+      end
+    end
+
+    test "outputs Heroku: yes" do
+      output = run()
+      assert String.contains? output, "Heroku: yes"
+    end
   end
 
   @tag :pending

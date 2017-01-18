@@ -108,9 +108,9 @@ defmodule Appsignal.Config do
       _ -> Map.merge(config, %{active: true})
     end
     # Detect Heroku
-    case System.get_env("DYNO") do
-      nil -> config
-      _ -> Map.merge(config, %{running_in_container: true, log: "stdout"})
+    case Appsignal.System.heroku? do
+      false -> config
+      true -> Map.merge(config, %{running_in_container: true, log: "stdout"})
     end
   end
 
