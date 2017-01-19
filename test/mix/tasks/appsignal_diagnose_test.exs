@@ -1,6 +1,7 @@
 defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   use ExUnit.Case
   import ExUnit.CaptureIO
+  import Mock
 
   defp run do
     capture_io(fn -> Mix.Tasks.Appsignal.Diagnose.run(nil) end)
@@ -11,7 +12,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
     # By default, Push API key is valid
     bypass = Bypass.open
-    appsignal_config %{endpoint: "http://localhost:#{bypass.port}"}
+    merge_appsignal_config %{endpoint: "http://localhost:#{bypass.port}"}
     Bypass.expect bypass, fn conn ->
       assert "/1/auth" == conn.request_path
       assert "GET" == conn.method
@@ -44,7 +45,6 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     assert String.contains? output, "Agent version: #{agent_version}"
   end
 
-  @tag :pending
   describe "when Nif is loaded" do
     test "outputs that the Nif is loaded" do
       output = run()
@@ -66,7 +66,6 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     assert String.contains? output, "Architecture: #{:erlang.system_info(:system_architecture)}"
     assert String.contains? output, "Elixir version: #{System.version}"
     assert String.contains? output, "OTP version: #{System.otp_release}"
-    assert String.contains? output, "Process user: #{System.get_env("USER")}"
     refute String.contains? output, "Heroku:"
   end
 
@@ -84,19 +83,21 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     end
   end
 
-  @tag :pending
   describe "when root user" do
     test "outputs warning about running as root" do
-      output = run()
-      assert String.contains? output, "root user: yes (not recommended)"
+      with_mocks([{Appsignal.System, [:passthrough], [root?: fn -> true end]}]) do
+        output = run()
+        assert String.contains? output, "root user: yes (not recommended)"
+      end
     end
   end
 
-  @tag :pending
   describe "when not root user" do
     test "outputs root user: no" do
-      output = run()
-      assert String.contains? output, "root user: no"
+      with_mocks([{Appsignal.System, [:passthrough], [root?: fn -> false end]}]) do
+        output = run()
+        assert String.contains? output, "root user: no"
+      end
     end
   end
 
@@ -130,7 +131,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
   describe "with invalid Push API key" do
     setup %{bypass: bypass} do
-      appsignal_config %{push_api_key: ""}
+      merge_appsignal_config %{push_api_key: ""}
       Bypass.expect bypass, fn conn ->
         assert "/1/auth" == conn.request_path
         assert "GET" == conn.method
@@ -147,7 +148,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
   describe "without config" do
     test "it outputs tmp dir for log_dir_path" do
-      appsignal_config %{log_path: nil}
+      merge_appsignal_config %{log_path: nil}
       output = run()
       assert String.contains? output, "Paths"
       assert String.contains? output, "log_dir_path: /tmp"
@@ -157,13 +158,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
   describe "when log_dir_path is writable" do
     setup do
-      log_dir_path = Path.expand("tmp/writable_path", File.cwd!)
-      log_file_path = Path.expand("appsignal.log", log_dir_path)
-      on_exit :clean_up, fn ->
-        File.rm_rf!(log_dir_path)
-      end
-      File.mkdir_p!(log_dir_path)
-      appsignal_config %{log_path: log_file_path}
+      %{log_dir_path: log_dir_path, log_file_path: log_file_path} = prepare_tmp_dir "writable_path"
 
       {:ok, %{log_dir_path: log_dir_path, log_file_path: log_file_path}}
     end
@@ -184,7 +179,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
   describe "when log_dir_path does not exist" do
     test "outputs exists: false" do
-      appsignal_config %{log_path: "/foo/bar/baz.log"}
+      merge_appsignal_config %{log_path: "/foo/bar/baz.log"}
       output = run()
 
       assert String.contains? output, "log_dir_path: /foo/bar\n    - Exists?: no"
@@ -204,7 +199,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       File.mkdir_p!(log_dir_path)
       File.touch!(log_file_path)
       File.chmod!(log_dir_path, 0o400)
-      appsignal_config %{log_path: log_file_path}
+      merge_appsignal_config %{log_path: log_file_path}
 
       {:ok, %{log_dir_path: log_dir_path, log_file_path: log_file_path}}
     end
@@ -218,26 +213,35 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     end
   end
 
-  describe "when path is not owned by current user" do
+  describe "when path is owned by current user" do
     setup do
-      log_dir_path = Path.expand("tmp/not_owned_path", File.cwd!)
-      log_file_path = Path.expand("appsignal.log", log_dir_path)
-      on_exit :clean_up, fn ->
-        File.rm_rf!(log_dir_path)
-      end
+      %{log_dir_path: log_dir_path} = prepare_tmp_dir "not_owned_path"
 
-      File.mkdir_p!(log_dir_path)
-      File.touch!(log_file_path)
-      appsignal_config %{log_path: log_file_path}
-
-      {:ok, %{log_dir_path: log_dir_path, log_file_path: log_file_path}}
+      {:ok, %{log_dir_path: log_dir_path}}
     end
 
-    test "outputs ownership uid", %{log_dir_path: log_dir_path, log_file_path: log_file_path} do
+    test "outputs ownership uid", %{log_dir_path: log_dir_path} do
       %{uid: uid} = File.stat!(log_dir_path)
       output = run()
-      assert String.contains? output, "log_dir_path: #{log_dir_path}\n    - Writable?: yes\n    - Ownership?: (file: #{uid})"
-      assert String.contains? output, "log_file_path: #{log_file_path}\n    - Writable?: yes\n    - Ownership?: (file: #{uid})"
+      assert Appsignal.System.uid == uid
+      assert String.contains? output, "log_dir_path: #{log_dir_path}\n    - Writable?: yes\n    - Ownership?: yes (file: #{uid}, process: #{Appsignal.System.uid})"
+    end
+  end
+
+  describe "when path is not owned by current user" do
+    setup do
+      %{log_dir_path: log_dir_path} = prepare_tmp_dir "owned_path"
+
+      {:ok, %{log_dir_path: log_dir_path}}
+    end
+
+    test "outputs ownership uid", %{log_dir_path: log_dir_path} do
+      with_mocks([{Appsignal.System, [:passthrough], [uid: fn -> 999 end]}]) do
+        %{uid: uid} = File.stat!(log_dir_path)
+        output = run()
+        assert Appsignal.System.uid != uid
+        assert String.contains? output, "log_dir_path: #{log_dir_path}\n    - Writable?: yes\n    - Ownership?: no (file: #{uid}, process: #{Appsignal.System.uid})"
+      end
     end
   end
 
@@ -245,7 +249,20 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     Application.get_env(:appsignal, :config, %{})
   end
 
-  defp appsignal_config(config) do
+  defp merge_appsignal_config(config) do
     Application.put_env(:appsignal, :config, Map.merge(appsignal_config(), config))
+  end
+
+  defp prepare_tmp_dir(path) do
+    log_dir_path = Path.expand("tmp/#{path}", File.cwd!)
+    log_file_path = Path.expand("appsignal.log", log_dir_path)
+    on_exit :clean_up, fn ->
+      File.rm_rf!(log_dir_path)
+    end
+
+    File.mkdir_p!(log_dir_path)
+    merge_appsignal_config %{log_path: log_file_path}
+
+    %{log_dir_path: log_dir_path, log_file_path: log_file_path}
   end
 end

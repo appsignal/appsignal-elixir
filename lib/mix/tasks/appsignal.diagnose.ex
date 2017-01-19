@@ -42,7 +42,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
 
     agent_info = Poison.decode!(File.read!(Path.expand("../../../agent.json", __DIR__)))
     IO.puts "  Agent version: #{agent_info["version"]}"
-    IO.puts "  Nif loaded: TODO"
+    IO.puts "  Nif loaded: yes"
   end
 
   defp host_information do
@@ -50,8 +50,8 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     IO.puts "  Architecture: #{:erlang.system_info(:system_architecture)}"
     IO.puts "  Elixir version: #{System.version}"
     IO.puts "  OTP version: #{System.otp_release}"
-    IO.puts "  root user: TODO"
-    IO.puts "  Process user: #{System.get_env("USER")}"
+    root_user = if (Appsignal.System.root?), do: "yes (not recommended)", else: "no"
+    IO.puts "  root user: #{root_user}"
     if Appsignal.System.heroku? do
       IO.puts "  Heroku: yes"
     end
@@ -82,6 +82,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
 
   defp diagnose_path(name, path) do
     IO.puts "  #{name}: #{path}"
+    process_uid = Appsignal.System.uid
 
     if File.exists? path do
       case File.stat(path) do
@@ -93,7 +94,10 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
             _ ->
               IO.puts "no"
           end
-          IO.puts "    - Ownership?: (file: #{uid})"
+
+          IO.write "    - Ownership?: "
+          IO.write if (uid == process_uid), do: "yes" , else: "no"
+          IO.puts " (file: #{uid}, process: #{process_uid})"
         {:error, reason} ->
           IO.puts "    Can't read path: #{reason}"
       end
