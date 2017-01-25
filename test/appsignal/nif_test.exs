@@ -13,4 +13,8 @@ defmodule Appsignal.NifTest do
     assert {:ok, transaction} = Appsignal.Nif.start_transaction("transaction id", "http_request")
     assert is_binary(transaction)
   end
+
+  test "the nif is loaded" do
+    assert true = Appsignal.Nif.loaded?
+  end
 end
