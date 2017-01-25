@@ -3,8 +3,14 @@ defmodule Mix.Tasks.Compile.Appsignal do
 
   def run(_args) do
     {_, _} = Code.eval_file("mix_helpers.exs")
-    :ok = Mix.Appsignal.Helper.ensure_downloaded
-    :ok = Mix.Appsignal.Helper.compile
+    case Mix.Appsignal.Helper.verify_system_architecture() do
+      {:ok, arch} ->
+        :ok = Mix.Appsignal.Helper.ensure_downloaded(arch)
+        :ok = Mix.Appsignal.Helper.compile
+      {:error, {:unsupported, arch}} ->
+        Mix.Shell.IO.error("Unsupported target platform #{arch}, AppSignal integration disabled!\nPlease check http://docs.appsignal.com/support/operating-systems.html")
+        :ok
+    end
   end
 end
 

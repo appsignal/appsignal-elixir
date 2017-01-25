@@ -7,10 +7,19 @@ defmodule Mix.Appsignal.Helper do
 
   @max_retries 5
 
-  def ensure_downloaded do
+  def verify_system_architecture() do
+    input_arch = :erlang.system_info(:system_architecture)
+    case map_arch(input_arch) do
+      :unsupported ->
+        {:error, {:unsupported, input_arch}}
+      arch when is_binary(arch) ->
+        {:ok, arch}
+    end
+  end
+
+  def ensure_downloaded(arch) do
 
     info = Poison.decode!(File.read!("agent.json"))
-    arch = map_arch(:erlang.system_info(:system_architecture))
     arch_config = info["triples"][arch]
     version = info["version"]
 
@@ -105,6 +114,7 @@ defmodule Mix.Appsignal.Helper do
   defp map_arch('x86_64-alpine-linux' ++ _), do: "x86_64-linux"
   defp map_arch('x86_64-unknown-linux' ++ _), do: "x86_64-linux"
   defp map_arch('x86_64-apple-darwin' ++ _), do: "x86_64-darwin"
+  defp map_arch(_), do: :unsupported
 
   defp priv_dir() do
     path = case :code.priv_dir(:appsignal) do
