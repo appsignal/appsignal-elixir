@@ -29,9 +29,17 @@ defmodule Appsignal.Nif do
 
   @on_load :init
 
+  require Logger
+
   def init do
     path = :filename.join(:code.priv_dir(:appsignal), 'appsignal_extension')
-    :ok = :erlang.load_nif(path, 1)
+    case :erlang.load_nif(path, 1) do
+      :ok -> :ok
+      {:error, {:load_failed, reason}} ->
+        arch = :erlang.system_info(:system_architecture)
+        Logger.error "Error loading NIF, Appsignal integration disabled!\n\n#{reason}\n\nIs your operating system (#{arch}) supported?\nPlease check http://docs.appsignal.com/support/operating-systems.html"
+        :ok
+    end
   end
 
   def start do
@@ -163,130 +171,130 @@ defmodule Appsignal.Nif do
   end
 
   def _start do
-    exit(:nif_library_not_loaded)
+    :ok
   end
 
   def _stop do
-    exit(:nif_library_not_loaded)
+    :ok
   end
 
   def _start_transaction(_id, _namespace) do
-    exit(:nif_library_not_loaded)
+    {:ok, nil}
   end
 
   def _start_event(_transaction_resource) do
-    exit(:nif_library_not_loaded)
+    :ok
   end
 
   def _finish_event(_transaction_resource, _name, _title, _body, _body_format) do
-    exit(:nif_library_not_loaded)
+    :ok
   end
 
   def _finish_event_data(_transaction_resource, _name, _title, _body, _body_format) do
-    exit(:nif_library_not_loaded)
+    :ok
   end
 
   def _record_event(_transaction_resource, _name, _title, _body, _duration, _body_format) do
-    exit(:nif_library_not_loaded)
+    :ok
   end
 
   def _set_error(_transaction_resource, _error, _message, _backtrace) do
-    exit(:nif_library_not_loaded)
+    :ok
   end
 
   def _set_sample_data(_transaction_resource, _key, _payload) do
-    exit(:nif_library_not_loaded)
+    :ok
   end
 
   def _set_action(_transaction_resource, _action) do
-    exit(:nif_library_not_loaded)
+    :ok
   end
 
   def _set_queue_start(_transaction_resource, _start) do
-    exit(:nif_library_not_loaded)
+    :ok
   end
 
   def _set_meta_data(_transaction_resource, _key, _value) do
-    exit(:nif_library_not_loaded)
+    :ok
   end
 
   def _finish(_transaction_resource) do
-    exit(:nif_library_not_loaded)
+    :no_sample
   end
 
   def _complete(_transaction_resource) do
-    exit(:nif_library_not_loaded)
+    :ok
   end
 
   def _set_gauge(_key, _value) do
-    exit(:nif_library_not_loaded)
+    :ok
   end
 
   def _increment_counter(_key, _count) do
-    exit(:nif_library_not_loaded)
+    :ok
   end
 
   def _add_distribution_value(_key, _value) do
-    exit(:nif_library_not_loaded)
+    :ok
   end
 
   def _data_map_new do
-    exit(:nif_library_not_loaded)
+    {:ok, nil}
   end
 
-  def _data_set_string(_resource, _key, _value) do
-    exit(:nif_library_not_loaded)
+  def _data_set_string(resource, _key, _value) do
+    resource
   end
 
-  def _data_set_string(_resource, _value) do
-    exit(:nif_library_not_loaded)
+  def _data_set_string(resource, _value) do
+    resource
   end
 
-  def _data_set_integer(_resource, _key, _value) do
-    exit(:nif_library_not_loaded)
+  def _data_set_integer(resource, _key, _value) do
+    resource
   end
 
-  def _data_set_integer(_resource, _value) do
-    exit(:nif_library_not_loaded)
+  def _data_set_integer(resource, _value) do
+    resource
   end
 
-  def _data_set_float(_resource, _key, _value) do
-    exit(:nif_library_not_loaded)
+  def _data_set_float(resource, _key, _value) do
+    resource
   end
 
-  def _data_set_float(_resource, _value) do
-    exit(:nif_library_not_loaded)
+  def _data_set_float(resource, _value) do
+    resource
   end
 
-  def _data_set_boolean(_resource, _key, _value) do
-    exit(:nif_library_not_loaded)
+  def _data_set_boolean(resource, _key, _value) do
+    resource
   end
 
-  def _data_set_boolean(_resource, _value) do
-    exit(:nif_library_not_loaded)
+  def _data_set_boolean(resource, _value) do
+    resource
   end
 
-  def _data_set_nil(_resource, _key) do
-    exit(:nif_library_not_loaded)
+  def _data_set_nil(resource, _key) do
+    resource
   end
 
-  def _data_set_nil(_resource) do
-    exit(:nif_library_not_loaded)
+  def _data_set_nil(resource) do
+    resource
   end
 
-  def _data_set_data(_resource, _key, _value) do
-    exit(:nif_library_not_loaded)
+  def _data_set_data(resource, _key, _value) do
+    resource
   end
 
-  def _data_set_data(_resource, _value) do
-    exit(:nif_library_not_loaded)
+  def _data_set_data(resource, _value) do
+    resource
   end
 
-  def _data_list_new do
-    exit(:nif_library_not_loaded)
+  def _data_list_new() do
+    {:ok, nil}
   end
 
-  def _data_to_json(_resource) do
-    exit(:nif_library_not_loaded)
+  def _data_to_json(resource) do
+    resource
   end
 end
