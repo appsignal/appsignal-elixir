@@ -170,6 +170,10 @@ defmodule Appsignal.Nif do
     _data_list_new()
   end
 
+  def loaded? do
+    _loaded()
+  end
+
   def _start do
     :ok
   end
@@ -296,5 +300,9 @@ defmodule Appsignal.Nif do
 
   def _data_to_json(resource) do
     resource
+  end
+
+  def _loaded do
+    false
   end
 end

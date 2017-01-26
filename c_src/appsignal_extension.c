@@ -711,6 +711,10 @@ static ERL_NIF_TERM _data_to_json(ErlNifEnv* env, int argc, const ERL_NIF_TERM a
   return make_ok_tuple(env, enif_make_string(env, json.buf, ERL_NIF_LATIN1));
 }
 
+static ERL_NIF_TERM _loaded(ErlNifEnv *env, int UNUSED(argc), const ERL_NIF_TERM UNUSED(argv[])) {
+  return enif_make_atom(env, "true");
+}
+
 static int on_load(ErlNifEnv* env, void** UNUSED(priv), ERL_NIF_TERM UNUSED(info))
 {
     ErlNifResourceType *transaction_resource_type;
@@ -786,7 +790,8 @@ static ErlNifFunc nif_funcs[] =
     {"_data_set_data", 3, _data_set_data, 0},
     {"_data_set_data", 2, _data_set_data, 0},
     {"_data_list_new", 0, _data_list_new, 0},
-    {"_data_to_json", 1, _data_to_json, 0}
+    {"_data_to_json", 1, _data_to_json, 0},
+    {"_loaded", 0, _loaded, 0}
 };
 
 ERL_NIF_INIT(Elixir.Appsignal.Nif, nif_funcs, on_load, on_reload, on_upgrade, NULL)
