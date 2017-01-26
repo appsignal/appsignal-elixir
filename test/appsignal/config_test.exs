@@ -108,6 +108,12 @@ defmodule Appsignal.ConfigTest do
       assert "prod" == System.get_env("APPSIGNAL_ENVIRONMENT")
     end
 
+    test "ca_file_path" do
+      add_to_application_env(:ca_file_path, "/foo/bar/zab.ca")
+      assert valid_configuration() |> Map.put(:ca_file_path, "/foo/bar/zab.ca") == init_config()
+      assert "/foo/bar/zab.ca" == System.get_env("APPSIGNAL_CA_FILE_PATH")
+    end
+
     test "enable_host_metrics" do
       add_to_application_env(:enable_host_metrics, false)
       assert valid_configuration() |> Map.put(:enable_host_metrics, false) == init_config()
@@ -230,6 +236,12 @@ defmodule Appsignal.ConfigTest do
       assert valid_configuration() |> Map.put(:env, :prod) == init_config()
       assert "prod" == System.get_env("APPSIGNAL_APP_ENV")
       assert "prod" == System.get_env("APPSIGNAL_ENVIRONMENT")
+    end
+
+    test "ca_file_path" do
+      System.put_env("APPSIGNAL_CA_FILE_PATH", "/foo/bar/baz.ca")
+      assert valid_configuration() |> Map.put(:ca_file_path, "/foo/bar/baz.ca") == init_config()
+      assert "/foo/bar/baz.ca" == System.get_env("APPSIGNAL_CA_FILE_PATH")
     end
 
     test "enable_host_metrics" do
@@ -378,10 +390,11 @@ defmodule Appsignal.ConfigTest do
     ~w(
       APPSIGNAL_ACTIVE
       APPSIGNAL_APP_NAME
+      APPSIGNAL_APP_ENV
       APPSIGNAL_DEBUG
       APPSIGNAL_DEBUG_LOGGING
+      APPSIGNAL_CA_FILE_PATH
       APPSIGNAL_ENABLE_HOST_METRICS
-      APPSIGNAL_APP_ENV
       APPSIGNAL_ENVIRONMENT
       APPSIGNAL_FILTER_PARAMETERS
       APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH
