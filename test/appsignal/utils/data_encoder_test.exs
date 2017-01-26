@@ -4,6 +4,7 @@ end
 
 defmodule Appsignal.Utils.DataEncoderTest do
   use ExUnit.Case
+  @moduletag :skip_env_test_no_nif
 
   alias Appsignal.{Utils.DataEncoder, Nif}
 

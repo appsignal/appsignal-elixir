@@ -51,9 +51,9 @@ defmodule Mix.Appsignal.Helper do
   end
 
   defp download_and_extract(url, version, checksum) do
-      download_file(url, version)
-      |> verify_checksum(checksum)
-      |> extract
+    download_file(url, version)
+    |> verify_checksum(checksum)
+    |> extract
   end
 
   defp download_file(url, version) do
@@ -109,11 +109,13 @@ defmodule Mix.Appsignal.Helper do
     :ok
   end
 
-  defp map_arch('x86_64-redhat-linux-gnu' ++ _), do: "x86_64-linux"
-  defp map_arch('x86_64-pc-linux-gnu' ++ _), do: "x86_64-linux"
-  defp map_arch('x86_64-alpine-linux' ++ _), do: "x86_64-linux"
-  defp map_arch('x86_64-unknown-linux' ++ _), do: "x86_64-linux"
-  defp map_arch('x86_64-apple-darwin' ++ _), do: "x86_64-darwin"
+  if Mix.env != :test_no_nif do
+    defp map_arch('x86_64-redhat-linux-gnu' ++ _), do: "x86_64-linux"
+    defp map_arch('x86_64-pc-linux-gnu' ++ _), do: "x86_64-linux"
+    defp map_arch('x86_64-alpine-linux' ++ _), do: "x86_64-linux"
+    defp map_arch('x86_64-unknown-linux' ++ _), do: "x86_64-linux"
+    defp map_arch('x86_64-apple-darwin' ++ _), do: "x86_64-darwin"
+  end
   defp map_arch(_), do: :unsupported
 
   defp priv_dir() do

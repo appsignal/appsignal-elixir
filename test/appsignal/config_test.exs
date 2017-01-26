@@ -7,13 +7,10 @@ defmodule Appsignal.ConfigTest do
 
   alias Appsignal.Config
 
-
   setup do
-    clear_env
-
+    clear_env()
     on_exit &clear_env/0
   end
-
 
   test "unconfigured" do
     assert {:error, :invalid_config} = Config.initialize()
