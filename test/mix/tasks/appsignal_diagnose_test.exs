@@ -52,9 +52,8 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     end
   end
 
-  @tag :pending
   describe "when Nif is not loaded" do
-    test "outputs that the Nif is not loaded" do
+    test_with_mock "outputs that the Nif is not loaded", Appsignal.Nif, [:passthrough], [loaded?: fn -> false end] do
       output = run()
       assert String.contains? output, "Nif loaded: no"
     end

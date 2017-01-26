@@ -42,7 +42,8 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
 
     agent_info = Poison.decode!(File.read!(Path.expand("../../../agent.json", __DIR__)))
     IO.puts "  Agent version: #{agent_info["version"]}"
-    IO.puts "  Nif loaded: yes"
+    nif_loaded = if (Appsignal.Nif.loaded?), do: "yes", else: "no"
+    IO.puts "  Nif loaded: #{nif_loaded}"
   end
 
   defp host_information do
