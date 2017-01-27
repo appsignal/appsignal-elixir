@@ -74,7 +74,7 @@ defmodule Appsignal.Mixfile do
       {:poison, "~> 2.1"},
       {:decorator, "~> 1.0"},
       {:phoenix, "~> 1.2.0", optional: true, only: [:prod, :test_phoenix]},
-      {:mock, "~> 0.1.1", only: [:test, :test_phoenix, :test_no_nif]},
+      {:mock, "~> 0.2.1", only: [:test, :test_phoenix, :test_no_nif]},
       {:ex_doc, "~> 0.12", only: :dev}
     ]
   end
