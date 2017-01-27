@@ -3,11 +3,14 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   import ExUnit.CaptureIO
   import Mock
 
+  @system Application.get_env(:appsignal, :appsignal_system)
+
   defp run do
     capture_io(fn -> Mix.Tasks.Appsignal.Diagnose.run(nil) end)
   end
 
   setup do
+    @system.start_link
     original_config = appsignal_config()
 
     # By default, Push API key is valid
@@ -69,12 +72,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   end
 
   describe "when on Heroku" do
-    setup do
-      System.put_env "DYNO", "1"
-      on_exit fn ->
-        System.delete_env "DYNO"
-      end
-    end
+    setup do: @system.set(:heroku, true)
 
     test "outputs Heroku: yes" do
       output = run()
@@ -82,21 +80,19 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     end
   end
 
-  describe "when root user" do
-    test "outputs warning about running as root" do
-      with_mocks([{Appsignal.System, [:passthrough], [root?: fn -> true end]}]) do
-        output = run()
-        assert String.contains? output, "root user: yes (not recommended)"
-      end
+  describe "when not root user" do
+    test "outputs root user: no" do
+      output = run()
+      assert String.contains? output, "root user: no"
     end
   end
 
-  describe "when not root user" do
-    test "outputs root user: no" do
-      with_mocks([{Appsignal.System, [:passthrough], [root?: fn -> false end]}]) do
-        output = run()
-        assert String.contains? output, "root user: no"
-      end
+  describe "when root user" do
+    setup do: @system.set(:root, true)
+
+    test "outputs warning about running as root" do
+      output = run()
+      assert String.contains? output, "root user: yes (not recommended)"
     end
   end
 
@@ -221,9 +217,9 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
     test "outputs ownership uid", %{log_dir_path: log_dir_path} do
       %{uid: uid} = File.stat!(log_dir_path)
+      @system.set(:uid, uid)
       output = run()
-      assert Appsignal.System.uid == uid
-      assert String.contains? output, "log_dir_path: #{log_dir_path}\n    - Writable?: yes\n    - Ownership?: yes (file: #{uid}, process: #{Appsignal.System.uid})"
+      assert String.contains? output, "log_dir_path: #{log_dir_path}\n    - Writable?: yes\n    - Ownership?: yes (file: #{uid}, process: #{@system.uid})"
     end
   end
 
@@ -235,13 +231,10 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     end
 
     test "outputs ownership uid", %{log_dir_path: log_dir_path} do
-      with_mocks([{Appsignal.System, [:passthrough], [uid: fn -> 999 end]}]) do
         %{uid: uid} = File.stat!(log_dir_path)
         output = run()
-        assert Appsignal.System.uid != uid
-        assert String.contains? output, "log_dir_path: #{log_dir_path}\n    - Writable?: yes\n    - Ownership?: no (file: #{uid}, process: #{Appsignal.System.uid})"
+        assert String.contains? output, "log_dir_path: #{log_dir_path}\n    - Writable?: yes\n    - Ownership?: no (file: #{uid}, process: #{@system.uid})"
       end
-    end
   end
 
   defp appsignal_config do

@@ -2,6 +2,8 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
   require Logger
   use Mix.Task
 
+  @system Application.get_env(:appsignal, :appsignal_system)
+
   @shortdoc "Starts and tests AppSignal while validating the configuration."
 
   def run(_args) do
@@ -51,9 +53,9 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     IO.puts "  Architecture: #{:erlang.system_info(:system_architecture)}"
     IO.puts "  Elixir version: #{System.version}"
     IO.puts "  OTP version: #{System.otp_release}"
-    root_user = if (Appsignal.System.root?), do: "yes (not recommended)", else: "no"
+    root_user = if (@system.root?), do: "yes (not recommended)", else: "no"
     IO.puts "  root user: #{root_user}"
-    if Appsignal.System.heroku? do
+    if @system.heroku? do
       IO.puts "  Heroku: yes"
     end
   end
@@ -83,7 +85,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
 
   defp diagnose_path(name, path) do
     IO.puts "  #{name}: #{path}"
-    process_uid = Appsignal.System.uid
+    process_uid = @system.uid
 
     if File.exists? path do
       case File.stat(path) do
