@@ -1,3 +1,3 @@
-
 :error_logger.tty(false)
-ExUnit.start()
+excludes = [String.to_atom("skip_env_#{Mix.env}")]
+ExUnit.start(exclude: excludes)

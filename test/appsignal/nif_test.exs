@@ -14,7 +14,16 @@ defmodule Appsignal.NifTest do
     assert is_binary(transaction)
   end
 
-  test "the nif is loaded" do
-    assert true = Appsignal.Nif.loaded?
+  if not(Mix.env in [:test_no_nif]) do
+    test "the nif is loaded" do
+      assert true == Appsignal.Nif.loaded?
+    end
   end
+
+  if Mix.env in [:test_no_nif] do
+    test "the nif is not loaded" do
+      assert false == Appsignal.Nif.loaded?
+    end
+  end
+
 end
