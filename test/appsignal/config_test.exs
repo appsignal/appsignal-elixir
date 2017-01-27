@@ -353,7 +353,8 @@ defmodule Appsignal.ConfigTest do
       send_params: true,
       skip_session_data: false,
       valid: false,
-      log: "file"
+      log: "file",
+      hostname: "Alices-MBP.example.com"
     }
   end
 

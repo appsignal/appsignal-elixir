@@ -1,4 +1,5 @@
 defmodule Appsignal.Config do
+  @system Application.get_env(:appsignal, :appsignal_system)
 
   @default_config %{
     debug: false,
@@ -97,9 +98,11 @@ defmodule Appsignal.Config do
   end
 
   defp load_from_system() do
+    config = %{hostname: @system.hostname_with_domain}
+
     case System.get_env("DYNO") do
-      nil -> %{}
-      _ -> %{running_in_container: true, log: "stdout"}
+      nil -> config
+      _ -> Map.merge(config, %{running_in_container: true, log: "stdout"})
     end
   end
 
