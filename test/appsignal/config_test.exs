@@ -163,6 +163,12 @@ defmodule Appsignal.ConfigTest do
       assert valid_configuration() |> Map.put(:revision, "03bd9e") == init_config()
       assert "03bd9e" == System.get_env("APP_REVISION")
     end
+
+    test "hostname" do
+      add_to_application_env(:hostname, "Bobs-MPB.example.com")
+      assert valid_configuration() |> Map.put(:hostname, "Bobs-MPB.example.com") == init_config()
+      assert "Bobs-MPB.example.com" == System.get_env("APPSIGNAL_HOSTNAME")
+    end
   end
 
   describe "using the system environment" do
@@ -293,6 +299,12 @@ defmodule Appsignal.ConfigTest do
       assert valid_configuration() |> Map.put(:revision, "03bd9e") == init_config()
       assert "03bd9e" == System.get_env("APP_REVISION")
     end
+
+    test "hostname" do
+      System.put_env("APPSIGNAL_HOSTNAME", "Bobs-MBP.example.com")
+      assert valid_configuration() |> Map.put(:hostname, "Bobs-MBP.example.com") == init_config()
+      assert "Bobs-MBP.example.com" == System.get_env("APPSIGNAL_HOSTNAME")
+    end
   end
 
   test "system environment overwrites application environment configuration" do
@@ -396,6 +408,7 @@ defmodule Appsignal.ConfigTest do
       APPSIGNAL_ENVIRONMENT
       APPSIGNAL_FILTER_PARAMETERS
       APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH
+      APPSIGNAL_HOSTNAME
       APPSIGNAL_HTTP_PROXY
       APPSIGNAL_IGNORE_ACTIONS
       APPSIGNAL_IGNORE_ERRORS
