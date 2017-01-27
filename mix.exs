@@ -57,8 +57,17 @@ defmodule Appsignal.Mixfile do
   defp test_paths(:test_phoenix), do: ["test/appsignal", "test/phoenix"]
   defp test_paths(_), do: ["test/appsignal"]
 
-  defp elixirc_paths(:test), do: ["lib", "test/support"]
-  defp elixirc_paths(_), do: ["lib"]
+  defp elixirc_paths(env) do
+    case test?(env) do
+      true -> ["lib", "test/support"]
+      false -> ["lib"]
+    end
+  end
+
+  defp test?(:test), do: true
+  defp test?(:test_phoenix), do: true
+  defp test?(:test_no_nif), do: true
+  defp test?(_), do: false
 
   defp deps do
     [
