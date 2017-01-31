@@ -696,6 +696,7 @@ static ERL_NIF_TERM _data_list_new(ErlNifEnv* env, int UNUSED(argc), const ERL_N
   return make_ok_tuple(env, data_ref);
 }
 
+#ifdef TEST
 static ERL_NIF_TERM _data_to_json(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
   data_ptr *ptr;
   appsignal_string_t json;
@@ -710,6 +711,7 @@ static ERL_NIF_TERM _data_to_json(ErlNifEnv* env, int argc, const ERL_NIF_TERM a
   json = appsignal_data_to_json(ptr->data);
   return make_ok_tuple(env, enif_make_string(env, json.buf, ERL_NIF_LATIN1));
 }
+#endif
 
 static ERL_NIF_TERM _loaded(ErlNifEnv *env, int UNUSED(argc), const ERL_NIF_TERM UNUSED(argv[])) {
   return enif_make_atom(env, "true");
