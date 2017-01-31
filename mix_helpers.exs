@@ -98,7 +98,7 @@ defmodule Mix.Appsignal.Helper do
 
 
   def compile do
-    {result, error_code} = System.cmd("make", [])
+    {result, error_code} = System.cmd("make", make_args(to_string(Mix.env)))
     IO.binwrite(result)
 
     if error_code != 0 do
@@ -108,6 +108,9 @@ defmodule Mix.Appsignal.Helper do
     end
     :ok
   end
+
+  defp make_args("test" <> _), do: ["-e", "CFLAGS_ADD=-DTEST"]
+  defp make_args(_), do: []
 
   if Mix.env != :test_no_nif do
     defp map_arch('x86_64-redhat-linux-gnu' ++ _), do: "x86_64-linux"

@@ -19,7 +19,7 @@ ifeq ($(shell uname),Darwin)
 endif
 
 all:
-	@$(CC) $(CFLAGS) -shared $(LDFLAGS) -o $(OUTPUT) c_src/$(LIB).c
+	@$(CC) $(CFLAGS) $(CFLAGS_ADD) -shared $(LDFLAGS) -o $(OUTPUT) c_src/$(LIB).c
 
 clean:
 	@$(RM) -r "$(LIB_DIR)"/$(LIB).so*

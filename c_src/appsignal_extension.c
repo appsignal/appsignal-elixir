@@ -790,7 +790,9 @@ static ErlNifFunc nif_funcs[] =
     {"_data_set_data", 3, _data_set_data, 0},
     {"_data_set_data", 2, _data_set_data, 0},
     {"_data_list_new", 0, _data_list_new, 0},
+#ifdef TEST
     {"_data_to_json", 1, _data_to_json, 0},
+#endif
     {"_loaded", 0, _loaded, 0}
 };
 
