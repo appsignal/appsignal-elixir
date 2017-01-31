@@ -7,6 +7,4 @@ if Mix.env in [:test, :test_phoenix, :test_no_nif] do
     handle_sasl_reports: false
 
   config :appsignal, appsignal_system: Appsignal.FakeSystem
-else
-  config :appsignal, appsignal_system: Appsignal.System
 end

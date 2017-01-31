@@ -1,5 +1,5 @@
 defmodule Appsignal.Config do
-  @system Application.get_env(:appsignal, :appsignal_system)
+  @system Application.get_env(:appsignal, :appsignal_system, Appsignal.System)
 
   @default_config %{
     debug: false,
