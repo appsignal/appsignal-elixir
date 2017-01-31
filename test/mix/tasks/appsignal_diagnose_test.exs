@@ -3,7 +3,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   import ExUnit.CaptureIO
   import Mock
 
-  @system Application.get_env(:appsignal, :appsignal_system)
+  @system Application.get_env(:appsignal, :appsignal_system, Appsignal.System)
 
   defp run do
     capture_io(fn -> Mix.Tasks.Appsignal.Diagnose.run(nil) end)
