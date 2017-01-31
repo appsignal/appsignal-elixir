@@ -2,7 +2,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
   require Logger
   use Mix.Task
 
-  @system Application.get_env(:appsignal, :appsignal_system)
+  @system Application.get_env(:appsignal, :appsignal_system, Appsignal.System)
 
   @shortdoc "Starts and tests AppSignal while validating the configuration."
 
