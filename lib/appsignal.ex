@@ -114,6 +114,15 @@ defmodule Appsignal do
 
   When there is no current transaction, this call starts one.
 
+  ## Examples
+      Appsignal.send_error(%RuntimeError{})
+      Appsignal.send_error(%RuntimeError{}, "Oops!")
+      Appsignal.send_error(%RuntimeError{}, "", System.stacktrace())
+      Appsignal.send_error(%RuntimeError{}, "", nil, %{foo: "bar"})
+      Appsignal.send_error(%RuntimeError{}, "", nil, %{}, %Plug.Conn{peer: {{127, 0, 0, 1}, 12345}})
+      Appsignal.send_error(%RuntimeError{}, "", nil, %{}, nil, fn(transaction) ->
+        Appsignal.Transaction.set_sample_data(transaction, "key", %{foo: "bar"})
+      end)
   """
   def send_error(reason, message \\ "", stack \\ nil, metadata \\ %{}, conn \\ nil, fun \\ fn(t) -> t end) do
     stack = stack || System.stacktrace()
