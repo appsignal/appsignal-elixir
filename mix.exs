@@ -29,8 +29,7 @@ defmodule Appsignal.Mixfile do
      elixir: "~> 1.0",
      compilers: compilers(Mix.env),
      deps: deps(),
-     docs: [logo: "logo.png",
-            extras: ["GettingStarted.md", "Phoenix.md", "Roadmap.md"]]
+     docs: [logo: "logo.png", extras: ["Roadmap.md"]]
     ]
   end
 
