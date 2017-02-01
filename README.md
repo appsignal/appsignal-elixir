@@ -55,6 +55,15 @@ library. The `develop` branch is used for development of features that
 will end up in the next minor release. If you fix a bug open a pull
 request on `master`, if it's a new feature on `develop`.
 
+### Publishing new versions
+
+1. Merge the `develop` branch to `master` if necessary.
+-  Update the version number in `mix.exs`, e.g. `1.2.3`
+-  Commit the change.
+-  Tag the commit with the version number: `git tag 1.2.3`
+-  Push the changes: `git push master 1.2.3`
+-  Publish the package: `mix hex.publish`
+
 ## License
 
 The AppSignal for Elixir package source code is released under the MIT License.
