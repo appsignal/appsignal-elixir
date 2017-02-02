@@ -33,7 +33,7 @@ make_error_tuple(ErlNifEnv *env, const char *reason)
     return enif_make_tuple2(env, enif_make_atom(env, "error"), enif_make_atom(env, reason));
 }
 
-static appsignal_string_t StringValueCStr(ErlNifBinary binary)
+static appsignal_string_t make_appsignal_string(ErlNifBinary binary)
 {
     appsignal_string_t retval;
     retval.len = binary.size;
@@ -74,8 +74,8 @@ static ERL_NIF_TERM _start_transaction(ErlNifEnv* env, int argc, const ERL_NIF_T
       return make_error_tuple(env, "no_memory");
 
     ptr->transaction = appsignal_start_transaction(
-        StringValueCStr(transaction_id),
-        StringValueCStr(namespace),
+        make_appsignal_string(transaction_id),
+        make_appsignal_string(namespace),
         0
     );
 
@@ -128,9 +128,9 @@ static ERL_NIF_TERM _finish_event(ErlNifEnv* env, int argc, const ERL_NIF_TERM a
 
     appsignal_finish_event(
         ptr->transaction,
-        StringValueCStr(name),
-        StringValueCStr(title),
-        StringValueCStr(body),
+        make_appsignal_string(name),
+        make_appsignal_string(title),
+        make_appsignal_string(body),
         bodyFormat,
         0
     );
@@ -166,8 +166,8 @@ static ERL_NIF_TERM _finish_event_data(ErlNifEnv* env, int argc, const ERL_NIF_T
 
     appsignal_finish_event_data(
         ptr->transaction,
-        StringValueCStr(name),
-        StringValueCStr(title),
+        make_appsignal_string(name),
+        make_appsignal_string(title),
         body,
         bodyFormat,
         0
@@ -207,9 +207,9 @@ static ERL_NIF_TERM _record_event(ErlNifEnv* env, int argc, const ERL_NIF_TERM a
 
     appsignal_record_event(
         ptr->transaction,
-        StringValueCStr(name),
-        StringValueCStr(title),
-        StringValueCStr(body),
+        make_appsignal_string(name),
+        make_appsignal_string(title),
+        make_appsignal_string(body),
         duration,
         bodyFormat,
         0
@@ -242,8 +242,8 @@ static ERL_NIF_TERM _set_error(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv
 
     appsignal_set_transaction_error(
         ptr->transaction,
-        StringValueCStr(error),
-        StringValueCStr(message),
+        make_appsignal_string(error),
+        make_appsignal_string(message),
         data_ptr->data
     );
 
@@ -271,7 +271,7 @@ static ERL_NIF_TERM _set_sample_data(ErlNifEnv* env, int argc, const ERL_NIF_TER
 
     appsignal_set_transaction_sample_data(
         ptr->transaction,
-        StringValueCStr(key),
+        make_appsignal_string(key),
         data_ptr->data
     );
 
@@ -295,7 +295,7 @@ static ERL_NIF_TERM _set_action(ErlNifEnv* env, int argc, const ERL_NIF_TERM arg
 
     appsignal_set_transaction_action(
         ptr->transaction,
-        StringValueCStr(action)
+        make_appsignal_string(action)
     );
 
     return enif_make_atom(env, "ok");
@@ -344,8 +344,8 @@ static ERL_NIF_TERM _set_meta_data(ErlNifEnv* env, int argc, const ERL_NIF_TERM 
 
     appsignal_set_transaction_metadata(
         ptr->transaction,
-        StringValueCStr(key),
-        StringValueCStr(value)
+        make_appsignal_string(key),
+        make_appsignal_string(value)
     );
 
     return enif_make_atom(env, "ok");
@@ -413,7 +413,7 @@ static ERL_NIF_TERM _set_gauge(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv
         return enif_make_badarg(env);
     }
 
-    appsignal_set_gauge(StringValueCStr(key), value);
+    appsignal_set_gauge(make_appsignal_string(key), value);
 
     return enif_make_atom(env, "ok");
 }
@@ -433,7 +433,7 @@ static ERL_NIF_TERM _increment_counter(ErlNifEnv* env, int argc, const ERL_NIF_T
         return enif_make_badarg(env);
     }
 
-    appsignal_increment_counter(StringValueCStr(key), count);
+    appsignal_increment_counter(make_appsignal_string(key), count);
 
     return enif_make_atom(env, "ok");
 }
@@ -453,7 +453,7 @@ static ERL_NIF_TERM _add_distribution_value(ErlNifEnv* env, int argc, const ERL_
         return enif_make_badarg(env);
     }
 
-    appsignal_add_distribution_value(StringValueCStr(key), value);
+    appsignal_add_distribution_value(make_appsignal_string(key), value);
 
     return enif_make_atom(env, "ok");
 }
@@ -491,7 +491,7 @@ static ERL_NIF_TERM _data_set_string(ErlNifEnv* env, int argc, const ERL_NIF_TER
         return enif_make_badarg(env);
       }
 
-      appsignal_data_map_set_string(ptr->data, StringValueCStr(key), StringValueCStr(value));
+      appsignal_data_map_set_string(ptr->data, make_appsignal_string(key), make_appsignal_string(value));
       break;
 
     case 2:
@@ -499,7 +499,7 @@ static ERL_NIF_TERM _data_set_string(ErlNifEnv* env, int argc, const ERL_NIF_TER
         return enif_make_badarg(env);
       }
 
-      appsignal_data_array_append_string(ptr->data, StringValueCStr(value));
+      appsignal_data_array_append_string(ptr->data, make_appsignal_string(value));
       break;
 
     default:
@@ -527,7 +527,7 @@ static ERL_NIF_TERM _data_set_integer(ErlNifEnv* env, int argc, const ERL_NIF_TE
         return enif_make_badarg(env);
       }
 
-      appsignal_data_map_set_integer(ptr->data, StringValueCStr(key), value);
+      appsignal_data_map_set_integer(ptr->data, make_appsignal_string(key), value);
       break;
 
     case 2:
@@ -563,7 +563,7 @@ static ERL_NIF_TERM _data_set_float(ErlNifEnv* env, int argc, const ERL_NIF_TERM
         return enif_make_badarg(env);
       }
 
-      appsignal_data_map_set_float(ptr->data, StringValueCStr(key), value);
+      appsignal_data_map_set_float(ptr->data, make_appsignal_string(key), value);
       break;
 
     case 2:
@@ -599,7 +599,7 @@ static ERL_NIF_TERM _data_set_boolean(ErlNifEnv* env, int argc, const ERL_NIF_TE
         return enif_make_badarg(env);
       }
 
-      appsignal_data_map_set_boolean(ptr->data, StringValueCStr(key), value);
+      appsignal_data_map_set_boolean(ptr->data, make_appsignal_string(key), value);
       break;
 
     case 2:
@@ -631,7 +631,7 @@ static ERL_NIF_TERM _data_set_nil(ErlNifEnv* env, int argc, const ERL_NIF_TERM a
         return enif_make_badarg(env);
       }
 
-      appsignal_data_map_set_null(ptr->data, StringValueCStr(key));
+      appsignal_data_map_set_null(ptr->data, make_appsignal_string(key));
       break;
 
     case 1:
@@ -662,7 +662,7 @@ static ERL_NIF_TERM _data_set_data(ErlNifEnv* env, int argc, const ERL_NIF_TERM 
         return enif_make_badarg(env);
       }
 
-      appsignal_data_map_set_data(ptr->data, StringValueCStr(key), value->data);
+      appsignal_data_map_set_data(ptr->data, make_appsignal_string(key), value->data);
       break;
 
     case 2:
