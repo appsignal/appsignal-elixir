@@ -28,6 +28,7 @@ defmodule Appsignal.Mixfile do
      test_paths: test_paths(Mix.env),
      elixir: "~> 1.0",
      compilers: compilers(Mix.env),
+     elixirc_paths: elixirc_paths(Mix.env),
      deps: deps(),
      docs: [logo: "logo.png", extras: ["Roadmap.md"]]
     ]
@@ -56,12 +57,24 @@ defmodule Appsignal.Mixfile do
   defp test_paths(:test_phoenix), do: ["test/appsignal", "test/phoenix"]
   defp test_paths(_), do: ["test/appsignal"]
 
+  defp elixirc_paths(env) do
+    case test?(env) do
+      true -> ["lib", "test/support"]
+      false -> ["lib"]
+    end
+  end
+
+  defp test?(:test), do: true
+  defp test?(:test_phoenix), do: true
+  defp test?(:test_no_nif), do: true
+  defp test?(_), do: false
+
   defp deps do
     [
       {:poison, "~> 2.1"},
       {:decorator, "~> 1.0"},
       {:phoenix, "~> 1.2.0", optional: true, only: [:prod, :test_phoenix]},
-      {:mock, "~> 0.1.1", only: [:test, :test_phoenix, :test_no_nif]},
+      {:mock, "~> 0.2.1", only: [:test, :test_phoenix, :test_no_nif]},
       {:ex_doc, "~> 0.12", only: :dev}
     ]
   end

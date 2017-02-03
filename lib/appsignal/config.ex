@@ -1,4 +1,5 @@
 defmodule Appsignal.Config do
+  @system Application.get_env(:appsignal, :appsignal_system, Appsignal.System)
 
   @default_config %{
     debug: false,
@@ -65,6 +66,7 @@ defmodule Appsignal.Config do
     "APPSIGNAL_CA_FILE_PATH" => :ca_file_path,
     "APPSIGNAL_PUSH_API_ENDPOINT" => :endpoint,
     "APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH" => :frontend_error_catching_path,
+    "APPSIGNAL_HOSTNAME" => :hostname,
     "APPSIGNAL_FILTER_PARAMETERS" => :filter_parameters,
     "APPSIGNAL_DEBUG" => :debug,
     "APPSIGNAL_LOG" => :log,
@@ -78,7 +80,7 @@ defmodule Appsignal.Config do
     "APPSIGNAL_SKIP_SESSION_DATA" => :skip_session_data
   }
 
-  @string_keys ~w(APPSIGNAL_PUSH_API_KEY APPSIGNAL_PUSH_API_ENDPOINT APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH APPSIGNAL_HTTP_PROXY APPSIGNAL_LOG APPSIGNAL_LOG_PATH APPSIGNAL_WORKING_DIR_PATH APP_REVISION APPSIGNAL_CA_FILE_PATH)
+  @string_keys ~w(APPSIGNAL_PUSH_API_KEY APPSIGNAL_PUSH_API_ENDPOINT APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH APPSIGNAL_HOSTNAME APPSIGNAL_HTTP_PROXY APPSIGNAL_LOG APPSIGNAL_LOG_PATH APPSIGNAL_WORKING_DIR_PATH APP_REVISION APPSIGNAL_CA_FILE_PATH)
   @bool_keys ~w(APPSIGNAL_ACTIVE APPSIGNAL_DEBUG APPSIGNAL_INSTRUMENT_NET_HTTP APPSIGNAL_ENABLE_FRONTEND_ERROR_CATCHING APPSIGNAL_ENABLE_ALLOCATION_TRACKING APPSIGNAL_ENABLE_GC_INSTRUMENTATION APPSIGNAL_RUNNING_IN_CONTAINER APPSIGNAL_ENABLE_HOST_METRICS APPSIGNAL_SKIP_SESSION_DATA)
   @atom_keys ~w(APPSIGNAL_APP_NAME APPSIGNAL_APP_ENV)
   @string_list_keys ~w(APPSIGNAL_FILTER_PARAMETERS APPSIGNAL_IGNORE_ACTIONS APPSIGNAL_IGNORE_ERRORS)
@@ -97,9 +99,11 @@ defmodule Appsignal.Config do
   end
 
   defp load_from_system() do
+    config = %{hostname: @system.hostname_with_domain}
+
     case System.get_env("DYNO") do
-      nil -> %{}
-      _ -> %{running_in_container: true, log: "stdout"}
+      nil -> config
+      _ -> Map.merge(config, %{running_in_container: true, log: "stdout"})
     end
   end
 
@@ -166,6 +170,7 @@ defmodule Appsignal.Config do
     unless empty?(config[:revision]) do
       System.put_env("APP_REVISION", config[:revision])
     end
+    System.put_env("APPSIGNAL_HOSTNAME", config[:hostname])
   end
 
   def get_system_env do
