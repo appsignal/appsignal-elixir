@@ -361,7 +361,6 @@ defmodule Appsignal.ConfigTest do
       filter_parameters: nil,
       ignore_actions: [],
       ignore_errors: [],
-      running_in_container: false,
       send_params: true,
       skip_session_data: false,
       valid: false,

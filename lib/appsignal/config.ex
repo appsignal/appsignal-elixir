@@ -9,7 +9,6 @@ defmodule Appsignal.Config do
     filter_parameters: nil,
     ignore_actions: [],
     ignore_errors: [],
-    running_in_container: false,
     send_params: true,
     skip_session_data: false,
     log: "file"
@@ -162,7 +161,9 @@ defmodule Appsignal.Config do
     System.put_env("APPSIGNAL_IGNORE_ACTIONS", config[:ignore_actions] |> Enum.join(","))
     System.put_env("APPSIGNAL_IGNORE_ERRORS", config[:ignore_errors] |> Enum.join(","))
     System.put_env("APPSIGNAL_SEND_PARAMS", Atom.to_string(config[:send_params]))
-    System.put_env("APPSIGNAL_RUNNING_IN_CONTAINER", Atom.to_string(config[:running_in_container]))
+    unless empty?(config[:running_in_container]) do
+      System.put_env("APPSIGNAL_RUNNING_IN_CONTAINER", Atom.to_string(config[:running_in_container]))
+    end
     unless empty?(config[:working_dir_path]) do
       System.put_env("APPSIGNAL_WORKING_DIR_PATH", config[:working_dir_path])
     end
