@@ -334,8 +334,8 @@ defmodule Appsignal.ConfigTest do
 
     test "application environment overwrites :running_in_container config on Heroku" do
       Application.put_env(
-	:appsignal, :config,
-	running_in_container: false
+        :appsignal, :config,
+        running_in_container: false
       )
       assert valid_heroku_configuration() |> Map.put(:running_in_container, false) == init_config()
       assert "false" == System.get_env("APPSIGNAL_RUNNING_IN_CONTAINER")
@@ -343,8 +343,8 @@ defmodule Appsignal.ConfigTest do
 
     test "application environment overwrites :log config on Heroku" do
       Application.put_env(
-	:appsignal, :config,
-	log: "file"
+        :appsignal, :config,
+        log: "file"
       )
       assert valid_heroku_configuration() |> Map.put(:log, "file") == init_config()
       assert "file" == System.get_env("APPSIGNAL_LOG")
