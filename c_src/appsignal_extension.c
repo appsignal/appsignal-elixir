@@ -168,7 +168,7 @@ static ERL_NIF_TERM _finish_event_data(ErlNifEnv* env, int argc, const ERL_NIF_T
         ptr->transaction,
         make_appsignal_string(name),
         make_appsignal_string(title),
-        body,
+        body->data,
         bodyFormat,
         0
     );
