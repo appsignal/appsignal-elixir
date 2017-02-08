@@ -2,6 +2,7 @@ defmodule Appsignal.Config do
   @system Application.get_env(:appsignal, :appsignal_system, Appsignal.System)
 
   @default_config %{
+    active: false,
     debug: false,
     enable_host_metrics: true,
     endpoint: "https://push.appsignal.com",
@@ -34,8 +35,6 @@ defmodule Appsignal.Config do
     config = config
     # Config is valid when we have a push api key
     |> Map.put(:valid, !empty?(config[:push_api_key]))
-    # Make active by default if the push key is present
-    |> Map.put(:active, (if config[:active] == nil, do: !empty?(config[:push_api_key]), else: config[:active]))
 
     Application.put_env(:appsignal, :config, config)
     write_to_environment(config)
@@ -101,6 +100,14 @@ defmodule Appsignal.Config do
   defp load_from_system() do
     config = %{hostname: @system.hostname_with_domain}
 
+    # Make AppSignal active by default if the APPSIGNAL_PUSH_API_KEY
+    # environment variable is present.
+    # Is overwritten by application config and env config.
+    config = case System.get_env("APPSIGNAL_PUSH_API_KEY") do
+      nil -> config
+      _ -> Map.merge(config, %{active: true})
+    end
+    # Detect Heroku
     case System.get_env("DYNO") do
       nil -> config
       _ -> Map.merge(config, %{running_in_container: true, log: "stdout"})
