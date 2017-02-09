@@ -44,8 +44,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
 
     agent_info = Poison.decode!(File.read!(Path.expand("../../../agent.json", __DIR__)))
     IO.puts "  Agent version: #{agent_info["version"]}"
-    nif_loaded = if (Appsignal.Nif.loaded?), do: "yes", else: "no"
-    IO.puts "  Nif loaded: #{nif_loaded}"
+    IO.puts "  Nif loaded: #{yes_or_no(Appsignal.Nif.loaded?)}"
   end
 
   defp host_information do
@@ -99,7 +98,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
           end
 
           IO.write "    - Ownership?: "
-          IO.write if (uid == process_uid), do: "yes" , else: "no"
+          IO.write yes_or_no(uid == process_uid)
           IO.puts " (file: #{uid}, process: #{process_uid})"
         {:error, reason} ->
           IO.puts "    Can't read path: #{reason}"
@@ -130,4 +129,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
   defp empty_line do
     IO.puts ""
   end
+
+  defp yes_or_no(true), do: "yes"
+  defp yes_or_no(false), do: "no"
 end
