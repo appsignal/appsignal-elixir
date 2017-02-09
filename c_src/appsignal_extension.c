@@ -696,6 +696,14 @@ static ERL_NIF_TERM _data_list_new(ErlNifEnv* env, int UNUSED(argc), const ERL_N
   return make_ok_tuple(env, data_ref);
 }
 
+static ERL_NIF_TERM _running_in_container(ErlNifEnv* env, int UNUSED(argc), const ERL_NIF_TERM UNUSED(argv[])) {
+  if(appsignal_running_in_container() == 1) {
+    return enif_make_atom(env, "true");
+  } else {
+    return enif_make_atom(env, "false");
+  }
+}
+
 #ifdef TEST
 static ERL_NIF_TERM _data_to_json(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
   data_ptr *ptr;
@@ -792,6 +800,7 @@ static ErlNifFunc nif_funcs[] =
     {"_data_set_data", 3, _data_set_data, 0},
     {"_data_set_data", 2, _data_set_data, 0},
     {"_data_list_new", 0, _data_list_new, 0},
+    {"_running_in_container", 0, _running_in_container, 0},
 #ifdef TEST
     {"_data_to_json", 1, _data_to_json, 0},
 #endif

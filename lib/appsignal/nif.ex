@@ -177,6 +177,10 @@ defmodule Appsignal.Nif do
     _data_list_new()
   end
 
+  def running_in_container? do
+    _running_in_container()
+  end
+
   def loaded? do
     _loaded()
   end
@@ -303,6 +307,10 @@ defmodule Appsignal.Nif do
 
   def _data_list_new() do
     {:ok, nil}
+  end
+
+  def _running_in_container do
+    false
   end
 
   def _loaded do
