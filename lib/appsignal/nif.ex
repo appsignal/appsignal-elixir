@@ -1,4 +1,9 @@
+defmodule Appsignal.NifBehaviour do
+  @callback loaded?() :: boolean()
+end
+
 defmodule Appsignal.Nif do
+  @behaviour Appsignal.NifBehaviour
   @moduledoc """
 
   It's a NIF! Oh no!

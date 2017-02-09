@@ -3,6 +3,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
   use Mix.Task
 
   @system Application.get_env(:appsignal, :appsignal_system, Appsignal.System)
+  @nif Application.get_env(:appsignal, :appsignal_nif, Appsignal.Nif)
 
   @shortdoc "Starts and tests AppSignal while validating the configuration."
 
@@ -44,7 +45,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     IO.puts "  Package version: #{Appsignal.Mixfile.project[:version]}"
 
     IO.puts "  Agent version: #{Appsignal.Agent.version}"
-    IO.puts "  Nif loaded: #{yes_or_no(Appsignal.Nif.loaded?)}"
+    IO.puts "  Nif loaded: #{yes_or_no(@nif.loaded?)}"
   end
 
   defp host_information do
