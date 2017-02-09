@@ -3,6 +3,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
   use Mix.Task
 
   @system Application.get_env(:appsignal, :appsignal_system, Appsignal.System)
+  @nif Application.get_env(:appsignal, :appsignal_nif, Appsignal.Nif)
 
   @shortdoc "Starts and tests AppSignal while validating the configuration."
 
@@ -44,7 +45,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
 
     agent_info = Poison.decode!(File.read!(Path.expand("../../../agent.json", __DIR__)))
     IO.puts "  Agent version: #{agent_info["version"]}"
-    IO.puts "  Nif loaded: #{yes_or_no(Appsignal.Nif.loaded?)}"
+    IO.puts "  Nif loaded: #{yes_or_no(@nif.loaded?)}"
   end
 
   defp host_information do
