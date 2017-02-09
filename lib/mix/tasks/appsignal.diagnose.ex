@@ -58,6 +58,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     if @system.heroku? do
       IO.puts "  Heroku: yes"
     end
+    IO.puts "  Container: #{yes_or_no(@nif.running_in_container?)}"
   end
 
   defp load_agent_config do

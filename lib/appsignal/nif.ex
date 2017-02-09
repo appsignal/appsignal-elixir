@@ -1,5 +1,6 @@
 defmodule Appsignal.NifBehaviour do
   @callback loaded?() :: boolean()
+  @callback running_in_container?() :: boolean()
 end
 
 defmodule Appsignal.Nif do
