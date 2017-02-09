@@ -18,32 +18,6 @@ if Appsignal.phoenix? do
     Note: Channels (`phoenix_channel_join` hook) are currently not
     supported.
 
-    ## Custom instrumentation events
-
-    You might be using your endpoint's `instrument/4` macro to create
-    custom instrumentation. If you want those events to become part of
-    the AppSignal timeline as well, you need to create a custom
-    instrumenter module with the help of
-    Appsignal.Phoenix.InstrumenterDSL:
-
-    ```
-    defmodule PhoenixApp.CustomInstrumenter do
-
-      import Appsignal.Phoenix.InstrumenterDSL
-      instrumenter :phoenix_controller_call
-      instrumenter :phoenix_controller_render
-      instrumenter :custom_event
-      instrumenter :another_custom_event
-    end
-    ```
-
-    And then, use that instead of the AppSignal instrumenter in your `config.exs`:
-
-    ```
-    config :phoenix_app, PhoenixApp.Endpoint,
-      instrumenters: [PhoenixApp.CustomInstrumenter]
-    ```
-
     See the [Phoenix integration
     guide](http://docs.appsignal.com/elixir/integrations/phoenix.html) for
     information on how to instrument other aspects of Phoenix.
@@ -53,9 +27,25 @@ if Appsignal.phoenix? do
 
     require Logger
 
-    import Appsignal.Phoenix.InstrumenterDSL
-    instrumenter :phoenix_controller_call
-    instrumenter :phoenix_controller_render
+    @doc false
+    def phoenix_controller_call(:start, _compiled, args) do
+      maybe_transaction_start_event(args, cleanup_args(args))
+    end
+
+    @doc false
+    def phoenix_controller_call(:stop, _diff, res) do
+      maybe_transaction_finish_event("phoenix_controller_call", res)
+    end
+
+    @doc false
+    def phoenix_controller_render(:start, _compiled, args) do
+      maybe_transaction_start_event(args, cleanup_args(args))
+    end
+
+    @doc false
+    def phoenix_controller_render(:stop, _diff, res) do
+      maybe_transaction_finish_event("phoenix_controller_render", res)
+    end
 
     @doc false
     def maybe_transaction_start_event(%Transaction{} = transaction, args) do
