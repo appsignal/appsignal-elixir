@@ -33,8 +33,10 @@ if Appsignal.phoenix? do
     end
 
     @doc false
-    def phoenix_controller_call(:stop, _diff, res) do
+    def phoenix_controller_call(:stop, _diff, {transaction, _args} = res) do
       maybe_transaction_finish_event("phoenix_controller_call", res)
+      Transaction.finish(transaction)
+      :ok = Transaction.complete(transaction)
     end
 
     @doc false
