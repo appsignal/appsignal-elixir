@@ -88,6 +88,24 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     end
   end
 
+  describe "when running in a container" do
+    setup do: @nif.set(:running_in_container?, true)
+
+    test "outputs Container: yes" do
+      output = run()
+      assert String.contains? output, "Container: yes"
+    end
+  end
+
+  describe "when not running in a container" do
+    setup do: @nif.set(:running_in_container?, false)
+
+    test "outputs Container: no" do
+      output = run()
+      assert String.contains? output, "Container: no"
+    end
+  end
+
   describe "when not root user" do
     test "outputs root user: no" do
       output = run()
