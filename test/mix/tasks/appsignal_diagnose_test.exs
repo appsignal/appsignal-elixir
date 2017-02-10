@@ -49,7 +49,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   end
 
   describe "when Nif is loaded" do
-    test "outputs that the Nif is loaded" do
+    test_with_mock "outputs that the Nif is loaded", Appsignal.Nif, [:passthrough], [loaded?: fn -> true end] do
       output = run()
       assert String.contains? output, "Nif loaded: yes"
     end
