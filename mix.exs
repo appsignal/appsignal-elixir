@@ -3,6 +3,11 @@ defmodule Mix.Tasks.Compile.Appsignal do
 
   def run(_args) do
     {_, _} = Code.eval_file("mix_helpers.exs")
+
+    unless Code.ensure_loaded?(Appsignal.Agent) do
+      {_, _} = Code.eval_file("agent.ex")
+    end
+
     case Mix.Appsignal.Helper.verify_system_architecture() do
       {:ok, arch} ->
         :ok = Mix.Appsignal.Helper.ensure_downloaded(arch)
@@ -71,7 +76,6 @@ defmodule Appsignal.Mixfile do
 
   defp deps do
     [
-      {:poison, "~> 2.1"},
       {:httpoison, "~> 0.10.0"},
       {:decorator, "~> 1.0"},
       {:phoenix, "~> 1.2.0", optional: true, only: [:prod, :test_phoenix]},
