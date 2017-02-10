@@ -136,10 +136,8 @@ defmodule Appsignal.Config do
   defp true?(true), do: true
   defp true?(_), do: false
 
-
-  @agent_version Poison.decode!(File.read!("agent.json"))["version"]
+  @agent_version Application.fetch_env!(:appsignal, :agent)[:version]
   @language_integration_version Mix.Project.config[:version]
-
 
   defp write_to_environment(config) do
     System.put_env("APPSIGNAL_ACTIVE", Atom.to_string(config[:active]))

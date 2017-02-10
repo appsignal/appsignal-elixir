@@ -71,7 +71,6 @@ defmodule Appsignal.Mixfile do
 
   defp deps do
     [
-      {:poison, "~> 2.1"},
       {:httpoison, "~> 0.10.0"},
       {:decorator, "~> 1.0"},
       {:phoenix, "~> 1.2.0", optional: true, only: [:prod, :test_phoenix]},

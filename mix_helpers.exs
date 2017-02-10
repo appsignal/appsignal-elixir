@@ -18,10 +18,8 @@ defmodule Mix.Appsignal.Helper do
   end
 
   def ensure_downloaded(arch) do
-
-    info = Poison.decode!(File.read!("agent.json"))
-    arch_config = info["triples"][arch]
-    version = info["version"]
+    arch_config = Application.fetch_env!(:appsignal, :agent)[:triples][arch]
+    version = Application.fetch_env!(:appsignal, :agent)[:version]
 
     System.put_env("LIB_DIR", priv_dir())
 
@@ -29,12 +27,12 @@ defmodule Mix.Appsignal.Helper do
 
       File.mkdir_p!(priv_dir())
       try do
-        download_and_extract(arch_config["download_url"], version, arch_config["checksum"])
+        download_and_extract(arch_config[:download_url], version, arch_config[:checksum])
       catch
         {:checksum_mismatch, filename, _, _} ->
           File.rm!(filename)
           try do
-            download_and_extract(arch_config["download_url"], version, arch_config["checksum"])
+            download_and_extract(arch_config[:download_url], version, arch_config[:checksum])
           catch
             {:checksum_mismatch, filename, calculated, expected} ->
               raise Mix.Error, message: """

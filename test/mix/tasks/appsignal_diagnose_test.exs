@@ -42,8 +42,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     assert String.contains? output, "Language: Elixir"
     assert String.contains? output, "Package version: #{Appsignal.Mixfile.project[:version]}"
 
-    agent_info = Poison.decode!(File.read!("agent.json"))
-    agent_version = agent_info["version"]
+    agent_version = Application.fetch_env!(:appsignal, :agent)[:version]
     assert agent_version
     assert String.contains? output, "Agent version: #{agent_version}"
   end

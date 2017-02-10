@@ -8,3 +8,5 @@ if Mix.env in [:test, :test_phoenix, :test_no_nif] do
 
   config :appsignal, appsignal_system: Appsignal.FakeSystem
 end
+
+import_config "agent.exs"
