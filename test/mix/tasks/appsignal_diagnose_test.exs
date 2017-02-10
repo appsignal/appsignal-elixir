@@ -4,6 +4,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   import Mock
 
   @system Application.get_env(:appsignal, :appsignal_system, Appsignal.System)
+  @nif Application.get_env(:appsignal, :appsignal_nif, Appsignal.Nif)
 
   defp run do
     capture_io(fn -> Mix.Tasks.Appsignal.Diagnose.run(nil) end)
@@ -11,6 +12,8 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
   setup do
     @system.start_link
+    @nif.start_link
+
     original_config = appsignal_config()
 
     # By default, Push API key is valid
@@ -56,7 +59,9 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   end
 
   describe "when Nif is not loaded" do
-    test_with_mock "outputs that the Nif is not loaded", Appsignal.Nif, [:passthrough], [loaded?: fn -> false end] do
+    setup do: @nif.set(:loaded?, false)
+
+    test "outputs that the Nif is not loaded" do
       output = run()
       assert String.contains? output, "Nif loaded: no"
     end
