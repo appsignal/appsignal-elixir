@@ -39,8 +39,15 @@ defmodule Appsignal.Utils.DataEncoderTest do
   end
 
   test "encode a map with an integer value" do
-    resource = DataEncoder.encode(%{foo: 1})
-    assert {:ok, '{"foo":1}'} == Nif.data_to_json(resource)
+    resource = DataEncoder.encode(%{foo: 9223372036854775807})
+    assert {:ok, '{"foo":9223372036854775807}'} == Nif.data_to_json(resource)
+  end
+
+  test "encode a map with an integer too big for C-lang longs to fit" do
+    resource = DataEncoder.encode(%{foo: 9223372036854775808})
+    assert {:ok, '{"foo":"bigint:9223372036854775808"}'} == Nif.data_to_json(resource)
+    resource = DataEncoder.encode(%{foo: 9223372036854775809})
+    assert {:ok, '{"foo":"bigint:9223372036854775809"}'} == Nif.data_to_json(resource)
   end
 
   test "encode a map with a float value" do
@@ -102,8 +109,15 @@ defmodule Appsignal.Utils.DataEncoderTest do
   end
 
   test "encode a list with an integer item" do
-    resource = DataEncoder.encode([1])
-    assert {:ok, '[1]'} == Nif.data_to_json(resource)
+    resource = DataEncoder.encode([9223372036854775807])
+    assert {:ok, '[9223372036854775807]'} == Nif.data_to_json(resource)
+  end
+
+  test "encode a list with an integer item too big for C-lang longs to fit" do
+    resource = DataEncoder.encode([9223372036854775808])
+    assert {:ok, '["bigint:9223372036854775808"]'} == Nif.data_to_json(resource)
+    resource = DataEncoder.encode([9223372036854775809])
+    assert {:ok, '["bigint:9223372036854775809"]'} == Nif.data_to_json(resource)
   end
 
   test "encode a list with an float item" do
