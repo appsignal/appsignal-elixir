@@ -104,7 +104,25 @@ request on `master`, if it's a new feature on `develop`.
 -  Push the changes: `git push master 1.2.3`
 -  Publish the package: `mix hex.publish`
 
+## Contributing
+
+Thinking of contributing to our Elixir package? Awesome! 🚀
+
+Please follow our [Contributing guide][contributing-guide].
+
+Also, we would be very happy to send you Stroopwafles. Have look at everyone
+we send a package to so far on our [Stroopwafles page][waffles-page].
+
+## Support
+
+[Contact us][contact] and speak directly with the engineers working on
+AppSignal. They will help you get set up, tweak your code and make sure you get
+the most out of using AppSignal.
+
 ## License
 
 The AppSignal for Elixir package source code is released under the MIT License.
 Check the [LICENSE](LICENSE) file for more information.
+
+[contributing-guide]: http://docs.appsignal.com/appsignal/contributing.html
+[waffles-page]: https://appsignal.com/waffles
