@@ -48,6 +48,46 @@ documentation](http://docs.appsignal.com/elixir/configuration/).
 
 ## Development
 
+### Setup
+
+Before you can start developing on the AppSignal for Elixir project make sure
+you have [Elixir installed](http://elixir-lang.org/install.html).
+
+Then make sure you have all the project's dependencies installed by running the
+following command:
+
+```
+mix deps.get
+```
+
+### Testing
+
+Testing is done with ExUnit and can be run with the `mix test` command. You can
+also supply a path to a specific file path you want to test and even a specific
+line on which the test you want to run is defined.
+
+```
+mix test
+mix test test/appsignal/some_test.ex:123
+```
+
+This project has several different test suites defined with different mix
+environments. You can run them by specifying the specific type of test suite in
+the `MIX_ENV` environment variable.
+
+```
+# Default
+MIX_ENV=test mix test
+
+# Test Phoenix framework integration
+MIX_ENV=test_phoenix mix test
+
+# Run the test suite with the NIF inoperational
+# This will generate errors that the NIF is not active, but should run
+# without failures.
+MIX_ENV=test_no_nif mix test
+```
+
 ### Branches and versions
 
 The `master` branch corresponds to the current release of the
