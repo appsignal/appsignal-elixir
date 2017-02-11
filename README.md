@@ -124,5 +124,6 @@ the most out of using AppSignal.
 The AppSignal for Elixir package source code is released under the MIT License.
 Check the [LICENSE](LICENSE) file for more information.
 
+[contact]: mailto:support@appsignal.com
 [contributing-guide]: http://docs.appsignal.com/appsignal/contributing.html
 [waffles-page]: https://appsignal.com/waffles
