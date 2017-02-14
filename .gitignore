@@ -6,3 +6,4 @@ priv
 /config/dev.exs
 /doc
 /cover
+/tmp
