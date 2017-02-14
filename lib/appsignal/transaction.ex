@@ -3,10 +3,10 @@ defmodule Appsignal.Transaction do
   use Appsignal.Config
 
   @moduledoc """
-  Functions related to Appsignal transactions
+  Functions related to AppSignal transactions
 
   This module contains functions for starting and stopping an
-  Appsignal transaction, recording events and collecting metrics
+  AppSignal transaction, recording events and collecting metrics
   within a transaction, et cetera.
 
   All functions take a `Transaction` as their first parameter. It is
@@ -23,7 +23,7 @@ defmodule Appsignal.Transaction do
   alias Appsignal.{Nif, Transaction, TransactionRegistry}
 
   @typedoc """
-  Datatype which is used as a handle to the current Appsignal transaction.
+  Datatype which is used as a handle to the current AppSignal transaction.
   """
   @type t :: %Transaction{}
 
@@ -351,7 +351,7 @@ defmodule Appsignal.Transaction do
   end
 
 
-  # Lookup the current Appsignal transaction in the transaction registry.
+  # Lookup the current AppSignal transaction in the transaction registry.
   defp lookup() do
     TransactionRegistry.lookup(self())
   end

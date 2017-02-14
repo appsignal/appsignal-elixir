@@ -3,7 +3,7 @@ if Appsignal.phoenix? do
     @moduledoc """
     Instrumentation of Phoenix requests
 
-    To integrate Appsignal with Phoenix, *use* the `Appsignal.Phoenix` module in
+    To integrate AppSignal with Phoenix, *use* the `Appsignal.Phoenix` module in
     your `endpoint.ex` file, just before your router:
 
     ```
