@@ -22,6 +22,10 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       Plug.Conn.resp(conn, 200, "")
     end
 
+    unless Code.ensure_loaded?(Appsignal.Agent) do
+      {_, _} = Code.eval_file("agent.ex")
+    end
+
     on_exit :reset_config, fn ->
       Application.put_env(:appsignal, :config, original_config)
     end
@@ -42,8 +46,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     assert String.contains? output, "Language: Elixir"
     assert String.contains? output, "Package version: #{Appsignal.Mixfile.project[:version]}"
 
-    agent_info = Poison.decode!(File.read!("agent.json"))
-    agent_version = agent_info["version"]
+    agent_version = Appsignal.Agent.version
     assert agent_version
     assert String.contains? output, "Agent version: #{agent_version}"
   end

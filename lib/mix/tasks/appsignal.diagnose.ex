@@ -16,6 +16,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     host_information()
     empty_line()
 
+    load_agent_config()
     start_appsignal_in_diagnose_mode()
 
     configuration()
@@ -42,8 +43,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     IO.puts "  Language: Elixir"
     IO.puts "  Package version: #{Appsignal.Mixfile.project[:version]}"
 
-    agent_info = Poison.decode!(File.read!(Path.expand("../../../agent.json", __DIR__)))
-    IO.puts "  Agent version: #{agent_info["version"]}"
+    IO.puts "  Agent version: #{Appsignal.Agent.version}"
     IO.puts "  Nif loaded: #{yes_or_no(Appsignal.Nif.loaded?)}"
   end
 
@@ -56,6 +56,12 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     IO.puts "  root user: #{root_user}"
     if @system.heroku? do
       IO.puts "  Heroku: yes"
+    end
+  end
+
+  defp load_agent_config do
+    unless Code.ensure_loaded?(Appsignal.Agent) do
+      {_, _} = Code.eval_file("agent.ex")
     end
   end
 
