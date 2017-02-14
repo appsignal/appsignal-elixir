@@ -14,7 +14,7 @@ defmodule Appsignal.Nif do
   designed to be as fast as possible and to do as little as possible
   on the calling thread.
 
-  Internally, the Appsignal NIF works as follows: it fork/execs a
+  Internally, the AppSignal NIF works as follows: it fork/execs a
   separate agent process, to which the NIF sends its data (protobuf)
   over a unix socket. This agent process (which is a separate unix
   process!) then takes care of sending the data the the server
@@ -43,7 +43,7 @@ defmodule Appsignal.Nif do
       :ok -> :ok
       {:error, {:load_failed, reason}} ->
         arch = :erlang.system_info(:system_architecture)
-        Logger.error "Error loading NIF, Appsignal integration disabled!\n\n#{reason}\n\nIs your operating system (#{arch}) supported?\nPlease check http://docs.appsignal.com/support/operating-systems.html"
+        Logger.error "Error loading NIF, AppSignal integration disabled!\n\n#{reason}\n\nIs your operating system (#{arch}) supported?\nPlease check http://docs.appsignal.com/support/operating-systems.html"
         :ok
     end
   end

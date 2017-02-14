@@ -22,7 +22,7 @@ if Appsignal.phoenix? do
 
     You might be using your endpoint's `instrument/4` macro to create
     custom instrumentation. If you want those events to become part of
-    the Appsignal timeline as well, you need to create a custom
+    the AppSignal timeline as well, you need to create a custom
     instrumenter module with the help of
     Appsignal.Phoenix.InstrumenterDSL:
 
@@ -37,7 +37,7 @@ if Appsignal.phoenix? do
     end
     ```
 
-    And then, use that instead of the Appsignal instrumenter in your `config.exs`:
+    And then, use that instead of the AppSignal instrumenter in your `config.exs`:
 
     ```
     config :phoenix_app, PhoenixApp.Endpoint,

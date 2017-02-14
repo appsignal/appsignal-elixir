@@ -2,8 +2,8 @@ defmodule Appsignal do
   @moduledoc """
   Main library entrypoint.
 
-  This module contains the main Appsignal OTP application, as well as
-  a few helper functions for sending metrics to Appsignal.
+  This module contains the main AppSignal OTP application, as well as
+  a few helper functions for sending metrics to AppSignal.
 
   These metrics do not rely on an active transaction being
   present. For transaction related-functions, see the
@@ -46,7 +46,7 @@ defmodule Appsignal do
   Application callback function
   """
   def stop(_state) do
-    Logger.debug("Appsignal stopping.")
+    Logger.debug("AppSignal stopping.")
   end
 
   def config_change(_changed, _new, _removed) do
@@ -57,17 +57,17 @@ defmodule Appsignal do
   defp initialize() do
     case {Config.initialize, Config.active?} do
       {:ok, true} ->
-        Logger.debug("Appsignal starting.")
+        Logger.debug("AppSignal starting.")
         Appsignal.Nif.start()
       {:ok, false} ->
-        Logger.info("Appsignal disabled.")
+        Logger.info("AppSignal disabled.")
         :ok
       {{:error, :invalid_config}, _} ->
         # show warning that Appsignal is not configured; but not when we run the tests.
         spawn_link(fn ->
           :timer.sleep 100 # FIXME, this timeout is kind of cludgy.
           unless Process.whereis(ExUnit.Server) do
-            Logger.warn("Warning: No valid Appsignal configuration found, continuing with Appsignal metrics disabled.")
+            Logger.warn("Warning: No valid AppSignal configuration found, continuing with AppSignal metrics disabled.")
           end
         end)
         :ok
@@ -110,7 +110,7 @@ defmodule Appsignal do
 
 
   @doc """
-  Send an error to Appsignal
+  Send an error to AppSignal
 
   When there is no current transaction, this call starts one.
 

@@ -16,7 +16,7 @@ defmodule Appsignal.Config do
   }
 
   @doc """
-  Initializes the Appsignal config. Looks at the config default, the
+  Initializes the AppSignal config. Looks at the config default, the
   Elixir-provided configuration and the various `APPSIGNAL_*`
   OS environment variables. Returns whether or not the configuration is valid.
   """
@@ -48,7 +48,7 @@ defmodule Appsignal.Config do
 
 
   @doc """
-  Returns whether the Appsignal agent is configured to start on application launch.
+  Returns whether the AppSignal agent is configured to start on application launch.
   """
   @spec active?() :: boolean
   def active? do

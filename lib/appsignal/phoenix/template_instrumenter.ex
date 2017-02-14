@@ -3,7 +3,7 @@ if Appsignal.phoenix? do
     @moduledoc """
     Instrument Phoenix template engines
 
-    As documented in the [phoenix guidelines](phoenix.html), The Appsignal
+    As documented in the [phoenix guidelines](phoenix.html), The AppSignal
     Elixir library comes with default template engines to instrument
     renders to `.eex` and `.exs` template files.
 

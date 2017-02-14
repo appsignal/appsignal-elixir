@@ -1,11 +1,11 @@
 defmodule Appsignal.ErrorHandler do
   @moduledoc """
-  Error handler which sends all crash reports to the Appsignal backend.
+  Error handler which sends all crash reports to the AppSignal backend.
 
   When you add `:appsignal` to your application's dependencies, this
   error logger will automatically be installed. All processes that are
   supervised, like GenServers, Tasks, Agents, Supervisored will be
-  monitored for crashes. In the case of a crash, the Appsignal error
+  monitored for crashes. In the case of a crash, the AppSignal error
   handler collects error information and sends it to the backend.
 
   """
