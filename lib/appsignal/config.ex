@@ -52,7 +52,8 @@ defmodule Appsignal.Config do
   """
   @spec active?() :: boolean
   def active? do
-    Application.fetch_env!(:appsignal, :config).active
+    config = Application.fetch_env!(:appsignal, :config)
+    config.valid && config.active
   end
 
   @env_to_key_mapping %{

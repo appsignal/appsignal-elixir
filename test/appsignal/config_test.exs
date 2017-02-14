@@ -35,6 +35,23 @@ defmodule Appsignal.ConfigTest do
     assert default_configuration() == init_config()
   end
 
+  describe "active?" do
+    test "when active and valid" do
+      Application.put_env(:appsignal, :config, %{active: true, valid: true})
+      assert Config.active?
+    end
+
+    test "when active but not valid" do
+      Application.put_env(:appsignal, :config, %{active: true, valid: false})
+      refute Config.active?
+    end
+
+    test "when not active and not valid" do
+      Application.put_env(:appsignal, :config, %{active: false, valid: false})
+      refute Config.active?
+    end
+  end
+
   describe "using the application environment" do
     setup do
       Application.put_env(
