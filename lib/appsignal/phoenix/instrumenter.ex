@@ -29,19 +29,24 @@ if Appsignal.phoenix? do
 
     @doc false
     def phoenix_controller_call(:start, _compiled, args) do
-      maybe_transaction_start_event(args, cleanup_args(args))
+      maybe_transaction_start_event(args, args)
     end
 
     @doc false
-    def phoenix_controller_call(:stop, _diff, {transaction, _args} = res) do
+    def phoenix_controller_call(:stop, _diff, {transaction, args} = res) do
       maybe_transaction_finish_event("phoenix_controller_call", res)
-      Transaction.finish(transaction)
+
+      response = Transaction.finish(transaction)
+      if response == :sample do
+        Transaction.set_request_metadata(transaction, args[:conn])
+      end
+
       :ok = Transaction.complete(transaction)
     end
 
     @doc false
     def phoenix_controller_render(:start, _compiled, args) do
-      maybe_transaction_start_event(args, cleanup_args(args))
+      maybe_transaction_start_event(args, args)
     end
 
     @doc false
@@ -68,11 +73,6 @@ if Appsignal.phoenix? do
     def maybe_transaction_finish_event(_event, nil), do: nil
     def maybe_transaction_finish_event(event, {transaction, args}) do
       Transaction.finish_event(transaction, event, event, args, 0)
-    end
-
-    @doc false
-    def cleanup_args(args) do
-      Map.delete(args, :conn)
     end
   end
 end

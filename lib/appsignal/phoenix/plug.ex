@@ -18,8 +18,6 @@ if Appsignal.phoenix? do
       conn
       |> register_before_send(fn conn ->
         Transaction.try_set_action(transaction, conn)
-        Transaction.set_request_metadata(transaction, conn)
-
         conn
       end)
       |> assign(:appsignal_transaction, transaction)
