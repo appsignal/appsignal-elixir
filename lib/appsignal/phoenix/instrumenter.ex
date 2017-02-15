@@ -29,14 +29,21 @@ if Appsignal.phoenix? do
 
     @doc false
     def phoenix_controller_call(:start, _compiled, args) do
-      maybe_transaction_start_event(args, args)
+      {Transaction.start_event(transaction), args}
     end
 
     @doc false
-    def phoenix_controller_call(:stop, _diff, {transaction, %{conn: conn}} = res) do
-      maybe_transaction_finish_event("phoenix_controller_call", res)
+    def phoenix_controller_call(:stop, _diff, {%Transaction{} = transaction, %{conn: conn} = args}) do
+      Transaction.finish_event(
+        transaction,
+        "phoenix_controller_call",
+        "phoenix_controller_call",
+        args,
+        0
+      )
 
       Transaction.try_set_action(transaction, conn)
+
       response = Transaction.finish(transaction)
       if response == :sample do
         Transaction.set_request_metadata(transaction, conn)
@@ -47,33 +54,20 @@ if Appsignal.phoenix? do
 
     @doc false
     def phoenix_controller_render(:start, _compiled, args) do
-      maybe_transaction_start_event(args, args)
-    end
-
-    @doc false
-    def phoenix_controller_render(:stop, _diff, res) do
-      maybe_transaction_finish_event("phoenix_controller_render", res)
-    end
-
-    @doc false
-    def maybe_transaction_start_event(%Transaction{} = transaction, args) do
+      transaction = Appsignal.TransactionRegistry.lookup(self())
       {Transaction.start_event(transaction), args}
     end
-    def maybe_transaction_start_event(pid, args) when is_pid(pid) do
-      maybe_transaction_start_event(Appsignal.TransactionRegistry.lookup(pid), args)
-    end
-    def maybe_transaction_start_event(%{conn: %Plug.Conn{} = conn}, args) do
-      maybe_transaction_start_event(conn.assigns[:appsignal_transaction], args)
-    end
-    def maybe_transaction_start_event(%{}, args) do
-      maybe_transaction_start_event(self(), args)
-    end
-    def maybe_transaction_start_event(nil, _), do: nil
 
     @doc false
-    def maybe_transaction_finish_event(_event, nil), do: nil
-    def maybe_transaction_finish_event(event, {transaction, args}) do
-      Transaction.finish_event(transaction, event, event, args, 0)
+    def phoenix_controller_render(:stop, _diff, nil), do: nil
+    def phoenix_controller_render(:stop, _diff, {transaction, args}) do
+      Transaction.finish_event(
+        transaction,
+        "phoenix_controller_render",
+        "phoenix_controller_render",
+        args,
+        0
+      )
     end
   end
 end
