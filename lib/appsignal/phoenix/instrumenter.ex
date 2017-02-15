@@ -33,12 +33,13 @@ if Appsignal.phoenix? do
     end
 
     @doc false
-    def phoenix_controller_call(:stop, _diff, {transaction, args} = res) do
+    def phoenix_controller_call(:stop, _diff, {transaction, %{conn: conn}} = res) do
       maybe_transaction_finish_event("phoenix_controller_call", res)
 
+      Transaction.try_set_action(transaction, conn)
       response = Transaction.finish(transaction)
       if response == :sample do
-        Transaction.set_request_metadata(transaction, args[:conn])
+        Transaction.set_request_metadata(transaction, conn)
       end
 
       :ok = Transaction.complete(transaction)

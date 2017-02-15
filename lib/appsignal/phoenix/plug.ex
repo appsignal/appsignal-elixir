@@ -15,12 +15,7 @@ if Appsignal.phoenix? do
       id = Logger.metadata()[:request_id] || Transaction.generate_id()
       transaction = Transaction.start(id, :http_request)
 
-      conn
-      |> register_before_send(fn conn ->
-        Transaction.try_set_action(transaction, conn)
-        conn
-      end)
-      |> assign(:appsignal_transaction, transaction)
+      conn |> assign(:appsignal_transaction, transaction)
     end
   end
 end
