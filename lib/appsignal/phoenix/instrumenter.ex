@@ -22,55 +22,46 @@ if Appsignal.phoenix? do
     guide](http://docs.appsignal.com/elixir/integrations/phoenix.html) for
     information on how to instrument other aspects of Phoenix.
     """
-
-    alias Appsignal.Transaction
-
-    require Logger
+    @transaction Application.get_env(:appsignal, :appsignal_transaction, Appsignal.Transaction)
 
     @doc false
-    def phoenix_controller_call(:start, _compiled, args) do
-      {Transaction.start_event(), args}
-    end
+    def phoenix_controller_call(:start, _, args), do: start_event(args)
 
     @doc false
-    def phoenix_controller_call(:stop, _diff, {%Transaction{} = transaction, %{conn: conn} = args}) do
-      Transaction.finish_event(
-        transaction,
-        "phoenix_controller_call",
-        "phoenix_controller_call",
-        cleanup_args(args),
-        0
-      )
+    def phoenix_controller_call(:stop, _diff, {%Appsignal.Transaction{} = transaction, %{conn: conn} = args}) do
+      finish_event(transaction, "phoenix_controller_call", args)
 
-      Transaction.try_set_action(transaction, conn)
+      @transaction.try_set_action(transaction, conn)
 
-      response = Transaction.finish(transaction)
-      if response == :sample do
-        Transaction.set_request_metadata(transaction, conn)
+      if @transaction.finish(transaction) == :sample do
+        @transaction.set_request_metadata(transaction, conn)
       end
 
-      :ok = Transaction.complete(transaction)
+      :ok = @transaction.complete(transaction)
     end
+    def phoenix_controller_call(:stop, _, _), do: nil
 
     @doc false
-    def phoenix_controller_render(:start, _compiled, args) do
-      {Transaction.start_event(), args}
-    end
+    def phoenix_controller_render(:start, _, args), do: start_event(args)
 
     @doc false
-    def phoenix_controller_render(:stop, _diff, nil), do: nil
-    def phoenix_controller_render(:stop, _diff, {transaction, args}) do
-      Transaction.finish_event(
+    def phoenix_controller_render(:stop, _diff, {%Appsignal.Transaction{} = transaction, args}) do
+      finish_event(transaction, "phoenix_controller_render", args)
+    end
+    def phoenix_controller_render(:stop, _, _), do: nil
+
+    defp start_event(args) do
+      {@transaction.start_event(), args}
+    end
+
+    defp finish_event(transaction, name, args) do
+      @transaction.finish_event(
         transaction,
-        "phoenix_controller_render",
-        "phoenix_controller_render",
-        cleanup_args(args),
+        name,
+        name,
+        Map.delete(args, :conn),
         0
       )
-    end
-
-    defp cleanup_args(args) do
-      Map.delete(args, :conn)
     end
   end
 end

@@ -1,5 +1,17 @@
-defmodule Appsignal.Transaction do
+defmodule Appsignal.TransactionBehaviour do
 
+  @callback start_event() :: Appsignal.Transaction.t
+  @callback finish_event(Appsignal.Transaction.t | nil, String.t, String.t, any, integer) :: Appsignal.Transaction.t
+  @callback try_set_action(Appsignal.Transaction.t, Plug.Conn.t) :: :ok
+  @callback finish() :: :sample | :no_sample
+  @callback finish(Transaction.t | nil) :: :sample | :no_sample
+  @callback set_request_metadata(Transaction.t | nil, Plug.Conn.t) :: Transaction.t
+  @callback complete() :: :ok
+  @callback complete(Transaction.t | nil) :: :ok
+end
+
+defmodule Appsignal.Transaction do
+  @behaviour Appsignal.TransactionBehaviour
   use Appsignal.Config
 
   @moduledoc """
