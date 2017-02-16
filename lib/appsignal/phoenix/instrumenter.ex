@@ -38,7 +38,7 @@ if Appsignal.phoenix? do
         transaction,
         "phoenix_controller_call",
         "phoenix_controller_call",
-        args,
+        cleanup_args(args),
         0
       )
 
@@ -65,9 +65,13 @@ if Appsignal.phoenix? do
         transaction,
         "phoenix_controller_render",
         "phoenix_controller_render",
-        args,
+        cleanup_args(args),
         0
       )
+    end
+
+    defp cleanup_args(args) do
+      Map.delete(args, :conn)
     end
   end
 end
