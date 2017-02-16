@@ -3,15 +3,12 @@ defmodule Appsignal.Phoenix.PlugTest do
   use Plug.Test
   import Mock
 
-
   test "does what it needs to do" do
     # Create a test connection
     conn = conn(:get, "/test/123")
 
     # Invoke the plug
     conn = Appsignal.Phoenix.Plug.call(conn, %{})
-
-    assert conn.assigns.appsignal_transaction != nil
 
     conn = conn
     |> Plug.Conn.resp(200, "ok")
@@ -37,7 +34,7 @@ defmodule Appsignal.Phoenix.PlugTest do
     Application.put_env(:appsignal, :config, [skip_session_data: false])
 
     conn = get_session_conn()
-    t = conn.assigns.appsignal_transaction
+    t = Appsignal.TransactionRegistry.lookup(self())
     Appsignal.Transaction.set_request_metadata(t, conn)
 
     assert called Appsignal.Transaction.set_sample_data(t, "session_data", conn.private.plug_session)
@@ -48,13 +45,11 @@ defmodule Appsignal.Phoenix.PlugTest do
     Application.put_env(:appsignal, :config, [skip_session_data: true])
 
     conn = get_session_conn()
-    t = conn.assigns.appsignal_transaction
+    t = Appsignal.TransactionRegistry.lookup(self())
     Appsignal.Transaction.set_request_metadata(t, conn)
 
     assert not called Appsignal.Transaction.set_sample_data(t, "session_data", conn.private.plug_session)
   end
-
-
 
   defp get_session_conn() do
     conn(:get, "/")
@@ -65,7 +60,6 @@ defmodule Appsignal.Phoenix.PlugTest do
     |> Plug.Conn.send_resp
   end
 
-
   @secret String.duplicate("abcdef0123456789", 8)
   @signing_opts Plug.Session.init(Keyword.put(@default_opts, :encrypt, false))
 
@@ -74,5 +68,4 @@ defmodule Appsignal.Phoenix.PlugTest do
     |> Plug.Session.call(@signing_opts)
     |> fetch_session
   end
-
 end

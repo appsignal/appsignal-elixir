@@ -5,7 +5,6 @@ if Appsignal.phoenix? do
     """
 
     @behaviour Plug
-    import Plug.Conn, only: [register_before_send: 2, assign: 3]
 
     alias Appsignal.Transaction
 
@@ -13,9 +12,8 @@ if Appsignal.phoenix? do
 
     def call(conn, _config) do
       id = Logger.metadata()[:request_id] || Transaction.generate_id()
-      transaction = Transaction.start(id, :http_request)
-
-      conn |> assign(:appsignal_transaction, transaction)
+      Transaction.start(id, :http_request)
+      conn
     end
   end
 end
