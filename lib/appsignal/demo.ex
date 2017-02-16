@@ -1,5 +1,12 @@
+defmodule Appsignal.DemoBehaviour do
+  @callback create_transaction_error_request :: nil
+  @callback create_transaction_performance_request :: nil
+end
+
 defmodule Appsignal.Demo do
   import Appsignal.Instrumentation.Helpers, only: [instrument: 4]
+
+  @behaviour Appsignal.DemoBehaviour
 
   @doc false
   def create_transaction_error_request do

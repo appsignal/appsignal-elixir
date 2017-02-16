@@ -2,6 +2,8 @@ defmodule Mix.Tasks.Appsignal.Install do
   use Mix.Task
   alias Appsignal.Utils.PushApiKeyValidator
 
+  @demo Application.get_env(:appsignal, :appsignal_demo, Appsignal.Demo)
+
   def run([]) do
     header()
     IO.puts "We're missing an AppSignal Push API key and cannot continue."
@@ -35,6 +37,12 @@ defmodule Mix.Tasks.Appsignal.Install do
     end
 
     IO.puts "\nAppSignal installed! 🎉"
+
+    # Start AppSignal so that we can send demo samples
+    Application.put_env(:appsignal, :config, config)
+    {:ok, _} = Application.ensure_all_started(:appsignal)
+
+    run_demo()
   end
 
   defp header do
@@ -54,7 +62,8 @@ defmodule Mix.Tasks.Appsignal.Install do
 
   defp validate_push_api_key do
     IO.write "Validating Push API key: "
-    case PushApiKeyValidator.validate(Application.get_env(:appsignal, :config)) do
+    config = Application.get_env(:appsignal, :config)
+    case PushApiKeyValidator.validate(config) do
       :ok -> IO.puts "Valid! 🎉"
       {:error, :invalid} ->
         IO.puts "Invalid"
@@ -213,5 +222,15 @@ defmodule Mix.Tasks.Appsignal.Install do
     else
       input
     end
+  end
+
+  defp run_demo do
+    {:ok, _} = Application.ensure_all_started(:appsignal)
+
+    @demo.create_transaction_performance_request
+    @demo.create_transaction_error_request
+    Appsignal.stop(nil)
+    IO.puts "Demonstration sample data sent!"
+    IO.puts "It may take about a minute for the data to appear on https://appsignal.com/accounts"
   end
 end
