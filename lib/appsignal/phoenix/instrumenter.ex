@@ -29,7 +29,7 @@ if Appsignal.phoenix? do
 
     @doc false
     def phoenix_controller_call(:start, _compiled, args) do
-      {Transaction.start_event(transaction), args}
+      {Transaction.start_event(), args}
     end
 
     @doc false
@@ -54,8 +54,7 @@ if Appsignal.phoenix? do
 
     @doc false
     def phoenix_controller_render(:start, _compiled, args) do
-      transaction = Appsignal.TransactionRegistry.lookup(self())
-      {Transaction.start_event(transaction), args}
+      {Transaction.start_event(), args}
     end
 
     @doc false
