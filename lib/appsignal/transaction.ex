@@ -312,7 +312,7 @@ defmodule Appsignal.Transaction do
 
   - `transaction`: The pointer to the transaction this event occurred in
 
-  Returns `:sample` wether sample data for this transaction should be
+  Returns `:sample` whether sample data for this transaction should be
   collected.
   """
   @spec finish(Transaction.t | nil) :: :sample | :no_sample

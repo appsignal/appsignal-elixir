@@ -16,7 +16,7 @@ defmodule Appsignal.ErrorHandlerTest do
   # end
 
 
-  test "wether we can send error reports without current transaction" do
+  test "whether we can send error reports without current transaction" do
     Task.start(fn() ->
       :erlang.error(:error_task)
     end)
@@ -25,7 +25,7 @@ defmodule Appsignal.ErrorHandlerTest do
   end
 
 
-  test "wether we can send error reports with a current transaction" do
+  test "whether we can send error reports with a current transaction" do
 
     id = Transaction.generate_id()
 
