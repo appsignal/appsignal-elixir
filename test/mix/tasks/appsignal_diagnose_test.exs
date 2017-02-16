@@ -13,8 +13,11 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   setup do
     @system.start_link
     @nif.start_link
+    # By default use the same as the actual state of the Nif
+    @nif.set(:loaded?, Appsignal.Nif.loaded?)
 
-    original_config = appsignal_config()
+    clear_env()
+    Application.put_env(:appsignal, :config, %{})
 
     # By default, Push API key is valid
     bypass = Bypass.open
@@ -30,7 +33,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     end
 
     on_exit :reset_config, fn ->
-      Application.put_env(:appsignal, :config, original_config)
+      Application.put_env(:appsignal, :config, %{})
     end
 
     {:ok, %{bypass: bypass}}
@@ -54,6 +57,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     assert String.contains? output, "Agent version: #{agent_version}"
   end
 
+  @tag :skip_env_test_no_nif
   describe "when Nif is loaded" do
     test_with_mock "outputs that the Nif is loaded", Appsignal.Nif, [:passthrough], [loaded?: fn -> true end] do
       output = run()
@@ -122,7 +126,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     end
   end
 
-  @tag :pending
+  @tag :skip_env_test_no_nif
   test "runs agent in diagnose mode" do
     output = run()
     assert String.contains? output, "Agent diagnostics"
@@ -184,17 +188,19 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       {:ok, %{log_dir_path: log_dir_path, log_file_path: log_file_path}}
     end
 
-    test "outputs writable", %{log_dir_path: log_dir_path, log_file_path: log_file_path} do
-      File.touch!(log_file_path)
-      output = run()
-      assert String.contains? output, "log_dir_path: #{log_dir_path}\n    - Writable?: yes"
-      assert String.contains? output, "log_file_path: #{log_file_path}\n    - Writable?: yes"
-    end
-
-    test "when log file doesn't exist, outputs exists: false", %{log_dir_path: log_dir_path, log_file_path: log_file_path} do
+    @tag :skip_env_test
+    @tag :skip_env_test_phoenix
+    test "outputs writable, but doesn't create log file", %{log_dir_path: log_dir_path, log_file_path: log_file_path} do
       output = run()
       assert String.contains? output, "log_dir_path: #{log_dir_path}\n    - Writable?: yes"
       assert String.contains? output, "log_file_path: #{log_file_path}\n    - Exists?: no"
+    end
+
+    @tag :skip_env_test_no_nif
+    test "outputs writable and creates log file", %{log_dir_path: log_dir_path, log_file_path: log_file_path} do
+      output = run()
+      assert String.contains? output, "log_dir_path: #{log_dir_path}\n    - Writable?: yes"
+      assert String.contains? output, "log_file_path: #{log_file_path}\n    - Writable?: yes"
     end
   end
 
@@ -282,5 +288,16 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     merge_appsignal_config %{log_path: log_file_path}
 
     %{log_dir_path: log_dir_path, log_file_path: log_file_path}
+  end
+
+  defp clear_env do
+    System.get_env
+    |> Enum.filter(
+      fn({"APPSIGNAL_" <> _, _}) -> true;
+      ({"DYNO", _}) -> true;
+      (_) -> false end
+    ) |> Enum.each(fn({key, _}) ->
+      System.delete_env(key)
+    end)
   end
 end
