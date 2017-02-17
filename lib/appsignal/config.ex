@@ -79,9 +79,9 @@ defmodule Appsignal.Config do
     "APPSIGNAL_SKIP_SESSION_DATA" => :skip_session_data
   }
 
-  @string_keys ~w(APPSIGNAL_PUSH_API_KEY APPSIGNAL_PUSH_API_ENDPOINT APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH APPSIGNAL_HOSTNAME APPSIGNAL_HTTP_PROXY APPSIGNAL_LOG APPSIGNAL_LOG_PATH APPSIGNAL_WORKING_DIR_PATH APP_REVISION APPSIGNAL_CA_FILE_PATH)
+  @string_keys ~w(APPSIGNAL_APP_NAME APPSIGNAL_PUSH_API_KEY APPSIGNAL_PUSH_API_ENDPOINT APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH APPSIGNAL_HOSTNAME APPSIGNAL_HTTP_PROXY APPSIGNAL_LOG APPSIGNAL_LOG_PATH APPSIGNAL_WORKING_DIR_PATH APP_REVISION APPSIGNAL_CA_FILE_PATH)
   @bool_keys ~w(APPSIGNAL_ACTIVE APPSIGNAL_DEBUG APPSIGNAL_INSTRUMENT_NET_HTTP APPSIGNAL_ENABLE_FRONTEND_ERROR_CATCHING APPSIGNAL_ENABLE_ALLOCATION_TRACKING APPSIGNAL_ENABLE_GC_INSTRUMENTATION APPSIGNAL_RUNNING_IN_CONTAINER APPSIGNAL_ENABLE_HOST_METRICS APPSIGNAL_SKIP_SESSION_DATA)
-  @atom_keys ~w(APPSIGNAL_APP_NAME APPSIGNAL_APP_ENV)
+  @atom_keys ~w(APPSIGNAL_APP_ENV)
   @string_list_keys ~w(APPSIGNAL_FILTER_PARAMETERS APPSIGNAL_IGNORE_ACTIONS APPSIGNAL_IGNORE_ERRORS)
 
   defp load_environment(config, list, converter) do
@@ -157,7 +157,9 @@ defmodule Appsignal.Config do
     end
     System.put_env("APPSIGNAL_PUSH_API_ENDPOINT", config[:endpoint] || "")
     System.put_env("APPSIGNAL_PUSH_API_KEY", config[:push_api_key] || "")
-    System.put_env("APPSIGNAL_APP_NAME", Atom.to_string(config[:name]))
+    unless empty?(config[:name]) do
+      System.put_env("APPSIGNAL_APP_NAME", app_name_to_string(config[:name]))
+    end
     unless empty?(config[:http_proxy]) do
       System.put_env("APPSIGNAL_HTTP_PROXY", config[:http_proxy])
     end
@@ -179,6 +181,9 @@ defmodule Appsignal.Config do
     end
     System.put_env("APPSIGNAL_HOSTNAME", config[:hostname])
   end
+
+  defp app_name_to_string(name) when is_atom(name), do: Atom.to_string(name)
+  defp app_name_to_string(name) when is_binary(name), do: name
 
   def get_system_env do
     System.get_env

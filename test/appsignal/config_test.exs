@@ -148,9 +148,21 @@ defmodule Appsignal.ConfigTest do
       assert "log/appsignal.log" == System.get_env("APPSIGNAL_LOG_FILE_PATH")
     end
 
-    test "name" do
+    test "without name" do
+      add_to_application_env(:name, nil)
+      assert default_configuration() |> Map.put(:name, nil) == init_config()
+      assert nil == System.get_env("APPSIGNAL_APP_NAME")
+    end
+
+    test "name as atom" do
       add_to_application_env(:name, :my_application)
       assert default_configuration() |> Map.put(:name, :my_application) == init_config()
+      assert "my_application" == System.get_env("APPSIGNAL_APP_NAME")
+    end
+
+    test "name as string" do
+      add_to_application_env(:name, "my_application")
+      assert default_configuration() |> Map.put(:name, "my_application") == init_config()
       assert "my_application" == System.get_env("APPSIGNAL_APP_NAME")
     end
 
@@ -283,7 +295,7 @@ defmodule Appsignal.ConfigTest do
 
     test "name" do
       System.put_env("APPSIGNAL_APP_NAME", "my_application")
-      assert default_configuration() |> Map.put(:name, :my_application) == init_config()
+      assert default_configuration() |> Map.put(:name, "my_application") == init_config()
       assert "my_application" == System.get_env("APPSIGNAL_APP_NAME")
     end
 
