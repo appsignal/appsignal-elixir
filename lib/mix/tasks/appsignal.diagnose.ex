@@ -1,6 +1,6 @@
 defmodule Mix.Tasks.Appsignal.Diagnose do
-  require Logger
   use Mix.Task
+  alias Appsignal.Utils.PushApiKeyValidator
 
   @system Application.get_env(:appsignal, :appsignal_system, Appsignal.System)
   @nif Application.get_env(:appsignal, :appsignal_nif, Appsignal.Nif)
@@ -118,15 +118,11 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
 
   defp validate_push_api_key do
     IO.puts "Validation"
-    HTTPoison.start
-    url = "#{config()[:endpoint]}/1/auth?api_key=#{config()[:push_api_key]}"
-    case HTTPoison.get url do
-      {:ok, %HTTPoison.Response{status_code: 200}} ->
-        IO.puts "  Push API key: valid"
-      {:ok, %HTTPoison.Response{status_code: 401}} ->
-        IO.puts "  Push API key: invalid"
-      {:error, %HTTPoison.Error{reason: reason}} ->
-        IO.inspect reason
+    IO.write "  Push API key: "
+    case PushApiKeyValidator.validate(config()) do
+      :ok -> IO.puts "valid"
+      {:error, :invalid} -> IO.puts "invalid"
+      {:error, reason} -> IO.puts "failure: #{reason}"
     end
   end
 
