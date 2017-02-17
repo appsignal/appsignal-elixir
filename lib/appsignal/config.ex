@@ -36,7 +36,6 @@ defmodule Appsignal.Config do
     |> Map.put(:valid, !empty?(config[:push_api_key]))
 
     Application.put_env(:appsignal, :config, config)
-    write_to_environment(config)
 
     case config[:valid] do
       true ->
@@ -45,7 +44,6 @@ defmodule Appsignal.Config do
         {:error, :invalid_config}
     end
   end
-
 
   @doc """
   Returns whether the AppSignal agent is configured to start on application launch.
@@ -140,46 +138,69 @@ defmodule Appsignal.Config do
   @agent_version Appsignal.Agent.version
   @language_integration_version Mix.Project.config[:version]
 
+  @doc """
+  Write the currently known AppSignal configuration to the system environment.
+  Must be run before starting the AppSignal agent otherwise it won't know the
+  correct configuration.
+
+  ## Example
+
+      case {Appsignal.Config.initialize, Appsignal.Config.active?} do
+        {:ok, true} ->
+          Appsignal.Config.write_to_environment
+          Appsignal.Nif.start
+        {:ok, false} ->
+          # AppSignal not active
+        {{:error, :invalid_config}, _} ->
+          # AppSignal has invalid config
+      end
+  """
+  def write_to_environment do
+    config = Application.get_env(:appsignal, :config)
+    write_to_environment(config)
+  end
+
   defp write_to_environment(config) do
     System.put_env("APPSIGNAL_ACTIVE", Atom.to_string(config[:active]))
-    System.put_env("APPSIGNAL_APP_PATH", List.to_string(:code.priv_dir(:appsignal))) # FIXME - app_path should not be necessary
     System.put_env("APPSIGNAL_AGENT_PATH", List.to_string(:code.priv_dir(:appsignal)))
-    System.put_env("APPSIGNAL_ENVIRONMENT", Atom.to_string(config[:env]))
+    System.put_env("APPSIGNAL_AGENT_VERSION", @agent_version)
+    System.put_env("APPSIGNAL_APP_PATH", List.to_string(:code.priv_dir(:appsignal))) # FIXME - app_path should not be necessary
+    unless empty?(config[:name]) do
+      System.put_env("APPSIGNAL_APP_NAME", app_name_to_string(config[:name]))
+    end
     unless empty?(config[:ca_file_path]) do
       System.put_env("APPSIGNAL_CA_FILE_PATH", config[:ca_file_path])
     end
-    System.put_env("APPSIGNAL_AGENT_VERSION", @agent_version)
-    System.put_env("APPSIGNAL_LANGUAGE_INTEGRATION_VERSION", "elixir-" <> @language_integration_version)
     System.put_env("APPSIGNAL_DEBUG_LOGGING", Atom.to_string(config[:debug]))
+
+    System.put_env("APPSIGNAL_ENABLE_HOST_METRICS", Atom.to_string(config[:enable_host_metrics]))
+    System.put_env("APPSIGNAL_ENVIRONMENT", Atom.to_string(config[:env]))
+    unless empty?(config[:filter_parameters]) do
+      System.put_env("APPSIGNAL_FILTER_PARAMETERS", config[:filter_parameters] |> Enum.join(","))
+    end
+    System.put_env("APPSIGNAL_HOSTNAME", config[:hostname])
+    unless empty?(config[:http_proxy]) do
+      System.put_env("APPSIGNAL_HTTP_PROXY", config[:http_proxy])
+    end
+    System.put_env("APPSIGNAL_IGNORE_ACTIONS", config[:ignore_actions] |> Enum.join(","))
+    System.put_env("APPSIGNAL_IGNORE_ERRORS", config[:ignore_errors] |> Enum.join(","))
+    System.put_env("APPSIGNAL_LANGUAGE_INTEGRATION_VERSION", "elixir-" <> @language_integration_version)
     System.put_env("APPSIGNAL_LOG", config[:log])
     unless empty?(config[:log_path]) do
       System.put_env("APPSIGNAL_LOG_FILE_PATH", config[:log_path])
     end
     System.put_env("APPSIGNAL_PUSH_API_ENDPOINT", config[:endpoint] || "")
     System.put_env("APPSIGNAL_PUSH_API_KEY", config[:push_api_key] || "")
-    unless empty?(config[:name]) do
-      System.put_env("APPSIGNAL_APP_NAME", app_name_to_string(config[:name]))
-    end
-    unless empty?(config[:http_proxy]) do
-      System.put_env("APPSIGNAL_HTTP_PROXY", config[:http_proxy])
-    end
-    unless empty?(config[:filter_parameters]) do
-      System.put_env("APPSIGNAL_FILTER_PARAMETERS", config[:filter_parameters] |> Enum.join(","))
-    end
-    System.put_env("APPSIGNAL_IGNORE_ACTIONS", config[:ignore_actions] |> Enum.join(","))
-    System.put_env("APPSIGNAL_IGNORE_ERRORS", config[:ignore_errors] |> Enum.join(","))
-    System.put_env("APPSIGNAL_SEND_PARAMS", Atom.to_string(config[:send_params]))
     unless empty?(config[:running_in_container]) do
       System.put_env("APPSIGNAL_RUNNING_IN_CONTAINER", Atom.to_string(config[:running_in_container]))
     end
+    System.put_env("APPSIGNAL_SEND_PARAMS", Atom.to_string(config[:send_params]))
     unless empty?(config[:working_dir_path]) do
       System.put_env("APPSIGNAL_WORKING_DIR_PATH", config[:working_dir_path])
     end
-    System.put_env("APPSIGNAL_ENABLE_HOST_METRICS", Atom.to_string(config[:enable_host_metrics]))
     unless empty?(config[:revision]) do
       System.put_env("APP_REVISION", config[:revision])
     end
-    System.put_env("APPSIGNAL_HOSTNAME", config[:hostname])
   end
 
   defp app_name_to_string(name) when is_atom(name), do: Atom.to_string(name)
