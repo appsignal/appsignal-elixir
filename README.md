@@ -14,7 +14,7 @@ document for more information.*
 - [AppSignal.com website](https://appsignal.com/)
 - [AppSignal for Elixir documentation](http://docs.appsignal.com/elixir/)
 - [Package documentation](https://hexdocs.pm/appsignal/)
-- [Support](support@appsignal.com)
+- [Support][contact]
 
 ## Description
 
