@@ -60,11 +60,17 @@ defmodule Appsignal.Utils.PushApiKeyValidatorTest do
   describe "with a connection error" do
     setup %{bypass: bypass, config: config} do
       Bypass.down(bypass)
-      {:ok, %{config: config}}
+      {:ok, %{bypass: bypass, config: config}}
     end
 
-    test "returns an error", %{config: config} do
-      assert PushApiKeyValidator.validate(config) == {:error, :econnrefused}
+    test "returns an error", %{bypass: bypass, config: config} do
+      assert PushApiKeyValidator.validate(config) == {
+        :error,
+        {
+          :failed_connect,
+          [{:to_address, {'localhost', bypass.port}}, {:inet, [:inet], :econnrefused}]
+        }
+      }
     end
   end
 end
