@@ -44,8 +44,9 @@ if Appsignal.phoenix? do
       instrumenters: [PhoenixApp.CustomInstrumenter]
     ```
 
-    See the [Phoenix integration guide](phoenix.html) for information on
-    how to instrument other aspects of Phoenix.
+    See the [Phoenix integration
+    guide](http://docs.appsignal.com/elixir/integrations/phoenix.html) for
+    information on how to instrument other aspects of Phoenix.
     """
 
     alias Appsignal.Transaction
