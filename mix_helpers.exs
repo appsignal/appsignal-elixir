@@ -131,7 +131,7 @@ defmodule Mix.Appsignal.Helper do
   end
 
   defp priv_path(filename) do
-    priv_dir() <> "/" <> filename
+    Path.join(priv_dir(), filename)
   end
 
   defp has_file(filename) do
