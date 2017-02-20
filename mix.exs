@@ -24,7 +24,7 @@ defmodule Appsignal.Mixfile do
 
   def project do
     [app: :appsignal,
-     version: "0.12.0",
+     version: "0.12.1",
      name: "AppSignal",
      description: description(),
      package: package(),
@@ -76,7 +76,7 @@ defmodule Appsignal.Mixfile do
 
   defp deps do
     [
-      {:httpoison, "~> 0.10.0"},
+      {:httpoison, "~> 0.11"},
       {:decorator, "~> 1.0"},
       {:phoenix, "~> 1.2.0", optional: true, only: [:prod, :test_phoenix]},
       {:mock, "~> 0.2.1", only: [:test, :test_phoenix, :test_no_nif]},
