@@ -146,6 +146,6 @@ defmodule Mix.Appsignal.Helper do
 
   defp has_correct_agent_version? do
     path = priv_path("appsignal.version")
-    File.read(path) == {:ok, Appsignal.Agent.version}
+    File.read(path) == {:ok, "#{Appsignal.Agent.version}\n"}
   end
 end
