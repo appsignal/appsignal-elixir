@@ -19,12 +19,12 @@ defmodule Mix.Appsignal.Helper do
 
   def ensure_downloaded(arch) do
     arch_config = Appsignal.Agent.triples[arch]
-    version = Appsignal.Agent.version
 
     System.put_env("LIB_DIR", priv_dir())
 
-    unless has_file("appsignal-agent") and has_file("appsignal.h") and has_file("appsignal_extension.so") do
-
+    unless has_files?() and has_correct_agent_version?() do
+      version = Appsignal.Agent.version
+      File.rm_rf!(priv_dir())
       File.mkdir_p!(priv_dir())
       try do
         download_and_extract(arch_config[:download_url], version, arch_config[:checksum])
@@ -130,8 +130,22 @@ defmodule Mix.Appsignal.Helper do
     List.to_string(path)
   end
 
-  defp has_file(filename) do
-    File.exists?(priv_dir() <> "/" <> filename)
+  defp priv_path(filename) do
+    Path.join(priv_dir(), filename)
   end
 
+  defp has_file(filename) do
+    filename |> priv_path |> File.exists?
+  end
+
+  defp has_files? do
+    has_file("appsignal-agent") and
+    has_file("appsignal.h") and
+    has_file("appsignal_extension.so")
+  end
+
+  defp has_correct_agent_version? do
+    path = priv_path("appsignal.version")
+    File.read(path) == {:ok, "#{Appsignal.Agent.version}\n"}
+  end
 end
