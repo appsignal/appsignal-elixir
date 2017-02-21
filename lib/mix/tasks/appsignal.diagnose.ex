@@ -2,6 +2,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
   require Logger
   use Mix.Task
 
+  @appsignal_version Mix.Project.config[:version]
   @system Application.get_env(:appsignal, :appsignal_system, Appsignal.System)
   @nif Application.get_env(:appsignal, :appsignal_nif, Appsignal.Nif)
 
@@ -42,7 +43,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
   defp agent_version do
     IO.puts "AppSignal agent"
     IO.puts "  Language: Elixir"
-    IO.puts "  Package version: #{Appsignal.Mixfile.project[:version]}"
+    IO.puts "  Package version: #{@appsignal_version}"
 
     IO.puts "  Agent version: #{Appsignal.Agent.version}"
     IO.puts "  Nif loaded: #{yes_or_no(@nif.loaded?)}"
