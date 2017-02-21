@@ -58,7 +58,8 @@ defmodule Appsignal do
     case {Config.initialize, Config.active?} do
       {:ok, true} ->
         Logger.debug("AppSignal starting.")
-        Appsignal.Nif.start()
+        Config.write_to_environment
+        Appsignal.Nif.start
       {:ok, false} ->
         Logger.info("AppSignal disabled.")
         :ok
@@ -73,7 +74,6 @@ defmodule Appsignal do
         :ok
     end
   end
-
 
   @doc """
   Set a gauge for a measurement of some metric.
@@ -108,7 +108,6 @@ defmodule Appsignal do
     Appsignal.Nif.add_distribution_value(key, value)
   end
 
-
   @doc """
   Send an error to AppSignal
 
@@ -133,5 +132,4 @@ defmodule Appsignal do
       Appsignal.ErrorHandler.submit_transaction(transaction, reason, message, stack, metadata, conn)
     end
   end
-
 end
