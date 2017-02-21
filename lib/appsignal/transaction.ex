@@ -1,4 +1,7 @@
 defmodule Appsignal.TransactionBehaviour do
+  @type namespace :: :http_request | :background_job
+
+  @callback start(String.t, namespace) :: Appsignal.Transaction.t
   @callback start_event() :: Appsignal.Transaction.t
   @callback finish_event(Appsignal.Transaction.t | nil, String.t, String.t, any, integer) :: Appsignal.Transaction.t
   @callback finish() :: :sample | :no_sample

@@ -56,7 +56,11 @@ defmodule Appsignal.FakeTransaction do
       new_state
     end)
 
-    :sample
+    Agent.get(__MODULE__, &Map.get(&1, :finish, :sample))
+  end
+
+  def set_finish(result) do
+    Agent.update(__MODULE__, &Map.put(&1, :finish, result))
   end
 
   def finished_transactions do
@@ -88,6 +92,33 @@ defmodule Appsignal.FakeTransaction do
   end
 
   def completed_transactions do
-    Agent.get(__MODULE__, &Map.get(&1, :finished_transactions, []))
+    Agent.get(__MODULE__, &Map.get(&1, :completed_transactions, []))
+  end
+
+  def start(id, namespace) do
+    Agent.update(__MODULE__, fn(state) ->
+      {_, new_state} = Map.get_and_update(state, :started_transactions, fn(current) ->
+        case current do
+          nil -> {nil, [{id, namespace}]}
+          _ -> {current, [{id, namespace}|current]}
+        end
+      end)
+
+      new_state
+    end)
+
+    Appsignal.Transaction.start(id, namespace)
+  end
+
+  def started_transactions do
+    Agent.get(__MODULE__, &Map.get(&1, :started_transactions, []))
+  end
+
+  def started_transaction? do
+    started_transactions() |> Enum.any?
+  end
+
+  def generate_id do
+    "123"
   end
 end

@@ -28,16 +28,8 @@ if Appsignal.phoenix? do
     def phoenix_controller_call(:start, _, args), do: start_event(args)
 
     @doc false
-    def phoenix_controller_call(:stop, _diff, {%Appsignal.Transaction{} = transaction, %{conn: conn} = args}) do
+    def phoenix_controller_call(:stop, _diff, {%Appsignal.Transaction{} = transaction, args}) do
       finish_event(transaction, "phoenix_controller_call", args)
-
-      @transaction.try_set_action(transaction, conn)
-
-      if @transaction.finish(transaction) == :sample do
-        @transaction.set_request_metadata(transaction, conn)
-      end
-
-      :ok = @transaction.complete(transaction)
     end
     def phoenix_controller_call(:stop, _, _), do: nil
 

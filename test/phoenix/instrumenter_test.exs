@@ -44,26 +44,6 @@ defmodule Appsignal.Phoenix.InstrumenterTest do
     assert [] == FakeTransaction.finished_events
   end
 
-  test "sets the action name in phoenix_controller_call", context do
-    Instrumenter.phoenix_controller_call(:stop, nil, {context[:transaction], %{conn: context[:conn]}})
-    assert "foo#bar" == FakeTransaction.action
-  end
-
-  test "finishes the transaction in phoenix_controller_call", context do
-    Instrumenter.phoenix_controller_call(:stop, nil, {context[:transaction], %{conn: context[:conn]}})
-    assert [context[:transaction]] == FakeTransaction.finished_transactions
-  end
-
-  test "sets request metadata in phoenix_controller_call", context do
-    Instrumenter.phoenix_controller_call(:stop, nil, {context[:transaction], %{conn: context[:conn]}})
-    assert context[:conn] == FakeTransaction.request_metadata
-  end
-
-  test "completed the transaction in phoenix_controller_call", context do
-    Instrumenter.phoenix_controller_call(:stop, nil, {context[:transaction], %{conn: context[:conn]}})
-    assert [context[:transaction]] == FakeTransaction.completed_transactions
-  end
-
   test "finishes an event in phoenix_controller_render", context do
     Instrumenter.phoenix_controller_render(:stop, nil, {context[:transaction], %{conn: context[:conn]}})
     assert [
