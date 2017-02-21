@@ -4,29 +4,25 @@ if Appsignal.phoenix? do
     Plug handler for Phoenix requests
     """
 
-    @behaviour Plug
-    import Plug.Conn, only: [register_before_send: 2, assign: 3]
+    defmacro __using__(_) do
+      quote do
+        @transaction Application.get_env(:appsignal, :appsignal_transaction, Appsignal.Transaction)
 
-    alias Appsignal.Transaction
+        def call(conn, opts) do
+          id = Logger.metadata()[:request_id] || @transaction.generate_id()
+          transaction = @transaction.start(id, :http_request)
 
-    def init(opts), do: opts
+          conn = super(conn, opts)
 
-    def call(conn, _config) do
-      id = Logger.metadata()[:request_id] || Transaction.generate_id()
-      transaction = Transaction.start(id, :http_request)
+          @transaction.try_set_action(transaction, conn)
+          if @transaction.finish(transaction) == :sample do
+            @transaction.set_request_metadata(transaction, conn)
+          end
 
-      conn
-      |> register_before_send(fn conn ->
-        Transaction.try_set_action(transaction, conn)
-        resp = Transaction.finish(transaction)
-        if resp == :sample do
-          Transaction.set_request_metadata(transaction, conn)
+          :ok = @transaction.complete(transaction)
+          conn
         end
-
-        :ok = Transaction.complete(transaction)
-        conn
-      end)
-      |> assign(:appsignal_transaction, transaction)
+      end
     end
   end
 end

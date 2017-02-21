@@ -1,5 +1,21 @@
-defmodule Appsignal.Transaction do
+defmodule Appsignal.TransactionBehaviour do
+  @type namespace :: :http_request | :background_job
 
+  @callback start(String.t, namespace) :: Appsignal.Transaction.t
+  @callback start_event() :: Appsignal.Transaction.t
+  @callback finish_event(Appsignal.Transaction.t | nil, String.t, String.t, any, integer) :: Appsignal.Transaction.t
+  @callback finish() :: :sample | :no_sample
+  @callback finish(Transaction.t | nil) :: :sample | :no_sample
+  @callback complete() :: :ok
+  @callback complete(Transaction.t | nil) :: :ok
+  if Appsignal.phoenix? do
+    @callback try_set_action(Appsignal.Transaction.t, Plug.Conn.t) :: :ok
+    @callback set_request_metadata(Transaction.t | nil, Plug.Conn.t) :: Transaction.t
+  end
+end
+
+defmodule Appsignal.Transaction do
+  @behaviour Appsignal.TransactionBehaviour
   use Appsignal.Config
 
   @moduledoc """

@@ -18,69 +18,42 @@ if Appsignal.phoenix? do
     Note: Channels (`phoenix_channel_join` hook) are currently not
     supported.
 
-    ## Custom instrumentation events
-
-    You might be using your endpoint's `instrument/4` macro to create
-    custom instrumentation. If you want those events to become part of
-    the AppSignal timeline as well, you need to create a custom
-    instrumenter module with the help of
-    Appsignal.Phoenix.InstrumenterDSL:
-
-    ```
-    defmodule PhoenixApp.CustomInstrumenter do
-
-      import Appsignal.Phoenix.InstrumenterDSL
-      instrumenter :phoenix_controller_call
-      instrumenter :phoenix_controller_render
-      instrumenter :custom_event
-      instrumenter :another_custom_event
-    end
-    ```
-
-    And then, use that instead of the AppSignal instrumenter in your `config.exs`:
-
-    ```
-    config :phoenix_app, PhoenixApp.Endpoint,
-      instrumenters: [PhoenixApp.CustomInstrumenter]
-    ```
-
     See the [Phoenix integration
     guide](http://docs.appsignal.com/elixir/integrations/phoenix.html) for
     information on how to instrument other aspects of Phoenix.
     """
-
-    alias Appsignal.Transaction
-
-    require Logger
-
-    import Appsignal.Phoenix.InstrumenterDSL
-    instrumenter :phoenix_controller_call
-    instrumenter :phoenix_controller_render
+    @transaction Application.get_env(:appsignal, :appsignal_transaction, Appsignal.Transaction)
 
     @doc false
-    def maybe_transaction_start_event(%Transaction{} = transaction, args) do
-      {Transaction.start_event(transaction), args}
-    end
-    def maybe_transaction_start_event(pid, args) when is_pid(pid) do
-      maybe_transaction_start_event(Appsignal.TransactionRegistry.lookup(pid), args)
-    end
-    def maybe_transaction_start_event(%{conn: %Plug.Conn{} = conn}, args) do
-      maybe_transaction_start_event(conn.assigns[:appsignal_transaction], args)
-    end
-    def maybe_transaction_start_event(%{}, args) do
-      maybe_transaction_start_event(self(), args)
-    end
-    def maybe_transaction_start_event(nil, _), do: nil
+    def phoenix_controller_call(:start, _, args), do: start_event(args)
 
     @doc false
-    def maybe_transaction_finish_event(_event, nil), do: nil
-    def maybe_transaction_finish_event(event, {transaction, args}) do
-      Transaction.finish_event(transaction, event, event, args, 0)
+    def phoenix_controller_call(:stop, _diff, {%Appsignal.Transaction{} = transaction, args}) do
+      finish_event(transaction, "controller_call.phoenix", args)
     end
+    def phoenix_controller_call(:stop, _, _), do: nil
 
     @doc false
-    def cleanup_args(args) do
-      Map.delete(args, :conn)
+    def phoenix_controller_render(:start, _, args), do: start_event(args)
+
+    @doc false
+    def phoenix_controller_render(:stop, _diff, {%Appsignal.Transaction{} = transaction, args}) do
+      finish_event(transaction, "controller_render.phoenix", args)
+    end
+    def phoenix_controller_render(:stop, _, _), do: nil
+
+    defp start_event(args) do
+      {@transaction.start_event(), args}
+    end
+
+    defp finish_event(transaction, name, args) do
+      @transaction.finish_event(
+        transaction,
+        name,
+        name,
+        Map.delete(args, :conn),
+        0
+      )
     end
   end
 end

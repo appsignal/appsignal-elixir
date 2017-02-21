@@ -1,78 +1,71 @@
+defmodule UsingAppsignalPhoenix do
+  def call(conn, _opts) do
+    conn |> Plug.Conn.assign(:called?, true)
+  end
+
+  defoverridable [call: 2]
+
+  use Appsignal.Phoenix.Plug
+end
+
 defmodule Appsignal.Phoenix.PlugTest do
   use ExUnit.Case
-  use Plug.Test
-  import Mock
+  alias Appsignal.FakeTransaction
 
-
-  test "does what it needs to do" do
-    # Create a test connection
-    conn = conn(:get, "/test/123")
-
-    # Invoke the plug
-    conn = Appsignal.Phoenix.Plug.call(conn, %{})
-
-    assert conn.assigns.appsignal_transaction != nil
-
-    conn = conn
-    |> Plug.Conn.resp(200, "ok")
-    |> Plug.Conn.send_resp
-
-    # Assert the response and status
-    assert conn.state == :sent
-    assert conn.status == 200
-    assert conn.resp_body == "ok"
-
+  setup do
+    FakeTransaction.start_link
+    :ok
   end
 
-  @default_opts [
-    store: :cookie,
-    key: "foobar",
-    encryption_salt: "encrypted cookie salt",
-    signing_salt: "signing salt",
-    log: false
-  ]
+  describe "for a :sample transaction" do
+    setup do
+      conn = %Plug.Conn{}
+      |> Plug.Conn.put_private(:phoenix_controller, "foo")
+      |> Plug.Conn.put_private(:phoenix_action, "bar")
+      |> UsingAppsignalPhoenix.call(%{})
 
-  test_with_mock "send session data", Appsignal.Transaction, [:passthrough], [] do
+      {:ok, conn: conn}
+    end
 
-    Application.put_env(:appsignal, :config, [skip_session_data: false])
+    test "starts a transaction" do
+      assert FakeTransaction.started_transaction?
+    end
 
-    conn = get_session_conn()
-    t = conn.assigns.appsignal_transaction
-    Appsignal.Transaction.set_request_metadata(t, conn)
+    test "calls super and returns the conn", context do
+      assert context[:conn].assigns[:called?]
+    end
 
-    assert called Appsignal.Transaction.set_sample_data(t, "session_data", conn.private.plug_session)
+    test "sets the transaction's action name" do
+      assert "foo#bar" == FakeTransaction.action
+    end
+
+    test "finishes the transaction" do
+      assert [%Appsignal.Transaction{}] = FakeTransaction.finished_transactions
+    end
+
+    test "sets the transaction's request metadata", context do
+      assert context[:conn] == FakeTransaction.request_metadata
+    end
+
+    test "completes the transaction" do
+      assert [%Appsignal.Transaction{}] = FakeTransaction.completed_transactions
+    end
   end
 
-  test_with_mock "do not send session data", Appsignal.Transaction, [:passthrough], [] do
+  describe "for a :no_sample transaction" do
+    setup do
+      FakeTransaction.set_finish(:no_sample)
 
-    Application.put_env(:appsignal, :config, [skip_session_data: true])
+      conn = %Plug.Conn{}
+      |> Plug.Conn.put_private(:phoenix_controller, "foo")
+      |> Plug.Conn.put_private(:phoenix_action, "bar")
+      |> UsingAppsignalPhoenix.call(%{})
 
-    conn = get_session_conn()
-    t = conn.assigns.appsignal_transaction
-    Appsignal.Transaction.set_request_metadata(t, conn)
+      {:ok, conn: conn}
+    end
 
-    assert not called Appsignal.Transaction.set_sample_data(t, "session_data", conn.private.plug_session)
+    test "does not set the transaction's request metadata" do
+      assert nil == FakeTransaction.request_metadata
+    end
   end
-
-
-
-  defp get_session_conn() do
-    conn(:get, "/")
-    |> sign_conn()
-    |> put_session("foo", "bar")
-    |> Appsignal.Phoenix.Plug.call(%{})
-    |> Plug.Conn.resp(200, "ok")
-    |> Plug.Conn.send_resp
-  end
-
-
-  @secret String.duplicate("abcdef0123456789", 8)
-  @signing_opts Plug.Session.init(Keyword.put(@default_opts, :encrypt, false))
-
-  defp sign_conn(conn, secret \\ @secret) do
-    put_in(conn.secret_key_base, secret)
-    |> Plug.Session.call(@signing_opts)
-    |> fetch_session
-  end
-
 end
