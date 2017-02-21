@@ -2,7 +2,10 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
   use ExUnit.Case
   import ExUnit.CaptureIO
 
+  @demo Application.get_env(:appsignal, :appsignal_demo, Appsignal.Demo)
+
   setup do
+    @demo.start_link
     original_config = Application.get_env(:appsignal, :config, %{})
 
     bypass = Bypass.open
@@ -228,6 +231,13 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
       output = run_with_environment_config()
       assert String.contains? output, "AppSignal detected a Phoenix app"
       assert String.contains? output, "http://docs.appsignal.com/elixir/integrations/phoenix.html"
+    end
+
+    test "sends a demo sample to AppSignal" do
+      output = run_with_environment_config()
+      assert @demo.get(:create_transaction_error_request)
+      assert @demo.get(:create_transaction_performance_request)
+      assert String.contains? output, "Demonstration sample data sent!"
     end
   end
 
