@@ -100,4 +100,40 @@ defmodule AppsignalTransactionTest do
     assert ^transaction = Transaction.start_event(transaction)
     assert ^transaction = Transaction.finish_event(transaction, "phoenix_controller_render", "phoenix_controller_render", %{format: "html", template: "index.html"}, 0)
   end
+
+  describe "concerning skipping session data" do
+    setup do
+      conn = %Plug.Conn{peer: {{127, 0, 0, 1}, 12345}}
+      |> Plug.Conn.put_private(:plug_session, %{})
+      |> Plug.Conn.put_private(:plug_session_fetch, :done)
+
+      {:ok, conn: conn}
+    end
+
+    @tag :skip_env_test_no_nif
+    @tag :skip_env_test
+    test_with_mock "send session data", context, Appsignal.Transaction, [:passthrough], [] do
+      Application.put_env(:appsignal, :config, [skip_session_data: false])
+
+      transaction = Transaction.start("test5", :http_request)
+      |> Transaction.set_request_metadata(context[:conn])
+
+      assert called Appsignal.Transaction.set_sample_data(
+        transaction, "session_data", context[:conn].private.plug_session
+      )
+    end
+
+    @tag :skip_env_test_no_nif
+    @tag :skip_env_test
+    test_with_mock "does not send session data", context, Appsignal.Transaction, [:passthrough], [] do
+      Application.put_env(:appsignal, :config, [skip_session_data: true])
+
+      transaction = Transaction.start("test5", :http_request)
+      |> Transaction.set_request_metadata(context[:conn])
+
+      assert not called Appsignal.Transaction.set_sample_data(
+        transaction, "session_data", context[:conn].private.plug_session
+      )
+    end
+  end
 end
