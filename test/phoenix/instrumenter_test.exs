@@ -31,8 +31,8 @@ defmodule Appsignal.Phoenix.InstrumenterTest do
     assert [
       %{
         transaction: context[:transaction],
-        name: "phoenix_controller_call",
-        title: "phoenix_controller_call",
+        name: "controller_call.phoenix",
+        title: "controller_call.phoenix",
         body: %{},
         body_format: 0
       }
@@ -49,8 +49,8 @@ defmodule Appsignal.Phoenix.InstrumenterTest do
     assert [
       %{
         transaction: context[:transaction],
-        name: "phoenix_controller_render",
-        title: "phoenix_controller_render",
+        name: "controller_render.phoenix",
+        title: "controller_render.phoenix",
         body: %{},
         body_format: 0
       }
