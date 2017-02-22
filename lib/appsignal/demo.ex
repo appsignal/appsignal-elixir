@@ -23,15 +23,15 @@ defmodule Appsignal.Demo do
   def create_transaction_performance_request do
     transaction = create_demo_transaction()
 
-    instrument(transaction, "template.render", "Rendering something slow", fn() ->
+    instrument(transaction, "render.phoenix_template", "Rendering something slow", fn() ->
       :timer.sleep(1000)
-      instrument(transaction, "ecto.query", "Slow query", fn() ->
+      instrument(transaction, "query.ecto", "Slow query", fn() ->
         :timer.sleep(300)
       end)
-      instrument(transaction, "ecto.query", "Slow query", fn() ->
+      instrument(transaction, "query.ecto", "Slow query", fn() ->
         :timer.sleep(500)
       end)
-      instrument(transaction, "template.render", "Rendering something slow", fn() ->
+      instrument(transaction, "render.phoenix_template", "Rendering something slow", fn() ->
         :timer.sleep(100)
       end)
     end)

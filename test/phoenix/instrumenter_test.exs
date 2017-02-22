@@ -16,7 +16,7 @@ defmodule Appsignal.Phoenix.InstrumenterTest do
 
   test "starts an event in phoenix_controller_call", context do
     arguments = %{foo: "bar"}
-    assert {context[:transaction], arguments} == 
+    assert {context[:transaction], arguments} ==
       Instrumenter.phoenix_controller_call(:start, nil, arguments)
   end
 
@@ -31,8 +31,8 @@ defmodule Appsignal.Phoenix.InstrumenterTest do
     assert [
       %{
         transaction: context[:transaction],
-        name: "controller_call.phoenix",
-        title: "controller_call.phoenix",
+        name: "call.phoenix_controller",
+        title: "call.phoenix_controller",
         body: %{},
         body_format: 0
       }
@@ -49,8 +49,8 @@ defmodule Appsignal.Phoenix.InstrumenterTest do
     assert [
       %{
         transaction: context[:transaction],
-        name: "controller_render.phoenix",
-        title: "controller_render.phoenix",
+        name: "render.phoenix_controller",
+        title: "render.phoenix_controller",
         body: %{},
         body_format: 0
       }

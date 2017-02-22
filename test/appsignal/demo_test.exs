@@ -21,7 +21,7 @@ defmodule AppsignalDemoTest do
     assert called Appsignal.Transaction.set_action(t, "DemoController#hello")
     assert called Appsignal.Transaction.set_meta_data(t, "demo_sample", "true")
     assert called Appsignal.Transaction.start_event(t)
-    assert called Appsignal.Transaction.finish_event(t, "template.render", "Rendering something slow", "", 0)
+    assert called Appsignal.Transaction.finish_event(t, "render.phoenix_template", "Rendering something slow", "", 0)
     assert called Appsignal.Transaction.finish(t)
     assert called Appsignal.Transaction.complete(t)
   end
