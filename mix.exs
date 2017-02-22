@@ -1,12 +1,12 @@
+unless Code.ensure_loaded?(Appsignal.Agent) do
+  {_, _} = Code.eval_file("agent.ex")
+end
+
 defmodule Mix.Tasks.Compile.Appsignal do
   use Mix.Task
 
   def run(_args) do
     {_, _} = Code.eval_file("mix_helpers.exs")
-
-    unless Code.ensure_loaded?(Appsignal.Agent) do
-      {_, _} = Code.eval_file("agent.ex")
-    end
 
     case Mix.Appsignal.Helper.verify_system_architecture() do
       {:ok, arch} ->
@@ -21,6 +21,7 @@ end
 
 defmodule Appsignal.Mixfile do
   use Mix.Project
+  @agent_version Appsignal.Agent.version
 
   def project do
     [app: :appsignal,
@@ -35,7 +36,8 @@ defmodule Appsignal.Mixfile do
      compilers: compilers(Mix.env),
      elixirc_paths: elixirc_paths(Mix.env),
      deps: deps(),
-     docs: [logo: "logo.png", extras: ["Roadmap.md"]]
+     docs: [logo: "logo.png", extras: ["Roadmap.md"]],
+     agent_version: @agent_version
     ]
   end
 
