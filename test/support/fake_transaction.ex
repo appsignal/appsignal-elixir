@@ -125,4 +125,22 @@ defmodule Appsignal.FakeTransaction do
   def generate_id do
     "123"
   end
+
+  def set_error(transaction, reason, message, stack) do
+    Agent.update(__MODULE__, fn(state) ->
+      {_, new_state} = Map.get_and_update(state, :errors, fn(current) ->
+        error = {transaction, reason, message, stack}
+        case current do
+          nil -> {nil, [error]}
+          _ -> {current, [error|current]}
+        end
+      end)
+
+      new_state
+    end)
+  end
+
+  def errors do
+    Agent.get(__MODULE__, &Map.get(&1, :errors, []))
+  end
 end

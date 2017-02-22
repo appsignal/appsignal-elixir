@@ -1,4 +1,4 @@
-defmodule UsingAppsignalPhoenix do
+defmodule UsingAppsignalPlug do
   def call(conn, _opts) do
     conn |> Plug.Conn.assign(:called?, true)
   end
@@ -22,7 +22,7 @@ defmodule Appsignal.Phoenix.PlugTest do
       conn = %Plug.Conn{}
       |> Plug.Conn.put_private(:phoenix_controller, "foo")
       |> Plug.Conn.put_private(:phoenix_action, "bar")
-      |> UsingAppsignalPhoenix.call(%{})
+      |> UsingAppsignalPlug.call(%{})
 
       {:ok, conn: conn}
     end
@@ -59,7 +59,7 @@ defmodule Appsignal.Phoenix.PlugTest do
       conn = %Plug.Conn{}
       |> Plug.Conn.put_private(:phoenix_controller, "foo")
       |> Plug.Conn.put_private(:phoenix_action, "bar")
-      |> UsingAppsignalPhoenix.call(%{})
+      |> UsingAppsignalPlug.call(%{})
 
       {:ok, conn: conn}
     end
