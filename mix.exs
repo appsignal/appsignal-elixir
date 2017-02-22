@@ -53,7 +53,7 @@ defmodule Appsignal.Mixfile do
 
   def application do
     [mod: {Appsignal, []},
-     applications: [:logger]]
+     applications: [:logger, :decorator, :httpoison]]
   end
 
   defp compilers(:test_phoenix), do: [:phoenix] ++ compilers(:prod)
