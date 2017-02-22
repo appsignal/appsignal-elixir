@@ -35,8 +35,12 @@ defmodule Appsignal.FakeTransaction do
   end
 
   def try_set_action(_transaction, conn) do
-    value = "#{conn.private.phoenix_controller}##{conn.private.phoenix_action}"
-    Agent.update(__MODULE__, &Map.put(&1, :action, value))
+    try do
+      value = "#{conn.private.phoenix_controller}##{conn.private.phoenix_action}"
+      Agent.update(__MODULE__, &Map.put(&1, :action, value))
+    catch
+      _, _ -> :ok
+    end
   end
 
   def action do

@@ -1,8 +1,39 @@
+defmodule UsingAppsignalPhoenix do
+  def call(conn, _opts) do
+    conn |> Plug.Conn.assign(:called?, true)
+  end
+
+  defoverridable [call: 2]
+
+  use Appsignal.Phoenix
+end
+
 defmodule Appsignal.PhoenixTest do
   use ExUnit.Case
   import Mock
 
-  alias Appsignal.{Transaction, TransactionRegistry}
+  alias Appsignal.{Transaction, TransactionRegistry, FakeTransaction}
+
+  describe "concerning starting and finishing transactions" do
+    setup do
+      FakeTransaction.start_link
+      conn = UsingAppsignalPhoenix.call(%Plug.Conn{}, %{})
+
+      {:ok, conn: conn}
+    end
+
+    test "starts a transaction" do
+      assert FakeTransaction.started_transaction?
+    end
+
+    test "calls super and returns the conn", context do
+      assert context[:conn].assigns[:called?]
+    end
+
+    test "finishes the transaction" do
+      assert [%Appsignal.Transaction{}] = FakeTransaction.finished_transactions
+    end
+  end
 
   test_with_mock "send_error with metadata and conn", Appsignal.Transaction, [:passthrough], [] do
     conn = %Plug.Conn{peer: {{127, 0, 0, 1}, 12345}}

@@ -23,24 +23,25 @@ if Appsignal.phoenix? do
     @doc false
     defmacro __using__(_) do
       quote do
-        use Appsignal.Phoenix.Plug
-
         def call(conn, opts) do
           try do
             super(conn, opts)
           rescue
             e ->
               stacktrace = System.stacktrace
-            import Appsignal.Phoenix
-            case {Appsignal.TransactionRegistry.lookup(self()), extract_error_metadata(e, conn, stacktrace)} do
-              {nil, _} -> :skip
-              {_, nil} -> :skip
-              {transaction, {reason, message, stack, conn}} ->
-                submit_http_error(reason, message, stack, transaction, conn)
-            end
-            reraise e, stacktrace
+              import Appsignal.Phoenix
+              case {Appsignal.TransactionRegistry.lookup(self()), extract_error_metadata(e, conn, stacktrace)} do
+                {nil, _} -> :skip
+                {_, nil} -> :skip
+                {transaction, {reason, message, stack, conn}} ->
+                  submit_http_error(reason, message, stack, transaction, conn)
+              end
+              reraise e, stacktrace
           end
         end
+
+        defoverridable [call: 2]
+        use Appsignal.Phoenix.Plug
       end
     end
 
