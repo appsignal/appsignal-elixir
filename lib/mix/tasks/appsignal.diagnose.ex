@@ -3,6 +3,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
   alias Appsignal.Utils.PushApiKeyValidator
 
   @appsignal_version Mix.Project.config[:version]
+  @agent_version Mix.Project.config[:agent_version]
   @system Application.get_env(:appsignal, :appsignal_system, Appsignal.System)
   @nif Application.get_env(:appsignal, :appsignal_nif, Appsignal.Nif)
 
@@ -18,7 +19,6 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     host_information()
     empty_line()
 
-    load_agent_config()
     start_appsignal_in_diagnose_mode()
 
     configuration()
@@ -45,7 +45,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     IO.puts "  Language: Elixir"
     IO.puts "  Package version: #{@appsignal_version}"
 
-    IO.puts "  Agent version: #{Appsignal.Agent.version}"
+    IO.puts "  Agent version: #{@agent_version}"
     IO.puts "  Nif loaded: #{yes_or_no(@nif.loaded?)}"
   end
 
@@ -60,12 +60,6 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
       IO.puts "  Heroku: yes"
     end
     IO.puts "  Container: #{yes_or_no(@nif.running_in_container?)}"
-  end
-
-  defp load_agent_config do
-    unless Code.ensure_loaded?(Appsignal.Agent) do
-      {_, _} = Code.eval_file("agent.ex")
-    end
   end
 
   defp start_appsignal_in_diagnose_mode do
