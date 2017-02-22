@@ -1,8 +1,78 @@
+defmodule UsingAppsignalPhoenix do
+  def call(conn, _opts) do
+    conn |> Plug.Conn.assign(:called?, true)
+  end
+
+  defoverridable [call: 2]
+
+  use Appsignal.Phoenix
+end
+
+defmodule UsingAppsignalPhoenixWithException do
+  def call(_conn, _opts) do
+    raise "exception!"
+  end
+
+  defoverridable [call: 2]
+
+  use Appsignal.Phoenix
+end
+
 defmodule Appsignal.PhoenixTest do
   use ExUnit.Case
   import Mock
 
-  alias Appsignal.{Transaction, TransactionRegistry}
+  alias Appsignal.{Transaction, TransactionRegistry, FakeTransaction}
+
+  setup do
+    FakeTransaction.start_link
+    :ok
+  end
+
+  describe "concerning starting and finishing transactions" do
+    setup do
+      conn = UsingAppsignalPhoenix.call(%Plug.Conn{}, %{})
+
+      {:ok, conn: conn}
+    end
+
+    test "starts a transaction" do
+      assert FakeTransaction.started_transaction?
+    end
+
+    test "calls super and returns the conn", context do
+      assert context[:conn].assigns[:called?]
+    end
+
+    test "finishes the transaction" do
+      assert [%Appsignal.Transaction{}] = FakeTransaction.finished_transactions
+    end
+  end
+
+  describe "concerning catching errors" do
+    test "reports an error" do
+      result = try do
+        %Plug.Conn{}
+        |> Plug.Conn.put_private(:phoenix_controller, "foo")
+        |> Plug.Conn.put_private(:phoenix_action, "bar")
+        |> UsingAppsignalPhoenixWithException.call(%{})
+      rescue
+        e -> e
+      end
+
+      assert %RuntimeError{message: "exception!"} == result
+      assert FakeTransaction.started_transaction?
+      assert "foo#bar" == FakeTransaction.action
+      assert [{
+        %Appsignal.Transaction{},
+        "RuntimeError",
+        "HTTP request error: exception!",
+        _stack
+      }] = FakeTransaction.errors
+      assert [%Appsignal.Transaction{}] = FakeTransaction.finished_transactions
+      assert [%Appsignal.Transaction{}] = FakeTransaction.completed_transactions
+    end
+  end
 
   test_with_mock "send_error with metadata and conn", Appsignal.Transaction, [:passthrough], [] do
     conn = %Plug.Conn{peer: {{127, 0, 0, 1}, 12345}}

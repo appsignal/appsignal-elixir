@@ -17,30 +17,32 @@ if Appsignal.phoenix? do
 
     require Logger
 
-    alias Appsignal.{Transaction,TransactionRegistry}
+    @transaction Application.get_env(:appsignal, :appsignal_transaction, Appsignal.Transaction)
+    alias Appsignal.TransactionRegistry
     alias Appsignal.ErrorHandler
 
     @doc false
     defmacro __using__(_) do
       quote do
-        use Appsignal.Phoenix.Plug
-
         def call(conn, opts) do
           try do
             super(conn, opts)
           rescue
             e ->
               stacktrace = System.stacktrace
-            import Appsignal.Phoenix
-            case {Appsignal.TransactionRegistry.lookup(self()), extract_error_metadata(e, conn, stacktrace)} do
-              {nil, _} -> :skip
-              {_, nil} -> :skip
-              {transaction, {reason, message, stack, conn}} ->
-                submit_http_error(reason, message, stack, transaction, conn)
-            end
-            reraise e, stacktrace
+              import Appsignal.Phoenix
+              case {Appsignal.TransactionRegistry.lookup(self()), extract_error_metadata(e, conn, stacktrace)} do
+                {nil, _} -> :skip
+                {_, nil} -> :skip
+                {transaction, {reason, message, stack, conn}} ->
+                  submit_http_error(reason, message, stack, transaction, conn)
+              end
+              reraise e, stacktrace
           end
         end
+
+        defoverridable [call: 2]
+        use Appsignal.Phoenix.Plug
       end
     end
 
@@ -62,12 +64,12 @@ if Appsignal.phoenix? do
 
     @doc false
     def submit_http_error(reason, message, stack, transaction, conn) do
-      Transaction.set_error(transaction, reason, message, stack)
-      Transaction.try_set_action(transaction, conn)
-      if Transaction.finish(transaction) == :sample do
-        Transaction.set_request_metadata(transaction, conn)
+      @transaction.set_error(transaction, reason, message, stack)
+      @transaction.try_set_action(transaction, conn)
+      if @transaction.finish(transaction) == :sample do
+        @transaction.set_request_metadata(transaction, conn)
       end
-      Transaction.complete(transaction)
+      @transaction.complete(transaction)
 
       # explicitly remove the transaction here so the regular error handler doesn't submit it again
       :ok = TransactionRegistry.remove_transaction(transaction)
