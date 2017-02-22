@@ -28,7 +28,7 @@ defmodule Appsignal.Ecto do
         # record the event
         total_time = (entry.queue_time || 0) + (entry.query_time || 0) + (entry.decode_time || 0)
         duration = trunc(total_time / @nano_seconds)
-        Transaction.record_event(transaction, "ecto.query", "", entry.query, duration, 1)
+        Transaction.record_event(transaction, "query.ecto", "", entry.query, duration, 1)
     end
     entry
   end

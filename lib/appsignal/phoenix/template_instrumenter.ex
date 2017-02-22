@@ -39,7 +39,12 @@ if Appsignal.phoenix? do
         def compile(path, name) do
           expr = unquote(opts[:engine]).compile(path, name)
           quote do
-            Appsignal.Instrumentation.Helpers.instrument(self(), "template.render", unquote(name), fn() -> unquote(expr) end)
+            Appsignal.Instrumentation.Helpers.instrument(
+              self(),
+              "render.phoenix_template",
+              unquote(name),
+              fn() -> unquote(expr) end
+            )
           end
         end
       end
