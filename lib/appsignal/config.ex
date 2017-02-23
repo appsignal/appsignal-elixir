@@ -160,43 +160,60 @@ defmodule Appsignal.Config do
   end
 
   defp write_to_environment(config) do
-    System.put_env("APPSIGNAL_ACTIVE", Atom.to_string(config[:active]))
-    System.put_env("APPSIGNAL_AGENT_PATH", List.to_string(:code.priv_dir(:appsignal)))
-    System.put_env("APPSIGNAL_AGENT_VERSION", @agent_version)
-    System.put_env("APPSIGNAL_APP_PATH", List.to_string(:code.priv_dir(:appsignal))) # FIXME - app_path should not be necessary
+    reset_environment_config!()
+
+    System.put_env("_APPSIGNAL_ACTIVE", Atom.to_string(config[:active]))
+    System.put_env("_APPSIGNAL_AGENT_PATH", List.to_string(:code.priv_dir(:appsignal)))
+    System.put_env("_APPSIGNAL_AGENT_VERSION", @agent_version)
+    System.put_env("_APPSIGNAL_APP_PATH", List.to_string(:code.priv_dir(:appsignal))) # FIXME - app_path should not be necessary
     unless empty?(config[:name]) do
-      System.put_env("APPSIGNAL_APP_NAME", app_name_to_string(config[:name]))
+      System.put_env("_APPSIGNAL_APP_NAME", app_name_to_string(config[:name]))
     end
     unless empty?(config[:ca_file_path]) do
-      System.put_env("APPSIGNAL_CA_FILE_PATH", config[:ca_file_path])
+      System.put_env("_APPSIGNAL_CA_FILE_PATH", config[:ca_file_path])
     end
-    System.put_env("APPSIGNAL_DEBUG_LOGGING", Atom.to_string(config[:debug]))
+    System.put_env("_APPSIGNAL_DEBUG_LOGGING", Atom.to_string(config[:debug]))
 
-    System.put_env("APPSIGNAL_ENABLE_HOST_METRICS", Atom.to_string(config[:enable_host_metrics]))
-    System.put_env("APPSIGNAL_ENVIRONMENT", Atom.to_string(config[:env]))
+    System.put_env("_APPSIGNAL_ENABLE_HOST_METRICS", Atom.to_string(config[:enable_host_metrics]))
+    System.put_env("_APPSIGNAL_ENVIRONMENT", Atom.to_string(config[:env]))
     unless empty?(config[:filter_parameters]) do
-      System.put_env("APPSIGNAL_FILTER_PARAMETERS", config[:filter_parameters] |> Enum.join(","))
+      System.put_env("_APPSIGNAL_FILTER_PARAMETERS", config[:filter_parameters] |> Enum.join(","))
     end
-    System.put_env("APPSIGNAL_HOSTNAME", config[:hostname])
+    System.put_env("_APPSIGNAL_HOSTNAME", config[:hostname])
     unless empty?(config[:http_proxy]) do
-      System.put_env("APPSIGNAL_HTTP_PROXY", config[:http_proxy])
+      System.put_env("_APPSIGNAL_HTTP_PROXY", config[:http_proxy])
     end
-    System.put_env("APPSIGNAL_IGNORE_ACTIONS", config[:ignore_actions] |> Enum.join(","))
-    System.put_env("APPSIGNAL_IGNORE_ERRORS", config[:ignore_errors] |> Enum.join(","))
-    System.put_env("APPSIGNAL_LANGUAGE_INTEGRATION_VERSION", "elixir-" <> @language_integration_version)
-    System.put_env("APPSIGNAL_LOG", config[:log])
+    System.put_env("_APPSIGNAL_IGNORE_ACTIONS", config[:ignore_actions] |> Enum.join(","))
+    System.put_env("_APPSIGNAL_IGNORE_ERRORS", config[:ignore_errors] |> Enum.join(","))
+    System.put_env("_APPSIGNAL_LANGUAGE_INTEGRATION_VERSION", "elixir-" <> @language_integration_version)
+    System.put_env("_APPSIGNAL_LOG", config[:log])
     unless empty?(config[:log_path]) do
-      System.put_env("APPSIGNAL_LOG_FILE_PATH", config[:log_path])
+      System.put_env("_APPSIGNAL_LOG_FILE_PATH", config[:log_path])
     end
-    System.put_env("APPSIGNAL_PUSH_API_ENDPOINT", config[:endpoint] || "")
-    System.put_env("APPSIGNAL_PUSH_API_KEY", config[:push_api_key] || "")
+    System.put_env("_APPSIGNAL_PUSH_API_ENDPOINT", config[:endpoint] || "")
+    System.put_env("_APPSIGNAL_PUSH_API_KEY", config[:push_api_key] || "")
     unless empty?(config[:running_in_container]) do
-      System.put_env("APPSIGNAL_RUNNING_IN_CONTAINER", Atom.to_string(config[:running_in_container]))
+      System.put_env("_APPSIGNAL_RUNNING_IN_CONTAINER", Atom.to_string(config[:running_in_container]))
     end
-    System.put_env("APPSIGNAL_SEND_PARAMS", Atom.to_string(config[:send_params]))
+    System.put_env("_APPSIGNAL_SEND_PARAMS", Atom.to_string(config[:send_params]))
     unless empty?(config[:working_dir_path]) do
-      System.put_env("APPSIGNAL_WORKING_DIR_PATH", config[:working_dir_path])
+      System.put_env("_APPSIGNAL_WORKING_DIR_PATH", config[:working_dir_path])
     end
+  end
+
+  @doc """
+  Reset the config written to the environment by `write_to_environment/1`.
+  This makes sure no existing config gets reused and the configuration for the
+  agent gets set again.
+  """
+  def reset_environment_config! do
+    System.get_env
+    |> Enum.filter(
+      fn({"_APPSIGNAL_" <> _, _}) -> true;
+      (_) -> false end
+    ) |> Enum.each(fn({key, _}) ->
+      System.delete_env(key)
+    end)
   end
 
   defp app_name_to_string(name) when is_atom(name), do: Atom.to_string(name)
