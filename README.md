@@ -7,10 +7,6 @@ AppSignal solves all your Elixir monitoring needs in a single tool. You and your
 team can focus on writing code and we'll provide the alerts if your app has any
 issues.
 
-**NOTE: This library is beta software, and still under development. API changes
-might still occur without notice. Please refer to the [Roadmap](Roadmap.md)
-document for more information.*
-
 - [AppSignal.com website](https://appsignal.com/)
 - [AppSignal for Elixir documentation](http://docs.appsignal.com/elixir/)
 - [Package documentation](https://hexdocs.pm/appsignal/)
