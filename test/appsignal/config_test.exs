@@ -138,11 +138,6 @@ defmodule Appsignal.ConfigTest do
       assert valid_configuration() |> Map.put(:active, false) == init_config()
     end
 
-    test "revision" do
-      add_to_application_env(:revision, "03bd9e")
-      assert default_configuration() |> Map.put(:revision, "03bd9e") == init_config()
-    end
-
     test "running_in_container" do
       add_to_application_env(:running_in_container, true)
       assert default_configuration() |> Map.put(:running_in_container, true) == init_config()
@@ -251,11 +246,6 @@ defmodule Appsignal.ConfigTest do
       assert init_config()[:active] == true
     end
 
-    test "revision" do
-      System.put_env("APP_REVISION", "03bd9e")
-      assert default_configuration() |> Map.put(:revision, "03bd9e") == init_config()
-    end
-
     test "running_in_container" do
       System.put_env("APPSIGNAL_RUNNING_IN_CONTAINER", "true")
       assert default_configuration() |> Map.put(:running_in_container, true) == init_config()
@@ -338,7 +328,6 @@ defmodule Appsignal.ConfigTest do
       assert System.get_env("APPSIGNAL_LOG_FILE_PATH") == nil
       assert System.get_env("APPSIGNAL_WORKING_DIR_PATH") == nil
       assert System.get_env("APPSIGNAL_RUNNING_IN_CONTAINER") == nil
-      assert System.get_env("APP_REVISION") == nil
     end
 
     test "writes valid AppSignal config options to the env" do
@@ -362,7 +351,6 @@ defmodule Appsignal.ConfigTest do
       add_to_application_env(:name, "My awesome app")
       add_to_application_env(:running_in_container, false)
       add_to_application_env(:working_dir_path, "/tmp/appsignal")
-      add_to_application_env(:revision, "03bd9e")
       write_to_environment()
 
       assert System.get_env("APPSIGNAL_ACTIVE") == "true"
@@ -386,7 +374,6 @@ defmodule Appsignal.ConfigTest do
       assert System.get_env("APPSIGNAL_RUNNING_IN_CONTAINER") == "false"
       assert System.get_env("APPSIGNAL_SEND_PARAMS") == "true"
       assert System.get_env("APPSIGNAL_WORKING_DIR_PATH") == "/tmp/appsignal"
-      assert System.get_env("APP_REVISION") == "03bd9e"
     end
 
     test "name as atom" do
@@ -464,7 +451,6 @@ defmodule Appsignal.ConfigTest do
       APPSIGNAL_RUNNING_IN_CONTAINER
       APPSIGNAL_SKIP_SESSION_DATA
       APPSIGNAL_WORKING_DIR_PATH
-      APP_REVISION
       DYNO
     ) |> Enum.each(fn(key) ->
       System.delete_env(key)

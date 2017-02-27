@@ -58,7 +58,6 @@ defmodule Appsignal.Config do
     "APPSIGNAL_ACTIVE" => :active,
     "APPSIGNAL_PUSH_API_KEY" => :push_api_key,
     "APPSIGNAL_APP_NAME" => :name,
-    "APP_REVISION" => :revision,
     "APPSIGNAL_APP_ENV" => :env,
     "APPSIGNAL_CA_FILE_PATH" => :ca_file_path,
     "APPSIGNAL_PUSH_API_ENDPOINT" => :endpoint,
@@ -77,7 +76,7 @@ defmodule Appsignal.Config do
     "APPSIGNAL_SKIP_SESSION_DATA" => :skip_session_data
   }
 
-  @string_keys ~w(APPSIGNAL_APP_NAME APPSIGNAL_PUSH_API_KEY APPSIGNAL_PUSH_API_ENDPOINT APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH APPSIGNAL_HOSTNAME APPSIGNAL_HTTP_PROXY APPSIGNAL_LOG APPSIGNAL_LOG_PATH APPSIGNAL_WORKING_DIR_PATH APP_REVISION APPSIGNAL_CA_FILE_PATH)
+  @string_keys ~w(APPSIGNAL_APP_NAME APPSIGNAL_PUSH_API_KEY APPSIGNAL_PUSH_API_ENDPOINT APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH APPSIGNAL_HOSTNAME APPSIGNAL_HTTP_PROXY APPSIGNAL_LOG APPSIGNAL_LOG_PATH APPSIGNAL_WORKING_DIR_PATH APPSIGNAL_CA_FILE_PATH)
   @bool_keys ~w(APPSIGNAL_ACTIVE APPSIGNAL_DEBUG APPSIGNAL_INSTRUMENT_NET_HTTP APPSIGNAL_ENABLE_FRONTEND_ERROR_CATCHING APPSIGNAL_ENABLE_ALLOCATION_TRACKING APPSIGNAL_ENABLE_GC_INSTRUMENTATION APPSIGNAL_RUNNING_IN_CONTAINER APPSIGNAL_ENABLE_HOST_METRICS APPSIGNAL_SKIP_SESSION_DATA)
   @atom_keys ~w(APPSIGNAL_APP_ENV)
   @string_list_keys ~w(APPSIGNAL_FILTER_PARAMETERS APPSIGNAL_IGNORE_ACTIONS APPSIGNAL_IGNORE_ERRORS)
@@ -198,9 +197,6 @@ defmodule Appsignal.Config do
     unless empty?(config[:working_dir_path]) do
       System.put_env("APPSIGNAL_WORKING_DIR_PATH", config[:working_dir_path])
     end
-    unless empty?(config[:revision]) do
-      System.put_env("APP_REVISION", config[:revision])
-    end
   end
 
   defp app_name_to_string(name) when is_atom(name), do: Atom.to_string(name)
@@ -210,7 +206,6 @@ defmodule Appsignal.Config do
     System.get_env
     |> Enum.filter(
     fn({"APPSIGNAL_" <> _, _}) -> true;
-      ({"APP_REVISION", _}) -> true;
       (_) -> false end)
       |> Enum.into(%{})
   end

@@ -157,8 +157,7 @@ defmodule Mix.Tasks.Appsignal.Install do
     "use Mix.Config\n\n" <>
       "config :appsignal, :config,\n" <>
       ~s(  name: "#{config[:name]}",\n) <>
-      ~s(  push_api_key: "#{config[:push_api_key]}",\n) <>
-      ~s(  revision: Mix.Project.config[:version]\n)
+      ~s(  push_api_key: "#{config[:push_api_key]}",\n)
   end
 
   # Append a line to Mix configuration environment files which activate
