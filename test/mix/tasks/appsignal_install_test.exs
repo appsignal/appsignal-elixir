@@ -167,6 +167,7 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
       appsignal_config = File.read!(Path.join(@test_config_directory, "appsignal.exs"))
       assert String.contains? appsignal_config, ~s(use Mix.Config\n\n) <>
         ~s(config :appsignal, :config,\n) <>
+        ~s(  active: true,\n) <>
         ~s(  name: "My app's name",\n) <>
         ~s(  push_api_key: "my_push_api_key",\n)
 

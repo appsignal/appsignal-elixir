@@ -154,6 +154,7 @@ defmodule Mix.Tasks.Appsignal.Install do
   defp appsignal_config_file_contents(config) do
     "use Mix.Config\n\n" <>
       "config :appsignal, :config,\n" <>
+      ~s(  active: true,\n) <>
       ~s(  name: "#{config[:name]}",\n) <>
       ~s(  push_api_key: "#{config[:push_api_key]}",\n)
   end
