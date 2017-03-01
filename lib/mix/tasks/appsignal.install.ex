@@ -120,7 +120,6 @@ defmodule Mix.Tasks.Appsignal.Install do
     IO.write "Linking config to config/config.exs: "
 
     config_file = Path.join("config", "config.exs")
-    IO.write "Linking config to config/config.exs: "
     active_content = "\nimport_config \"#{appsignal_config_filename()}\"\n"
     if appsignal_config_linked?() do
       IO.puts "Success! (Already linked?)"
