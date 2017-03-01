@@ -73,7 +73,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     Config.write_to_environment
 
     agent_path = Path.join(List.to_string(:code.priv_dir(:appsignal)), "appsignal-agent")
-    env = [{"APPSIGNAL_ACTIVE", "true"}, {"APPSIGNAL_DIAGNOSE", "true"}]
+    env = [{"APPSIGNAL_DIAGNOSE", "true"}]
     case System.cmd(agent_path, [], env: env) do
       {output, 0} -> IO.puts output
       {output, exit_code} ->
