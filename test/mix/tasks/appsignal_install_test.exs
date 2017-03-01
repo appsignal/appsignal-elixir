@@ -177,7 +177,7 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
 
       # Deactivates Appsignal for the test environment
       assert String.contains? output, "Deactivating AppSignal in the test environment: Success!"
-      assert config_deactivated_for_test_env?
+      assert config_deactivated_for_test_env?()
     end
 
     @tag :file_config
@@ -186,7 +186,7 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
       output = run_with_file_config()
 
       refute String.contains? output, "Deactivating AppSignal"
-      refute config_deactivated_for_test_env?
+      refute config_deactivated_for_test_env?()
     end
 
     @tag :file_config
