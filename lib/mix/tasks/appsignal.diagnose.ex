@@ -1,6 +1,7 @@
 defmodule Mix.Tasks.Appsignal.Diagnose do
   use Mix.Task
   alias Appsignal.Utils.PushApiKeyValidator
+  alias Appsignal.Config
 
   @appsignal_version Mix.Project.config[:version]
   @agent_version Mix.Project.config[:agent_version]
@@ -19,7 +20,9 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     host_information()
     empty_line()
 
-    start_appsignal_in_diagnose_mode()
+    if @nif.loaded? do
+      start_appsignal_in_diagnose_mode()
+    end
 
     configuration()
     empty_line()
@@ -62,10 +65,22 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     IO.puts "  Container: #{yes_or_no(@nif.running_in_container?)}"
   end
 
+  # Start AppSignal as usual, in diagnose mode, so that it exits early, but
+  # does go through the whole process of setting the config to the
+  # environment.
   defp start_appsignal_in_diagnose_mode do
-    System.put_env "APPSIGNAL_DIAGNOSE", "true"
-    {:ok, _} = Application.ensure_all_started(:appsignal)
-    Appsignal.stop(nil)
+    Config.initialize
+    Config.write_to_environment
+
+    agent_path = Path.join(List.to_string(:code.priv_dir(:appsignal)), "appsignal-agent")
+    env = [{"APPSIGNAL_ACTIVE", "true"}, {"APPSIGNAL_DIAGNOSE", "true"}]
+    case System.cmd(agent_path, [], env: env) do
+      {output, 0} -> IO.puts output
+      {output, exit_code} ->
+        IO.puts "Agent diagnostic failure!"
+        IO.puts "  Exit code: #{exit_code}"
+        IO.puts "  Error message: #{output}"
+    end
   end
 
   defp configuration do

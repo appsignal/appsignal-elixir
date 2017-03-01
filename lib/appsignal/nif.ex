@@ -17,7 +17,7 @@ defmodule Appsignal.Nif do
   Internally, the AppSignal NIF works as follows: it fork/execs a
   separate agent process, to which the NIF sends its data (protobuf)
   over a unix socket. This agent process (which is a separate unix
-  process!) then takes care of sending the data the the server
+  process!) then takes care of sending the data the server
   periodically.
 
   The C library that the NIF interfaces with, is specifically written
