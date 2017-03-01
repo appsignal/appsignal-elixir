@@ -52,8 +52,8 @@ defmodule Mix.Tasks.Appsignal.Install do
     IO.puts String.duplicate("=", 80)
     IO.puts "\nWelcome to AppSignal!\n"
     IO.puts "This installer will guide you through setting up AppSignal in your application."
-    IO.puts "We will perform some checks on your system, ask how you like AppSignal to be "
-    IO.puts "configured and for what environments.\n"
+    IO.puts "We will perform some checks on your system and ask how you like AppSignal to be "
+    IO.puts "configured.\n"
     IO.puts String.duplicate("=", 80)
     IO.puts ""
   end
