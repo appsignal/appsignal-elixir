@@ -151,6 +151,7 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
       assert String.contains? output, "What is your preferred configuration method? (1/2): "
       assert String.contains? output, "Configuring with environment variables."
       assert String.contains? output, ~s(APPSIGNAL_APP_NAME="My app's name")
+      assert String.contains? output, ~s(APPSIGNAL_APP_ENV="production")
       assert String.contains? output, ~s(APPSIGNAL_PUSH_API_KEY="my_push_api_key")
     end
 
