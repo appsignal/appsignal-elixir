@@ -137,6 +137,21 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     assert String.contains? output, "Agent diagnose finished"
   end
 
+  @tag :skip_env_test_no_nif
+  describe "when config is not active" do
+    test "runs agent in diagnose mode, but doesn't change the active state" do
+      merge_appsignal_config %{active: false}
+      output = run()
+      assert String.contains? output, "active: false"
+      assert String.contains? output, "Agent diagnostics"
+      assert String.contains? output, "Running agent in diagnose mode"
+      assert String.contains? output, "Valid config present"
+      assert String.contains? output, "Logger initialized successfully"
+      assert String.contains? output, "Lock path is writable"
+      assert String.contains? output, "Agent diagnose finished"
+    end
+  end
+
   test "outputs configuration" do
     output = run()
     assert String.contains? output, "Configuration"
