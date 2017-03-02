@@ -10,6 +10,7 @@ defmodule Appsignal.TransactionBehaviour do
   @callback complete(Transaction.t | nil) :: :ok
   @callback set_error(Transaction.t | nil, String.t, String.t, any) :: Transaction.t
   if Appsignal.phoenix? do
+    @callback try_set_action(Plug.Conn.t) :: :ok
     @callback try_set_action(Appsignal.Transaction.t, Plug.Conn.t) :: :ok
     @callback set_request_metadata(Transaction.t | nil, Plug.Conn.t) :: Transaction.t
   end
@@ -431,6 +432,7 @@ defmodule Appsignal.Transaction do
     @doc """
     Given the transaction and a %Plug.Conn{}, try to set the Phoenix controller module / action in the transaction.
     """
+    def try_set_action(conn), do: try_set_action(lookup(), conn)
     def try_set_action(transaction, conn) do
       try do
         action_str = "#{Phoenix.Controller.controller_module(conn)}##{Phoenix.Controller.action_name(conn)}"

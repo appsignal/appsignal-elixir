@@ -65,7 +65,6 @@ if Appsignal.phoenix? do
     @doc false
     def submit_http_error(reason, message, stack, transaction, conn) do
       @transaction.set_error(transaction, reason, message, stack)
-      @transaction.try_set_action(transaction, conn)
       if @transaction.finish(transaction) == :sample do
         @transaction.set_request_metadata(transaction, conn)
       end
