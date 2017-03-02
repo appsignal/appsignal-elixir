@@ -1,5 +1,13 @@
+# 1.0.3
+* Force the agent to run in diagnostics mode even if the app's config doesn't
+  have AppSignal marked as active. (#132 and #160)
+* Remove duplicate config file linking output in installer (#159)
+* Upon install deactive test env if available rather than activate any other
+  env (#159)
+* Print missing APPSIGNAL_APP_ENV env var in installation instructions. (#161)
+
 # 1.0.2
-* Remove extra comma from generated config/appsignal.exs (#158)  
+* Remove extra comma from generated config/appsignal.exs (#158)
 
 # 1.0.1
 * Remove (confusing revision logic) (#154)
