@@ -97,7 +97,7 @@ request on `master`, if it's a new feature on `develop`.
 -  Update the version number in `mix.exs`, e.g. `1.2.3`
 -  Commit the change.
 -  Tag the commit with the version number: `git tag 1.2.3`
--  Push the changes: `git push master 1.2.3`
+-  Push the changes: `git push origin master 1.2.3`
 -  Publish the package: `mix hex.publish`
 
 ## Contributing
