@@ -6,7 +6,7 @@ defmodule Appsignal.Ecto do
 
   ```
   config :my_app, MyApp.Repo,
-    loggers: [Appsignal.Ecto]
+    loggers: [Appsignal.Ecto, Ecto.LogEntry]
   ```
 
   """
