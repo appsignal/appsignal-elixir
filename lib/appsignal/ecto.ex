@@ -12,12 +12,16 @@ defmodule Appsignal.Ecto do
   """
 
   require Logger
+  use Appsignal.Config
 
   alias Appsignal.{Transaction, TransactionRegistry}
 
   @nano_seconds :erlang.convert_time_unit(1, :nano_seconds, :native)
 
   def log(entry) do
+    if config()[:debug] do
+      Logger.debug("[Appsignal.Ecto] logged: #{inspect [entry]}")
+    end
 
     # See if we have a transaction registered for the current process
     case TransactionRegistry.lookup(self()) do

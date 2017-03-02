@@ -18,6 +18,7 @@ end
 defmodule Appsignal.Transaction do
   @behaviour Appsignal.TransactionBehaviour
   use Appsignal.Config
+  require Logger
 
   @moduledoc """
   Functions related to AppSignal transactions
@@ -162,6 +163,9 @@ defmodule Appsignal.Transaction do
   def record_event(nil, _name, _title, _body, _duration, _body_format), do: nil
   def record_event(%Transaction{} = transaction, name, title, body, duration, body_format) do
     :ok = Nif.record_event(transaction.resource, name, title, body, duration, body_format)
+    if config()[:debug] do
+      Logger.debug("[Appsignal.Transaction] recorded event: #{inspect [transaction.resource, name, title, body, duration, body_format]}")
+    end
     transaction
   end
 
