@@ -307,6 +307,14 @@ defmodule Appsignal.ConfigTest do
     end
   end
 
+  describe "reset_environment_config!" do
+    test "deletes existing configuration in environment" do
+      System.put_env("_APPSIGNAL_NAME", "foo")
+      Appsignal.Config.reset_environment_config!
+      assert System.get_env("_APPSIGNAL_NAME") == nil
+    end
+  end
+
   describe "write_to_environment" do
     setup do
       Application.put_env(:appsignal, :config, [])
@@ -319,15 +327,25 @@ defmodule Appsignal.ConfigTest do
 
     test "empty config options don't get written to the env" do
       write_to_environment()
-      assert System.get_env("APPSIGNAL_APP_NAME") == nil
-      assert System.get_env("APPSIGNAL_CA_FILE_PATH") == nil
-      assert System.get_env("APPSIGNAL_FILTER_PARAMETERS") == nil
-      assert System.get_env("APPSIGNAL_HTTP_PROXY") == nil
-      assert System.get_env("APPSIGNAL_IGNORE_ERRORS") == ""
-      assert System.get_env("APPSIGNAL_IGNORE_ACTIONS") == ""
-      assert System.get_env("APPSIGNAL_LOG_FILE_PATH") == nil
-      assert System.get_env("APPSIGNAL_WORKING_DIR_PATH") == nil
-      assert System.get_env("APPSIGNAL_RUNNING_IN_CONTAINER") == nil
+      assert System.get_env("_APPSIGNAL_APP_NAME") == nil
+      assert System.get_env("_APPSIGNAL_CA_FILE_PATH") == nil
+      assert System.get_env("_APPSIGNAL_FILTER_PARAMETERS") == nil
+      assert System.get_env("_APPSIGNAL_HTTP_PROXY") == nil
+      assert System.get_env("_APPSIGNAL_IGNORE_ERRORS") == ""
+      assert System.get_env("_APPSIGNAL_IGNORE_ACTIONS") == ""
+      assert System.get_env("_APPSIGNAL_LOG_FILE_PATH") == nil
+      assert System.get_env("_APPSIGNAL_WORKING_DIR_PATH") == nil
+      assert System.get_env("_APPSIGNAL_RUNNING_IN_CONTAINER") == nil
+    end
+
+    test "deletes existing configuration in environment" do
+      # Name is present in the configuration
+      System.put_env("_APPSIGNAL_NAME", "foo")
+      # The new config doesn't have a name
+      add_to_application_env(:name, "")
+      write_to_environment()
+      # So it doesn't get written to the new agent environment configuration
+      assert System.get_env("_APPSIGNAL_NAME") == nil
     end
 
     test "writes valid AppSignal config options to the env" do
@@ -353,39 +371,39 @@ defmodule Appsignal.ConfigTest do
       add_to_application_env(:working_dir_path, "/tmp/appsignal")
       write_to_environment()
 
-      assert System.get_env("APPSIGNAL_ACTIVE") == "true"
-      assert System.get_env("APPSIGNAL_AGENT_PATH") == List.to_string(:code.priv_dir(:appsignal))
-      assert System.get_env("APPSIGNAL_AGENT_VERSION") == Appsignal.Agent.version
-      assert System.get_env("APPSIGNAL_APP_NAME") == "My awesome app"
-      assert System.get_env("APPSIGNAL_CA_FILE_PATH") == "/foo/bar/zab.ca"
-      assert System.get_env("APPSIGNAL_DEBUG_LOGGING") == "true"
-      assert System.get_env("APPSIGNAL_ENABLE_HOST_METRICS") == "false"
-      assert System.get_env("APPSIGNAL_ENVIRONMENT") == "prod"
-      assert System.get_env("APPSIGNAL_FILTER_PARAMETERS") == "password,secret"
-      assert System.get_env("APPSIGNAL_HOSTNAME") == "My hostname"
-      assert System.get_env("APPSIGNAL_HTTP_PROXY") == "http://10.10.10.10:8888"
-      assert System.get_env("APPSIGNAL_IGNORE_ACTIONS") == "ExampleApplication.PageController#ignored,ExampleApplication.PageController#also_ignored"
-      assert System.get_env("APPSIGNAL_IGNORE_ERRORS") == "VerySpecificError,AnotherError"
-      assert System.get_env("APPSIGNAL_LANGUAGE_INTEGRATION_VERSION") == "elixir-" <> Mix.Project.config[:version]
-      assert System.get_env("APPSIGNAL_LOG") == "stdout"
-      assert System.get_env("APPSIGNAL_LOG_FILE_PATH") == "log/appsignal.log"
-      assert System.get_env("APPSIGNAL_PUSH_API_ENDPOINT") == "https://push.staging.lol"
-      assert System.get_env("APPSIGNAL_PUSH_API_KEY") == "00000000-0000-0000-0000-000000000000"
-      assert System.get_env("APPSIGNAL_RUNNING_IN_CONTAINER") == "false"
-      assert System.get_env("APPSIGNAL_SEND_PARAMS") == "true"
-      assert System.get_env("APPSIGNAL_WORKING_DIR_PATH") == "/tmp/appsignal"
+      assert System.get_env("_APPSIGNAL_ACTIVE") == "true"
+      assert System.get_env("_APPSIGNAL_AGENT_PATH") == List.to_string(:code.priv_dir(:appsignal))
+      assert System.get_env("_APPSIGNAL_AGENT_VERSION") == Appsignal.Agent.version
+      assert System.get_env("_APPSIGNAL_APP_NAME") == "My awesome app"
+      assert System.get_env("_APPSIGNAL_CA_FILE_PATH") == "/foo/bar/zab.ca"
+      assert System.get_env("_APPSIGNAL_DEBUG_LOGGING") == "true"
+      assert System.get_env("_APPSIGNAL_ENABLE_HOST_METRICS") == "false"
+      assert System.get_env("_APPSIGNAL_ENVIRONMENT") == "prod"
+      assert System.get_env("_APPSIGNAL_FILTER_PARAMETERS") == "password,secret"
+      assert System.get_env("_APPSIGNAL_HOSTNAME") == "My hostname"
+      assert System.get_env("_APPSIGNAL_HTTP_PROXY") == "http://10.10.10.10:8888"
+      assert System.get_env("_APPSIGNAL_IGNORE_ACTIONS") == "ExampleApplication.PageController#ignored,ExampleApplication.PageController#also_ignored"
+      assert System.get_env("_APPSIGNAL_IGNORE_ERRORS") == "VerySpecificError,AnotherError"
+      assert System.get_env("_APPSIGNAL_LANGUAGE_INTEGRATION_VERSION") == "elixir-" <> Mix.Project.config[:version]
+      assert System.get_env("_APPSIGNAL_LOG") == "stdout"
+      assert System.get_env("_APPSIGNAL_LOG_FILE_PATH") == "log/appsignal.log"
+      assert System.get_env("_APPSIGNAL_PUSH_API_ENDPOINT") == "https://push.staging.lol"
+      assert System.get_env("_APPSIGNAL_PUSH_API_KEY") == "00000000-0000-0000-0000-000000000000"
+      assert System.get_env("_APPSIGNAL_RUNNING_IN_CONTAINER") == "false"
+      assert System.get_env("_APPSIGNAL_SEND_PARAMS") == "true"
+      assert System.get_env("_APPSIGNAL_WORKING_DIR_PATH") == "/tmp/appsignal"
     end
 
     test "name as atom" do
       add_to_application_env(:name, :my_application)
       write_to_environment()
-      assert System.get_env("APPSIGNAL_APP_NAME") == "my_application"
+      assert System.get_env("_APPSIGNAL_APP_NAME") == "my_application"
     end
 
     test "name as string" do
       add_to_application_env(:name, "My awesome application")
       write_to_environment()
-      assert System.get_env("APPSIGNAL_APP_NAME") == "My awesome application"
+      assert System.get_env("_APPSIGNAL_APP_NAME") == "My awesome application"
     end
   end
 
@@ -428,31 +446,14 @@ defmodule Appsignal.ConfigTest do
   defp clear_env() do
     Application.delete_env(:appsignal, :config)
 
-    ~w(
-      APPSIGNAL_ACTIVE
-      APPSIGNAL_APP_ENV
-      APPSIGNAL_APP_NAME
-      APPSIGNAL_CA_FILE_PATH
-      APPSIGNAL_DEBUG
-      APPSIGNAL_DEBUG_LOGGING
-      APPSIGNAL_ENABLE_HOST_METRICS
-      APPSIGNAL_ENVIRONMENT
-      APPSIGNAL_FILTER_PARAMETERS
-      APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH
-      APPSIGNAL_HOSTNAME
-      APPSIGNAL_HTTP_PROXY
-      APPSIGNAL_IGNORE_ACTIONS
-      APPSIGNAL_IGNORE_ERRORS
-      APPSIGNAL_LOG
-      APPSIGNAL_LOG_PATH
-      APPSIGNAL_LOG_FILE_PATH
-      APPSIGNAL_PUSH_API_ENDPOINT
-      APPSIGNAL_PUSH_API_KEY
-      APPSIGNAL_RUNNING_IN_CONTAINER
-      APPSIGNAL_SKIP_SESSION_DATA
-      APPSIGNAL_WORKING_DIR_PATH
-      DYNO
-    ) |> Enum.each(fn(key) ->
+    System.get_env
+    |> Enum.filter(
+      fn({"APPSIGNAL_" <> _, _}) -> true;
+      ({"_APPSIGNAL_" <> _, _}) -> true;
+      ({"APP_REVISION", _}) -> true;
+      ({"DYNO", _}) -> true;
+      (_) -> false end
+    ) |> Enum.each(fn({key, _}) ->
       System.delete_env(key)
     end)
   end
