@@ -17,6 +17,11 @@ defmodule Appsignal.Instrumentation.DecoratorsTest do
       bar(123)
     end
 
+    @decorate transaction
+    def transaction_with_return_value(x) do
+      2 * x
+    end
+
     @decorate transaction_event
     def bar(arg) do
       nested(arg, arg)
@@ -49,6 +54,15 @@ defmodule Appsignal.Instrumentation.DecoratorsTest do
     Example.background_transaction
     assert called Transaction.start(:_, :background_job)
     assert called Appsignal.Transaction.set_action(:_, "Elixir.Appsignal.Instrumentation.DecoratorsTest.Example#background_transaction")
+    assert called Appsignal.Transaction.finish(:_)
+    assert called Appsignal.Transaction.complete(:_)
+  end
+
+  test_with_mock "instrument transaction with return value", Appsignal.Transaction, [:passthrough], [] do
+    result = Example.transaction_with_return_value(123)
+    assert 246 == result
+    assert called Transaction.start(:_, :http_request)
+    assert called Appsignal.Transaction.set_action(:_, "Elixir.Appsignal.Instrumentation.DecoratorsTest.Example#transaction_with_return_value")
     assert called Appsignal.Transaction.finish(:_)
     assert called Appsignal.Transaction.complete(:_)
   end

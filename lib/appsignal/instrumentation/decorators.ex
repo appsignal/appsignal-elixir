@@ -50,10 +50,12 @@ defmodule Appsignal.Instrumentation.Decorators do
       )
       |> Appsignal.Transaction.set_action(unquote("#{context.module}##{context.name}"))
 
-      unquote(body)
+      result = unquote(body)
 
       Appsignal.Transaction.finish(transaction)
       :ok = Appsignal.Transaction.complete(transaction)
+
+      result
     end
   end
 
