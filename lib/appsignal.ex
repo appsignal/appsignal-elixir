@@ -50,11 +50,18 @@ defmodule Appsignal do
   end
 
   def config_change(_changed, _new, _removed) do
-    :ok = Appsignal.Nif.stop()
-    :ok = initialize()
+    # Spawn a separate process that reloads the configuration. AppSignal can't
+    # reload it in the same process because the GenServer would continue
+    # calling itself once it reached `Application.put_env` in
+    # `Appsignal.Config`.
+    spawn(fn ->
+      :ok = Appsignal.Nif.stop()
+      :ok = initialize()
+    end)
   end
 
-  defp initialize() do
+  @doc false
+  def initialize() do
     case {Config.initialize, Config.active?} do
       {:ok, true} ->
         Logger.debug("AppSignal starting.")
