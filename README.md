@@ -38,7 +38,7 @@ guide](http://docs.appsignal.com/elixir/instrumentation/).
 
 ## Configuration
 
-A complete list of all configurable options for AppSignal for Elixr is
+A complete list of all configurable options for AppSignal for Elixir is
 available in [our
 documentation](http://docs.appsignal.com/elixir/configuration/).
 
