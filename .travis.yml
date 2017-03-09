@@ -9,6 +9,7 @@ branches:
   only:
     - "master"
     - "develop"
+    - "phoenix-pre"
 script:
   - MIX_ENV=test mix compile --warnings-as-errors && MIX_ENV=test mix test
   - MIX_ENV=test_phoenix mix compile --warnings-as-errors && MIX_ENV=test_phoenix mix test
