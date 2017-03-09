@@ -1,3 +1,6 @@
+# 1.0.4
+* Fix propagation of transaction decorator return value (#164)
+
 # 1.0.3
 * Force the agent to run in diagnostics mode even if the app's config doesn't
   have AppSignal marked as active. (#132 and #160)
