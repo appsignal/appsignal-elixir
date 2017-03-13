@@ -36,7 +36,7 @@ defmodule Appsignal.Mixfile do
      compilers: compilers(Mix.env),
      elixirc_paths: elixirc_paths(Mix.env),
      deps: deps(),
-     docs: [logo: "logo.png", extras: ["Roadmap.md"]],
+     docs: [logo: "logo.png"],
      agent_version: @agent_version
     ]
   end
