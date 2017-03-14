@@ -52,12 +52,6 @@ defmodule Appsignal.Instrumentation.Helpers do
     end
   end
 
-  if Appsignal.phoenix? do
-    def instrument(%Plug.Conn{} = conn, name, title, body, body_format, function) do
-      instrument(conn.assigns.appsignal_transaction, name, title, body, body_format, function)
-    end
-  end
-
   def instrument(%Transaction{} = transaction, name, title, body, body_format, function) do
     Transaction.start_event(transaction)
     result = function.()
