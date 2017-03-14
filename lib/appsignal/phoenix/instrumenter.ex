@@ -25,7 +25,10 @@ if Appsignal.phoenix? do
     @transaction Application.get_env(:appsignal, :appsignal_transaction, Appsignal.Transaction)
 
     @doc false
-    def phoenix_controller_call(:start, _, args), do: start_event(args)
+    def phoenix_controller_call(:start, _, args) do
+      @transaction.try_set_action(args[:conn])
+      start_event(args)
+    end
 
     @doc false
     def phoenix_controller_call(:stop, _diff, {%Appsignal.Transaction{} = transaction, args}) do

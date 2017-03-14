@@ -62,7 +62,6 @@ defmodule Appsignal.PhoenixTest do
 
       assert %RuntimeError{message: "exception!"} == result
       assert FakeTransaction.started_transaction?
-      assert "foo#bar" == FakeTransaction.action
       assert [{
         %Appsignal.Transaction{},
         "RuntimeError",
