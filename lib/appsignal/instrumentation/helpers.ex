@@ -8,6 +8,15 @@ defmodule Appsignal.Instrumentation.Helpers do
   @type instrument_arg :: Transaction.t | Plug.Conn.t | pid()
 
   @doc """
+  Execute the given function in start / finish event calls in the current
+  transaction. See `instrument/6`.
+  """
+  @spec instrument(String.t, String.t, function) :: any
+  def instrument(name, title, function) do
+    instrument(self(), name, title, "", function)
+  end
+
+  @doc """
   Execute the given function in start / finish event calls. See `instrument/6`.
   """
   @spec instrument(instrument_arg, String.t, String.t, function) :: any
@@ -34,7 +43,7 @@ defmodule Appsignal.Instrumentation.Helpers do
   import Appsignal.Instrumentation.Helpers, only: [instrument: 4]
 
   def index(conn, _params) do
-    result = instrument conn, "net.http", "Some slow backend call", fn() ->
+    result = instrument "net.http", "Some slow backend call", fn() ->
       Backend.get_result()
     end
     json conn, result
@@ -58,5 +67,4 @@ defmodule Appsignal.Instrumentation.Helpers do
     Transaction.finish_event(transaction, name, title, body, body_format)
     result
   end
-
 end
