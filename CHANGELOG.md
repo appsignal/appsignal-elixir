@@ -1,3 +1,8 @@
+# 1.1.0
+* Depend on Phoenix >= 1.2.0 instead of ~> 1.2.0 (#167)
+* Reload the config in a separate process (#166)
+* Add action names to exceptions (#162)
+
 # 1.0.4
 * Fix propagation of transaction decorator return value (#164)
 
