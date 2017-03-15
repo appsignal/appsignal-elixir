@@ -132,7 +132,10 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     case PushApiKeyValidator.validate(config()) do
       :ok -> IO.puts "valid"
       {:error, :invalid} -> IO.puts "invalid"
-      {:error, reason} -> IO.puts "failure: #{reason}"
+      {:error, reason} ->
+        IO.puts "failure."
+        IO.puts "Error:"
+        IO.inspect reason
     end
   end
 
