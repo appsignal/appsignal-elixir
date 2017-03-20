@@ -14,7 +14,7 @@ defmodule Appsignal.ErrorHandler do
 
   require Logger
 
-  alias Appsignal.Transaction
+  alias Appsignal.{Transaction, Backtrace}
 
   @doc """
   Retrieve the last Appsignal.Transaction.t that the error logger picked up
@@ -107,7 +107,7 @@ defmodule Appsignal.ErrorHandler do
     case supervisor_event?(reason) do
       false ->
         msg = "Process #{crash_name(pid, name)} terminating"
-        {origin, "#{inspect reason}", msg, format_stack(stack), nil}
+        {origin, "#{inspect reason}", msg, Backtrace.from_stacktrace(stack), nil}
       true ->
         :nomatch
     end
@@ -120,20 +120,20 @@ defmodule Appsignal.ErrorHandler do
   defp match_error_format('Error in process ' ++ _, [pid, {reason, stack}]) do
     msg = "Process #{inspect pid} raised an exception"
     {reason, msg} = extract_reason_and_message(reason, msg)
-    {pid, reason, msg, format_stack(stack), nil}
+    {pid, reason, msg, Backtrace.from_stacktrace(stack), nil}
   end
 
   defp match_error_format('** Generic server ' ++ _, [pid, _last, _state, reason]) do
     {reason, stack} = maybe_extract_stack(reason)
     {reason, msg} = extract_reason_and_message(reason, "GenServer #{inspect pid} terminating")
-    {pid, reason, msg, format_stack(stack), nil}
+    {pid, reason, msg, Backtrace.from_stacktrace(stack), nil}
   end
 
   defp match_error_format('** Task ' ++ _, [pid, starter, function, args, reason]) do
     {reason, stack} = maybe_extract_stack(reason)
     msg = "Task #{inspect pid} started from #{inspect starter} terminating. Function: #{inspect function}, args: #{inspect args}"
     {reason, msg} = extract_reason_and_message(reason, msg)
-    {pid, reason, msg, format_stack(stack), nil}
+    {pid, reason, msg, Backtrace.from_stacktrace(stack), nil}
   end
 
   # FIXME add test coverage for this one
@@ -141,15 +141,13 @@ defmodule Appsignal.ErrorHandler do
     conn = extract_conn(initial)
     msg = "HTTP request #{inspect pid} crashed"
     {reason, msg} = extract_reason_and_message(reason, msg)
-    {pid, reason, msg, format_stack(stack), conn}
+    {pid, reason, msg, Backtrace.from_stacktrace(stack), conn}
   end
 
-  # Format the stack trace as an array of strings
   @doc false
   def format_stack(stacktrace) do
-    for entry <- stacktrace do
-      Exception.format_stacktrace_entry(entry)
-    end
+    IO.warn "Appsignal.ErrorHandler.format_stack/1 is deprecated. Use Appsignal.Backtrace.from_stacktrace/1 instead."
+    Backtrace.from_stacktrace(stacktrace)
   end
 
   # Extract stack trace from GenServer crash report reason
