@@ -22,7 +22,7 @@ defmodule Appsignal.PhoenixTest do
   use ExUnit.Case
   import Mock
 
-  alias Appsignal.{Transaction, TransactionRegistry, FakeTransaction}
+  alias Appsignal.{Phoenix, Transaction, TransactionRegistry, FakeTransaction}
 
   setup do
     FakeTransaction.start_link
@@ -105,4 +105,24 @@ defmodule Appsignal.PhoenixTest do
     assert called Transaction.set_sample_data(t, "environment", env)
   end
 
+  test "extract_error_metadata with a timeout" do
+    conn = %Plug.Conn{}
+
+    reason = {:timeout,
+     {Task, :await,
+      [%Task{owner: self(), pid: self(), ref: make_ref()},
+       100]}}
+
+    expected_reason = reason
+    |> inspect
+    |> Appsignal.ErrorHandler.normalize_reason
+
+    stacktrace = System.stacktrace
+
+    assert Phoenix.extract_error_metadata(
+      %Plug.Conn.WrapperError{reason: reason, conn: conn},
+      conn,
+      stacktrace
+    ) == {expected_reason, "HTTP request error", stacktrace, conn}
+  end
 end

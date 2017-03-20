@@ -205,7 +205,7 @@ defmodule Appsignal.ErrorHandler do
   end
   def extract_reason_and_message(any, message) do
     # inspect any term; truncate it
-    {"#{inspect any}", message}
+    {"#{inspect(any) |> normalize_reason}", message}
   end
 
   defp prefixed(nil, msg), do: msg
