@@ -96,7 +96,8 @@ defmodule AppsignalTransactionTest do
 
   test "handles unformatted stacktraces" do
     transaction = Transaction.start("test1", :http_request)
-    assert ^transaction = Transaction.set_error(transaction, "Error", "error message", System.stacktrace)
+    stacktrace =  [{:elixir_translator, :guard_op, 2, [file: 'src/elixir_translator.erl', line: 317]}]
+    assert ^transaction = Transaction.set_error(transaction, "Error", "error message", stacktrace)
     assert ^transaction = Transaction.start_event(transaction)
     assert ^transaction = Transaction.finish_event(transaction, "render.phoenix_controller", "phoenix_controller_render", %{format: "html", template: "index.html"}, 0)
   end
