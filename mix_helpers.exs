@@ -83,7 +83,7 @@ defmodule Mix.Appsignal.Helper do
   end
 
   defp extract(filename) do
-    case System.cmd("tar", ["zxf", filename], stderr_to_stdout: true, cd: priv_dir()) do
+    case System.cmd("tar", ["zxf", filename, "--no-same-owner"], stderr_to_stdout: true, cd: priv_dir()) do
       {_, 0} ->
         :ok
       {result, _exitcode} ->

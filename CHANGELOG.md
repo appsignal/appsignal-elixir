@@ -1,3 +1,8 @@
+# 1.1.1
+* Fix unpacking agent tar as root (#179)
+* Add Instrumentation.Helpers.instrument/3
+* Add Appsignal.Backtrace, deprecate ErrorHandler.format_stack/1
+
 # 1.1.0
 * Depend on Phoenix >= 1.2.0 instead of ~> 1.2.0 (#167)
 * Reload the config in a separate process (#166)

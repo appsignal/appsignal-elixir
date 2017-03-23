@@ -1,13 +1,11 @@
 defmodule AppsignalHelpersTest do
   use ExUnit.Case
-  # use Plug.Test
 
   import Mock
 
   alias Appsignal.{Transaction, Instrumentation.Helpers}
 
   test_with_mock "instrument with transaction", Appsignal.Transaction, [:passthrough], [] do
-
     t = Transaction.start("foo", :http_request)
     call_instrument(t)
     assert called Transaction.start_event(t)
@@ -29,5 +27,4 @@ defmodule AppsignalHelpersTest do
     end)
     assert :result == r
   end
-
 end
