@@ -17,19 +17,17 @@ defmodule Appsignal.ErrorHandlerTest do
 
 
   test "whether we can send error reports without current transaction" do
-    Task.start(fn() ->
+    :proc_lib.spawn(fn() ->
       :erlang.error(:error_task)
     end)
 
     :timer.sleep 100
   end
 
-
   test "whether we can send error reports with a current transaction" do
-
     id = Transaction.generate_id()
 
-    Task.start(fn() ->
+    :proc_lib.spawn(fn() ->
       Transaction.start(id, :http_request)
       |> Transaction.set_action("AppsignalErrorHandlerTest#test")
 
