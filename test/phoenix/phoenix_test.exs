@@ -63,13 +63,13 @@ defmodule Appsignal.PhoenixTest do
       assert %RuntimeError{message: "exception!"} == result
       assert FakeTransaction.started_transaction?
       assert [{
-        %Appsignal.Transaction{},
+        %Appsignal.Transaction{} = transaction,
         "RuntimeError",
         "HTTP request error: exception!",
         _stack
       }] = FakeTransaction.errors
-      assert [%Appsignal.Transaction{}] = FakeTransaction.finished_transactions
-      assert [%Appsignal.Transaction{}] = FakeTransaction.completed_transactions
+      assert [transaction] == FakeTransaction.finished_transactions
+      assert [transaction] == FakeTransaction.completed_transactions
     end
   end
 
