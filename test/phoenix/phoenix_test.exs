@@ -105,6 +105,25 @@ defmodule Appsignal.PhoenixTest do
       assert [transaction] == FakeTransaction.finished_transactions
       assert [transaction] == FakeTransaction.completed_transactions
     end
+
+    test "reports an error for a timeout", %{conn: conn} do
+      result = try do
+        UsingAppsignalPhoenixWithTimeout.call(conn, %{})
+      catch
+        _kind, exception -> exception
+      end
+
+      assert result = {:timeout, {Task, :await, []}}
+      assert FakeTransaction.started_transaction?
+      assert [{
+        %Appsignal.Transaction{} = transaction,
+        ":timeout",
+        "{:timeout, {Task, :await, [%Task{owner: " <> _,
+        _stack
+      }] = FakeTransaction.errors
+      assert [transaction] = FakeTransaction.finished_transactions
+      assert [transaction] = FakeTransaction.completed_transactions
+    end
   end
 
   test_with_mock "send_error with metadata and conn", Appsignal.Transaction, [:passthrough], [] do
