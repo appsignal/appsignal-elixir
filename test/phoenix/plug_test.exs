@@ -68,4 +68,28 @@ defmodule Appsignal.Phoenix.PlugTest do
       assert nil == FakeTransaction.request_metadata
     end
   end
+
+  describe "extracting error metadata" do
+    setup do
+      [conn: %Plug.Conn{}, stack: System.stacktrace]
+    end
+
+    test "with a reason and a conn", %{conn: conn, stack: stack} do
+      assert Appsignal.Phoenix.Plug.extract_error_metadata(
+        %RuntimeError{}, conn, stack
+      ) == {"RuntimeError", "HTTP request error: runtime error", stack, conn}
+    end
+
+    test "with a Plug.Conn.WrapperError", %{conn: conn, stack: stack} do
+      assert Appsignal.Phoenix.Plug.extract_error_metadata(
+        %Plug.Conn.WrapperError{reason: %RuntimeError{}, conn: conn}, conn, stack
+      ) == {"RuntimeError", "HTTP request error: runtime error", stack, conn}
+    end
+
+    test "ignores errors with a plug_status < 500", %{conn: conn, stack: stack} do
+      assert Appsignal.Phoenix.Plug.extract_error_metadata(
+        %Plug.BadRequestError{}, conn, stack
+      ) == nil
+    end
+  end
 end

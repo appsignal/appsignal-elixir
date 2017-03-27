@@ -19,7 +19,6 @@ if Appsignal.phoenix? do
 
     @transaction Application.get_env(:appsignal, :appsignal_transaction, Appsignal.Transaction)
     alias Appsignal.TransactionRegistry
-    alias Appsignal.ErrorHandler
 
     @doc false
     defmacro __using__(_) do
@@ -46,20 +45,10 @@ if Appsignal.phoenix? do
       end
     end
 
-    @phoenix_message "HTTP request error"
-
     @doc false
-    def extract_error_metadata(%Plug.Conn.WrapperError{reason: reason = %{}, conn: conn}, _conn, stack) do
-      {reason, message} = ErrorHandler.extract_reason_and_message(reason, @phoenix_message)
-      {reason, message, stack, conn}
-    end
-    def extract_error_metadata(%{plug_status: s}, _conn, _stack) when s < 500 do
-      # Do not submit regular HTTP errors which have a status code
-      nil
-    end
     def extract_error_metadata(reason, conn, stack) do
-      {reason, message} = ErrorHandler.extract_reason_and_message(reason, @phoenix_message)
-      {reason, message, stack, conn}
+      IO.warn "Appsignal.Phoenix.extract_error_metadata/3 is deprecated. Use Appsignal.Phoenix.Plug.extract_error_metadata/3 instead."
+      Appsignal.Phoenix.Plug.extract_error_metadata(reason, conn, stack)
     end
 
     @doc false
