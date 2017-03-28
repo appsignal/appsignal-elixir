@@ -22,7 +22,7 @@ defmodule Mix.Appsignal.Helper do
 
     System.put_env("LIB_DIR", priv_dir())
 
-    unless has_files?() and has_correct_agent_version?() do
+    # unless has_files?() and has_correct_agent_version?() do
       version = Appsignal.Agent.version
       File.rm_rf!(priv_dir())
       File.mkdir_p!(priv_dir())
@@ -43,15 +43,26 @@ defmodule Mix.Appsignal.Helper do
           end
       end
 
-    else
-      :ok
-    end
+    # else
+      # :ok
+    # end
   end
 
   defp download_and_extract(url, version, checksum) do
-    download_file(url, version)
-    |> verify_checksum(checksum)
-    |> extract
+    File.rm_rf!(priv_dir())
+    File.mkdir_p!(priv_dir())
+    ["appsignal-agent", "appsignal.h", "appsignal.version", "libappsignal.a"]
+    |> Enum.each(fn(file) ->
+      File.cp!(
+        "/Users/tombruijn/appsignal/agent/target/x86_64-apple-darwin/release/#{file}",
+        "#{priv_dir()}/#{file}"
+      )
+    end)
+    # File.cp_r!("/Users/tombruijn/appsignal/agent/target/x86_64-apple-darwin/release/", priv_dir())
+
+    # download_file(url, version)
+    # |> verify_checksum(checksum)
+    # |> extract
   end
 
   defp download_file(url, version) do
