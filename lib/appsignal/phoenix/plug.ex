@@ -39,9 +39,6 @@ if Appsignal.phoenix? do
       # Do not submit regular HTTP errors which have a status code
       nil
     end
-    def extract_error_metadata({type, _} = reason, conn, stack) do
-      {inspect(type), inspect(reason), stack, conn}
-    end
     def extract_error_metadata(reason, conn, stack) do
       {reason, message} = Appsignal.ErrorHandler.extract_reason_and_message(reason, @phoenix_message)
       {reason, message, stack, conn}
