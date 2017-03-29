@@ -61,10 +61,6 @@ defmodule Appsignal.ErrorHandler do
     end
   end
 
-  # inspect the 'reason' argument to see if it is a supervisor
-  # event. if so, we skip submitting it, because the original event
-  # has already been processed.
-
   def handle_call(:get_last_transaction, state) do
     {:ok, state, state}
   end

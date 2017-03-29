@@ -29,9 +29,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     end
   end
 
-
   defmodule CustomErrorHandler do
-
     use GenEvent
 
     def init(_) do
@@ -45,7 +43,6 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     def handle_call(:get_matched_crash, state) do
       {:remove_handler, state}
     end
-
   end
 
   @error_handler Appsignal.ErrorHandler.ErrorMatcherTest.CustomErrorHandler
@@ -67,7 +64,6 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
 
     for s <- stacktrace do
       assert is_binary(s)
-      # IO.puts("- #{s}")
     end
     {reason, message}
   end
