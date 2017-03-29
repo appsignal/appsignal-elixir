@@ -18,6 +18,19 @@ defmodule AppsignalTest do
     Appsignal.add_distribution_value("dist_key", 10)
   end
 
+  describe "phoenix?/0" do
+    @tag :skip_env_test
+    @tag :skip_env_test_no_nif
+    test "is true when Phoenix is loaded" do
+      assert Appsignal.phoenix? == true
+    end
+
+    @tag :skip_env_test_phoenix
+    test "is false when Phoenix is not loaded" do
+      assert Appsignal.phoenix? == false
+    end
+  end
+
   test "Agent environment variables" do
     with_env(%{"APPSIGNAL_APP_ENV" => "test"}, fn() ->
       Appsignal.Config.initialize()
