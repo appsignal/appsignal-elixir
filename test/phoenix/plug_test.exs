@@ -95,7 +95,7 @@ defmodule Appsignal.Phoenix.PlugTest do
          1]}}
 
       assert Appsignal.Phoenix.Plug.extract_error_metadata(error, conn, stack)
-        == {":timeout", inspect(error), stack, conn}
+        == {":timeout", "HTTP request error: #{inspect(error)}", stack, conn}
     end
 
     test "ignores errors with a plug_status < 500", %{conn: conn, stack: stack} do

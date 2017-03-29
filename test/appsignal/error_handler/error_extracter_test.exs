@@ -30,9 +30,12 @@ defmodule Appsignal.ErrorHandler.ErrorExtracterTest do
   end
 
   test "arbitrary term error" do
-    {r, m} = ErrorHandler.extract_reason_and_message({:error, :badarg}, "Badarg error")
-    assert "{:error, :badarg}" == r
-    assert "Badarg error" == m
+    error = {:timeout,
+      {Task, :await,
+        [%Task{owner: self(), pid: self(), ref: make_ref()},
+         1]}}
+    assert ErrorHandler.extract_reason_and_message(error, "Badarg error")
+      == {":timeout", "Badarg error: #{inspect error}"}
   end
 
   @undefined_error_extract %Protocol.UndefinedError{description: "", protocol: Enumerable, value: {:error, {%RuntimeError{}, []}}}

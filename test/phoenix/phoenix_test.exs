@@ -99,7 +99,7 @@ defmodule Appsignal.PhoenixTest do
       assert [{
         %Appsignal.Transaction{} = transaction,
         ":timeout",
-        "{:timeout, {Task, :await, [%Task{owner: " <> _,
+        "HTTP request error: {:timeout, {Task, :await, [%Task{owner: " <> _,
         _stack
       }] = FakeTransaction.errors
       assert [transaction] == FakeTransaction.finished_transactions
