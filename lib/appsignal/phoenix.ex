@@ -31,7 +31,10 @@ if Appsignal.phoenix? do
               Plug.ErrorHandler.__catch__(conn, kind, reason, fn(conn, _exception) ->
                 stacktrace = System.stacktrace
                 import Appsignal.Phoenix
-                case {Appsignal.TransactionRegistry.lookup(self()), extract_error_metadata(reason, conn, stacktrace)} do
+                case {
+                  Appsignal.TransactionRegistry.lookup(self()),
+                  Appsignal.Phoenix.Plug.extract_error_metadata(reason, conn, stacktrace)
+                } do
                   {nil, _} -> :skip
                   {_, nil} -> :skip
                   {transaction, {reason, message, stack, conn}} ->
