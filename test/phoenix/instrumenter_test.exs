@@ -16,7 +16,7 @@ defmodule Appsignal.Phoenix.InstrumenterTest do
       Instrumenter.phoenix_controller_call(:start, nil, arguments)
   end
 
-  test "sets the action name in phoenix_controller_call", context do
+  test "sets the action name in phoenix_controller_call" do
     conn = %Plug.Conn{}
     |> Plug.Conn.put_private(:phoenix_controller, "foo")
     |> Plug.Conn.put_private(:phoenix_action, "bar")
