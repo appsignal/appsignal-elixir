@@ -5,10 +5,10 @@ defmodule UsingAppsignalPlug do
 
   defoverridable [call: 2]
 
-  use Appsignal.Phoenix.Plug
+  use Appsignal.Plug
 end
 
-defmodule Appsignal.Phoenix.PlugTest do
+defmodule Appsignal.PlugTest do
   use ExUnit.Case
   alias Appsignal.FakeTransaction
 
@@ -77,14 +77,14 @@ defmodule Appsignal.Phoenix.PlugTest do
     test "with a reason and a conn", %{conn: conn, stack: stack} do
       error = %RuntimeError{}
 
-      assert Appsignal.Phoenix.Plug.extract_error_metadata(error, conn, stack)
+      assert Appsignal.Plug.extract_error_metadata(error, conn, stack)
         == {"RuntimeError", "HTTP request error: runtime error", stack, conn}
     end
 
     test "with a Plug.Conn.WrapperError", %{conn: conn, stack: stack} do
       error = %Plug.Conn.WrapperError{reason: %RuntimeError{}, conn: conn}
 
-      assert Appsignal.Phoenix.Plug.extract_error_metadata(error, conn, stack)
+      assert Appsignal.Plug.extract_error_metadata(error, conn, stack)
         == {"RuntimeError", "HTTP request error: runtime error", stack, conn}
     end
 
@@ -94,14 +94,14 @@ defmodule Appsignal.Phoenix.PlugTest do
         [%Task{owner: self(), pid: self(), ref: make_ref()},
          1]}}
 
-      assert Appsignal.Phoenix.Plug.extract_error_metadata(error, conn, stack)
+      assert Appsignal.Plug.extract_error_metadata(error, conn, stack)
         == {":timeout", "HTTP request error: #{inspect(error)}", stack, conn}
     end
 
     test "ignores errors with a plug_status < 500", %{conn: conn, stack: stack} do
       error = %Plug.BadRequestError{}
 
-      assert Appsignal.Phoenix.Plug.extract_error_metadata(error, conn, stack)
+      assert Appsignal.Plug.extract_error_metadata(error, conn, stack)
         == nil
     end
   end
