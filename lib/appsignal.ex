@@ -34,6 +34,10 @@ defmodule Appsignal do
     Supervisor.start_link(children, [strategy: :one_for_one, name: Appsignal.Supervisor])
   end
 
+  def plug? do
+    Code.ensure_loaded?(Plug)
+  end
+
   def phoenix? do
     Code.ensure_loaded?(Phoenix)
   end

@@ -18,6 +18,12 @@ defmodule AppsignalTest do
     Appsignal.add_distribution_value("dist_key", 10)
   end
 
+  describe "plug?/0" do
+    test "is true when Plug is loaded" do
+      assert Appsignal.plug? == true
+    end
+  end
+
   describe "phoenix?/0" do
     @tag :skip_env_test
     @tag :skip_env_test_no_nif
