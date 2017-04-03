@@ -7,9 +7,13 @@ defmodule Appsignal.TransactionBehaviour do
   @callback complete() :: :ok
   @callback complete(Transaction.t | nil) :: :ok
   @callback set_error(Transaction.t | nil, String.t, String.t, any) :: Transaction.t
+
   if Appsignal.phoenix? do
     @callback try_set_action(Plug.Conn.t) :: :ok
     @callback try_set_action(Appsignal.Transaction.t, Plug.Conn.t) :: :ok
+  end
+
+  if Appsignal.plug? do
     @callback set_request_metadata(Transaction.t | nil, Plug.Conn.t) :: Transaction.t
   end
 end
@@ -365,7 +369,7 @@ defmodule Appsignal.Transaction do
     end
   end
 
-  if Appsignal.phoenix? do
+  if Appsignal.plug? do
     @doc """
     Set the request metadata, given a Plug.Conn.t.
     """
@@ -413,7 +417,9 @@ defmodule Appsignal.Transaction do
     defp peer(%Plug.Conn{peer: {host, port}}) do
       "#{:inet_parse.ntoa host}:#{port}"
     end
+  end
 
+  if Appsignal.phoenix? do
     @doc """
     Given the transaction and a %Plug.Conn{}, try to set the Phoenix controller module / action in the transaction.
     """
@@ -453,5 +459,4 @@ defmodule Appsignal.Transaction do
         t
     end
   end
-
 end

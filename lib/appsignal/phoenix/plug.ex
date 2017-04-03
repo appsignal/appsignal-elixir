@@ -1,4 +1,4 @@
-if Appsignal.phoenix? do
+if Appsignal.plug? do
   defmodule Appsignal.Phoenix.Plug do
     @moduledoc """
     Plug handler for Phoenix requests
