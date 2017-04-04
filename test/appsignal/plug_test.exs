@@ -112,5 +112,12 @@ defmodule Appsignal.PlugTest do
         %Plug.Conn{method: "GET", request_path: "/foo"}
       ) == "GET /foo"
     end
+
+    test "from a Plug conn with a Phoenix controller and action" do
+      assert %Plug.Conn{}
+      |> Plug.Conn.put_private(:phoenix_controller, AppsignalPhoenixExample.PageController)
+      |> Plug.Conn.put_private(:phoenix_action, :index)
+      |> Appsignal.Plug.extract_action == "AppsignalPhoenixExample.PageController#index"
+    end
   end
 end
