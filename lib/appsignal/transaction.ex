@@ -423,15 +423,13 @@ defmodule Appsignal.Transaction do
     @doc """
     Given the transaction and a %Plug.Conn{}, try to set the Phoenix controller module / action in the transaction.
     """
-    def try_set_action(conn), do: try_set_action(lookup(), conn)
+    def try_set_action(conn) do
+      IO.warn "Appsignal.Transaction.try_set_action/1 is deprecated. Use Appsignal.Plug.extract_action/1 and Appsignal.Transaction.set_action/1 instead."
+      Transaction.set_action(lookup(), Appsignal.Plug.extract_action(conn))
+    end
     def try_set_action(transaction, conn) do
-      try do
-        action_str = "#{Phoenix.Controller.controller_module(conn)}##{Phoenix.Controller.action_name(conn)}"
-        <<"Elixir.", action :: binary>> = action_str
-        Transaction.set_action(transaction, action)
-      catch
-        _, _ -> :ok
-      end
+      IO.warn "Appsignal.Transaction.try_set_action/2 is deprecated. Use Appsignal.Plug.extract_action/1 and Appsignal.Transaction.set_action/2 instead."
+      Transaction.set_action(transaction, Appsignal.Plug.extract_action(conn))
     end
   end
 
