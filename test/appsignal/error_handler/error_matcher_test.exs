@@ -191,6 +191,20 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     |> reason_regex(~r/^{:exit, {:timeout/)
   end
 
+
+  test "Ranch no function clause matching in :cow_http_hd.token_ci_list_sep/3" do
+    pid = self()
+    msg = 'Ranch listener ~p had connection process started with ~p:start_link/4 at ~p exit with reason: ~999999p~n'
+    stacktrace = [
+      {:cow_http_hd, :token_ci_list_sep, ["Te", [], "keep-alive"], [file: '/app/deps/cowlib/src/cow_http_hd.erl', line: 191]},
+      {:cow_http_hd, :parse_connection, 1, [file: '/app/deps/cowlib/src/cow_http_hd.erl', line: 31]}
+    ]
+    :error_logger.error_msg msg, [__MODULE__, :cowboy_protocol, pid, {:function_clause, stacktrace}]
+    pid
+    |> assert_crash_caught
+    |> reason(":function_clause")
+  end
+
   defp reason(reason, expected) do
     assert expected == reason
   end
