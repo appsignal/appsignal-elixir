@@ -134,6 +134,7 @@ defmodule Appsignal.FakeTransaction do
 
       new_state
     end)
+    transaction
   end
 
   def errors do

@@ -12,25 +12,25 @@ if Appsignal.plug? do
           id = Logger.metadata()[:request_id] || @transaction.generate_id()
           transaction = @transaction.start(id, :http_request)
 
-          conn = try do
+          try do
             super(conn, opts)
           catch
             kind, error ->
               Plug.ErrorHandler.__catch__(conn, kind, error, fn(conn, _exception) ->
                 case Appsignal.Plug.extract_error_metadata(error) do
                   {reason, message} ->
-                    @transaction.set_action(transaction, Appsignal.Plug.extract_action(conn))
-                    @transaction.set_error(
-                      transaction, reason, message, System.stacktrace
-                    )
-                    @transaction.finish(transaction)
-                    @transaction.set_request_metadata(transaction, conn)
-                    :ok = @transaction.complete(transaction)
-                  nil -> :ok
+                    transaction
+                    |> @transaction.set_error(reason, message, System.stacktrace)
+                    |> finish_with_conn(conn)
+                  nil -> conn
                 end
               end)
+          else
+            conn -> finish_with_conn(transaction, conn)
           end
+        end
 
+        defp finish_with_conn(transaction, conn) do
           @transaction.set_action(transaction, Appsignal.Plug.extract_action(conn))
           if @transaction.finish(transaction) == :sample do
             @transaction.set_request_metadata(transaction, conn)
