@@ -33,7 +33,7 @@ if Appsignal.phoenix? do
                 import Appsignal.Phoenix
                 case {
                   Appsignal.TransactionRegistry.lookup(self()),
-                  Appsignal.Phoenix.Plug.extract_error_metadata(reason, conn, stacktrace)
+                  Appsignal.Plug.extract_error_metadata(reason, conn, stacktrace)
                 } do
                   {nil, _} -> :skip
                   {_, nil} -> :skip
@@ -45,14 +45,14 @@ if Appsignal.phoenix? do
         end
 
         defoverridable [call: 2]
-        use Appsignal.Phoenix.Plug
+        use Appsignal.Plug
       end
     end
 
     @doc false
     def extract_error_metadata(reason, conn, stack) do
-      IO.warn "Appsignal.Phoenix.extract_error_metadata/3 is deprecated. Use Appsignal.Phoenix.Plug.extract_error_metadata/3 instead."
-      Appsignal.Phoenix.Plug.extract_error_metadata(reason, conn, stack)
+      IO.warn "Appsignal.Phoenix.extract_error_metadata/3 is deprecated. Use Appsignal.Plug.extract_error_metadata/3 instead."
+      Appsignal.Plug.extract_error_metadata(reason, conn, stack)
     end
 
     @doc false
