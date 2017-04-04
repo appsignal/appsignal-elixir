@@ -8,6 +8,9 @@ defmodule UsingAppsignalPlug do
   def call(%Plug.Conn{private: %{phoenix_action: :timeout}}, _opts) do
     Task.async(fn -> :timer.sleep(10) end) |> Task.await(1)
   end
+  def call(%Plug.Conn{private: %{phoenix_action: :bad_request}}, _opts) do
+    raise %Plug.BadRequestError{}
+  end
 
   defoverridable [call: 2]
 
@@ -98,6 +101,27 @@ defmodule Appsignal.PlugTest do
         "HTTP request error: Exception!",
         _stack
       }] = FakeTransaction.errors
+    end
+  end
+
+  describe "for a transaction with a bad request error" do
+    setup do
+      conn = %Plug.Conn{}
+      |> Plug.Conn.put_private(:phoenix_controller, AppsignalPhoenixExample.PageController)
+      |> Plug.Conn.put_private(:phoenix_action, :bad_request)
+
+      [conn: conn]
+    end
+
+    test "does not set the transaction error", %{conn: conn} do
+      :ok = try do
+        UsingAppsignalPlug.call(conn, %{})
+      catch
+        :error, %Plug.BadRequestError{} -> :ok
+        type, reason -> {type, reason}
+      end
+
+      assert [] = FakeTransaction.errors
     end
   end
 

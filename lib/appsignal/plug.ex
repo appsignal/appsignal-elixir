@@ -15,12 +15,15 @@ if Appsignal.plug? do
           conn = try do
             super(conn, opts)
           catch
-            kind, error->
+            kind, error ->
               Plug.ErrorHandler.__catch__(conn, kind, error, fn(conn, _exception) ->
-                {reason, message} = Appsignal.Plug.extract_error_metadata(error)
-                @transaction.set_error(
-                  transaction, reason, message, System.stacktrace
-                )
+                case Appsignal.Plug.extract_error_metadata(error) do
+                  {reason, message} ->
+                    @transaction.set_error(
+                      transaction, reason, message, System.stacktrace
+                    )
+                  nil -> :ok
+                end
               end)
           end
 
