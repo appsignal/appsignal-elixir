@@ -84,10 +84,6 @@ defmodule Appsignal.PlugTest do
       |> Plug.Conn.put_private(:phoenix_controller, AppsignalPhoenixExample.PageController)
       |> Plug.Conn.put_private(:phoenix_action, :exception)
 
-      [conn: conn]
-    end
-
-    test "sets the transaction error", %{conn: conn} do
       :ok = try do
         UsingAppsignalPlug.call(conn, %{})
       catch
@@ -95,12 +91,32 @@ defmodule Appsignal.PlugTest do
         type, reason -> {type, reason}
       end
 
+      [conn: conn]
+    end
+
+    test "sets the transaction error" do
       assert [{
         %Appsignal.Transaction{},
         "RuntimeError",
         "HTTP request error: Exception!",
         _stack
       }] = FakeTransaction.errors
+    end
+
+    test "sets the transaction's action name" do
+      assert "AppsignalPhoenixExample.PageController#exception" == FakeTransaction.action
+    end
+
+    test "finishes the transaction" do
+      assert [%Appsignal.Transaction{}] = FakeTransaction.finished_transactions
+    end
+
+    test "sets the transaction's request metadata", %{conn: conn} do
+      assert conn |> Plug.Conn.put_status(500) == FakeTransaction.request_metadata
+    end
+
+    test "completes the transaction" do
+      assert [%Appsignal.Transaction{}] = FakeTransaction.completed_transactions
     end
   end
 

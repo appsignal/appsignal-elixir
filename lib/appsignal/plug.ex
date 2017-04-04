@@ -19,9 +19,13 @@ if Appsignal.plug? do
               Plug.ErrorHandler.__catch__(conn, kind, error, fn(conn, _exception) ->
                 case Appsignal.Plug.extract_error_metadata(error) do
                   {reason, message} ->
+                    @transaction.set_action(transaction, Appsignal.Plug.extract_action(conn))
                     @transaction.set_error(
                       transaction, reason, message, System.stacktrace
                     )
+                    @transaction.finish(transaction)
+                    @transaction.set_request_metadata(transaction, conn)
+                    :ok = @transaction.complete(transaction)
                   nil -> :ok
                 end
               end)
