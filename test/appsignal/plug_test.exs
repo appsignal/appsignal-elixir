@@ -20,11 +20,11 @@ defmodule Appsignal.PlugTest do
   describe "for a :sample transaction" do
     setup do
       conn = %Plug.Conn{}
-      |> Plug.Conn.put_private(:phoenix_controller, "foo")
-      |> Plug.Conn.put_private(:phoenix_action, "bar")
+      |> Plug.Conn.put_private(:phoenix_controller, AppsignalPhoenixExample.PageController)
+      |> Plug.Conn.put_private(:phoenix_action, :index)
       |> UsingAppsignalPlug.call(%{})
 
-      {:ok, conn: conn}
+      [conn: conn]
     end
 
     test "starts a transaction" do
@@ -36,7 +36,7 @@ defmodule Appsignal.PlugTest do
     end
 
     test "sets the transaction's action name" do
-      assert "foo#bar" == FakeTransaction.action
+      assert "AppsignalPhoenixExample.PageController#index" == FakeTransaction.action
     end
 
     test "finishes the transaction" do
@@ -57,11 +57,11 @@ defmodule Appsignal.PlugTest do
       FakeTransaction.set_finish(:no_sample)
 
       conn = %Plug.Conn{}
-      |> Plug.Conn.put_private(:phoenix_controller, "foo")
-      |> Plug.Conn.put_private(:phoenix_action, "bar")
+      |> Plug.Conn.put_private(:phoenix_controller, AppsignalPhoenixExample.PageController)
+      |> Plug.Conn.put_private(:phoenix_action, :index)
       |> UsingAppsignalPlug.call(%{})
 
-      {:ok, conn: conn}
+      [conn: conn]
     end
 
     test "does not set the transaction's request metadata" do
