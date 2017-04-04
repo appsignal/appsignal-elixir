@@ -51,7 +51,7 @@ if Appsignal.phoenix? do
 
     @doc false
     def extract_error_metadata(reason, conn, stack) do
-      IO.warn "Appsignal.Phoenix.extract_error_metadata/3 is deprecated. Use Appsignal.Plug.extract_error_metadata/3 instead."
+      IO.warn "Appsignal.Phoenix.extract_error_metadata/3 is deprecated. Use Appsignal.Plug.extract_error_metadata/1 instead."
       Appsignal.Plug.extract_error_metadata(reason, conn, stack)
     end
 

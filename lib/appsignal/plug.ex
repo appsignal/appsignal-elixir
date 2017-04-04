@@ -37,22 +37,24 @@ if Appsignal.plug? do
       end
     end
 
-    @phoenix_message "HTTP request error"
-
     @doc """
-    Returns a tuple with the exception's reason, message, stacktrace and the
-    conn when passing the exception, a conn, and a stacktrace.
+    Returns a tuple with the exception's reason and message unless the error has
+    a status code under 500.
     """
-    def extract_error_metadata(%Plug.Conn.WrapperError{reason: reason = %{}, conn: conn}, _conn, stack) do
-      {reason, message} = Appsignal.ErrorHandler.extract_reason_and_message(reason, @phoenix_message)
-      {reason, message, stack, conn}
-    end
-    def extract_error_metadata(%{plug_status: s}, _conn, _stack) when s < 500 do
-      # Do not submit regular HTTP errors which have a status code
+    def extract_error_metadata(%{plug_status: status}) when status < 500 do
       nil
     end
+    def extract_error_metadata(%Plug.Conn.WrapperError{reason: reason = %{}}) do
+      Appsignal.ErrorHandler.extract_reason_and_message(reason, "HTTP request error")
+    end
+    def extract_error_metadata(reason) do
+      Appsignal.ErrorHandler.extract_reason_and_message(reason, "HTTP request error")
+    end
+
+    @doc false
     def extract_error_metadata(reason, conn, stack) do
-      {reason, message} = Appsignal.ErrorHandler.extract_reason_and_message(reason, @phoenix_message)
+      IO.warn "Appsignal.Plug.extract_error_metadata/3 is deprecated. Use Appsignal.Plug.extract_error_metadata/1 instead."
+      {reason, message} = extract_error_metadata(reason)
       {reason, message, stack, conn}
     end
 

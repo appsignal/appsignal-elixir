@@ -128,38 +128,30 @@ defmodule Appsignal.PlugTest do
   end
 
   describe "extracting error metadata" do
-    setup do
-      [conn: %Plug.Conn{}, stack: System.stacktrace]
+    test "with a RuntimeError" do
+      assert Appsignal.Plug.extract_error_metadata(%RuntimeError{})
+        == {"RuntimeError", "HTTP request error: runtime error"}
     end
 
-    test "with a reason and a conn", %{conn: conn, stack: stack} do
-      error = %RuntimeError{}
+    test "with a Plug.Conn.WrapperError" do
+      error = %Plug.Conn.WrapperError{reason: %RuntimeError{}}
 
-      assert Appsignal.Plug.extract_error_metadata(error, conn, stack)
-        == {"RuntimeError", "HTTP request error: runtime error", stack, conn}
+      assert Appsignal.Plug.extract_error_metadata(error)
+        == {"RuntimeError", "HTTP request error: runtime error"}
     end
 
-    test "with a Plug.Conn.WrapperError", %{conn: conn, stack: stack} do
-      error = %Plug.Conn.WrapperError{reason: %RuntimeError{}, conn: conn}
-
-      assert Appsignal.Plug.extract_error_metadata(error, conn, stack)
-        == {"RuntimeError", "HTTP request error: runtime error", stack, conn}
-    end
-
-    test "with an error tuple", %{conn: conn, stack: stack} do
+    test "with an error tuple" do
       error = {:timeout,
        {Task, :await,
         [%Task{owner: self(), pid: self(), ref: make_ref()},
          1]}}
 
-      assert Appsignal.Plug.extract_error_metadata(error, conn, stack)
-        == {":timeout", "HTTP request error: #{inspect(error)}", stack, conn}
+      assert Appsignal.Plug.extract_error_metadata(error)
+        == {":timeout", "HTTP request error: #{inspect(error)}"}
     end
 
-    test "ignores errors with a plug_status < 500", %{conn: conn, stack: stack} do
-      error = %Plug.BadRequestError{}
-
-      assert Appsignal.Plug.extract_error_metadata(error, conn, stack)
+    test "ignores errors with a plug_status < 500" do
+      assert Appsignal.Plug.extract_error_metadata(%Plug.BadRequestError{})
         == nil
     end
   end
