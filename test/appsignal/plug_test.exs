@@ -105,4 +105,12 @@ defmodule Appsignal.PlugTest do
         == nil
     end
   end
+
+  describe "extracting action names" do
+    test "from a Plug conn" do
+      assert Appsignal.Plug.extract_action(
+        %Plug.Conn{method: "GET", request_path: "/foo"}
+      ) == "GET /foo"
+    end
+  end
 end

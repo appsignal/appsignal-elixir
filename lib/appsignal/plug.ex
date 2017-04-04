@@ -43,5 +43,9 @@ if Appsignal.plug? do
       {reason, message} = Appsignal.ErrorHandler.extract_reason_and_message(reason, @phoenix_message)
       {reason, message, stack, conn}
     end
+
+    def extract_action(%Plug.Conn{method: method, request_path: path}) do
+      "#{method} #{path}"
+    end
   end
 end
