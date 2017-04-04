@@ -15,12 +15,10 @@ if Appsignal.plug? do
           conn = try do
             super(conn, opts)
           catch
-            _kind, %RuntimeError{message: message} = error ->
+            _kind, error ->
+              {reason, message} = Appsignal.Plug.extract_error_metadata(error)
               @transaction.set_error(
-                transaction,
-                "RuntimeError",
-                "HTTP request error: #{message}",
-                System.stacktrace
+                transaction, reason, message, System.stacktrace
               )
 
               raise error
