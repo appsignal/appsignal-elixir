@@ -12,7 +12,19 @@ if Appsignal.plug? do
           id = Logger.metadata()[:request_id] || @transaction.generate_id()
           transaction = @transaction.start(id, :http_request)
 
-          conn = super(conn, opts)
+          conn = try do
+            super(conn, opts)
+          catch
+            _kind, %RuntimeError{message: message} = error ->
+              @transaction.set_error(
+                transaction,
+                "RuntimeError",
+                "HTTP request error: #{message}",
+                System.stacktrace
+              )
+
+              raise error
+          end
 
           @transaction.set_action(transaction, Appsignal.Plug.extract_action(conn))
           if @transaction.finish(transaction) == :sample do

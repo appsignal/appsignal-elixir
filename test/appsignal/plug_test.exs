@@ -1,6 +1,12 @@
 defmodule UsingAppsignalPlug do
-  def call(conn, _opts) do
+  def call(%Plug.Conn{private: %{phoenix_action: :index}} = conn, _opts) do
     conn |> Plug.Conn.assign(:called?, true)
+  end
+  def call(%Plug.Conn{private: %{phoenix_action: :exception}}, _opts) do
+    raise("Exception!")
+  end
+  def call(%Plug.Conn{private: %{phoenix_action: :timeout}}, _opts) do
+    Task.async(fn -> :timer.sleep(10) end) |> Task.await(1)
   end
 
   defoverridable [call: 2]
@@ -31,8 +37,8 @@ defmodule Appsignal.PlugTest do
       assert FakeTransaction.started_transaction?
     end
 
-    test "calls super and returns the conn", context do
-      assert context[:conn].assigns[:called?]
+    test "calls super and returns the conn", %{conn: conn} do
+      assert conn.assigns[:called?]
     end
 
     test "sets the transaction's action name" do
@@ -66,6 +72,58 @@ defmodule Appsignal.PlugTest do
 
     test "does not set the transaction's request metadata" do
       assert nil == FakeTransaction.request_metadata
+    end
+  end
+
+  describe "for a transaction with an error" do
+    setup do
+      conn = %Plug.Conn{}
+      |> Plug.Conn.put_private(:phoenix_controller, AppsignalPhoenixExample.PageController)
+      |> Plug.Conn.put_private(:phoenix_action, :exception)
+
+      [conn: conn]
+    end
+
+    test "sets the transaction error", %{conn: conn} do
+      :ok = try do
+        UsingAppsignalPlug.call(conn, %{})
+      catch
+        :error, %RuntimeError{message: "Exception!"} -> :ok
+        type, reason -> {type, reason}
+      end
+
+      assert [{
+        %Appsignal.Transaction{},
+        "RuntimeError",
+        "HTTP request error: Exception!",
+        _stack
+      }] = FakeTransaction.errors
+    end
+  end
+
+  describe "for a transaction with an timeout" do
+    setup do
+      conn = %Plug.Conn{}
+      |> Plug.Conn.put_private(:phoenix_controller, AppsignalPhoenixExample.PageController)
+      |> Plug.Conn.put_private(:phoenix_action, :timeout)
+
+      [conn: conn]
+    end
+
+    test "sets the transaction error", %{conn: conn} do
+      :ok = try do
+        UsingAppsignalPlug.call(conn, %{})
+      catch
+        :exit, {:timeout, {Task, :await, _}} -> :ok
+        type, reason -> {type, reason}
+      end
+
+      assert [{
+        %Appsignal.Transaction{},
+        ":timeout",
+        "HTTP request error: {:timeout, {Task, :await, [%Task{owner: " <> _,
+        _stack
+      }] = FakeTransaction.errors
     end
   end
 
