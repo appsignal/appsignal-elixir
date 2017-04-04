@@ -136,6 +136,12 @@ defmodule Appsignal.ErrorHandler do
     {pid, reason, msg, Backtrace.from_stacktrace(stack), nil}
   end
 
+  defp match_error_format('Ranch listener ' ++ _, [_, _, pid, {reason, stack}]) do
+    msg = "HTTP request #{inspect pid} crashed"
+    {reason, msg} = extract_reason_and_message(reason, msg)
+    {pid, reason, msg, Backtrace.from_stacktrace(stack), nil}
+  end
+
   # FIXME add test coverage for this one
   defp match_error_format('Ranch listener ' ++ _, [_, _, pid, {{reason, stack}, initial}]) do
     conn = extract_conn(initial)
