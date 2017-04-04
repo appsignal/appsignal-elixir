@@ -14,7 +14,7 @@ if Appsignal.plug? do
 
           conn = super(conn, opts)
 
-          @transaction.try_set_action(transaction, conn)
+          @transaction.set_action(transaction, Appsignal.Plug.extract_action(conn))
           if @transaction.finish(transaction) == :sample do
             @transaction.set_request_metadata(transaction, conn)
           end

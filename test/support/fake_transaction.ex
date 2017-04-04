@@ -34,14 +34,9 @@ defmodule Appsignal.FakeTransaction do
     Agent.get(__MODULE__, &Map.get(&1, :finished_events, []))
   end
 
-  def try_set_action(_transaction, conn), do: try_set_action(conn)
-  def try_set_action(conn) do
-    try do
-      value = "#{conn.private.phoenix_controller}##{conn.private.phoenix_action}"
-      Agent.update(__MODULE__, &Map.put(&1, :action, value))
-    catch
-      _, _ -> :ok
-    end
+  def set_action(_transaction, conn), do: set_action(conn)
+  def set_action(action) do
+    Agent.update(__MODULE__, &Map.put(&1, :action, action))
   end
 
   def action do

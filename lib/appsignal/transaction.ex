@@ -7,11 +7,8 @@ defmodule Appsignal.TransactionBehaviour do
   @callback complete() :: :ok
   @callback complete(Transaction.t | nil) :: :ok
   @callback set_error(Transaction.t | nil, String.t, String.t, any) :: Transaction.t
-
-  if Appsignal.phoenix? do
-    @callback try_set_action(Plug.Conn.t) :: :ok
-    @callback try_set_action(Appsignal.Transaction.t, Plug.Conn.t) :: :ok
-  end
+  @callback set_action(String.t) :: Transaction.t
+  @callback set_action(Transaction.t | nil, String.t) :: Transaction.t
 
   if Appsignal.plug? do
     @callback set_request_metadata(Transaction.t | nil, Plug.Conn.t) :: Transaction.t
