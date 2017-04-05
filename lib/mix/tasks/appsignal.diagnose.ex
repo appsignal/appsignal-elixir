@@ -10,6 +10,98 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
 
   @shortdoc "Starts and tests AppSignal while validating the configuration."
 
+  defmodule AgentReport do
+    @nif Application.get_env(:appsignal, :appsignal_nif, Appsignal.Nif)
+
+    # Start AppSignal as usual, in diagnose mode, so that it exits early, but
+    # does go through the whole process of setting the config to the
+    # environment.
+    def run do
+      IO.puts "Agent diagnostics"
+      if @nif.loaded? do
+        System.put_env("_APPSIGNAL_DIAGNOSE", "true")
+        report_string = @nif.diagnose
+        case Poison.decode(report_string) do
+          {:ok, report} -> print_report report
+          {:error, _} ->
+            IO.puts "  Error: Could not parse the agent report:"
+            IO.puts "    Output: " <> report_string
+        end
+        System.delete_env("_APPSIGNAL_DIAGNOSE")
+      else
+        IO.puts "  Error: Nif not loaded, aborting."
+      end
+      IO.puts ""
+    end
+
+    defp print_report(report) do
+      Enum.each(report_definition(), fn({component, categories}) ->
+        print_component(report[component] || %{}, categories)
+      end)
+    end
+
+    defp print_component(report, categories) do
+      Enum.each(categories, fn({category, tests}) ->
+        print_category(report[category] || %{}, tests)
+      end)
+    end
+
+    defp print_category(report, tests) do
+      Enum.each(tests, fn({test, definition}) ->
+        print_test(report[test] || %{}, definition)
+      end)
+    end
+
+    defp print_test(report, definition) do
+      IO.write "  " <> definition[:label] <> ": "
+      case Map.fetch(definition[:values], report["result"]) do
+        {:ok, value} -> IO.puts value
+        :error -> IO.puts "-"
+      end
+      if report["error"], do: IO.puts "    Error: " <> report["error"]
+      if report["output"], do: IO.puts "    Output" <> report["output"]
+    end
+
+    defp report_definition do
+      %{
+        "extension" => %{
+          "config" => %{
+            "valid" => %{
+              :label => "Extension config",
+              :values => %{ true => "valid", false => "invalid" }
+            }
+          }
+        },
+        "agent" => %{
+          "boot" => %{
+            "started" => %{
+              :label => "Agent started",
+              :values => %{ true => "started", false => "not started" }
+            }
+          },
+          "config" => %{
+            "valid" => %{
+              :label => "Agent config",
+              :values => %{ true => "valid", false => "invalid" }
+            }
+          },
+          "logger" => %{
+            "started" => %{
+              :label => "Agent logger",
+              :values => %{ true => "started", false => "not started" }
+            }
+          },
+          "lock_path" => %{
+            "created" => %{
+              :label => "Agent lock path",
+              :values => %{ true => "writable", false => "not writable" }
+            }
+          }
+        }
+      }
+    end
+  end
+
   def run(_args) do
     header()
     empty_line()
@@ -20,9 +112,8 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     host_information()
     empty_line()
 
-    if @nif.loaded? do
-      start_appsignal_in_diagnose_mode()
-    end
+    configure_appsignal()
+    run_agent_diagnose_mode()
 
     configuration()
     empty_line()
@@ -65,22 +156,13 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     IO.puts "  Container: #{yes_or_no(@nif.running_in_container?)}"
   end
 
-  # Start AppSignal as usual, in diagnose mode, so that it exits early, but
-  # does go through the whole process of setting the config to the
-  # environment.
-  defp start_appsignal_in_diagnose_mode do
+  defp configure_appsignal do
     Config.initialize
     Config.write_to_environment
+  end
 
-    agent_path = Path.join(List.to_string(:code.priv_dir(:appsignal)), "appsignal-agent")
-    env = [{"_APPSIGNAL_DIAGNOSE", "true"}]
-    case System.cmd(agent_path, [], env: env) do
-      {output, 0} -> IO.puts output
-      {output, exit_code} ->
-        IO.puts "Agent diagnostic failure!"
-        IO.puts "  Exit code: #{exit_code}"
-        IO.puts "  Error message: #{output}"
-    end
+  defp run_agent_diagnose_mode do
+    AgentReport.run
   end
 
   defp configuration do
