@@ -201,6 +201,9 @@ defmodule Appsignal.ErrorHandler do
     msg = Exception.message(r)
     {"#{inspect r.__struct__}", prefixed(message, msg)}
   end
+  def extract_reason_and_message({kind, _} = reason, message) do
+    {inspect(kind), prefixed(message, inspect(reason))}
+  end
   def extract_reason_and_message(any, message) do
     # inspect any term; truncate it
     {"#{inspect any}", message}

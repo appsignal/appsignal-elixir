@@ -18,6 +18,16 @@ defmodule UsingAppsignalPhoenixWithException do
   use Appsignal.Phoenix
 end
 
+defmodule UsingAppsignalPhoenixWithTimeout do
+  def call(_conn, _opts) do
+    Task.async(fn -> :timer.sleep(10) end) |> Task.await(1)
+  end
+
+  defoverridable [call: 2]
+
+  use Appsignal.Phoenix
+end
+
 defmodule Appsignal.PhoenixTest do
   use ExUnit.Case
   import Mock
@@ -50,26 +60,50 @@ defmodule Appsignal.PhoenixTest do
   end
 
   describe "concerning catching errors" do
-    test "reports an error" do
-      result = try do
-        %Plug.Conn{}
-        |> Plug.Conn.put_private(:phoenix_controller, "foo")
-        |> Plug.Conn.put_private(:phoenix_action, "bar")
-        |> UsingAppsignalPhoenixWithException.call(%{})
-      rescue
-        e -> e
+    setup do
+      conn = %Plug.Conn{}
+      |> Plug.Conn.put_private(:phoenix_controller, "foo")
+      |> Plug.Conn.put_private(:phoenix_action, "bar")
+
+      [conn: conn]
+    end
+
+    test "reports an error for an exception", %{conn: conn} do
+      :ok = try do
+        UsingAppsignalPhoenixWithException.call(conn, %{})
+      catch
+        :error, %RuntimeError{message: "exception!"} -> :ok
+        type, reason -> {type, reason}
       end
 
-      assert %RuntimeError{message: "exception!"} == result
       assert FakeTransaction.started_transaction?
       assert [{
-        %Appsignal.Transaction{},
+        %Appsignal.Transaction{} = transaction,
         "RuntimeError",
         "HTTP request error: exception!",
         _stack
       }] = FakeTransaction.errors
-      assert [%Appsignal.Transaction{}] = FakeTransaction.finished_transactions
-      assert [%Appsignal.Transaction{}] = FakeTransaction.completed_transactions
+      assert [transaction] == FakeTransaction.finished_transactions
+      assert [transaction] == FakeTransaction.completed_transactions
+    end
+
+    test "reports an error for a timeout", %{conn: conn} do
+      :ok = try do
+        UsingAppsignalPhoenixWithTimeout.call(conn, %{})
+      catch
+        :exit, {:timeout, {Task, :await, _}} -> :ok
+        type, reason -> {type, reason}
+      end
+
+      assert FakeTransaction.started_transaction?
+      assert [{
+        %Appsignal.Transaction{} = transaction,
+        ":timeout",
+        "HTTP request error: {:timeout, {Task, :await, [%Task{owner: " <> _,
+        _stack
+      }] = FakeTransaction.errors
+      assert [transaction] == FakeTransaction.finished_transactions
+      assert [transaction] == FakeTransaction.completed_transactions
     end
   end
 

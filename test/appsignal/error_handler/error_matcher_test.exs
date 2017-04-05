@@ -73,7 +73,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
       assert is_binary(s)
       # IO.puts("- #{s}")
     end
-    reason
+    {reason, message}
   end
 
 
@@ -92,6 +92,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     end)
     |> assert_crash_caught
     |> reason("{:nocatch, :crash_bare_throw}")
+    |> message_regex(~r/Process #PID<[\d.]+> raised an exception/)
   end
 
   test "bare spawn + :erlang.error" do
@@ -100,6 +101,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     end)
     |> assert_crash_caught
     |> reason(":crash_bare_error")
+    |> message_regex(~r/Process #PID<[\d.]+> raised an exception/)
   end
 
   test "bare spawn + function error" do
@@ -108,6 +110,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     end)
     |> assert_crash_caught
     |> reason(":function_clause")
+    |> message_regex(~r(Process #PID<[\d.]+> raised an exception))
   end
 
   test "bare spawn + badmatch error" do
@@ -116,6 +119,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     end)
     |> assert_crash_caught
     |> reason("{:badmatch, 2}")
+    |> message_regex(~r(Process #PID<[\d.]+> raised an exception))
   end
 
 
@@ -126,6 +130,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     end)
     |> assert_crash_caught
     |> reason("{:exit, :crash_proc_lib_spawn}")
+    |> message_regex(~r(Process #PID<[\d.]+> terminating))
   end
 
   test "proc_lib.spawn + erlang.error" do
@@ -134,6 +139,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     end)
     |> assert_crash_caught
     |> reason("{:error, :crash_proc_lib_error}")
+    |> message_regex(~r(Process #PID<[\d.]+> terminating))
   end
 
   test "proc_lib.spawn + function error" do
@@ -142,6 +148,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     end)
     |> assert_crash_caught
     |> reason("{:error, :function_clause}")
+    |> message_regex(~r(Process #PID<[\d.]+> terminating))
   end
 
   test "proc_lib.spawn + badmatch error" do
@@ -150,6 +157,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     end)
     |> assert_crash_caught
     |> reason("{:error, {:badmatch, 2}}")
+    |> message_regex(~r(Process #PID<[\d.]+> terminating))
   end
 
 
@@ -158,18 +166,21 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     |> assert_crash_caught
     # http://erlang.org/pipermail/erlang-bugs/2012-April/002862.html
     |> reason("{:bad_return_value, :crashed_gen_server_throw}")
+    |> message_regex(~r(GenServer #PID<[\d.]+> terminating))
   end
 
   test "Crashing GenServer with exit" do
     CrashingGenServer.start(:exit)
     |> assert_crash_caught
     |> reason(":crashed_gen_server_exit")
+    |> message_regex(~r(GenServer #PID<[\d.]+> terminating))
   end
 
   test "Crashing GenServer with function error" do
     CrashingGenServer.start(:function_error)
     |> assert_crash_caught
     |> reason(":function_clause")
+    |> message_regex(~r(GenServer #PID<[\d.]+> terminating))
   end
 
   test "Task" do
@@ -178,6 +189,9 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     end)
     |> assert_crash_caught
     |> reason(":function_clause")
+    |> message_regex(
+      ~r(Task #PID<[\d.]+> started from #PID<[\d.]+> terminating. Function: #Function<[\d.]+/0 in Appsignal.ErrorHandler.ErrorMatcherTest.test Task/1>, args: \[\])
+    )
   end
 
   test "Task await" do
@@ -191,12 +205,18 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     |> reason_regex(~r/^{:exit, {:timeout/)
   end
 
-  defp reason(reason, expected) do
-    assert expected == reason
+  defp reason({reason, _message} = data, expected) do
+    assert expected =~ reason
+    data
   end
 
-  defp reason_regex(reason, expected) do
+  defp reason_regex({reason, _message} = data, expected) do
     assert reason =~ expected
+    data
   end
 
+  defp message_regex({_reason, message} = data, expected) do
+    assert message =~ expected
+    data
+  end
 end
