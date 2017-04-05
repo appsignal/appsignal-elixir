@@ -22,29 +22,37 @@ defmodule Mix.Appsignal.Helper do
 
     System.put_env("LIB_DIR", priv_dir())
 
-    unless has_files?() and has_correct_agent_version?() do
-      version = Appsignal.Agent.version
+    if has_local_release_files?() do
+      IO.puts "AppSignal: Using local agent release."
       File.rm_rf!(priv_dir())
       File.mkdir_p!(priv_dir())
-      try do
-        download_and_extract(arch_config[:download_url], version, arch_config[:checksum])
-      catch
-        {:checksum_mismatch, filename, _, _} ->
-          File.rm!(filename)
-          try do
-            download_and_extract(arch_config[:download_url], version, arch_config[:checksum])
-          catch
-            {:checksum_mismatch, filename, calculated, expected} ->
-              raise Mix.Error, message: """
-              Checksum verification of #{filename} failed!
-              Calculated: #{calculated}
-              Expected: #{expected}
-              """
-          end
-      end
-
+      Enum.each(["appsignal.h", "appsignal-agent", "appsignal.version", "libappsignal.a"], fn(file) ->
+        File.cp(project_ext_path(file), priv_path(file))
+      end)
     else
-      :ok
+      unless has_files?() and has_correct_agent_version?() do
+        version = Appsignal.Agent.version
+        File.rm_rf!(priv_dir())
+        File.mkdir_p!(priv_dir())
+        try do
+          download_and_extract(arch_config[:download_url], version, arch_config[:checksum])
+        catch
+          {:checksum_mismatch, filename, _, _} ->
+            File.rm!(filename)
+            try do
+              download_and_extract(arch_config[:download_url], version, arch_config[:checksum])
+            catch
+              {:checksum_mismatch, filename, calculated, expected} ->
+                raise Mix.Error, message: """
+                Checksum verification of #{filename} failed!
+                Calculated: #{calculated}
+                Expected: #{expected}
+                """
+            end
+        end
+      else
+        :ok
+      end
     end
   end
 
@@ -134,14 +142,28 @@ defmodule Mix.Appsignal.Helper do
     Path.join(priv_dir(), filename)
   end
 
+  defp project_ext_path(filename) do
+    Path.join([__DIR__, "c_src", filename])
+  end
+
   defp has_file(filename) do
     filename |> priv_path |> File.exists?
+  end
+
+  defp has_local_ext_file(filename) do
+    filename |> project_ext_path |> File.exists?
   end
 
   defp has_files? do
     has_file("appsignal-agent") and
     has_file("appsignal.h") and
     has_file("appsignal_extension.so")
+  end
+
+  defp has_local_release_files? do
+    has_local_ext_file("appsignal-agent") and
+    has_local_ext_file("appsignal.h") and
+    has_local_ext_file("libappsignal.a")
   end
 
   defp has_correct_agent_version? do
