@@ -49,7 +49,7 @@ if Appsignal.phoenix? do
     @phoenix_message "HTTP request error"
 
     @doc false
-    def extract_error_metadata(%Plug.Conn.WrapperError{reason: reason = %{}, conn: conn}, _conn, stack) do
+    def extract_error_metadata(%Plug.Conn.WrapperError{reason: reason, conn: conn}, _conn, stack) do
       {reason, message} = ErrorHandler.extract_reason_and_message(reason, @phoenix_message)
       {reason, message, stack, conn}
     end
