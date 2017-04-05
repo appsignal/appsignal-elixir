@@ -24,7 +24,7 @@ defmodule Appsignal.ReleaseUpgradeTest do
     config_reload_pid = Appsignal.config_change([], [], [])
     # The config is reloaded in a separate process so we wait for it here
     assert Process.alive?(config_reload_pid)
-    :timer.sleep 1500
+    :timer.sleep 3500
     refute Process.alive?(config_reload_pid)
 
     assert config()[:name] == "My app v2"
