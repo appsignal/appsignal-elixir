@@ -35,9 +35,13 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     end
 
     defp print_report(report) do
-      Enum.each(report_definition(), fn({component, categories}) ->
-        print_component(report[component] || %{}, categories)
-      end)
+      if report["error"] do
+        IO.puts "  Error: #{report["error"]}"
+      else
+        Enum.each(report_definition(), fn({component, categories}) ->
+          print_component(report[component] || %{}, categories)
+        end)
+      end
     end
 
     defp print_component(report, categories) do

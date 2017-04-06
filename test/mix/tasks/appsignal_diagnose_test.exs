@@ -199,7 +199,19 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     end
   end
 
-  describe "when agent diagnose report contains an error" do
+  describe "when the agent diagnose report contains an error" do
+    setup do
+      @nif.set(:loaded?, true)
+      @nif.set(:diagnose, ~s({ "error": "fatal error" }))
+    end
+
+    test "prints the error" do
+      output = run()
+      assert String.contains? output, "Agent diagnostics\n  Error: fatal error"
+    end
+  end
+
+  describe "when an agent diagnose report test contains an error" do
     setup do
       @nif.set(:loaded?, true)
       @nif.set(:diagnose, ~s(
@@ -216,7 +228,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     end
   end
 
-  describe "when agent diagnose report contains command output" do
+  describe "when an agent diagnose report test contains command output" do
     setup do
       @nif.set(:loaded?, true)
       @nif.set(:diagnose, ~s(
