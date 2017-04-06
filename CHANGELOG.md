@@ -1,3 +1,8 @@
+# 1.2.0
+
+* Catch and handle errors in the Plug using Plug.ErrorHandler instead of
+  in Appsignal.ErrorHandler (#187 & #193)
+
 # 1.1.1
 * Fix unpacking agent tar as root (#179)
 * Add Instrumentation.Helpers.instrument/3

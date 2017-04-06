@@ -27,7 +27,7 @@ if Appsignal.phoenix? do
     @doc false
     def phoenix_controller_call(:start, _, args) do
       @transaction.try_set_action(args[:conn])
-      start_event(args)
+      {@transaction.start_event, args}
     end
 
     @doc false
@@ -37,17 +37,15 @@ if Appsignal.phoenix? do
     def phoenix_controller_call(:stop, _, _), do: nil
 
     @doc false
-    def phoenix_controller_render(:start, _, args), do: start_event(args)
+    def phoenix_controller_render(:start, _, args) do
+      {@transaction.start_event, args}
+    end
 
     @doc false
     def phoenix_controller_render(:stop, _diff, {%Appsignal.Transaction{} = transaction, args}) do
       finish_event(transaction, "render.phoenix_controller", args)
     end
     def phoenix_controller_render(:stop, _, _), do: nil
-
-    defp start_event(args) do
-      {@transaction.start_event(), args}
-    end
 
     defp finish_event(transaction, name, args) do
       @transaction.finish_event(

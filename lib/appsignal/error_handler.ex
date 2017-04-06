@@ -33,15 +33,9 @@ defmodule Appsignal.ErrorHandler do
     state =
      case match_event(event) do
         {origin, reason, message, stack, conn} ->
-          case supervisor_event?(reason) do
-            false ->
-              transaction = Transaction.lookup_or_create_transaction(origin)
-              if transaction != nil do
-                submit_transaction(transaction, normalize_reason(reason), message, stack, %{}, conn)
-              end
-            true ->
-              # ignore this event; we have already handled it.
-              state
+          transaction = Transaction.lookup_or_create_transaction(origin)
+          if transaction != nil do
+            submit_transaction(transaction, normalize_reason(reason), message, stack, %{}, conn)
           end
         :nomatch ->
           state
@@ -67,31 +61,12 @@ defmodule Appsignal.ErrorHandler do
     end
   end
 
-  # inspect the 'reason' argument to see if it is a supervisor
-  # event. if so, we skip submitting it, because the original event
-  # has already been processed.
-  defp supervisor_event?({:exit, {_reason, [entry|_]}}) do
-    case entry do
-      {_,_,_} -> true
-      {_,_,_,_} -> true
-      _ -> false
-    end
-  end
-  defp supervisor_event?(_) do
-    false
-  end
-
-
   def handle_call(:get_last_transaction, state) do
     {:ok, state, state}
   end
 
-
   @doc false
   @spec match_event(term) :: {pid, term, String.t, list, Map.t} | :nomatch
-  def match_event({:error, _gleader, {_pid, format, data}}) do
-    match_error_format(format, data)
-  end
   def match_event({:error_report, _gleader, {origin, :crash_report, report}}) do
     match_error_report(origin, report)
   end
@@ -102,46 +77,11 @@ defmodule Appsignal.ErrorHandler do
   defp match_error_report(origin, [[{:initial_call, _},
                                     {:pid, pid},
                                     {:registered_name, name},
-                                    {:error_info, {kind, exception, stack}} | _], _linked]) do
-    reason = {kind, exception}
-    case supervisor_event?(reason) do
-      false ->
-        msg = "Process #{crash_name(pid, name)} terminating"
-        {origin, "#{inspect reason}", msg, Backtrace.from_stacktrace(stack), nil}
-      true ->
-        :nomatch
-    end
-  end
+                                    {:error_info, {_kind, exception, stack}} | _], _linked]) do
 
-
-  # Match on the various format strings that OTP gives us to extract the
-  # error information like stack traces et cetera.
-  # TODO: Add crashes caused by gen_event handlers
-  defp match_error_format('Error in process ' ++ _, [pid, {reason, stack}]) do
-    msg = "Process #{inspect pid} raised an exception"
-    {reason, msg} = extract_reason_and_message(reason, msg)
-    {pid, reason, msg, Backtrace.from_stacktrace(stack), nil}
-  end
-
-  defp match_error_format('** Generic server ' ++ _, [pid, _last, _state, reason]) do
-    {reason, stack} = maybe_extract_stack(reason)
-    {reason, msg} = extract_reason_and_message(reason, "GenServer #{inspect pid} terminating")
-    {pid, reason, msg, Backtrace.from_stacktrace(stack), nil}
-  end
-
-  defp match_error_format('** Task ' ++ _, [pid, starter, function, args, reason]) do
-    {reason, stack} = maybe_extract_stack(reason)
-    msg = "Task #{inspect pid} started from #{inspect starter} terminating. Function: #{inspect function}, args: #{inspect args}"
-    {reason, msg} = extract_reason_and_message(reason, msg)
-    {pid, reason, msg, Backtrace.from_stacktrace(stack), nil}
-  end
-
-  # FIXME add test coverage for this one
-  defp match_error_format('Ranch listener ' ++ _, [_, _, pid, {{reason, stack}, initial}]) do
-    conn = extract_conn(initial)
-    msg = "HTTP request #{inspect pid} crashed"
-    {reason, msg} = extract_reason_and_message(reason, msg)
-    {pid, reason, msg, Backtrace.from_stacktrace(stack), conn}
+    msg = "Process #{crash_name(pid, name)} terminating"
+    {reason, message} = extract_reason_and_message(exception, msg)
+    {origin, reason, message, Backtrace.from_stacktrace(stack), nil}
   end
 
   @doc false
@@ -150,28 +90,8 @@ defmodule Appsignal.ErrorHandler do
     Backtrace.from_stacktrace(stacktrace)
   end
 
-  # Extract stack trace from GenServer crash report reason
-  defp maybe_extract_stack({maybe_exception, [_ | _ ] = maybe_stacktrace} = reason) do
-    try do
-      {maybe_exception, maybe_stacktrace}
-    catch
-      :error, _ ->
-        {reason, []}
-    end
-  end
-
-  defp maybe_extract_stack(reason) do
-    {reason, []}
-  end
-
   defp crash_name(pid, []), do: inspect(pid)
   defp crash_name(pid, name), do: "#{inspect(name)} (#{inspect(pid)})"
-
-  if Appsignal.phoenix? do
-    defp extract_conn({_, :call, [%Plug.Conn{} = conn, _params]}), do: conn
-  end
-  defp extract_conn(_), do: nil
-
 
   @doc """
   Extract a consise reason from the given error reason, stripping it from long stack traces and the like.
@@ -200,6 +120,9 @@ defmodule Appsignal.ErrorHandler do
   def extract_reason_and_message(r = %{}, message) do
     msg = Exception.message(r)
     {"#{inspect r.__struct__}", prefixed(message, msg)}
+  end
+  def extract_reason_and_message({kind, _} = reason, message) do
+    {inspect(kind), prefixed(message, inspect(reason))}
   end
   def extract_reason_and_message(any, message) do
     # inspect any term; truncate it
