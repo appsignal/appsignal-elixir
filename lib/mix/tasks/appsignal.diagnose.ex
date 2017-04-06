@@ -25,7 +25,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
           {:ok, report} -> print_report report
           {:error, _} ->
             IO.puts "  Error: Could not parse the agent report:"
-            IO.puts "    Output: " <> report_string
+            IO.puts "    Output: #{report_string}"
         end
         System.delete_env("_APPSIGNAL_DIAGNOSE")
       else
@@ -53,13 +53,13 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     end
 
     defp print_test(report, definition) do
-      IO.write "  " <> definition[:label] <> ": "
+      IO.write "  #{definition[:label]}: "
       case Map.fetch(definition[:values], report["result"]) do
         {:ok, value} -> IO.puts value
         :error -> IO.puts "-"
       end
-      if report["error"], do: IO.puts "    Error: " <> report["error"]
-      if report["output"], do: IO.puts "    Output" <> report["output"]
+      if report["error"], do: IO.puts "    Error: #{report["error"]}"
+      if report["output"], do: IO.puts "    Output: #{report["output"]}"
     end
 
     defp report_definition do

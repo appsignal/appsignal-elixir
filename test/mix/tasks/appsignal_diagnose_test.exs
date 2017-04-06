@@ -199,6 +199,40 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     end
   end
 
+  describe "when agent diagnose report contains an error" do
+    setup do
+      @nif.set(:loaded?, true)
+      @nif.set(:diagnose, ~s(
+        {
+          "agent": { "boot": { "started": { "result": false, "error": "my error" } } }
+        }
+      ))
+    end
+
+    test "prints the error" do
+      output = run()
+      assert String.contains? output, "Agent diagnostics"
+      assert String.contains? output, "  Agent started: not started\n    Error: my error"
+    end
+  end
+
+  describe "when agent diagnose report contains command output" do
+    setup do
+      @nif.set(:loaded?, true)
+      @nif.set(:diagnose, ~s(
+        {
+          "agent": { "boot": { "started": { "result": false, "output": "my output" } } }
+        }
+      ))
+    end
+
+    test "prints the output" do
+      output = run()
+      assert String.contains? output, "Agent diagnostics"
+      assert String.contains? output, "  Agent started: not started\n    Output: my output"
+    end
+  end
+
   test "outputs configuration" do
     output = run()
     assert String.contains? output, "Configuration"
