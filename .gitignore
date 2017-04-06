@@ -7,3 +7,7 @@ priv
 /doc
 /cover
 /tmp
+/c_src/appsignal-agent
+/c_src/appsignal.h
+/c_src/appsignal.version
+/c_src/libappsignal.a
