@@ -6,6 +6,7 @@ defmodule Appsignal.Config do
     debug: false,
     enable_host_metrics: true,
     endpoint: "https://push.appsignal.com",
+    diagnose_endpoint: "https://appsignal.com/diag",
     env: :dev,
     filter_parameters: nil,
     ignore_actions: [],
