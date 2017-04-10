@@ -19,6 +19,10 @@ defmodule AppsignalHelpersTest do
     assert called Transaction.finish_event(t, "name", "title", "", 0)
   end
 
+  test "instrument with nil" do
+    call_instrument(nil)
+  end
+
   defp call_instrument(arg) do
     r = Helpers.instrument(arg, "name", "title", fn() ->
       # some slow function

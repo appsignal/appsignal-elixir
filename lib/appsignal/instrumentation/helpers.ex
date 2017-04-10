@@ -5,7 +5,7 @@ defmodule Appsignal.Instrumentation.Helpers do
 
   alias Appsignal.{Transaction, TransactionRegistry}
 
-  @type instrument_arg :: Transaction.t | Plug.Conn.t | pid()
+  @type instrument_arg :: Transaction.t | Plug.Conn.t | pid() | nil
 
   @doc """
   Execute the given function in start / finish event calls in the current
@@ -66,5 +66,9 @@ defmodule Appsignal.Instrumentation.Helpers do
     result = function.()
     Transaction.finish_event(transaction, name, title, body, body_format)
     result
+  end
+
+  def instrument(nil, _name, _title, _body, _body_format, function) do
+    function.()
   end
 end
