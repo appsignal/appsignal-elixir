@@ -23,28 +23,6 @@ if Appsignal.phoenix? do
     @doc false
     defmacro __using__(_) do
       quote do
-        def call(conn, opts) do
-          try do
-            super(conn, opts)
-          catch
-            kind, reason ->
-              Plug.ErrorHandler.__catch__(conn, kind, reason, fn(conn, _exception) ->
-                stacktrace = System.stacktrace
-                import Appsignal.Phoenix
-                case {
-                  Appsignal.TransactionRegistry.lookup(self()),
-                  Appsignal.Plug.extract_error_metadata(reason, conn, stacktrace)
-                } do
-                  {nil, _} -> :skip
-                  {_, nil} -> :skip
-                  {transaction, {reason, message, stack, conn}} ->
-                    submit_http_error(reason, message, stack, transaction, conn)
-                end
-              end)
-          end
-        end
-
-        defoverridable [call: 2]
         use Appsignal.Plug
       end
     end
@@ -57,6 +35,8 @@ if Appsignal.phoenix? do
 
     @doc false
     def submit_http_error(reason, message, stack, transaction, conn) do
+      IO.warn "Appsignal.Phoenix.submit_http_error/5 is deprecated."
+
       @transaction.set_error(transaction, reason, message, stack)
       if @transaction.finish(transaction) == :sample do
         @transaction.set_request_metadata(transaction, conn)
