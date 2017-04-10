@@ -5,7 +5,7 @@ defmodule Appsignal.Instrumentation.Helpers do
 
   alias Appsignal.{Transaction, TransactionRegistry}
 
-  @type instrument_arg :: Transaction.t | Plug.Conn.t | pid()
+  @type instrument_arg :: Transaction.t | Plug.Conn.t | pid() | nil
 
   @doc """
   Execute the given function in start / finish event calls in the current
@@ -53,12 +53,8 @@ defmodule Appsignal.Instrumentation.Helpers do
   """
   @spec instrument(instrument_arg, String.t, String.t, String.t, integer, function) :: any
   def instrument(pid, name, title, body, body_format, function) when is_pid(pid) do
-    case TransactionRegistry.lookup(pid) do
-      nil ->
-        function.()
-      t = %Transaction{} ->
-        instrument(t, name, title, body, body_format, function)
-    end
+    t = TransactionRegistry.lookup(pid)
+    instrument(t, name, title, body, body_format, function)
   end
 
   def instrument(%Transaction{} = transaction, name, title, body, body_format, function) do
@@ -66,5 +62,9 @@ defmodule Appsignal.Instrumentation.Helpers do
     result = function.()
     Transaction.finish_event(transaction, name, title, body, body_format)
     result
+  end
+
+  def instrument(nil, _name, _title, _body, _body_format, function) do
+    function.()
   end
 end
