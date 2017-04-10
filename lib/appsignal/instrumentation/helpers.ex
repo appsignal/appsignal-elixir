@@ -53,12 +53,8 @@ defmodule Appsignal.Instrumentation.Helpers do
   """
   @spec instrument(instrument_arg, String.t, String.t, String.t, integer, function) :: any
   def instrument(pid, name, title, body, body_format, function) when is_pid(pid) do
-    case TransactionRegistry.lookup(pid) do
-      nil ->
-        function.()
-      t = %Transaction{} ->
-        instrument(t, name, title, body, body_format, function)
-    end
+    t = TransactionRegistry.lookup(pid)
+    instrument(t, name, title, body, body_format, function)
   end
 
   def instrument(%Transaction{} = transaction, name, title, body, body_format, function) do
