@@ -1,12 +1,30 @@
 defmodule Appsignal.Utils.PushApiKeyValidator do
   def validate(config) do
-    HTTPoison.start
-    url = "#{config[:endpoint]}/1/auth?api_key=#{config[:push_api_key]}"
-    case HTTPoison.get url do
-      {:ok, %HTTPoison.Response{status_code: 200}} -> :ok
-      {:ok, %HTTPoison.Response{status_code: 401}} -> {:error, :invalid}
-      {:ok, %HTTPoison.Response{status_code: status_code}} -> {:error, status_code}
-      {:error, %HTTPoison.Error{reason: reason}} -> {:error, reason}
+    case send_validation_request(config) do
+      {:ok, {{_version, 200, _reason}, _headers, _body}} -> :ok
+      {:ok, {{_version, 401, _reason}, _headers, _body}} -> {:error, :invalid}
+      {:ok, {{_version, status, _reason}, _headers, _body}} -> {:error, status}
+      {:error, reason} -> {:error, reason}
     end
+  end
+
+  defp send_validation_request(config) do
+    url = "#{config[:endpoint]}/1/auth?api_key=#{config[:push_api_key]}"
+    :inets.start
+    uri = URI.parse(config[:endpoint])
+
+    :httpc.request(
+      :get,
+      {to_charlist(url), []},
+      [
+        ssl: [
+          verify: :verify_peer,
+          cacerts: :certifi.cacerts,
+          verify_fun: {&:ssl_verify_hostname.verify_fun/3, [:check_hostname, uri.host]},
+          depth: 99
+        ]
+      ],
+      []
+    )
   end
 end
