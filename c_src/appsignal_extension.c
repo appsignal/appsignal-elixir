@@ -56,6 +56,7 @@ static ERL_NIF_TERM _stop(ErlNifEnv* env, int UNUSED(arc), const ERL_NIF_TERM UN
 static ERL_NIF_TERM _start_transaction(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     ErlNifBinary transaction_id, namespace;
+    appsignal_transaction_t *raw_ptr;
     transaction_ptr *ptr;
     ERL_NIF_TERM transaction_ref;
 
@@ -73,16 +74,21 @@ static ERL_NIF_TERM _start_transaction(ErlNifEnv* env, int argc, const ERL_NIF_T
     if(!ptr)
       return make_error_tuple(env, "no_memory");
 
-    ptr->transaction = appsignal_start_transaction(
+    raw_ptr = appsignal_start_transaction(
         make_appsignal_string(transaction_id),
         make_appsignal_string(namespace),
         0
     );
 
-    transaction_ref = enif_make_resource(env, ptr);
-    enif_release_resource(ptr);
+    if (raw_ptr) {
+      ptr->transaction = raw_ptr;
+      transaction_ref = enif_make_resource(env, ptr);
+      enif_release_resource(ptr);
 
-    return make_ok_tuple(env, transaction_ref);
+      return make_ok_tuple(env, transaction_ref);
+    } else {
+      return make_error_tuple(env, "null_transaction");
+    }
 }
 
 static ERL_NIF_TERM _start_event(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
@@ -460,18 +466,24 @@ static ERL_NIF_TERM _add_distribution_value(ErlNifEnv* env, int argc, const ERL_
 
 static ERL_NIF_TERM _data_map_new(ErlNifEnv* env, int UNUSED(argc), const ERL_NIF_TERM UNUSED(argv[])) {
   data_ptr *ptr;
+  appsignal_data_t *raw_ptr;
   ERL_NIF_TERM data_ref;
 
   ptr = enif_alloc_resource(appsignal_data_type, sizeof(data_ptr));
   if(!ptr)
     return make_error_tuple(env, "no_memory");
 
-  ptr->data = appsignal_data_map_new();
+  raw_ptr  = appsignal_data_map_new();
 
-  data_ref = enif_make_resource(env, ptr);
-  enif_release_resource(ptr);
+  if (raw_ptr) {
+    ptr->data = raw_ptr;
+    data_ref = enif_make_resource(env, ptr);
+    enif_release_resource(ptr);
 
-  return make_ok_tuple(env, data_ref);
+    return make_ok_tuple(env, data_ref);
+  } else {
+    return make_error_tuple(env, "null_data");
+  }
 }
 
 static ERL_NIF_TERM _data_set_string(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
@@ -682,18 +694,24 @@ static ERL_NIF_TERM _data_set_data(ErlNifEnv* env, int argc, const ERL_NIF_TERM 
 
 static ERL_NIF_TERM _data_list_new(ErlNifEnv* env, int UNUSED(argc), const ERL_NIF_TERM UNUSED(argv[])) {
   data_ptr *ptr;
+  appsignal_data_t *raw_ptr;
   ERL_NIF_TERM data_ref;
 
   ptr = enif_alloc_resource(appsignal_data_type, sizeof(data_ptr));
   if(!ptr)
     return make_error_tuple(env, "no_memory");
 
-  ptr->data = appsignal_data_array_new();
+  raw_ptr = appsignal_data_array_new();
 
-  data_ref = enif_make_resource(env, ptr);
-  enif_release_resource(ptr);
+  if (raw_ptr) {
+    ptr->data = raw_ptr;
+    data_ref = enif_make_resource(env, ptr);
+    enif_release_resource(ptr);
 
-  return make_ok_tuple(env, data_ref);
+    return make_ok_tuple(env, data_ref);
+  } else {
+    return make_error_tuple(env, "null_data");
+  }
 }
 
 static ERL_NIF_TERM _running_in_container(ErlNifEnv* env, int UNUSED(argc), const ERL_NIF_TERM UNUSED(argv[])) {
