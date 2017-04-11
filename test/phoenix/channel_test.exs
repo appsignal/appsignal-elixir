@@ -27,7 +27,7 @@ defmodule Appsignal.Phoenix.ChannelTest do
   test_with_mock "channel_action function decorator", Appsignal.Transaction, [:passthrough], [] do
     SomeApp.MyChannel.handle_in("ping", :payload, %Socket{})
     t = Appsignal.TransactionRegistry.lookup(self())
-    assert called Transaction.start(t.id, :background_job)
+    assert called Transaction.start(t.id, :channel)
     assert called Transaction.set_action(t, "Appsignal.Phoenix.ChannelTest.SomeApp.MyChannel#ping")
     assert called Transaction.finish(t)
     assert called Transaction.complete(t)
@@ -36,7 +36,7 @@ defmodule Appsignal.Phoenix.ChannelTest do
   test_with_mock "direct calling of channel_action function", Appsignal.Transaction, [:passthrough], [] do
     SomeApp.MyChannel.handle_in("pong", :payload, %Socket{})
     t = Appsignal.TransactionRegistry.lookup(self())
-    assert called Transaction.start(t.id, :background_job)
+    assert called Transaction.start(t.id, :channel)
     assert called Transaction.set_action(t, "Appsignal.Phoenix.ChannelTest.SomeApp.MyChannel#pong")
     assert called Transaction.finish(t)
     assert called Transaction.complete(t)

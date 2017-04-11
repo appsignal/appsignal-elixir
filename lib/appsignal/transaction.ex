@@ -1,7 +1,5 @@
 defmodule Appsignal.TransactionBehaviour do
-  @type namespace :: :http_request | :background_job
-
-  @callback start(String.t, namespace) :: Appsignal.Transaction.t
+  @callback start(String.t, String.t) :: Appsignal.Transaction.t
   @callback start_event() :: Appsignal.Transaction.t
   @callback finish_event(Appsignal.Transaction.t | nil, String.t, String.t, any, integer) :: Appsignal.Transaction.t
   @callback finish() :: :sample | :no_sample
@@ -45,22 +43,14 @@ defmodule Appsignal.Transaction do
   """
   @type t :: %Transaction{}
 
-  @typedoc """
-  The transaction's namespace
-  """
-  @type namespace :: :http_request | :background_job
-
-  @valid_namespaces [:http_request, :background_job]
-
-
   @doc """
   Start a transaction
 
   Call this when a transaction such as a http request or background job starts.
 
   Parameters:
-  - `transaction_id` The unique identifier of this transaction
-  - `namespace` The namespace of this transaction. Must be one of `:http_request`, `:background_job`.
+  - `transaction_id` The unique identifier of this transaction.
+  - `namespace` The namespace of this transaction. Defaults to :background_job.
 
   The function returns a `%Transaction{}` struct for use with the
   other transaction functions in this module.
@@ -71,8 +61,8 @@ defmodule Appsignal.Transaction do
   `Appsignal.TransactionRegistry`.
 
   """
-  @spec start(String.t, namespace) :: Transaction.t
-  def start(transaction_id, namespace) when is_binary(transaction_id) and namespace in @valid_namespaces do
+  @spec start(String.t, String.t) :: Transaction.t
+  def start(transaction_id, namespace) when is_binary(transaction_id) do
     {:ok, resource} = Nif.start_transaction(transaction_id, Atom.to_string(namespace))
     transaction = %Appsignal.Transaction{resource: resource, id: transaction_id}
     TransactionRegistry.register(transaction)
