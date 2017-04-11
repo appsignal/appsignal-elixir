@@ -51,7 +51,7 @@ if Appsignal.phoenix? do
     def channel_action(module, name, %Phoenix.Socket{} = socket, function) do
       alias Appsignal.Transaction
 
-      transaction = Transaction.start(Transaction.generate_id(), :background_job)
+      transaction = Transaction.start(Transaction.generate_id(), :channel)
 
       action_str = "#{module}##{name}"
       <<"Elixir.", action :: binary>> = action_str
