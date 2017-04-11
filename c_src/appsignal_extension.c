@@ -41,6 +41,10 @@ static appsignal_string_t make_appsignal_string(ErlNifBinary binary)
     return retval;
 }
 
+static ERL_NIF_TERM make_elixir_string(ErlNifEnv* env, appsignal_string_t binary) {
+  return enif_make_string_len(env, binary.buf, binary.len, ERL_NIF_LATIN1);
+}
+
 static ERL_NIF_TERM _start(ErlNifEnv* env, int UNUSED(arc), const ERL_NIF_TERM UNUSED(argv[]))
 {
     appsignal_start();
@@ -51,6 +55,10 @@ static ERL_NIF_TERM _stop(ErlNifEnv* env, int UNUSED(arc), const ERL_NIF_TERM UN
 {
     appsignal_stop();
     return enif_make_atom(env, "ok");
+}
+
+static ERL_NIF_TERM _diagnose(ErlNifEnv* env, int UNUSED(arc), const ERL_NIF_TERM UNUSED(argv[])) {
+  return make_elixir_string(env, appsignal_diagnose());
 }
 
 static ERL_NIF_TERM _start_transaction(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
@@ -771,6 +779,7 @@ static ErlNifFunc nif_funcs[] =
 {
     {"_start", 0, _start, 0},
     {"_stop", 0, _stop, 0},
+    {"_diagnose", 0, _diagnose, 0},
     {"_start_transaction", 2, _start_transaction, 0},
     {"_start_event", 1, _start_event, 0},
     {"_finish_event", 5, _finish_event, 0},
