@@ -16,4 +16,12 @@ defmodule Appsignal.FakeNif do
   def running_in_container? do
     Agent.get(__MODULE__, &Map.get(&1, :running_in_container?, true))
   end
+
+  def diagnose do
+    if Agent.get(__MODULE__, &Map.get(&1, :run_diagnose, false)) do
+      Appsignal.Nif.diagnose
+    else
+      Agent.get(__MODULE__, &Map.get(&1, :diagnose, "{}"))
+    end
+  end
 end

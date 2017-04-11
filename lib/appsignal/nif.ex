@@ -56,6 +56,10 @@ defmodule Appsignal.Nif do
     _stop()
   end
 
+  def diagnose do
+    _diagnose()
+  end
+
   def start_transaction(transaction_id, namespace) do
     _start_transaction(transaction_id, namespace)
   end
@@ -192,6 +196,10 @@ defmodule Appsignal.Nif do
 
   def _stop do
     :ok
+  end
+
+  def _diagnose do
+    :error
   end
 
   def _start_transaction(_id, _namespace) do

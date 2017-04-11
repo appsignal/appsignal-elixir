@@ -128,27 +128,120 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
   @tag :skip_env_test_no_nif
   test "runs agent in diagnose mode" do
+    @nif.set(:run_diagnose, true)
     output = run()
     assert String.contains? output, "Agent diagnostics"
-    assert String.contains? output, "Running agent in diagnose mode"
-    assert String.contains? output, "Valid config present"
-    assert String.contains? output, "Logger initialized successfully"
-    assert String.contains? output, "Lock path is writable"
-    assert String.contains? output, "Agent diagnose finished"
+    assert String.contains? output, "  Extension config: valid"
+    assert String.contains? output, "  Agent started: started"
+    assert String.contains? output, "  Agent config: valid"
+    assert String.contains? output, "  Agent lock path: writable"
+    assert String.contains? output, "  Agent logger: started"
   end
 
   @tag :skip_env_test_no_nif
   describe "when config is not active" do
     test "runs agent in diagnose mode, but doesn't change the active state" do
+      @nif.set(:run_diagnose, true)
       merge_appsignal_config %{active: false}
       output = run()
       assert String.contains? output, "active: false"
       assert String.contains? output, "Agent diagnostics"
-      assert String.contains? output, "Running agent in diagnose mode"
-      assert String.contains? output, "Valid config present"
-      assert String.contains? output, "Logger initialized successfully"
-      assert String.contains? output, "Lock path is writable"
-      assert String.contains? output, "Agent diagnose finished"
+      assert String.contains? output, "  Extension config: valid"
+      assert String.contains? output, "  Agent started: started"
+      assert String.contains? output, "  Agent config: valid"
+      assert String.contains? output, "  Agent lock path: writable"
+      assert String.contains? output, "  Agent logger: started"
+    end
+  end
+
+  describe "when extension is not loaded" do
+    setup do: @nif.set(:loaded?, false)
+
+    test "agent diagnostics is not run" do
+      output = run()
+      assert String.contains? output, "Agent diagnostics"
+      assert String.contains? output, "  Error: Nif not loaded, aborting."
+    end
+  end
+
+  describe "when extension output is invalid JSON" do
+    setup do
+      @nif.set(:loaded?, true)
+      @nif.set(:diagnose, "agent_report_string")
+    end
+
+    test "agent diagnostics report prints an error" do
+      output = run()
+      assert String.contains? output, "Agent diagnostics"
+      assert String.contains? output, "  Error: Could not parse the agent report:"
+      assert String.contains? output, "    Output: agent_report_string"
+    end
+  end
+
+  describe "when extension output is missing a test" do
+    setup do
+      @nif.set(:loaded?, true)
+      @nif.set(:diagnose, ~s(
+        {
+          "extension": { "config": { "valid": { "result": true } } }
+        }
+      ))
+    end
+
+    test "agent diagnostics report prints the tests, but shows a dash `-` for missed results" do
+      output = run()
+      assert String.contains? output, "Agent diagnostics"
+      assert String.contains? output, "  Extension config: valid"
+      assert String.contains? output, "  Agent started: -"
+      assert String.contains? output, "  Agent config: -"
+      assert String.contains? output, "  Agent lock path: -"
+      assert String.contains? output, "  Agent logger: -"
+    end
+  end
+
+  describe "when the agent diagnose report contains an error" do
+    setup do
+      @nif.set(:loaded?, true)
+      @nif.set(:diagnose, ~s({ "error": "fatal error" }))
+    end
+
+    test "prints the error" do
+      output = run()
+      assert String.contains? output, "Agent diagnostics\n  Error: fatal error"
+    end
+  end
+
+  describe "when an agent diagnose report test contains an error" do
+    setup do
+      @nif.set(:loaded?, true)
+      @nif.set(:diagnose, ~s(
+        {
+          "agent": { "boot": { "started": { "result": false, "error": "my error" } } }
+        }
+      ))
+    end
+
+    test "prints the error" do
+      output = run()
+      assert String.contains? output, "Agent diagnostics"
+      assert String.contains? output, "  Agent started: not started\n    Error: my error"
+    end
+  end
+
+  describe "when an agent diagnose report test contains command output" do
+    setup do
+      @nif.set(:loaded?, true)
+      @nif.set(:diagnose, ~s(
+        {
+          "agent": { "boot": { "started": { "result": false, "output": "my output" } } }
+        }
+      ))
+    end
+
+    test "prints the output" do
+      output = run()
+      assert String.contains? output, "Agent diagnostics"
+      assert String.contains? output, "  Agent started: not started\n    Output: my output"
     end
   end
 
@@ -213,6 +306,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
     @tag :skip_env_test_no_nif
     test "outputs writable and creates log file", %{log_dir_path: log_dir_path, log_file_path: log_file_path} do
+      @nif.set(:run_diagnose, true)
       output = run()
       assert String.contains? output, "log_dir_path: #{log_dir_path}\n    - Writable?: yes"
       assert String.contains? output, "log_file_path: #{log_file_path}\n    - Writable?: yes"
