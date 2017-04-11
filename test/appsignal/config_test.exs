@@ -4,7 +4,7 @@ defmodule Appsignal.ConfigTest do
   """
 
   use ExUnit.Case
-
+  import AppsignalTest.Utils
   alias Appsignal.Config
 
   setup do
@@ -441,20 +441,5 @@ defmodule Appsignal.ConfigTest do
   defp init_config() do
     Config.initialize()
     Application.get_all_env(:appsignal)[:config]
-  end
-
-  defp clear_env() do
-    Application.delete_env(:appsignal, :config)
-
-    System.get_env
-    |> Enum.filter(
-      fn({"APPSIGNAL_" <> _, _}) -> true;
-      ({"_APPSIGNAL_" <> _, _}) -> true;
-      ({"APP_REVISION", _}) -> true;
-      ({"DYNO", _}) -> true;
-      (_) -> false end
-    ) |> Enum.each(fn({key, _}) ->
-      System.delete_env(key)
-    end)
   end
 end

@@ -2,6 +2,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   use ExUnit.Case
   import ExUnit.CaptureIO
   import Mock
+  import AppsignalTest.Utils
 
   @system Application.get_env(:appsignal, :appsignal_system, Appsignal.System)
   @nif Application.get_env(:appsignal, :appsignal_nif, Appsignal.Nif)
@@ -17,7 +18,6 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     @nif.set(:loaded?, Appsignal.Nif.loaded?)
 
     clear_env()
-    Application.put_env(:appsignal, :config, %{})
 
     # By default, Push API key is valid
     bypass = Bypass.open
@@ -30,10 +30,6 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
     unless Code.ensure_loaded?(Appsignal.Agent) do
       {_, _} = Code.eval_file("agent.ex")
-    end
-
-    on_exit :reset_config, fn ->
-      Application.put_env(:appsignal, :config, %{})
     end
 
     {:ok, %{bypass: bypass}}
@@ -399,14 +395,4 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     %{log_dir_path: log_dir_path, log_file_path: log_file_path}
   end
 
-  defp clear_env do
-    System.get_env
-    |> Enum.filter(
-      fn({"APPSIGNAL_" <> _, _}) -> true;
-      ({"DYNO", _}) -> true;
-      (_) -> false end
-    ) |> Enum.each(fn({key, _}) ->
-      System.delete_env(key)
-    end)
-  end
 end
