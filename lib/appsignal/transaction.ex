@@ -397,9 +397,10 @@ defmodule Appsignal.Transaction do
       |> Transaction.set_sample_data("environment", request_environment(conn))
 
       # Add session data
-      if not config()[:skip_session_data] and conn.private[:plug_session_fetch] == :done do
-        session_data = conn.private[:plug_session]
-        Transaction.set_sample_data(transaction, "session_data", session_data)
+      if !config()[:skip_session_data] and conn.private[:plug_session_fetch] == :done do
+        Transaction.set_sample_data(
+          transaction, "session_data", conn.private[:plug_session]
+        )
       else
         transaction
       end
