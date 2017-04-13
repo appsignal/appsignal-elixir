@@ -15,8 +15,7 @@ defmodule AppsignalTest.Utils do
   end
 
   def with_config_for(app, config, function) do
-    before = Application.get_env(app, :config, %{})
-    Application.put_env(app, :config, Map.merge(before, config))
+    before = put_merged_config_for(app, config)
     result = function.()
     Application.put_env(app, :config, before)
     result
@@ -24,6 +23,20 @@ defmodule AppsignalTest.Utils do
 
   def with_config(config, function) do
     with_config_for(:appsignal, config, function)
+  end
+
+  defp put_merged_config_for(app, config) do
+    before = Application.get_env(app, :config, %{})
+    Application.put_env(app, :config, Map.merge(before, config))
+    before
+  end
+
+  def setup_with_config(config) do
+    before = put_merged_config_for(:appsignal, config)
+
+    ExUnit.Callbacks.on_exit fn() ->
+      Application.put_env(:appsignal, :config, before)
+    end
   end
 
   def with_env(env, function) do
