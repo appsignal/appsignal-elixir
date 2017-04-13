@@ -309,9 +309,9 @@ defmodule Appsignal.ConfigTest do
 
   describe "reset_environment_config!" do
     test "deletes existing configuration in environment" do
-      System.put_env("_APPSIGNAL_NAME", "foo")
+      System.put_env("_APPSIGNAL_APP_NAME", "foo")
       Appsignal.Config.reset_environment_config!
-      assert System.get_env("_APPSIGNAL_NAME") == nil
+      assert System.get_env("_APPSIGNAL_APP_NAME") == nil
     end
   end
 
@@ -340,12 +340,12 @@ defmodule Appsignal.ConfigTest do
 
     test "deletes existing configuration in environment" do
       # Name is present in the configuration
-      System.put_env("_APPSIGNAL_NAME", "foo")
+      System.put_env("_APPSIGNAL_APP_NAME", "foo")
       # The new config doesn't have a name
       add_to_application_env(:name, "")
       write_to_environment()
       # So it doesn't get written to the new agent environment configuration
-      assert System.get_env("_APPSIGNAL_NAME") == nil
+      assert System.get_env("_APPSIGNAL_APP_NAME") == nil
     end
 
     test "writes valid AppSignal config options to the env" do
