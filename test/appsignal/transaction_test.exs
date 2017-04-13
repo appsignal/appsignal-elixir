@@ -1,6 +1,7 @@
 defmodule AppsignalTransactionTest do
   use ExUnit.Case
   import Mock
+  import AppsignalTest.Utils
 
   alias Appsignal.Transaction
 
@@ -114,12 +115,13 @@ defmodule AppsignalTransactionTest do
     @tag :skip_env_test_no_nif
     @tag :skip_env_test
     test_with_mock "send session data", context, Appsignal.Transaction, [:passthrough], [] do
-      Application.put_env(:appsignal, :config, [skip_session_data: false])
+      transaction = with_config(%{skip_session_data: false}, fn() ->
+        "test5"
+        |> Transaction.start(:http_request)
+        |> Transaction.set_request_metadata(context[:conn])
+      end)
 
-      transaction = Transaction.start("test5", :http_request)
-      |> Transaction.set_request_metadata(context[:conn])
-
-      assert called Appsignal.Transaction.set_sample_data(
+      assert called Transaction.set_sample_data(
         transaction, "session_data", context[:conn].private.plug_session
       )
     end
@@ -127,10 +129,11 @@ defmodule AppsignalTransactionTest do
     @tag :skip_env_test_no_nif
     @tag :skip_env_test
     test_with_mock "does not send session data", context, Appsignal.Transaction, [:passthrough], [] do
-      Application.put_env(:appsignal, :config, [skip_session_data: true])
-
-      transaction = Transaction.start("test5", :http_request)
-      |> Transaction.set_request_metadata(context[:conn])
+      transaction = with_config(%{skip_session_data: true}, fn() ->
+        "test5"
+        |> Transaction.start(:http_request)
+        |> Transaction.set_request_metadata(context[:conn])
+      end)
 
       assert not called Appsignal.Transaction.set_sample_data(
         transaction, "session_data", context[:conn].private.plug_session
