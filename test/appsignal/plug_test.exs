@@ -203,6 +203,12 @@ defmodule Appsignal.PlugTest do
       ) == "GET /foo"
     end
 
+    test "from a Plug conn with a Phoenix endpoint, but no controller or action" do
+      assert %Plug.Conn{}
+      |> Plug.Conn.put_private(:phoenix_endpoint, MyEndpoint)
+      |> Appsignal.Plug.extract_action == nil
+    end
+
     test "from a Plug conn with a Phoenix controller and action" do
       assert %Plug.Conn{}
       |> Plug.Conn.put_private(:phoenix_controller, AppsignalPhoenixExample.PageController)

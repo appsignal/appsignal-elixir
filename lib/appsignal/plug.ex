@@ -66,6 +66,7 @@ if Appsignal.plug? do
     def extract_action(%Plug.Conn{private: %{phoenix_action: action, phoenix_controller: controller}}) do
       merge_action_and_controller(action, controller)
     end
+    def extract_action(%Plug.Conn{private: %{phoenix_endpoint: _}}), do: nil
     def extract_action(%Plug.Conn{method: method, request_path: path}) do
       "#{method} #{path}"
     end
