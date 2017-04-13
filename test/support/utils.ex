@@ -14,10 +14,22 @@ defmodule AppsignalTest.Utils do
     end)
   end
 
+  def with_config_for(app, config, function) do
+    before = Application.get_env(app, :config, %{})
+    Application.put_env(app, :config, Map.merge(before, config))
+    result = function.()
+    Application.put_env(app, :config, before)
+    result
+  end
+
+  def with_config(config, function) do
+    with_config_for(:appsignal, config, function)
+  end
+
   def with_env(env, function) do
     before = put_merged_env(env)
     result = function.()
-    System.put_env(before)
+    reset_env(before)
     result
   end
 
@@ -25,7 +37,7 @@ defmodule AppsignalTest.Utils do
     before = put_merged_env(env)
 
     ExUnit.Callbacks.on_exit fn() ->
-      System.put_env(before)
+      reset_env(before)
     end
   end
 
@@ -37,5 +49,12 @@ defmodule AppsignalTest.Utils do
     |> System.put_env
 
     before
+  end
+
+  defp reset_env(before) do
+    System.put_env(before)
+
+    Map.keys(System.get_env) -- Map.keys(before)
+    |> Enum.each(&System.delete_env/1)
   end
 end
