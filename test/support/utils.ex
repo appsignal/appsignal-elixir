@@ -13,4 +13,16 @@ defmodule AppsignalTest.Utils do
       System.delete_env(key)
     end)
   end
+
+  def setup_with_env(env) do
+    before = System.get_env
+
+    before
+    |> Map.merge(env)
+    |> System.put_env
+
+    ExUnit.Callbacks.on_exit fn() ->
+      System.put_env(before)
+    end
+  end
 end
