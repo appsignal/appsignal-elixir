@@ -14,15 +14,28 @@ defmodule AppsignalTest.Utils do
     end)
   end
 
+  def with_env(env, function) do
+    before = put_merged_env(env)
+    result = function.()
+    System.put_env(before)
+    result
+  end
+
   def setup_with_env(env) do
+    before = put_merged_env(env)
+
+    ExUnit.Callbacks.on_exit fn() ->
+      System.put_env(before)
+    end
+  end
+
+  defp put_merged_env(env) do
     before = System.get_env
 
     before
     |> Map.merge(env)
     |> System.put_env
 
-    ExUnit.Callbacks.on_exit fn() ->
-      System.put_env(before)
-    end
+    before
   end
 end
