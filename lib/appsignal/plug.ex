@@ -31,13 +31,20 @@ if Appsignal.plug? do
         end
 
         defp finish_with_conn(transaction, conn) do
-          @transaction.set_action(transaction, Appsignal.Plug.extract_action(conn))
+          try_set_action(transaction, conn)
           if @transaction.finish(transaction) == :sample do
             @transaction.set_request_metadata(transaction, conn)
           end
 
           :ok = @transaction.complete(transaction)
           conn
+        end
+
+        defp try_set_action(transaction, conn) do
+          case Appsignal.Plug.extract_action(conn) do
+            nil -> nil
+            action -> @transaction.set_action(transaction, action)
+          end
         end
       end
     end

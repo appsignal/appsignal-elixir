@@ -1,7 +1,4 @@
 defmodule UsingAppsignalPlug do
-  def call(%Plug.Conn{private: %{phoenix_action: :index}} = conn, _opts) do
-    conn |> Plug.Conn.assign(:called?, true)
-  end
   def call(%Plug.Conn{private: %{phoenix_action: :exception}}, _opts) do
     raise("Exception!")
   end
@@ -10,6 +7,9 @@ defmodule UsingAppsignalPlug do
   end
   def call(%Plug.Conn{private: %{phoenix_action: :bad_request}}, _opts) do
     raise %Plug.BadRequestError{}
+  end
+  def call(%Plug.Conn{} = conn, _opts) do
+    conn |> Plug.Conn.assign(:called?, true)
   end
 
   defoverridable [call: 2]
@@ -75,6 +75,20 @@ defmodule Appsignal.PlugTest do
 
     test "does not set the transaction's request metadata" do
       assert nil == FakeTransaction.request_metadata
+    end
+  end
+
+  describe "for a transaction with a Phoenix endpoint, but no action" do
+    setup do
+      conn = %Plug.Conn{}
+      |> Plug.Conn.put_private(:phoenix_endpoint, MyEndpoint)
+      |> UsingAppsignalPlug.call(%{})
+
+      [conn: conn]
+    end
+
+    test "does not set the transaction's action name" do
+      assert FakeTransaction.action == nil
     end
   end
 
