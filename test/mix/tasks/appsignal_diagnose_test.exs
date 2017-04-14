@@ -17,8 +17,6 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     # By default use the same as the actual state of the Nif
     @nif.set(:loaded?, Appsignal.Nif.loaded?)
 
-    clear_env()
-
     # By default, Push API key is valid
     bypass = Bypass.open
     setup_with_config(%{

@@ -8,8 +8,12 @@ defmodule Appsignal.ConfigTest do
   alias Appsignal.Config
 
   setup do
-    clear_env()
-    on_exit &clear_env/0
+    environment = freeze_environment()
+    Application.delete_env(:appsignal, :config)
+
+    ExUnit.Callbacks.on_exit fn() ->
+      unfreeze_environment(environment)
+    end
   end
 
   test "unconfigured" do

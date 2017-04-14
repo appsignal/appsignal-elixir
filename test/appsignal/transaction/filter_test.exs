@@ -21,7 +21,7 @@ defmodule Appsignal.Transaction.FilterTest do
     end
 
     test "appsignal's paramter filters override Phoenix' parameter filters" do
-      with_config_for(:phoenix, %{filter_parameters: ["secret1"]}, fn() ->
+      with_config(:phoenix, %{filter_parameters: ["secret1"]}, fn() ->
         with_config(%{filter_parameters: ["secret2"]}, fn() ->
           Config.initialize()
           assert ParamsFilter.get_filter_parameters() == ["secret2"]
