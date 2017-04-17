@@ -104,9 +104,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
   end
 
   test "proc_lib.spawn + badmatch error" do
-    :proc_lib.spawn(fn() ->
-      1 = 2
-    end)
+    :proc_lib.spawn(fn() -> throw({:badmatch, 2}) end)
     |> assert_crash_caught
     |> reason("{:error, {:badmatch, 2}}")
     |> message(~r(Process #PID<[\d.]+> terminating: {:badmatch, 2}))
