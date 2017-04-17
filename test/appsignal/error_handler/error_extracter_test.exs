@@ -54,4 +54,19 @@ defmodule Appsignal.ErrorHandler.ErrorExtracterTest do
     assert "Foo error: protocol Enumerable not implemented for {:error, :foo}" == m
   end
 
+  @tuple_with_error_and_exception {
+    %RuntimeError{message: "Exception!"},
+    [
+      {AppsignalPhoenixExample.PageController, :"-exception/2-fun-0-", 0, [file: 'web/controllers/page_controller.ex', line: 18]},
+      {Task.Supervised, :do_apply, 2, [file: 'lib/task/supervised.ex', line: 85]},
+      {Task.Supervised, :reply, 5, [file: 'lib/task/supervised.ex', line: 36]},
+      {:proc_lib, :init_p_do_apply, 3, [file: 'proc_lib.erl', line: 247]}
+    ]
+  }
+
+  test "tuple with error struct and exception" do
+    {r, m} = ErrorHandler.extract_reason_and_message(@tuple_with_error_and_exception, "Foo error")
+    assert "RuntimeError" == r
+    assert "Foo error: Exception!" == m
+  end
 end
