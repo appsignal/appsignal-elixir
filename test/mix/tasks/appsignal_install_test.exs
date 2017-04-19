@@ -1,19 +1,17 @@
 defmodule Mix.Tasks.Appsignal.InstallTest do
   use ExUnit.Case
   import ExUnit.CaptureIO
+  import AppsignalTest.Utils
 
   @demo Application.get_env(:appsignal, :appsignal_demo, Appsignal.Demo)
 
   setup do
     @demo.start_link
-    original_config = Application.get_env(:appsignal, :config, %{})
 
     bypass = Bypass.open
-    System.put_env("APPSIGNAL_PUSH_API_ENDPOINT", "http://localhost:#{bypass.port}")
-
-    on_exit :reset_config, fn ->
-      Application.put_env(:appsignal, :config, original_config)
-    end
+    setup_with_env(%{
+      "APPSIGNAL_PUSH_API_ENDPOINT" => "http://localhost:#{bypass.port}"
+    })
 
     {:ok, %{bypass: bypass}}
   end

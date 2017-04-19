@@ -1,27 +1,28 @@
 defmodule Appsignal.Transaction.FilterTest do
   use ExUnit.Case
   alias Appsignal.Config
-
   alias Appsignal.Utils.ParamsFilter
+
+  import AppsignalTest.Utils
 
   describe "parameter filtering" do
     test "uses parameter filters from the appsignal config" do
-      with_app_config(:appsignal, :config, [filter_parameters: ["password"]], fn() ->
+      with_config(%{filter_parameters: ["password"]}, fn() ->
         Config.initialize()
         assert ParamsFilter.get_filter_parameters() == ["password"]
       end)
     end
 
     test "uses parameter filters from the phoenix config" do
-      with_app_config(:phoenix, :filter_parameters, ["secret1"], fn() ->
+      with_config(%{filter_parameters: ["secret1"]}, fn() ->
         Config.initialize()
         assert ParamsFilter.get_filter_parameters() == ["secret1"]
       end)
     end
 
     test "appsignal's paramter filters override Phoenix' parameter filters" do
-      with_app_config(:phoenix, :config, [filter_parameters: ["secret1"]], fn() ->
-        with_app_config(:appsignal, :config, [filter_parameters: ["secret2"]], fn() ->
+      with_config(:phoenix, %{filter_parameters: ["secret1"]}, fn() ->
+        with_config(%{filter_parameters: ["secret2"]}, fn() ->
           Config.initialize()
           assert ParamsFilter.get_filter_parameters() == ["secret2"]
         end)
@@ -29,11 +30,10 @@ defmodule Appsignal.Transaction.FilterTest do
     end
 
     test "uses filter parameters from the OS environment" do
-      System.put_env("APPSIGNAL_FILTER_PARAMETERS", "foo,bar")
-      Config.initialize()
-      assert ParamsFilter.get_filter_parameters() == ["foo", "bar"]
-      System.delete_env("APPSIGNAL_FILTER_PARAMETERS")
-      Application.delete_env(:appsignal, :config)
+      with_env(%{"APPSIGNAL_FILTER_PARAMETERS" => "foo,bar"}, fn() ->
+        Config.initialize()
+        assert ParamsFilter.get_filter_parameters() == ["foo", "bar"]
+      end)
     end
 
     test "filter_values" do
@@ -68,13 +68,4 @@ defmodule Appsignal.Transaction.FilterTest do
         %{:foo => "bar", "password" => "[FILTERED]"}
     end
   end
-
-
-  defp with_app_config(app, key, value, function) do
-    Application.put_env(app, key, value)
-    function.()
-    Application.delete_env(app, key)
-    System.delete_env("APPSIGNAL_FILTER_PARAMETERS")
-  end
-
 end
