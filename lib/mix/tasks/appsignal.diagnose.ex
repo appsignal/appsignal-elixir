@@ -1,131 +1,60 @@
 defmodule Mix.Tasks.Appsignal.Diagnose do
   use Mix.Task
-  alias Appsignal.Utils.PushApiKeyValidator
   alias Appsignal.Config
+  alias Appsignal.Diagnose
 
-  @appsignal_version Mix.Project.config[:version]
-  @agent_version Mix.Project.config[:agent_version]
   @system Application.get_env(:appsignal, :appsignal_system, Appsignal.System)
-  @nif Application.get_env(:appsignal, :appsignal_nif, Appsignal.Nif)
+  @report Application.get_env(:appsignal, :appsignal_diagnose_report, Appsignal.Diagnose.Report)
 
   @shortdoc "Starts and tests AppSignal while validating the configuration."
 
-  defmodule AgentReport do
-    @nif Application.get_env(:appsignal, :appsignal_nif, Appsignal.Nif)
-
-    # Start AppSignal as usual, in diagnose mode, so that it exits early, but
-    # does go through the whole process of setting the config to the
-    # environment.
-    def run do
-      IO.puts "Agent diagnostics"
-      if @nif.loaded? do
-        System.put_env("_APPSIGNAL_DIAGNOSE", "true")
-        report_string = @nif.diagnose
-        case Poison.decode(report_string) do
-          {:ok, report} -> print_report report
-          {:error, _} ->
-            IO.puts "  Error: Could not parse the agent report:"
-            IO.puts "    Output: #{report_string}"
-        end
-        System.delete_env("_APPSIGNAL_DIAGNOSE")
-      else
-        IO.puts "  Error: Nif not loaded, aborting."
-      end
-      IO.puts ""
-    end
-
-    defp print_report(report) do
-      if report["error"] do
-        IO.puts "  Error: #{report["error"]}"
-      else
-        Enum.each(report_definition(), fn({component, categories}) ->
-          print_component(report[component] || %{}, categories)
-        end)
-      end
-    end
-
-    defp print_component(report, categories) do
-      Enum.each(categories, fn({category, tests}) ->
-        print_category(report[category] || %{}, tests)
-      end)
-    end
-
-    defp print_category(report, tests) do
-      Enum.each(tests, fn({test, definition}) ->
-        print_test(report[test] || %{}, definition)
-      end)
-    end
-
-    defp print_test(report, definition) do
-      IO.write "  #{definition[:label]}: "
-      case Map.fetch(definition[:values], report["result"]) do
-        {:ok, value} -> IO.puts value
-        :error -> IO.puts "-"
-      end
-      if report["error"], do: IO.puts "    Error: #{report["error"]}"
-      if report["output"], do: IO.puts "    Output: #{report["output"]}"
-    end
-
-    defp report_definition do
-      %{
-        "extension" => %{
-          "config" => %{
-            "valid" => %{
-              :label => "Extension config",
-              :values => %{ true => "valid", false => "invalid" }
-            }
-          }
-        },
-        "agent" => %{
-          "boot" => %{
-            "started" => %{
-              :label => "Agent started",
-              :values => %{ true => "started", false => "not started" }
-            }
-          },
-          "config" => %{
-            "valid" => %{
-              :label => "Agent config",
-              :values => %{ true => "valid", false => "invalid" }
-            }
-          },
-          "logger" => %{
-            "started" => %{
-              :label => "Agent logger",
-              :values => %{ true => "started", false => "not started" }
-            }
-          },
-          "lock_path" => %{
-            "created" => %{
-              :label => "Agent lock path",
-              :values => %{ true => "writable", false => "not writable" }
-            }
-          }
-        }
-      }
-    end
-  end
-
   def run(_args) do
+    report = %{process: %{uid: @system.uid}}
+    configure_appsignal()
+    config = Application.get_env(:appsignal, :config)
     header()
     empty_line()
 
-    agent_version()
+    library_report = Diagnose.Library.info
+    report = Map.put(report, :library, library_report)
+    print_library_info(library_report)
     empty_line()
 
-    host_information()
+    host_report = Diagnose.Host.info
+    report = Map.put(report, :host, host_report)
+    print_host_information(host_report)
     empty_line()
 
-    configure_appsignal()
-    run_agent_diagnose_mode()
+    report =
+      case Diagnose.Agent.report do
+        {:ok, agent_report} ->
+          print_agent_diagnostics(agent_report)
+          Map.put(report, :agent, agent_report)
+        {:error, :nif_not_loaded} ->
+          IO.puts "Agent diagnostics"
+          IO.puts "  Error: Nif not loaded, aborting.\n"
+          report
+        {:error, raw_report} ->
+          IO.puts "Agent diagnostics"
+          IO.puts "  Error: Could not parse the agent report:"
+          IO.puts "    Output: #{raw_report}\n"
+          Map.put(report, :agent, %{output: raw_report})
+      end
 
-    configuration()
+    report = Map.put(report, :config, config)
+    print_configuration(config)
     empty_line()
 
-    validate_push_api_key()
+    validation_report = Diagnose.Validation.validate(config)
+    report = Map.put(report, :validation, validation_report)
+    print_validation(validation_report)
     empty_line()
 
-    paths()
+    path_report = Diagnose.Paths.info(config)
+    report = Map.put(report, :paths, path_report)
+    print_paths(path_report)
+
+    send_report_to_appsignal_if_agreed_upon(config, report)
   end
 
   defp header do
@@ -138,26 +67,25 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     IO.puts String.duplicate("=", 80)
   end
 
-  defp agent_version do
+  defp print_library_info(library_report) do
     IO.puts "AppSignal agent"
     IO.puts "  Language: Elixir"
-    IO.puts "  Package version: #{@appsignal_version}"
-
-    IO.puts "  Agent version: #{@agent_version}"
-    IO.puts "  Nif loaded: #{yes_or_no(@nif.loaded?)}"
+    IO.puts "  Package version: #{library_report[:package_version]}"
+    IO.puts "  Agent version: #{library_report[:agent_version]}"
+    IO.puts "  Nif loaded: #{yes_or_no(library_report[:extension_loaded])}"
   end
 
-  defp host_information do
+  defp print_host_information(host_report) do
     IO.puts "Host information"
-    IO.puts "  Architecture: #{:erlang.system_info(:system_architecture)}"
-    IO.puts "  Elixir version: #{System.version}"
-    IO.puts "  OTP version: #{System.otp_release}"
-    root_user = if (@system.root?), do: "yes (not recommended)", else: "no"
+    IO.puts "  Architecture: #{host_report[:architecture]}"
+    IO.puts "  Elixir version: #{host_report[:language_version]}"
+    IO.puts "  OTP version: #{host_report[:otp_version]}"
+    root_user = if (host_report[:root]), do: "yes (not recommended)", else: "no"
     IO.puts "  root user: #{root_user}"
-    if @system.heroku? do
+    if host_report[:heroku] do
       IO.puts "  Heroku: yes"
     end
-    IO.puts "  Container: #{yes_or_no(@nif.running_in_container?)}"
+    IO.puts "  Container: #{yes_or_no(host_report[:running_in_container])}"
   end
 
   defp configure_appsignal do
@@ -165,71 +93,94 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     Config.write_to_environment
   end
 
-  defp run_agent_diagnose_mode do
-    AgentReport.run
+  defp print_agent_diagnostics(report) do
+    Diagnose.Agent.print(report)
   end
 
-  defp configuration do
+  defp print_configuration(config) do
     IO.puts "Configuration"
 
-    Enum.each config(), fn({key, value}) ->
+    Enum.each config, fn({key, value}) ->
       IO.puts "  #{key}: #{value}"
     end
   end
 
-  defp paths do
-    IO.puts "Paths"
-    log_file_path = config()[:log_path] || "/tmp/appsignal.log"
-    log_dir_path = Path.dirname(log_file_path)
-
-    diagnose_path "log_dir_path", log_dir_path
-    diagnose_path "log_file_path", log_file_path
+  defp print_validation(validation_report) do
+    IO.puts "Validation"
+    IO.puts "  Push API key: #{validation_report[:push_api_key]}"
   end
 
-  defp diagnose_path(name, path) do
-    IO.puts "  #{name}: #{path}"
-    process_uid = @system.uid
+  defp print_paths(path_report) do
+    IO.puts "Paths"
+    Enum.each(path_report, fn(path) ->
+      print_path path
+    end)
+  end
 
-    if File.exists? path do
-      case File.stat(path) do
-        {:ok, %{access: access, uid: uid}} ->
-          IO.write "    - Writable?: "
-          case access do
-            p when p in [:write, :read_write] ->
-              IO.puts "yes"
-            _ ->
-              IO.puts "no"
-          end
-
-          IO.write "    - Ownership?: "
-          IO.write yes_or_no(uid == process_uid)
-          IO.puts " (file: #{uid}, process: #{process_uid})"
-        {:error, reason} ->
-          IO.puts "    Can't read path: #{reason}"
-      end
+  defp print_path({name, path}) do
+    IO.puts "  #{name}: #{path[:path]}"
+    if path[:exists] do
+      IO.puts "    - Writable?: #{yes_or_no(path[:writable])}"
+      file_uid = path[:ownership][:uid]
+      process_uid = @system.uid
+      IO.write "    - Ownership?: #{yes_or_no(file_uid == process_uid)}"
+      IO.puts " (file: #{file_uid}, process: #{process_uid})"
     else
       IO.puts "    - Exists?: no"
     end
+    if path[:error], do: IO.puts "    - Error: #{path[:error]}"
   end
 
-  defp validate_push_api_key do
-    IO.puts "Validation"
-    IO.write "  Push API key: "
-    case PushApiKeyValidator.validate(config()) do
-      :ok -> IO.puts "valid"
-      {:error, :invalid} -> IO.puts "invalid"
-      {:error, reason} -> IO.puts "failure: #{reason}"
+  defp send_report_to_appsignal_if_agreed_upon(config, report) do
+    IO.puts "\nDiagnostics report"
+    IO.puts "  Do you want to send this diagnostics report to AppSignal?"
+    IO.puts "  If you share this diagnostics report you will be given\n" <>
+      "  a support token you can use to refer to your diagnotics \n" <>
+      "  report when you contact us at support@appsignal.com\n"
+    answer = yes_or_no?("  Send diagnostics report to AppSignal? (Y/n): ")
+    case answer do
+      true ->
+        IO.puts "\n  Transmitting diagnostics report"
+        case @report.send(config, report) do
+          {:ok, support_token} ->
+            IO.puts "  Your diagnostics report has been sent to AppSignal."
+            IO.puts "  Your support token: #{support_token}"
+          {:error, %{status_code: 200, body: body}} ->
+            IO.puts "  Error: Couldn't decode server response."
+            IO.puts "  Response body: #{body}"
+          {:error, %{status_code: status_code, body: body}} ->
+            IO.puts "  Error: Something went wrong while submitting the " <>
+              "report to AppSignal."
+            IO.puts "  Response code: #{status_code}"
+            IO.puts "  Response body: #{body}"
+          {:error, %{reason: reason}} ->
+            IO.puts "  Error: Something went wrong while submitting the " <>
+              "report to AppSignal."
+            IO.puts reason
+        end
+      false ->
+        IO.puts "  Not sending diagnostics report to AppSignal."
     end
   end
 
-  defp config do
-    Application.get_env(:appsignal, :config)
-  end
-
-  defp empty_line do
-    IO.puts ""
-  end
+  defp empty_line, do: IO.puts ""
 
   defp yes_or_no(true), do: "yes"
   defp yes_or_no(false), do: "no"
+
+  # Ask for a yes or no input from the user
+  defp yes_or_no?(prompt) do
+    case IO.gets(prompt) do
+      input when is_binary(input) ->
+        case String.downcase(String.trim(input)) do
+          input when input in ["y", "yes", ""] -> true
+          input when input in ["n", "no"] -> false
+          _ -> yes_or_no? prompt
+        end
+      :eof -> yes_or_no? prompt
+      {:error, reason} ->
+        IO.puts "  Error while reading input: #{reason}"
+        yes_or_no? prompt
+    end
+  end
 end

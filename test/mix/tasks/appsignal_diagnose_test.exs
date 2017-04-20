@@ -1,39 +1,39 @@
 defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   use ExUnit.Case
   import ExUnit.CaptureIO
-  import Mock
   import AppsignalTest.Utils
 
   @system Application.get_env(:appsignal, :appsignal_system, Appsignal.System)
   @nif Application.get_env(:appsignal, :appsignal_nif, Appsignal.Nif)
+  @diagnose_report Application.get_env(:appsignal, :appsignal_diagnose_report, Appsignal.Diagnose.Report)
+  @appsignal_version Mix.Project.config[:version]
+  @agent_version Appsignal.Agent.version
 
-  defp run do
-    capture_io(fn -> Mix.Tasks.Appsignal.Diagnose.run(nil) end)
-  end
+  defp run, do: capture_io("Y", &run_fn/0)
+  defp run(input), do: capture_io(input, &run_fn/0)
+  defp run_fn, do: Mix.Tasks.Appsignal.Diagnose.run(nil)
 
   setup do
+    @diagnose_report.start_link
     @system.start_link
     @nif.start_link
     # By default use the same as the actual state of the Nif
     @nif.set(:loaded?, Appsignal.Nif.loaded?)
 
     # By default, Push API key is valid
-    bypass = Bypass.open
-    setup_with_config(%{
-      endpoint: "http://localhost:#{bypass.port}"
-    })
-
-    Bypass.expect bypass, fn conn ->
+    auth_bypass = Bypass.open
+    setup_with_config(%{endpoint: "http://localhost:#{auth_bypass.port}"})
+    Bypass.expect auth_bypass, fn conn ->
       assert "/1/auth" == conn.request_path
       assert "GET" == conn.method
       Plug.Conn.resp(conn, 200, "")
     end
 
-    unless Code.ensure_loaded?(Appsignal.Agent) do
-      {_, _} = Code.eval_file("agent.ex")
-    end
+    {:ok, %{auth_bypass: auth_bypass}}
+  end
 
-    {:ok, %{bypass: bypass}}
+  defp received_report do
+    @diagnose_report.get(:sent_report)
   end
 
   test "outputs AppSignal support header" do
@@ -43,22 +43,44 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     assert String.contains? output, "support@appsignal.com"
   end
 
-  test "outputs agent version numbers" do
+  test "outputs library information" do
     output = run()
     assert String.contains? output, "AppSignal agent"
     assert String.contains? output, "Language: Elixir"
-    assert String.contains? output, "Package version: #{Appsignal.Mixfile.project[:version]}"
+    assert String.contains? output, "Package version: #{@appsignal_version}"
+    assert String.contains? output, "Agent version: #{@agent_version}"
+  end
 
-    agent_version = Appsignal.Agent.version
-    assert agent_version
-    assert String.contains? output, "Agent version: #{agent_version}"
+  test "adds library information to report" do
+    run()
+    report = received_report()
+    assert report[:library] == %{
+      agent_version: @agent_version,
+      extension_loaded: Appsignal.Nif.loaded?,
+      language: "elixir",
+      package_version: @appsignal_version
+    }
+  end
+
+  test "adds process information to report" do
+    run()
+    report = received_report()
+    assert report[:process] == %{uid: @system.uid}
   end
 
   @tag :skip_env_test_no_nif
   describe "when Nif is loaded" do
-    test_with_mock "outputs that the Nif is loaded", Appsignal.Nif, [:passthrough], [loaded?: fn -> true end] do
+    setup do: @nif.set(:loaded?, true)
+
+    test "outputs that the Nif is loaded" do
       output = run()
       assert String.contains? output, "Nif loaded: yes"
+    end
+
+    test "adds library extension_loaded true to report" do
+      run()
+      report = received_report()
+      assert report[:library][:extension_loaded] == true
     end
   end
 
@@ -69,6 +91,12 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       output = run()
       assert String.contains? output, "Nif loaded: no"
     end
+
+    test "adds library extension_loaded false to report" do
+      run()
+      report = received_report()
+      assert report[:library][:extension_loaded] == false
+    end
   end
 
   test "outputs host information" do
@@ -77,7 +105,19 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     assert String.contains? output, "Architecture: #{:erlang.system_info(:system_architecture)}"
     assert String.contains? output, "Elixir version: #{System.version}"
     assert String.contains? output, "OTP version: #{System.otp_release}"
-    refute String.contains? output, "Heroku:"
+  end
+
+  test "adds host information to report" do
+    run()
+    report =
+      received_report()[:host]
+      |> Map.drop([:root, :running_in_container])
+    assert report == %{
+      architecture: to_string(:erlang.system_info(:system_architecture)),
+      language_version: System.version,
+      otp_version: System.otp_release,
+      heroku: false
+    }
   end
 
   describe "when on Heroku" do
@@ -86,6 +126,12 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     test "outputs Heroku: yes" do
       output = run()
       assert String.contains? output, "Heroku: yes"
+    end
+
+    test "adds host heroku true to report" do
+      run()
+      report = received_report()
+      assert report[:host][:heroku] == true
     end
   end
 
@@ -96,6 +142,12 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       output = run()
       assert String.contains? output, "Container: yes"
     end
+
+    test "adds host running_in_container true to report" do
+      run()
+      report = received_report()
+      assert report[:host][:running_in_container] == true
+    end
   end
 
   describe "when not running in a container" do
@@ -105,12 +157,24 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       output = run()
       assert String.contains? output, "Container: no"
     end
+
+    test "adds host running_in_container false to report" do
+      run()
+      report = received_report()
+      assert report[:host][:running_in_container] == false
+    end
   end
 
   describe "when not root user" do
     test "outputs root user: no" do
       output = run()
       assert String.contains? output, "root user: no"
+    end
+
+    test "adds host root false to report" do
+      run()
+      report = received_report()
+      assert report[:host][:root] == false
     end
   end
 
@@ -120,6 +184,12 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     test "outputs warning about running as root" do
       output = run()
       assert String.contains? output, "root user: yes (not recommended)"
+    end
+
+    test "adds host root true to report" do
+      run()
+      report = received_report()
+      assert report[:host][:root] == true
     end
   end
 
@@ -136,7 +206,25 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   end
 
   @tag :skip_env_test_no_nif
+  test "adds agent report to report" do
+    @nif.set(:run_diagnose, true)
+    run()
+    report = received_report()
+    assert report[:agent] == %{
+      "agent" => %{
+        "boot" => %{"started" => %{"result" => true}},
+        "config" => %{"valid" => %{"result" => true}},
+        "lock_path" => %{"created" => %{"result" => true}},
+        "logger" => %{"started" => %{"result" => true}}
+      },
+      "extension" => %{
+        "config" => %{"valid" => %{"result" => true}}
+      }
+    }
+  end
+
   describe "when config is not active" do
+    @tag :skip_env_test_no_nif
     test "runs agent in diagnose mode, but doesn't change the active state" do
       @nif.set(:run_diagnose, true)
 
@@ -149,6 +237,24 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       assert String.contains? output, "  Agent lock path: writable"
       assert String.contains? output, "  Agent logger: started"
     end
+
+    @tag :skip_env_test_no_nif
+    test "adds agent report to report" do
+      @nif.set(:run_diagnose, true)
+      run()
+      report = received_report()
+      assert report[:agent] == %{
+        "agent" => %{
+          "boot" => %{"started" => %{"result" => true}},
+          "config" => %{"valid" => %{"result" => true}},
+          "lock_path" => %{"created" => %{"result" => true}},
+          "logger" => %{"started" => %{"result" => true}}
+        },
+        "extension" => %{
+          "config" => %{"valid" => %{"result" => true}}
+        }
+      }
+    end
   end
 
   describe "when extension is not loaded" do
@@ -158,6 +264,11 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       output = run()
       assert String.contains? output, "Agent diagnostics"
       assert String.contains? output, "  Error: Nif not loaded, aborting."
+    end
+
+    test "adds no agent report to report" do
+      run()
+      assert received_report()[:agent] == nil
     end
   end
 
@@ -172,6 +283,12 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       assert String.contains? output, "Agent diagnostics"
       assert String.contains? output, "  Error: Could not parse the agent report:"
       assert String.contains? output, "    Output: agent_report_string"
+    end
+
+    test "adds agent output to report" do
+      run()
+      report = received_report()
+      assert report[:agent] == %{output: "agent_report_string"}
     end
   end
 
@@ -194,6 +311,16 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       assert String.contains? output, "  Agent lock path: -"
       assert String.contains? output, "  Agent logger: -"
     end
+
+    test "missings tests are not added to report" do
+      run()
+      assert received_report()[:agent] == %{
+        "extension" => %{
+          "config" => %{"valid" => %{"result" => true}}
+        }
+        # Missing agent report
+      }
+    end
   end
 
   describe "when the agent diagnose report contains an error" do
@@ -205,6 +332,11 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     test "prints the error" do
       output = run()
       assert String.contains? output, "Agent diagnostics\n  Error: fatal error"
+    end
+
+    test "adds the error to the report" do
+      run()
+      assert received_report()[:agent] == %{"error" => "fatal error"}
     end
   end
 
@@ -251,19 +383,28 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     end
   end
 
+  test "adds configuration to the report" do
+    run()
+    assert received_report()[:config] == Application.get_env(:appsignal, :config)
+  end
+
   describe "with valid Push API key" do
     test "outputs invalid API key warning" do
       output = run()
       assert String.contains? output, "Validation"
       assert String.contains? output, "Push API key: valid"
     end
+
+    test "adds validation to the report" do
+      run()
+      assert received_report()[:validation] == %{push_api_key: "valid"}
+    end
   end
 
   describe "with invalid Push API key" do
-    setup %{bypass: bypass} do
+    setup %{auth_bypass: auth_bypass} do
       setup_with_config(%{push_api_key: ""})
-
-      Bypass.expect bypass, fn conn ->
+      Bypass.expect auth_bypass, fn conn ->
         assert "/1/auth" == conn.request_path
         assert "GET" == conn.method
         Plug.Conn.resp(conn, 401, "")
@@ -275,6 +416,11 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       assert String.contains? output, "Validation"
       assert String.contains? output, "Push API key: invalid"
     end
+
+    test "adds validation to the report" do
+      run()
+      assert received_report()[:validation] == %{push_api_key: "invalid"}
+    end
   end
 
   describe "without config" do
@@ -283,6 +429,11 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       assert String.contains? output, "Paths"
       assert String.contains? output, "log_dir_path: /tmp"
       assert String.contains? output, "log_file_path: /tmp/appsignal.log"
+    end
+
+    test "adds paths to report" do
+      run()
+      assert Map.keys(received_report()[:paths]) == [:log_dir_path, :log_file_path]
     end
   end
 
@@ -293,14 +444,6 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       {:ok, %{log_dir_path: log_dir_path, log_file_path: log_file_path}}
     end
 
-    @tag :skip_env_test
-    @tag :skip_env_test_phoenix
-    test "outputs writable, but doesn't create log file", %{log_dir_path: log_dir_path, log_file_path: log_file_path} do
-      output = run()
-      assert String.contains? output, "log_dir_path: #{log_dir_path}\n    - Writable?: yes"
-      assert String.contains? output, "log_file_path: #{log_file_path}\n    - Exists?: no"
-    end
-
     @tag :skip_env_test_no_nif
     test "outputs writable and creates log file", %{log_dir_path: log_dir_path, log_file_path: log_file_path} do
       @nif.set(:run_diagnose, true)
@@ -308,14 +451,51 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       assert String.contains? output, "log_dir_path: #{log_dir_path}\n    - Writable?: yes"
       assert String.contains? output, "log_file_path: #{log_file_path}\n    - Writable?: yes"
     end
+
+    @tag :skip_env_test_no_nif
+    test "adds writable log paths to report", %{log_dir_path: log_dir_path, log_file_path: log_file_path} do
+      @nif.set(:run_diagnose, true)
+      run()
+      %{uid: uid} = File.stat!(log_dir_path)
+      assert received_report()[:paths] == %{
+        log_dir_path: %{
+          path: log_dir_path,
+          configured: true,
+          exists: true,
+          writable: true,
+          ownership: %{uid: uid}
+        },
+        log_file_path: %{
+          path: log_file_path,
+          configured: true,
+          exists: true,
+          writable: true,
+          ownership: %{uid: uid}
+        }
+      }
+    end
   end
 
   describe "when log_dir_path does not exist" do
+    setup do
+      setup_with_config(%{log_path: "/foo/bar/baz.log"})
+    end
+
     test "outputs exists: false" do
-      output = with_config(%{log_path: "/foo/bar/baz.log"}, &run/0)
+      output = run()
 
       assert String.contains? output, "log_dir_path: /foo/bar\n    - Exists?: no"
       assert String.contains? output, "log_file_path: /foo/bar/baz.log\n    - Exists?: no"
+    end
+
+    test "adds log exists: false to report" do
+      run()
+      log_dir_report = received_report()[:paths][:log_dir_path]
+      assert log_dir_report[:exists] == false
+      assert log_dir_report[:writable] == false
+      log_file_report = received_report()[:paths][:log_file_path]
+      assert log_file_report[:exists] == false
+      assert log_file_report[:writable] == false
     end
   end
 
@@ -343,20 +523,31 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       # Can't read inside the directory so it's assumed to not exist
       assert String.contains? output, "log_file_path: #{log_file_path}\n    - Exists?: no"
     end
+
+    test "adds log writable: false to report" do
+      run()
+      log_dir_report = received_report()[:paths][:log_dir_path]
+      assert log_dir_report[:exists] == true
+      assert log_dir_report[:writable] == false
+      log_file_report = received_report()[:paths][:log_file_path]
+      assert log_file_report[:exists] == false
+      assert log_file_report[:writable] == false
+    end
   end
 
   describe "when path is owned by current user" do
     setup do
       %{log_dir_path: log_dir_path} = prepare_tmp_dir "not_owned_path"
+      %{uid: uid} = File.stat!(log_dir_path)
 
-      {:ok, %{log_dir_path: log_dir_path}}
+      {:ok, %{log_dir_path: log_dir_path, uid: uid}}
     end
 
-    test "outputs ownership uid", %{log_dir_path: log_dir_path} do
-      %{uid: uid} = File.stat!(log_dir_path)
+    test "outputs ownership uid", %{log_dir_path: log_dir_path, uid: uid} do
       @system.set(:uid, uid)
       output = run()
-      assert String.contains? output, "log_dir_path: #{log_dir_path}\n    - Writable?: yes\n    - Ownership?: yes (file: #{uid}, process: #{@system.uid})"
+      assert String.contains? output, "log_dir_path: #{log_dir_path}\n    - Writable?: yes\n" <>
+        "    - Ownership?: yes (file: #{uid}, process: #{@system.uid})"
     end
   end
 
@@ -370,8 +561,67 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     test "outputs ownership uid", %{log_dir_path: log_dir_path} do
         %{uid: uid} = File.stat!(log_dir_path)
         output = run()
-        assert String.contains? output, "log_dir_path: #{log_dir_path}\n    - Writable?: yes\n    - Ownership?: no (file: #{uid}, process: #{@system.uid})"
+        assert String.contains? output, "log_dir_path: #{log_dir_path}\n    - Writable?: yes\n" <>
+          "    - Ownership?: no (file: #{uid}, process: #{@system.uid})"
       end
+  end
+
+  describe "when user does not submit report to AppSignal" do
+    test "exits early" do
+      output = run("n")
+      assert String.contains? output, "Diagnostics report"
+      assert String.contains? output, "Send diagnostics report to AppSignal? (Y/n):"
+      assert String.contains? output, "Not sending diagnostics report to AppSignal."
+
+      refute @diagnose_report.get(:report_sent?)
+    end
+  end
+
+  describe "when user submits report to AppSignal" do
+    test "sends diagnostics report to AppSignal and outputs a support token" do
+      assert @diagnose_report.set(:response, {:ok, "0123456789abcdef"})
+      output = run()
+      assert String.contains? output, "Diagnostics report"
+      assert String.contains? output, "Send diagnostics report to AppSignal? (Y/n):"
+      assert String.contains? output, "Transmitting diagnostics report"
+      assert String.contains? output, "Your diagnostics report has been sent to AppSignal."
+      assert String.contains? output, "Your support token: 0123456789abcdef"
+
+      assert @diagnose_report.get(:report_sent?)
+      assert received_report()
+    end
+
+    test "when returns invalid output it outputs an error" do
+      assert @diagnose_report.set(:response, {:error, %{status_code: 200, body: "foo"}})
+      output = run()
+      assert String.contains? output, "Diagnostics report"
+      assert String.contains? output, "Send diagnostics report to AppSignal? (Y/n):"
+      assert String.contains? output, "Transmitting diagnostics report"
+      assert String.contains? output, "Error: Couldn't decode server response."
+      assert String.contains? output, "Response body: foo"
+    end
+
+    test "when server errors it outputs an error" do
+      assert @diagnose_report.set(:response, {:error, %{status_code: 500, body: "foo"}})
+      output = run()
+      assert String.contains? output, "Diagnostics report"
+      assert String.contains? output, "Send diagnostics report to AppSignal? (Y/n):"
+      assert String.contains? output, "Transmitting diagnostics report"
+      assert String.contains? output, "Error: Something went wrong while submitting the report " <>
+        "to AppSignal."
+      assert String.contains? output, "Response code: 500"
+      assert String.contains? output, "Response body: foo"
+    end
+
+    test "when no connection to server it outputs an error" do
+      assert @diagnose_report.set(:response, {:error, %{reason: "foo"}})
+      output = run()
+      assert String.contains? output, "Diagnostics report"
+      assert String.contains? output, "Send diagnostics report to AppSignal? (Y/n):"
+      assert String.contains? output, "Transmitting diagnostics report"
+      assert String.contains? output, "Error: Something went wrong while submitting the report " <>
+        "to AppSignal.\nfoo"
+    end
   end
 
   defp prepare_tmp_dir(path) do
@@ -386,5 +636,4 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
     %{log_dir_path: log_dir_path, log_file_path: log_file_path}
   end
-
 end
