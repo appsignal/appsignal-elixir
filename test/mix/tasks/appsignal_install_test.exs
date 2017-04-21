@@ -170,7 +170,8 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
         ~s(config :appsignal, :config,\n) <>
         ~s(  active: true,\n) <>
         ~s(  name: "My app's name",\n) <>
-        ~s(  push_api_key: "my_push_api_key"\n)
+        ~s(  push_api_key: "my_push_api_key",\n) <>
+        ~s(  env: Mix.env\n)
 
       # Imports AppSignal config in config.exs file
       app_config = File.read!(Path.join(@test_config_directory, "config.exs"))

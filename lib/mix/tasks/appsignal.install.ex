@@ -156,7 +156,8 @@ defmodule Mix.Tasks.Appsignal.Install do
       "config :appsignal, :config,\n" <>
       ~s(  active: true,\n) <>
       ~s(  name: "#{config[:name]}",\n) <>
-      ~s(  push_api_key: "#{config[:push_api_key]}"\n)
+      ~s(  push_api_key: "#{config[:push_api_key]}",\n) <>
+      ~s(  env: Mix.env\n)
   end
 
   # Append a line to Mix configuration environment files which deactivates
