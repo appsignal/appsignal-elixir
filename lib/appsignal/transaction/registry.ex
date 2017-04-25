@@ -34,7 +34,7 @@ defmodule Appsignal.TransactionRegistry do
   @spec register(Transaction.t) :: :ok
   def register(transaction) do
     pid = self()
-    case Appsignal.started? do
+    case registry_alive?() do
       true ->
         true = :ets.insert(@table, {pid, transaction})
         GenServer.cast(__MODULE__, {:monitor, pid})
@@ -44,12 +44,17 @@ defmodule Appsignal.TransactionRegistry do
     end
   end
 
+  defp registry_alive? do
+    pid = Process.whereis(__MODULE__)
+    !is_nil(pid) && Process.alive?(pid)
+  end
+
   @doc """
   Given a process ID, return its associated transaction.
   """
   @spec lookup(pid, boolean) :: Transaction.t | nil
   def lookup(pid, return_removed \\ false) do
-    case Appsignal.started? && :ets.lookup(@table, pid) do
+    case registry_alive?() && :ets.lookup(@table, pid) do
       [{^pid, :removed}] ->
         case return_removed do
           false -> nil

@@ -1,6 +1,5 @@
 defmodule Appsignal.Transaction.RegistryTest do
-  use ExUnit.Case
-  import Mock
+  use ExUnit.Case, async: false
 
   alias Appsignal.{Transaction, TransactionRegistry}
 
@@ -33,24 +32,29 @@ defmodule Appsignal.Transaction.RegistryTest do
     assert :removed == TransactionRegistry.lookup(pid, true)
   end
 
-  test_with_mock "register returns nil if appsignal is not started", Appsignal, [], [
-    started?: fn() -> false end
-  ] do
-    transaction = %Transaction{id: Transaction.generate_id()}
-    assert nil == TransactionRegistry.register(transaction)
-  end
-
-  test_with_mock "lookup returns nil if appsignal is not started", Appsignal, [], [
-    started?: fn() -> false end
-  ] do
-    assert nil == TransactionRegistry.lookup(self())
-  end
-
   test "delete entry by transaction" do
     transaction = %Transaction{id: Transaction.generate_id()}
     TransactionRegistry.register(transaction)
     :ok = TransactionRegistry.remove_transaction(transaction)
     {:error, :not_found} = TransactionRegistry.remove_transaction(transaction)
+  end
+
+  describe "when registry is not running" do
+    setup do
+      :ok = Supervisor.terminate_child(Appsignal.Supervisor, TransactionRegistry)
+      on_exit fn ->
+        {:ok, _} = Supervisor.restart_child(Appsignal.Supervisor, TransactionRegistry)
+      end
+    end
+
+    test "register/1 returns nil" do
+      transaction = %Transaction{id: Transaction.generate_id()}
+      assert nil == TransactionRegistry.register(transaction)
+    end
+
+    test "lookup/1 returns nil" do
+      assert nil == TransactionRegistry.lookup(self())
+    end
   end
 
   defp wait_for_process_to_exit(pid) do
