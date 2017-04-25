@@ -9,7 +9,7 @@ defmodule Appsignal.Transaction.RegistryTest do
 
     TransactionRegistry.register(transaction)
 
-    assert ^transaction = TransactionRegistry.lookup(self())
+    assert transaction == TransactionRegistry.lookup(self())
   end
 
 
@@ -18,13 +18,13 @@ defmodule Appsignal.Transaction.RegistryTest do
 
     pid = spawn(fn() ->
       TransactionRegistry.register(transaction)
-      assert ^transaction = TransactionRegistry.lookup(self())
+      assert transaction == TransactionRegistry.lookup(self())
       :timer.sleep(50)
     end)
 
     :timer.sleep(10)
 
-    assert ^transaction = TransactionRegistry.lookup(pid)
+    assert transaction == TransactionRegistry.lookup(pid)
 
     :timer.sleep(100)
     # by now the process is gone
