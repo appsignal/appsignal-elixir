@@ -19,15 +19,11 @@ defmodule Appsignal.Transaction.RegistryTest do
     pid = spawn(fn() ->
       TransactionRegistry.register(transaction)
       assert transaction == TransactionRegistry.lookup(self())
-      :timer.sleep(50)
     end)
 
-    :timer.sleep(10)
+    :ok = wait_for_process_to_exit(pid)
 
     assert transaction == TransactionRegistry.lookup(pid)
-
-    :timer.sleep(100)
-    # by now the process is gone
 
     :ok = TransactionRegistry.remove_transaction(transaction)
 
@@ -35,7 +31,6 @@ defmodule Appsignal.Transaction.RegistryTest do
 
     # Lookup removed status
     assert :removed == TransactionRegistry.lookup(pid, true)
-
   end
 
   test_with_mock "register returns nil if appsignal is not started", Appsignal, [], [
@@ -58,4 +53,12 @@ defmodule Appsignal.Transaction.RegistryTest do
     {:error, :not_found} = TransactionRegistry.remove_transaction(transaction)
   end
 
+  defp wait_for_process_to_exit(pid) do
+    ref = Process.monitor(pid)
+    receive do
+      {:DOWN, ^ref, _, _, _} -> :ok
+    after
+      500 -> :timeout
+    end
+  end
 end
