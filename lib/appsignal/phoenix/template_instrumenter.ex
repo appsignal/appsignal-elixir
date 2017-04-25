@@ -42,7 +42,7 @@ if Appsignal.phoenix? do
             Appsignal.Instrumentation.Helpers.instrument(
               self(),
               "render.phoenix_template",
-              unquote(name),
+              unquote(path),
               fn() -> unquote(expr) end
             )
           end
