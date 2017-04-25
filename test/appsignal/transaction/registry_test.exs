@@ -12,7 +12,7 @@ defmodule Appsignal.Transaction.RegistryTest do
   end
 
 
-  test "lookup returns nil after process has ended" do
+  test "lookup/1 returns nil after process has ended" do
     transaction = %Transaction{id: Transaction.generate_id()}
 
     pid = spawn(fn() ->
