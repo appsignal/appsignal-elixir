@@ -155,7 +155,10 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     |> reason(":function_clause")
     |> message(~r(Process #PID<[\d.]+> terminating: {:function_clause...))
     |> stacktrace([
-      "(stdlib) gen_server.erl:812: :gen_server.terminate/7",
+      "(elixir) unicode/unicode.ex:190: String.Unicode.length/1",
+      "test/appsignal/error_handler/error_matcher_test.exs:27: Appsignal.ErrorHandler.ErrorMatcherTest.CrashingGenServer.handle_info/2",
+      "(stdlib) gen_server.erl:601: :gen_server.try_dispatch/4",
+      "(stdlib) gen_server.erl:667: :gen_server.handle_msg/5",
       "(stdlib) proc_lib.erl:247: :proc_lib.init_p_do_apply/3"
     ])
   end
@@ -170,7 +173,8 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
       ~r(Process #PID<[\d.]+> terminating: {:function_clause, \[{String.Uni...)
     )
     |> stacktrace([
-      "(elixir) lib/task/supervised.ex:116: Task.Supervised.exit/4",
+      "(elixir) unicode/unicode.ex:190: String.Unicode.length/1",
+      "(elixir) lib/task/supervised.ex:85: Task.Supervised.do_apply/2",
       "(stdlib) proc_lib.erl:247: :proc_lib.init_p_do_apply/3"
     ])
   end
