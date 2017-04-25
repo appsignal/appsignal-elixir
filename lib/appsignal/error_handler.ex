@@ -84,10 +84,21 @@ defmodule Appsignal.ErrorHandler do
     {origin, reason, message, Backtrace.from_stacktrace(stacktrace), nil}
   end
 
-  defp extract_stacktrace({_, stacktrace}) when is_list(stacktrace) do
-    stacktrace
+  defp extract_stacktrace({_, stacktrace}) do
+    case stacktrace?(stacktrace) do
+      true -> stacktrace
+      false -> nil
+    end
   end
   defp extract_stacktrace(_), do: nil
+
+  defp stacktrace?(stacktrace) when is_list(stacktrace) do
+    Enum.all?(stacktrace, &stacktrace_line?/1)
+  end
+  defp stacktrace?(_), do: false
+
+  defp stacktrace_line?({_,_,_,[file: _, line: _]}), do: true
+  defp stacktrace_line?(_), do: false
 
   @doc false
   def format_stack(stacktrace) do

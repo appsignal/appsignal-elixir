@@ -116,10 +116,10 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
   end
 
   test "proc_lib.spawn + badmatch error" do
-    :proc_lib.spawn(fn() -> throw({:badmatch, 2}) end)
+    :proc_lib.spawn(fn() -> throw({:badmatch, [1, 2, 3]}) end)
     |> assert_crash_caught
-    |> reason("{:error, {:badmatch, 2}}")
-    |> message(~r(Process #PID<[\d.]+> terminating: {:badmatch, 2}))
+    |> reason("{:error, {:badmatch, [1, 2, 3]}}")
+    |> message(~r(Process #PID<[\d.]+> terminating: {:badmatch, \[1, 2, 3\]}))
     |> stacktrace([
       "test/appsignal/error_handler/error_matcher_test.exs:119: anonymous fn/0 in Appsignal.ErrorHandler.ErrorMatcherTest.test proc_lib.spawn + badmatch error/1",
       "(stdlib) proc_lib.erl:232: :proc_lib.init_p/3"
