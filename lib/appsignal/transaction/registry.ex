@@ -43,11 +43,6 @@ defmodule Appsignal.TransactionRegistry do
     end
   end
 
-  defp registry_alive? do
-    pid = Process.whereis(__MODULE__)
-    !is_nil(pid) && Process.alive?(pid)
-  end
-
   @doc """
   Given a process ID, return its associated transaction.
   """
@@ -124,5 +119,8 @@ defmodule Appsignal.TransactionRegistry do
     {:noreply, state}
   end
 
-
+  defp registry_alive? do
+    pid = Process.whereis(__MODULE__)
+    !is_nil(pid) && Process.alive?(pid)
+  end
 end
