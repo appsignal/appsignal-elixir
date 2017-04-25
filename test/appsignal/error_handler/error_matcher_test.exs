@@ -65,7 +65,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     for s <- stacktrace do
       assert is_binary(s)
     end
-    {reason, message}
+    {reason, message, stacktrace}
   end
 
   setup do
@@ -83,6 +83,10 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     |> assert_crash_caught
     |> reason("{:exit, :crash_proc_lib_spawn}")
     |> message(~r(Process #PID<[\d.]+> terminating$))
+    |> stacktrace([
+      "test/appsignal/error_handler/error_matcher_test.exs:81: anonymous fn/0 in Appsignal.ErrorHandler.ErrorMatcherTest.test proc_lib.spawn + exit/1",
+      "(stdlib) proc_lib.erl:232: :proc_lib.init_p/3"
+    ])
   end
 
   test "proc_lib.spawn + erlang.error" do
@@ -92,6 +96,10 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     |> assert_crash_caught
     |> reason("{:error, :crash_proc_lib_error}")
     |> message(~r(Process #PID<[\d.]+> terminating$))
+    |> stacktrace([
+      "test/appsignal/error_handler/error_matcher_test.exs:94: anonymous fn/0 in Appsignal.ErrorHandler.ErrorMatcherTest.test proc_lib.spawn + erlang.error/1",
+      "(stdlib) proc_lib.erl:232: :proc_lib.init_p/3"
+    ])
   end
 
   test "proc_lib.spawn + function error" do
@@ -101,6 +109,10 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     |> assert_crash_caught
     |> reason("{:error, :function_clause}")
     |> message(~r(Process #PID<[\d.]+> terminating$))
+    |> stacktrace([
+      "(elixir) unicode/unicode.ex:190: String.Unicode.length/1",
+      "(stdlib) proc_lib.erl:232: :proc_lib.init_p/3"
+    ])
   end
 
   test "proc_lib.spawn + badmatch error" do
@@ -108,6 +120,10 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     |> assert_crash_caught
     |> reason("{:error, {:badmatch, 2}}")
     |> message(~r(Process #PID<[\d.]+> terminating: {:badmatch, 2}))
+    |> stacktrace([
+      "test/appsignal/error_handler/error_matcher_test.exs:119: anonymous fn/0 in Appsignal.ErrorHandler.ErrorMatcherTest.test proc_lib.spawn + badmatch error/1",
+      "(stdlib) proc_lib.erl:232: :proc_lib.init_p/3"
+    ])
   end
 
   test "Crashing GenServer with throw" do
@@ -116,6 +132,10 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     # http://erlang.org/pipermail/erlang-bugs/2012-April/002862.html
     |> reason("{:exit, {:bad_return_value, :crashed_gen_server_throw}}")
     |> message(~r(Process #PID<[\d.]+> terminating: {:bad_return_valu...))
+    |> stacktrace([
+      "(stdlib) gen_server.erl:812: :gen_server.terminate/7",
+      "(stdlib) proc_lib.erl:247: :proc_lib.init_p_do_apply/3"
+    ])
   end
 
   test "Crashing GenServer with exit" do
@@ -123,6 +143,10 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     |> assert_crash_caught
     |> reason("{:exit, :crashed_gen_server_exit}")
     |> message(~r(Process #PID<[\d.]+> terminating$))
+    |> stacktrace([
+      "(stdlib) gen_server.erl:812: :gen_server.terminate/7",
+      "(stdlib) proc_lib.erl:247: :proc_lib.init_p_do_apply/3"
+    ])
   end
 
   test "Crashing GenServer with function error" do
@@ -130,6 +154,10 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     |> assert_crash_caught
     |> reason(":function_clause")
     |> message(~r(Process #PID<[\d.]+> terminating: {:function_clause...))
+    |> stacktrace([
+      "(stdlib) gen_server.erl:812: :gen_server.terminate/7",
+      "(stdlib) proc_lib.erl:247: :proc_lib.init_p_do_apply/3"
+    ])
   end
 
   test "Task" do
@@ -141,6 +169,10 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     |> message(
       ~r(Process #PID<[\d.]+> terminating: {:function_clause, \[{String.Uni...)
     )
+    |> stacktrace([
+      "(elixir) lib/task/supervised.ex:116: Task.Supervised.exit/4",
+      "(stdlib) proc_lib.erl:247: :proc_lib.init_p_do_apply/3"
+    ])
   end
 
   test "Task await" do
@@ -155,15 +187,24 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     |> message(
       ~r(Process #PID<[\d.]+> terminating: {:timeout, {Task, :await, \[%Tas...)
     )
+    |> stacktrace([
+      "(elixir) lib/task.ex:416: Task.await/2",
+      "(stdlib) proc_lib.erl:232: :proc_lib.init_p/3"
+    ])
   end
 
-  defp reason({reason, _message} = data, expected) do
+  defp reason({reason, _message, _stacktrace} = data, expected) do
     assert expected =~ reason
     data
   end
 
-  defp message({_reason, message} = data, expected) do
+  defp message({_reason, message, _stacktrace} = data, expected) do
     assert message =~ expected
+    data
+  end
+
+  defp stacktrace({_reason, _message, stacktrace} = data, expected) do
+    assert stacktrace == expected
     data
   end
 end
