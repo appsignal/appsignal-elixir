@@ -25,7 +25,9 @@ defmodule Mix.Tasks.Appsignal.Install do
       :file ->
         write_config_file(config)
         link_config_file()
-        deactivate_config_in_test_env()
+        activate_config_for_env("dev")
+        activate_config_for_env("stag")
+        activate_config_for_env("prod")
       :env ->
         output_config_environment_variables(config)
     end
@@ -160,18 +162,19 @@ defmodule Mix.Tasks.Appsignal.Install do
       ~s(  env: Mix.env\n)
   end
 
-  # Append a line to Mix configuration environment files which deactivates
-  # AppSignal for the test environment.
-  defp deactivate_config_in_test_env do
-    env_file = Path.join("config", "test.exs")
+  # Append a line to Mix configuration environment files which activate
+  # AppSignal. This is done for development, staging and production
+  # environments if they are present.
+  defp activate_config_for_env(env) do
+    env_file = Path.join("config", "#{env}.exs")
     if File.exists? env_file do
-      IO.write "Deactivating AppSignal in the test environment: "
+      IO.write "Activating #{env} environment: "
 
-      deactivation = "\nconfig :appsignal, :config, active: false\n"
-      case file_contains?(env_file, deactivation) do
-        :ok -> IO.puts "Success! (Already deactivated)"
+      active_content = "\nconfig :appsignal, :config, active: true, env: :#{env}\n"
+      case file_contains?(env_file, active_content) do
+        :ok -> IO.puts "Success! (Already active?)"
         {:error, :not_found} ->
-          case append_to_file(env_file, deactivation) do
+          case append_to_file(env_file, active_content) do
             :ok -> IO.puts "Success!"
             {:error, reason} ->
               IO.puts "Failure! #{reason}"
