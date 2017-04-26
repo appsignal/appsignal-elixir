@@ -84,8 +84,8 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     |> reason("{:exit, :crash_proc_lib_spawn}")
     |> message(~r(Process #PID<[\d.]+> terminating$))
     |> stacktrace([
-      "test/appsignal/error_handler/error_matcher_test.exs:81: anonymous fn/0 in Appsignal.ErrorHandler.ErrorMatcherTest.test proc_lib.spawn + exit/1",
-      "(stdlib) proc_lib.erl:232: :proc_lib.init_p/3"
+      ~r{test/appsignal/error_handler/error_matcher_test.exs:\d+: anonymous fn/0 in Appsignal.ErrorHandler.ErrorMatcherTest.test proc_lib.spawn \+ exit/1},
+      ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p/3}
     ])
   end
 
@@ -97,8 +97,8 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     |> reason("{:error, :crash_proc_lib_error}")
     |> message(~r(Process #PID<[\d.]+> terminating$))
     |> stacktrace([
-      "test/appsignal/error_handler/error_matcher_test.exs:94: anonymous fn/0 in Appsignal.ErrorHandler.ErrorMatcherTest.test proc_lib.spawn + erlang.error/1",
-      "(stdlib) proc_lib.erl:232: :proc_lib.init_p/3"
+      ~r{test/appsignal/error_handler/error_matcher_test.exs:\d+: anonymous fn/0 in Appsignal.ErrorHandler.ErrorMatcherTest.test proc_lib.spawn \+ erlang.error/1},
+      ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p/3}
     ])
   end
 
@@ -110,8 +110,8 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     |> reason("{:error, :function_clause}")
     |> message(~r(Process #PID<[\d.]+> terminating$))
     |> stacktrace([
-      "(elixir) unicode/unicode.ex:190: String.Unicode.length/1",
-      "(stdlib) proc_lib.erl:232: :proc_lib.init_p/3"
+      ~r{\(elixir\) unicode/unicode.ex:\d+: String.Unicode.length/1},
+      ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p/3}
     ])
   end
 
@@ -121,8 +121,8 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     |> reason("{:error, {:badmatch, [1, 2, 3]}}")
     |> message(~r(Process #PID<[\d.]+> terminating: {:badmatch, \[1, 2, 3\]}))
     |> stacktrace([
-      "test/appsignal/error_handler/error_matcher_test.exs:119: anonymous fn/0 in Appsignal.ErrorHandler.ErrorMatcherTest.test proc_lib.spawn + badmatch error/1",
-      "(stdlib) proc_lib.erl:232: :proc_lib.init_p/3"
+      ~r{test/appsignal/error_handler/error_matcher_test.exs:\d+: anonymous fn/0 in Appsignal.ErrorHandler.ErrorMatcherTest.test proc_lib.spawn \+ badmatch error/1},
+      ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p/3}
     ])
   end
 
@@ -133,8 +133,8 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     |> reason("{:exit, {:bad_return_value, :crashed_gen_server_throw}}")
     |> message(~r(Process #PID<[\d.]+> terminating: {:bad_return_valu...))
     |> stacktrace([
-      "(stdlib) gen_server.erl:812: :gen_server.terminate/7",
-      "(stdlib) proc_lib.erl:247: :proc_lib.init_p_do_apply/3"
+      ~r{\(stdlib\) gen_server.erl:\d+: :gen_server.terminate/7},
+      ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p_do_apply/3}
     ])
   end
 
@@ -144,8 +144,8 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     |> reason("{:exit, :crashed_gen_server_exit}")
     |> message(~r(Process #PID<[\d.]+> terminating$))
     |> stacktrace([
-      "(stdlib) gen_server.erl:812: :gen_server.terminate/7",
-      "(stdlib) proc_lib.erl:247: :proc_lib.init_p_do_apply/3"
+      ~r{\(stdlib\) gen_server.erl:\d+: :gen_server.terminate/7},
+      ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p_do_apply/3}
     ])
   end
 
@@ -155,11 +155,11 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     |> reason(":function_clause")
     |> message(~r(Process #PID<[\d.]+> terminating: {:function_clause...))
     |> stacktrace([
-      "(elixir) unicode/unicode.ex:190: String.Unicode.length/1",
-      "test/appsignal/error_handler/error_matcher_test.exs:27: Appsignal.ErrorHandler.ErrorMatcherTest.CrashingGenServer.handle_info/2",
-      "(stdlib) gen_server.erl:601: :gen_server.try_dispatch/4",
-      "(stdlib) gen_server.erl:667: :gen_server.handle_msg/5",
-      "(stdlib) proc_lib.erl:247: :proc_lib.init_p_do_apply/3"
+      ~r{\(elixir\) unicode/unicode.ex:\d+: String.Unicode.length/1},
+      ~r{test/appsignal/error_handler/error_matcher_test.exs:\d+: Appsignal.ErrorHandler.ErrorMatcherTest.CrashingGenServer.handle_info/2},
+      ~r{\(stdlib\) gen_server.erl:\d+: :gen_server.try_dispatch/4},
+      ~r{\(stdlib\) gen_server.erl:\d+: :gen_server.handle_msg/5},
+      ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p_do_apply/3}
     ])
   end
 
@@ -173,9 +173,9 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
       ~r(Process #PID<[\d.]+> terminating: {:function_clause, \[{String.Uni...)
     )
     |> stacktrace([
-      "(elixir) unicode/unicode.ex:190: String.Unicode.length/1",
-      "(elixir) lib/task/supervised.ex:85: Task.Supervised.do_apply/2",
-      "(stdlib) proc_lib.erl:247: :proc_lib.init_p_do_apply/3"
+      ~r{\(elixir\) unicode/unicode.ex:\d+: String.Unicode.length/1},
+      ~r{\(elixir\) lib/task/supervised.ex:\d+: Task.Supervised.do_apply/2},
+      ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p_do_apply/3}
     ])
   end
 
@@ -192,8 +192,8 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
       ~r(Process #PID<[\d.]+> terminating: {:timeout, {Task, :await, \[%Tas...)
     )
     |> stacktrace([
-      "(elixir) lib/task.ex:416: Task.await/2",
-      "(stdlib) proc_lib.erl:232: :proc_lib.init_p/3"
+      ~r{\(elixir\) lib/task.ex:\d+: Task.await/2},
+      ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p/3}
     ])
   end
 
@@ -208,7 +208,14 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
   end
 
   defp stacktrace({_reason, _message, stacktrace} = data, expected) do
-    assert stacktrace == expected
+    assert_stacktrace(stacktrace, expected)
     data
   end
+
+  defp assert_stacktrace([line|tail], [expected|expected_tail]) do
+    assert line =~ expected
+    assert_stacktrace(tail, expected_tail)
+  end
+  defp assert_stacktrace([line], [expected]), do: assert line =~ expected
+  defp assert_stacktrace([], []), do: true
 end
