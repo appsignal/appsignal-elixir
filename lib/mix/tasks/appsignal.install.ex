@@ -154,12 +154,17 @@ defmodule Mix.Tasks.Appsignal.Install do
 
   # Contents for the config/appsignal.exs file.
   defp appsignal_config_file_contents(config) do
+    options = [
+      ~s(  active: true),
+      ~s(  name: "#{config[:name]}"),
+      ~s(  push_api_key: "#{config[:push_api_key]}"),
+      ~s(  env: Mix.env)
+    ]
+
     "use Mix.Config\n\n" <>
       "config :appsignal, :config,\n" <>
-      ~s(  active: true,\n) <>
-      ~s(  name: "#{config[:name]}",\n) <>
-      ~s(  push_api_key: "#{config[:push_api_key]}",\n) <>
-      ~s(  env: Mix.env\n)
+      Enum.join(options, ",\n") <>
+      "\n"
   end
 
   # Append a line to Mix configuration environment files which activate
