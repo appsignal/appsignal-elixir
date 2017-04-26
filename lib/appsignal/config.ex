@@ -10,6 +10,7 @@ defmodule Appsignal.Config do
     env: :dev,
     filter_parameters: nil,
     ignore_actions: [],
+    ignore_cookies: [],
     ignore_errors: [],
     send_params: true,
     skip_session_data: false,
@@ -69,6 +70,7 @@ defmodule Appsignal.Config do
     "APPSIGNAL_LOG" => :log,
     "APPSIGNAL_LOG_PATH" => :log_path,
     "APPSIGNAL_IGNORE_ERRORS" => :ignore_errors,
+    "APPSIGNAL_IGNORE_COOKIES" => :ignore_cookies,
     "APPSIGNAL_IGNORE_ACTIONS" => :ignore_actions,
     "APPSIGNAL_HTTP_PROXY" => :http_proxy,
     "APPSIGNAL_RUNNING_IN_CONTAINER" => :running_in_container,
@@ -80,7 +82,7 @@ defmodule Appsignal.Config do
   @string_keys ~w(APPSIGNAL_APP_NAME APPSIGNAL_PUSH_API_KEY APPSIGNAL_PUSH_API_ENDPOINT APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH APPSIGNAL_HOSTNAME APPSIGNAL_HTTP_PROXY APPSIGNAL_LOG APPSIGNAL_LOG_PATH APPSIGNAL_WORKING_DIR_PATH APPSIGNAL_CA_FILE_PATH)
   @bool_keys ~w(APPSIGNAL_ACTIVE APPSIGNAL_DEBUG APPSIGNAL_INSTRUMENT_NET_HTTP APPSIGNAL_ENABLE_FRONTEND_ERROR_CATCHING APPSIGNAL_ENABLE_ALLOCATION_TRACKING APPSIGNAL_ENABLE_GC_INSTRUMENTATION APPSIGNAL_RUNNING_IN_CONTAINER APPSIGNAL_ENABLE_HOST_METRICS APPSIGNAL_SKIP_SESSION_DATA)
   @atom_keys ~w(APPSIGNAL_APP_ENV)
-  @string_list_keys ~w(APPSIGNAL_FILTER_PARAMETERS APPSIGNAL_IGNORE_ACTIONS APPSIGNAL_IGNORE_ERRORS)
+  @string_list_keys ~w(APPSIGNAL_FILTER_PARAMETERS APPSIGNAL_IGNORE_ACTIONS APPSIGNAL_IGNORE_COOKIES APPSIGNAL_IGNORE_ERRORS)
 
   defp load_environment(config, list, converter) do
     list |> Enum.reduce(
@@ -185,6 +187,7 @@ defmodule Appsignal.Config do
       System.put_env("_APPSIGNAL_HTTP_PROXY", config[:http_proxy])
     end
     System.put_env("_APPSIGNAL_IGNORE_ACTIONS", config[:ignore_actions] |> Enum.join(","))
+    System.put_env("_APPSIGNAL_IGNORE_COOKIES", config[:ignore_cookies] |> Enum.join(","))
     System.put_env("_APPSIGNAL_IGNORE_ERRORS", config[:ignore_errors] |> Enum.join(","))
     System.put_env("_APPSIGNAL_LANGUAGE_INTEGRATION_VERSION", "elixir-" <> @language_integration_version)
     System.put_env("_APPSIGNAL_LOG", config[:log])
