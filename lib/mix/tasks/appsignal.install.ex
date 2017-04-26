@@ -155,15 +155,19 @@ defmodule Mix.Tasks.Appsignal.Install do
   # Contents for the config/appsignal.exs file.
   defp appsignal_config_file_contents(config) do
     options = [
-      ~s(  active: true),
       ~s(  name: "#{config[:name]}"),
       ~s(  push_api_key: "#{config[:push_api_key]}"),
       ~s(  env: Mix.env)
     ]
 
+    options_with_active = case has_environment_configuration_files?() do
+      false -> [~s(  active: true)] ++ options
+      true -> options
+    end
+
     "use Mix.Config\n\n" <>
       "config :appsignal, :config,\n" <>
-      Enum.join(options, ",\n") <>
+      Enum.join(options_with_active, ",\n") <>
       "\n"
   end
 
@@ -171,7 +175,7 @@ defmodule Mix.Tasks.Appsignal.Install do
   # AppSignal. This is done for development, staging and production
   # environments if they are present.
   defp activate_config_for_env(env) do
-    env_file = Path.join("config", "#{env}.exs")
+    env_file = config_path_for_env(env)
     if File.exists? env_file do
       IO.write "Activating #{env} environment: "
 
@@ -238,5 +242,15 @@ defmodule Mix.Tasks.Appsignal.Install do
     Appsignal.stop(nil)
     IO.puts "Demonstration sample data sent!"
     IO.puts "It may take about a minute for the data to appear on https://appsignal.com/accounts"
+  end
+
+  defp has_environment_configuration_files? do
+    "dev" |> config_path_for_env |> File.exists? or
+    "stag" |> config_path_for_env |> File.exists? or
+    "prod" |> config_path_for_env |> File.exists?
+  end
+
+  defp config_path_for_env(env) do
+    Path.join("config", "#{env}.exs")
   end
 end
