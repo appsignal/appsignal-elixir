@@ -13,13 +13,13 @@ defmodule Appsignal.ReleaseUpgradeTest do
       Appsignal.initialize
 
       # Sets config to Application environment
-      assert config()[:name] == "My app v1"
+      assert config()[:name] == "AppSignal test suite app v1"
       # Sets config to system environment variables
-      assert System.get_env("_APPSIGNAL_APP_NAME") == "My app v1"
+      assert System.get_env("_APPSIGNAL_APP_NAME") == "AppSignal test suite app v1"
 
       # The system reloads the application config (set in Mix) during the upgrade.
       new_config = valid_configuration()
-      |> Map.put(:name, "My app v2")
+      |> Map.put(:name, "AppSignal test suite app v2")
 
       with_config(new_config, fn() ->
         # Hot reload / upgrade
@@ -29,8 +29,8 @@ defmodule Appsignal.ReleaseUpgradeTest do
         :timer.sleep 3500
         refute Process.alive?(config_reload_pid)
 
-        assert config()[:name] == "My app v2"
-        assert System.get_env("_APPSIGNAL_APP_NAME") == "My app v2"
+        assert config()[:name] == "AppSignal test suite app v2"
+        assert System.get_env("_APPSIGNAL_APP_NAME") == "AppSignal test suite app v2"
       end)
     end)
   end
@@ -47,7 +47,7 @@ defmodule Appsignal.ReleaseUpgradeTest do
       ignore_actions: [],
       ignore_errors: [],
       log: "file",
-      name: "My app v1",
+      name: "AppSignal test suite app v1",
       push_api_key: "00000000-0000-0000-0000-000000000000",
       send_params: true,
       skip_session_data: false,
