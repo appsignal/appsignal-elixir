@@ -395,7 +395,6 @@ defmodule Appsignal.ConfigTest do
       assert System.get_env("_APPSIGNAL_FILTER_PARAMETERS") == nil
       assert System.get_env("_APPSIGNAL_HTTP_PROXY") == nil
       assert System.get_env("_APPSIGNAL_IGNORE_ERRORS") == ""
-      assert System.get_env("_APPSIGNAL_IGNORE_COOKIES") == ""
       assert System.get_env("_APPSIGNAL_IGNORE_ACTIONS") == ""
       assert System.get_env("_APPSIGNAL_LOG_FILE_PATH") == nil
       assert System.get_env("_APPSIGNAL_WORKING_DIR_PATH") == nil
@@ -454,7 +453,6 @@ defmodule Appsignal.ConfigTest do
         assert System.get_env("_APPSIGNAL_HOSTNAME") == "My hostname"
         assert System.get_env("_APPSIGNAL_HTTP_PROXY") == "http://10.10.10.10:8888"
         assert System.get_env("_APPSIGNAL_IGNORE_ACTIONS") == "ExampleApplication.PageController#ignored,ExampleApplication.PageController#also_ignored"
-        assert System.get_env("_APPSIGNAL_IGNORE_COOKIES") == "session_cookie,secret_cookie"
         assert System.get_env("_APPSIGNAL_IGNORE_ERRORS") == "VerySpecificError,AnotherError"
         assert System.get_env("_APPSIGNAL_LANGUAGE_INTEGRATION_VERSION") == "elixir-" <> Mix.Project.config[:version]
         assert System.get_env("_APPSIGNAL_LOG") == "stdout"
@@ -464,6 +462,8 @@ defmodule Appsignal.ConfigTest do
         assert System.get_env("_APPSIGNAL_RUNNING_IN_CONTAINER") == "false"
         assert System.get_env("_APPSIGNAL_SEND_PARAMS") == "true"
         assert System.get_env("_APPSIGNAL_WORKING_DIR_PATH") == "/tmp/appsignal"
+
+        refute System.get_env("_APPSIGNAL_IGNORE_COOKIES")
       end)
     end
 

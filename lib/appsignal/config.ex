@@ -187,7 +187,6 @@ defmodule Appsignal.Config do
       System.put_env("_APPSIGNAL_HTTP_PROXY", config[:http_proxy])
     end
     System.put_env("_APPSIGNAL_IGNORE_ACTIONS", config[:ignore_actions] |> Enum.join(","))
-    System.put_env("_APPSIGNAL_IGNORE_COOKIES", config[:ignore_cookies] |> Enum.join(","))
     System.put_env("_APPSIGNAL_IGNORE_ERRORS", config[:ignore_errors] |> Enum.join(","))
     System.put_env("_APPSIGNAL_LANGUAGE_INTEGRATION_VERSION", "elixir-" <> @language_integration_version)
     System.put_env("_APPSIGNAL_LOG", config[:log])
