@@ -86,6 +86,7 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
         create_config_file_for_env("dev")
         create_config_file_for_env("stag")
         create_config_file_for_env("prod")
+        create_config_file_for_env("test")
 
         on_exit :cleanup_tmp_dir, fn ->
           File.rm_rf!(@test_directory)
@@ -186,6 +187,7 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
       assert config_active_for_env?("dev")
       assert config_active_for_env?("stag")
       assert config_active_for_env?("prod")
+      assert config_inactive_for_env?("test")
     end
 
     @tag :file_config
@@ -227,6 +229,7 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
       assert config_active_for_env?("dev")
       refute config_active_for_env?("stag")
       assert config_active_for_env?("prod")
+      assert config_inactive_for_env?("test")
     end
 
     @tag :file_config
@@ -234,13 +237,19 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
       File.open!(Path.join(@test_config_directory, "config.exs"), [:write])
       |> IO.binwrite(~s(use Mix.Config\n# config\nimport_config "appsignal.exs"))
       |> File.close
+
       File.open!(Path.join(@test_config_directory, "dev.exs"), [:append])
       |> IO.binwrite(~s(\nconfig :appsignal, :config, active: true\n))
       |> File.close
 
+      File.open!(Path.join(@test_config_directory, "test.exs"), [:append])
+      |> IO.binwrite(~s(\nconfig :appsignal, :config, active: false\n))
+      |> File.close
+
       output = run_with_file_config()
       assert String.contains? output, "Linking config to config/config.exs: Success! (Already linked?)"
-      assert String.contains? output, "Activating dev environment: Success! (Already active?)"
+      assert String.contains? output, "Activating dev environment: Success! (Already activated?)"
+      assert String.contains? output, "Deactivating test environment: Success! (Already deactivated?)"
     end
 
     test "outputs 'installed!' message" do
@@ -290,10 +299,18 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
   # Checks if the original file content is present and if the env has AppSignal
   # activation config.
   defp config_active_for_env?(env) do
+    config_for_env_includes?(env, ~s(\nconfig :appsignal, :config, active: true))
+  end
+
+  defp config_inactive_for_env?(env) do
+    config_for_env_includes?(env, ~s(\nconfig :appsignal, :config, active: false))
+  end
+
+  defp config_for_env_includes?(env, config) do
     case File.read(Path.join(@test_config_directory, "#{env}.exs")) do
       {:ok, env_config} ->
         String.contains?(env_config, ~s(use Mix.Config\n# #{env}\n)) &&
-          String.contains?(env_config, ~s(\nconfig :appsignal, :config, active: true))
+          String.contains?(env_config, config)
       {:error, _} -> false
     end
   end
