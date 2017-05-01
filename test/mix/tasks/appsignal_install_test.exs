@@ -94,7 +94,7 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
     end
 
     defp run_with_file_config do
-      capture_io([input: "My app's name\n1"], fn ->
+      capture_io([input: "AppSignal test suite app\n1"], fn ->
         File.cd!(@test_directory, fn ->
           Mix.Tasks.Appsignal.Install.run(["my_push_api_key"])
         end)
@@ -102,7 +102,7 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
     end
 
     defp run_with_environment_config do
-      capture_io([input: "My app's name\n2"], fn ->
+      capture_io([input: "AppSignal test suite app\n2"], fn ->
         Mix.Tasks.Appsignal.Install.run(["my_push_api_key"])
       end)
     end
@@ -123,7 +123,7 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
 
     test "requires an application name" do
       # First entry is empty and thus invalid, so it asks for the name again.
-      output = capture_io([input: "\nfoo\n2"], fn ->
+      output = capture_io([input: "\nAppSignal test suite app\n2"], fn ->
         Mix.Tasks.Appsignal.Install.run(["my_push_api_key"])
       end)
 
@@ -148,7 +148,7 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
       output = run_with_environment_config()
       assert String.contains? output, "What is your preferred configuration method? (1/2): "
       assert String.contains? output, "Configuring with environment variables."
-      assert String.contains? output, ~s(APPSIGNAL_APP_NAME="My app's name")
+      assert String.contains? output, ~s(APPSIGNAL_APP_NAME="AppSignal test suite app")
       assert String.contains? output, ~s(APPSIGNAL_APP_ENV="production")
       assert String.contains? output, ~s(APPSIGNAL_PUSH_API_KEY="my_push_api_key")
     end
@@ -167,7 +167,7 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
       assert String.contains? appsignal_config, ~s(use Mix.Config\n\n) <>
         ~s(config :appsignal, :config,\n) <>
         ~s(  active: true,\n) <>
-        ~s(  name: "My app's name",\n) <>
+        ~s(  name: "AppSignal test suite app",\n) <>
         ~s(  push_api_key: "my_push_api_key",\n) <>
         ~s(  env: Mix.env\n)
 

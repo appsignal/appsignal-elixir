@@ -13,7 +13,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose.ReportTest do
     diagnose_bypass = Bypass.open
     setup_with_config(%{
       api_key: "foo",
-      name: "My app",
+      name: "AppSignal test suite app",
       environment: "production",
       hostname: "foo",
       diagnose_endpoint: "http://localhost:#{diagnose_bypass.port}/diag"
