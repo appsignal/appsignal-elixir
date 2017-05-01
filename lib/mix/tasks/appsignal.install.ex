@@ -179,7 +179,7 @@ defmodule Mix.Tasks.Appsignal.Install do
     if File.exists? env_file do
       IO.write "Activating #{env} environment: "
 
-      active_content = "\nconfig :appsignal, :config, active: true, env: :#{env}\n"
+      active_content = "\nconfig :appsignal, :config, active: true\n"
       case file_contains?(env_file, active_content) do
         :ok -> IO.puts "Success! (Already active?)"
         {:error, :not_found} ->

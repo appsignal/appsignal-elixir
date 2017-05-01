@@ -235,7 +235,7 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
       |> IO.binwrite(~s(use Mix.Config\n# config\nimport_config "appsignal.exs"))
       |> File.close
       File.open!(Path.join(@test_config_directory, "dev.exs"), [:append])
-      |> IO.binwrite(~s(\nconfig :appsignal, :config, active: true, env: :dev\n))
+      |> IO.binwrite(~s(\nconfig :appsignal, :config, active: true\n))
       |> File.close
 
       output = run_with_file_config()
@@ -293,7 +293,7 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
     case File.read(Path.join(@test_config_directory, "#{env}.exs")) do
       {:ok, env_config} ->
         String.contains?(env_config, ~s(use Mix.Config\n# #{env}\n)) &&
-          String.contains?(env_config, ~s(\nconfig :appsignal, :config, active: true, env: :#{env}))
+          String.contains?(env_config, ~s(\nconfig :appsignal, :config, active: true))
       {:error, _} -> false
     end
   end
