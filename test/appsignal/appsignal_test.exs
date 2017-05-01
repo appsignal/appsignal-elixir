@@ -18,10 +18,6 @@ defmodule AppsignalTest do
     Appsignal.add_distribution_value("dist_key", 10)
   end
 
-  test "started?" do
-    assert Appsignal.started?
-  end
-
   test "Agent environment variables" do
     with_env(%{"APPSIGNAL_APP_ENV" => "test"}, fn() ->
       Appsignal.Config.initialize()
