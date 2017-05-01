@@ -152,4 +152,40 @@ defmodule AppsignalTransactionTest do
       )
     end
   end
+
+    describe "concerning skipping ignored cookies" do
+    setup do
+      conn = %Plug.Conn{peer: {{127, 0, 0, 1}, 12345}}
+      |> Plug.Conn.put_req_header("cookie", "x=1;y=2;z=3")
+      |> Plug.Conn.fetch_cookies
+
+      {:ok, conn: conn}
+    end
+
+    @tag :skip_env_test_no_nif
+    @tag :skip_env_test
+    test_with_mock "sends cookies", context, Appsignal.Transaction, [:passthrough], [] do
+      transaction = "test6"
+      |> Transaction.start(:http_request)
+      |> Transaction.set_request_metadata(context[:conn])
+
+      assert called Transaction.set_sample_data(
+        transaction, "environment", %{"req_header.cookie" => "x=1;y=2;z=3"}
+      )
+    end
+
+    @tag :skip_env_test_no_nif
+    @tag :skip_env_test
+    test_with_mock "does not send ignored cookies when ignore_cookies is set", context, Appsignal.Transaction, [:passthrough], [] do
+      transaction = with_config(%{ignore_cookies: ["y"]}, fn() ->
+        "test6"
+        |> Transaction.start(:http_request)
+        |> Transaction.set_request_metadata(context[:conn])
+      end)
+
+      assert called Transaction.set_sample_data(
+        transaction, "environment", %{"req_header.cookie" => "x=1;z=3"}
+      )
+    end
+  end
 end

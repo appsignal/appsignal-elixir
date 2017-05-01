@@ -122,6 +122,13 @@ defmodule Appsignal.ConfigTest do
         == default_configuration() |> Map.put(:ignore_actions, actions)
     end
 
+    test "ignore_cookies" do
+      cookies = ~w(session_cookie secret_cookie)
+
+      assert with_config(%{ignore_cookies: cookies}, &init_config/0)
+      == default_configuration() |> Map.put(:ignore_cookies, cookies)
+    end
+
     test "ignore_errors" do
       errors = ~w(VerySpecificError AnotherError)
 
@@ -249,6 +256,13 @@ defmodule Appsignal.ConfigTest do
           ExampleApplication.PageController#ignored
           ExampleApplication.PageController#also_ignored
       ))
+    end
+
+    test "ignore_cookies" do
+      assert with_env(
+        %{"APPSIGNAL_IGNORE_COOKIES" => "session_cookie,secret_cookie"},
+        &init_config/0
+      ) == default_configuration() |> Map.put(:ignore_cookies, ~w(session_cookie secret_cookie))
     end
 
     test "ignore_errors" do
@@ -417,6 +431,7 @@ defmodule Appsignal.ConfigTest do
           ExampleApplication.PageController#ignored
           ExampleApplication.PageController#also_ignored
         ),
+        ignore_cookies: ~w(session_cookie secret_cookie),
         ignore_errors: ~w(VerySpecificError AnotherError),
         log: "stdout",
         log_path: "log/appsignal.log",
@@ -447,6 +462,8 @@ defmodule Appsignal.ConfigTest do
         assert System.get_env("_APPSIGNAL_RUNNING_IN_CONTAINER") == "false"
         assert System.get_env("_APPSIGNAL_SEND_PARAMS") == "true"
         assert System.get_env("_APPSIGNAL_WORKING_DIR_PATH") == "/tmp/appsignal"
+
+        refute System.get_env("_APPSIGNAL_IGNORE_COOKIES")
       end)
     end
 
@@ -475,6 +492,7 @@ defmodule Appsignal.ConfigTest do
       env: :dev,
       filter_parameters: nil,
       ignore_actions: [],
+      ignore_cookies: [],
       ignore_errors: [],
       send_params: true,
       skip_session_data: false,

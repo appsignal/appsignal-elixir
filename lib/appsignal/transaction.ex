@@ -406,9 +406,25 @@ defmodule Appsignal.Transaction do
         |> Map.put(:peer, peer(conn))
       # add all request headers
       Enum.reduce(conn.req_headers || [], env,
-        fn({header, value}, env) ->
+        fn {header, value}, env ->
           Map.put(env, "req_header.#{header}", value)
-        end)
+      end)
+      |> put_cookies(conn)
+    end
+
+    defp put_cookies(env, conn) do
+      ignored = config()[:ignore_cookies]
+      if ignored == [] do
+        env
+      else
+        cookie =
+          conn.req_cookies
+          |> Map.drop(ignored)
+          |> Enum.map(fn {k,v} -> "#{k}=#{v}" end)
+          |> Enum.join(";")
+
+        Map.put(env, "req_header.cookie", cookie)
+      end
     end
 
     defp url(%Plug.Conn{scheme: scheme, host: host, port: port} = conn) do
