@@ -140,8 +140,8 @@ defmodule Appsignal.ConfigTest do
     end
 
     test "name" do
-      assert with_config(%{name: "my_application"}, &init_config/0)
-        == default_configuration() |> Map.put(:name, "my_application")
+      assert with_config(%{name: "AppSignal test suite app"}, &init_config/0)
+        == default_configuration() |> Map.put(:name, "AppSignal test suite app")
     end
 
     test "push_api_key" do
@@ -274,9 +274,9 @@ defmodule Appsignal.ConfigTest do
 
     test "name" do
       assert with_env(
-        %{"APPSIGNAL_APP_NAME" => "my_application"},
+        %{"APPSIGNAL_APP_NAME" => "AppSignal test suite app"},
         &init_config/0
-      ) == default_configuration() |> Map.put(:name, "my_application")
+      ) == default_configuration() |> Map.put(:name, "AppSignal test suite app")
     end
 
     test "push_api_key" do
@@ -359,7 +359,7 @@ defmodule Appsignal.ConfigTest do
   describe "reset_environment_config!" do
     test "deletes existing configuration in environment" do
       assert with_env(
-        %{"_APPSIGNAL_APP_NAME" => "foo"},
+        %{"_APPSIGNAL_APP_NAME" => "AppSignal test suite app"},
         fn() ->
           Appsignal.Config.reset_environment_config!
           System.get_env("_APPSIGNAL_APP_NAME")
@@ -390,7 +390,7 @@ defmodule Appsignal.ConfigTest do
     test "deletes existing configuration in environment" do
       with_env(
         # Name is present in the configuration
-        %{"_APPSIGNAL_APP_NAME" => "foo"},
+        %{"_APPSIGNAL_APP_NAME" => "AppSignal test suite app"},
         fn() ->
           # The new config doesn't have a name
           with_config(%{name: ""}, fn() ->
@@ -420,7 +420,7 @@ defmodule Appsignal.ConfigTest do
         ignore_errors: ~w(VerySpecificError AnotherError),
         log: "stdout",
         log_path: "log/appsignal.log",
-        name: "My awesome app",
+        name: "AppSignal test suite app",
         running_in_container: false,
         working_dir_path: "/tmp/appsignal"
       }, fn() ->
@@ -429,7 +429,7 @@ defmodule Appsignal.ConfigTest do
         assert System.get_env("_APPSIGNAL_ACTIVE") == "true"
         assert System.get_env("_APPSIGNAL_AGENT_PATH") == List.to_string(:code.priv_dir(:appsignal))
         assert System.get_env("_APPSIGNAL_AGENT_VERSION") == Appsignal.Agent.version
-        assert System.get_env("_APPSIGNAL_APP_NAME") == "My awesome app"
+        assert System.get_env("_APPSIGNAL_APP_NAME") == "AppSignal test suite app"
         assert System.get_env("_APPSIGNAL_CA_FILE_PATH") == "/foo/bar/zab.ca"
         assert System.get_env("_APPSIGNAL_DEBUG_LOGGING") == "true"
         assert System.get_env("_APPSIGNAL_ENABLE_HOST_METRICS") == "false"
@@ -450,17 +450,17 @@ defmodule Appsignal.ConfigTest do
       end)
     end
 
-    test "name as atom" do
-      with_config(%{name: :my_application}, fn() ->
+    test "ame as atom" do
+      with_config(%{name: :appsignal_test_suite_app}, fn() ->
         write_to_environment()
-        assert System.get_env("_APPSIGNAL_APP_NAME") == "my_application"
+        assert System.get_env("_APPSIGNAL_APP_NAME") == "appsignal_test_suite_app"
       end)
     end
 
     test "name as string" do
-      with_config(%{name: "My awesome application"}, fn() ->
+      with_config(%{name: "AppSignal test suite app"}, fn() ->
         write_to_environment()
-        assert System.get_env("_APPSIGNAL_APP_NAME") == "My awesome application"
+        assert System.get_env("_APPSIGNAL_APP_NAME") == "AppSignal test suite app"
       end)
     end
   end
