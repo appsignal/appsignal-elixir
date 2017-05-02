@@ -1,6 +1,7 @@
 defmodule AppsignalTest do
   use ExUnit.Case
   import Mock
+  import AppsignalTest.Utils
 
   test "set gauge" do
     Appsignal.set_gauge("key", 10.0)
@@ -17,21 +18,16 @@ defmodule AppsignalTest do
     Appsignal.add_distribution_value("dist_key", 10)
   end
 
-  test "started?" do
-    assert Appsignal.started?
-  end
-
   test "Agent environment variables" do
-    System.put_env("APPSIGNAL_APP_ENV", "test")
-    Application.put_env(:appsignal, :config, env: :test)
+    with_env(%{"APPSIGNAL_APP_ENV" => "test"}, fn() ->
+      Appsignal.Config.initialize()
 
-    Appsignal.Config.initialize()
+      env = Appsignal.Config.get_system_env()
+      assert "test" = env["APPSIGNAL_APP_ENV"]
 
-    env = Appsignal.Config.get_system_env()
-    assert "test" = env["APPSIGNAL_APP_ENV"]
-
-    config = Application.get_env :appsignal, :config
-    assert :test = config[:env]
+      config = Application.get_env :appsignal, :config
+      assert :test = config[:env]
+    end)
   end
 
   alias Appsignal.{Transaction, TransactionRegistry}

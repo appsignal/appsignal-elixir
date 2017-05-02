@@ -1,19 +1,17 @@
 defmodule Mix.Tasks.Appsignal.InstallTest do
   use ExUnit.Case
   import ExUnit.CaptureIO
+  import AppsignalTest.Utils
 
   @demo Application.get_env(:appsignal, :appsignal_demo, Appsignal.Demo)
 
   setup do
     @demo.start_link
-    original_config = Application.get_env(:appsignal, :config, %{})
 
     bypass = Bypass.open
-    System.put_env("APPSIGNAL_PUSH_API_ENDPOINT", "http://localhost:#{bypass.port}")
-
-    on_exit :reset_config, fn ->
-      Application.put_env(:appsignal, :config, original_config)
-    end
+    setup_with_env(%{
+      "APPSIGNAL_PUSH_API_ENDPOINT" => "http://localhost:#{bypass.port}"
+    })
 
     {:ok, %{bypass: bypass}}
   end
@@ -85,7 +83,9 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
       if context[:file_config] do
         File.mkdir_p!(@test_config_directory)
         create_config_file()
-        create_config_file_for_env("test")
+        create_config_file_for_env("dev")
+        create_config_file_for_env("stag")
+        create_config_file_for_env("prod")
 
         on_exit :cleanup_tmp_dir, fn ->
           File.rm_rf!(@test_directory)
@@ -96,15 +96,18 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
     end
 
     defp run_with_file_config do
-      capture_io([input: "My app's name\n1"], fn ->
-        File.cd!(@test_directory, fn ->
+      run_with_file_config_in(@test_directory)
+    end
+    defp run_with_file_config_in(directory) do
+      capture_io([input: "AppSignal test suite app\n1"], fn ->
+        File.cd!(directory, fn ->
           Mix.Tasks.Appsignal.Install.run(["my_push_api_key"])
         end)
       end)
     end
 
     defp run_with_environment_config do
-      capture_io([input: "My app's name\n2"], fn ->
+      capture_io([input: "AppSignal test suite app\n2"], fn ->
         Mix.Tasks.Appsignal.Install.run(["my_push_api_key"])
       end)
     end
@@ -125,7 +128,7 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
 
     test "requires an application name" do
       # First entry is empty and thus invalid, so it asks for the name again.
-      output = capture_io([input: "\nfoo\n2"], fn ->
+      output = capture_io([input: "\nAppSignal test suite app\n2"], fn ->
         Mix.Tasks.Appsignal.Install.run(["my_push_api_key"])
       end)
 
@@ -150,13 +153,13 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
       output = run_with_environment_config()
       assert String.contains? output, "What is your preferred configuration method? (1/2): "
       assert String.contains? output, "Configuring with environment variables."
-      assert String.contains? output, ~s(APPSIGNAL_APP_NAME="My app's name")
+      assert String.contains? output, ~s(APPSIGNAL_APP_NAME="AppSignal test suite app")
       assert String.contains? output, ~s(APPSIGNAL_APP_ENV="production")
       assert String.contains? output, ~s(APPSIGNAL_PUSH_API_KEY="my_push_api_key")
     end
 
     @tag :file_config
-    test "file based config option writes to config files" do
+    test "file based config option writes to env-based config files" do
       output = run_with_file_config()
       assert String.contains? output, "What is your preferred configuration method? (1/2): "
       assert String.contains? output, "Writing config file config/appsignal.exs: Success!\n"
@@ -168,26 +171,62 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
       appsignal_config = File.read!(Path.join(@test_config_directory, "appsignal.exs"))
       assert String.contains? appsignal_config, ~s(use Mix.Config\n\n) <>
         ~s(config :appsignal, :config,\n) <>
-        ~s(  active: true,\n) <>
-        ~s(  name: "My app's name",\n) <>
-        ~s(  push_api_key: "my_push_api_key"\n)
+        ~s(  name: "AppSignal test suite app",\n) <>
+        ~s(  push_api_key: "my_push_api_key",\n) <>
+        ~s(  env: Mix.env\n)
 
       # Imports AppSignal config in config.exs file
       app_config = File.read!(Path.join(@test_config_directory, "config.exs"))
       assert String.contains? app_config, ~s(\nimport_config "appsignal.exs")
 
-      # Deactivates Appsignal for the test environment
-      assert String.contains? output, "Deactivating AppSignal in the test environment: Success!"
-      assert config_deactivated_for_test_env?()
+      # Activates AppSignal in the production, staging and development environments
+      assert String.contains? output, "Activating dev environment: Success!"
+      assert String.contains? output, "Activating stag environment: Success!"
+      assert String.contains? output, "Activating prod environment: Success!"
+      assert config_active_for_env?("dev")
+      assert config_active_for_env?("stag")
+      assert config_active_for_env?("prod")
+    end
+
+    @tag :file_config
+    test "file based config option writes to a single config file" do
+      directory = "tmp/install_project_single_config_file"
+      config_directory = Path.join(directory, "config")
+      File.mkdir_p!(config_directory)
+      create_config_file_in(config_directory)
+
+      output = run_with_file_config_in(directory)
+      assert String.contains? output, "What is your preferred configuration method? (1/2): "
+      assert String.contains? output, "Writing config file config/appsignal.exs: Success!\n"
+      assert String.contains? output, "Linking config to config/config.exs: Success!\n"
+
+      # Create AppSignal config file
+      assert File.exists?(Path.join(config_directory, "appsignal.exs"))
+      # Test the contents of AppSignal config file
+      appsignal_config = File.read!(Path.join(config_directory, "appsignal.exs"))
+      assert String.contains? appsignal_config, ~s(use Mix.Config\n\n) <>
+        ~s(config :appsignal, :config,\n) <>
+        ~s(  active: true,\n) <>
+        ~s(  name: "AppSignal test suite app",\n) <>
+        ~s(  push_api_key: "my_push_api_key",\n) <>
+        ~s(  env: Mix.env\n)
+
+      # Imports AppSignal config in config.exs file
+      app_config = File.read!(Path.join(config_directory, "config.exs"))
+      assert String.contains? app_config, ~s(\nimport_config "appsignal.exs")
     end
 
     @tag :file_config
     test "file based config option doesn't crash if a config file doesn't exist" do
-      File.rm(Path.join(@test_config_directory, "test.exs"))
+      File.rm(Path.join(@test_config_directory, "stag.exs"))
       output = run_with_file_config()
 
-      refute String.contains? output, "Deactivating AppSignal"
-      refute config_deactivated_for_test_env?()
+      assert String.contains? output, "Activating dev environment: Success!"
+      refute String.contains? output, "Activating stag environment:"
+      assert String.contains? output, "Activating prod environment: Success!"
+      assert config_active_for_env?("dev")
+      refute config_active_for_env?("stag")
+      assert config_active_for_env?("prod")
     end
 
     @tag :file_config
@@ -195,13 +234,13 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
       File.open!(Path.join(@test_config_directory, "config.exs"), [:write])
       |> IO.binwrite(~s(use Mix.Config\n# config\nimport_config "appsignal.exs"))
       |> File.close
-      File.open!(Path.join(@test_config_directory, "test.exs"), [:append])
-      |> IO.binwrite(~s(\nconfig :appsignal, :config, active: false\n))
+      File.open!(Path.join(@test_config_directory, "dev.exs"), [:append])
+      |> IO.binwrite(~s(\nconfig :appsignal, :config, active: true\n))
       |> File.close
 
       output = run_with_file_config()
       assert String.contains? output, "Linking config to config/config.exs: Success! (Already linked?)"
-      assert String.contains? output, "Deactivating AppSignal in the test environment: Success! (Already deactivated)"
+      assert String.contains? output, "Activating dev environment: Success! (Already active?)"
     end
 
     test "outputs 'installed!' message" do
@@ -233,19 +272,28 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
   end
 
   defp create_config_file, do: create_config_file_for_env("config")
+
+  defp create_config_file_in(directory) do
+    create_config_file_for_env_in("config", directory)
+  end
+
   defp create_config_file_for_env(env) do
-    File.open!(Path.join(@test_config_directory, "#{env}.exs"), [:write])
+    create_config_file_for_env_in(env, @test_config_directory)
+  end
+
+  defp create_config_file_for_env_in(env, directory) do
+    File.open!(Path.join(directory, "#{env}.exs"), [:write])
     |> IO.binwrite("use Mix.Config\n# #{env}")
     |> File.close
   end
 
   # Checks if the original file content is present and if the env has AppSignal
   # activation config.
-  defp config_deactivated_for_test_env? do
-    case File.read(Path.join(@test_config_directory, "test.exs")) do
+  defp config_active_for_env?(env) do
+    case File.read(Path.join(@test_config_directory, "#{env}.exs")) do
       {:ok, env_config} ->
-        String.contains?(env_config, ~s(use Mix.Config\n# test\n)) &&
-          String.contains?(env_config, ~s(\nconfig :appsignal, :config, active: false))
+        String.contains?(env_config, ~s(use Mix.Config\n# #{env}\n)) &&
+          String.contains?(env_config, ~s(\nconfig :appsignal, :config, active: true))
       {:error, _} -> false
     end
   end

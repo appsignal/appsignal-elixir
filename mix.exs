@@ -13,7 +13,11 @@ defmodule Mix.Tasks.Compile.Appsignal do
         :ok = Mix.Appsignal.Helper.ensure_downloaded(arch)
         :ok = Mix.Appsignal.Helper.compile
       {:error, {:unsupported, arch}} ->
-        Mix.Shell.IO.error("Unsupported target platform #{arch}, AppSignal integration disabled!\nPlease check http://docs.appsignal.com/support/operating-systems.html")
+        Mix.Shell.IO.error(
+          "Unsupported target platform #{arch}, AppSignal integration " <>
+          "disabled!\nPlease check " <>
+          "http://docs.appsignal.com/support/operating-systems.html"
+        )
         :ok
     end
   end
@@ -25,7 +29,7 @@ defmodule Appsignal.Mixfile do
 
   def project do
     [app: :appsignal,
-     version: "1.2.0",
+     version: "1.2.1",
      name: "AppSignal",
      description: description(),
      package: package(),
@@ -80,7 +84,7 @@ defmodule Appsignal.Mixfile do
     [
       {:httpoison, "~> 0.11"},
       {:decorator, "~> 1.0"},
-      {:phoenix, ">= 1.2.0", optional: true, only: [:prod, :test_phoenix]},
+      {:phoenix, ">= 1.2.0", optional: true, only: [:prod, :test_phoenix, :dev]},
       {:mock, "~> 0.2.1", only: [:test, :test_phoenix, :test_no_nif]},
       {:bypass, "~> 0.5", only: [:test, :test_phoenix, :test_no_nif]},
       {:ex_doc, "~> 0.12", only: :dev, runtime: false}

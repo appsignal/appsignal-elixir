@@ -2,6 +2,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   use ExUnit.Case
   import ExUnit.CaptureIO
   import Mock
+  import AppsignalTest.Utils
 
   @system Application.get_env(:appsignal, :appsignal_system, Appsignal.System)
   @nif Application.get_env(:appsignal, :appsignal_nif, Appsignal.Nif)
@@ -16,12 +17,12 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     # By default use the same as the actual state of the Nif
     @nif.set(:loaded?, Appsignal.Nif.loaded?)
 
-    clear_env()
-    Application.put_env(:appsignal, :config, %{})
-
     # By default, Push API key is valid
     bypass = Bypass.open
-    merge_appsignal_config %{endpoint: "http://localhost:#{bypass.port}"}
+    setup_with_config(%{
+      endpoint: "http://localhost:#{bypass.port}"
+    })
+
     Bypass.expect bypass, fn conn ->
       assert "/1/auth" == conn.request_path
       assert "GET" == conn.method
@@ -30,10 +31,6 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
     unless Code.ensure_loaded?(Appsignal.Agent) do
       {_, _} = Code.eval_file("agent.ex")
-    end
-
-    on_exit :reset_config, fn ->
-      Application.put_env(:appsignal, :config, %{})
     end
 
     {:ok, %{bypass: bypass}}
@@ -140,8 +137,9 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   @tag :skip_env_test_no_nif
   describe "when config is not active" do
     test "runs agent in diagnose mode, but doesn't change the active state" do
-      merge_appsignal_config %{active: false}
-      output = run()
+      @nif.set(:run_diagnose, true)
+
+      output = with_config(%{active: false}, &run/0)
       assert String.contains? output, "active: false"
       assert String.contains? output, "Agent diagnostics"
       assert String.contains? output, "Running agent in diagnose mode"
@@ -171,7 +169,8 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
   describe "with invalid Push API key" do
     setup %{bypass: bypass} do
-      merge_appsignal_config %{push_api_key: ""}
+      setup_with_config(%{push_api_key: ""})
+
       Bypass.expect bypass, fn conn ->
         assert "/1/auth" == conn.request_path
         assert "GET" == conn.method
@@ -188,8 +187,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
   describe "without config" do
     test "it outputs tmp dir for log_dir_path" do
-      merge_appsignal_config %{log_path: nil}
-      output = run()
+      output = with_config(%{log_path: nil}, &run/0)
       assert String.contains? output, "Paths"
       assert String.contains? output, "log_dir_path: /tmp"
       assert String.contains? output, "log_file_path: /tmp/appsignal.log"
@@ -221,8 +219,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
   describe "when log_dir_path does not exist" do
     test "outputs exists: false" do
-      merge_appsignal_config %{log_path: "/foo/bar/baz.log"}
-      output = run()
+      output = with_config(%{log_path: "/foo/bar/baz.log"}, &run/0)
 
       assert String.contains? output, "log_dir_path: /foo/bar\n    - Exists?: no"
       assert String.contains? output, "log_file_path: /foo/bar/baz.log\n    - Exists?: no"
@@ -241,7 +238,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       File.mkdir_p!(log_dir_path)
       File.touch!(log_file_path)
       File.chmod!(log_dir_path, 0o400)
-      merge_appsignal_config %{log_path: log_file_path}
+      setup_with_config(%{log_path: log_file_path})
 
       {:ok, %{log_dir_path: log_dir_path, log_file_path: log_file_path}}
     end
@@ -284,14 +281,6 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       end
   end
 
-  defp appsignal_config do
-    Application.get_env(:appsignal, :config, %{})
-  end
-
-  defp merge_appsignal_config(config) do
-    Application.put_env(:appsignal, :config, Map.merge(appsignal_config(), config))
-  end
-
   defp prepare_tmp_dir(path) do
     log_dir_path = Path.expand("tmp/#{path}", File.cwd!)
     log_file_path = Path.expand("appsignal.log", log_dir_path)
@@ -300,19 +289,9 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     end
 
     File.mkdir_p!(log_dir_path)
-    merge_appsignal_config %{log_path: log_file_path}
+    setup_with_config(%{log_path: log_file_path})
 
     %{log_dir_path: log_dir_path, log_file_path: log_file_path}
   end
 
-  defp clear_env do
-    System.get_env
-    |> Enum.filter(
-      fn({"APPSIGNAL_" <> _, _}) -> true;
-      ({"DYNO", _}) -> true;
-      (_) -> false end
-    ) |> Enum.each(fn({key, _}) ->
-      System.delete_env(key)
-    end)
-  end
 end

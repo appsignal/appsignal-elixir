@@ -1,3 +1,10 @@
+# 1.2.1
+
+* Allow nil transaction in instrumentation (#198)
+* ErrorHandler handles errors in tuples (#201)
+* Set `env: Mix.env` in generated config.exs (#203)
+* Improve registry lookup performance (#205)
+
 # 1.2.0
 
 * Catch and handle errors in the Plug using Plug.ErrorHandler instead of
