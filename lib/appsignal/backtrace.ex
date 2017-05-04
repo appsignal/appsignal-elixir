@@ -29,6 +29,11 @@ defmodule Appsignal.Backtrace do
   end
 
   defp format_stacktrace(stacktrace) do
-    Enum.map(stacktrace, &Exception.format_stacktrace_entry(&1))
+    Enum.map(stacktrace, &format_stacktrace_entry/1)
+  end
+
+  defp format_stacktrace_entry(entry) when is_binary(entry), do: entry
+  defp format_stacktrace_entry(entry) do
+    Exception.format_stacktrace_entry(entry)
   end
 end
