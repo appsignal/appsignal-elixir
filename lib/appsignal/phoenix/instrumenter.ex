@@ -11,7 +11,7 @@ if Appsignal.phoenix? do
     Add this to your `config.exs`:
 
     ```
-    config :phoenix_app, PhoenixApp.Endpoint,
+    config :my_app, MyApp.Endpoint,
       instrumenters: [Appsignal.Phoenix.Instrumenter]
     ```
 
