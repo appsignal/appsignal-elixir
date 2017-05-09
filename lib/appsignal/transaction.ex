@@ -152,7 +152,7 @@ defmodule Appsignal.Transaction do
   @spec record_event(Transaction.t | nil, String.t, String.t, String.t, integer, integer) :: Transaction.t
   def record_event(nil, _name, _title, _body, _duration, _body_format), do: nil
   def record_event(%Transaction{} = transaction, name, title, body, duration, body_format) do
-    :ok = Nif.record_event(transaction.resource, name, title, body, duration, body_format)
+    :ok = Nif.record_event(transaction.resource, name, title, body, body_format, duration)
     transaction
   end
 

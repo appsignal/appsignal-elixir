@@ -76,8 +76,8 @@ defmodule Appsignal.Nif do
     _finish_event_data(transaction_resource, name, title, body, body_format)
   end
 
-  def record_event(transaction_resource, name, title, body, duration, body_format) do
-    _record_event(transaction_resource, name, title, body, duration, body_format)
+  def record_event(transaction_resource, name, title, body, body_format, duration) do
+    _record_event(transaction_resource, name, title, body, body_format, duration)
   end
 
   def set_error(transaction_resource, error, message, backtrace) do
@@ -218,7 +218,7 @@ defmodule Appsignal.Nif do
     :ok
   end
 
-  def _record_event(_transaction_resource, _name, _title, _body, _duration, _body_format) do
+  def _record_event(_transaction_resource, _name, _title, _body, _body_format, _duration) do
     :ok
   end
 
