@@ -218,8 +218,8 @@ static ERL_NIF_TERM _record_event(ErlNifEnv* env, int argc, const ERL_NIF_TERM a
         make_appsignal_string(name),
         make_appsignal_string(title),
         make_appsignal_string(body),
-        duration,
         bodyFormat,
+        duration,
         0
     );
 
