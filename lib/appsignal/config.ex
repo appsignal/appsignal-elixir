@@ -4,6 +4,7 @@ defmodule Appsignal.Config do
   @default_config %{
     active: false,
     debug: false,
+    dns_servers: [],
     enable_host_metrics: true,
     endpoint: "https://push.appsignal.com",
     diagnose_endpoint: "https://appsignal.com/diag",
@@ -66,6 +67,7 @@ defmodule Appsignal.Config do
     "APPSIGNAL_HOSTNAME" => :hostname,
     "APPSIGNAL_FILTER_PARAMETERS" => :filter_parameters,
     "APPSIGNAL_DEBUG" => :debug,
+    "APPSIGNAL_DNS_SERVERS" => :dns_servers,
     "APPSIGNAL_LOG" => :log,
     "APPSIGNAL_LOG_PATH" => :log_path,
     "APPSIGNAL_IGNORE_ERRORS" => :ignore_errors,
@@ -80,7 +82,7 @@ defmodule Appsignal.Config do
   @string_keys ~w(APPSIGNAL_APP_NAME APPSIGNAL_PUSH_API_KEY APPSIGNAL_PUSH_API_ENDPOINT APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH APPSIGNAL_HOSTNAME APPSIGNAL_HTTP_PROXY APPSIGNAL_LOG APPSIGNAL_LOG_PATH APPSIGNAL_WORKING_DIR_PATH APPSIGNAL_CA_FILE_PATH)
   @bool_keys ~w(APPSIGNAL_ACTIVE APPSIGNAL_DEBUG APPSIGNAL_INSTRUMENT_NET_HTTP APPSIGNAL_ENABLE_FRONTEND_ERROR_CATCHING APPSIGNAL_ENABLE_ALLOCATION_TRACKING APPSIGNAL_ENABLE_GC_INSTRUMENTATION APPSIGNAL_RUNNING_IN_CONTAINER APPSIGNAL_ENABLE_HOST_METRICS APPSIGNAL_SKIP_SESSION_DATA)
   @atom_keys ~w(APPSIGNAL_APP_ENV)
-  @string_list_keys ~w(APPSIGNAL_FILTER_PARAMETERS APPSIGNAL_IGNORE_ACTIONS APPSIGNAL_IGNORE_ERRORS)
+  @string_list_keys ~w(APPSIGNAL_FILTER_PARAMETERS APPSIGNAL_IGNORE_ACTIONS APPSIGNAL_IGNORE_ERRORS APPSIGNAL_DNS_SERVERS)
 
   defp load_environment(config, list, converter) do
     list |> Enum.reduce(
@@ -129,6 +131,7 @@ defmodule Appsignal.Config do
 
   defp empty?(nil), do: true
   defp empty?(""), do: true
+  defp empty?([]), do: true
   defp empty?(_), do: false
 
   defp true?("true"), do: true
@@ -174,6 +177,9 @@ defmodule Appsignal.Config do
       System.put_env("_APPSIGNAL_CA_FILE_PATH", config[:ca_file_path])
     end
     System.put_env("_APPSIGNAL_DEBUG_LOGGING", Atom.to_string(config[:debug]))
+    unless empty?(config[:dns_servers]) do
+      System.put_env("_APPSIGNAL_DNS_SERVERS", config[:dns_servers] |> Enum.join(","))
+    end
 
     System.put_env("_APPSIGNAL_ENABLE_HOST_METRICS", Atom.to_string(config[:enable_host_metrics]))
     System.put_env("_APPSIGNAL_ENVIRONMENT", Atom.to_string(config[:env]))

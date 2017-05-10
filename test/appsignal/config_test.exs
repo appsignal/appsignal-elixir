@@ -77,6 +77,11 @@ defmodule Appsignal.ConfigTest do
         == default_configuration() |> Map.put(:debug, true)
     end
 
+    test "dns_servers" do
+      assert with_config(%{dns_servers: ["8.8.8.8", "8.8.4.4"]}, &init_config/0)
+        == default_configuration() |> Map.put(:dns_servers, ["8.8.8.8", "8.8.4.4"])
+    end
+
     test "enable_host_metrics" do
       assert with_config(%{enable_host_metrics: false}, &init_config/0)
         == default_configuration() |> Map.put(:enable_host_metrics, false)
@@ -190,6 +195,13 @@ defmodule Appsignal.ConfigTest do
         %{"APPSIGNAL_DEBUG" => "true"},
         &init_config/0
       ) == default_configuration() |> Map.put(:debug, true)
+    end
+
+    test "dns_servers" do
+      assert with_env(
+        %{"APPSIGNAL_DNS_SERVERS" => "8.8.8.8,8.8.4.4"},
+        &init_config/0
+      ) == default_configuration() |> Map.put(:dns_servers, ["8.8.8.8", "8.8.4.4"])
     end
 
     test "enable_host_metrics" do
@@ -406,6 +418,7 @@ defmodule Appsignal.ConfigTest do
         active: true,
         ca_file_path: "/foo/bar/zab.ca",
         debug: true,
+        dns_servers: ["8.8.8.8", "8.8.4.4"],
         enable_host_metrics: false,
         endpoint: "https://push.staging.lol",
         env: :prod,
@@ -432,6 +445,7 @@ defmodule Appsignal.ConfigTest do
         assert System.get_env("_APPSIGNAL_APP_NAME") == "AppSignal test suite app"
         assert System.get_env("_APPSIGNAL_CA_FILE_PATH") == "/foo/bar/zab.ca"
         assert System.get_env("_APPSIGNAL_DEBUG_LOGGING") == "true"
+        assert System.get_env("_APPSIGNAL_DNS_SERVERS") == "8.8.8.8,8.8.4.4"
         assert System.get_env("_APPSIGNAL_ENABLE_HOST_METRICS") == "false"
         assert System.get_env("_APPSIGNAL_ENVIRONMENT") == "prod"
         assert System.get_env("_APPSIGNAL_FILTER_PARAMETERS") == "password,secret"
@@ -450,7 +464,7 @@ defmodule Appsignal.ConfigTest do
       end)
     end
 
-    test "ame as atom" do
+    test "name as atom" do
       with_config(%{name: :appsignal_test_suite_app}, fn() ->
         write_to_environment()
         assert System.get_env("_APPSIGNAL_APP_NAME") == "appsignal_test_suite_app"
@@ -463,12 +477,20 @@ defmodule Appsignal.ConfigTest do
         assert System.get_env("_APPSIGNAL_APP_NAME") == "AppSignal test suite app"
       end)
     end
+
+    test "does not write dns_servers to env if empty" do
+      with_config(%{dns_servers: []}, fn() ->
+        write_to_environment()
+        assert System.get_env("_APPSIGNAL_DNS_SERVERS") == nil
+      end)
+    end
   end
 
   defp default_configuration() do
     %{
       active: false,
       debug: false,
+      dns_servers: [],
       enable_host_metrics: true,
       endpoint: "https://push.appsignal.com",
       diagnose_endpoint: "https://appsignal.com/diag",
