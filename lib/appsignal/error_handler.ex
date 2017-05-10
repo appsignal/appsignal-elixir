@@ -78,11 +78,27 @@ defmodule Appsignal.ErrorHandler do
                                     {:pid, pid},
                                     {:registered_name, name},
                                     {:error_info, {_kind, exception, stack}} | _], _linked]) do
-
     msg = "Process #{crash_name(pid, name)} terminating"
+    stacktrace = extract_stacktrace(exception) || stack
     {reason, message} = extract_reason_and_message(exception, msg)
-    {origin, reason, message, Backtrace.from_stacktrace(stack), nil}
+    {origin, reason, message, Backtrace.from_stacktrace(stacktrace), nil}
   end
+
+  defp extract_stacktrace({_, stacktrace}) do
+    case stacktrace?(stacktrace) do
+      true -> stacktrace
+      false -> nil
+    end
+  end
+  defp extract_stacktrace(_), do: nil
+
+  defp stacktrace?(stacktrace) when is_list(stacktrace) do
+    Enum.all?(stacktrace, &stacktrace_line?/1)
+  end
+  defp stacktrace?(_), do: false
+
+  defp stacktrace_line?({_,_,_,[file: _, line: _]}), do: true
+  defp stacktrace_line?(_), do: false
 
   @doc false
   def format_stack(stacktrace) do
