@@ -206,10 +206,10 @@ static ERL_NIF_TERM _record_event(ErlNifEnv* env, int argc, const ERL_NIF_TERM a
     if(!enif_inspect_iolist_as_binary(env, argv[3], &body)) {
         return enif_make_badarg(env);
     }
-    if(!enif_get_long(env, argv[4], &duration)) {
+    if(!enif_get_int(env, argv[4], &bodyFormat)) {
         return enif_make_badarg(env);
     }
-    if(!enif_get_int(env, argv[5], &bodyFormat)) {
+    if(!enif_get_long(env, argv[5], &duration)) {
         return enif_make_badarg(env);
     }
 
@@ -218,8 +218,8 @@ static ERL_NIF_TERM _record_event(ErlNifEnv* env, int argc, const ERL_NIF_TERM a
         make_appsignal_string(name),
         make_appsignal_string(title),
         make_appsignal_string(body),
-        duration,
         bodyFormat,
+        duration,
         0
     );
 
