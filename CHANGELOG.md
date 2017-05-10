@@ -1,3 +1,8 @@
+# 1.2.2
+
+* Better backtraces for linked processes (#207)
+* Backtrace.format_stacktrace handles lists of binaries (#214)
+
 # 1.2.1
 
 * Allow nil transaction in instrumentation (#198)

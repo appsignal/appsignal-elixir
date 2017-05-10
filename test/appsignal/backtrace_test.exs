@@ -17,4 +17,10 @@ defmodule Appsignal.BacktraceTest do
         [file: 'src/elixir_translator.erl', line: 317]},
     ]) == ["(elixir) src/elixir_translator.erl:317: :elixir_translator.guard_op/2"]
   end
+
+  test "handles lists of binaries" do
+    stacktrace = ["(elixir) src/elixir_translator.erl:317: :elixir_translator.guard_op/2"]
+
+    assert Appsignal.Backtrace.from_stacktrace(stacktrace) == stacktrace
+  end
 end
