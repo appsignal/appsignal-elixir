@@ -12,6 +12,7 @@ defmodule Appsignal.Config do
     filter_parameters: nil,
     ignore_actions: [],
     ignore_errors: [],
+    ignore_namespaces: [],
     send_params: true,
     skip_session_data: false,
     log: "file"
@@ -70,8 +71,9 @@ defmodule Appsignal.Config do
     "APPSIGNAL_DNS_SERVERS" => :dns_servers,
     "APPSIGNAL_LOG" => :log,
     "APPSIGNAL_LOG_PATH" => :log_path,
-    "APPSIGNAL_IGNORE_ERRORS" => :ignore_errors,
     "APPSIGNAL_IGNORE_ACTIONS" => :ignore_actions,
+    "APPSIGNAL_IGNORE_ERRORS" => :ignore_errors,
+    "APPSIGNAL_IGNORE_NAMESPACES" => :ignore_namespaces,
     "APPSIGNAL_HTTP_PROXY" => :http_proxy,
     "APPSIGNAL_RUNNING_IN_CONTAINER" => :running_in_container,
     "APPSIGNAL_WORKING_DIR_PATH" => :working_dir_path,
@@ -82,7 +84,7 @@ defmodule Appsignal.Config do
   @string_keys ~w(APPSIGNAL_APP_NAME APPSIGNAL_PUSH_API_KEY APPSIGNAL_PUSH_API_ENDPOINT APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH APPSIGNAL_HOSTNAME APPSIGNAL_HTTP_PROXY APPSIGNAL_LOG APPSIGNAL_LOG_PATH APPSIGNAL_WORKING_DIR_PATH APPSIGNAL_CA_FILE_PATH)
   @bool_keys ~w(APPSIGNAL_ACTIVE APPSIGNAL_DEBUG APPSIGNAL_INSTRUMENT_NET_HTTP APPSIGNAL_ENABLE_FRONTEND_ERROR_CATCHING APPSIGNAL_ENABLE_ALLOCATION_TRACKING APPSIGNAL_ENABLE_GC_INSTRUMENTATION APPSIGNAL_RUNNING_IN_CONTAINER APPSIGNAL_ENABLE_HOST_METRICS APPSIGNAL_SKIP_SESSION_DATA)
   @atom_keys ~w(APPSIGNAL_APP_ENV)
-  @string_list_keys ~w(APPSIGNAL_FILTER_PARAMETERS APPSIGNAL_IGNORE_ACTIONS APPSIGNAL_IGNORE_ERRORS APPSIGNAL_DNS_SERVERS)
+  @string_list_keys ~w(APPSIGNAL_FILTER_PARAMETERS APPSIGNAL_IGNORE_ACTIONS APPSIGNAL_IGNORE_ERRORS APPSIGNAL_IGNORE_NAMESPACES APPSIGNAL_DNS_SERVERS)
 
   defp load_environment(config, list, converter) do
     list |> Enum.reduce(
@@ -192,6 +194,7 @@ defmodule Appsignal.Config do
     end
     System.put_env("_APPSIGNAL_IGNORE_ACTIONS", config[:ignore_actions] |> Enum.join(","))
     System.put_env("_APPSIGNAL_IGNORE_ERRORS", config[:ignore_errors] |> Enum.join(","))
+    System.put_env("_APPSIGNAL_IGNORE_NAMESPACES", config[:ignore_namespaces] |> Enum.join(","))
     System.put_env("_APPSIGNAL_LANGUAGE_INTEGRATION_VERSION", "elixir-" <> @language_integration_version)
     System.put_env("_APPSIGNAL_LOG", config[:log])
     unless empty?(config[:log_path]) do
