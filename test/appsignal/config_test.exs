@@ -134,6 +134,13 @@ defmodule Appsignal.ConfigTest do
         == default_configuration() |> Map.put(:ignore_errors, errors)
     end
 
+    test "ignore_namespaces" do
+      namespaces = ~w(admin private_namespace)
+
+      assert with_config(%{ignore_namespaces: namespaces}, &init_config/0)
+        == default_configuration() |> Map.put(:ignore_namespaces, namespaces)
+    end
+
     test "log" do
       assert with_config(%{log: "stdout"}, &init_config/0)
         == default_configuration() |> Map.put(:log, "stdout")
@@ -270,6 +277,13 @@ defmodule Appsignal.ConfigTest do
       ) == default_configuration() |> Map.put(:ignore_errors, ~w(VerySpecificError AnotherError))
     end
 
+    test "ignore_namespaces" do
+      assert with_env(
+        %{"APPSIGNAL_IGNORE_NAMESPACES" => "admin,private_namespace"},
+        &init_config/0
+      ) == default_configuration() |> Map.put(:ignore_namespaces, ~w(admin private_namespace))
+    end
+
     test "log" do
       assert with_env(
         %{"APPSIGNAL_LOG" => "stdout"},
@@ -392,8 +406,9 @@ defmodule Appsignal.ConfigTest do
       assert System.get_env("_APPSIGNAL_CA_FILE_PATH") == nil
       assert System.get_env("_APPSIGNAL_FILTER_PARAMETERS") == nil
       assert System.get_env("_APPSIGNAL_HTTP_PROXY") == nil
-      assert System.get_env("_APPSIGNAL_IGNORE_ERRORS") == ""
       assert System.get_env("_APPSIGNAL_IGNORE_ACTIONS") == ""
+      assert System.get_env("_APPSIGNAL_IGNORE_ERRORS") == ""
+      assert System.get_env("_APPSIGNAL_IGNORE_NAMESPACES") == ""
       assert System.get_env("_APPSIGNAL_LOG_FILE_PATH") == nil
       assert System.get_env("_APPSIGNAL_WORKING_DIR_PATH") == nil
       assert System.get_env("_APPSIGNAL_RUNNING_IN_CONTAINER") == nil
@@ -431,6 +446,7 @@ defmodule Appsignal.ConfigTest do
           ExampleApplication.PageController#also_ignored
         ),
         ignore_errors: ~w(VerySpecificError AnotherError),
+        ignore_namespaces: ~w(admin private_namespace),
         log: "stdout",
         log_path: "log/appsignal.log",
         name: "AppSignal test suite app",
@@ -453,6 +469,7 @@ defmodule Appsignal.ConfigTest do
         assert System.get_env("_APPSIGNAL_HTTP_PROXY") == "http://10.10.10.10:8888"
         assert System.get_env("_APPSIGNAL_IGNORE_ACTIONS") == "ExampleApplication.PageController#ignored,ExampleApplication.PageController#also_ignored"
         assert System.get_env("_APPSIGNAL_IGNORE_ERRORS") == "VerySpecificError,AnotherError"
+        assert System.get_env("_APPSIGNAL_IGNORE_NAMESPACES") == "admin,private_namespace"
         assert System.get_env("_APPSIGNAL_LANGUAGE_INTEGRATION_VERSION") == "elixir-" <> Mix.Project.config[:version]
         assert System.get_env("_APPSIGNAL_LOG") == "stdout"
         assert System.get_env("_APPSIGNAL_LOG_FILE_PATH") == "log/appsignal.log"
@@ -498,6 +515,7 @@ defmodule Appsignal.ConfigTest do
       filter_parameters: nil,
       ignore_actions: [],
       ignore_errors: [],
+      ignore_namespaces: [],
       send_params: true,
       skip_session_data: false,
       valid: false,
