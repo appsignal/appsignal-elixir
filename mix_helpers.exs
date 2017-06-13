@@ -69,14 +69,23 @@ defmodule Mix.Appsignal.Helper do
         filename
       false ->
         Logger.info "Downloading agent release from #{url}"
-        case System.cmd("curl", ["-s", "-S", "--retry", Integer.to_string(@max_retries), "-f", "-o", filename, url], stderr_to_stdout: true) do
-          {_, 0} ->
-            filename
-          {result, exitcode} ->
-            IO.binwrite(result)
+        case System.find_executable("curl") do
+          nil ->
             raise Mix.Error, message: """
-            Download failed with code #{exitcode}
+            Could not find the curl executable. Please make sure curl is
+            installed on this system as it is needed to download the AppSignal
+            extension and agent.
             """
+          _ ->
+            case System.cmd("curl", ["-s", "-S", "--retry", Integer.to_string(@max_retries), "-f", "-o", filename, url], stderr_to_stdout: true) do
+              {_, 0} ->
+                filename
+              {result, exitcode} ->
+                IO.binwrite(result)
+                raise Mix.Error, message: """
+                Download failed with code #{exitcode}
+                """
+            end
         end
     end
   end
