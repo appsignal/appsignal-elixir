@@ -111,6 +111,7 @@ defmodule Mix.Appsignal.Helper do
   defp make_args(_), do: []
 
   if Mix.env != :test_no_nif do
+    defp map_arch('i686-pc-linux-gnu' ++ _), do: "i686-linux"
     defp map_arch('x86_64-redhat-linux-gnu' ++ _), do: "x86_64-linux"
     defp map_arch('x86_64-pc-linux-gnu' ++ _), do: "x86_64-linux"
     defp map_arch('x86_64-alpine-linux' ++ _), do: "x86_64-linux"
