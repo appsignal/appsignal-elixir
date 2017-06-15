@@ -1,3 +1,7 @@
+# 1.2.3
+
+* Add architecture mappings for 32bit systems. (#229)
+
 # 1.2.2
 
 * Better backtraces for linked processes (#207)
