@@ -63,7 +63,7 @@ defmodule Mix.Appsignal.Helper do
   end
 
   defp download_file(url, version) do
-    filename = "/tmp/appsignal-agent-#{version}.tar.gz"
+    filename = Path.join(tmp_dir(), "appsignal-agent-#{version}.tar.gz")
     case File.exists?(filename) do
       true ->
         filename
@@ -139,6 +139,16 @@ defmodule Mix.Appsignal.Helper do
     defp map_arch('x86_64-apple-darwin' ++ _), do: "x86_64-darwin"
   end
   defp map_arch(_), do: :unsupported
+
+  defp tmp_dir do
+    default_tmp_dir = "/tmp"
+
+    case {File.dir?(default_tmp_dir), File.stat(default_tmp_dir)} do
+      {true, {:ok, %{access: :write}}} -> default_tmp_dir
+      {true, {:ok, %{access: :read_write}}} -> default_tmp_dir
+      _ -> System.tmp_dir!
+    end
+  end
 
   defp priv_dir() do
     case :code.priv_dir(:appsignal) do
