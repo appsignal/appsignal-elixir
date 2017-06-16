@@ -63,7 +63,7 @@ defmodule Mix.Appsignal.Helper do
   end
 
   defp download_file(url, version) do
-    filename = "/tmp/appsignal-agent-#{version}.tar.gz"
+    filename = priv_path("appsignal-agent-#{version}.tar.gz")
     case File.exists?(filename) do
       true ->
         filename
