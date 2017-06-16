@@ -103,6 +103,20 @@ defmodule AppsignalTransactionTest do
     assert ^transaction = Transaction.finish_event(transaction, "render.phoenix_controller", "phoenix_controller_render", %{format: "html", template: "index.html"}, 0)
   end
 
+  describe "concerning metadata" do
+    test_with_mock "sets the request metadata", _,  Appsignal.Transaction, [:passthrough], [] do
+      conn = %Plug.Conn{peer: {{127, 0, 0, 1}, 12345}, request_path: "/pa/th", method: "GET"}
+      |> Plug.Conn.put_private(:plug_session, %{})
+      |> Plug.Conn.put_private(:plug_session_fetch, :done)
+
+      transaction = "test5"
+      |> Transaction.start(:http_request)
+      |> Transaction.set_request_metadata(conn)
+
+      assert called Transaction.set_meta_data(transaction, "path", "/pa/th")
+      assert called Transaction.set_meta_data(transaction, "method", "GET")
+    end
+  end
   describe "concerning skipping session data" do
     setup do
       conn = %Plug.Conn{peer: {{127, 0, 0, 1}, 12345}}
