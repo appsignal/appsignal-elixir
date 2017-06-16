@@ -104,6 +104,8 @@ defmodule AppsignalTransactionTest do
   end
 
   describe "concerning metadata" do
+    @tag :skip_env_test_no_nif
+    @tag :skip_env_test
     test_with_mock "sets the request metadata", _,  Appsignal.Transaction, [:passthrough], [] do
       conn = %Plug.Conn{peer: {{127, 0, 0, 1}, 12345}, request_path: "/pa/th", method: "GET"}
       |> Plug.Conn.put_private(:plug_session, %{})
