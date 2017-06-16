@@ -141,14 +141,18 @@ defmodule Mix.Appsignal.Helper do
   defp map_arch(_), do: :unsupported
 
   defp priv_dir() do
-    path = case :code.priv_dir(:appsignal) do
-             {:error, :bad_name} ->
-               # this happens on initial compilation
-               :filename.join(:filename.dirname(String.to_char_list(List.first(Mix.Tasks.Compile.Erlang.manifests))), 'priv')
-             path ->
-               path
-           end
-    List.to_string(path)
+    case :code.priv_dir(:appsignal) do
+      {:error, :bad_name} ->
+        # this happens on initial compilation
+        Mix.Tasks.Compile.Erlang.manifests
+        |> List.first
+        |> String.to_charlist
+        |> :filename.dirname
+        |> :filename.join('priv')
+      path ->
+        path
+    end
+    |> List.to_string
   end
 
   defp priv_path(filename) do
