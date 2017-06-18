@@ -381,6 +381,8 @@ defmodule Appsignal.Transaction do
       transaction
       |> Transaction.set_sample_data("params", conn.params |> Appsignal.Utils.ParamsFilter.filter_values)
       |> Transaction.set_sample_data("environment", request_environment(conn))
+      |> Transaction.set_meta_data("method", conn.method)
+      |> Transaction.set_meta_data("path", conn.request_path)
 
       # Add session data
       if !config()[:skip_session_data] and conn.private[:plug_session_fetch] == :done do
