@@ -7,9 +7,10 @@ defmodule Appsignal.TransactionBehaviour do
   @callback complete() :: :ok
   @callback complete(Transaction.t | nil) :: :ok
   @callback set_error(Transaction.t | nil, String.t, String.t, any) :: Transaction.t
-  if Appsignal.phoenix? do
-    @callback try_set_action(Plug.Conn.t) :: :ok
-    @callback try_set_action(Appsignal.Transaction.t, Plug.Conn.t) :: :ok
+  @callback set_action(String.t) :: Transaction.t
+  @callback set_action(Transaction.t | nil, String.t) :: Transaction.t
+
+  if Appsignal.plug? do
     @callback set_request_metadata(Transaction.t | nil, Plug.Conn.t) :: Transaction.t
   end
 end
@@ -365,7 +366,7 @@ defmodule Appsignal.Transaction do
     end
   end
 
-  if Appsignal.phoenix? do
+  if Appsignal.plug? do
     @doc """
     Set the request metadata, given a Plug.Conn.t.
     """
@@ -413,19 +414,19 @@ defmodule Appsignal.Transaction do
     defp peer(%Plug.Conn{peer: {host, port}}) do
       "#{:inet_parse.ntoa host}:#{port}"
     end
+  end
 
+  if Appsignal.phoenix? do
     @doc """
     Given the transaction and a %Plug.Conn{}, try to set the Phoenix controller module / action in the transaction.
     """
-    def try_set_action(conn), do: try_set_action(lookup(), conn)
+    def try_set_action(conn) do
+      IO.warn "Appsignal.Transaction.try_set_action/1 is deprecated. Use Appsignal.Plug.extract_action/1 and Appsignal.Transaction.set_action/1 instead."
+      Transaction.set_action(lookup(), Appsignal.Plug.extract_action(conn))
+    end
     def try_set_action(transaction, conn) do
-      try do
-        action_str = "#{Phoenix.Controller.controller_module(conn)}##{Phoenix.Controller.action_name(conn)}"
-        <<"Elixir.", action :: binary>> = action_str
-        Transaction.set_action(transaction, action)
-      catch
-        _, _ -> :ok
-      end
+      IO.warn "Appsignal.Transaction.try_set_action/2 is deprecated. Use Appsignal.Plug.extract_action/1 and Appsignal.Transaction.set_action/2 instead."
+      Transaction.set_action(transaction, Appsignal.Plug.extract_action(conn))
     end
   end
 
@@ -453,5 +454,4 @@ defmodule Appsignal.Transaction do
         t
     end
   end
-
 end

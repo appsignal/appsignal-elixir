@@ -52,7 +52,7 @@ defmodule Appsignal.ErrorHandler do
     Logger.debug("Submitting #{inspect transaction}: #{message}")
     transaction
   end
-  if Appsignal.phoenix? do
+  if Appsignal.plug? do
     def submit_transaction(transaction, reason, message, stack, metadata, conn) do
       if conn do
         Transaction.set_request_metadata(transaction, conn)
