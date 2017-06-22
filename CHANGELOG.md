@@ -1,3 +1,11 @@
+# 1.3.0-beta.1
+
+* Plug support without Phoenix
+* Transaction.set_request_metadata sets path and method
+* Add arch mapping for 32bit linux
+* Check if curl is installed before calling it
+* Add ignore_namespaces option
+
 # 1.2.3
 
 * Add architecture mappings for 32bit systems. (#229)
