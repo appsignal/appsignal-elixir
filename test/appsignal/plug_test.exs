@@ -230,4 +230,12 @@ defmodule Appsignal.PlugTest do
       |> Appsignal.Plug.extract_action == "AppsignalPhoenixExample.PageController#index"
     end
   end
+
+  describe "extracting request metadata" do
+    test "from a Plug conn" do
+      assert Appsignal.Plug.extract_meta_data(
+        %Plug.Conn{method: "GET", request_path: "/foo"}
+      ) == %{"method" => "GET", "path" => "/foo"}
+    end
+  end
 end

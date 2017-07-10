@@ -268,6 +268,11 @@ defmodule Appsignal.Transaction do
   @spec set_meta_data(Enum.t) :: Transaction.t
   def set_meta_data(values) do
     transaction = lookup()
+    set_meta_data(transaction, values)
+    transaction
+  end
+
+  def set_meta_data(%Transaction{} = transaction, values) do
     values |> Enum.each(fn({key, value}) ->
       Transaction.set_meta_data(transaction, key, value)
     end)
@@ -381,8 +386,7 @@ defmodule Appsignal.Transaction do
       transaction
       |> Transaction.set_sample_data("params", conn.params |> Appsignal.Utils.ParamsFilter.filter_values)
       |> Transaction.set_sample_data("environment", request_environment(conn))
-      |> Transaction.set_meta_data("method", conn.method)
-      |> Transaction.set_meta_data("path", conn.request_path)
+      |> Transaction.set_meta_data(Appsignal.Plug.extract_meta_data(conn))
 
       # Add session data
       if !config()[:skip_session_data] and conn.private[:plug_session_fetch] == :done do
