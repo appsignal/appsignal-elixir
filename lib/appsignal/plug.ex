@@ -78,6 +78,10 @@ if Appsignal.plug? do
       "#{method} #{path}"
     end
 
+    def extract_sample_data(%Plug.Conn{params: params}) do
+      %{"params" => params}
+    end
+
     def extract_meta_data(%Plug.Conn{method: method, request_path: path}) do
       %{"method" => method, "path" => path}
     end

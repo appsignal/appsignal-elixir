@@ -193,6 +193,13 @@ defmodule Appsignal.Transaction do
   @doc """
   Set sample data for the current transaction. See `set_sample_data/3`.
   """
+  def set_sample_data(%Transaction{} = transaction, values) do
+    values |> Enum.each(fn({key, value}) ->
+      Transaction.set_sample_data(transaction, key, value)
+    end)
+    transaction
+  end
+
   @spec set_sample_data(String.t, any) :: Transaction.t
   def set_sample_data(key, payload) do
     set_sample_data(lookup(), key, payload)
@@ -384,8 +391,8 @@ defmodule Appsignal.Transaction do
 
       # collect sample data
       transaction
-      |> Transaction.set_sample_data("params", conn.params |> Appsignal.Utils.ParamsFilter.filter_values)
       |> Transaction.set_sample_data("environment", request_environment(conn))
+      |> Transaction.set_sample_data(Appsignal.Plug.extract_sample_data(conn))
       |> Transaction.set_meta_data(Appsignal.Plug.extract_meta_data(conn))
 
       # Add session data

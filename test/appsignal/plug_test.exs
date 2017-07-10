@@ -238,4 +238,12 @@ defmodule Appsignal.PlugTest do
       ) == %{"method" => "GET", "path" => "/foo"}
     end
   end
+
+  describe "extracting sample data" do
+    test "from a Plug conn" do
+      assert Appsignal.Plug.extract_sample_data(
+        %Plug.Conn{params: %{"foo" => "bar"}}
+      ) == %{"params" => %{"foo" => "bar"}}
+    end
+  end
 end
