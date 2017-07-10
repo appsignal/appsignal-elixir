@@ -243,7 +243,9 @@ defmodule Appsignal.Nif do
   end
 
   def _finish(_transaction_resource) do
-    :no_sample
+    # Using `String.to_atom("no_sample") instead of `:no_sample` to trick
+    # Dialyzer into thinking this value isn't hardcoded.
+    String.to_atom("no_sample")
   end
 
   def _complete(_transaction_resource) do
