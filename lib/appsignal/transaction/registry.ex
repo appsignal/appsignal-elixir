@@ -38,7 +38,7 @@ defmodule Appsignal.TransactionRegistry do
       true = :ets.insert(@table, {pid, transaction})
       GenServer.cast(__MODULE__, {:monitor, pid})
     else
-      Logger.debug("Appsignal was not started, skipping transaction registration.")
+      Logger.debug("AppSignal was not started, skipping transaction registration.")
       nil
     end
   end
@@ -56,7 +56,7 @@ defmodule Appsignal.TransactionRegistry do
         end
       [{^pid, transaction}] -> transaction
       false ->
-        Logger.debug("Appsignal was not started, skipping transaction lookup.")
+        Logger.debug("AppSignal was not started, skipping transaction lookup.")
         nil
       [] -> nil
     end
