@@ -79,7 +79,7 @@ if Appsignal.plug? do
     end
 
     def extract_sample_data(%Plug.Conn{params: params}) do
-      %{"params" => params}
+      %{"params" => Appsignal.Utils.ParamsFilter.filter_values(params)}
     end
 
     def extract_meta_data(%Plug.Conn{method: method, request_path: path}) do

@@ -245,5 +245,11 @@ defmodule Appsignal.PlugTest do
         %Plug.Conn{params: %{"foo" => "bar"}}
       ) == %{"params" => %{"foo" => "bar"}}
     end
+
+    test "with a param that should be filtered out" do
+      assert Appsignal.Plug.extract_sample_data(
+        %Plug.Conn{params: %{"password" => "secret"}}
+      ) == %{"params" => %{"password" => "[FILTERED]"}}
+    end
   end
 end
