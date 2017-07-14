@@ -250,7 +250,8 @@ defmodule Appsignal.PlugTest do
         port: 80,
         query_string: "foo=bar",
         peer: {{127, 0, 0, 1}, 12345},
-        scheme: :http
+        scheme: :http,
+        req_headers: [{"accept", "text/html"}]
       }}
     end
 
@@ -265,7 +266,8 @@ defmodule Appsignal.PlugTest do
           "port" => 80,
           "query_string" => "foo=bar",
           "peer" => "127.0.0.1:12345",
-          "request_uri" => "http://www.example.com:80/foo/bar"
+          "request_uri" => "http://www.example.com:80/foo/bar",
+          "req_headers.accept" => "text/html"
         }
       }
     end

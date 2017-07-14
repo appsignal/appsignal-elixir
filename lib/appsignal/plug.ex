@@ -93,7 +93,7 @@ if Appsignal.plug? do
           "query_string" => query_string,
           "request_uri" => url(conn),
           "peer" => peer(conn)
-        }
+        } |> Map.merge(extract_request_headers(conn))
       }
     end
 

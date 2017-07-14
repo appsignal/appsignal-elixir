@@ -122,7 +122,7 @@ defmodule Appsignal.PhoenixTest do
   end
 
 
-  @headers [{"content-type", "text/plain"}, {"x-some-value", "1234"}]
+  @headers [{"accept", "text/plain"}]
 
   test_with_mock "all request headers are sent", Appsignal.Transaction, [:passthrough], [] do
     conn = %Plug.Conn{peer: {{127, 0, 0, 1}, 12345}, req_headers: @headers}
@@ -130,11 +130,12 @@ defmodule Appsignal.PhoenixTest do
 
     t = %Transaction{} = TransactionRegistry.lookup(self())
 
-    env = %{:host => "www.example.com", :method => "GET", :peer => "127.0.0.1:12345",
-            :port => 0, :query_string => "", :request_path => "",
-            :request_uri => "http://www.example.com:0", :script_name => [],
-            "req_header.content-type" => "text/plain",
-            "req_header.x-some-value" => "1234"}
+    env = %{
+      "host" => "www.example.com", "method" => "GET",
+      "peer" => "127.0.0.1:12345", "port" => 0, "query_string" => "",
+      "request_path" => "", "request_uri" => "http://www.example.com:0",
+      "script_name" => [], "req_headers.accept" => "text/plain",
+    }
 
     assert called Transaction.set_sample_data(t, "environment", env)
   end
