@@ -273,9 +273,11 @@ defmodule Appsignal.PlugTest do
     end
 
     test "with a param that should be filtered out", %{conn: conn} do
-      conn = %{conn | params: %{"password" => "secret"}}
-      assert %{"params" => %{"password" => "[FILTERED]"}} =
-        Appsignal.Plug.extract_sample_data(conn)
+      AppsignalTest.Utils.with_config(%{filter_parameters: ["password"]}, fn() ->
+        conn = %{conn | params: %{"password" => "secret"}}
+        assert %{"params" => %{"password" => "[FILTERED]"}} =
+          Appsignal.Plug.extract_sample_data(conn)
+      end)
     end
   end
 
