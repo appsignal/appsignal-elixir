@@ -240,16 +240,40 @@ defmodule Appsignal.PlugTest do
   end
 
   describe "extracting sample data" do
-    test "from a Plug conn" do
-      assert Appsignal.Plug.extract_sample_data(
-        %Plug.Conn{params: %{"foo" => "bar"}}
-      ) == %{"params" => %{"foo" => "bar"}}
+    setup do
+      %{conn: %Plug.Conn{
+        params: %{"foo" => "bar"},
+        host: "www.example.com",
+        method: "GET",
+        script_name: ["foo", "bar"],
+        request_path: "/foo/bar",
+        port: 80,
+        query_string: "foo=bar",
+        peer: {{127, 0, 0, 1}, 12345},
+        scheme: :http
+      }}
     end
 
-    test "with a param that should be filtered out" do
-      assert Appsignal.Plug.extract_sample_data(
-        %Plug.Conn{params: %{"password" => "secret"}}
-      ) == %{"params" => %{"password" => "[FILTERED]"}}
+    test "from a Plug conn", %{conn: conn} do
+      assert Appsignal.Plug.extract_sample_data(conn) == %{
+        "params" => %{"foo" => "bar"},
+        "environment" => %{
+          "host" => "www.example.com",
+          "method" => "GET",
+          "script_name" => ["foo", "bar"],
+          "request_path" => "/foo/bar",
+          "port" => 80,
+          "query_string" => "foo=bar",
+          "peer" => "127.0.0.1:12345",
+          "request_uri" => "http://www.example.com:80/foo/bar"
+        }
+      }
+    end
+
+    test "with a param that should be filtered out", %{conn: conn} do
+      conn = %{conn | params: %{"password" => "secret"}}
+      assert %{"params" => %{"password" => "[FILTERED]"}} =
+        Appsignal.Plug.extract_sample_data(conn)
     end
   end
 end

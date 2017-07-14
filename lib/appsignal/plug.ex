@@ -78,8 +78,23 @@ if Appsignal.plug? do
       "#{method} #{path}"
     end
 
-    def extract_sample_data(%Plug.Conn{params: params}) do
-      %{"params" => Appsignal.Utils.ParamsFilter.filter_values(params)}
+    def extract_sample_data(%Plug.Conn{params: params, host: host,
+      method: method, script_name: script_name, request_path: request_path,
+      port: port, query_string: query_string} = conn) do
+
+      %{
+        "params" => Appsignal.Utils.ParamsFilter.filter_values(params),
+        "environment" => %{
+          "host" => host,
+          "method" => method,
+          "script_name" => script_name,
+          "request_path" => request_path,
+          "port" => port,
+          "query_string" => query_string,
+          "request_uri" => url(conn),
+          "peer" => peer(conn)
+        }
+      }
     end
 
     def extract_meta_data(%Plug.Conn{method: method, request_path: path}) do
@@ -94,6 +109,14 @@ if Appsignal.plug? do
     end
     defp merge_action_and_controller(action, controller) do
       "#{controller}##{action}"
+    end
+
+    defp url(%Plug.Conn{scheme: scheme, host: host, port: port, request_path: request_path}) do
+      "#{scheme}://#{host}:#{port}#{request_path}"
+    end
+
+    defp peer(%Plug.Conn{peer: {host, port}}) do
+      "#{:inet_parse.ntoa host}:#{port}"
     end
   end
 end
