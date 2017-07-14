@@ -391,7 +391,6 @@ defmodule Appsignal.Transaction do
 
       # collect sample data
       transaction
-      |> Transaction.set_sample_data("environment", request_environment(conn))
       |> Transaction.set_sample_data(Appsignal.Plug.extract_sample_data(conn))
       |> Transaction.set_meta_data(Appsignal.Plug.extract_meta_data(conn))
 
@@ -403,29 +402,6 @@ defmodule Appsignal.Transaction do
       else
         transaction
       end
-    end
-
-    @conn_fields ~w(host method script_name request_path port query_string)a
-    defp request_environment(conn) do
-      env =
-        @conn_fields
-        |> Enum.map(fn(k) -> {k, Map.get(conn, k)} end)
-        |> Enum.into(%{})
-        |> Map.put(:request_uri, url(conn))
-        |> Map.put(:peer, peer(conn))
-      # add all request headers
-      Enum.reduce(conn.req_headers || [], env,
-        fn({header, value}, env) ->
-          Map.put(env, "req_header.#{header}", value)
-        end)
-    end
-
-    defp url(%Plug.Conn{scheme: scheme, host: host, port: port} = conn) do
-      "#{scheme}://#{host}:#{port}#{conn.request_path}"
-    end
-
-    defp peer(%Plug.Conn{peer: {host, port}}) do
-      "#{:inet_parse.ntoa host}:#{port}"
     end
   end
 
