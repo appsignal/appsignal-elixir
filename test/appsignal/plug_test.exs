@@ -276,4 +276,38 @@ defmodule Appsignal.PlugTest do
         Appsignal.Plug.extract_sample_data(conn)
     end
   end
+
+  describe "extracting request headers" do
+    test "from a Plug conn" do
+      conn = %Plug.Conn{
+        req_headers: [
+          {"accept", "text/html"},
+          {"accept-charset", "utf-8"},
+          {"accept-encoding", "gzip, deflate"},
+          {"accept-language", "en-us"},
+          {"cache-control", "no-cache"},
+          {"connection", "keep-alive"},
+          {"user-agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3..."},
+          {"from", "webmaster@example.org"},
+          {"referer", "http://localhost:4001/"},
+          {"range", "bytes=0-1023"},
+
+          {"cookie", "__ar_v4=U35IKTLTJNEP7GWW6OH3N2%3A20161120%3A90%7CI..."}
+        ]
+      }
+
+      assert Appsignal.Plug.extract_request_headers(conn) == %{
+        "req_headers.accept" => "text/html",
+        "req_headers.accept-charset" => "utf-8",
+        "req_headers.accept-encoding" => "gzip, deflate",
+        "req_headers.accept-language" => "en-us",
+        "req_headers.cache-control" => "no-cache",
+        "req_headers.connection" => "keep-alive",
+        "req_headers.user-agent" => "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3...",
+        "req_headers.from" => "webmaster@example.org",
+        "req_headers.referer" => "http://localhost:4001/",
+        "req_headers.range" => "bytes=0-1023"
+      }
+    end
+  end
 end

@@ -97,6 +97,18 @@ if Appsignal.plug? do
       }
     end
 
+    def extract_request_headers(%Plug.Conn{req_headers: req_headers}) do
+      keys = ~w(
+        accept accept-charset accept-encoding accept-language cache-control
+        connection user-agent from referer range
+      )
+
+      req_headers
+      |> Keyword.take(keys)
+      |> Enum.map(fn({key, value}) -> {"req_headers.#{key}", value} end)
+      |> Enum.into(%{})
+    end
+
     def extract_meta_data(%Plug.Conn{method: method, request_path: path}) do
       %{"method" => method, "path" => path}
     end
