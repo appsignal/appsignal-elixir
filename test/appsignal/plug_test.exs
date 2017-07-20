@@ -285,6 +285,7 @@ defmodule Appsignal.PlugTest do
     test "from a Plug conn" do
       conn = %Plug.Conn{
         req_headers: [
+          {"content-length", "1024"},
           {"accept", "text/html"},
           {"accept-charset", "utf-8"},
           {"accept-encoding", "gzip, deflate"},
@@ -301,6 +302,7 @@ defmodule Appsignal.PlugTest do
       }
 
       assert Appsignal.Plug.extract_request_headers(conn) == %{
+        "req_headers.content-length" => "1024",
         "req_headers.accept" => "text/html",
         "req_headers.accept-charset" => "utf-8",
         "req_headers.accept-encoding" => "gzip, deflate",
