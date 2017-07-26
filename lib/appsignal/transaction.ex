@@ -193,6 +193,13 @@ defmodule Appsignal.Transaction do
   @doc """
   Set sample data for the current transaction. See `set_sample_data/3`.
   """
+  def set_sample_data(%Transaction{} = transaction, values) do
+    values |> Enum.each(fn({key, value}) ->
+      Transaction.set_sample_data(transaction, key, value)
+    end)
+    transaction
+  end
+
   @spec set_sample_data(String.t, any) :: Transaction.t
   def set_sample_data(key, payload) do
     set_sample_data(lookup(), key, payload)
@@ -268,6 +275,11 @@ defmodule Appsignal.Transaction do
   @spec set_meta_data(Enum.t) :: Transaction.t
   def set_meta_data(values) do
     transaction = lookup()
+    set_meta_data(transaction, values)
+    transaction
+  end
+
+  def set_meta_data(%Transaction{} = transaction, values) do
     values |> Enum.each(fn({key, value}) ->
       Transaction.set_meta_data(transaction, key, value)
     end)
@@ -379,10 +391,8 @@ defmodule Appsignal.Transaction do
 
       # collect sample data
       transaction
-      |> Transaction.set_sample_data("params", conn.params |> Appsignal.Utils.ParamsFilter.filter_values)
-      |> Transaction.set_sample_data("environment", request_environment(conn))
-      |> Transaction.set_meta_data("method", conn.method)
-      |> Transaction.set_meta_data("path", conn.request_path)
+      |> Transaction.set_sample_data(Appsignal.Plug.extract_sample_data(conn))
+      |> Transaction.set_meta_data(Appsignal.Plug.extract_meta_data(conn))
 
       # Add session data
       if !config()[:skip_session_data] and conn.private[:plug_session_fetch] == :done do
@@ -392,29 +402,6 @@ defmodule Appsignal.Transaction do
       else
         transaction
       end
-    end
-
-    @conn_fields ~w(host method script_name request_path port query_string)a
-    defp request_environment(conn) do
-      env =
-        @conn_fields
-        |> Enum.map(fn(k) -> {k, Map.get(conn, k)} end)
-        |> Enum.into(%{})
-        |> Map.put(:request_uri, url(conn))
-        |> Map.put(:peer, peer(conn))
-      # add all request headers
-      Enum.reduce(conn.req_headers || [], env,
-        fn({header, value}, env) ->
-          Map.put(env, "req_header.#{header}", value)
-        end)
-    end
-
-    defp url(%Plug.Conn{scheme: scheme, host: host, port: port} = conn) do
-      "#{scheme}://#{host}:#{port}#{conn.request_path}"
-    end
-
-    defp peer(%Plug.Conn{peer: {host, port}}) do
-      "#{:inet_parse.ntoa host}:#{port}"
     end
   end
 
