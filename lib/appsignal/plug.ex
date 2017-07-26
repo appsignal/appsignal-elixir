@@ -106,7 +106,7 @@ if Appsignal.plug? do
       server-protocol request-uri path-info client-ip range
 
       x-request-start x-queue-start x-queue-time x-heroku-queue-wait-time
-      x-application-start x-forwarded-for x-auth-token
+      x-application-start x-forwarded-for
     )
 
     def extract_request_headers(%Plug.Conn{req_headers: req_headers}) do
