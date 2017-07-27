@@ -78,6 +78,48 @@ if Appsignal.plug? do
       "#{method} #{path}"
     end
 
+    def extract_sample_data(%Plug.Conn{params: params, host: host,
+      method: method, script_name: script_name, request_path: request_path,
+      port: port, query_string: query_string} = conn) do
+
+      %{
+        "params" => Appsignal.Utils.ParamsFilter.filter_values(params),
+        "environment" => %{
+          "host" => host,
+          "method" => method,
+          "script_name" => script_name,
+          "request_path" => request_path,
+          "port" => port,
+          "query_string" => query_string,
+          "request_uri" => url(conn),
+          "peer" => peer(conn)
+        } |> Map.merge(extract_request_headers(conn))
+      }
+    end
+
+    @header_keys ~w(
+      accept accept-charset accept-encoding accept-language cache-control
+      connection content-length user-agent from negotiate pragma referer range
+
+      auth-type gateway-interface path-translated remote-host remote-ident
+      remote-user remote-addr request-method server-name server-port
+      server-protocol request-uri path-info client-ip range
+
+      x-request-start x-queue-start x-queue-time x-heroku-queue-wait-time
+      x-application-start x-forwarded-for
+    )
+
+    def extract_request_headers(%Plug.Conn{req_headers: req_headers}) do
+      req_headers
+      |> Keyword.take(@header_keys)
+      |> Enum.map(fn({key, value}) -> {"req_headers.#{key}", value} end)
+      |> Enum.into(%{})
+    end
+
+    def extract_meta_data(%Plug.Conn{method: method, request_path: path}) do
+      %{"method" => method, "path" => path}
+    end
+
     defp merge_action_and_controller(action, controller) when is_atom(controller) do
       merge_action_and_controller(
         action,
@@ -86,6 +128,14 @@ if Appsignal.plug? do
     end
     defp merge_action_and_controller(action, controller) do
       "#{controller}##{action}"
+    end
+
+    defp url(%Plug.Conn{scheme: scheme, host: host, port: port, request_path: request_path}) do
+      "#{scheme}://#{host}:#{port}#{request_path}"
+    end
+
+    defp peer(%Plug.Conn{peer: {host, port}}) do
+      "#{:inet_parse.ntoa host}:#{port}"
     end
   end
 end
