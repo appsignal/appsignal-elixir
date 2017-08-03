@@ -1,4 +1,4 @@
-# 1.3.0-beta.3
+# 1.3.0
 
 * Plug support without Phoenix
 * Transaction.set_request_metadata sets path and method
