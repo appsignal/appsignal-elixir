@@ -176,6 +176,11 @@ defmodule Appsignal.ConfigTest do
         == default_configuration() |> Map.put(:skip_session_data, true)
     end
 
+    test "files_world_accessible" do
+      assert with_config(%{files_world_accessible: true}, &init_config/0)
+        == default_configuration() |> Map.put(:files_world_accessible, true)
+    end
+
     test "working_dir_path" do
       assert with_config(%{working_dir_path: "/tmp/appsignal"}, &init_config/0)
         == default_configuration() |> Map.put(:working_dir_path, "/tmp/appsignal")
@@ -333,6 +338,13 @@ defmodule Appsignal.ConfigTest do
       ) == default_configuration() |> Map.put(:skip_session_data, true)
     end
 
+    test "files_world_accessible" do
+      assert with_env(
+        %{"APPSIGNAL_FILES_WORLD_ACCESSIBLE" => "false"},
+        &init_config/0
+      ) == default_configuration() |> Map.put(:files_world_accessible, false)
+    end
+
     test "working_dir_path" do
       assert with_env(
         %{"APPSIGNAL_WORKING_DIR_PATH" => "/tmp/appsignal"},
@@ -451,7 +463,8 @@ defmodule Appsignal.ConfigTest do
         log_path: "log/appsignal.log",
         name: "AppSignal test suite app",
         running_in_container: false,
-        working_dir_path: "/tmp/appsignal"
+        working_dir_path: "/tmp/appsignal",
+        files_world_accessible: false
       }, fn() ->
         write_to_environment()
 
@@ -478,6 +491,7 @@ defmodule Appsignal.ConfigTest do
         assert System.get_env("_APPSIGNAL_RUNNING_IN_CONTAINER") == "false"
         assert System.get_env("_APPSIGNAL_SEND_PARAMS") == "true"
         assert System.get_env("_APPSIGNAL_WORKING_DIR_PATH") == "/tmp/appsignal"
+        assert System.get_env("_APPSIGNAL_FILES_WORLD_ACCESSIBLE") == "false"
       end)
     end
 
@@ -518,6 +532,7 @@ defmodule Appsignal.ConfigTest do
       ignore_namespaces: [],
       send_params: true,
       skip_session_data: false,
+      files_world_accessible: true,
       valid: false,
       log: "file",
       hostname: "Alices-MBP.example.com"
