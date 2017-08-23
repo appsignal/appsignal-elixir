@@ -30,8 +30,6 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
   end
 
   defmodule CustomErrorHandler do
-    use GenEvent
-
     def init(_) do
       {:ok, nil}
     end
@@ -49,7 +47,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
 
   defp get_last_crash do
     :timer.sleep(20)
-    GenEvent.call(:error_logger, @error_handler, :get_matched_crash)
+    :gen_event.call(:error_logger, @error_handler, :get_matched_crash)
   end
 
   defp assert_crash_caught({:ok, pid}) when is_pid(pid) do
