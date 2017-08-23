@@ -7,7 +7,7 @@ defmodule Appsignal.Instrumentation.DecoratorsTest do
   defmodule Example do
     use Appsignal.Instrumentation.Decorators
 
-    @decorate transaction
+    @decorate transaction()
     def transaction do
       bar(123)
     end
@@ -17,18 +17,18 @@ defmodule Appsignal.Instrumentation.DecoratorsTest do
       bar(123)
     end
 
-    @decorate transaction
+    @decorate transaction()
     def transaction_with_return_value(x) do
       2 * x
     end
 
-    @decorate transaction_event
+    @decorate transaction_event()
     def bar(arg) do
       nested(arg, arg)
     end
 
     @doc "A moduledoc attribute"
-    @decorate transaction_event
+    @decorate transaction_event()
     def nested(_arg1, _arg2) do
     end
 
