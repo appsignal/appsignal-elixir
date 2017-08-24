@@ -10,11 +10,13 @@ defmodule Appsignal.NifTest do
   end
 
   if System.otp_release >= "20" do
+    @tag :skip_env_test_no_nif
     test "starting transaction returns a reference to the transaction resource" do
       assert {:ok, transaction} = Appsignal.Nif.start_transaction("transaction id", "http_request")
       assert is_reference(transaction)
     end
   else
+    @tag :skip_env_test_no_nif
     test "starting transaction returns a resource term" do
       assert {:ok, transaction} = Appsignal.Nif.start_transaction("transaction id", "http_request")
       assert is_binary(transaction)
