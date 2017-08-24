@@ -125,40 +125,69 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
   end
 
   test "Crashing GenServer with throw" do
-    CrashingGenServer.start(:throw)
+    result = CrashingGenServer.start(:throw)
     |> assert_crash_caught
     # http://erlang.org/pipermail/erlang-bugs/2012-April/002862.html
     |> reason("{:exit, {:bad_return_value, :crashed_gen_server_throw}}")
     |> message(~r(Process #PID<[\d.]+> terminating: {:bad_return_valu...))
-    |> stacktrace([
-      ~r{\(stdlib\) gen_server.erl:\d+: :gen_server.terminate/7},
-      ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p_do_apply/3}
-    ])
+
+    if System.otp_release >= "20" do
+      stacktrace(result, [
+        ~r{\(stdlib\) gen_server.erl:\d+: :gen_server.handle_common_reply/8},
+        ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p_do_apply/3}
+      ])
+    else
+      stacktrace(result, [
+        ~r{\(stdlib\) gen_server.erl:\d+: :gen_server.terminate/7},
+        ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p_do_apply/3}
+      ])
+    end
   end
 
   test "Crashing GenServer with exit" do
-    CrashingGenServer.start(:exit)
+    result = CrashingGenServer.start(:exit)
     |> assert_crash_caught
     |> reason("{:exit, :crashed_gen_server_exit}")
     |> message(~r(Process #PID<[\d.]+> terminating$))
-    |> stacktrace([
-      ~r{\(stdlib\) gen_server.erl:\d+: :gen_server.terminate/7},
-      ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p_do_apply/3}
-    ])
+
+    if System.otp_release >= "20" do
+      stacktrace(result, [
+        ~r{test/appsignal/error_handler/error_matcher_test.exs:\d+: Appsignal.ErrorHandler.ErrorMatcherTest.CrashingGenServer.handle_info/2},
+        ~r{\(stdlib\) gen_server.erl:\d+: :gen_server.try_dispatch/4},
+        ~r{\(stdlib\) gen_server.erl:\d+: :gen_server.handle_msg/6},
+        ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p_do_apply/3}
+      ])
+    else
+      stacktrace(result, [
+        ~r{\(stdlib\) gen_server.erl:\d+: :gen_server.terminate/7},
+        ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p_do_apply/3}
+      ])
+    end
   end
 
   test "Crashing GenServer with function error" do
-    CrashingGenServer.start(:function_error)
+    result = CrashingGenServer.start(:function_error)
     |> assert_crash_caught
     |> reason(":function_clause")
-    |> message(~r(Process #PID<[\d.]+> terminating: {:function_clause...))
-    |> stacktrace([
-      ~r{\(elixir\) (lib/elixir/)?unicode/unicode.ex:\d+: String.Unicode.length/1},
-      ~r{test/appsignal/error_handler/error_matcher_test.exs:\d+: Appsignal.ErrorHandler.ErrorMatcherTest.CrashingGenServer.handle_info/2},
-      ~r{\(stdlib\) gen_server.erl:\d+: :gen_server.try_dispatch/4},
-      ~r{\(stdlib\) gen_server.erl:\d+: :gen_server.handle_msg/5},
-      ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p_do_apply/3}
-    ])
+    |> message(~r(Process #PID<[\d.]+> terminating))
+
+    if System.otp_release >= "20" do
+      stacktrace(result, [
+        ~r{\(elixir\) (lib/elixir/)?unicode/unicode.ex:\d+: String.Unicode.length/1},
+        ~r{test/appsignal/error_handler/error_matcher_test.exs:\d+: Appsignal.ErrorHandler.ErrorMatcherTest.CrashingGenServer.handle_info/2},
+        ~r{\(stdlib\) gen_server.erl:\d+: :gen_server.try_dispatch/4},
+        ~r{\(stdlib\) gen_server.erl:\d+: :gen_server.handle_msg/6},
+        ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p_do_apply/3}
+      ])
+    else
+      stacktrace(result, [
+        ~r{\(elixir\) (lib/elixir/)?unicode/unicode.ex:\d+: String.Unicode.length/1},
+        ~r{test/appsignal/error_handler/error_matcher_test.exs:\d+: Appsignal.ErrorHandler.ErrorMatcherTest.CrashingGenServer.handle_info/2},
+        ~r{\(stdlib\) gen_server.erl:\d+: :gen_server.try_dispatch/4},
+        ~r{\(stdlib\) gen_server.erl:\d+: :gen_server.handle_msg/5},
+        ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p_do_apply/3}
+      ])
+    end
   end
 
   test "Task" do
