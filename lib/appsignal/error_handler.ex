@@ -10,8 +10,6 @@ defmodule Appsignal.ErrorHandler do
 
   """
 
-  use GenEvent
-
   require Logger
 
   alias Appsignal.{Transaction, Backtrace}
@@ -21,7 +19,7 @@ defmodule Appsignal.ErrorHandler do
   """
   @spec get_last_transaction :: Transaction.t | nil
   def get_last_transaction do
-    GenEvent.call(:error_logger, Appsignal.ErrorHandler, :get_last_transaction)
+    :gen_event.call(:error_logger, Appsignal.ErrorHandler, :get_last_transaction)
   end
 
   def init(_) do
