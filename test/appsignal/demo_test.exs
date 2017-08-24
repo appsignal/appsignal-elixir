@@ -8,7 +8,7 @@ defmodule AppsignalDemoTest do
 
     t = %Transaction{} = TransactionRegistry.lookup(self())
     assert called Appsignal.Transaction.set_action(t, "DemoController#hello")
-    assert called Appsignal.Transaction.set_error(t, "TestError", "Hello world! This is an error used for demonstration purposes.", [])
+    assert called Appsignal.Transaction.set_error(t, "TestError", "Hello world! This is an error used for demonstration purposes.", :_)
     assert called Appsignal.Transaction.set_meta_data(t, "demo_sample", "true")
     assert called Appsignal.Transaction.finish(t)
     assert called Appsignal.Transaction.complete(t)
