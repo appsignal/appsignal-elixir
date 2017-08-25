@@ -76,6 +76,7 @@ if Appsignal.phoenix? do
     socket metadata to the transaction.
     """
     def set_metadata(transaction, socket) do
+      IO.warn "Appsignal.Channel.set_metadata/1 is deprecated. Set params and environment data directly with Appsignal.Transaction.set_sample_data/2 instead."
       transaction
       |> @transaction.set_sample_data("params", socket.assigns |> Appsignal.Utils.ParamsFilter.filter_values)
       |> @transaction.set_sample_data("environment", request_environment(socket))
