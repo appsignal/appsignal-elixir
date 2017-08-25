@@ -35,7 +35,7 @@ defmodule Appsignal.Phoenix.ChannelTest do
   end
 
   test "instruments a channel action with a decorator", %{socket: socket} do
-    UsingAppsignalPhoenixChannel.handle_in("decorated", %{}, socket)
+    UsingAppsignalPhoenixChannel.handle_in("decorated", %{body: "Hello, world!"}, socket)
 
     assert [{"123", :channel}] == FakeTransaction.started_transactions
     assert "UsingAppsignalPhoenixChannel#decorated" == FakeTransaction.action
@@ -49,7 +49,7 @@ defmodule Appsignal.Phoenix.ChannelTest do
         topic: "room:lobby",
         transport: Phoenix.Transports.WebSocket
       },
-      "params" => %{}
+      "params" => %{body: "Hello, world!"}
     } == FakeTransaction.sample_data
     assert [%Appsignal.Transaction{id: "123"}] = FakeTransaction.finished_transactions
     assert [%Appsignal.Transaction{id: "123"}] = FakeTransaction.completed_transactions
