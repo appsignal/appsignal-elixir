@@ -122,6 +122,25 @@ defmodule Appsignal.FakeTransaction do
     "123"
   end
 
+  def set_sample_data(transaction, key, payload) do
+    Agent.update(__MODULE__, fn(state) ->
+      {_, new_state} = Map.get_and_update(state, :sample_data, fn(current) ->
+        case current do
+          nil -> {nil, %{key => payload}}
+          _ -> {current, Map.put(current, key, payload)}
+        end
+      end)
+
+      new_state
+    end)
+
+    transaction
+  end
+
+  def sample_data do
+    Agent.get(__MODULE__, &Map.get(&1, :sample_data, %{}))
+  end
+
   def set_error(transaction, reason, message, stack) do
     Agent.update(__MODULE__, fn(state) ->
       {_, new_state} = Map.get_and_update(state, :errors, fn(current) ->
@@ -135,10 +154,6 @@ defmodule Appsignal.FakeTransaction do
       new_state
     end)
     transaction
-  end
-
-  def set_sample_data(transaction, key, payload) do
-    :ok
   end
 
   def errors do

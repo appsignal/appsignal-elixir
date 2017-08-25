@@ -20,23 +20,58 @@ defmodule Appsignal.Phoenix.ChannelTest do
 
   setup do
     Appsignal.FakeTransaction.start_link
-    :ok
+
+    [
+      socket: %Phoenix.Socket{
+        channel: Elixir.PhoenixChatExampleWeb.RoomChannel,
+        endpoint: Elixir.PhoenixChatExampleWeb.Endpoint,
+        handler: Elixir.PhoenixChatExampleWeb.UserSocket,
+        ref: 2,
+        topic: "room:lobby",
+        transport: Elixir.Phoenix.Transports.WebSocket,
+        id: 1
+      }
+    ]
   end
 
-  test "instruments a channel action with a decorator" do
-    UsingAppsignalPhoenixChannel.handle_in("decorated", :payload, %Phoenix.Socket{})
+  test "instruments a channel action with a decorator", %{socket: socket} do
+    UsingAppsignalPhoenixChannel.handle_in("decorated", %{}, socket)
 
     assert [{"123", :channel}] == FakeTransaction.started_transactions
     assert "UsingAppsignalPhoenixChannel#decorated" == FakeTransaction.action
+    assert %{
+      "environment" => %{
+        channel: PhoenixChatExampleWeb.RoomChannel,
+        endpoint: PhoenixChatExampleWeb.Endpoint,
+        handler: PhoenixChatExampleWeb.UserSocket,
+        id: 1,
+        ref: 2,
+        topic: "room:lobby",
+        transport: Phoenix.Transports.WebSocket
+      },
+      "params" => %{}
+    } == FakeTransaction.sample_data
     assert [%Appsignal.Transaction{id: "123"}] = FakeTransaction.finished_transactions
     assert [%Appsignal.Transaction{id: "123"}] = FakeTransaction.completed_transactions
   end
 
-  test "instruments a channel action with an instrumentation helper" do
-    UsingAppsignalPhoenixChannel.handle_in("instrumented", :payload, %Phoenix.Socket{})
+  test "instruments a channel action with an instrumentation helper", %{socket: socket} do
+    UsingAppsignalPhoenixChannel.handle_in("instrumented", %{}, socket)
 
     assert [{"123", :channel}] == FakeTransaction.started_transactions
     assert "UsingAppsignalPhoenixChannel#instrumented" == FakeTransaction.action
+    assert %{
+      "environment" => %{
+        channel: PhoenixChatExampleWeb.RoomChannel,
+        endpoint: PhoenixChatExampleWeb.Endpoint,
+        handler: PhoenixChatExampleWeb.UserSocket,
+        id: 1,
+        ref: 2,
+        topic: "room:lobby",
+        transport: Phoenix.Transports.WebSocket
+      },
+      "params" => %{}
+    } == FakeTransaction.sample_data
     assert [%Appsignal.Transaction{id: "123"}] = FakeTransaction.finished_transactions
     assert [%Appsignal.Transaction{id: "123"}] = FakeTransaction.completed_transactions
   end
