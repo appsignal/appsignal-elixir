@@ -1,5 +1,5 @@
 defmodule UsingAppsignalPhoenixChannel do
-  import Appsignal.Phoenix.Channel, only: [channel_action: 4]
+  import Appsignal.Phoenix.Channel, only: [channel_action: 5]
   use Appsignal.Instrumentation.Decorators
 
   @decorate channel_action()
@@ -8,7 +8,7 @@ defmodule UsingAppsignalPhoenixChannel do
   end
 
   def handle_in("instrumented" = action, payload, socket) do
-    channel_action(__MODULE__, action, socket, fn ->
+    channel_action(__MODULE__, action, socket, payload, fn ->
       {:reply, {:ok, payload}, socket}
     end)
   end
@@ -56,7 +56,7 @@ defmodule Appsignal.Phoenix.ChannelTest do
   end
 
   test "instruments a channel action with an instrumentation helper", %{socket: socket} do
-    UsingAppsignalPhoenixChannel.handle_in("instrumented", %{}, socket)
+    UsingAppsignalPhoenixChannel.handle_in("instrumented", %{body: "Hello, world!"}, socket)
 
     assert [{"123", :channel}] == FakeTransaction.started_transactions
     assert "UsingAppsignalPhoenixChannel#instrumented" == FakeTransaction.action
@@ -70,7 +70,7 @@ defmodule Appsignal.Phoenix.ChannelTest do
         topic: "room:lobby",
         transport: Phoenix.Transports.WebSocket
       },
-      "params" => %{}
+      "params" => %{body: "Hello, world!"}
     } == FakeTransaction.sample_data
     assert [%Appsignal.Transaction{id: "123"}] = FakeTransaction.finished_transactions
     assert [%Appsignal.Transaction{id: "123"}] = FakeTransaction.completed_transactions

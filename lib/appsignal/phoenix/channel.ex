@@ -48,6 +48,10 @@ if Appsignal.phoenix? do
     Record a channel action. Meant to be called from the 'channel_action' instrumentation decorator.
     """
     def channel_action(module, name, %Phoenix.Socket{} = socket, function) do
+      channel_action(module, name, %Phoenix.Socket{} = socket, %{}, function)
+    end
+
+    def channel_action(module, name, %Phoenix.Socket{} = socket, params, function) do
       transaction = @transaction.start(@transaction.generate_id(), :channel)
 
       action_str = "#{module}##{name}"
@@ -58,7 +62,9 @@ if Appsignal.phoenix? do
 
       resp = @transaction.finish(transaction)
       if resp == :sample do
-        Appsignal.Phoenix.Channel.set_metadata(transaction, socket)
+        transaction
+        |> @transaction.set_sample_data("params", params)
+        |> @transaction.set_sample_data("environment", request_environment(socket))
       end
       :ok = @transaction.complete(transaction)
 
