@@ -4,7 +4,7 @@ defmodule Appsignal.FakeTransaction do
   def start_link do
     Agent.start_link(fn -> %{} end, name: __MODULE__)
   end
-  
+
   def start_event do
     Appsignal.Transaction.start_event
   end
@@ -135,6 +135,10 @@ defmodule Appsignal.FakeTransaction do
       new_state
     end)
     transaction
+  end
+
+  def set_sample_data(transaction, key, payload) do
+    :ok
   end
 
   def errors do
