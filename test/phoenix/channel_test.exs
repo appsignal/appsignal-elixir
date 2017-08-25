@@ -75,4 +75,11 @@ defmodule Appsignal.Phoenix.ChannelTest do
     assert [%Appsignal.Transaction{id: "123"}] = FakeTransaction.finished_transactions
     assert [%Appsignal.Transaction{id: "123"}] = FakeTransaction.completed_transactions
   end
+
+  test "filters parameters", %{socket: socket} do
+    AppsignalTest.Utils.with_config(%{filter_parameters: ["password"]}, fn() ->
+      UsingAppsignalPhoenixChannel.handle_in("instrumented", %{"password" => "secret"}, socket)
+      assert "[FILTERED]" == FakeTransaction.sample_data["params"]["password"]
+    end)
+  end
 end

@@ -63,8 +63,12 @@ if Appsignal.phoenix? do
       resp = @transaction.finish(transaction)
       if resp == :sample do
         transaction
-        |> @transaction.set_sample_data("params", params)
-        |> @transaction.set_sample_data("environment", request_environment(socket))
+        |> @transaction.set_sample_data(
+          "params", Appsignal.Utils.ParamsFilter.filter_values(params)
+        )
+        |> @transaction.set_sample_data(
+          "environment", request_environment(socket)
+        )
       end
       :ok = @transaction.complete(transaction)
 
