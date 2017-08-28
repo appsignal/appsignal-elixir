@@ -47,10 +47,12 @@ if Appsignal.phoenix? do
     @doc """
     Record a channel action. Meant to be called from the 'channel_action' instrumentation decorator.
     """
+    @spec channel_action(atom, String.t, Phoenix.Socket.t, fun) :: any
     def channel_action(module, name, %Phoenix.Socket{} = socket, function) do
       channel_action(module, name, %Phoenix.Socket{} = socket, %{}, function)
     end
 
+    @spec channel_action(atom, String.t, Phoenix.Socket.t, map, fun) :: any
     def channel_action(module, name, %Phoenix.Socket{} = socket, params, function) do
       transaction = @transaction.start(@transaction.generate_id(), :channel)
 
@@ -79,6 +81,7 @@ if Appsignal.phoenix? do
     Given the `Appsignal.Transaction` and a `Phoenix.Socket`, add the
     socket metadata to the transaction.
     """
+    @spec set_metadata(Appsignal.Transaction.t, Phoenix.Socket.t) :: Appsignal.Transaction.t
     def set_metadata(transaction, socket) do
       IO.warn "Appsignal.Channel.set_metadata/1 is deprecated. Set params and environment data directly with Appsignal.Transaction.set_sample_data/2 instead."
       transaction
@@ -87,6 +90,7 @@ if Appsignal.phoenix? do
     end
 
     @socket_fields ~w(id channel endpoint handler ref topic transport)a
+    @spec request_environment(Phoenix.Socket.t) :: map
     defp request_environment(socket) do
       @socket_fields
       |> Enum.map(fn(k) -> {k, Map.get(socket, k)} end)
