@@ -9,6 +9,7 @@ defmodule Appsignal.TransactionBehaviour do
   @callback set_error(Transaction.t | nil, String.t, String.t, any) :: Transaction.t
   @callback set_action(String.t) :: Transaction.t
   @callback set_action(Transaction.t | nil, String.t) :: Transaction.t
+  @callback set_sample_data(Transaction.t | nil, String.t, any) :: Transaction.t
 
   if Appsignal.plug? do
     @callback set_request_metadata(Transaction.t | nil, Plug.Conn.t) :: Transaction.t
