@@ -51,7 +51,7 @@ defmodule Appsignal.ErrorHandler.ErrorExtracterTest do
   test "Protocol.UndefinedError" do
     {r, m} = ErrorHandler.extract_reason_and_message(@undefined_error, "Foo error")
     assert "Protocol.UndefinedError" == r
-    assert "Foo error: protocol Enumerable not implemented for {:error, :foo}" == m
+    assert m =~ ~r(^Foo error: protocol Enumerable not implemented for {:error, :foo})
   end
 
   @tuple_with_error_and_exception {

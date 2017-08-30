@@ -29,7 +29,7 @@ defmodule Appsignal.Mixfile do
 
   def project do
     [app: :appsignal,
-     version: "1.3.0",
+     version: "1.3.1",
      name: "AppSignal",
      description: description(),
      package: package(),
@@ -84,10 +84,10 @@ defmodule Appsignal.Mixfile do
     [
       {:httpoison, "~> 0.11"},
       {:poison, ">= 1.3.0"},
-      {:decorator, "~> 1.0"},
+      {:decorator, "~> 1.2.2"},
       {:plug, ">= 1.1.0", optional: true},
       {:phoenix, ">= 1.2.0", optional: true, only: [:prod, :test_phoenix, :dev]},
-      {:mock, "~> 0.2.1", only: [:test, :test_phoenix, :test_no_nif]},
+      {:mock, "~> 0.3.0", only: [:test, :test_phoenix, :test_no_nif]},
       {:bypass, "~> 0.5", only: [:test, :test_phoenix, :test_no_nif]},
       {:ex_doc, "~> 0.12", only: :dev, runtime: false}
     ]

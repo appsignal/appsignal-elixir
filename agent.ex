@@ -1,27 +1,27 @@
 defmodule Appsignal.Agent do
-  def version, do: "0ad5573"
+  def version, do: "1e9d96e"
 
   def triples do
     %{
       "x86_64-linux" => %{
-        checksum: "1e0701414c6777116e0c300b424f612fa13eb8e2f86587622e92c3249ca1f7cf",
-        download_url: "https://appsignal-agent-releases.global.ssl.fastly.net/0ad5573/appsignal-x86_64-linux-all-static.tar.gz"
+        checksum: "eb9101280bd1c8bbe7b91404fd64db04f854549557cf131d14be5dc25e905820",
+        download_url: "https://appsignal-agent-releases.global.ssl.fastly.net/1e9d96e/appsignal-x86_64-linux-all-static.tar.gz"
        },
       "i686-linux" => %{
-        checksum: "6913c60616479c759ed592e9977e4370b10f9992d55e09624c2c59422feadbf3",
-        download_url: "https://appsignal-agent-releases.global.ssl.fastly.net/0ad5573/appsignal-i686-linux-all-static.tar.gz"
+        checksum: "cfb64011566530469d0a80dce252bcbb30549cecfe08eee7c7abafc917758c12",
+        download_url: "https://appsignal-agent-releases.global.ssl.fastly.net/1e9d96e/appsignal-i686-linux-all-static.tar.gz"
        },
       "x86-linux" => %{
-        checksum: "6913c60616479c759ed592e9977e4370b10f9992d55e09624c2c59422feadbf3",
-        download_url: "https://appsignal-agent-releases.global.ssl.fastly.net/0ad5573/appsignal-i686-linux-all-static.tar.gz"
+        checksum: "cfb64011566530469d0a80dce252bcbb30549cecfe08eee7c7abafc917758c12",
+        download_url: "https://appsignal-agent-releases.global.ssl.fastly.net/1e9d96e/appsignal-i686-linux-all-static.tar.gz"
        },
       "x86_64-darwin" => %{
-        checksum: "0a08981be4b864756275d9c780f637571aa1bea957776db1aad30013e5f155f9",
-        download_url: "https://appsignal-agent-releases.global.ssl.fastly.net/0ad5573/appsignal-x86_64-darwin-all-static.tar.gz"
+        checksum: "038e71a9ebb348250e7f46c3884cdb79b3526e2eaa2a0e2189294c21099c2dcc",
+        download_url: "https://appsignal-agent-releases.global.ssl.fastly.net/1e9d96e/appsignal-x86_64-darwin-all-static.tar.gz"
        },
       "universal-darwin" => %{
-        checksum: "0a08981be4b864756275d9c780f637571aa1bea957776db1aad30013e5f155f9",
-        download_url: "https://appsignal-agent-releases.global.ssl.fastly.net/0ad5573/appsignal-x86_64-darwin-all-static.tar.gz"
+        checksum: "038e71a9ebb348250e7f46c3884cdb79b3526e2eaa2a0e2189294c21099c2dcc",
+        download_url: "https://appsignal-agent-releases.global.ssl.fastly.net/1e9d96e/appsignal-x86_64-darwin-all-static.tar.gz"
        },
     }
   end
