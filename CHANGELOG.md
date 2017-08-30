@@ -1,3 +1,8 @@
+# 1.3.1
+
+* Appsignal.Phoenix.Channel.channel_action/5 includes channel parameters (#251)
+* Add files world accessible option to config (#246)
+
 # 1.3.0
 
 * Plug support without Phoenix
