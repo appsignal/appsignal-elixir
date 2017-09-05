@@ -81,9 +81,23 @@ defmodule Appsignal.Instrumentation.Decorators do
 
   @doc false
   def channel_action(body, context = %{args: [action, payload, socket]}) do
+    do_channel_action(context.module, action, socket, payload, body)
+  end
+
+  defp do_channel_action(module, action, socket, {:_, _, _}, body) do
     quote do
       Appsignal.Phoenix.Channel.channel_action(
-        unquote(context.module),
+        unquote(module),
+        unquote(action),
+        unquote(socket),
+        fn -> unquote(body) end
+      )
+    end
+  end
+  defp do_channel_action(module, action, socket, payload, body) do
+    quote do
+      Appsignal.Phoenix.Channel.channel_action(
+        unquote(module),
         unquote(action),
         unquote(socket),
         unquote(payload),
@@ -91,5 +105,4 @@ defmodule Appsignal.Instrumentation.Decorators do
       )
     end
   end
-
 end

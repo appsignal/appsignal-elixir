@@ -1,3 +1,6 @@
+# 1.3.2
+* Don't crash with unbound channel payloads (#253)
+
 # 1.3.1
 
 * Appsignal.Phoenix.Channel.channel_action/5 includes channel parameters (#251)
