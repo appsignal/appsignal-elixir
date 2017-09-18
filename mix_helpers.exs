@@ -136,6 +136,7 @@ defmodule Mix.Appsignal.Helper do
     defp map_arch('x86_64-pc-linux-gnu' ++ _), do: "x86_64-linux"
     defp map_arch('x86_64-redhat-linux-gnu' ++ _), do: "x86_64-linux"
     defp map_arch('x86_64-unknown-linux' ++ _), do: "x86_64-linux"
+    defp map_arch('x86_64-pc-linux-musl' ++_), do: "x86_64-linux"
     defp map_arch('x86_64-apple-darwin' ++ _), do: "x86_64-darwin"
   end
   defp map_arch(_), do: :unsupported
