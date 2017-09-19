@@ -1,3 +1,7 @@
+# 1.3.3
+* No channel payloads in the channel_action decorator (#255)
+* Add architecture for elixir:alpine Docker image (#256) 
+
 # 1.3.2
 * Don't crash with unbound channel payloads (#253)
 

@@ -24,10 +24,28 @@ if Appsignal.phoenix? do
     Channel events will be displayed under the "Background jobs" tab,
     showing the channel module and the action argument that you entered.
 
+    ### Adding channel payloads
+
+    Channel payloads aren't included by default, but can be added by using
+    `Appsignal.Transaction.set_sample_data/2` using the "params" key:
+
+        defmodule SomeApp.MyChannel do
+          use Appsignal.Instrumentation.Decorators
+
+          @decorate channel_action
+          def handle_in("ping", payload, socket) do
+            Appsignal.Transaction.set_sample_data(
+              "params", Appsignal.Utils.ParamsFilter.filter_values(payload)
+            )
+
+            # your code here..
+          end
+        end
+
     ## Instrumenting without decorators
 
     You can also decide not to use function decorators. In that case,
-    use the `channel_action/3` function directly, passing in a name for
+    use the `channel_action/4` function directly, passing in a name for
     the channel action, the socket and the actual code that you are
     executing in the channel handler:
 
@@ -36,6 +54,22 @@ if Appsignal.phoenix? do
 
           def handle_in("ping" = action, _payload, socket) do
             channel_action(__MODULE__, action, socket, fn ->
+              # do some heave processing here...
+              reply = perform_work()
+              {:reply, {:ok, reply}, socket}
+            end)
+          end
+        end
+
+    ### Adding channel payloads
+
+    To add channel payloads, use `channel_action/5`:
+
+        defmodule SomeApp.MyChannel do
+          import Appsignal.Phoenix.Channel, only: [channel_action: 4]
+
+          def handle_in("ping" = action, payload, socket) do
+            channel_action(__MODULE__, action, socket, payload, fn ->
               # do some heave processing here...
               reply = perform_work()
               {:reply, {:ok, reply}, socket}
