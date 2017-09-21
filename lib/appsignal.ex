@@ -137,6 +137,7 @@ defmodule Appsignal do
       fun.(transaction)
       {reason, message} = Appsignal.ErrorHandler.extract_reason_and_message(reason, message)
       Appsignal.ErrorHandler.submit_transaction(transaction, reason, message, stack, metadata, conn)
+      :ok = Appsignal.TransactionRegistry.remove_transaction(transaction)
     end
   end
 end
