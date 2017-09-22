@@ -136,6 +136,7 @@ defmodule AppsignalTest do
 
       assert called TransactionRegistry.remove_transaction(t)
 
+      assert called Transaction.start(:_, :http_request)
       assert called Transaction.set_error(t, "RuntimeError", "Oops: Some bad stuff happened", stack)
       assert called Transaction.set_sample_data(t, "key", %{foo: "bar"})
       assert called Transaction.finish(t)
