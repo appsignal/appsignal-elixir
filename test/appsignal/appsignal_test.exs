@@ -88,6 +88,35 @@ defmodule AppsignalTest do
     end
   end
 
+  test "send_error with metadata and conn" do
+    with_mocks([
+      {Appsignal.Transaction, [:passthrough], []},
+      {Appsignal.TransactionRegistry, [:passthrough], [remove_transaction: fn(t) -> :ok end]},
+    ]) do
+
+      conn = %Plug.Conn{peer: {{127, 0, 0, 1}, 12345}, req_headers: [{"accept", "text/plain"}]}
+      stack = System.stacktrace()
+      Appsignal.send_error(%RuntimeError{message: "Some bad stuff happened"}, "Oops", stack, %{foo: "bar"}, conn)
+
+      t = %Transaction{} = TransactionRegistry.lookup(self())
+      env = %{
+        "host" => "www.example.com", "method" => "GET",
+        "peer" => "127.0.0.1:12345", "port" => 0, "query_string" => "",
+        "request_path" => "", "request_uri" => "http://www.example.com:0",
+        "script_name" => [], "req_headers.accept" => "text/plain",
+      }
+
+      assert called TransactionRegistry.remove_transaction(t)
+
+      assert called Transaction.set_error(t, "RuntimeError", "Oops: Some bad stuff happened", stack)
+      assert called Transaction.set_meta_data(t, :foo, "bar")
+      assert called Transaction.set_sample_data(t, "environment", env)
+      assert called Transaction.set_request_metadata(t, conn)
+      assert called Transaction.finish(t)
+      assert called Transaction.complete(t)
+    end
+  end
+
   test "send_error with a passed function" do
     with_mocks([
       {Appsignal.Transaction, [:passthrough], []},
