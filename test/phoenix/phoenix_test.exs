@@ -32,7 +32,7 @@ defmodule Appsignal.PhoenixTest do
   use ExUnit.Case
   import Mock
 
-  alias Appsignal.{Transaction, TransactionRegistry, FakeTransaction}
+  alias Appsignal.{Transaction, FakeTransaction}
 
   setup do
     FakeTransaction.start_link
@@ -112,13 +112,11 @@ defmodule Appsignal.PhoenixTest do
     stack = System.stacktrace()
     Appsignal.send_error(%RuntimeError{message: "Some bad stuff happened"}, "Oops", stack, %{foo: "bar"}, conn)
 
-    t = %Transaction{} = TransactionRegistry.lookup(self())
-
-    assert called Transaction.set_error(t, "RuntimeError", "Oops: Some bad stuff happened", stack)
-    assert called Transaction.set_meta_data(t, :foo, "bar")
-    assert called Transaction.set_request_metadata(t, conn)
-    assert called Transaction.finish(t)
-    assert called Transaction.complete(t)
+    assert called Transaction.set_error(:_, "RuntimeError", "Oops: Some bad stuff happened", stack)
+    assert called Transaction.set_meta_data(:_, :foo, "bar")
+    assert called Transaction.set_request_metadata(:_, conn)
+    assert called Transaction.finish(:_)
+    assert called Transaction.complete(:_)
   end
 
 
@@ -128,8 +126,6 @@ defmodule Appsignal.PhoenixTest do
     conn = %Plug.Conn{peer: {{127, 0, 0, 1}, 12345}, req_headers: @headers}
     Appsignal.send_error(%RuntimeError{message: "Some bad stuff happened"}, "Oops", [], %{}, conn)
 
-    t = %Transaction{} = TransactionRegistry.lookup(self())
-
     env = %{
       "host" => "www.example.com", "method" => "GET",
       "peer" => "127.0.0.1:12345", "port" => 0, "query_string" => "",
@@ -137,7 +133,7 @@ defmodule Appsignal.PhoenixTest do
       "script_name" => [], "req_headers.accept" => "text/plain",
     }
 
-    assert called Transaction.set_sample_data(t, "environment", env)
+    assert called Transaction.set_sample_data(:_, "environment", env)
   end
 
 end
