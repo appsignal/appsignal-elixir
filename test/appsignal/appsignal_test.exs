@@ -143,4 +143,31 @@ defmodule AppsignalTest do
       assert called Transaction.complete(t)
     end
   end
+
+  test "send_error with a custom namespace" do
+    with_mocks([
+      {Appsignal.Transaction, [:passthrough], []},
+      {Appsignal.TransactionRegistry, [:passthrough], [remove_transaction: fn(t) -> :ok end]},
+    ]) do
+      stack = System.stacktrace()
+      Appsignal.send_error(
+        %RuntimeError{message: "Some bad stuff happened"},
+        "Oops",
+        stack,
+        %{},
+        nil,
+        fn(transaction) -> transaction end,
+        :background_job
+      )
+
+      t = %Transaction{} = TransactionRegistry.lookup(self())
+
+      assert called TransactionRegistry.remove_transaction(t)
+
+      assert called Transaction.start(:_, :background_job)
+      assert called Transaction.set_error(t, "RuntimeError", "Oops: Some bad stuff happened", stack)
+      assert called Transaction.finish(t)
+      assert called Transaction.complete(t)
+    end
+  end
 end
