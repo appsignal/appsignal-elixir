@@ -66,7 +66,7 @@ if Appsignal.phoenix? do
     To add channel payloads, use `channel_action/5`:
 
         defmodule SomeApp.MyChannel do
-          import Appsignal.Phoenix.Channel, only: [channel_action: 4]
+          import Appsignal.Phoenix.Channel, only: [channel_action: 5]
 
           def handle_in("ping" = action, payload, socket) do
             channel_action(__MODULE__, action, socket, payload, fn ->

@@ -47,7 +47,9 @@ defmodule Appsignal.ErrorHandler do
     Transaction.set_meta_data(metadata)
     Transaction.finish(transaction)
     Transaction.complete(transaction)
-    Logger.debug("Submitting #{inspect transaction}: #{message}")
+    Logger.debug fn ->
+      "Submitting #{inspect transaction}: #{message}"
+    end
     transaction
   end
   if Appsignal.plug? do
