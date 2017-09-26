@@ -1,3 +1,10 @@
+# 1.3.4
+* Allow configuration of permissions of working directory. (#246)
+* Fix locking bug that delayed extension shutdown.
+  Commit 1953b2abced8c477af3eb973cc71b98c20761b51
+* Log extension start with app revision if present
+  Commit 1953b2abced8c477af3eb973cc71b98c20761b51
+
 # 1.3.3
 * No channel payloads in the channel_action decorator (#255)
 * Add architecture for elixir:alpine Docker image (#256) 
