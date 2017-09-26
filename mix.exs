@@ -88,7 +88,7 @@ defmodule Appsignal.Mixfile do
       {:plug, ">= 1.1.0", optional: true},
       {:phoenix, ">= 1.2.0", optional: true, only: [:prod, :test_phoenix, :dev]},
       {:mock, "~> 0.3.0", only: [:test, :test_phoenix, :test_no_nif]},
-      {:bypass, "~> 0.5", only: [:test, :test_phoenix, :test_no_nif]},
+      {:bypass, "~> 0.6.0", only: [:test, :test_phoenix, :test_no_nif]},
       {:ex_doc, "~> 0.12", only: :dev, runtime: false},
       {:credo, "~> 0.8", only: [:dev, :test], runtime: false}
     ]
