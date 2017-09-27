@@ -1,6 +1,6 @@
 defmodule Appsignal do
   @moduledoc """
-  Main library entrypoint.
+  AppSignal for Elixir. Follow the [installation guide](https://docs.appsignal.com/elixir/installation.html) to install AppSignal into your Elixir app.
 
   This module contains the main AppSignal OTP application, as well as
   a few helper functions for sending metrics to AppSignal.
