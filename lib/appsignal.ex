@@ -130,13 +130,13 @@ defmodule Appsignal do
         Appsignal.Transaction.set_sample_data(transaction, "key", %{foo: "bar"})
       end)
   """
-  def send_error(reason, message \\ "", stack \\ nil, metadata \\ %{}, conn \\ nil, fun \\ fn(t) -> t end) do
+  def send_error(reason, message \\ "", stack \\ nil, metadata \\ %{}, conn \\ nil, fun \\ fn(t) -> t end, namespace \\ :http_request) do
     stack = stack || System.stacktrace()
-    transaction = Appsignal.Transaction.lookup_or_create_transaction(self())
-    if transaction != nil do
-      fun.(transaction)
-      {reason, message} = Appsignal.ErrorHandler.extract_reason_and_message(reason, message)
-      Appsignal.ErrorHandler.submit_transaction(transaction, reason, message, stack, metadata, conn)
-    end
+
+    transaction = Appsignal.Transaction.start("_" <> Appsignal.Transaction.generate_id(), namespace)
+    fun.(transaction)
+    {reason, message} = Appsignal.ErrorHandler.extract_reason_and_message(reason, message)
+    Appsignal.ErrorHandler.submit_transaction(transaction, reason, message, stack, metadata, conn)
+    :ok = Appsignal.TransactionRegistry.remove_transaction(transaction)
   end
 end
