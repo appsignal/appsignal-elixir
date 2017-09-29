@@ -1,3 +1,6 @@
+# 1.3.5
+* Allow multiple calls to `send_error` in one Transaction (#260)
+
 # 1.3.4
 * Allow configuration of permissions of working directory. (#246)
 * Fix locking bug that delayed extension shutdown.

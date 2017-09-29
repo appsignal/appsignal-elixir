@@ -29,7 +29,7 @@ defmodule Appsignal.Mixfile do
 
   def project do
     [app: :appsignal,
-     version: "1.3.4",
+     version: "1.3.5",
      name: "AppSignal",
      description: description(),
      package: package(),
@@ -40,7 +40,7 @@ defmodule Appsignal.Mixfile do
      compilers: compilers(Mix.env),
      elixirc_paths: elixirc_paths(Mix.env),
      deps: deps(),
-     docs: [logo: "logo.png"],
+     docs: [main: "Appsignal", logo: "logo.png"],
      agent_version: @agent_version
     ]
   end
