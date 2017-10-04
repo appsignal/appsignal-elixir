@@ -9,7 +9,8 @@ defmodule Mix.Appsignal.Helper do
 
   def verify_system_architecture() do
     input_arch = :erlang.system_info(:system_architecture)
-    case map_arch(input_arch) do
+    force_musl = !(System.get_env("APPSIGNAL_BUILD_FOR_MUSL") |> is_nil())
+    case map_arch(input_arch, force_musl) do
       :unsupported ->
         {:error, {:unsupported, input_arch}}
       arch when is_binary(arch) ->
@@ -128,18 +129,22 @@ defmodule Mix.Appsignal.Helper do
   defp make_args(_), do: []
 
   if Mix.env != :test_no_nif do
-    defp map_arch('i686-alpine-linux' ++ _), do: "i686-linux"
-    defp map_arch('i686-pc-linux-gnu' ++ _), do: "i686-linux"
-    defp map_arch('i686-redhat-linux-gnu' ++ _), do: "i686-linux"
-    defp map_arch('i686-unknown-linux' ++ _), do: "i686-linux"
-    defp map_arch('x86_64-alpine-linux' ++ _), do: "x86_64-linux"
-    defp map_arch('x86_64-pc-linux-gnu' ++ _), do: "x86_64-linux"
-    defp map_arch('x86_64-redhat-linux-gnu' ++ _), do: "x86_64-linux"
-    defp map_arch('x86_64-unknown-linux' ++ _), do: "x86_64-linux"
-    defp map_arch('x86_64-pc-linux-musl' ++_), do: "x86_64-linux"
-    defp map_arch('x86_64-apple-darwin' ++ _), do: "x86_64-darwin"
+    defp map_arch('i686-' ++ _, true), do: "i686-linux-musl"
+    defp map_arch('x86_64-' ++ _, true), do: "x86_64-linux-musl"
+
+    defp map_arch('i686-alpine-linux' ++ _, _), do: "i686-linux-musl"
+    defp map_arch('i686-pc-linux-gnu' ++ _, _), do: "i686-linux"
+    defp map_arch('i686-pc-linux-musl' ++ _, _), do: "i686-linux-musl"
+    defp map_arch('i686-redhat-linux-gnu' ++ _, _), do: "i686-linux"
+    defp map_arch('i686-unknown-linux' ++ _, _), do: "i686-linux"
+    defp map_arch('x86_64-alpine-linux' ++ _, _), do: "x86_64-linux-musl"
+    defp map_arch('x86_64-apple-darwin' ++ _, _), do: "x86_64-darwin"
+    defp map_arch('x86_64-pc-linux-gnu' ++ _, _), do: "x86_64-linux"
+    defp map_arch('x86_64-pc-linux-musl' ++ _, _), do: "x86_64-linux-musl"
+    defp map_arch('x86_64-redhat-linux-gnu' ++ _, _), do: "x86_64-linux"
+    defp map_arch('x86_64-unknown-linux' ++ _, _), do: "x86_64-linux"
   end
-  defp map_arch(_), do: :unsupported
+  defp map_arch(_, _), do: :unsupported
 
   defp tmp_dir do
     default_tmp_dir = "/tmp"
