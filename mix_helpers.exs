@@ -31,10 +31,21 @@ defmodule Mix.Appsignal.Helper do
         File.cp(project_ext_path(file), priv_path(file))
       end)
     else
-      unless has_files?() and has_correct_agent_version?() do
+      if has_files?() and has_correct_agent_version?() do
+        :ok
+      else
+        if is_nil(arch_config) do
+          raise Mix.Error, message: """
+          No config found for architecture '#{arch}'.
+          Please check http://docs.appsignal.com/support/operating-systems.html
+          And inform us about this error at support@appsignal.com
+          """
+        end
+
         version = Appsignal.Agent.version
         File.rm_rf!(priv_dir())
         File.mkdir_p!(priv_dir())
+
         try do
           download_and_extract(arch_config[:download_url], version, arch_config[:checksum])
         catch
@@ -51,8 +62,6 @@ defmodule Mix.Appsignal.Helper do
                 """
             end
         end
-      else
-        :ok
       end
     end
   end
