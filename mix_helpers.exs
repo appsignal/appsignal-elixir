@@ -152,6 +152,9 @@ defmodule Mix.Appsignal.Helper do
     defp map_arch('x86_64-pc-linux-musl' ++ _, _), do: "x86_64-linux-musl"
     defp map_arch('x86_64-redhat-linux-gnu' ++ _, _), do: "x86_64-linux"
     defp map_arch('x86_64-unknown-linux' ++ _, _), do: "x86_64-linux"
+    defp map_arch('x86_64-unknown-freebsd' ++ _, _), do: "x86_64-freebsd"
+    defp map_arch('amd64-portbld-freebsd' ++ _, _), do: "x86_64-freebsd"
+    defp map_arch('amd64-freebsd' ++ _, _), do: "x86_64-freebsd"
   end
   defp map_arch(_, _), do: :unsupported
 
