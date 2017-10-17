@@ -27,14 +27,6 @@ defmodule Appsignal.Agent do
         checksum: "aaee5ccd80c8dc96401182238d39cc16f5dd9566b23e0395f316f294f08cfc73",
         download_url: "https://appsignal-agent-releases.global.ssl.fastly.net/bd1eb5f/appsignal-i686-linux-musl-all-static.tar.gz"
        },
-      "i686-freebsd" => %{
-        checksum: "79a67cc440adb0901b47dea54d0bef25cfbcc5c5ae5b61b2500b42a72271a87e",
-        download_url: "https://appsignal-agent-releases.global.ssl.fastly.net/bd1eb5f/appsignal-i686-freebsd-all-static.tar.gz"
-       },
-      "x86-freebsd" => %{
-        checksum: "79a67cc440adb0901b47dea54d0bef25cfbcc5c5ae5b61b2500b42a72271a87e",
-        download_url: "https://appsignal-agent-releases.global.ssl.fastly.net/bd1eb5f/appsignal-i686-freebsd-all-static.tar.gz"
-       },
       "x86_64-linux" => %{
         checksum: "e90af03dc243a4752137018ff92b8da2eb600c5074a841aa2d996484b9315c54",
         download_url: "https://appsignal-agent-releases.global.ssl.fastly.net/bd1eb5f/appsignal-x86_64-linux-all-static.tar.gz"
