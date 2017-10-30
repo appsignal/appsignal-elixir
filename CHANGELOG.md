@@ -3,11 +3,13 @@
   Commit b9546cae01cd89d597586ad6c7dc4b5213fe2fca
 * Add separate FreeBSD build
   Commit b9546cae01cd89d597586ad6c7dc4b5213fe2fca
-* Fix crashes when using a transaction from multiple processes in an
-  unsupported way.
-  Commit b9546cae01cd89d597586ad6c7dc4b5213fe2fca
 * Auto restart agent when none is running
   Commit b9546cae01cd89d597586ad6c7dc4b5213fe2fca
+
+# 1.3.6
+* Fix crashes when using a transaction from multiple processes in an unsupported way. 
+  Commit b9546cae01cd89d597586ad6c7dc4b5213fe2fca
+* Allow string values in atom config fields (#269)
 
 # 1.3.5
 * Allow multiple calls to `send_error` in one Transaction (#260)
