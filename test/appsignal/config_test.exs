@@ -515,6 +515,28 @@ defmodule Appsignal.ConfigTest do
         assert System.get_env("_APPSIGNAL_DNS_SERVERS") == nil
       end)
     end
+
+    test "handles atom fields as strings" do
+      with_config(%{
+        active: "true",
+        debug: "false",
+        enable_host_metrics: "true",
+        env: "prod",
+        running_in_container: "false",
+        send_params: "true",
+        files_world_accessible: "false"
+      }, fn() ->
+        write_to_environment()
+
+        assert System.get_env("_APPSIGNAL_ACTIVE") == "true"
+        assert System.get_env("_APPSIGNAL_DEBUG_LOGGING") == "false"
+        assert System.get_env("_APPSIGNAL_ENABLE_HOST_METRICS") == "true"
+        assert System.get_env("_APPSIGNAL_ENVIRONMENT") == "prod"
+        assert System.get_env("_APPSIGNAL_RUNNING_IN_CONTAINER") == "false"
+        assert System.get_env("_APPSIGNAL_SEND_PARAMS") == "true"
+        assert System.get_env("_APPSIGNAL_FILES_WORLD_ACCESSIBLE") == "false"
+      end)
+    end
   end
 
   defp default_configuration() do
