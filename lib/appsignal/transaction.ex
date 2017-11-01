@@ -1,5 +1,5 @@
 defmodule Appsignal.TransactionBehaviour do
-  @callback start(String.t, String.t) :: Appsignal.Transaction.t
+  @callback start(String.t, atom) :: Appsignal.Transaction.t
   @callback start_event() :: Appsignal.Transaction.t
   @callback finish_event(Appsignal.Transaction.t | nil, String.t, String.t, any, integer) :: Appsignal.Transaction.t
   @callback finish() :: :sample | :no_sample
@@ -63,7 +63,7 @@ defmodule Appsignal.Transaction do
   `Appsignal.TransactionRegistry`.
 
   """
-  @spec start(String.t, String.t) :: Transaction.t
+  @spec start(String.t, atom) :: Transaction.t
   def start(transaction_id, namespace) when is_binary(transaction_id) do
     {:ok, resource} = Nif.start_transaction(transaction_id, Atom.to_string(namespace))
     transaction = %Appsignal.Transaction{resource: resource, id: transaction_id}
