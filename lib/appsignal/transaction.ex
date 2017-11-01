@@ -3,16 +3,16 @@ defmodule Appsignal.TransactionBehaviour do
   @callback start_event() :: Appsignal.Transaction.t
   @callback finish_event(Appsignal.Transaction.t | nil, String.t, String.t, any, integer) :: Appsignal.Transaction.t
   @callback finish() :: :sample | :no_sample
-  @callback finish(Transaction.t | nil) :: :sample | :no_sample
+  @callback finish(Appsignal.Transaction.t | nil) :: :sample | :no_sample
   @callback complete() :: :ok
-  @callback complete(Transaction.t | nil) :: :ok
-  @callback set_error(Transaction.t | nil, String.t, String.t, any) :: Transaction.t
-  @callback set_action(String.t) :: Transaction.t
-  @callback set_action(Transaction.t | nil, String.t) :: Transaction.t
-  @callback set_sample_data(Transaction.t | nil, String.t, any) :: Transaction.t
+  @callback complete(Appsignal.Transaction.t | nil) :: :ok
+  @callback set_error(Appsignal.Transaction.t | nil, String.t, String.t, any) :: Appsignal.Transaction.t
+  @callback set_action(String.t) :: Appsignal.Transaction.t
+  @callback set_action(Appsignal.Transaction.t | nil, String.t) :: Appsignal.Transaction.t
+  @callback set_sample_data(Appsignal.Transaction.t | nil, String.t, any) :: Appsignal.Transaction.t
 
   if Appsignal.plug? do
-    @callback set_request_metadata(Transaction.t | nil, Plug.Conn.t) :: Transaction.t
+    @callback set_request_metadata(Appsignal.Transaction.t | nil, Plug.Conn.t) :: Appsignal.Transaction.t
   end
 end
 
