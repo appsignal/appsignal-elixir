@@ -16,7 +16,10 @@ branches:
     - "master"
     - "develop"
     - "phoenix-pre"
+before_script:
+  - mix dialyzer --plt
 script:
+  - mix dialyzer --halt-exit-status
   - MIX_ENV=test mix compile --warnings-as-errors && MIX_ENV=test mix test
   - MIX_ENV=test_phoenix mix compile --warnings-as-errors && MIX_ENV=test_phoenix mix test
   - MIX_ENV=test_no_nif mix compile --warnings-as-errors && MIX_ENV=test_no_nif mix test
