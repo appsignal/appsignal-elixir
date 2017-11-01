@@ -54,7 +54,7 @@ defmodule AppsignalTest do
   test "send_error" do
     with_mocks([
       {Appsignal.Transaction, [:passthrough], []},
-      {Appsignal.TransactionRegistry, [:passthrough], [remove_transaction: fn(t) -> :ok end]},
+      {Appsignal.TransactionRegistry, [:passthrough], [remove_transaction: fn(_) -> :ok end]},
     ]) do
       stack = System.stacktrace()
       t = %Transaction{} = Appsignal.send_error(%RuntimeError{message: "Some bad stuff happened"}, "Oops", stack)
@@ -70,7 +70,7 @@ defmodule AppsignalTest do
   test "send_error with metadata" do
     with_mocks([
       {Appsignal.Transaction, [:passthrough], []},
-      {Appsignal.TransactionRegistry, [:passthrough], [remove_transaction: fn(t) -> :ok end]},
+      {Appsignal.TransactionRegistry, [:passthrough], [remove_transaction: fn(_) -> :ok end]},
     ]) do
       stack = System.stacktrace()
       t = %Transaction{} = Appsignal.send_error(%RuntimeError{message: "Some bad stuff happened"}, "Oops", stack, %{foo: "bar"})
@@ -87,7 +87,7 @@ defmodule AppsignalTest do
   test "send_error with metadata and conn" do
     with_mocks([
       {Appsignal.Transaction, [:passthrough], []},
-      {Appsignal.TransactionRegistry, [:passthrough], [remove_transaction: fn(t) -> :ok end]},
+      {Appsignal.TransactionRegistry, [:passthrough], [remove_transaction: fn(_) -> :ok end]},
     ]) do
 
       conn = %Plug.Conn{peer: {{127, 0, 0, 1}, 12345}, req_headers: [{"accept", "text/plain"}]}
@@ -115,7 +115,7 @@ defmodule AppsignalTest do
   test "send_error with a passed function" do
     with_mocks([
       {Appsignal.Transaction, [:passthrough], []},
-      {Appsignal.TransactionRegistry, [:passthrough], [remove_transaction: fn(t) -> :ok end]},
+      {Appsignal.TransactionRegistry, [:passthrough], [remove_transaction: fn(_) -> :ok end]},
     ]) do
       stack = System.stacktrace()
       t = %Transaction{} = Appsignal.send_error(
@@ -140,7 +140,7 @@ defmodule AppsignalTest do
   test "send_error with a custom namespace" do
     with_mocks([
       {Appsignal.Transaction, [:passthrough], []},
-      {Appsignal.TransactionRegistry, [:passthrough], [remove_transaction: fn(t) -> :ok end]},
+      {Appsignal.TransactionRegistry, [:passthrough], [remove_transaction: fn(_) -> :ok end]},
     ]) do
       stack = System.stacktrace()
       t = %Transaction{} = Appsignal.send_error(
