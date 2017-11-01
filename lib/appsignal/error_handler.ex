@@ -66,7 +66,7 @@ defmodule Appsignal.ErrorHandler do
   end
 
   @doc false
-  @spec match_event(term) :: {pid, term, String.t, list, Map.t} | :nomatch
+  @spec match_event(term) :: {pid, term, String.t, list, %{}} | :nomatch
   def match_event({:error_report, _gleader, {origin, :crash_report, report}}) do
     match_error_report(origin, report)
   end
