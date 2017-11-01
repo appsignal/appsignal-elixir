@@ -194,6 +194,7 @@ defmodule Appsignal.Transaction do
   @doc """
   Set sample data for the current transaction. See `set_sample_data/3`.
   """
+  @spec set_sample_data(Transaction.t, Enum.t) :: Transaction.t
   def set_sample_data(%Transaction{} = transaction, values) do
     values |> Enum.each(fn({key, value}) ->
       Transaction.set_sample_data(transaction, key, value)
