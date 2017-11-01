@@ -280,6 +280,7 @@ defmodule Appsignal.Transaction do
     transaction
   end
 
+  @spec set_meta_data(Transaction.t, Enum.t) :: Transaction.t
   def set_meta_data(%Transaction{} = transaction, values) do
     values |> Enum.each(fn({key, value}) ->
       Transaction.set_meta_data(transaction, key, value)
