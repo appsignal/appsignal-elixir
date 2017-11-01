@@ -46,7 +46,7 @@ defmodule Appsignal.TransactionRegistry do
   @doc """
   Given a process ID, return its associated transaction.
   """
-  @spec lookup(pid, boolean) :: Transaction.t | nil
+  @spec lookup(pid, boolean) :: Transaction.t | nil | :removed
   def lookup(pid, return_removed \\ false) do
     case registry_alive?() && :ets.lookup(@table, pid) do
       [{^pid, :removed}] ->
