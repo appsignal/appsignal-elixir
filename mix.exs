@@ -41,7 +41,8 @@ defmodule Appsignal.Mixfile do
      elixirc_paths: elixirc_paths(Mix.env),
      deps: deps(),
      docs: [main: "Appsignal", logo: "logo.png"],
-     agent_version: @agent_version
+     agent_version: @agent_version,
+     dialyzer: [plt_add_deps: :transitive]
     ]
   end
 
