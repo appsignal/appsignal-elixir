@@ -1,3 +1,11 @@
+# 1.4.0
+* Add separate GNU linux build. PR #265 and
+  Commit b9546cae01cd89d597586ad6c7dc4b5213fe2fca
+* Add separate FreeBSD build
+  Commit b9546cae01cd89d597586ad6c7dc4b5213fe2fca
+* Auto restart agent when none is running
+  Commit b9546cae01cd89d597586ad6c7dc4b5213fe2fca
+
 # 1.3.6
 * Fix crashes when using a transaction from multiple processes in an unsupported way. 
   Commit b9546cae01cd89d597586ad6c7dc4b5213fe2fca
