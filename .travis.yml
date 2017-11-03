@@ -20,7 +20,7 @@ before_script:
   - mkdir -p _build/dev/plt
   - mix dialyzer --plt
 script:
-  - mix dialyzer --halt-exit-status
+  - mix dialyzer --no-check --halt-exit-status
   - MIX_ENV=test mix compile --warnings-as-errors && MIX_ENV=test mix test
   - MIX_ENV=test_phoenix mix compile --warnings-as-errors && MIX_ENV=test_phoenix mix test
   - MIX_ENV=test_no_nif mix compile --warnings-as-errors && MIX_ENV=test_no_nif mix test
