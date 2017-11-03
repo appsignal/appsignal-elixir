@@ -18,11 +18,15 @@ branches:
     - "phoenix-pre"
 before_script:
   - mkdir -p _build/test/plt
+  - MIX_ENV=test mix compile --warnings-as-errors
+  - MIX_ENV=test_phoenix mix compile --warnings-as-errors
+  - MIX_ENV=test_no_nif mix compile --warnings-as-errors
+  - MIX_ENV=test mix dialyzer --plt --no-compile
 script:
-  - MIX_ENV=test mix compile --warnings-as-errors && MIX_ENV=test mix test
-  - MIX_ENV=test_phoenix mix compile --warnings-as-errors && MIX_ENV=test_phoenix mix test
-  - MIX_ENV=test_no_nif mix compile --warnings-as-errors && MIX_ENV=test_no_nif mix test
-  - MIX_ENV=test mix dialyzer --halt-exit-status --no-compile
+  - MIX_ENV=test mix test
+  - MIX_ENV=test_phoenix mix test
+  - MIX_ENV=test_no_nif mix test
+  - MIX_ENV=test mix dialyzer --halt-exit-status --no-compile --no-check
 cache:
   directories:
     - _build/test/plt
