@@ -17,7 +17,6 @@ branches:
     - "develop"
     - "phoenix-pre"
 before_script:
-  - mkdir -p _build/test/plt
   - MIX_ENV=test mix compile --warnings-as-errors
   - MIX_ENV=test_phoenix mix compile --warnings-as-errors
   - MIX_ENV=test_no_nif mix compile --warnings-as-errors

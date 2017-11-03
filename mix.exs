@@ -42,11 +42,7 @@ defmodule Appsignal.Mixfile do
      deps: deps(),
      docs: [main: "Appsignal", logo: "logo.png"],
      agent_version: @agent_version,
-     dialyzer: [
-       plt_add_deps: :transitive,
-       plt_add_apps: [:mix],
-       plt_core_path: "_build/test/plt"
-     ]
+     dialyzer: [plt_add_deps: :transitive, plt_add_apps: [:mix]]
     ]
   end
 
