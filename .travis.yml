@@ -17,13 +17,12 @@ branches:
     - "develop"
     - "phoenix-pre"
 before_script:
-  - mkdir -p _build/dev/plt
-  - mix dialyzer --plt
+  - mkdir -p _build/test/plt
 script:
-  - mix dialyzer --no-check --halt-exit-status
   - MIX_ENV=test mix compile --warnings-as-errors && MIX_ENV=test mix test
   - MIX_ENV=test_phoenix mix compile --warnings-as-errors && MIX_ENV=test_phoenix mix test
   - MIX_ENV=test_no_nif mix compile --warnings-as-errors && MIX_ENV=test_no_nif mix test
+  - MIX_ENV=test mix dialyzer --halt-exit-status --no-compile
 cache:
   directories:
-    - _build/dev/plt
+    - _build/test/plt
