@@ -42,7 +42,7 @@ defmodule Appsignal.Nif do
       :ok -> :ok
       {:error, {:load_failed, reason}} ->
         arch = :erlang.system_info(:system_architecture)
-        message = "[#{DateTime.utc_now |> to_string}] Error loading NIF, AppSignal integration disabled!\n\n#{reason}\n\nIs your operating system (#{arch}) supported?\nPlease check http://docs.appsignal.com/support/operating-systems.html"
+        message = "[#{DateTime.utc_now |> to_string}] Error loading NIF (Is your operating system (#{arch}) supported? Please check http://docs.appsignal.com/support/operating-systems.html):\n#{reason}\n\n"
 
         :appsignal
         |> Application.app_dir
