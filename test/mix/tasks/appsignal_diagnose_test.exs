@@ -120,6 +120,62 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     }
   end
 
+  describe "when install.log exists" do
+    setup do
+      content = "[2017-11-10 13:39:47.795755Z] Error!\n[2017-11-10 13:39:48.795755Z] Another Error!"
+      File.write!(install_log_path(), content)
+
+      {:ok, %{content: content}}
+    end
+
+    test "outputs the log", %{content: content} do
+      output = run()
+      assert String.contains? output, "Log files"
+      assert String.contains? output, "Path: #{install_log_path()}"
+      refute String.contains? output, "File not found."
+      assert String.contains? output, content
+    end
+
+    test "adds logs to report", %{content: content} do
+      run()
+      logs = received_report()[:logs]
+
+      assert logs == %{
+        "install.log": %{
+          path: install_log_path(),
+          exists: true,
+          content: content |> String.split("\n")
+        }
+      }
+    end
+  end
+
+  describe "when install.log does not exist" do
+    setup do
+      File.rm(install_log_path())
+      :ok
+    end
+
+    test "outputs the log" do
+      output = run()
+      assert String.contains? output, "Log files"
+      assert String.contains? output, "Path: #{install_log_path()}"
+      assert String.contains? output, "File not found."
+    end
+
+    test "adds logs to report" do
+      run()
+      logs = received_report()[:logs]
+
+      assert logs == %{
+        "install.log": %{
+          path: install_log_path(),
+          exists: false
+        }
+      }
+    end
+  end
+
   describe "when on Heroku" do
     setup do: @system.set(:heroku, true)
 
@@ -635,5 +691,11 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     setup_with_config(%{log_path: log_file_path})
 
     %{log_dir_path: log_dir_path, log_file_path: log_file_path}
+  end
+
+  def install_log_path() do
+    :appsignal
+    |> Application.app_dir
+    |> Path.join("install.log")
   end
 end
