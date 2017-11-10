@@ -24,4 +24,8 @@ defmodule Appsignal.FakeSystem do
   def uid do
     Agent.get(__MODULE__, &Map.get(&1, :uid, 999))
   end
+
+  def agent_platform do
+    Agent.get(__MODULE__, &Map.get(&1, :agent_platform, "linux"))
+  end
 end

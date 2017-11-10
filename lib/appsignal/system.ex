@@ -3,10 +3,12 @@ defmodule Appsignal.SystemBehaviour do
   @callback root?() :: boolean()
   @callback heroku?() :: boolean()
   @callback uid() :: integer | nil
+  @callback agent_platform() :: String.t
 end
 
 defmodule Appsignal.System do
   @behaviour Appsignal.SystemBehaviour
+  @os Application.get_env(:appsignal, :os, :os)
 
   @doc """
   Get the full host name, including the domain.
@@ -38,5 +40,39 @@ defmodule Appsignal.System do
         end
       _ -> nil
     end
+  end
+
+  def agent_platform do
+    case force_musl_build?() do
+      true -> "linux-musl"
+      false ->
+        case @os.type do
+          {:unix, :linux} ->
+            agent_platform_by_ldd_version()
+          {_, os} ->
+            to_string(os)
+        end
+    end
+  end
+
+  defp agent_platform_by_ldd_version do
+    try do
+      {output, _} = System.cmd("ldd", ["--version"], stderr_to_stdout: true)
+      case String.contains?(output, "musl") do
+        true -> "linux-musl"
+        false ->
+          ldd_version = List.first(Regex.run(~r/\d+\.\d+/, output))
+          case Version.compare("#{ldd_version}.0", "2.15.0") do
+            :lt -> "linux-musl"
+            _ -> "linux"
+          end
+      end
+    rescue
+      _ -> "linux"
+    end
+  end
+
+  defp force_musl_build? do
+    !is_nil(System.get_env("APPSIGNAL_BUILD_FOR_MUSL"))
   end
 end

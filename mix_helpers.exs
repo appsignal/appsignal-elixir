@@ -9,8 +9,7 @@ defmodule Mix.Appsignal.Helper do
 
   def verify_system_architecture() do
     input_arch = :erlang.system_info(:system_architecture)
-    force_musl = !(System.get_env("APPSIGNAL_BUILD_FOR_MUSL") |> is_nil())
-    case map_arch(input_arch, force_musl) do
+    case map_arch(input_arch, String.contains?(Appsignal.System.agent_platform(), "musl")) do
       :unsupported ->
         {:error, {:unsupported, input_arch}}
       arch when is_binary(arch) ->
