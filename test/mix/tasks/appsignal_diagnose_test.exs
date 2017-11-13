@@ -14,6 +14,8 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   defp run_fn, do: Mix.Tasks.Appsignal.Diagnose.run(nil)
 
   setup do
+    FakeOS.start_link
+    FakeOS.set(:type, {:unix, :linux})
     @diagnose_report.start_link
     @system.start_link
     @nif.start_link
@@ -56,6 +58,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     report = received_report()
     assert report[:library] == %{
       agent_version: @agent_version,
+      agent_platform: Appsignal.System.agent_platform(),
       extension_loaded: Appsignal.Nif.loaded?,
       language: "elixir",
       package_version: @appsignal_version
