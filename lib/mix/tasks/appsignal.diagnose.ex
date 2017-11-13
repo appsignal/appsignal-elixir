@@ -53,6 +53,11 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     path_report = Diagnose.Paths.info(config)
     report = Map.put(report, :paths, path_report)
     print_paths(path_report)
+    empty_line()
+
+    logs = Diagnose.Logs.info
+    report = Map.put(report, :logs, logs)
+    print_logs(logs)
 
     send_report_to_appsignal_if_agreed_upon(config, report)
   end
@@ -114,6 +119,21 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     IO.puts "Paths"
     Enum.each(path_report, fn(path) ->
       print_path path
+    end)
+  end
+
+  defp print_logs(logs) do
+    IO.puts "Log files"
+    Enum.each(logs, fn({filename, log}) ->
+      IO.puts "  #{filename}:"
+      IO.puts "    Path: #{log[:path]}"
+      case log do
+        %{exists: false} -> IO.puts "    File not found."
+        %{content: lines} ->
+          IO.puts "    Contents:"
+          Enum.each(lines, &IO.puts/1)
+      end
+      empty_line()
     end)
   end
 

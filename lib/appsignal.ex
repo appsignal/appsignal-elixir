@@ -67,6 +67,11 @@ defmodule Appsignal do
         Logger.debug("AppSignal starting.")
         Config.write_to_environment
         Appsignal.Nif.start
+        if Appsignal.Nif.loaded? do
+          Logger.debug("AppSignal started.")
+        else
+          Logger.error("Failed to start AppSignal. Please run the diagnose task (https://docs.appsignal.com/elixir/command-line/diagnose.html) to debug your installation.")
+        end
       {:ok, false} ->
         Logger.info("AppSignal disabled.")
         :ok

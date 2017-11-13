@@ -35,15 +35,20 @@ defmodule Appsignal.Nif do
 
   @on_load :init
 
-  require Logger
-
   def init do
     path = :filename.join(:code.priv_dir(:appsignal), 'appsignal_extension')
+
     case :erlang.load_nif(path, 1) do
       :ok -> :ok
       {:error, {:load_failed, reason}} ->
         arch = :erlang.system_info(:system_architecture)
-        Logger.error "Error loading NIF, AppSignal integration disabled!\n\n#{reason}\n\nIs your operating system (#{arch}) supported?\nPlease check http://docs.appsignal.com/support/operating-systems.html"
+        message = "[#{DateTime.utc_now |> to_string}] Error loading NIF (Is your operating system (#{arch}) supported? Please check http://docs.appsignal.com/support/operating-systems.html):\n#{reason}\n\n"
+
+        :appsignal
+        |> Application.app_dir
+        |> Path.join("install.log")
+        |> File.write(message, [:append])
+
         :ok
     end
   end
