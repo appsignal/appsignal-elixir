@@ -65,6 +65,17 @@ defmodule Mix.Appsignal.Helper do
     end
   end
 
+  def store_architecture(arch) do
+    File.mkdir_p!(priv_dir())
+    case File.open priv_path("appsignal.architecture"), [:write] do
+      {:ok, file} ->
+        result = IO.binwrite(file, arch)
+        File.close(file)
+        result
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
   defp download_and_extract(url, version, checksum) do
     download_file(url, version)
     |> verify_checksum(checksum)
@@ -120,7 +131,6 @@ defmodule Mix.Appsignal.Helper do
     end
   end
 
-
   def compile do
     {result, error_code} = System.cmd("make", make_args(to_string(Mix.env)))
     IO.binwrite(result)
@@ -167,20 +177,7 @@ defmodule Mix.Appsignal.Helper do
     end
   end
 
-  defp priv_dir() do
-    case :code.priv_dir(:appsignal) do
-      {:error, :bad_name} ->
-        # this happens on initial compilation
-        Mix.Tasks.Compile.Erlang.manifests
-        |> List.first
-        |> String.to_charlist
-        |> :filename.dirname
-        |> :filename.join('priv')
-      path ->
-        path
-    end
-    |> List.to_string
-  end
+  defp priv_dir(), do: Appsignal.System.priv_dir
 
   defp priv_path(filename) do
     Path.join(priv_dir(), filename)

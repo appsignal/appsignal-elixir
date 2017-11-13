@@ -1,4 +1,5 @@
 defmodule Appsignal.SystemBehaviour do
+  @callback priv_dir() :: String.t
   @callback hostname_with_domain() :: String.t | nil
   @callback root?() :: boolean()
   @callback heroku?() :: boolean()
@@ -9,6 +10,20 @@ end
 defmodule Appsignal.System do
   @behaviour Appsignal.SystemBehaviour
   @os Application.get_env(:appsignal, :os, :os)
+
+  def priv_dir() do
+    case :code.priv_dir(:appsignal) do
+      {:error, :bad_name} ->
+        # This happens on initial compilation
+        Mix.Tasks.Compile.Erlang.manifests
+        |> List.first
+        |> Path.dirname
+        |> Path.join("priv")
+      path ->
+        path
+        |> List.to_string
+    end
+  end
 
   @doc """
   Get the full host name, including the domain.
@@ -39,6 +54,19 @@ defmodule Appsignal.System do
           :error -> nil
         end
       _ -> nil
+    end
+  end
+
+  # Returns the platform for which the agent was installed.
+  #
+  # This value is saved when the package is installed.
+  # We use this value to build the diagnose report with the installed
+  # platform, rather than the detected platform in .agent_platform during
+  # the diagnose run.
+  def installed_agent_architecture do
+    case File.read(Path.join([priv_dir(), "appsignal.architecture"])) do
+      {:ok, arch} -> arch
+      {:error, _} -> nil
     end
   end
 

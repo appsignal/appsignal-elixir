@@ -15,13 +15,14 @@ defmodule Mix.Tasks.Compile.Appsignal do
       {:ok, arch} ->
         :ok = Mix.Appsignal.Helper.ensure_downloaded(arch)
         :ok = Mix.Appsignal.Helper.compile
+        :ok = Mix.Appsignal.Helper.store_architecture(arch)
       {:error, {:unsupported, arch}} ->
         Mix.Shell.IO.error(
           "Unsupported target platform #{arch}, AppSignal integration " <>
           "disabled!\nPlease check " <>
           "http://docs.appsignal.com/support/operating-systems.html"
         )
-        :ok
+        :ok = Mix.Appsignal.Helper.store_architecture(arch)
     end
 
     purge_module Appsignal.SystemBehaviour

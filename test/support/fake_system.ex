@@ -13,6 +13,10 @@ defmodule Appsignal.FakeSystem do
     Agent.update(__MODULE__, &Map.put(&1, key, value))
   end
 
+  def priv_dir do
+    Agent.get(__MODULE__, &Map.get(&1, :priv_dir, Appsignal.System.priv_dir))
+  end
+
   def root? do
     Agent.get(__MODULE__, &Map.get(&1, :root, false))
   end
