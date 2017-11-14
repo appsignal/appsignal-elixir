@@ -1,3 +1,5 @@
+Code.require_file("agent.ex")
+
 defmodule Appsignal do
   @moduledoc """
   AppSignal for Elixir. Follow the [installation guide](https://docs.appsignal.com/elixir/installation.html) to install AppSignal into your Elixir app.

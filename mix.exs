@@ -20,12 +20,20 @@ defmodule Mix.Tasks.Compile.Appsignal do
         )
         :ok
     end
+    purge_module Appsignal.Agent
+    :ok
+  end
+
+  # Unload loaded module so that it can be loaded again for the application
+  # itself, when it's already loaded in the mix setup.
+  def purge_module(mod) do
+    :code.purge mod
+    :code.delete mod
   end
 end
 
 defmodule Appsignal.Mixfile do
   use Mix.Project
-  @agent_version Appsignal.Agent.version
 
   def project do
     [app: :appsignal,
@@ -41,7 +49,6 @@ defmodule Appsignal.Mixfile do
      elixirc_paths: elixirc_paths(Mix.env),
      deps: deps(),
      docs: [main: "Appsignal", logo: "logo.png"],
-     agent_version: @agent_version,
      dialyzer: [
        plt_add_deps: :transitive,
        plt_add_apps: [:mix],
