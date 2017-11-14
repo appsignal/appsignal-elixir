@@ -23,6 +23,13 @@ defmodule Mix.Tasks.Compile.Appsignal do
           "http://docs.appsignal.com/support/operating-systems.html"
         )
         :ok = Mix.Appsignal.Helper.store_architecture(arch)
+      {:error, {:unknown, {arch, platform}}} ->
+        Mix.Shell.IO.error(
+          "Unknown target platform #{arch} - #{platform}, AppSignal " <>
+          "integration disabled!\nPlease check " <>
+          "http://docs.appsignal.com/support/operating-systems.html"
+        )
+        :ok = Mix.Appsignal.Helper.store_architecture(arch)
     end
 
     purge_module Appsignal.SystemBehaviour
