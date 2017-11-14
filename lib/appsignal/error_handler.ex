@@ -66,7 +66,7 @@ defmodule Appsignal.ErrorHandler do
   end
 
   @doc false
-  @spec match_event(term) :: {pid, term, String.t, list, Map.t} | :nomatch
+  @spec match_event(term) :: {pid, term, String.t, list, %{}} | :nomatch
   def match_event({:error_report, _gleader, {origin, :crash_report, report}}) do
     match_error_report(origin, report)
   end
@@ -133,9 +133,9 @@ defmodule Appsignal.ErrorHandler do
       extract_reason_and_message(reason, message)
     end
   end
-  def extract_reason_and_message(r = %{}, message) do
+  def extract_reason_and_message(r = %{__struct__: struct}, message) do
     msg = Exception.message(r)
-    {"#{inspect r.__struct__}", prefixed(message, msg)}
+    {"#{inspect struct}", prefixed(message, msg)}
   end
   def extract_reason_and_message({r = %{}, _}, message) do
     extract_reason_and_message(r, message)

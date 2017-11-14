@@ -46,7 +46,9 @@ if Appsignal.phoenix? do
       # explicitly remove the transaction here so the regular error handler doesn't submit it again
       :ok = TransactionRegistry.remove_transaction(transaction)
 
-      Logger.debug("Submitting Phoenix error #{inspect transaction}: #{message}")
+      Logger.debug(fn() ->
+        "Submitting Phoenix error #{inspect transaction}: #{message}"
+      end)
     end
   end
 end

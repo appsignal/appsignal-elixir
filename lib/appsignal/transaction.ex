@@ -1,18 +1,18 @@
 defmodule Appsignal.TransactionBehaviour do
-  @callback start(String.t, String.t) :: Appsignal.Transaction.t
+  @callback start(String.t, atom) :: Appsignal.Transaction.t
   @callback start_event() :: Appsignal.Transaction.t
   @callback finish_event(Appsignal.Transaction.t | nil, String.t, String.t, any, integer) :: Appsignal.Transaction.t
   @callback finish() :: :sample | :no_sample
-  @callback finish(Transaction.t | nil) :: :sample | :no_sample
+  @callback finish(Appsignal.Transaction.t | nil) :: :sample | :no_sample
   @callback complete() :: :ok
-  @callback complete(Transaction.t | nil) :: :ok
-  @callback set_error(Transaction.t | nil, String.t, String.t, any) :: Transaction.t
-  @callback set_action(String.t) :: Transaction.t
-  @callback set_action(Transaction.t | nil, String.t) :: Transaction.t
-  @callback set_sample_data(Transaction.t | nil, String.t, any) :: Transaction.t
+  @callback complete(Appsignal.Transaction.t | nil) :: :ok
+  @callback set_error(Appsignal.Transaction.t | nil, String.t, String.t, any) :: Appsignal.Transaction.t
+  @callback set_action(String.t) :: Appsignal.Transaction.t
+  @callback set_action(Appsignal.Transaction.t | nil, String.t) :: Appsignal.Transaction.t
+  @callback set_sample_data(Appsignal.Transaction.t | nil, String.t, any) :: Appsignal.Transaction.t
 
   if Appsignal.plug? do
-    @callback set_request_metadata(Transaction.t | nil, Plug.Conn.t) :: Transaction.t
+    @callback set_request_metadata(Appsignal.Transaction.t | nil, Plug.Conn.t) :: Appsignal.Transaction.t
   end
 end
 
@@ -63,7 +63,7 @@ defmodule Appsignal.Transaction do
   `Appsignal.TransactionRegistry`.
 
   """
-  @spec start(String.t, String.t) :: Transaction.t
+  @spec start(String.t, atom) :: Transaction.t
   def start(transaction_id, namespace) when is_binary(transaction_id) do
     {:ok, resource} = Nif.start_transaction(transaction_id, Atom.to_string(namespace))
     transaction = %Appsignal.Transaction{resource: resource, id: transaction_id}
@@ -194,6 +194,7 @@ defmodule Appsignal.Transaction do
   @doc """
   Set sample data for the current transaction. See `set_sample_data/3`.
   """
+  @spec set_sample_data(Transaction.t, Enum.t) :: Transaction.t
   def set_sample_data(%Transaction{} = transaction, values) do
     values |> Enum.each(fn({key, value}) ->
       Transaction.set_sample_data(transaction, key, value)
@@ -280,6 +281,7 @@ defmodule Appsignal.Transaction do
     transaction
   end
 
+  @spec set_meta_data(Transaction.t, Enum.t) :: Transaction.t
   def set_meta_data(%Transaction{} = transaction, values) do
     values |> Enum.each(fn({key, value}) ->
       Transaction.set_meta_data(transaction, key, value)

@@ -1,10 +1,11 @@
 defmodule Appsignal.Diagnose.ReportBehaviour do
-  @callback send(Appsignal.Config.t, %{}) :: {:ok, String.t}
+  @callback send(%{}, %{}) :: {:ok | :error, String.t}
 end
 
 defmodule Appsignal.Diagnose.Report do
   @behaviour Appsignal.Diagnose.ReportBehaviour
 
+  @spec send(%{}, %{}) :: {:ok | :error, String.t}
   def send(config, report) do
     HTTPoison.start
     params = URI.encode_query(%{

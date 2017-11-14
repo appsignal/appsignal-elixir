@@ -41,7 +41,12 @@ defmodule Appsignal.Mixfile do
      elixirc_paths: elixirc_paths(Mix.env),
      deps: deps(),
      docs: [main: "Appsignal", logo: "logo.png"],
-     agent_version: @agent_version
+     agent_version: @agent_version,
+     dialyzer: [
+       plt_add_deps: :transitive,
+       plt_add_apps: [:mix],
+       ignore_warnings: "dialyzer.ignore-warnings"
+     ]
     ]
   end
 
@@ -90,7 +95,8 @@ defmodule Appsignal.Mixfile do
       {:mock, "~> 0.3.0", only: [:test, :test_phoenix, :test_no_nif]},
       {:bypass, "~> 0.6.0", only: [:test, :test_phoenix, :test_no_nif]},
       {:ex_doc, "~> 0.12", only: :dev, runtime: false},
-      {:credo, "~> 0.8", only: [:dev, :test], runtime: false}
+      {:credo, "~> 0.8", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 0.5", only: [:dev], runtime: false}
     ]
   end
 end

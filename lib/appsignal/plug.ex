@@ -110,9 +110,10 @@ if Appsignal.plug? do
     )
 
     def extract_request_headers(%Plug.Conn{req_headers: req_headers}) do
-      req_headers
-      |> Keyword.take(@header_keys)
-      |> Enum.map(fn({key, value}) -> {"req_headers.#{key}", value} end)
+      for {key, value} <- req_headers,
+          key in @header_keys do
+        {"req_headers.#{key}", value}
+      end
       |> Enum.into(%{})
     end
 

@@ -31,12 +31,12 @@ defmodule Appsignal.System do
 
   def uid do
     case System.cmd("id", ["-u"]) do
-      {id, _} ->
+      {id, 0} ->
         case Integer.parse(List.first(String.split(id, "\n"))) do
           {int, _} -> int
           :error -> nil
         end
-      _ -> nil
+      {_, _} -> nil
     end
   end
 end
