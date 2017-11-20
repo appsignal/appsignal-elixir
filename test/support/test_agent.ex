@@ -1,9 +1,11 @@
 defmodule TestAgent do
-  defmacro __using__(initial_state) do
+  defmacro __using__(default_state) do
     quote do
-      def start_link do
+      def start_link(state \\ %{}) do
         Agent.start_link(fn() ->
-            unquote(initial_state) |> Enum.into(%{})
+            unquote(default_state)
+            |> Enum.into(%{})
+            |> Map.merge(state)
           end,
           name: __MODULE__
         )

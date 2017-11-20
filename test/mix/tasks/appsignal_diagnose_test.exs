@@ -2,9 +2,8 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   use ExUnit.Case
   import ExUnit.CaptureIO
   import AppsignalTest.Utils
-  alias Appsignal.{Diagnose.FakeReport, FakeSystem}
+  alias Appsignal.{Diagnose.FakeReport, FakeSystem, FakeNif}
 
-  @nif Application.get_env(:appsignal, :appsignal_nif, Appsignal.Nif)
   @appsignal_version Mix.Project.config[:version]
   @agent_version Appsignal.Agent.version
 
@@ -15,9 +14,10 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   setup do
     {:ok, fake_report} = FakeReport.start_link
     {:ok, fake_system} = Appsignal.FakeSystem.start_link
-    @nif.start_link
-    # By default use the same as the actual state of the Nif
-    @nif.set(:loaded?, Appsignal.Nif.loaded?)
+    # Set loaded? to the actual state of the Nif
+    {:ok, fake_nif} = Appsignal.FakeNif.start_link(
+      %{loaded?: Appsignal.Nif.loaded?}
+    )
 
     # By default, Push API key is valid
     auth_bypass = Bypass.open
@@ -28,7 +28,15 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       Plug.Conn.resp(conn, 200, "")
     end
 
-    {:ok, %{auth_bypass: auth_bypass, fake_report: fake_report, fake_system: fake_system}}
+    {
+      :ok,
+      %{
+        auth_bypass: auth_bypass,
+        fake_report: fake_report,
+        fake_system: fake_system,
+        fake_nif: fake_nif
+      }
+    }
   end
 
   defp received_report(pid) do
@@ -69,7 +77,9 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
   @tag :skip_env_test_no_nif
   describe "when Nif is loaded" do
-    setup do: @nif.set(:loaded?, true)
+    setup %{fake_nif: fake_nif} do
+      FakeNif.update(fake_nif, :loaded?, true)
+    end
 
     test "outputs that the Nif is loaded" do
       output = run()
@@ -84,7 +94,9 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   end
 
   describe "when Nif is not loaded" do
-    setup do: @nif.set(:loaded?, false)
+    setup %{fake_nif: fake_nif} do
+      FakeNif.update(fake_nif, :loaded?, false)
+    end
 
     test "outputs that the Nif is not loaded" do
       output = run()
@@ -193,7 +205,9 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   end
 
   describe "when running in a container" do
-    setup do: @nif.set(:running_in_container?, true)
+    setup %{fake_nif: fake_nif} do
+      FakeNif.update(fake_nif, :running_in_container?, true)
+    end
 
     test "outputs Container: yes" do
       output = run()
@@ -208,7 +222,9 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   end
 
   describe "when not running in a container" do
-    setup do: @nif.set(:running_in_container?, false)
+    setup %{fake_nif: fake_nif} do
+      FakeNif.update(fake_nif, :running_in_container?, false)
+    end
 
     test "outputs Container: no" do
       output = run()
@@ -253,8 +269,8 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   end
 
   @tag :skip_env_test_no_nif
-  test "runs agent in diagnose mode" do
-    @nif.set(:run_diagnose, true)
+  test "runs agent in diagnose mode", %{fake_nif: fake_nif} do
+    FakeNif.update(fake_nif, :run_diagnose, true)
     output = run()
     assert String.contains? output, "Agent diagnostics"
     assert String.contains? output, "  Extension config: valid"
@@ -265,8 +281,8 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   end
 
   @tag :skip_env_test_no_nif
-  test "adds agent report to report", %{fake_report: fake_report} do
-    @nif.set(:run_diagnose, true)
+  test "adds agent report to report", %{fake_report: fake_report, fake_nif: fake_nif} do
+    FakeNif.update(fake_nif, :run_diagnose, true)
     run()
     report = received_report(fake_report)
     assert report[:agent] == %{
@@ -284,8 +300,8 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
   describe "when config is not active" do
     @tag :skip_env_test_no_nif
-    test "runs agent in diagnose mode, but doesn't change the active state" do
-      @nif.set(:run_diagnose, true)
+    test "runs agent in diagnose mode, but doesn't change the active state", %{fake_nif: fake_nif} do
+      FakeNif.update(fake_nif, :run_diagnose, true)
 
       output = with_config(%{active: false}, &run/0)
       assert String.contains? output, "active: false"
@@ -298,8 +314,8 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     end
 
     @tag :skip_env_test_no_nif
-    test "adds agent report to report", %{fake_report: fake_report} do
-      @nif.set(:run_diagnose, true)
+    test "adds agent report to report", %{fake_report: fake_report, fake_nif: fake_nif} do
+      FakeNif.update(fake_nif, :run_diagnose, true)
       run()
       report = received_report(fake_report)
       assert report[:agent] == %{
@@ -317,7 +333,9 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   end
 
   describe "when extension is not loaded" do
-    setup do: @nif.set(:loaded?, false)
+    setup %{fake_nif: fake_nif} do
+      FakeNif.update(fake_nif, :loaded?, false)
+    end
 
     test "agent diagnostics is not run" do
       output = run()
@@ -332,9 +350,9 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   end
 
   describe "when extension output is invalid JSON" do
-    setup do
-      @nif.set(:loaded?, true)
-      @nif.set(:diagnose, "agent_report_string")
+    setup %{fake_nif: fake_nif} do
+      FakeNif.update(fake_nif, :loaded?, true)
+      FakeNif.update(fake_nif, :diagnose, "agent_report_string")
     end
 
     test "agent diagnostics report prints an error" do
@@ -352,9 +370,9 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   end
 
   describe "when extension output is missing a test" do
-    setup do
-      @nif.set(:loaded?, true)
-      @nif.set(:diagnose, ~s(
+    setup %{fake_nif: fake_nif} do
+      FakeNif.update(fake_nif, :loaded?, true)
+      FakeNif.update(fake_nif, :diagnose, ~s(
         {
           "extension": { "config": { "valid": { "result": true } } }
         }
@@ -383,9 +401,9 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   end
 
   describe "when the agent diagnose report contains an error" do
-    setup do
-      @nif.set(:loaded?, true)
-      @nif.set(:diagnose, ~s({ "error": "fatal error" }))
+    setup %{fake_nif: fake_nif} do
+      FakeNif.update(fake_nif, :loaded?, true)
+      FakeNif.update(fake_nif, :diagnose, ~s({ "error": "fatal error" }))
     end
 
     test "prints the error" do
@@ -400,9 +418,9 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   end
 
   describe "when an agent diagnose report test contains an error" do
-    setup do
-      @nif.set(:loaded?, true)
-      @nif.set(:diagnose, ~s(
+    setup %{fake_nif: fake_nif} do
+      FakeNif.update(fake_nif, :loaded?, true)
+      FakeNif.update(fake_nif, :diagnose, ~s(
         {
           "agent": { "boot": { "started": { "result": false, "error": "my error" } } }
         }
@@ -417,9 +435,9 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   end
 
   describe "when an agent diagnose report test contains command output" do
-    setup do
-      @nif.set(:loaded?, true)
-      @nif.set(:diagnose, ~s(
+    setup %{fake_nif: fake_nif} do
+      FakeNif.update(fake_nif, :loaded?, true)
+      FakeNif.update(fake_nif, :diagnose, ~s(
         {
           "agent": { "boot": { "started": { "result": false, "output": "my output" } } }
         }
@@ -504,16 +522,16 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     end
 
     @tag :skip_env_test_no_nif
-    test "outputs writable and creates log file", %{log_dir_path: log_dir_path, log_file_path: log_file_path} do
-      @nif.set(:run_diagnose, true)
+    test "outputs writable and creates log file", %{log_dir_path: log_dir_path, log_file_path: log_file_path, fake_nif: fake_nif} do
+      FakeNif.update(fake_nif, :run_diagnose, true)
       output = run()
       assert String.contains? output, "log_dir_path: #{log_dir_path}\n    - Writable?: yes"
       assert String.contains? output, "log_file_path: #{log_file_path}\n    - Writable?: yes"
     end
 
     @tag :skip_env_test_no_nif
-    test "adds writable log paths to report", %{log_dir_path: log_dir_path, log_file_path: log_file_path, fake_report: fake_report} do
-      @nif.set(:run_diagnose, true)
+    test "adds writable log paths to report", %{log_dir_path: log_dir_path, log_file_path: log_file_path, fake_report: fake_report, fake_nif: fake_nif} do
+      FakeNif.update(fake_nif, :run_diagnose, true)
       run()
       %{uid: uid} = File.stat!(log_dir_path)
       assert received_report(fake_report)[:paths] == %{

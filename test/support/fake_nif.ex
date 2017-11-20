@@ -1,27 +1,15 @@
 defmodule Appsignal.FakeNif do
   @behaviour Appsignal.NifBehaviour
+  use TestAgent, %{loaded?: true, running_in_container?: true, run_diagnose: false, diagnose: "%{}"}
 
-  def start_link do
-    Agent.start_link(fn -> %{} end, name: __MODULE__)
-  end
-
-  def set(key, value) do
-    Agent.update(__MODULE__, &Map.put(&1, key, value))
-  end
-
-  def loaded? do
-    Agent.get(__MODULE__, &Map.get(&1, :loaded?, true))
-  end
-
-  def running_in_container? do
-    Agent.get(__MODULE__, &Map.get(&1, :running_in_container?, true))
-  end
+  def loaded?, do: get(__MODULE__, :loaded?)
+  def running_in_container?, do: get(__MODULE__, :running_in_container?)
 
   def diagnose do
-    if Agent.get(__MODULE__, &Map.get(&1, :run_diagnose, false)) do
+    if get(__MODULE__, :run_diagnose) do
       Appsignal.Nif.diagnose
     else
-      Agent.get(__MODULE__, &Map.get(&1, :diagnose, "{}"))
+      get(__MODULE__, :diagnose)
     end
   end
 end
