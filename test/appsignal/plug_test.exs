@@ -22,8 +22,8 @@ defmodule Appsignal.PlugTest do
   alias Appsignal.FakeTransaction
 
   setup do
-    FakeTransaction.start_link
-    :ok
+    {:ok, fake_transaction} = FakeTransaction.start_link
+    [fake_transaction: fake_transaction]
   end
 
   describe "for a :sample transaction" do
@@ -36,34 +36,36 @@ defmodule Appsignal.PlugTest do
       [conn: conn]
     end
 
-    test "starts a transaction" do
-      assert FakeTransaction.started_transaction?
+    test "starts a transaction", %{fake_transaction: fake_transaction} do
+      assert FakeTransaction.started_transaction?(fake_transaction)
     end
 
     test "calls super and returns the conn", %{conn: conn} do
       assert conn.assigns[:called?]
     end
 
-    test "sets the transaction's action name" do
-      assert "AppsignalPhoenixExample.PageController#index" == FakeTransaction.action
+    test "sets the transaction's action name", %{fake_transaction: fake_transaction} do
+      assert "AppsignalPhoenixExample.PageController#index"
+        == FakeTransaction.action(fake_transaction)
     end
 
-    test "finishes the transaction" do
-      assert [%Appsignal.Transaction{}] = FakeTransaction.finished_transactions
+    test "finishes the transaction", %{fake_transaction: fake_transaction} do
+      assert [%Appsignal.Transaction{}] = FakeTransaction.finished_transactions(fake_transaction)
     end
 
-    test "sets the transaction's request metadata", context do
-      assert context[:conn] == FakeTransaction.request_metadata
+    test "sets the transaction's request metadata", %{conn: conn, fake_transaction: fake_transaction} do
+      assert conn == FakeTransaction.request_metadata(fake_transaction)
     end
 
-    test "completes the transaction" do
-      assert [%Appsignal.Transaction{}] = FakeTransaction.completed_transactions
+    test "completes the transaction", %{fake_transaction: fake_transaction} do
+      assert [%Appsignal.Transaction{}] =
+        FakeTransaction.completed_transactions(fake_transaction)
     end
   end
 
   describe "for a :no_sample transaction" do
-    setup do
-      FakeTransaction.set_finish(:no_sample)
+    setup %{fake_transaction: fake_transaction} do
+      FakeTransaction.update(fake_transaction, :finish, :no_sample)
 
       conn = %Plug.Conn{}
       |> Plug.Conn.put_private(:phoenix_controller, AppsignalPhoenixExample.PageController)
@@ -73,8 +75,8 @@ defmodule Appsignal.PlugTest do
       [conn: conn]
     end
 
-    test "does not set the transaction's request metadata" do
-      assert nil == FakeTransaction.request_metadata
+    test "does not set the transaction's request metadata", %{fake_transaction: fake_transaction} do
+      assert nil == FakeTransaction.request_metadata(fake_transaction)
     end
   end
 
@@ -87,8 +89,8 @@ defmodule Appsignal.PlugTest do
       [conn: conn]
     end
 
-    test "does not set the transaction's action name" do
-      assert FakeTransaction.action == nil
+    test "does not set the transaction's action name", %{fake_transaction: fake_transaction} do
+      assert FakeTransaction.action(fake_transaction) == nil
     end
   end
 
@@ -108,29 +110,32 @@ defmodule Appsignal.PlugTest do
       [conn: conn]
     end
 
-    test "sets the transaction error" do
+    test "sets the transaction error", %{fake_transaction: fake_transaction} do
       assert [{
         %Appsignal.Transaction{},
         "RuntimeError",
         "HTTP request error: Exception!",
         _stack
-      }] = FakeTransaction.errors
+      }] = FakeTransaction.errors(fake_transaction)
     end
 
-    test "sets the transaction's action name" do
-      assert "AppsignalPhoenixExample.PageController#exception" == FakeTransaction.action
+    test "sets the transaction's action name", %{fake_transaction: fake_transaction} do
+      assert "AppsignalPhoenixExample.PageController#exception"
+        == FakeTransaction.action(fake_transaction)
     end
 
-    test "finishes the transaction" do
-      assert [%Appsignal.Transaction{}] = FakeTransaction.finished_transactions
+    test "finishes the transaction", %{fake_transaction: fake_transaction} do
+      assert [%Appsignal.Transaction{}] =
+        FakeTransaction.finished_transactions(fake_transaction)
     end
 
-    test "sets the transaction's request metadata", %{conn: conn} do
-      assert conn |> Plug.Conn.put_status(500) == FakeTransaction.request_metadata
+    test "sets the transaction's request metadata", %{conn: conn, fake_transaction: fake_transaction} do
+      assert Plug.Conn.put_status(conn, 500) ==
+        FakeTransaction.request_metadata(fake_transaction)
     end
 
-    test "completes the transaction" do
-      assert [%Appsignal.Transaction{}] = FakeTransaction.completed_transactions
+    test "completes the transaction", %{fake_transaction: fake_transaction} do
+      assert [%Appsignal.Transaction{}] = FakeTransaction.completed_transactions(fake_transaction)
     end
   end
 
@@ -143,7 +148,7 @@ defmodule Appsignal.PlugTest do
       [conn: conn]
     end
 
-    test "does not set the transaction error", %{conn: conn} do
+    test "does not set the transaction error", %{conn: conn, fake_transaction: fake_transaction} do
       :ok = try do
         UsingAppsignalPlug.call(conn, %{})
       catch
@@ -151,7 +156,7 @@ defmodule Appsignal.PlugTest do
         type, reason -> {type, reason}
       end
 
-      assert [] = FakeTransaction.errors
+      assert [] = FakeTransaction.errors(fake_transaction)
     end
   end
 
@@ -164,7 +169,7 @@ defmodule Appsignal.PlugTest do
       [conn: conn]
     end
 
-    test "sets the transaction error", %{conn: conn} do
+    test "sets the transaction error", %{conn: conn, fake_transaction: fake_transaction} do
       :ok = try do
         UsingAppsignalPlug.call(conn, %{})
       catch
@@ -177,7 +182,7 @@ defmodule Appsignal.PlugTest do
         ":timeout",
         "HTTP request error: {:timeout, {Task, :await, [%Task{owner: " <> _,
         _stack
-      }] = FakeTransaction.errors
+      }] = FakeTransaction.errors(fake_transaction)
     end
   end
 
