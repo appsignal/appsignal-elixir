@@ -2,18 +2,17 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
   use ExUnit.Case
   import ExUnit.CaptureIO
   import AppsignalTest.Utils
-
-  @demo Application.get_env(:appsignal, :appsignal_demo, Appsignal.Demo)
+  alias Appsignal.FakeDemo
 
   setup do
-    @demo.start_link
+    {:ok, fake_demo} = FakeDemo.start_link
 
     bypass = Bypass.open
     setup_with_env(%{
       "APPSIGNAL_PUSH_API_ENDPOINT" => "http://localhost:#{bypass.port}"
     })
 
-    {:ok, %{bypass: bypass}}
+    {:ok, %{bypass: bypass, fake_demo: fake_demo}}
   end
 
   describe "without push api key" do
@@ -263,10 +262,10 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
       assert String.contains? output, "http://docs.appsignal.com/elixir/integrations/phoenix.html"
     end
 
-    test "sends a demo sample to AppSignal" do
+    test "sends a demo sample to AppSignal", %{fake_demo: fake_demo} do
       output = run_with_environment_config()
-      assert @demo.get(:create_transaction_error_request)
-      assert @demo.get(:create_transaction_performance_request)
+      assert FakeDemo.get(fake_demo, :create_transaction_error_request)
+      assert FakeDemo.get(fake_demo, :create_transaction_performance_request)
       assert String.contains? output, "Demonstration sample data sent!"
     end
   end
