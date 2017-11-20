@@ -2,9 +2,8 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   use ExUnit.Case
   import ExUnit.CaptureIO
   import AppsignalTest.Utils
-  alias Appsignal.Diagnose.FakeReport
+  alias Appsignal.{Diagnose.FakeReport, FakeSystem}
 
-  @system Application.get_env(:appsignal, :appsignal_system, Appsignal.System)
   @nif Application.get_env(:appsignal, :appsignal_nif, Appsignal.Nif)
   @appsignal_version Mix.Project.config[:version]
   @agent_version Appsignal.Agent.version
@@ -15,7 +14,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
   setup do
     {:ok, fake_report} = FakeReport.start_link
-    @system.start_link
+    {:ok, fake_system} = Appsignal.FakeSystem.start_link
     @nif.start_link
     # By default use the same as the actual state of the Nif
     @nif.set(:loaded?, Appsignal.Nif.loaded?)
@@ -29,7 +28,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       Plug.Conn.resp(conn, 200, "")
     end
 
-    {:ok, %{auth_bypass: auth_bypass, fake_report: fake_report}}
+    {:ok, %{auth_bypass: auth_bypass, fake_report: fake_report, fake_system: fake_system}}
   end
 
   defp received_report(pid) do
@@ -62,10 +61,10 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     }
   end
 
-  test "adds process information to report", %{fake_report: fake_report} do
+  test "adds process information to report", %{fake_report: fake_report, fake_system: fake_system} do
     run()
     report = received_report(fake_report)
-    assert report[:process] == %{uid: @system.uid}
+    assert report[:process] == %{uid: FakeSystem.get(fake_system, :uid)}
   end
 
   @tag :skip_env_test_no_nif
@@ -177,7 +176,9 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   end
 
   describe "when on Heroku" do
-    setup do: @system.set(:heroku, true)
+    setup %{fake_system: fake_system} do
+      FakeSystem.update(fake_system, :heroku, true)
+    end
 
     test "outputs Heroku: yes" do
       output = run()
@@ -235,7 +236,9 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   end
 
   describe "when root user" do
-    setup do: @system.set(:root, true)
+    setup %{fake_system: fake_system} do
+      FakeSystem.update(fake_system, :root, true)
+    end
 
     test "outputs warning about running as root" do
       output = run()
@@ -599,11 +602,11 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       {:ok, %{log_dir_path: log_dir_path, uid: uid}}
     end
 
-    test "outputs ownership uid", %{log_dir_path: log_dir_path, uid: uid} do
-      @system.set(:uid, uid)
+    test "outputs ownership uid", %{log_dir_path: log_dir_path, uid: uid, fake_system: fake_system} do
+      FakeSystem.update(fake_system, :uid, uid)
       output = run()
       assert String.contains? output, "log_dir_path: #{log_dir_path}\n    - Writable?: yes\n" <>
-        "    - Ownership?: yes (file: #{uid}, process: #{@system.uid})"
+        "    - Ownership?: yes (file: #{uid}, process: #{FakeSystem.get(fake_system, :uid)})"
     end
   end
 
@@ -614,11 +617,12 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       {:ok, %{log_dir_path: log_dir_path}}
     end
 
-    test "outputs ownership uid", %{log_dir_path: log_dir_path} do
+    test "outputs ownership uid", %{log_dir_path: log_dir_path, fake_system: fake_system} do
         %{uid: uid} = File.stat!(log_dir_path)
         output = run()
+
         assert String.contains? output, "log_dir_path: #{log_dir_path}\n    - Writable?: yes\n" <>
-          "    - Ownership?: no (file: #{uid}, process: #{@system.uid})"
+          "    - Ownership?: no (file: #{uid}, process: #{FakeSystem.get(fake_system, :uid)})"
       end
   end
 
