@@ -5,7 +5,6 @@ defmodule Appsignal.SystemTest do
   import AppsignalTest.Utils
   setup do
     FakeOS.start_link
-    FakeOS.set(:type, {:unix, :linux})
     :ok
   end
 
@@ -44,7 +43,6 @@ defmodule Appsignal.SystemTest do
 
   describe ".agent_platform" do
     test "agent_platform returns libc build when the system detection doesn't work" do
-      FakeOS.set(:type, {:unix, :linux})
       with_mock System, [:passthrough], [cmd: fn(_, _, _) -> raise "oh no!" end] do
         assert Appsignal.System.agent_platform() == "linux"
       end
@@ -57,7 +55,6 @@ defmodule Appsignal.SystemTest do
     end
 
     test "returns the musl build when on a musl system" do
-      FakeOS.set(:type, {:unix, :linux})
       with_mock System, [:passthrough], [
         cmd: fn(_, _, _) -> {"musl libc (x86_64)\nVersion 1.1.16", 1} end
       ] do
@@ -66,7 +63,6 @@ defmodule Appsignal.SystemTest do
     end
 
     test "returns the libc build when on a libc linux system" do
-      FakeOS.set(:type, {:unix, :linux})
       with_mocks([
         {System,
           [:passthrough],
@@ -78,7 +74,6 @@ defmodule Appsignal.SystemTest do
     end
 
     test "returns the musl build when on an old libc linux system" do
-      FakeOS.set(:type, {:unix, :linux})
       with_mocks([
         {System,
           [:passthrough],
@@ -90,7 +85,6 @@ defmodule Appsignal.SystemTest do
     end
 
     test "returns the musl build when on a very old libc linux system" do
-      FakeOS.set(:type, {:unix, :linux})
       with_mocks([
         {System,
           [:passthrough],

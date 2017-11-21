@@ -15,7 +15,6 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
   setup do
     FakeOS.start_link
-    FakeOS.set(:type, {:unix, :linux})
     @diagnose_report.start_link
     @system.start_link
     @nif.start_link
