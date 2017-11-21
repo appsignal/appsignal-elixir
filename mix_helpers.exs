@@ -9,13 +9,8 @@ defmodule Mix.Appsignal.Helper do
 
   def verify_system_architecture() do
     input_arch = :erlang.system_info(:system_architecture)
-    force_musl = !(System.get_env("APPSIGNAL_BUILD_FOR_MUSL") |> is_nil())
-    case map_arch(input_arch, force_musl) do
-      :unsupported ->
-        {:error, {:unsupported, input_arch}}
-      arch when is_binary(arch) ->
-        {:ok, arch}
-    end
+    platform = Appsignal.System.agent_platform
+    map_arch(input_arch, platform)
   end
 
   def ensure_downloaded(arch) do
@@ -63,6 +58,17 @@ defmodule Mix.Appsignal.Helper do
             end
         end
       end
+    end
+  end
+
+  def store_architecture(arch) do
+    File.mkdir_p!(priv_dir())
+    case File.open priv_path("appsignal.architecture"), [:write] do
+      {:ok, file} ->
+        result = IO.binwrite(file, arch)
+        File.close(file)
+        result
+      {:error, reason} -> {:error, reason}
     end
   end
 
@@ -121,7 +127,6 @@ defmodule Mix.Appsignal.Helper do
     end
   end
 
-
   def compile do
     {result, error_code} = System.cmd("make", make_args(to_string(Mix.env)))
     IO.binwrite(result)
@@ -138,25 +143,20 @@ defmodule Mix.Appsignal.Helper do
   defp make_args(_), do: []
 
   if Mix.env != :test_no_nif do
-    defp map_arch('i686-' ++ _, true), do: "i686-linux-musl"
-    defp map_arch('x86_64-' ++ _, true), do: "x86_64-linux-musl"
-
-    defp map_arch('i686-alpine-linux' ++ _, _), do: "i686-linux-musl"
-    defp map_arch('i686-pc-linux-gnu' ++ _, _), do: "i686-linux"
-    defp map_arch('i686-pc-linux-musl' ++ _, _), do: "i686-linux-musl"
-    defp map_arch('i686-redhat-linux-gnu' ++ _, _), do: "i686-linux"
-    defp map_arch('i686-unknown-linux' ++ _, _), do: "i686-linux"
-    defp map_arch('x86_64-alpine-linux' ++ _, _), do: "x86_64-linux-musl"
-    defp map_arch('x86_64-apple-darwin' ++ _, _), do: "x86_64-darwin"
-    defp map_arch('x86_64-pc-linux-gnu' ++ _, _), do: "x86_64-linux"
-    defp map_arch('x86_64-pc-linux-musl' ++ _, _), do: "x86_64-linux-musl"
-    defp map_arch('x86_64-redhat-linux-gnu' ++ _, _), do: "x86_64-linux"
-    defp map_arch('x86_64-unknown-linux' ++ _, _), do: "x86_64-linux"
-    defp map_arch('x86_64-unknown-freebsd' ++ _, _), do: "x86_64-freebsd"
-    defp map_arch('amd64-portbld-freebsd' ++ _, _), do: "x86_64-freebsd"
-    defp map_arch('amd64-freebsd' ++ _, _), do: "x86_64-freebsd"
+    defp map_arch('i386-' ++ _, platform), do: build_for("i686", platform)
+    defp map_arch('i686-' ++ _, platform), do: build_for("i686", platform)
+    defp map_arch('x86-' ++ _, platform), do: build_for("i686", platform)
+    defp map_arch('amd64-' ++ _, platform), do: build_for("x86_64", platform)
+    defp map_arch('x86_64-' ++ _, platform), do: build_for("x86_64", platform)
   end
-  defp map_arch(_, _), do: :unsupported
+  defp map_arch(arch, platform), do: {:error, {:unknown, {arch, platform}}}
+  defp build_for(bit, platform) do
+    arch = "#{bit}-#{platform}"
+    case Map.has_key?(Appsignal.Agent.triples, arch) do
+      true -> {:ok, arch}
+      false -> {:error, {:unsupported, arch}}
+    end
+  end
 
   defp tmp_dir do
     default_tmp_dir = "/tmp"
@@ -168,20 +168,7 @@ defmodule Mix.Appsignal.Helper do
     end
   end
 
-  defp priv_dir() do
-    case :code.priv_dir(:appsignal) do
-      {:error, :bad_name} ->
-        # this happens on initial compilation
-        Mix.Tasks.Compile.Erlang.manifests
-        |> List.first
-        |> String.to_charlist
-        |> :filename.dirname
-        |> :filename.join('priv')
-      path ->
-        path
-    end
-    |> List.to_string
-  end
+  defp priv_dir(), do: Appsignal.System.priv_dir
 
   defp priv_path(filename) do
     Path.join(priv_dir(), filename)
