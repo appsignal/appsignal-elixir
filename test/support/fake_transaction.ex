@@ -6,7 +6,7 @@ defmodule Appsignal.FakeTransaction do
 
   def finish_event(transaction, name, title, body, body_format) do
     Agent.update(__MODULE__, fn(state) ->
-      {_, new_state} = Map.get_and_update(state, :finished_events, fn(current) -> 
+      {_, new_state} = Map.get_and_update(state, :finished_events, fn(current) ->
         finished_event = %{
           transaction: transaction,
           name: name,
@@ -33,7 +33,7 @@ defmodule Appsignal.FakeTransaction do
   def finish, do: self() |> Appsignal.TransactionRegistry.lookup |> finish
   def finish(transaction) do
     Agent.update(__MODULE__, fn(state) ->
-      {_, new_state} = Map.get_and_update(state, :finished_transactions, fn(current) -> 
+      {_, new_state} = Map.get_and_update(state, :finished_transactions, fn(current) ->
         case current do
           nil -> {nil, [transaction]}
           _ -> {current, [transaction|current]}
@@ -65,11 +65,10 @@ defmodule Appsignal.FakeTransaction do
     transaction
   end
 
-
   def complete, do: self() |> Appsignal.TransactionRegistry.lookup |> complete
   def complete(transaction) do
     Agent.update(__MODULE__, fn(state) ->
-      {_, new_state} = Map.get_and_update(state, :completed_transactions, fn(current) -> 
+      {_, new_state} = Map.get_and_update(state, :completed_transactions, fn(current) ->
         case current do
           nil -> {nil, [transaction]}
           _ -> {current, [transaction|current]}

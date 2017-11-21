@@ -31,4 +31,3 @@ defmodule TestAgent do
     end
   end
 end
-
