@@ -1,6 +1,6 @@
 defmodule Appsignal.FakeSystem do
   @behaviour Appsignal.SystemBehaviour
-  use TestAgent, %{uid: 999, heroku: false, root: false}
+  use TestAgent, %{uid: 999, heroku: false, root: false, priv_dir: Appsignal.System.priv_dir}
 
   def hostname_with_domain, do: "Alices-MBP.example.com"
 
