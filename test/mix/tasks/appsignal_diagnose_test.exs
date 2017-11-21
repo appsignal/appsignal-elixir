@@ -2,10 +2,8 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   use ExUnit.Case
   import ExUnit.CaptureIO
   import AppsignalTest.Utils
+  alias Appsignal.{Diagnose.FakeReport, FakeSystem, FakeNif}
 
-  @system Application.get_env(:appsignal, :appsignal_system, Appsignal.System)
-  @nif Application.get_env(:appsignal, :appsignal_nif, Appsignal.Nif)
-  @diagnose_report Application.get_env(:appsignal, :appsignal_diagnose_report, Appsignal.Diagnose.Report)
   @appsignal_version Mix.Project.config[:version]
   @agent_version Appsignal.Agent.version
 
@@ -14,11 +12,11 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   defp run_fn, do: Mix.Tasks.Appsignal.Diagnose.run(nil)
 
   setup do
-    @diagnose_report.start_link
-    @system.start_link
-    @nif.start_link
-    # By default use the same as the actual state of the Nif
-    @nif.set(:loaded?, Appsignal.Nif.loaded?)
+    {:ok, fake_report} = FakeReport.start_link
+    {:ok, fake_system} = Appsignal.FakeSystem.start_link
+    # Set loaded? to the actual state of the Nif
+    {:ok, fake_nif} = Appsignal.FakeNif.start_link
+    Appsignal.FakeNif.update(fake_nif, :loaded?, Appsignal.Nif.loaded?)
 
     # By default, Push API key is valid
     auth_bypass = Bypass.open
@@ -29,11 +27,19 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       Plug.Conn.resp(conn, 200, "")
     end
 
-    {:ok, %{auth_bypass: auth_bypass}}
+    {
+      :ok,
+      %{
+        auth_bypass: auth_bypass,
+        fake_report: fake_report,
+        fake_system: fake_system,
+        fake_nif: fake_nif
+      }
+    }
   end
 
-  defp received_report do
-    @diagnose_report.get(:sent_report)
+  defp received_report(pid) do
+    FakeReport.get(pid, :sent_report)
   end
 
   test "outputs AppSignal support header" do
@@ -51,9 +57,9 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     assert String.contains? output, "Agent version: #{@agent_version}"
   end
 
-  test "adds library information to report" do
+  test "adds library information to report", %{fake_report: fake_report} do
     run()
-    report = received_report()
+    report = received_report(fake_report)
     assert report[:library] == %{
       agent_version: @agent_version,
       extension_loaded: Appsignal.Nif.loaded?,
@@ -62,39 +68,43 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     }
   end
 
-  test "adds process information to report" do
+  test "adds process information to report", %{fake_report: fake_report, fake_system: fake_system} do
     run()
-    report = received_report()
-    assert report[:process] == %{uid: @system.uid}
+    report = received_report(fake_report)
+    assert report[:process] == %{uid: FakeSystem.get(fake_system, :uid)}
   end
 
   @tag :skip_env_test_no_nif
   describe "when Nif is loaded" do
-    setup do: @nif.set(:loaded?, true)
+    setup %{fake_nif: fake_nif} do
+      FakeNif.update(fake_nif, :loaded?, true)
+    end
 
     test "outputs that the Nif is loaded" do
       output = run()
       assert String.contains? output, "Nif loaded: yes"
     end
 
-    test "adds library extension_loaded true to report" do
+    test "adds library extension_loaded true to report", %{fake_report: fake_report} do
       run()
-      report = received_report()
+      report = received_report(fake_report)
       assert report[:library][:extension_loaded] == true
     end
   end
 
   describe "when Nif is not loaded" do
-    setup do: @nif.set(:loaded?, false)
+    setup %{fake_nif: fake_nif} do
+      FakeNif.update(fake_nif, :loaded?, false)
+    end
 
     test "outputs that the Nif is not loaded" do
       output = run()
       assert String.contains? output, "Nif loaded: no"
     end
 
-    test "adds library extension_loaded false to report" do
+    test "adds library extension_loaded false to report", %{fake_report: fake_report} do
       run()
-      report = received_report()
+      report = received_report(fake_report)
       assert report[:library][:extension_loaded] == false
     end
   end
@@ -107,10 +117,10 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     assert String.contains? output, "OTP version: #{System.otp_release}"
   end
 
-  test "adds host information to report" do
+  test "adds host information to report", %{fake_report: fake_report} do
     run()
     report =
-      received_report()[:host]
+      received_report(fake_report)[:host]
       |> Map.drop([:root, :running_in_container])
     assert report == %{
       architecture: to_string(:erlang.system_info(:system_architecture)),
@@ -136,9 +146,9 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       assert String.contains? output, content
     end
 
-    test "adds logs to report", %{content: content} do
+    test "adds logs to report", %{content: content, fake_report: fake_report} do
       run()
-      logs = received_report()[:logs]
+      logs = received_report(fake_report)[:logs]
 
       assert logs == %{
         "install.log": %{
@@ -163,9 +173,9 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       assert String.contains? output, "File not found."
     end
 
-    test "adds logs to report" do
+    test "adds logs to report", %{fake_report: fake_report} do
       run()
-      logs = received_report()[:logs]
+      logs = received_report(fake_report)[:logs]
 
       assert logs == %{
         "install.log": %{
@@ -177,46 +187,52 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   end
 
   describe "when on Heroku" do
-    setup do: @system.set(:heroku, true)
+    setup %{fake_system: fake_system} do
+      FakeSystem.update(fake_system, :heroku, true)
+    end
 
     test "outputs Heroku: yes" do
       output = run()
       assert String.contains? output, "Heroku: yes"
     end
 
-    test "adds host heroku true to report" do
+    test "adds host heroku true to report", %{fake_report: fake_report} do
       run()
-      report = received_report()
+      report = received_report(fake_report)
       assert report[:host][:heroku] == true
     end
   end
 
   describe "when running in a container" do
-    setup do: @nif.set(:running_in_container?, true)
+    setup %{fake_nif: fake_nif} do
+      FakeNif.update(fake_nif, :running_in_container?, true)
+    end
 
     test "outputs Container: yes" do
       output = run()
       assert String.contains? output, "Container: yes"
     end
 
-    test "adds host running_in_container true to report" do
+    test "adds host running_in_container true to report", %{fake_report: fake_report} do
       run()
-      report = received_report()
+      report = received_report(fake_report)
       assert report[:host][:running_in_container] == true
     end
   end
 
   describe "when not running in a container" do
-    setup do: @nif.set(:running_in_container?, false)
+    setup %{fake_nif: fake_nif} do
+      FakeNif.update(fake_nif, :running_in_container?, false)
+    end
 
     test "outputs Container: no" do
       output = run()
       assert String.contains? output, "Container: no"
     end
 
-    test "adds host running_in_container false to report" do
+    test "adds host running_in_container false to report", %{fake_report: fake_report} do
       run()
-      report = received_report()
+      report = received_report(fake_report)
       assert report[:host][:running_in_container] == false
     end
   end
@@ -227,31 +243,33 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       assert String.contains? output, "root user: no"
     end
 
-    test "adds host root false to report" do
+    test "adds host root false to report", %{fake_report: fake_report} do
       run()
-      report = received_report()
+      report = received_report(fake_report)
       assert report[:host][:root] == false
     end
   end
 
   describe "when root user" do
-    setup do: @system.set(:root, true)
+    setup %{fake_system: fake_system} do
+      FakeSystem.update(fake_system, :root, true)
+    end
 
     test "outputs warning about running as root" do
       output = run()
       assert String.contains? output, "root user: yes (not recommended)"
     end
 
-    test "adds host root true to report" do
+    test "adds host root true to report", %{fake_report: fake_report} do
       run()
-      report = received_report()
+      report = received_report(fake_report)
       assert report[:host][:root] == true
     end
   end
 
   @tag :skip_env_test_no_nif
-  test "runs agent in diagnose mode" do
-    @nif.set(:run_diagnose, true)
+  test "runs agent in diagnose mode", %{fake_nif: fake_nif} do
+    FakeNif.update(fake_nif, :run_diagnose, true)
     output = run()
     assert String.contains? output, "Agent diagnostics"
     assert String.contains? output, "  Extension config: valid"
@@ -262,10 +280,10 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   end
 
   @tag :skip_env_test_no_nif
-  test "adds agent report to report" do
-    @nif.set(:run_diagnose, true)
+  test "adds agent report to report", %{fake_report: fake_report, fake_nif: fake_nif} do
+    FakeNif.update(fake_nif, :run_diagnose, true)
     run()
-    report = received_report()
+    report = received_report(fake_report)
     assert report[:agent] == %{
       "agent" => %{
         "boot" => %{"started" => %{"result" => true}},
@@ -281,8 +299,8 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
   describe "when config is not active" do
     @tag :skip_env_test_no_nif
-    test "runs agent in diagnose mode, but doesn't change the active state" do
-      @nif.set(:run_diagnose, true)
+    test "runs agent in diagnose mode, but doesn't change the active state", %{fake_nif: fake_nif} do
+      FakeNif.update(fake_nif, :run_diagnose, true)
 
       output = with_config(%{active: false}, &run/0)
       assert String.contains? output, "active: false"
@@ -295,10 +313,10 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     end
 
     @tag :skip_env_test_no_nif
-    test "adds agent report to report" do
-      @nif.set(:run_diagnose, true)
+    test "adds agent report to report", %{fake_report: fake_report, fake_nif: fake_nif} do
+      FakeNif.update(fake_nif, :run_diagnose, true)
       run()
-      report = received_report()
+      report = received_report(fake_report)
       assert report[:agent] == %{
         "agent" => %{
           "boot" => %{"started" => %{"result" => true}},
@@ -314,7 +332,9 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   end
 
   describe "when extension is not loaded" do
-    setup do: @nif.set(:loaded?, false)
+    setup %{fake_nif: fake_nif} do
+      FakeNif.update(fake_nif, :loaded?, false)
+    end
 
     test "agent diagnostics is not run" do
       output = run()
@@ -322,16 +342,16 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       assert String.contains? output, "  Error: Nif not loaded, aborting."
     end
 
-    test "adds no agent report to report" do
+    test "adds no agent report to report", %{fake_report: fake_report} do
       run()
-      assert received_report()[:agent] == nil
+      assert received_report(fake_report)[:agent] == nil
     end
   end
 
   describe "when extension output is invalid JSON" do
-    setup do
-      @nif.set(:loaded?, true)
-      @nif.set(:diagnose, "agent_report_string")
+    setup %{fake_nif: fake_nif} do
+      FakeNif.update(fake_nif, :loaded?, true)
+      FakeNif.update(fake_nif, :diagnose, "agent_report_string")
     end
 
     test "agent diagnostics report prints an error" do
@@ -341,17 +361,17 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       assert String.contains? output, "    Output: agent_report_string"
     end
 
-    test "adds agent output to report" do
+    test "adds agent output to report", %{fake_report: fake_report} do
       run()
-      report = received_report()
+      report = received_report(fake_report)
       assert report[:agent] == %{output: "agent_report_string"}
     end
   end
 
   describe "when extension output is missing a test" do
-    setup do
-      @nif.set(:loaded?, true)
-      @nif.set(:diagnose, ~s(
+    setup %{fake_nif: fake_nif} do
+      FakeNif.update(fake_nif, :loaded?, true)
+      FakeNif.update(fake_nif, :diagnose, ~s(
         {
           "extension": { "config": { "valid": { "result": true } } }
         }
@@ -368,9 +388,9 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       assert String.contains? output, "  Agent logger: -"
     end
 
-    test "missings tests are not added to report" do
+    test "missings tests are not added to report", %{fake_report: fake_report} do
       run()
-      assert received_report()[:agent] == %{
+      assert received_report(fake_report)[:agent] == %{
         "extension" => %{
           "config" => %{"valid" => %{"result" => true}}
         }
@@ -380,9 +400,9 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   end
 
   describe "when the agent diagnose report contains an error" do
-    setup do
-      @nif.set(:loaded?, true)
-      @nif.set(:diagnose, ~s({ "error": "fatal error" }))
+    setup %{fake_nif: fake_nif} do
+      FakeNif.update(fake_nif, :loaded?, true)
+      FakeNif.update(fake_nif, :diagnose, ~s({ "error": "fatal error" }))
     end
 
     test "prints the error" do
@@ -390,16 +410,16 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       assert String.contains? output, "Agent diagnostics\n  Error: fatal error"
     end
 
-    test "adds the error to the report" do
+    test "adds the error to the report", %{fake_report: fake_report} do
       run()
-      assert received_report()[:agent] == %{"error" => "fatal error"}
+      assert received_report(fake_report)[:agent] == %{"error" => "fatal error"}
     end
   end
 
   describe "when an agent diagnose report test contains an error" do
-    setup do
-      @nif.set(:loaded?, true)
-      @nif.set(:diagnose, ~s(
+    setup %{fake_nif: fake_nif} do
+      FakeNif.update(fake_nif, :loaded?, true)
+      FakeNif.update(fake_nif, :diagnose, ~s(
         {
           "agent": { "boot": { "started": { "result": false, "error": "my error" } } }
         }
@@ -414,9 +434,9 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   end
 
   describe "when an agent diagnose report test contains command output" do
-    setup do
-      @nif.set(:loaded?, true)
-      @nif.set(:diagnose, ~s(
+    setup %{fake_nif: fake_nif} do
+      FakeNif.update(fake_nif, :loaded?, true)
+      FakeNif.update(fake_nif, :diagnose, ~s(
         {
           "agent": { "boot": { "started": { "result": false, "output": "my output" } } }
         }
@@ -439,9 +459,9 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     end
   end
 
-  test "adds configuration to the report" do
+  test "adds configuration to the report", %{fake_report: fake_report} do
     run()
-    assert received_report()[:config] == Application.get_env(:appsignal, :config)
+    assert received_report(fake_report)[:config] == Application.get_env(:appsignal, :config)
   end
 
   describe "with valid Push API key" do
@@ -451,9 +471,9 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       assert String.contains? output, "Push API key: valid"
     end
 
-    test "adds validation to the report" do
+    test "adds validation to the report", %{fake_report: fake_report} do
       run()
-      assert received_report()[:validation] == %{push_api_key: "valid"}
+      assert received_report(fake_report)[:validation] == %{push_api_key: "valid"}
     end
   end
 
@@ -473,9 +493,9 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       assert String.contains? output, "Push API key: invalid"
     end
 
-    test "adds validation to the report" do
+    test "adds validation to the report", %{fake_report: fake_report} do
       run()
-      assert received_report()[:validation] == %{push_api_key: "invalid"}
+      assert received_report(fake_report)[:validation] == %{push_api_key: "invalid"}
     end
   end
 
@@ -487,9 +507,9 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       assert String.contains? output, "log_file_path: /tmp/appsignal.log"
     end
 
-    test "adds paths to report" do
+    test "adds paths to report", %{fake_report: fake_report} do
       run()
-      assert Map.keys(received_report()[:paths]) == [:log_dir_path, :log_file_path]
+      assert Map.keys(received_report(fake_report)[:paths]) == [:log_dir_path, :log_file_path]
     end
   end
 
@@ -501,19 +521,19 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     end
 
     @tag :skip_env_test_no_nif
-    test "outputs writable and creates log file", %{log_dir_path: log_dir_path, log_file_path: log_file_path} do
-      @nif.set(:run_diagnose, true)
+    test "outputs writable and creates log file", %{log_dir_path: log_dir_path, log_file_path: log_file_path, fake_nif: fake_nif} do
+      FakeNif.update(fake_nif, :run_diagnose, true)
       output = run()
       assert String.contains? output, "log_dir_path: #{log_dir_path}\n    - Writable?: yes"
       assert String.contains? output, "log_file_path: #{log_file_path}\n    - Writable?: yes"
     end
 
     @tag :skip_env_test_no_nif
-    test "adds writable log paths to report", %{log_dir_path: log_dir_path, log_file_path: log_file_path} do
-      @nif.set(:run_diagnose, true)
+    test "adds writable log paths to report", %{log_dir_path: log_dir_path, log_file_path: log_file_path, fake_report: fake_report, fake_nif: fake_nif} do
+      FakeNif.update(fake_nif, :run_diagnose, true)
       run()
       %{uid: uid} = File.stat!(log_dir_path)
-      assert received_report()[:paths] == %{
+      assert received_report(fake_report)[:paths] == %{
         log_dir_path: %{
           path: log_dir_path,
           configured: true,
@@ -544,12 +564,12 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       assert String.contains? output, "log_file_path: /foo/bar/baz.log\n    - Exists?: no"
     end
 
-    test "adds log exists: false to report" do
+    test "adds log exists: false to report", %{fake_report: fake_report} do
       run()
-      log_dir_report = received_report()[:paths][:log_dir_path]
+      log_dir_report = received_report(fake_report)[:paths][:log_dir_path]
       assert log_dir_report[:exists] == false
       assert log_dir_report[:writable] == false
-      log_file_report = received_report()[:paths][:log_file_path]
+      log_file_report = received_report(fake_report)[:paths][:log_file_path]
       assert log_file_report[:exists] == false
       assert log_file_report[:writable] == false
     end
@@ -580,12 +600,12 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       assert String.contains? output, "log_file_path: #{log_file_path}\n    - Exists?: no"
     end
 
-    test "adds log writable: false to report" do
+    test "adds log writable: false to report", %{fake_report: fake_report} do
       run()
-      log_dir_report = received_report()[:paths][:log_dir_path]
+      log_dir_report = received_report(fake_report)[:paths][:log_dir_path]
       assert log_dir_report[:exists] == true
       assert log_dir_report[:writable] == false
-      log_file_report = received_report()[:paths][:log_file_path]
+      log_file_report = received_report(fake_report)[:paths][:log_file_path]
       assert log_file_report[:exists] == false
       assert log_file_report[:writable] == false
     end
@@ -599,11 +619,11 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       {:ok, %{log_dir_path: log_dir_path, uid: uid}}
     end
 
-    test "outputs ownership uid", %{log_dir_path: log_dir_path, uid: uid} do
-      @system.set(:uid, uid)
+    test "outputs ownership uid", %{log_dir_path: log_dir_path, uid: uid, fake_system: fake_system} do
+      FakeSystem.update(fake_system, :uid, uid)
       output = run()
       assert String.contains? output, "log_dir_path: #{log_dir_path}\n    - Writable?: yes\n" <>
-        "    - Ownership?: yes (file: #{uid}, process: #{@system.uid})"
+        "    - Ownership?: yes (file: #{uid}, process: #{FakeSystem.get(fake_system, :uid)})"
     end
   end
 
@@ -614,28 +634,29 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       {:ok, %{log_dir_path: log_dir_path}}
     end
 
-    test "outputs ownership uid", %{log_dir_path: log_dir_path} do
+    test "outputs ownership uid", %{log_dir_path: log_dir_path, fake_system: fake_system} do
         %{uid: uid} = File.stat!(log_dir_path)
         output = run()
+
         assert String.contains? output, "log_dir_path: #{log_dir_path}\n    - Writable?: yes\n" <>
-          "    - Ownership?: no (file: #{uid}, process: #{@system.uid})"
+          "    - Ownership?: no (file: #{uid}, process: #{FakeSystem.get(fake_system, :uid)})"
       end
   end
 
   describe "when user does not submit report to AppSignal" do
-    test "exits early" do
+    test "exits early", %{fake_report: fake_report} do
       output = run("n")
       assert String.contains? output, "Diagnostics report"
       assert String.contains? output, "Send diagnostics report to AppSignal? (Y/n):"
       assert String.contains? output, "Not sending diagnostics report to AppSignal."
 
-      refute @diagnose_report.get(:report_sent?)
+      refute FakeReport.get(fake_report, :report_sent?)
     end
   end
 
   describe "when user submits report to AppSignal" do
-    test "sends diagnostics report to AppSignal and outputs a support token" do
-      assert @diagnose_report.set(:response, {:ok, "0123456789abcdef"})
+    test "sends diagnostics report to AppSignal and outputs a support token", %{fake_report: fake_report} do
+      assert FakeReport.update(fake_report, :response, {:ok, "0123456789abcdef"})
       output = run()
       assert String.contains? output, "Diagnostics report"
       assert String.contains? output, "Send diagnostics report to AppSignal? (Y/n):"
@@ -643,12 +664,12 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       assert String.contains? output, "Your diagnostics report has been sent to AppSignal."
       assert String.contains? output, "Your support token: 0123456789abcdef"
 
-      assert @diagnose_report.get(:report_sent?)
-      assert received_report()
+      assert FakeReport.get(fake_report, :report_sent?)
+      assert received_report(fake_report)
     end
 
-    test "when returns invalid output it outputs an error" do
-      assert @diagnose_report.set(:response, {:error, %{status_code: 200, body: "foo"}})
+    test "when returns invalid output it outputs an error", %{fake_report: fake_report} do
+      assert FakeReport.update(fake_report, :response, {:error, %{status_code: 200, body: "foo"}})
       output = run()
       assert String.contains? output, "Diagnostics report"
       assert String.contains? output, "Send diagnostics report to AppSignal? (Y/n):"
@@ -657,8 +678,8 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       assert String.contains? output, "Response body: foo"
     end
 
-    test "when server errors it outputs an error" do
-      assert @diagnose_report.set(:response, {:error, %{status_code: 500, body: "foo"}})
+    test "when server errors it outputs an error", %{fake_report: fake_report} do
+      assert FakeReport.update(fake_report, :response, {:error, %{status_code: 500, body: "foo"}})
       output = run()
       assert String.contains? output, "Diagnostics report"
       assert String.contains? output, "Send diagnostics report to AppSignal? (Y/n):"
@@ -669,8 +690,8 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       assert String.contains? output, "Response body: foo"
     end
 
-    test "when no connection to server it outputs an error" do
-      assert @diagnose_report.set(:response, {:error, %{reason: "foo"}})
+    test "when no connection to server it outputs an error", %{fake_report: fake_report} do
+      assert FakeReport.update(fake_report, :response, {:error, %{reason: "foo"}})
       output = run()
       assert String.contains? output, "Diagnostics report"
       assert String.contains? output, "Send diagnostics report to AppSignal? (Y/n):"

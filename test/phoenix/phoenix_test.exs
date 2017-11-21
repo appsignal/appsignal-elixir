@@ -35,8 +35,8 @@ defmodule Appsignal.PhoenixTest do
   alias Appsignal.{Transaction, FakeTransaction}
 
   setup do
-    FakeTransaction.start_link
-    :ok
+    {:ok, fake_transaction} = FakeTransaction.start_link
+    [fake_transaction: fake_transaction]
   end
 
   describe "concerning starting and finishing transactions" do
@@ -46,16 +46,16 @@ defmodule Appsignal.PhoenixTest do
       {:ok, conn: conn}
     end
 
-    test "starts a transaction" do
-      assert FakeTransaction.started_transaction?
+    test "starts a transaction", %{fake_transaction: fake_transaction} do
+      assert FakeTransaction.started_transaction?(fake_transaction)
     end
 
     test "calls super and returns the conn", context do
       assert context[:conn].assigns[:called?]
     end
 
-    test "finishes the transaction" do
-      assert [%Appsignal.Transaction{}] = FakeTransaction.finished_transactions
+    test "finishes the transaction", %{fake_transaction: fake_transaction} do
+      assert [%Appsignal.Transaction{}] = FakeTransaction.finished_transactions(fake_transaction)
     end
   end
 
@@ -68,7 +68,7 @@ defmodule Appsignal.PhoenixTest do
       [conn: conn]
     end
 
-    test "reports an error for an exception", %{conn: conn} do
+    test "reports an error for an exception", %{conn: conn, fake_transaction: fake_transaction} do
       :ok = try do
         UsingAppsignalPhoenixWithException.call(conn, %{})
       catch
@@ -76,18 +76,18 @@ defmodule Appsignal.PhoenixTest do
         type, reason -> {type, reason}
       end
 
-      assert FakeTransaction.started_transaction?
+      assert FakeTransaction.started_transaction?(fake_transaction)
       assert [{
         %Appsignal.Transaction{} = transaction,
         "RuntimeError",
         "HTTP request error: exception!",
         _stack
-      }] = FakeTransaction.errors
-      assert [transaction] == FakeTransaction.finished_transactions
-      assert [transaction] == FakeTransaction.completed_transactions
+      }] = FakeTransaction.errors(fake_transaction)
+      assert [transaction] == FakeTransaction.finished_transactions(fake_transaction)
+      assert [transaction] == FakeTransaction.completed_transactions(fake_transaction)
     end
 
-    test "reports an error for a timeout", %{conn: conn} do
+    test "reports an error for a timeout", %{conn: conn, fake_transaction: fake_transaction} do
       :ok = try do
         UsingAppsignalPhoenixWithTimeout.call(conn, %{})
       catch
@@ -95,15 +95,15 @@ defmodule Appsignal.PhoenixTest do
         type, reason -> {type, reason}
       end
 
-      assert FakeTransaction.started_transaction?
+      assert FakeTransaction.started_transaction?(fake_transaction)
       assert [{
         %Appsignal.Transaction{} = transaction,
         ":timeout",
         "HTTP request error: {:timeout, {Task, :await, [%Task{owner: " <> _,
         _stack
-      }] = FakeTransaction.errors
-      assert [transaction] == FakeTransaction.finished_transactions
-      assert [transaction] == FakeTransaction.completed_transactions
+      }] = FakeTransaction.errors(fake_transaction)
+      assert [transaction] == FakeTransaction.finished_transactions(fake_transaction)
+      assert [transaction] == FakeTransaction.completed_transactions(fake_transaction)
     end
   end
 end
