@@ -15,9 +15,8 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     {:ok, fake_report} = FakeReport.start_link
     {:ok, fake_system} = Appsignal.FakeSystem.start_link
     # Set loaded? to the actual state of the Nif
-    {:ok, fake_nif} = Appsignal.FakeNif.start_link(
-      %{loaded?: Appsignal.Nif.loaded?}
-    )
+    {:ok, fake_nif} = Appsignal.FakeNif.start_link
+    Appsignal.FakeNif.update(fake_nif, :loaded?, Appsignal.Nif.loaded?)
 
     # By default, Push API key is valid
     auth_bypass = Bypass.open
