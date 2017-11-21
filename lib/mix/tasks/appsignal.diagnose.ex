@@ -77,6 +77,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     IO.puts "  Language: Elixir"
     IO.puts "  Package version: #{library_report[:package_version]}"
     IO.puts "  Agent version: #{library_report[:agent_version]}"
+    IO.puts "  Agent architecture: #{library_report[:agent_architecture]}"
     IO.puts "  Nif loaded: #{yes_or_no(library_report[:extension_loaded])}"
   end
 

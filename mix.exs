@@ -1,6 +1,9 @@
 unless Code.ensure_loaded?(Appsignal.Agent) do
   {_, _} = Code.eval_file("lib/agent.ex")
 end
+unless Code.ensure_loaded?(Appsignal.System) do
+  {_, _} = Code.eval_file("lib/appsignal/system.ex")
+end
 
 defmodule Mix.Tasks.Compile.Appsignal do
   use Mix.Task
@@ -12,15 +15,27 @@ defmodule Mix.Tasks.Compile.Appsignal do
       {:ok, arch} ->
         :ok = Mix.Appsignal.Helper.ensure_downloaded(arch)
         :ok = Mix.Appsignal.Helper.compile
+        :ok = Mix.Appsignal.Helper.store_architecture(arch)
       {:error, {:unsupported, arch}} ->
         Mix.Shell.IO.error(
           "Unsupported target platform #{arch}, AppSignal integration " <>
           "disabled!\nPlease check " <>
           "http://docs.appsignal.com/support/operating-systems.html"
         )
-        :ok
+        :ok = Mix.Appsignal.Helper.store_architecture(arch)
+      {:error, {:unknown, {arch, platform}}} ->
+        Mix.Shell.IO.error(
+          "Unknown target platform #{arch} - #{platform}, AppSignal " <>
+          "integration disabled!\nPlease check " <>
+          "http://docs.appsignal.com/support/operating-systems.html"
+        )
+        :ok = Mix.Appsignal.Helper.store_architecture(arch)
     end
+
     purge_module Appsignal.Agent
+    purge_module Appsignal.SystemBehaviour
+    purge_module Appsignal.System
+
     :ok
   end
 
@@ -37,7 +52,7 @@ defmodule Appsignal.Mixfile do
 
   def project do
     [app: :appsignal,
-     version: "1.4.0",
+     version: "1.4.1",
      name: "AppSignal",
      description: description(),
      package: package(),

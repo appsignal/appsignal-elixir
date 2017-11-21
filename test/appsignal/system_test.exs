@@ -3,6 +3,10 @@ defmodule Appsignal.SystemTest do
 
   import Mock
   import AppsignalTest.Utils
+  setup do
+    FakeOS.start_link
+    :ok
+  end
 
   test "hostname_with_domain" do
     with_mocks([
@@ -35,5 +39,102 @@ defmodule Appsignal.SystemTest do
     test "returns true" do
       assert Appsignal.System.heroku?
     end
+  end
+
+  describe ".agent_platform" do
+    test "agent_platform returns libc build when the system detection doesn't work" do
+      with_mock System, [:passthrough], [cmd: fn(_, _, _) -> raise "oh no!" end] do
+        assert Appsignal.System.agent_platform() == "linux"
+      end
+    end
+
+    test "returns the musl build when using the APPSIGNAL_BUILD_FOR_MUSL env var" do
+      with_env %{"APPSIGNAL_BUILD_FOR_MUSL" => "1"}, fn() ->
+        assert Appsignal.System.agent_platform() == "linux-musl"
+      end
+    end
+
+    test "returns the musl build when on a musl system" do
+      with_mock System, [:passthrough], [
+        cmd: fn(_, _, _) -> {"musl libc (x86_64)\nVersion 1.1.16", 1} end
+      ] do
+        assert Appsignal.System.agent_platform() == "linux-musl"
+      end
+    end
+
+    test "returns the libc build when on a libc linux system" do
+      with_mocks([
+        {System,
+          [:passthrough],
+          [cmd: fn(_, _, _) -> {"ldd (Debian GLIBC 2.15-18+deb8u7) 2.15", 1} end]
+        }
+      ]) do
+        assert Appsignal.System.agent_platform() == "linux"
+      end
+    end
+
+    test "returns the musl build when on an old libc linux system" do
+      with_mocks([
+        {System,
+          [:passthrough],
+          [cmd: fn(_, _, _) -> {"ldd (Debian GLIBC 2.14-18+deb8u7) 2.14", 1} end]
+        }
+      ]) do
+        assert Appsignal.System.agent_platform() == "linux-musl"
+      end
+    end
+
+    test "returns the musl build when on a very old libc linux system" do
+      with_mocks([
+        {System,
+          [:passthrough],
+          [cmd: fn(_, _, _) -> {"ldd (Debian GLIBC 2.5-18+deb8u7) 2.5", 1} end]
+        }
+      ]) do
+        assert Appsignal.System.agent_platform() == "linux-musl"
+      end
+    end
+
+    test "returns the darwin build when on a darwin system" do
+      FakeOS.set(:type, {:unix, :darwin})
+      with_mocks([
+        {System,
+          [:passthrough],
+          [cmd: fn(_, _, _) -> {"ldd: command not found", 1} end]
+        }
+      ]) do
+        assert Appsignal.System.agent_platform() == "darwin"
+      end
+    end
+
+    test "returns the darwin build when on a freebsd system" do
+      FakeOS.set(:type, {:unix, :freebsd})
+      with_mocks([
+        {System,
+          [:passthrough],
+          [cmd: fn(_, _, _) -> {"ldd: illegal option -- -", 1} end]
+        }
+      ]) do
+        assert Appsignal.System.agent_platform() == "freebsd"
+      end
+    end
+  end
+
+  describe ".installed_agent_architecture" do
+    test "returns nil if the architecture doesn't exist" do
+      File.rm(agent_architecture_path)
+      assert Appsignal.System.installed_agent_architecture() == nil
+    end
+
+    test "returns the architecure if appsignal.architecure exists" do
+      File.write(agent_architecture_path, "x86_64-linux")
+      assert Appsignal.System.installed_agent_architecture() == "x86_64-linux"
+    end
+  end
+
+  defp agent_architecture_path do
+    :appsignal
+    |> Application.app_dir
+    |> Path.join("priv/appsignal.architecture")
   end
 end

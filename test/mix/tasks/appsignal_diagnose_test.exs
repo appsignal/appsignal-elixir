@@ -18,6 +18,8 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     # Set loaded? to the actual state of the Nif
     Appsignal.FakeNif.update(fake_nif, :loaded?, Appsignal.Nif.loaded?)
 
+    FakeOS.start_link
+
     # By default, Push API key is valid
     auth_bypass = Bypass.open
     setup_with_config(%{endpoint: "http://localhost:#{auth_bypass.port}"})
@@ -62,6 +64,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     report = received_report(fake_report)
     assert report[:library] == %{
       agent_version: @agent_version,
+      agent_architecture: Appsignal.System.installed_agent_architecture,
       extension_loaded: Appsignal.Nif.loaded?,
       language: "elixir",
       package_version: @appsignal_version
