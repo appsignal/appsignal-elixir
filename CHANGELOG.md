@@ -1,3 +1,6 @@
+# 1.4.1
+* Use musl build for older systems (#274)
+
 # 1.4.0
 * Add separate GNU linux build. PR #265 and
   Commit b9546cae01cd89d597586ad6c7dc4b5213fe2fca
