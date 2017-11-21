@@ -1,4 +1,11 @@
 defmodule AppsignalTest.Utils do
+  # Remove loaded from the app so the module is recompiled when called. Do this
+  # if the module is already loaded before the test env, such as in `mix.exs`.
+  def purge(mod) do
+    :code.purge mod
+    :code.delete mod
+  end
+
   def with_frozen_environment(function) do
     environment = freeze_environment()
     result = function.()
