@@ -4,8 +4,8 @@ defmodule Appsignal.SystemTest do
   import Mock
   import AppsignalTest.Utils
   setup do
-    FakeOS.start_link
-    :ok
+    {:ok, fake_os} = FakeOS.start_link
+    [fake_os: fake_os]
   end
 
   test "hostname_with_domain" do
@@ -95,8 +95,8 @@ defmodule Appsignal.SystemTest do
       end
     end
 
-    test "returns the darwin build when on a darwin system" do
-      FakeOS.set(:type, {:unix, :darwin})
+    test "returns the darwin build when on a darwin system", %{fake_os: fake_os} do
+      FakeOS.update(fake_os, :type, {:unix, :darwin})
       with_mocks([
         {System,
           [:passthrough],
@@ -107,8 +107,8 @@ defmodule Appsignal.SystemTest do
       end
     end
 
-    test "returns the darwin build when on a freebsd system" do
-      FakeOS.set(:type, {:unix, :freebsd})
+    test "returns the darwin build when on a freebsd system", %{fake_os: fake_os} do
+      FakeOS.update(fake_os, :type, {:unix, :freebsd})
       with_mocks([
         {System,
           [:passthrough],
