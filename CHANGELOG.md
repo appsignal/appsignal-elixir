@@ -1,3 +1,9 @@
+# 1.4.2
+* Change log level from info to debug for value comparing failures.
+  Commit 76fafebba5e37cfd2c303c286271f4616cf63bd3
+* Collect free memory host metric.
+  Commit 76fafebba5e37cfd2c303c286271f4616cf63bd3
+
 # 1.4.1
 * Use musl build for older systems (#274)
 
