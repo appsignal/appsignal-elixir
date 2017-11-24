@@ -114,7 +114,7 @@ defmodule Appsignal.Mixfile do
     [
       {:httpoison, "~> 0.11"},
       {:poison, ">= 1.3.0"},
-      {:decorator, "~> 1.2.2"},
+      {:decorator, "~> 1.2.3"},
       {:plug, ">= 1.1.0", optional: true},
       {:phoenix, ">= 1.2.0", optional: true, only: [:prod, :test_phoenix, :dev]},
       {:mock, "~> 0.3.0", only: [:test, :test_phoenix, :test_no_nif]},
