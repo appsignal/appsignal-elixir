@@ -1,3 +1,8 @@
+# 1.4.3
+* Fix dialyzer linting violations. (#271)
+* Fix logger error on failed installation. (#275)
+* Reuse Appsignal.agent module by unloading it after use in `mix.exs`. (#277)
+
 # 1.4.2
 * Change log level from info to debug for value comparing failures.
   Commit 76fafebba5e37cfd2c303c286271f4616cf63bd3
@@ -16,7 +21,7 @@
   Commit b9546cae01cd89d597586ad6c7dc4b5213fe2fca
 
 # 1.3.6
-* Fix crashes when using a transaction from multiple processes in an unsupported way. 
+* Fix crashes when using a transaction from multiple processes in an unsupported way.
   Commit b9546cae01cd89d597586ad6c7dc4b5213fe2fca
 * Allow string values in atom config fields (#269)
 
@@ -32,7 +37,7 @@
 
 # 1.3.3
 * No channel payloads in the channel_action decorator (#255)
-* Add architecture for elixir:alpine Docker image (#256) 
+* Add architecture for elixir:alpine Docker image (#256)
 
 # 1.3.2
 * Don't crash with unbound channel payloads (#253)
