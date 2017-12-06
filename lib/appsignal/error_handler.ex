@@ -114,6 +114,11 @@ defmodule Appsignal.ErrorHandler do
   Also returns a 'message' which is supposed to contain extra error information.
   """
   @spec extract_reason_and_message(any(), binary()) :: {any(), binary()}
+  def extract_reason_and_message(%Plug.Conn.WrapperError{reason: reason, kind: kind, stack: stacktrace}, message) do
+    kind
+    |> Exception.normalize(reason, stacktrace)
+    |> extract_reason_and_message(message)
+  end
   def extract_reason_and_message(reason, message) when is_binary(reason) do
     {reason, message}
   end
