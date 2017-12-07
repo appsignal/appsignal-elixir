@@ -9,8 +9,7 @@ if Appsignal.plug? do
         @transaction Application.get_env(:appsignal, :appsignal_transaction, Appsignal.Transaction)
 
         def call(conn, opts) do
-          id = Logger.metadata()[:request_id] || @transaction.generate_id()
-          transaction = @transaction.start(id, :http_request)
+          transaction = @transaction.start(@transaction.generate_id(), :http_request)
 
           try do
             super(conn, opts)
@@ -117,8 +116,16 @@ if Appsignal.plug? do
       |> Enum.into(%{})
     end
 
-    def extract_meta_data(%Plug.Conn{method: method, request_path: path}) do
-      %{"method" => method, "path" => path}
+    def extract_meta_data(%Plug.Conn{method: method, request_path: path} = conn) do
+      request_id = conn
+      |> Plug.Conn.get_resp_header("x-request-id")
+      |> List.first
+
+      %{
+        "method" => method,
+        "path" => path,
+        "request_id" => request_id
+      }
     end
 
     defp merge_action_and_controller(action, controller) when is_atom(controller) do

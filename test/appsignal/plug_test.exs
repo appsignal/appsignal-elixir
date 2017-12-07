@@ -269,8 +269,16 @@ defmodule Appsignal.PlugTest do
   describe "extracting request metadata" do
     test "from a Plug conn" do
       assert Appsignal.Plug.extract_meta_data(
-        %Plug.Conn{method: "GET", request_path: "/foo"}
-      ) == %{"method" => "GET", "path" => "/foo"}
+        %Plug.Conn{
+          method: "GET",
+          request_path: "/foo",
+          resp_headers: [{"x-request-id", "kk4hk5sis7c3b56t683nnmdig632c9ot"}]
+        }
+      ) == %{
+        "method" => "GET",
+        "path" => "/foo",
+        "request_id" => "kk4hk5sis7c3b56t683nnmdig632c9ot"
+      }
     end
   end
 
