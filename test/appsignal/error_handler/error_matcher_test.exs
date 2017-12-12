@@ -224,6 +224,21 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     ])
   end
 
+  test "Plug.Conn.WrapperError" do
+    :proc_lib.spawn(fn() ->
+      raise(%Plug.Conn.WrapperError{reason: :undef, kind: :error, stack: System.stacktrace})
+    end)
+    |> assert_crash_caught
+    |> reason("UndefinedFunctionError")
+    |> message(
+      ~r(Process #PID<[\d.]+> terminating: undefined function)
+    )
+    |> stacktrace([
+      ~r{test/appsignal/error_handler/error_matcher_test.exs:\d+: anonymous fn/0 in Appsignal.ErrorHandler.ErrorMatcherTest."?test Plug.Conn.WrapperError"?/1},
+      ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p/3}
+    ])
+  end
+
   defp reason({reason, _message, _stacktrace} = data, expected) do
     assert expected =~ reason
     data

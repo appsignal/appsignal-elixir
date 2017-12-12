@@ -1,3 +1,7 @@
+# 1.4.4
+* ErrorHandler unwraps Plug.Conn.WrapperError (#281)
+* Fetch request_id in Appsignal.Plug.extract_meta_data/1 (#283)
+
 # 1.4.3
 * Fix dialyzer linting violations. (#271)
 * Fix logger error on failed installation. (#275)

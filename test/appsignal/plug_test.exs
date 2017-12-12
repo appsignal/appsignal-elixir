@@ -8,6 +8,11 @@ defmodule UsingAppsignalPlug do
   def call(%Plug.Conn{private: %{phoenix_action: :bad_request}}, _opts) do
     raise %Plug.BadRequestError{}
   end
+  def call(%Plug.Conn{private: %{phoenix_action: :undef}} = conn, _opts) do
+    raise %Plug.Conn.WrapperError{
+      kind: :error, reason: :undef, stack: System.stacktrace, conn: conn
+    }
+  end
   def call(%Plug.Conn{} = conn, _opts) do
     conn |> Plug.Conn.assign(:called?, true)
   end
@@ -160,6 +165,31 @@ defmodule Appsignal.PlugTest do
     end
   end
 
+  describe "for a wrapped undefined error" do
+    setup do
+      conn = %Plug.Conn{}
+      |> Plug.Conn.put_private(:phoenix_controller, AppsignalPhoenixExample.PageController)
+      |> Plug.Conn.put_private(:phoenix_action, :undef)
+
+      [conn: conn]
+    end
+
+    test "sets the transaction error", %{conn: conn, fake_transaction: fake_transaction} do
+      :ok = try do
+        UsingAppsignalPlug.call(conn, %{})
+      rescue
+        Plug.Conn.WrapperError -> :ok
+      end
+
+      assert [{
+        %Appsignal.Transaction{},
+        "UndefinedFunctionError",
+        "HTTP request error: undefined function",
+        _stack
+      }] = FakeTransaction.errors(fake_transaction)
+    end
+  end
+
   describe "for a transaction with an timeout" do
     setup do
       conn = %Plug.Conn{}
@@ -239,8 +269,16 @@ defmodule Appsignal.PlugTest do
   describe "extracting request metadata" do
     test "from a Plug conn" do
       assert Appsignal.Plug.extract_meta_data(
-        %Plug.Conn{method: "GET", request_path: "/foo"}
-      ) == %{"method" => "GET", "path" => "/foo"}
+        %Plug.Conn{
+          method: "GET",
+          request_path: "/foo",
+          resp_headers: [{"x-request-id", "kk4hk5sis7c3b56t683nnmdig632c9ot"}]
+        }
+      ) == %{
+        "method" => "GET",
+        "path" => "/foo",
+        "request_id" => "kk4hk5sis7c3b56t683nnmdig632c9ot"
+      }
     end
   end
 
