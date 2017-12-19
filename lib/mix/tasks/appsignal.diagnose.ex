@@ -96,7 +96,6 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
 
   defp configure_appsignal do
     Config.initialize
-    Config.write_to_environment
   end
 
   defp print_agent_diagnostics(report) do
