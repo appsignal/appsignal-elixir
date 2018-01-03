@@ -9,6 +9,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
   @shortdoc "Starts and tests AppSignal while validating the configuration."
 
   def run(_args) do
+    {:ok, _} = Application.ensure_all_started(:appsignal)
     report = %{process: %{uid: @system.uid}}
     configure_appsignal()
     config = Application.get_env(:appsignal, :config)

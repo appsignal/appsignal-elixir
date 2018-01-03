@@ -1,3 +1,6 @@
+# 1.4.5
+Ensure the appsignal application is started when running diagnose (#286)
+
 # 1.4.4
 * ErrorHandler unwraps Plug.Conn.WrapperError (#281)
 * Fetch request_id in Appsignal.Plug.extract_meta_data/1 (#283)
