@@ -14,16 +14,19 @@ if Appsignal.plug? do
           try do
             super(conn, opts)
           catch
-            kind, error ->
-              Plug.ErrorHandler.__catch__(conn, kind, error, fn(conn, _exception) ->
-                case Appsignal.Plug.extract_error_metadata(error) do
-                  {reason, message} ->
-                    transaction
-                    |> @transaction.set_error(reason, message, System.stacktrace)
-                    |> finish_with_conn(conn)
-                  nil -> conn
-                end
-              end)
+            kind, reason ->
+              stacktrace = System.stacktrace
+              exception = Exception.normalize(kind, reason, stacktrace)
+
+              case Appsignal.Plug.extract_error_metadata(exception) do
+                {reason, message} ->
+                  transaction
+                  |> @transaction.set_error(reason, message, stacktrace)
+                  |> finish_with_conn(conn)
+                nil -> conn
+              end
+
+              :erlang.raise(kind, reason, stacktrace)
           else
             conn -> finish_with_conn(transaction, conn)
           end
