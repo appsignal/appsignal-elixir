@@ -135,8 +135,7 @@ defmodule Appsignal.PlugTest do
     end
 
     test "sets the transaction's request metadata", %{conn: conn, fake_transaction: fake_transaction} do
-      assert Plug.Conn.put_status(conn, 500) ==
-        FakeTransaction.request_metadata(fake_transaction)
+      assert conn == FakeTransaction.request_metadata(fake_transaction)
     end
 
     test "completes the transaction", %{fake_transaction: fake_transaction} do
