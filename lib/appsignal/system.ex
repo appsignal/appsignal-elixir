@@ -18,6 +18,7 @@ defmodule Appsignal.System do
         Mix.Tasks.Compile.Erlang.manifests
         |> List.first
         |> Path.dirname
+        |> String.trim_trailing(".mix")
         |> Path.join("priv")
       path ->
         path
