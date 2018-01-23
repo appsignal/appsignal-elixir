@@ -1,9 +1,12 @@
+# 1.4.7
+* Fix compile errors on Elixir 1.6 (#298)
+
 # 1.4.6
-Wrap WrapperError clause in Appsignal.plug? (#291)
-Don't use Plug.ErrorHandler.__catch__/4 in Appsignal.Plug (#287)
+* Wrap WrapperError clause in Appsignal.plug? (#291)
+* Don't use Plug.ErrorHandler.__catch__/4 in Appsignal.Plug (#287)
 
 # 1.4.5
-Ensure the appsignal application is started when running diagnose (#286)
+* Ensure the appsignal application is started when running diagnose (#286)
 
 # 1.4.4
 * ErrorHandler unwraps Plug.Conn.WrapperError (#281)
