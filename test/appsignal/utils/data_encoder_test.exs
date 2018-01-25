@@ -98,11 +98,6 @@ defmodule Appsignal.Utils.DataEncoderTest do
     assert {:ok, '[]'} == Nif.data_to_json(resource)
   end
 
-  test "encode a list a cons operator" do
-    resource = DataEncoder.encode(["" | "foo"])
-    assert {:ok, '["foo"]'} == Nif.data_to_json(resource)
-  end
-
   test "encode a list with a string item" do
     resource = DataEncoder.encode(["foo"])
     assert {:ok, '["foo"]'} == Nif.data_to_json(resource)
@@ -151,6 +146,19 @@ defmodule Appsignal.Utils.DataEncoderTest do
   test "encode a list with a list item" do
     resource = DataEncoder.encode(["foo", ["bar"]])
     assert {:ok, '["foo",["bar"]]'} == Nif.data_to_json(resource)
+  end
+
+  test "encode a list with an improper list as string representation" do
+    resource = DataEncoder.encode([1, ["foo" | "bar"]])
+    assert {:ok, '[1,"improper_list:[\\"foo\\" | \\"bar\\"]"]'} == Nif.data_to_json(resource)
+  end
+
+  test "encode a map with an improper list as string representation" do
+    resource = DataEncoder.encode(%{foo: ["foo" | "bar"]})
+    assert {:ok, '{"foo":"improper_list:[\\"foo\\" | \\"bar\\"]"}'} == Nif.data_to_json(resource)
+
+    resource = DataEncoder.encode(%{foo: [1, "foo" | "bar"]})
+    assert {:ok, '{"foo":"improper_list:[1, \\"foo\\" | \\"bar\\"]"}'} == Nif.data_to_json(resource)
   end
 
   test "encode a list with a tuple item" do
