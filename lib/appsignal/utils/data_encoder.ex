@@ -40,8 +40,19 @@ defmodule Appsignal.Utils.DataEncoder do
   def encode(resource, {key, value}) when is_float(value) do
     Nif.data_set_float(resource, key, value)
   end
-  def encode(resource, {key, value}) when is_map(value) or is_list(value) or is_tuple(value) do
+  def encode(resource, {key, value}) when is_map(value) or is_tuple(value) do
     Nif.data_set_data(resource, key, encode(value))
+  end
+  def encode(resource, {key, value}) when is_list(value) do
+    if proper_list? value do
+      Nif.data_set_data(resource, key, encode(value))
+    else
+      Nif.data_set_string(
+        resource,
+        key,
+        "improper_list:#{inspect(value)}"
+      )
+    end
   end
   def encode(resource, {key, true}) do
     Nif.data_set_boolean(resource, key, 1)
@@ -70,8 +81,18 @@ defmodule Appsignal.Utils.DataEncoder do
   def encode(resource, value) when is_float(value) do
     Nif.data_set_float(resource, value)
   end
-  def encode(resource, value) when is_map(value) or is_list(value) or is_tuple(value) do
+  def encode(resource, value) when is_map(value) or is_tuple(value) do
     Nif.data_set_data(resource, encode(value))
+  end
+  def encode(resource, value) when is_list(value) do
+    if proper_list? value do
+      Nif.data_set_data(resource, encode(value))
+    else
+      Nif.data_set_string(
+        resource,
+        "improper_list:#{inspect(value)}"
+      )
+    end
   end
   def encode(resource, true) do
     Nif.data_set_boolean(resource, 1)
@@ -88,4 +109,10 @@ defmodule Appsignal.Utils.DataEncoder do
   def encode(resource, value) do
     encode(resource, inspect(value))
   end
+
+  def proper_list?([_head|tail]) when is_list(tail) do
+    proper_list?(tail)
+  end
+  def proper_list?([]), do: true
+  def proper_list?(_), do: false
 end
