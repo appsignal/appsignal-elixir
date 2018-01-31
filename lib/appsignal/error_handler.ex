@@ -44,7 +44,7 @@ defmodule Appsignal.ErrorHandler do
   def submit_transaction(transaction, reason, message, stack, metadata, conn \\ nil)
   def submit_transaction(transaction, reason, message, stack, metadata, nil) do
     Transaction.set_error(transaction, reason, message, stack)
-    Transaction.set_meta_data(metadata)
+    Transaction.set_meta_data(transaction, metadata)
     Transaction.finish(transaction)
     Transaction.complete(transaction)
     Logger.debug fn ->
