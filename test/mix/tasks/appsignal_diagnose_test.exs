@@ -22,7 +22,11 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
     # By default, Push API key is valid
     auth_bypass = Bypass.open
-    setup_with_config(%{endpoint: "http://localhost:#{auth_bypass.port}"})
+    setup_with_config(%{
+      valid: true,
+      push_api_key: "foo",
+      endpoint: "http://localhost:#{auth_bypass.port}"
+    })
     Bypass.expect auth_bypass, fn conn ->
       assert "/1/auth" == conn.request_path
       assert "GET" == conn.method
