@@ -1,3 +1,18 @@
+defmodule ErrorLoggerForwarder do
+  def init(pid) do
+    {:ok, pid}
+  end
+
+  def handle_event(event, pid) do
+    send(pid, event)
+    {:ok, pid}
+  end
+
+  def handle_info(_, state) do
+    {:ok, state}
+  end
+end
+
 defmodule Appsignal.ErrorHandlerTest do
   @moduledoc """
   Test the actual Appsignal.ErrorHandler
@@ -56,5 +71,15 @@ defmodule Appsignal.ErrorHandlerTest do
     assert called(Transaction.set_meta_data(transaction, metadata))
     assert called(Transaction.finish(transaction))
     assert called(Transaction.complete(transaction))
+  end
+
+  test "does not cause warnings for noise on handle_info" do
+    :error_logger.add_report_handler(ErrorLoggerForwarder, self())
+
+    :error_logger
+    |> Process.whereis
+    |> send(:noise)
+
+    refute_receive({:warning_msg, _, _})
   end
 end

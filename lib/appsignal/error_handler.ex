@@ -41,6 +41,10 @@ defmodule Appsignal.ErrorHandler do
     {:ok, state}
   end
 
+  def handle_info(_, state) do
+    {:ok, state}
+  end
+
   def submit_transaction(transaction, reason, message, stack, metadata, conn \\ nil)
   def submit_transaction(transaction, reason, message, stack, metadata, nil) do
     Transaction.set_error(transaction, reason, message, stack)
