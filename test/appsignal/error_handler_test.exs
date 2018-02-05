@@ -60,7 +60,7 @@ defmodule Appsignal.ErrorHandlerTest do
     )
 
     assert called Transaction.set_error(transaction, reason, message, stacktrace)
-    assert called Transaction.set_meta_data(metadata)
+    assert called Transaction.set_meta_data(transaction, metadata)
     assert called Transaction.finish(transaction)
     assert called Transaction.complete(transaction)
   end

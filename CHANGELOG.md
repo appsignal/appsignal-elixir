@@ -1,3 +1,9 @@
+# 1.4.8
+* Fix transaction metadata for send_error (#303)
+* Use Application.load/1 in diagnose task (#297)
+* Fix DataEncoder.encode error (#293)
+* Update agent to fix locking issue in diagnose (#300)
+
 # 1.4.7
 * Fix compile errors on Elixir 1.6 (#298)
 
