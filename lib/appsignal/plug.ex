@@ -6,6 +6,8 @@ if Appsignal.plug?() do
 
     defmacro __using__(_) do
       quote do
+        use Plug.ErrorHandler
+
         @transaction Application.get_env(
                        :appsignal,
                        :appsignal_transaction,
@@ -15,26 +17,26 @@ if Appsignal.plug?() do
         def call(conn, opts) do
           transaction = @transaction.start(@transaction.generate_id(), :http_request)
 
-          try do
-            super(conn, opts)
-          catch
-            kind, reason ->
-              stacktrace = System.stacktrace()
-              exception = Exception.normalize(kind, reason, stacktrace)
+          conn =
+            conn
+            |> Plug.Conn.put_private(:appsignal_transaction, transaction)
+            |> super(opts)
 
-              case Appsignal.Plug.extract_error_metadata(exception) do
-                {reason, message} ->
-                  transaction
-                  |> @transaction.set_error(reason, message, stacktrace)
-                  |> finish_with_conn(conn)
+          finish_with_conn(transaction, conn)
+        end
 
-                nil ->
-                  conn
-              end
+        def handle_errors(%Plug.Conn{private: %{appsignal_transaction: transaction}} = conn, %{
+              reason: exception,
+              stack: stacktrace
+            }) do
+          case Appsignal.Plug.extract_error_metadata(exception) do
+            {reason, message} ->
+              transaction
+              |> @transaction.set_error(reason, message, stacktrace)
+              |> finish_with_conn(conn)
 
-              :erlang.raise(kind, reason, stacktrace)
-          else
-            conn -> finish_with_conn(transaction, conn)
+            nil ->
+              conn
           end
         end
 
