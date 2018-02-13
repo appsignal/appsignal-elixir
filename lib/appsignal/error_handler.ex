@@ -41,6 +41,10 @@ defmodule Appsignal.ErrorHandler do
     {:ok, state}
   end
 
+  def handle_info(_, state) do
+    {:ok, state}
+  end
+
   def submit_transaction(transaction, reason, message, stack, metadata, conn \\ nil)
   def submit_transaction(transaction, reason, message, stack, metadata, nil) do
     Transaction.set_error(transaction, reason, message, stack)
@@ -97,7 +101,7 @@ defmodule Appsignal.ErrorHandler do
   end
   defp stacktrace?(_), do: false
 
-  defp stacktrace_line?({_,_,_,[file: _, line: _]}), do: true
+  defp stacktrace_line?({_, _, _, [file: _, line: _]}), do: true
   defp stacktrace_line?(_), do: false
 
   @doc false
@@ -140,8 +144,8 @@ defmodule Appsignal.ErrorHandler do
       extract_reason_and_message(reason, message)
     end
   end
-  def extract_reason_and_message(r = %{__struct__: struct}, message) do
-    msg = Exception.message(r)
+  def extract_reason_and_message(%{__struct__: struct} = reason, message) do
+    msg = Exception.message(reason)
     {"#{inspect struct}", prefixed(message, msg)}
   end
   def extract_reason_and_message({r = %{}, _}, message) do

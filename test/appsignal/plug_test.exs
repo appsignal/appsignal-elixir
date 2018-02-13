@@ -338,8 +338,8 @@ defmodule Appsignal.PlugTest do
           {"from", "webmaster@example.org"},
           {"referer", "http://localhost:4001/"},
           {"range", "bytes=0-1023"},
-
-          {"cookie", "__ar_v4=U35IKTLTJNEP7GWW6OH3N2%3A20161120%3A90%7CI..."}
+          {"cookie", "__ar_v4=U35IKTLTJNEP7GWW6OH3N2%3A20161120%3A90%7CI..."},
+          {"x-real-ip", "179.146.231.170"}
         ]
       }
 
@@ -354,7 +354,8 @@ defmodule Appsignal.PlugTest do
         "req_headers.user-agent" => "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3...",
         "req_headers.from" => "webmaster@example.org",
         "req_headers.referer" => "http://localhost:4001/",
-        "req_headers.range" => "bytes=0-1023"
+        "req_headers.range" => "bytes=0-1023",
+        "req_headers.x-real-ip" => "179.146.231.170"
       }
     end
   end

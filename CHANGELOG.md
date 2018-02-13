@@ -1,3 +1,7 @@
+# 1.4.9
+* Add x-real-ip to request header whitelist (#308)
+* ErrorHandler doesn't cause warnings for noise over handle_info (#304)
+
 # 1.4.8
 * Fix transaction metadata for send_error (#303)
 * Use Application.load/1 in diagnose task (#297)
