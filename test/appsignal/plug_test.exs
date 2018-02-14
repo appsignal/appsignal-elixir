@@ -57,6 +57,10 @@ defmodule Appsignal.PlugTest do
       assert conn.assigns[:called?]
     end
 
+    test "adds the transaction to the conn", %{conn: conn} do
+      assert %Appsignal.Transaction{id: "123"} = conn.private[:appsignal_transaction]
+    end
+
     test "sets the transaction's action name", %{fake_transaction: fake_transaction} do
       assert "AppsignalPhoenixExample.PageController#index" ==
                FakeTransaction.action(fake_transaction)
@@ -114,7 +118,7 @@ defmodule Appsignal.PlugTest do
   describe "for a transaction with an error" do
     setup do
       conn =
-        %Plug.Conn{}
+        %Plug.Conn{params: %{"foo" => "bar"}}
         |> Plug.Conn.put_private(:phoenix_controller, AppsignalPhoenixExample.PageController)
         |> Plug.Conn.put_private(:phoenix_action, :exception)
 
@@ -125,8 +129,6 @@ defmodule Appsignal.PlugTest do
           :error, %RuntimeError{message: "Exception!"} -> :ok
           type, reason -> {type, reason}
         end
-
-      [conn: conn]
     end
 
     test "sets the transaction error", %{fake_transaction: fake_transaction} do
@@ -150,10 +152,10 @@ defmodule Appsignal.PlugTest do
     end
 
     test "sets the transaction's request metadata", %{
-      conn: conn,
       fake_transaction: fake_transaction
     } do
-      assert conn == FakeTransaction.request_metadata(fake_transaction)
+      assert %Plug.Conn{params: %{"foo" => "bar"}} =
+        FakeTransaction.request_metadata(fake_transaction)
     end
 
     test "completes the transaction", %{fake_transaction: fake_transaction} do

@@ -15,6 +15,8 @@ if Appsignal.plug?() do
         def call(conn, opts) do
           transaction = @transaction.start(@transaction.generate_id(), :http_request)
 
+          conn = Plug.Conn.put_private(conn, :appsignal_transaction, transaction)
+
           try do
             super(conn, opts)
           catch
