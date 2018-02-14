@@ -20,6 +20,15 @@ defmodule UsingAppsignalPlug do
     }
   end
 
+  def call(%Plug.Conn{private: %{phoenix_action: :no_transaction}}, _opts) do
+    raise %Plug.Conn.WrapperError{
+      kind: :error,
+      reason: :undef,
+      stack: System.stacktrace(),
+      conn: %Plug.Conn{}
+    }
+  end
+
   def call(%Plug.Conn{} = conn, _opts) do
     conn |> Plug.Conn.assign(:called?, true)
   end
@@ -216,6 +225,27 @@ defmodule Appsignal.PlugTest do
     } do
       assert %Plug.Conn{params: %{"foo" => "bar"}} =
         FakeTransaction.request_metadata(fake_transaction)
+    end
+  end
+
+  describe "for a conn without a transaction" do
+    setup do
+      conn =
+        %Plug.Conn{params: %{"foo" => "bar"}}
+        |> Plug.Conn.put_private(:phoenix_controller, AppsignalPhoenixExample.PageController)
+        |> Plug.Conn.put_private(:phoenix_action, :no_transaction)
+
+      :ok = try do
+        UsingAppsignalPlug.call(conn, %{})
+      rescue
+        Plug.Conn.WrapperError -> :ok
+      end
+
+      [conn: conn]
+    end
+
+    test "does not set a transaction error", %{fake_transaction: fake_transaction} do
+      assert [] = FakeTransaction.errors(fake_transaction)
     end
   end
 

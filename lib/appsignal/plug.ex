@@ -57,6 +57,10 @@ if Appsignal.plug?() do
           :erlang.raise(kind, reason, stack)
         end
 
+        defp handle_error(_conn, kind, reason, _wrapped_reason, stack) do
+          :erlang.raise(kind, reason, stack)
+        end
+
         defp finish_with_conn(transaction, conn) do
           try_set_action(transaction, conn)
 
