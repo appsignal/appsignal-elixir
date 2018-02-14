@@ -16,7 +16,7 @@ defmodule UsingAppsignalPlug do
       kind: :error,
       reason: :undef,
       stack: System.stacktrace(),
-      conn: conn
+      conn: %{conn | params: %{"foo" => "bar"}}
     }
   end
 
@@ -189,29 +189,33 @@ defmodule Appsignal.PlugTest do
   describe "for a wrapped undefined error" do
     setup do
       conn =
-        %Plug.Conn{}
+        %Plug.Conn{params: %{"foo" => "bar"}}
         |> Plug.Conn.put_private(:phoenix_controller, AppsignalPhoenixExample.PageController)
         |> Plug.Conn.put_private(:phoenix_action, :undef)
+
+      :ok = try do
+        UsingAppsignalPlug.call(conn, %{})
+      rescue
+        Plug.Conn.WrapperError -> :ok
+      end
 
       [conn: conn]
     end
 
-    test "sets the transaction error", %{conn: conn, fake_transaction: fake_transaction} do
-      :ok =
-        try do
-          UsingAppsignalPlug.call(conn, %{})
-        rescue
-          Plug.Conn.WrapperError -> :ok
-        end
+    test "sets the transaction error", %{fake_transaction: fake_transaction} do
+      assert [{
+        %Appsignal.Transaction{},
+        "UndefinedFunctionError",
+        "HTTP request error: undefined function",
+        _stack
+      }] = FakeTransaction.errors(fake_transaction)
+    end
 
-      assert [
-               {
-                 %Appsignal.Transaction{},
-                 "UndefinedFunctionError",
-                 "HTTP request error: undefined function",
-                 _stack
-               }
-             ] = FakeTransaction.errors(fake_transaction)
+    test "sets the transaction's request metadata", %{
+      fake_transaction: fake_transaction
+    } do
+      assert %Plug.Conn{params: %{"foo" => "bar"}} =
+        FakeTransaction.request_metadata(fake_transaction)
     end
   end
 

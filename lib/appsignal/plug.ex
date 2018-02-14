@@ -26,25 +26,35 @@ if Appsignal.plug?() do
           end
         end
 
+        defp handle_error(_conn, :error, %Plug.Conn.WrapperError{} = wrapper) do
+          %{conn: conn, kind: kind, reason: reason, stack: stack} = wrapper
+          handle_error(conn, kind, wrapper, reason, stack)
+        end
+
+        defp handle_error(conn, kind, reason) do
+          handle_error(conn, kind, reason, reason, System.stacktrace)
+        end
+
         defp handle_error(
                %Plug.Conn{private: %{appsignal_transaction: transaction}} = conn,
                kind,
-               reason
+               reason,
+               wrapped_reason,
+               stack
              ) do
-          stacktrace = System.stacktrace()
-          exception = Exception.normalize(kind, reason, stacktrace)
+          exception = Exception.normalize(kind, wrapped_reason, stack)
 
           case Appsignal.Plug.extract_error_metadata(exception) do
             {reason, message} ->
               transaction
-              |> @transaction.set_error(reason, message, stacktrace)
+              |> @transaction.set_error(reason, message, stack)
               |> finish_with_conn(conn)
 
             nil ->
               conn
           end
 
-          :erlang.raise(kind, reason, stacktrace)
+          :erlang.raise(kind, reason, stack)
         end
 
         defp finish_with_conn(transaction, conn) do
