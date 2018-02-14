@@ -20,24 +20,31 @@ if Appsignal.plug?() do
           try do
             super(conn, opts)
           catch
-            kind, reason ->
-              stacktrace = System.stacktrace()
-              exception = Exception.normalize(kind, reason, stacktrace)
-
-              case Appsignal.Plug.extract_error_metadata(exception) do
-                {reason, message} ->
-                  transaction
-                  |> @transaction.set_error(reason, message, stacktrace)
-                  |> finish_with_conn(conn)
-
-                nil ->
-                  conn
-              end
-
-              :erlang.raise(kind, reason, stacktrace)
+            kind, reason -> handle_error(conn, kind, reason)
           else
             conn -> finish_with_conn(transaction, conn)
           end
+        end
+
+        defp handle_error(
+               %Plug.Conn{private: %{appsignal_transaction: transaction}} = conn,
+               kind,
+               reason
+             ) do
+          stacktrace = System.stacktrace()
+          exception = Exception.normalize(kind, reason, stacktrace)
+
+          case Appsignal.Plug.extract_error_metadata(exception) do
+            {reason, message} ->
+              transaction
+              |> @transaction.set_error(reason, message, stacktrace)
+              |> finish_with_conn(conn)
+
+            nil ->
+              conn
+          end
+
+          :erlang.raise(kind, reason, stacktrace)
         end
 
         defp finish_with_conn(transaction, conn) do
