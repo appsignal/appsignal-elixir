@@ -20,69 +20,71 @@ if Appsignal.plug?() do
           try do
             super(conn, opts)
           catch
-            kind, reason -> handle_error(conn, kind, reason)
+            kind, reason -> Appsignal.Plug.handle_error(conn, kind, reason)
           else
-            conn -> finish_with_conn(transaction, conn)
-          end
-        end
-
-        defp handle_error(_conn, :error, %Plug.Conn.WrapperError{} = wrapper) do
-          %{conn: conn, kind: kind, reason: reason, stack: stack} = wrapper
-          handle_error(conn, kind, wrapper, reason, stack)
-        end
-
-        defp handle_error(conn, kind, reason) do
-          handle_error(conn, kind, reason, reason, System.stacktrace)
-        end
-
-        defp handle_error(
-               %Plug.Conn{private: %{appsignal_transaction: transaction}} = conn,
-               kind,
-               reason,
-               wrapped_reason,
-               stack
-             ) do
-          exception = Exception.normalize(kind, wrapped_reason, stack)
-
-          case Appsignal.Plug.extract_error_metadata(exception) do
-            {reason, message} ->
-              transaction
-              |> @transaction.set_error(reason, message, stack)
-              |> finish_with_conn(conn)
-
-            nil ->
-              conn
-          end
-
-          :erlang.raise(kind, reason, stack)
-        end
-
-        defp handle_error(conn, kind, reason, wrapped_reason, stack) do
-          Appsignal.Plug.handle_error(conn, kind, reason, wrapped_reason, stack)
-        end
-
-        defp finish_with_conn(transaction, conn) do
-          try_set_action(transaction, conn)
-
-          if @transaction.finish(transaction) == :sample do
-            @transaction.set_request_metadata(transaction, conn)
-          end
-
-          :ok = @transaction.complete(transaction)
-          conn
-        end
-
-        defp try_set_action(transaction, conn) do
-          case Appsignal.Plug.extract_action(conn) do
-            nil -> nil
-            action -> @transaction.set_action(transaction, action)
+            conn -> Appsignal.Plug.finish_with_conn(transaction, conn)
           end
         end
       end
     end
 
+    @transaction Application.get_env(
+                   :appsignal,
+                   :appsignal_transaction,
+                   Appsignal.Transaction
+                 )
+
+    def handle_error(_conn, :error, %Plug.Conn.WrapperError{} = wrapper) do
+      %{conn: conn, kind: kind, reason: reason, stack: stack} = wrapper
+      handle_error(conn, kind, wrapper, reason, stack)
+    end
+
+    def handle_error(conn, kind, reason) do
+      handle_error(conn, kind, reason, reason, System.stacktrace())
+    end
+
+    def handle_error(
+          %Plug.Conn{private: %{appsignal_transaction: transaction}} = conn,
+          kind,
+          reason,
+          wrapped_reason,
+          stack
+        ) do
+      exception = Exception.normalize(kind, wrapped_reason, stack)
+
+      case Appsignal.Plug.extract_error_metadata(exception) do
+        {reason, message} ->
+          transaction
+          |> @transaction.set_error(reason, message, stack)
+          |> finish_with_conn(conn)
+
+        nil ->
+          :ok
+      end
+
+      :erlang.raise(kind, reason, stack)
+    end
+
     def handle_error(_conn, kind, reason, _wrapped_reason, stack) do
       :erlang.raise(kind, reason, stack)
+    end
+
+    def finish_with_conn(transaction, conn) do
+      try_set_action(transaction, conn)
+
+      if @transaction.finish(transaction) == :sample do
+        @transaction.set_request_metadata(transaction, conn)
+      end
+
+      :ok = @transaction.complete(transaction)
+      conn
+    end
+
+    defp try_set_action(transaction, conn) do
+      case Appsignal.Plug.extract_action(conn) do
+        nil -> nil
+        action -> @transaction.set_action(transaction, action)
+      end
     end
 
     @doc """

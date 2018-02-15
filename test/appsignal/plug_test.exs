@@ -164,7 +164,7 @@ defmodule Appsignal.PlugTest do
       fake_transaction: fake_transaction
     } do
       assert %Plug.Conn{params: %{"foo" => "bar"}} =
-        FakeTransaction.request_metadata(fake_transaction)
+               FakeTransaction.request_metadata(fake_transaction)
     end
 
     test "completes the transaction", %{fake_transaction: fake_transaction} do
@@ -202,29 +202,32 @@ defmodule Appsignal.PlugTest do
         |> Plug.Conn.put_private(:phoenix_controller, AppsignalPhoenixExample.PageController)
         |> Plug.Conn.put_private(:phoenix_action, :undef)
 
-      :ok = try do
-        UsingAppsignalPlug.call(conn, %{})
-      rescue
-        Plug.Conn.WrapperError -> :ok
-      end
+      :ok =
+        try do
+          UsingAppsignalPlug.call(conn, %{})
+        rescue
+          Plug.Conn.WrapperError -> :ok
+        end
 
       [conn: conn]
     end
 
     test "sets the transaction error", %{fake_transaction: fake_transaction} do
-      assert [{
-        %Appsignal.Transaction{},
-        "UndefinedFunctionError",
-        "HTTP request error: undefined function",
-        _stack
-      }] = FakeTransaction.errors(fake_transaction)
+      assert [
+               {
+                 %Appsignal.Transaction{},
+                 "UndefinedFunctionError",
+                 "HTTP request error: undefined function",
+                 _stack
+               }
+             ] = FakeTransaction.errors(fake_transaction)
     end
 
     test "sets the transaction's request metadata", %{
       fake_transaction: fake_transaction
     } do
       assert %Plug.Conn{params: %{"foo" => "bar"}} =
-        FakeTransaction.request_metadata(fake_transaction)
+               FakeTransaction.request_metadata(fake_transaction)
     end
   end
 
@@ -235,11 +238,12 @@ defmodule Appsignal.PlugTest do
         |> Plug.Conn.put_private(:phoenix_controller, AppsignalPhoenixExample.PageController)
         |> Plug.Conn.put_private(:phoenix_action, :no_transaction)
 
-      :ok = try do
-        UsingAppsignalPlug.call(conn, %{})
-      rescue
-        Plug.Conn.WrapperError -> :ok
-      end
+      :ok =
+        try do
+          UsingAppsignalPlug.call(conn, %{})
+        rescue
+          Plug.Conn.WrapperError -> :ok
+        end
 
       [conn: conn]
     end
@@ -420,13 +424,77 @@ defmodule Appsignal.PlugTest do
     end
   end
 
+  describe "handling errors for a wrapped error" do
+    setup do
+      transaction = %Appsignal.Transaction{}
+      conn = %Plug.Conn{private: %{appsignal_transaction: transaction}}
+      kind = :error
+      wrapped_reason = :undef
+      stack = []
+
+      reason = %Plug.Conn.WrapperError{
+        kind: kind,
+        reason: wrapped_reason,
+        stack: stack,
+        conn: conn
+      }
+
+      :ok =
+        try do
+          Appsignal.Plug.handle_error(conn, kind, reason, wrapped_reason, stack)
+        rescue
+          Plug.Conn.WrapperError -> :ok
+        end
+
+      [conn: conn]
+    end
+
+    test "sets the transaction error", %{fake_transaction: fake_transaction} do
+      assert [
+               {
+                 %Appsignal.Transaction{},
+                 "UndefinedFunctionError",
+                 "HTTP request error: undefined function",
+                 []
+               }
+             ] == FakeTransaction.errors(fake_transaction)
+    end
+
+    test "sets the transaction's request metdata", %{
+      fake_transaction: fake_transaction,
+      conn: conn
+    } do
+      assert conn == FakeTransaction.request_metadata(fake_transaction)
+    end
+  end
+
+  describe "handling errors for an error with a plug status < 500" do
+    test "reraises the error" do
+      :ok =
+        try do
+          transaction = %Appsignal.Transaction{}
+
+          Appsignal.Plug.handle_error(
+            %Plug.Conn{private: %{appsignal_transaction: transaction}},
+            :error,
+            %Plug.BadRequestError{},
+            %Plug.BadRequestError{},
+            []
+          )
+        rescue
+          Plug.BadRequestError -> :ok
+        end
+    end
+  end
+
   describe "handling errors for a conn without a transaction" do
     test "reraises the error" do
-      :ok = try do
-        Appsignal.Plug.handle_error(%Plug.Conn{}, :error, :undef, :undef, [])
-      rescue
-        UndefinedFunctionError -> :ok
-      end
+      :ok =
+        try do
+          Appsignal.Plug.handle_error(%Plug.Conn{}, :error, :undef, :undef, [])
+        rescue
+          UndefinedFunctionError -> :ok
+        end
     end
   end
 end
