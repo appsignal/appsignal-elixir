@@ -57,8 +57,8 @@ if Appsignal.plug?() do
           :erlang.raise(kind, reason, stack)
         end
 
-        defp handle_error(_conn, kind, reason, _wrapped_reason, stack) do
-          :erlang.raise(kind, reason, stack)
+        defp handle_error(conn, kind, reason, wrapped_reason, stack) do
+          Appsignal.Plug.handle_error(conn, kind, reason, wrapped_reason, stack)
         end
 
         defp finish_with_conn(transaction, conn) do
@@ -79,6 +79,10 @@ if Appsignal.plug?() do
           end
         end
       end
+    end
+
+    def handle_error(_conn, kind, reason, _wrapped_reason, stack) do
+      :erlang.raise(kind, reason, stack)
     end
 
     @doc """

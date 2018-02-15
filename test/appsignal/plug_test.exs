@@ -419,4 +419,14 @@ defmodule Appsignal.PlugTest do
              }
     end
   end
+
+  describe "handling errors for a conn without a transaction" do
+    test "reraises the error" do
+      :ok = try do
+        Appsignal.Plug.handle_error(%Plug.Conn{}, :error, :undef, :undef, [])
+      rescue
+        UndefinedFunctionError -> :ok
+      end
+    end
+  end
 end
