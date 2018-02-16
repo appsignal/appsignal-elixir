@@ -46,7 +46,7 @@ defmodule Appsignal.FakeTransaction do
     Agent.get(__MODULE__, &Map.get(&1, :finish, :sample))
   end
 
-  def set_request_metadata(_transation, conn) do
+  def set_request_metadata(_transaction, conn) do
     Agent.update(__MODULE__, &Map.put(&1, :request_metadata, conn))
   end
 
