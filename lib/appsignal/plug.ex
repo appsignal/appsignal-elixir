@@ -1,4 +1,4 @@
-if Appsignal.plug? do
+if Appsignal.plug?() do
   defmodule Appsignal.Plug do
     @moduledoc """
     Plug handler for Phoenix requests
@@ -6,48 +6,84 @@ if Appsignal.plug? do
 
     defmacro __using__(_) do
       quote do
-        @transaction Application.get_env(:appsignal, :appsignal_transaction, Appsignal.Transaction)
+        @transaction Application.get_env(
+                       :appsignal,
+                       :appsignal_transaction,
+                       Appsignal.Transaction
+                     )
 
         def call(conn, opts) do
           transaction = @transaction.start(@transaction.generate_id(), :http_request)
 
+          conn = Plug.Conn.put_private(conn, :appsignal_transaction, transaction)
+
           try do
             super(conn, opts)
           catch
-            kind, reason ->
-              stacktrace = System.stacktrace
-              exception = Exception.normalize(kind, reason, stacktrace)
-
-              case Appsignal.Plug.extract_error_metadata(exception) do
-                {reason, message} ->
-                  transaction
-                  |> @transaction.set_error(reason, message, stacktrace)
-                  |> finish_with_conn(conn)
-                nil -> conn
-              end
-
-              :erlang.raise(kind, reason, stacktrace)
+            kind, reason -> Appsignal.Plug.handle_error(conn, kind, reason)
           else
-            conn -> finish_with_conn(transaction, conn)
+            conn -> Appsignal.Plug.finish_with_conn(transaction, conn)
           end
         end
+      end
+    end
 
-        defp finish_with_conn(transaction, conn) do
-          try_set_action(transaction, conn)
-          if @transaction.finish(transaction) == :sample do
-            @transaction.set_request_metadata(transaction, conn)
-          end
+    @transaction Application.get_env(
+                   :appsignal,
+                   :appsignal_transaction,
+                   Appsignal.Transaction
+                 )
 
-          :ok = @transaction.complete(transaction)
-          conn
-        end
+    def handle_error(_conn, :error, %Plug.Conn.WrapperError{} = wrapper) do
+      %{conn: conn, kind: kind, reason: reason, stack: stack} = wrapper
+      handle_error(conn, kind, wrapper, reason, stack)
+    end
 
-        defp try_set_action(transaction, conn) do
-          case Appsignal.Plug.extract_action(conn) do
-            nil -> nil
-            action -> @transaction.set_action(transaction, action)
-          end
-        end
+    def handle_error(conn, kind, reason) do
+      handle_error(conn, kind, reason, reason, System.stacktrace())
+    end
+
+    def handle_error(
+          %Plug.Conn{private: %{appsignal_transaction: transaction}} = conn,
+          kind,
+          reason,
+          wrapped_reason,
+          stack
+        ) do
+      exception = Exception.normalize(kind, wrapped_reason, stack)
+
+      case Appsignal.Plug.extract_error_metadata(exception) do
+        {reason, message} ->
+          transaction
+          |> @transaction.set_error(reason, message, stack)
+          |> finish_with_conn(conn)
+
+        nil ->
+          :ok
+      end
+
+      :erlang.raise(kind, reason, stack)
+    end
+
+    def handle_error(_conn, kind, reason, _wrapped_reason, stack) do
+      :erlang.raise(kind, reason, stack)
+    end
+
+    def finish_with_conn(transaction, conn) do
+      try_set_action(transaction, conn)
+
+      if @transaction.finish(transaction) == :sample do
+        @transaction.set_request_metadata(transaction, conn)
+      end
+
+      :ok = @transaction.complete(transaction)
+      conn
+    end
+
+    defp try_set_action(transaction, conn) do
+      case Appsignal.Plug.extract_action(conn) do
+        nil -> nil
+        action -> @transaction.set_action(transaction, action)
       end
     end
 
@@ -58,44 +94,62 @@ if Appsignal.plug? do
     def extract_error_metadata(%{plug_status: status}) when status < 500 do
       nil
     end
+
     def extract_error_metadata(%Plug.Conn.WrapperError{reason: reason = %{}}) do
       Appsignal.ErrorHandler.extract_reason_and_message(reason, "HTTP request error")
     end
+
     def extract_error_metadata(reason) do
       Appsignal.ErrorHandler.extract_reason_and_message(reason, "HTTP request error")
     end
 
     @doc false
     def extract_error_metadata(reason, conn, stack) do
-      IO.warn "Appsignal.Plug.extract_error_metadata/3 is deprecated. Use Appsignal.Plug.extract_error_metadata/1 instead."
+      IO.warn(
+        "Appsignal.Plug.extract_error_metadata/3 is deprecated. Use Appsignal.Plug.extract_error_metadata/1 instead."
+      )
+
       {reason, message} = extract_error_metadata(reason)
       {reason, message, stack, conn}
     end
 
-    def extract_action(%Plug.Conn{private: %{phoenix_action: action, phoenix_controller: controller}}) do
+    def extract_action(%Plug.Conn{
+          private: %{phoenix_action: action, phoenix_controller: controller}
+        }) do
       merge_action_and_controller(action, controller)
     end
+
     def extract_action(%Plug.Conn{private: %{phoenix_endpoint: _}}), do: nil
+
     def extract_action(%Plug.Conn{method: method, request_path: path}) do
       "#{method} #{path}"
     end
 
-    def extract_sample_data(%Plug.Conn{params: params, host: host,
-      method: method, script_name: script_name, request_path: request_path,
-      port: port, query_string: query_string} = conn) do
-
+    def extract_sample_data(
+          %Plug.Conn{
+            params: params,
+            host: host,
+            method: method,
+            script_name: script_name,
+            request_path: request_path,
+            port: port,
+            query_string: query_string
+          } = conn
+        ) do
       %{
         "params" => Appsignal.Utils.ParamsFilter.filter_values(params),
-        "environment" => %{
-          "host" => host,
-          "method" => method,
-          "script_name" => script_name,
-          "request_path" => request_path,
-          "port" => port,
-          "query_string" => query_string,
-          "request_uri" => url(conn),
-          "peer" => peer(conn)
-        } |> Map.merge(extract_request_headers(conn))
+        "environment" =>
+          %{
+            "host" => host,
+            "method" => method,
+            "script_name" => script_name,
+            "request_path" => request_path,
+            "port" => port,
+            "query_string" => query_string,
+            "request_uri" => url(conn),
+            "peer" => peer(conn)
+          }
+          |> Map.merge(extract_request_headers(conn))
       }
     end
 
@@ -112,17 +166,17 @@ if Appsignal.plug? do
     )
 
     def extract_request_headers(%Plug.Conn{req_headers: req_headers}) do
-      for {key, value} <- req_headers,
-          key in @header_keys do
+      for {key, value} <- req_headers, key in @header_keys do
         {"req_headers.#{key}", value}
       end
       |> Enum.into(%{})
     end
 
     def extract_meta_data(%Plug.Conn{method: method, request_path: path} = conn) do
-      request_id = conn
-      |> Plug.Conn.get_resp_header("x-request-id")
-      |> List.first
+      request_id =
+        conn
+        |> Plug.Conn.get_resp_header("x-request-id")
+        |> List.first()
 
       %{
         "method" => method,
@@ -134,9 +188,10 @@ if Appsignal.plug? do
     defp merge_action_and_controller(action, controller) when is_atom(controller) do
       merge_action_and_controller(
         action,
-        controller |> Atom.to_string |> String.trim_leading("Elixir.")
+        controller |> Atom.to_string() |> String.trim_leading("Elixir.")
       )
     end
+
     defp merge_action_and_controller(action, controller) do
       "#{controller}##{action}"
     end
@@ -146,7 +201,7 @@ if Appsignal.plug? do
     end
 
     defp peer(%Plug.Conn{peer: {host, port}}) do
-      "#{:inet_parse.ntoa host}:#{port}"
+      "#{:inet_parse.ntoa(host)}:#{port}"
     end
   end
 end

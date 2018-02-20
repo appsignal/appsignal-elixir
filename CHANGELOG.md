@@ -1,3 +1,6 @@
+# 1.4.10
+* Fix POST parameters in errors, take the Plug.Conn from Plug.Conn.WrapperErrors (#309)
+
 # 1.4.9
 * Add x-real-ip to request header whitelist (#308)
 * ErrorHandler doesn't cause warnings for noise over handle_info (#304)
