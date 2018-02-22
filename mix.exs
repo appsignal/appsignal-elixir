@@ -1,10 +1,3 @@
-unless Code.ensure_loaded?(Appsignal.Agent) do
-  {_, _} = Code.eval_file("lib/agent.ex")
-end
-unless Code.ensure_loaded?(Appsignal.System) do
-  {_, _} = Code.eval_file("lib/appsignal/system.ex")
-end
-
 defmodule Mix.Tasks.Compile.Appsignal do
   use Mix.Task
 
@@ -31,19 +24,6 @@ defmodule Mix.Tasks.Compile.Appsignal do
         )
         :ok = Mix.Appsignal.Helper.store_architecture(arch)
     end
-
-    purge_module Appsignal.Agent
-    purge_module Appsignal.SystemBehaviour
-    purge_module Appsignal.System
-
-    :ok
-  end
-
-  # Unload loaded module so that it can be loaded again for the application
-  # itself, when it's already loaded in the mix setup.
-  def purge_module(mod) do
-    :code.purge mod
-    :code.delete mod
   end
 end
 
@@ -90,7 +70,7 @@ defmodule Appsignal.Mixfile do
   end
 
   defp compilers(:test_phoenix), do: [:phoenix] ++ compilers(:prod)
-  defp compilers(_), do: [:appsignal] ++ Mix.compilers
+  defp compilers(_), do: Mix.compilers ++ [:appsignal]
 
   defp test_paths(:test_phoenix), do: ["test/appsignal", "test/mix", "test/phoenix"]
   defp test_paths(_), do: ["test/appsignal", "test/mix"]
