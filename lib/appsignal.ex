@@ -23,6 +23,7 @@ defmodule Appsignal do
   def start(_type, _args) do
     import Supervisor.Spec, warn: false
 
+    :ok = Appsignal.Nif.init()
     initialize()
 
     :error_logger.add_report_handler(Appsignal.ErrorHandler)

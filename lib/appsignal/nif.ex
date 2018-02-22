@@ -33,7 +33,6 @@ defmodule Appsignal.Nif do
 
   """
 
-  @on_load :init
 
   def init do
     path = :filename.join(:code.priv_dir(:appsignal), 'appsignal_extension')
