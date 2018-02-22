@@ -4,9 +4,6 @@ end
 unless Code.ensure_loaded?(Appsignal.System) do
   {_, _} = Code.eval_file("lib/appsignal/system.ex")
 end
-unless Code.ensure_loaded?(Appsignal.System) do
-  {_, _} = Code.eval_file("lib/appsignal/system.ex")
-end
 
 defmodule Mix.Tasks.Compile.Appsignal do
   use Mix.Task
