@@ -325,7 +325,7 @@ defmodule Appsignal.PlugTest do
   describe "extracting action names" do
     test "from a Plug conn" do
       assert Appsignal.Plug.extract_action(%Plug.Conn{method: "GET", request_path: "/foo"}) ==
-               :unknown
+               "unknown"
     end
 
     test "from a Plug conn with a Phoenix endpoint, but no controller or action" do

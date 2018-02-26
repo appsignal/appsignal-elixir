@@ -82,7 +82,6 @@ if Appsignal.plug?() do
     def try_set_action(transaction, conn) do
       case Appsignal.Plug.extract_action(conn) do
         nil -> nil
-        :unknown -> @transaction.set_action(transaction, "unknown")
         action -> @transaction.set_action(transaction, action)
       end
     end
@@ -122,7 +121,7 @@ if Appsignal.plug?() do
     def extract_action(%Plug.Conn{private: %{phoenix_endpoint: _}}), do: nil
 
     def extract_action(%Plug.Conn{method: method, request_path: path}) do
-      :unknown
+      "unknown"
     end
 
     def extract_sample_data(
