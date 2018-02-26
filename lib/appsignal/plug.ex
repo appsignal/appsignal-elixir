@@ -83,6 +83,7 @@ if Appsignal.plug?() do
     defp try_set_action(transaction, conn) do
       case Appsignal.Plug.extract_action(conn) do
         nil -> nil
+        :unknown -> @transaction.set_action(transaction, "unknown")
         action -> @transaction.set_action(transaction, action)
       end
     end

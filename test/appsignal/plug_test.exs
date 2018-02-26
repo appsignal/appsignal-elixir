@@ -109,6 +109,20 @@ defmodule Appsignal.PlugTest do
     end
   end
 
+  describe "for a transaction without a Phoenix endpoint" do
+    setup do
+      conn =
+        %Plug.Conn{method: "GET", request_path: "/foo"}
+        |> UsingAppsignalPlug.call(%{})
+
+      [conn: conn]
+    end
+
+    test "does not set the transaction's action name", %{fake_transaction: fake_transaction} do
+      assert FakeTransaction.action(fake_transaction) == "unknown"
+    end
+  end
+
   describe "for a transaction with a Phoenix endpoint, but no action" do
     setup do
       conn =
