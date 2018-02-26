@@ -25,7 +25,10 @@ defmodule Appsignal.FakeTransaction do
     end)
   end
 
-  def set_action(_transaction, conn), do: set_action(conn)
+  def set_action(transaction, conn) do
+    set_action(conn)
+    transaction
+  end
   def set_action(action) do
     Agent.update(__MODULE__, &Map.put(&1, :action, action))
   end
