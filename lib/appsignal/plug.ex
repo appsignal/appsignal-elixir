@@ -13,7 +13,9 @@ if Appsignal.plug?() do
                      )
 
         def call(conn, opts) do
-          transaction = @transaction.start(@transaction.generate_id(), :http_request)
+          transaction = @transaction.generate_id()
+          |> @transaction.start(:http_request)
+          |> Appsignal.Plug.try_set_action(conn)
 
           conn = Plug.Conn.put_private(conn, :appsignal_transaction, transaction)
 
@@ -70,8 +72,6 @@ if Appsignal.plug?() do
     end
 
     def finish_with_conn(transaction, conn) do
-      try_set_action(transaction, conn)
-
       if @transaction.finish(transaction) == :sample do
         @transaction.set_request_metadata(transaction, conn)
       end
@@ -80,9 +80,9 @@ if Appsignal.plug?() do
       conn
     end
 
-    defp try_set_action(transaction, conn) do
+    def try_set_action(transaction, conn) do
       case Appsignal.Plug.extract_action(conn) do
-        nil -> nil
+        nil -> transaction
         action -> @transaction.set_action(transaction, action)
       end
     end
@@ -121,8 +121,8 @@ if Appsignal.plug?() do
 
     def extract_action(%Plug.Conn{private: %{phoenix_endpoint: _}}), do: nil
 
-    def extract_action(%Plug.Conn{method: method, request_path: path}) do
-      "#{method} #{path}"
+    def extract_action(%Plug.Conn{method: _method, request_path: _path}) do
+      "unknown"
     end
 
     def extract_sample_data(
