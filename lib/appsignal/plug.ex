@@ -122,7 +122,7 @@ if Appsignal.plug?() do
     def extract_action(%Plug.Conn{private: %{phoenix_endpoint: _}}), do: nil
 
     def extract_action(%Plug.Conn{method: method, request_path: path}) do
-      "#{method} #{path}"
+      :unknown
     end
 
     def extract_sample_data(
