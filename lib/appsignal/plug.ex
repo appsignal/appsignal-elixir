@@ -14,6 +14,7 @@ if Appsignal.plug?() do
 
         def call(conn, opts) do
           transaction = @transaction.start(@transaction.generate_id(), :http_request)
+          Appsignal.Plug.try_set_action(transaction, conn)
 
           conn = Plug.Conn.put_private(conn, :appsignal_transaction, transaction)
 
@@ -70,8 +71,6 @@ if Appsignal.plug?() do
     end
 
     def finish_with_conn(transaction, conn) do
-      try_set_action(transaction, conn)
-
       if @transaction.finish(transaction) == :sample do
         @transaction.set_request_metadata(transaction, conn)
       end
@@ -80,7 +79,7 @@ if Appsignal.plug?() do
       conn
     end
 
-    defp try_set_action(transaction, conn) do
+    def try_set_action(transaction, conn) do
       case Appsignal.Plug.extract_action(conn) do
         nil -> nil
         :unknown -> @transaction.set_action(transaction, "unknown")
