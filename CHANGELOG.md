@@ -1,4 +1,4 @@
-# 1.4.11.beta-1
+# 1.4.11-beta.1
 
 * Use "unknown" as action for Plug-only transactions, set action before `call/2` (#311)
 * Bump agent to ee63235 (#310)
