@@ -1,3 +1,10 @@
+# 1.4.11.beta-1
+
+* Use "unknown" as action for Plug-only transactions, set action before `call/2` (#311)
+* Bump agent to ee63235 (#310)
+  - Fix locking issue on diagnose mode run
+  - Increase stored length of error messages
+
 # 1.4.10
 * Fix POST parameters in errors, take the Plug.Conn from Plug.Conn.WrapperErrors (#309)
 
