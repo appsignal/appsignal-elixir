@@ -1,9 +1,6 @@
 unless Code.ensure_loaded?(Appsignal.Agent) do
   {_, _} = Code.eval_file("lib/agent.ex")
 end
-unless Code.ensure_loaded?(Appsignal.System) do
-  {_, _} = Code.eval_file("lib/appsignal/system.ex")
-end
 
 defmodule Mix.Tasks.Compile.Appsignal do
   use Mix.Task
@@ -33,8 +30,6 @@ defmodule Mix.Tasks.Compile.Appsignal do
     end
 
     purge_module Appsignal.Agent
-    purge_module Appsignal.SystemBehaviour
-    purge_module Appsignal.System
 
     :ok
   end
