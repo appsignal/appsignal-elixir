@@ -1,9 +1,5 @@
-unless Code.ensure_loaded?(Appsignal.Agent) do
-  {_, _} = Code.eval_file("lib/agent.ex")
-end
-unless Code.ensure_loaded?(Appsignal.System) do
-  {_, _} = Code.eval_file("lib/appsignal/system.ex")
-end
+{_, _} = Code.eval_file("lib/agent.ex")
+{_, _} = Code.eval_file("lib/appsignal/system.ex")
 
 defmodule Mix.Tasks.Compile.Appsignal do
   use Mix.Task
