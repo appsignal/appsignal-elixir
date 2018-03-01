@@ -142,7 +142,6 @@ defmodule Appsignal.Config do
   defp true?(true), do: true
   defp true?(_), do: false
 
-  @agent_version Appsignal.agent_version
   @language_integration_version Mix.Project.config[:version]
 
   @doc """
@@ -172,7 +171,6 @@ defmodule Appsignal.Config do
 
     System.put_env("_APPSIGNAL_ACTIVE", to_string(config[:active]))
     System.put_env("_APPSIGNAL_AGENT_PATH", List.to_string(:code.priv_dir(:appsignal)))
-    System.put_env("_APPSIGNAL_AGENT_VERSION", to_string(@agent_version))
     System.put_env("_APPSIGNAL_APP_PATH", List.to_string(:code.priv_dir(:appsignal))) # FIXME - app_path should not be necessary
     unless empty?(config[:name]) do
       System.put_env("_APPSIGNAL_APP_NAME", app_name_to_string(config[:name]))
