@@ -1,3 +1,5 @@
+{_, _} = Code.eval_file("agent.exs")
+
 defmodule Mix.Appsignal.Helper do
   @moduledoc """
   Helper functions for downloading and compiling the AppSignal agent library.

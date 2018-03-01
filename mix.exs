@@ -1,7 +1,3 @@
-unless Code.ensure_loaded?(Appsignal.Agent) do
-  {_, _} = Code.eval_file("lib/agent.ex")
-end
-
 defmodule Mix.Tasks.Compile.Appsignal do
   use Mix.Task
 
