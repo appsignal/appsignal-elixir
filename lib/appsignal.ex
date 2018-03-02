@@ -42,16 +42,6 @@ defmodule Appsignal do
     Code.ensure_loaded?(Phoenix)
   end
 
-  def agent_version do
-    case :appsignal
-    |> :code.priv_dir
-    |> Path.join("appsignal.version")
-    |> File.read do
-      {:ok, contents} -> String.trim(contents)
-      _ -> nil
-    end
-  end
-
   @doc """
   Application callback function
   """

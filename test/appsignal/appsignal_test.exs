@@ -1,5 +1,3 @@
-{_, _} = Code.eval_file("agent.exs")
-
 defmodule AppsignalTest do
   use ExUnit.Case
   import Mock
@@ -36,19 +34,6 @@ defmodule AppsignalTest do
     @tag :skip_env_test_phoenix
     test "is false when Phoenix is not loaded" do
       assert Appsignal.phoenix? == false
-    end
-  end
-
-  describe "agent_version" do
-    @tag :skip_env_test_no_nif
-    test "returns the installed agent version" do
-      assert Appsignal.agent_version == Appsignal.Agent.version
-    end
-
-    @tag :skip_env_test
-    @tag :skip_env_test_phoenix
-    test "does not return the agent version if the agent is not installed" do
-      assert Appsignal.agent_version == nil
     end
   end
 
