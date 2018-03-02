@@ -199,6 +199,9 @@ defmodule Appsignal.Config do
     System.put_env("_APPSIGNAL_SEND_PARAMS", to_string(config[:send_params]))
     System.put_env("_APPSIGNAL_WORKING_DIR_PATH", to_string(config[:working_dir_path]))
     System.put_env("_APPSIGNAL_FILES_WORLD_ACCESSIBLE", to_string(config[:files_world_accessible]))
+    unless empty?(config[:revision]) do
+      System.put_env("APP_REVISION", to_string(config[:revision]))
+    end
   end
 
   @doc """
