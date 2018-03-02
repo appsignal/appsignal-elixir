@@ -24,17 +24,6 @@ defmodule Mix.Tasks.Compile.Appsignal do
         )
         :ok = Mix.Appsignal.Helper.store_architecture(arch)
     end
-
-    purge_module Appsignal.Agent
-
-    :ok
-  end
-
-  # Unload loaded module so that it can be loaded again for the application
-  # itself, when it's already loaded in the mix setup.
-  def purge_module(mod) do
-    :code.purge mod
-    :code.delete mod
   end
 end
 
