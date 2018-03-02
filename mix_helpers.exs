@@ -4,6 +4,7 @@ defmodule Mix.Appsignal.Helper do
   @moduledoc """
   Helper functions for downloading and compiling the AppSignal agent library.
   """
+  @os Application.get_env(:appsignal, :os, :os)
 
   require Logger
 
@@ -207,7 +208,7 @@ defmodule Mix.Appsignal.Helper do
     case force_musl_build?() do
       true -> "linux-musl"
       false ->
-        case :os.type do
+        case @os.type do
           {:unix, :linux} ->
             agent_platform_by_ldd_version()
           {_, os} ->
