@@ -1,7 +1,10 @@
+{_, _} = Code.eval_file("agent.exs")
+
 defmodule Mix.Appsignal.Helper do
   @moduledoc """
   Helper functions for downloading and compiling the AppSignal agent library.
   """
+  @os Application.get_env(:appsignal, :os, :os)
 
   require Logger
 
@@ -9,8 +12,7 @@ defmodule Mix.Appsignal.Helper do
 
   def verify_system_architecture() do
     input_arch = :erlang.system_info(:system_architecture)
-    platform = Appsignal.System.agent_platform
-    map_arch(input_arch, platform)
+    map_arch(input_arch, agent_platform())
   end
 
   def ensure_downloaded(arch) do
@@ -168,7 +170,6 @@ defmodule Mix.Appsignal.Helper do
     end
   end
 
-  defp priv_dir(), do: Appsignal.System.priv_dir
 
   defp priv_path(filename) do
     Path.join(priv_dir(), filename)
@@ -201,5 +202,54 @@ defmodule Mix.Appsignal.Helper do
   defp has_correct_agent_version? do
     path = priv_path("appsignal.version")
     File.read(path) == {:ok, "#{Appsignal.Agent.version}\n"}
+  end
+
+  def agent_platform do
+    case force_musl_build?() do
+      true -> "linux-musl"
+      false ->
+        case @os.type do
+          {:unix, :linux} ->
+            agent_platform_by_ldd_version()
+          {_, os} ->
+            to_string(os)
+        end
+    end
+  end
+
+  def priv_dir() do
+    case :code.priv_dir(:appsignal) do
+      {:error, :bad_name} ->
+        # This happens on initial compilation
+        Mix.Tasks.Compile.Erlang.manifests
+        |> List.first
+        |> Path.dirname
+        |> String.trim_trailing(".mix")
+        |> Path.join("priv")
+      path ->
+        path
+        |> List.to_string
+    end
+  end
+
+  defp agent_platform_by_ldd_version do
+    try do
+      {output, _} = System.cmd("ldd", ["--version"], stderr_to_stdout: true)
+      case String.contains?(output, "musl") do
+        true -> "linux-musl"
+        false ->
+          ldd_version = List.first(Regex.run(~r/\d+\.\d+/, output))
+          case Version.compare("#{ldd_version}.0", "2.15.0") do
+            :lt -> "linux-musl"
+            _ -> "linux"
+          end
+      end
+    rescue
+      _ -> "linux"
+    end
+  end
+
+  defp force_musl_build? do
+    !is_nil(System.get_env("APPSIGNAL_BUILD_FOR_MUSL"))
   end
 end

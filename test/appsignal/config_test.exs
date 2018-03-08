@@ -470,7 +470,6 @@ defmodule Appsignal.ConfigTest do
 
         assert System.get_env("_APPSIGNAL_ACTIVE") == "true"
         assert System.get_env("_APPSIGNAL_AGENT_PATH") == List.to_string(:code.priv_dir(:appsignal))
-        assert System.get_env("_APPSIGNAL_AGENT_VERSION") == Appsignal.Agent.version
         assert System.get_env("_APPSIGNAL_APP_NAME") == "AppSignal test suite app"
         assert System.get_env("_APPSIGNAL_CA_FILE_PATH") == "/foo/bar/zab.ca"
         assert System.get_env("_APPSIGNAL_DEBUG_LOGGING") == "true"

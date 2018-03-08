@@ -1,6 +1,6 @@
 defmodule Appsignal.Diagnose.Library do
   @appsignal_version Mix.Project.config[:version]
-  @agent_version Appsignal.Agent.version
+  @agent_version Appsignal.Nif.agent_version
   @nif Application.get_env(:appsignal, :appsignal_nif, Appsignal.Nif)
 
   def info do
