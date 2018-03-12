@@ -181,7 +181,7 @@ defmodule Appsignal.Config do
     System.put_env("_APPSIGNAL_APP_PATH", List.to_string(:code.priv_dir(:appsignal)))
 
     unless empty?(config[:name]) do
-      System.put_env("_APPSIGNAL_APP_NAME", app_name_to_string(config[:name]))
+      System.put_env("_APPSIGNAL_APP_NAME", to_string(config[:name]))
     end
 
     unless empty?(config[:ca_file_path]) do
@@ -258,9 +258,6 @@ defmodule Appsignal.Config do
       System.delete_env(key)
     end)
   end
-
-  defp app_name_to_string(name) when is_atom(name), do: Atom.to_string(name)
-  defp app_name_to_string(name) when is_binary(name), do: name
 
   def get_system_env do
     System.get_env()
