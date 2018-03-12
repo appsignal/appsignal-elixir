@@ -429,7 +429,7 @@ defmodule Appsignal.ConfigTest do
       assert System.get_env("_APPSIGNAL_LOG_FILE_PATH") == ""
       assert System.get_env("_APPSIGNAL_WORKING_DIR_PATH") == ""
       assert System.get_env("_APPSIGNAL_RUNNING_IN_CONTAINER") == ""
-      assert System.get_env("APP_REVISION") == nil
+      assert System.get_env("APP_REVISION") == ""
     end
 
     test "deletes existing configuration in environment" do
