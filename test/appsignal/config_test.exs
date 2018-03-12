@@ -412,18 +412,18 @@ defmodule Appsignal.ConfigTest do
       Appsignal.Config.write_to_environment
     end
 
-    test "empty config options don't get written to the env" do
+    test "empty config options get written to the env" do
       write_to_environment()
-      assert System.get_env("_APPSIGNAL_APP_NAME") == nil
-      assert System.get_env("_APPSIGNAL_CA_FILE_PATH") == nil
-      assert System.get_env("_APPSIGNAL_FILTER_PARAMETERS") == nil
-      assert System.get_env("_APPSIGNAL_HTTP_PROXY") == nil
+      assert System.get_env("_APPSIGNAL_APP_NAME") == ""
+      assert System.get_env("_APPSIGNAL_CA_FILE_PATH") == ""
+      assert System.get_env("_APPSIGNAL_FILTER_PARAMETERS") == ""
+      assert System.get_env("_APPSIGNAL_HTTP_PROXY") == ""
       assert System.get_env("_APPSIGNAL_IGNORE_ACTIONS") == ""
       assert System.get_env("_APPSIGNAL_IGNORE_ERRORS") == ""
       assert System.get_env("_APPSIGNAL_IGNORE_NAMESPACES") == ""
-      assert System.get_env("_APPSIGNAL_LOG_FILE_PATH") == nil
-      assert System.get_env("_APPSIGNAL_WORKING_DIR_PATH") == nil
-      assert System.get_env("_APPSIGNAL_RUNNING_IN_CONTAINER") == nil
+      assert System.get_env("_APPSIGNAL_LOG_FILE_PATH") == ""
+      assert System.get_env("_APPSIGNAL_WORKING_DIR_PATH") == ""
+      assert System.get_env("_APPSIGNAL_RUNNING_IN_CONTAINER") == ""
     end
 
     test "deletes existing configuration in environment" do
@@ -435,7 +435,7 @@ defmodule Appsignal.ConfigTest do
           with_config(%{name: ""}, fn() ->
             write_to_environment()
             # So it doesn't get written to the new agent environment configuration
-            assert System.get_env("_APPSIGNAL_APP_NAME")  == nil
+            assert System.get_env("_APPSIGNAL_APP_NAME") == ""
           end)
       end)
     end
@@ -508,10 +508,10 @@ defmodule Appsignal.ConfigTest do
       end)
     end
 
-    test "does not write dns_servers to env if empty" do
+    test "writes dns_servers to env if empty" do
       with_config(%{dns_servers: []}, fn() ->
         write_to_environment()
-        assert System.get_env("_APPSIGNAL_DNS_SERVERS") == nil
+        assert System.get_env("_APPSIGNAL_DNS_SERVERS") == ""
       end)
     end
 
@@ -547,7 +547,7 @@ defmodule Appsignal.ConfigTest do
       endpoint: "https://push.appsignal.com",
       diagnose_endpoint: "https://appsignal.com/diag",
       env: :dev,
-      filter_parameters: nil,
+      filter_parameters: [],
       ignore_actions: [],
       ignore_errors: [],
       ignore_namespaces: [],
