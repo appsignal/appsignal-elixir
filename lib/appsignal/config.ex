@@ -30,20 +30,23 @@ defmodule Appsignal.Config do
     app_config = Application.get_env(:appsignal, :config, []) |> coerce_map
     env_config = load_from_environment()
 
-    config = @default_config
-    |> Map.merge(system_config)
-    |> Map.merge(app_config)
-    |> Map.merge(env_config)
+    config =
+      @default_config
+      |> Map.merge(system_config)
+      |> Map.merge(app_config)
+      |> Map.merge(env_config)
 
-    config = config
     # Config is valid when we have a push api key
-    |> Map.put(:valid, !empty?(config[:push_api_key]))
+    config =
+      config
+      |> Map.put(:valid, !empty?(config[:push_api_key]))
 
     Application.put_env(:appsignal, :config, config)
 
     case config[:valid] do
       true ->
         :ok
+
       false ->
         {:error, :invalid_config}
     end
@@ -89,16 +92,16 @@ defmodule Appsignal.Config do
   @string_list_keys ~w(APPSIGNAL_FILTER_PARAMETERS APPSIGNAL_IGNORE_ACTIONS APPSIGNAL_IGNORE_ERRORS APPSIGNAL_IGNORE_NAMESPACES APPSIGNAL_DNS_SERVERS)
 
   defp load_environment(config, list, converter) do
-    list |> Enum.reduce(
-      config,
-      fn(key, cfg) ->
-        value = System.get_env(key)
-        if !empty?(value) do
-          Map.put(cfg, @env_to_key_mapping[key], converter.(value))
-        else
-          cfg
-        end
-      end)
+    list
+    |> Enum.reduce(config, fn key, cfg ->
+      value = System.get_env(key)
+
+      if !empty?(value) do
+        Map.put(cfg, @env_to_key_mapping[key], converter.(value))
+      else
+        cfg
+      end
+    end)
   end
 
   defp load_from_system() do
@@ -107,12 +110,14 @@ defmodule Appsignal.Config do
     # Make AppSignal active by default if the APPSIGNAL_PUSH_API_KEY
     # environment variable is present.
     # Is overwritten by application config and env config.
-    config = case System.get_env("APPSIGNAL_PUSH_API_KEY") do
-      nil -> config
-      _ -> Map.merge(config, %{active: true})
-    end
+    config =
+      case System.get_env("APPSIGNAL_PUSH_API_KEY") do
+        nil -> config
+        _ -> Map.merge(config, %{active: true})
+      end
+
     # Detect Heroku
-    case Appsignal.System.heroku? do
+    case Appsignal.System.heroku?() do
       false -> config
       true -> Map.merge(config, %{running_in_container: true, log: "stdout"})
     end
@@ -120,15 +125,16 @@ defmodule Appsignal.Config do
 
   defp load_from_environment() do
     %{}
-    |> load_environment(@string_keys, &(&1))
-    |> load_environment(@bool_keys, &(true?(&1)))
-    |> load_environment(@atom_keys, &(String.to_atom(&1)))
-    |> load_environment(@string_list_keys, &(String.split(&1, ",")))
+    |> load_environment(@string_keys, & &1)
+    |> load_environment(@bool_keys, &true?(&1))
+    |> load_environment(@atom_keys, &String.to_atom(&1))
+    |> load_environment(@string_list_keys, &String.split(&1, ","))
   end
 
   defp coerce_map(value) when is_list(value) do
     value |> Enum.into(%{})
   end
+
   defp coerce_map(%{} = value) do
     value
   end
@@ -142,7 +148,7 @@ defmodule Appsignal.Config do
   defp true?(true), do: true
   defp true?(_), do: false
 
-  @language_integration_version Mix.Project.config[:version]
+  @language_integration_version Mix.Project.config()[:version]
 
   @doc """
   Write the currently known AppSignal configuration to the system environment.
@@ -171,46 +177,69 @@ defmodule Appsignal.Config do
 
     System.put_env("_APPSIGNAL_ACTIVE", to_string(config[:active]))
     System.put_env("_APPSIGNAL_AGENT_PATH", List.to_string(:code.priv_dir(:appsignal)))
-    System.put_env("_APPSIGNAL_APP_PATH", List.to_string(:code.priv_dir(:appsignal))) # FIXME - app_path should not be necessary
+    # FIXME - app_path should not be necessary
+    System.put_env("_APPSIGNAL_APP_PATH", List.to_string(:code.priv_dir(:appsignal)))
+
     unless empty?(config[:name]) do
       System.put_env("_APPSIGNAL_APP_NAME", app_name_to_string(config[:name]))
     end
+
     unless empty?(config[:ca_file_path]) do
       System.put_env("_APPSIGNAL_CA_FILE_PATH", config[:ca_file_path])
     end
+
     System.put_env("_APPSIGNAL_DEBUG_LOGGING", to_string(config[:debug]))
+
     unless empty?(config[:dns_servers]) do
       System.put_env("_APPSIGNAL_DNS_SERVERS", config[:dns_servers] |> Enum.join(","))
     end
 
     System.put_env("_APPSIGNAL_ENABLE_HOST_METRICS", to_string(config[:enable_host_metrics]))
     System.put_env("_APPSIGNAL_ENVIRONMENT", to_string(config[:env]))
+
     unless empty?(config[:filter_parameters]) do
       System.put_env("_APPSIGNAL_FILTER_PARAMETERS", config[:filter_parameters] |> Enum.join(","))
     end
+
     System.put_env("_APPSIGNAL_HOSTNAME", config[:hostname])
+
     unless empty?(config[:http_proxy]) do
       System.put_env("_APPSIGNAL_HTTP_PROXY", config[:http_proxy])
     end
+
     System.put_env("_APPSIGNAL_IGNORE_ACTIONS", config[:ignore_actions] |> Enum.join(","))
     System.put_env("_APPSIGNAL_IGNORE_ERRORS", config[:ignore_errors] |> Enum.join(","))
     System.put_env("_APPSIGNAL_IGNORE_NAMESPACES", config[:ignore_namespaces] |> Enum.join(","))
-    System.put_env("_APPSIGNAL_LANGUAGE_INTEGRATION_VERSION", "elixir-" <> @language_integration_version)
+
+    System.put_env(
+      "_APPSIGNAL_LANGUAGE_INTEGRATION_VERSION",
+      "elixir-" <> @language_integration_version
+    )
+
     System.put_env("_APPSIGNAL_LOG", config[:log])
+
     unless empty?(config[:log_path]) do
       System.put_env("_APPSIGNAL_LOG_FILE_PATH", config[:log_path])
     end
+
     System.put_env("_APPSIGNAL_PUSH_API_ENDPOINT", config[:endpoint] || "")
     System.put_env("_APPSIGNAL_PUSH_API_KEY", config[:push_api_key] || "")
+
     unless empty?(config[:running_in_container]) do
       System.put_env("_APPSIGNAL_RUNNING_IN_CONTAINER", to_string(config[:running_in_container]))
     end
+
     System.put_env("_APPSIGNAL_SEND_PARAMS", to_string(config[:send_params]))
+
     unless empty?(config[:working_dir_path]) do
       System.put_env("_APPSIGNAL_WORKING_DIR_PATH", config[:working_dir_path])
     end
+
     unless empty?(config[:files_world_accessible]) do
-      System.put_env("_APPSIGNAL_FILES_WORLD_ACCESSIBLE", to_string(config[:files_world_accessible]))
+      System.put_env(
+        "_APPSIGNAL_FILES_WORLD_ACCESSIBLE",
+        to_string(config[:files_world_accessible])
+      )
     end
   end
 
@@ -220,11 +249,12 @@ defmodule Appsignal.Config do
   agent gets set again.
   """
   def reset_environment_config! do
-    System.get_env
-    |> Enum.filter(
-      fn({"_APPSIGNAL_" <> _, _}) -> true;
-      (_) -> false end
-    ) |> Enum.each(fn({key, _}) ->
+    System.get_env()
+    |> Enum.filter(fn
+      {"_APPSIGNAL_" <> _, _} -> true
+      _ -> false
+    end)
+    |> Enum.each(fn {key, _} ->
       System.delete_env(key)
     end)
   end
@@ -233,25 +263,23 @@ defmodule Appsignal.Config do
   defp app_name_to_string(name) when is_binary(name), do: name
 
   def get_system_env do
-    System.get_env
-    |> Enum.filter(
-    fn({"APPSIGNAL_" <> _, _}) -> true;
-      (_) -> false end)
-      |> Enum.into(%{})
+    System.get_env()
+    |> Enum.filter(fn
+      {"APPSIGNAL_" <> _, _} -> true
+      _ -> false
+    end)
+    |> Enum.into(%{})
   end
 
   # When you use Appsignal.Config you get a handy config macro which
   # can be used to read the application config.
   defmacro __using__(_) do
     quote do
-
       defmacro config do
         quote do
           Application.get_env(:appsignal, :config, [])
         end
       end
     end
-
   end
-
 end
