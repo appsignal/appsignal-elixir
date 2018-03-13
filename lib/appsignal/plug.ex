@@ -13,9 +13,10 @@ if Appsignal.plug?() do
                      )
 
         def call(conn, opts) do
-          transaction = @transaction.generate_id()
-          |> @transaction.start(:http_request)
-          |> Appsignal.Plug.try_set_action(conn)
+          transaction =
+            @transaction.generate_id()
+            |> @transaction.start(:http_request)
+            |> Appsignal.Plug.try_set_action(conn)
 
           conn = Plug.Conn.put_private(conn, :appsignal_transaction, transaction)
 
