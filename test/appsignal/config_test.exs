@@ -539,25 +539,10 @@ defmodule Appsignal.ConfigTest do
   end
 
   defp default_configuration() do
-    %{
-      active: false,
-      debug: false,
-      dns_servers: [],
-      enable_host_metrics: true,
-      endpoint: "https://push.appsignal.com",
-      diagnose_endpoint: "https://appsignal.com/diag",
-      env: :dev,
-      filter_parameters: nil,
-      ignore_actions: [],
-      ignore_errors: [],
-      ignore_namespaces: [],
-      send_params: true,
-      skip_session_data: false,
-      files_world_accessible: true,
+    Map.merge(Appsignal.Config.default_config, %{
       valid: false,
-      log: "file",
       hostname: "Alices-MBP.example.com"
-    }
+    })
   end
 
   defp valid_configuration() do

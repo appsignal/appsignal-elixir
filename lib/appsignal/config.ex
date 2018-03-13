@@ -282,4 +282,8 @@ defmodule Appsignal.Config do
       end
     end
   end
+
+  if Mix.env |> Atom.to_string |> String.starts_with?("test") do
+    def default_config, do: @default_config
+  end
 end
