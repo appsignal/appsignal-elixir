@@ -63,7 +63,7 @@ defmodule Appsignal.ConfigTest do
 
   describe "request_headers" do
     test "with default request header keys" do
-      assert init_config()[:request_headers] == Config.request_header_keys
+      assert init_config()[:request_headers] == Config.request_headers
     end
   end
 
@@ -190,6 +190,11 @@ defmodule Appsignal.ConfigTest do
     test "working_dir_path" do
       assert with_config(%{working_dir_path: "/tmp/appsignal"}, &init_config/0)
         == default_configuration() |> Map.put(:working_dir_path, "/tmp/appsignal")
+    end
+
+    test "request_headers" do
+      assert with_config(%{request_headers: ~w(foo bar baz)}, &init_config/0)
+        == default_configuration() |> Map.put(:request_headers, ~w(foo bar baz))
     end
   end
 
@@ -356,6 +361,13 @@ defmodule Appsignal.ConfigTest do
         %{"APPSIGNAL_WORKING_DIR_PATH" => "/tmp/appsignal"},
         &init_config/0
       ) == default_configuration() |> Map.put(:working_dir_path, "/tmp/appsignal")
+    end
+
+    test "request_headers" do
+      assert with_env(
+        %{"APPSIGNAL_REQUEST_HEADERS" => "foo,bar,baz"},
+        &init_config/0
+      ) == default_configuration() |> Map.put(:request_headers, ~w(foo bar baz))
     end
   end
 
