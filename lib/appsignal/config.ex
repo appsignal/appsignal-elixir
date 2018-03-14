@@ -16,7 +16,18 @@ defmodule Appsignal.Config do
     send_params: true,
     skip_session_data: false,
     files_world_accessible: true,
-    log: "file"
+    log: "file",
+    request_header_keys: ~w(
+      accept accept-charset accept-encoding accept-language cache-control
+      connection content-length user-agent from negotiate pragma referer range
+
+      auth-type gateway-interface path-translated remote-host remote-ident
+      remote-user remote-addr request-method server-name server-port
+      server-protocol request-uri path-info client-ip range
+
+      x-request-start x-queue-start x-queue-time x-heroku-queue-wait-time
+      x-application-start x-forwarded-for x-real-ip
+    )
   }
 
   @doc """
@@ -59,6 +70,10 @@ defmodule Appsignal.Config do
   def active? do
     config = Application.fetch_env!(:appsignal, :config)
     config.valid && config.active
+  end
+
+  def request_header_keys do
+    Application.fetch_env!(:appsignal, :config)[:request_header_keys]
   end
 
   @env_to_key_mapping %{

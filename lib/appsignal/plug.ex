@@ -154,20 +154,8 @@ if Appsignal.plug?() do
       }
     end
 
-    @header_keys ~w(
-      accept accept-charset accept-encoding accept-language cache-control
-      connection content-length user-agent from negotiate pragma referer range
-
-      auth-type gateway-interface path-translated remote-host remote-ident
-      remote-user remote-addr request-method server-name server-port
-      server-protocol request-uri path-info client-ip range
-
-      x-request-start x-queue-start x-queue-time x-heroku-queue-wait-time
-      x-application-start x-forwarded-for x-real-ip
-    )
-
     def extract_request_headers(%Plug.Conn{req_headers: req_headers}) do
-      for {key, value} <- req_headers, key in @header_keys do
+      for {key, value} <- req_headers, key in Appsignal.Config.request_header_keys do
         {"req_headers.#{key}", value}
       end
       |> Enum.into(%{})
