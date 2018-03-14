@@ -462,7 +462,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     assert String.contains? output, "Configuration"
 
     Enum.each Application.get_env(:appsignal, :config), fn({key, value}) ->
-      assert String.contains? output, "  #{key}: #{value}"
+      assert String.contains? output, "  #{key}: #{inspect(value)}"
     end
   end
 

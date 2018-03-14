@@ -108,7 +108,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     IO.puts "Configuration"
 
     Enum.each config, fn({key, value}) ->
-      IO.puts "  #{key}: #{value}"
+      IO.puts "  #{key}: #{inspect(value)}"
     end
   end
 
