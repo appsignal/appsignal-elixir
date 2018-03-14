@@ -61,9 +61,9 @@ defmodule Appsignal.ConfigTest do
     end
   end
 
-  describe "request_header_keys" do
+  describe "request_headers" do
     test "with default request header keys" do
-      assert init_config()[:request_header_keys] == Config.request_header_keys
+      assert init_config()[:request_headers] == Config.request_header_keys
     end
   end
 

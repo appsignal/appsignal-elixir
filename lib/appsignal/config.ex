@@ -17,7 +17,7 @@ defmodule Appsignal.Config do
     skip_session_data: false,
     files_world_accessible: true,
     log: "file",
-    request_header_keys: ~w(
+    request_headers: ~w(
       accept accept-charset accept-encoding accept-language cache-control
       connection content-length user-agent from negotiate pragma referer range
 
@@ -72,8 +72,8 @@ defmodule Appsignal.Config do
     config.valid && config.active
   end
 
-  def request_header_keys do
-    Application.fetch_env!(:appsignal, :config)[:request_header_keys]
+  def request_headers do
+    Application.fetch_env!(:appsignal, :config)[:request_headers]
   end
 
   @env_to_key_mapping %{

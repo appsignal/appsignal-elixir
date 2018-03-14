@@ -155,7 +155,7 @@ if Appsignal.plug?() do
     end
 
     def extract_request_headers(%Plug.Conn{req_headers: req_headers}) do
-      for {key, value} <- req_headers, key in Appsignal.Config.request_header_keys do
+      for {key, value} <- req_headers, key in Appsignal.Config.request_headers do
         {"req_headers.#{key}", value}
       end
       |> Enum.into(%{})
