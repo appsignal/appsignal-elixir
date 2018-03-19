@@ -523,6 +523,15 @@ defmodule Appsignal.ConfigTest do
       end)
     end
 
+    test "doesn't overwrite APP_REVISION" do
+      with_env(%{"APP_REVISION" => "env"}, fn() ->
+        with_config(%{revision: "config"}, fn() ->
+          write_to_environment()
+          assert System.get_env("APP_REVISION") == "env"
+        end)
+      end)
+    end
+
     test "handles atom fields as strings" do
       with_config(%{
         active: "true",
