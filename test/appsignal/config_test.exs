@@ -356,6 +356,13 @@ defmodule Appsignal.ConfigTest do
         &init_config/0
       ) == default_configuration() |> Map.put(:working_dir_path, "/tmp/appsignal")
     end
+
+    test "revision" do
+      assert with_env(
+        %{"APP_REVISION" => "03bd9e"},
+        &init_config/0
+      ) == default_configuration() |> Map.put(:revision, "03bd9e")
+    end
   end
 
   test "system environment overwrites application environment configuration" do
