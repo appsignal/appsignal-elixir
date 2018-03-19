@@ -436,7 +436,7 @@ defmodule Appsignal.ConfigTest do
       assert System.get_env("_APPSIGNAL_LOG_FILE_PATH") == ""
       assert System.get_env("_APPSIGNAL_WORKING_DIR_PATH") == ""
       assert System.get_env("_APPSIGNAL_RUNNING_IN_CONTAINER") == ""
-      assert System.get_env("APP_REVISION") == ""
+      assert System.get_env("_APP_REVISION") == ""
     end
 
     test "deletes existing configuration in environment" do
@@ -505,7 +505,7 @@ defmodule Appsignal.ConfigTest do
         assert System.get_env("_APPSIGNAL_SEND_PARAMS") == "true"
         assert System.get_env("_APPSIGNAL_WORKING_DIR_PATH") == "/tmp/appsignal"
         assert System.get_env("_APPSIGNAL_FILES_WORLD_ACCESSIBLE") == "false"
-        assert System.get_env("APP_REVISION") == "03bd9e"
+        assert System.get_env("_APP_REVISION") == "03bd9e"
       end)
     end
 
@@ -527,15 +527,6 @@ defmodule Appsignal.ConfigTest do
       with_config(%{dns_servers: []}, fn() ->
         write_to_environment()
         assert System.get_env("_APPSIGNAL_DNS_SERVERS") == ""
-      end)
-    end
-
-    test "doesn't overwrite APP_REVISION" do
-      with_env(%{"APP_REVISION" => "env"}, fn() ->
-        with_config(%{revision: "config"}, fn() ->
-          write_to_environment()
-          assert System.get_env("APP_REVISION") == "env"
-        end)
       end)
     end
 
