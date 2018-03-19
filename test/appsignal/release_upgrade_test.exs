@@ -42,7 +42,7 @@ defmodule Appsignal.ReleaseUpgradeTest do
       enable_host_metrics: true,
       endpoint: "https://push.appsignal.com",
       env: :dev,
-      filter_parameters: nil,
+      filter_parameters: [],
       hostname: "Alices-MBP.example.com",
       ignore_actions: [],
       ignore_errors: [],
