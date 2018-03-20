@@ -185,6 +185,11 @@ defmodule Appsignal.ConfigTest do
       assert with_config(%{working_dir_path: "/tmp/appsignal"}, &init_config/0)
         == default_configuration() |> Map.put(:working_dir_path, "/tmp/appsignal")
     end
+
+    test "revision" do
+      assert with_config(%{revision: "03bd9e"}, &init_config/0)
+        == default_configuration() |> Map.put(:revision, "03bd9e")
+    end
   end
 
   describe "using the system environment" do
@@ -351,6 +356,13 @@ defmodule Appsignal.ConfigTest do
         &init_config/0
       ) == default_configuration() |> Map.put(:working_dir_path, "/tmp/appsignal")
     end
+
+    test "revision" do
+      assert with_env(
+        %{"APP_REVISION" => "03bd9e"},
+        &init_config/0
+      ) == default_configuration() |> Map.put(:revision, "03bd9e")
+    end
   end
 
   test "system environment overwrites application environment configuration" do
@@ -424,6 +436,7 @@ defmodule Appsignal.ConfigTest do
       assert System.get_env("_APPSIGNAL_LOG_FILE_PATH") == ""
       assert System.get_env("_APPSIGNAL_WORKING_DIR_PATH") == ""
       assert System.get_env("_APPSIGNAL_RUNNING_IN_CONTAINER") == ""
+      assert System.get_env("_APP_REVISION") == ""
     end
 
     test "deletes existing configuration in environment" do
@@ -464,7 +477,8 @@ defmodule Appsignal.ConfigTest do
         name: "AppSignal test suite app",
         running_in_container: false,
         working_dir_path: "/tmp/appsignal",
-        files_world_accessible: false
+        files_world_accessible: false,
+        revision: "03bd9e"
       }, fn() ->
         write_to_environment()
 
@@ -491,6 +505,7 @@ defmodule Appsignal.ConfigTest do
         assert System.get_env("_APPSIGNAL_SEND_PARAMS") == "true"
         assert System.get_env("_APPSIGNAL_WORKING_DIR_PATH") == "/tmp/appsignal"
         assert System.get_env("_APPSIGNAL_FILES_WORLD_ACCESSIBLE") == "false"
+        assert System.get_env("_APP_REVISION") == "03bd9e"
       end)
     end
 
