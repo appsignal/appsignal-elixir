@@ -1,5 +1,7 @@
-# 1.4.11-beta.1
-
+# 1.5.0-beta.1
+* Restore :revision config (#315)
+* Underscored environment variables are always overwritten (#316)
+* Move compilation helper functions to mix_helpers.exs (#314)
 * Use "unknown" as action for Plug-only transactions, set action before `call/2` (#311)
 * Bump agent to ee63235 (#310)
   - Fix locking issue on diagnose mode run
