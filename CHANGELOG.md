@@ -3,7 +3,10 @@
 * Underscored environment variables are always overwritten (#316)
 * Move compilation helper functions to mix_helpers.exs (#314)
 * Use "unknown" as action for Plug-only transactions, set action before `call/2` (#311)
-* Bump agent to ee63235 (#310)
+* Bump agent to ca32965 (#310, #315)
+  - Underscore `_APP_REVISION` environment variable.
+  - Unset revision config option when the APP_REVISION environment
+    variable only contains an empty string.
   - Fix locking issue on diagnose mode run
   - Increase stored length of error messages
 
