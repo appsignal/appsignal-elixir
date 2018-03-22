@@ -155,19 +155,25 @@ defmodule Mix.Tasks.Appsignal.Install do
   # Contents for the config/appsignal.exs file.
   defp appsignal_config_file_contents(config) do
     options = [
-      ~s(  name: "#{config[:name]}"),
-      ~s(  push_api_key: "#{config[:push_api_key]}"),
+      ~s(  name: "#{config[:name]}",),
+      ~s(  push_api_key: "#{config[:push_api_key]}",),
+      ~s{  request_headers: ~w(},
+      ~s{    accept accept-charset accept-encoding accept-language cache-control},
+      ~s{    client-ip connection content-length path-info range referer remote-addr},
+      ~s{    remote-host request-method request-uri server-name server-port},
+      ~s{    server-protocol user-agent x-forwarded-for x-real-ip},
+      ~s{  ),},
       ~s(  env: Mix.env)
     ]
 
     options_with_active = case has_environment_configuration_files?() do
-      false -> [~s(  active: true)] ++ options
+      false -> [~s(  active: true,)] ++ options
       true -> options
     end
 
     "use Mix.Config\n\n" <>
       "config :appsignal, :config,\n" <>
-      Enum.join(options_with_active, ",\n") <>
+      Enum.join(options_with_active, "\n") <>
       "\n"
   end
 

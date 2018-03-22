@@ -172,6 +172,12 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
         ~s(config :appsignal, :config,\n) <>
         ~s(  name: "AppSignal test suite app",\n) <>
         ~s(  push_api_key: "my_push_api_key",\n) <>
+        ~s{  request_headers: ~w(\n} <>
+        ~s{    accept accept-charset accept-encoding accept-language cache-control\n} <>
+        ~s{    client-ip connection content-length path-info range referer remote-addr\n} <>
+        ~s{    remote-host request-method request-uri server-name server-port\n} <>
+        ~s{    server-protocol user-agent x-forwarded-for x-real-ip\n} <>
+        ~s{  ),\n} <>
         ~s(  env: Mix.env\n)
 
       # Imports AppSignal config in config.exs file
@@ -208,6 +214,12 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
         ~s(  active: true,\n) <>
         ~s(  name: "AppSignal test suite app",\n) <>
         ~s(  push_api_key: "my_push_api_key",\n) <>
+        ~s{  request_headers: ~w(\n} <>
+        ~s{    accept accept-charset accept-encoding accept-language cache-control\n} <>
+        ~s{    client-ip connection content-length path-info range referer remote-addr\n} <>
+        ~s{    remote-host request-method request-uri server-name server-port\n} <>
+        ~s{    server-protocol user-agent x-forwarded-for x-real-ip\n} <>
+        ~s{  ),\n} <>
         ~s(  env: Mix.env\n)
 
       # Imports AppSignal config in config.exs file
