@@ -61,6 +61,10 @@ defmodule Appsignal.Config do
     config.valid && config.active
   end
 
+  def request_headers do
+    Application.fetch_env!(:appsignal, :config)[:request_headers]
+  end
+
   @env_to_key_mapping %{
     "APPSIGNAL_ACTIVE" => :active,
     "APPSIGNAL_PUSH_API_KEY" => :push_api_key,
