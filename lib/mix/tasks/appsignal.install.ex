@@ -4,6 +4,13 @@ defmodule Mix.Tasks.Appsignal.Install do
 
   @demo Application.get_env(:appsignal, :appsignal_demo, Appsignal.Demo)
 
+  @request_headers [
+    ~w(accept accept-charset accept-encoding accept-language cache-control),
+    ~w(client-ip connection content-length path-info range referer remote-addr),
+    ~w(remote-host request-method request-uri server-name server-port),
+    ~w(server-protocol user-agent x-forwarded-for x-real-ip)
+  ]
+
   def run([]) do
     header()
     IO.puts "We're missing an AppSignal Push API key and cannot continue."
@@ -152,16 +159,19 @@ defmodule Mix.Tasks.Appsignal.Install do
     end
   end
 
+  defp multiline_request_headers do
+    Enum.map_join(@request_headers, "\n", fn(row) ->
+      "    #{Enum.join(row, " ")}"
+    end)
+  end
+
   # Contents for the config/appsignal.exs file.
   defp appsignal_config_file_contents(config) do
     options = [
       ~s(  name: "#{config[:name]}",),
       ~s(  push_api_key: "#{config[:push_api_key]}",),
       ~s{  request_headers: ~w(},
-      ~s{    accept accept-charset accept-encoding accept-language cache-control},
-      ~s{    client-ip connection content-length path-info range referer remote-addr},
-      ~s{    remote-host request-method request-uri server-name server-port},
-      ~s{    server-protocol user-agent x-forwarded-for x-real-ip},
+      multiline_request_headers(),
       ~s{  ),},
       ~s(  env: Mix.env)
     ]
