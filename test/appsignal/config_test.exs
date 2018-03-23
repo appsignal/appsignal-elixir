@@ -196,6 +196,11 @@ defmodule Appsignal.ConfigTest do
         == default_configuration() |> Map.put(:working_dir_path, "/tmp/appsignal")
     end
 
+    test "request_headers" do
+      assert with_config(%{request_headers: ~w(accept accept-charset)}, &init_config/0)
+        == default_configuration() |> Map.put(:request_headers, ~w(accept accept-charset))
+    end
+
     test "revision" do
       assert with_config(%{revision: "03bd9e"}, &init_config/0)
         == default_configuration() |> Map.put(:revision, "03bd9e")
@@ -365,6 +370,13 @@ defmodule Appsignal.ConfigTest do
         %{"APPSIGNAL_WORKING_DIR_PATH" => "/tmp/appsignal"},
         &init_config/0
       ) == default_configuration() |> Map.put(:working_dir_path, "/tmp/appsignal")
+    end
+
+    test "request_headers" do
+      assert with_env(
+        %{"APPSIGNAL_REQUEST_HEADERS" => "accept,accept-charset"},
+        &init_config/0
+      ) == default_configuration() |> Map.put(:request_headers, ~w(accept accept-charset))
     end
 
     test "revision" do
