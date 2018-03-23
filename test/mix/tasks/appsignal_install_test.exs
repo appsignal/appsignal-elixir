@@ -155,6 +155,7 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
       assert String.contains? output, ~s(APPSIGNAL_APP_NAME="AppSignal test suite app")
       assert String.contains? output, ~s(APPSIGNAL_APP_ENV="production")
       assert String.contains? output, ~s(APPSIGNAL_PUSH_API_KEY="my_push_api_key")
+      assert String.contains? output, ~s(APPSIGNAL_REQUEST_HEADERS="accept,accept-charset,accept-encoding,accept-language,cache-control,client-ip,connection,content-length,path-info,range,referer,remote-addr,remote-host,request-method,request-uri,server-name,server-port,server-protocol,user-agent,x-forwarded-for,x-real-ip")
     end
 
     @tag :file_config

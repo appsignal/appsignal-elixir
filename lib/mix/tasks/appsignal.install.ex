@@ -104,6 +104,7 @@ defmodule Mix.Tasks.Appsignal.Install do
     IO.puts ~s(  export APPSIGNAL_APP_NAME="#{config[:name]}")
     IO.puts ~s(  export APPSIGNAL_APP_ENV="production")
     IO.puts ~s(  export APPSIGNAL_PUSH_API_KEY="#{config[:push_api_key]}")
+    IO.puts ~s(  export APPSIGNAL_REQUEST_HEADERS="#{single_line_request_headers()}")
   end
 
   defp write_config_file(config) do
@@ -157,6 +158,12 @@ defmodule Mix.Tasks.Appsignal.Install do
         IO.puts "Failure! #{reason}"
         exit :shutdown
     end
+  end
+
+  defp single_line_request_headers do
+    @request_headers
+    |> List.flatten
+    |> Enum.join(",")
   end
 
   defp multiline_request_headers do
