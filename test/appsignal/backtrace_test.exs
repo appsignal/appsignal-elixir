@@ -10,12 +10,12 @@ defmodule Appsignal.BacktraceTest do
     ]
   end
 
-  test "removes error lines" do
+  test "replaces arguments with arities" do
     stacktrace = [{:erl_internal, :op_type, [:get_stacktrace, 0],
-        [file: 'erl_internal.erl', line: 212]}, @match_line]
+        [file: 'erl_internal.erl', line: 212]}]
 
     assert Appsignal.Backtrace.from_stacktrace(stacktrace) == [
-      Exception.format_stacktrace_entry(@match_line)
+      "(stdlib) erl_internal.erl:212: :erl_internal.op_type/2"
     ]
   end
 
