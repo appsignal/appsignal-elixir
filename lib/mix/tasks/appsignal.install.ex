@@ -6,9 +6,8 @@ defmodule Mix.Tasks.Appsignal.Install do
 
   @request_headers [
     ~w(accept accept-charset accept-encoding accept-language cache-control),
-    ~w(client-ip connection content-length path-info range referer remote-addr),
-    ~w(remote-host request-method request-uri server-name server-port),
-    ~w(server-protocol user-agent x-forwarded-for x-real-ip)
+    ~w(connection content-length path-info range referer request-method),
+    ~w(request-uri server-name server-port server-protocol user-agent)
   ]
 
   def run([]) do
