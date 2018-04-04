@@ -1,7 +1,5 @@
-# 1.5.0-beta.2
+# 1.5.0
 * Add agent.exs file to package in mix.exs (#323)
-
-# 1.5.0-beta.1
 * Restore :revision config (#315)
 * Underscored environment variables are always overwritten (#316)
 * Move compilation helper functions to mix_helpers.exs (#314)
