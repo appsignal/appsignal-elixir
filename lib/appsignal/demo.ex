@@ -1,6 +1,6 @@
 defmodule Appsignal.DemoBehaviour do
-  @callback create_transaction_error_request :: :ok
-  @callback create_transaction_performance_request :: :ok
+  @callback create_transaction_error_request :: Appsignal.Transaction.t
+  @callback create_transaction_performance_request :: Appsignal.Transaction.t
 end
 
 defmodule Appsignal.Demo do
@@ -9,7 +9,7 @@ defmodule Appsignal.Demo do
   @behaviour Appsignal.DemoBehaviour
 
   @doc false
-  @spec create_transaction_error_request :: :ok
+  @spec create_transaction_error_request :: Appsignal.Transaction.t
   def create_transaction_error_request do
     create_demo_transaction()
     |> Appsignal.Transaction.set_error(
@@ -21,7 +21,7 @@ defmodule Appsignal.Demo do
   end
 
   @doc false
-  @spec create_transaction_performance_request :: :ok
+  @spec create_transaction_performance_request :: Appsignal.Transaction.t
   def create_transaction_performance_request do
     transaction = create_demo_transaction()
 
@@ -56,5 +56,7 @@ defmodule Appsignal.Demo do
   defp finish_demo_transaction(transaction) do
     Appsignal.Transaction.finish(transaction)
     :ok = Appsignal.Transaction.complete(transaction)
+
+    transaction
   end
 end

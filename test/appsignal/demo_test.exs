@@ -1,12 +1,10 @@
 defmodule AppsignalDemoTest do
   use ExUnit.Case
   import Mock
-  alias Appsignal.{Transaction, TransactionRegistry}
 
   test_with_mock "sends a demonstration error", Appsignal.Transaction, [:passthrough], [] do
-    Appsignal.Demo.create_transaction_error_request
+    t = Appsignal.Demo.create_transaction_error_request
 
-    t = %Transaction{} = TransactionRegistry.lookup(self())
     assert called Appsignal.Transaction.set_action(t, "DemoController#hello")
     assert called Appsignal.Transaction.set_error(t, "TestError", "Hello world! This is an error used for demonstration purposes.", :_)
     assert called Appsignal.Transaction.set_meta_data(t, "demo_sample", "true")
@@ -15,9 +13,8 @@ defmodule AppsignalDemoTest do
   end
 
   test_with_mock "sends a performance issue", Appsignal.Transaction, [:passthrough], [] do
-    Appsignal.Demo.create_transaction_performance_request
+    t = Appsignal.Demo.create_transaction_performance_request
 
-    t = %Transaction{} = TransactionRegistry.lookup(self())
     assert called Appsignal.Transaction.set_action(t, "DemoController#hello")
     assert called Appsignal.Transaction.set_meta_data(t, "demo_sample", "true")
     assert called Appsignal.Transaction.start_event(t)
