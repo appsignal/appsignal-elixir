@@ -358,6 +358,7 @@ defmodule Appsignal.Transaction do
   @spec complete(Transaction.t | nil) :: :ok
   def complete(nil), do: nil
   def complete(%Transaction{} = transaction) do
+    TransactionRegistry.remove_transaction(transaction)
     :ok = Nif.complete(transaction.resource)
   end
 
