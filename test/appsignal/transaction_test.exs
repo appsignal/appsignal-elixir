@@ -3,7 +3,7 @@ defmodule AppsignalTransactionTest do
   import Mock
   import AppsignalTest.Utils
 
-  alias Appsignal.Transaction
+  alias Appsignal.{Transaction, TransactionRegistry}
 
   test "transaction lifecycle" do
     transaction = Transaction.start("test1", :http_request)
@@ -166,6 +166,15 @@ defmodule AppsignalTransactionTest do
       assert not called Appsignal.Transaction.set_sample_data(
         transaction, "session_data", context[:conn].private.plug_session
       )
+    end
+  end
+
+  describe "completing a transaction" do
+    test "removes the transaction from the registry" do
+      transaction = Transaction.start(Transaction.generate_id, :http_request)
+      Transaction.finish(transaction)
+      :ok = Transaction.complete(transaction)
+      {:error, :not_found} = TransactionRegistry.remove_transaction(transaction)
     end
   end
 end
