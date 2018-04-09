@@ -402,8 +402,8 @@ defmodule Appsignal.PlugTest do
   end
 
   describe "extracting request headers" do
-    test "from a Plug conn" do
-      conn = %Plug.Conn{
+    setup do
+      [conn: %Plug.Conn{
         req_headers: [
           {"content-length", "1024"},
           {"accept", "text/html"},
@@ -419,22 +419,32 @@ defmodule Appsignal.PlugTest do
           {"cookie", "__ar_v4=U35IKTLTJNEP7GWW6OH3N2%3A20161120%3A90%7CI..."},
           {"x-real-ip", "179.146.231.170"}
         ]
-      }
+      }]
+    end
 
+    test "with header key configuration", %{conn: conn} do
+      AppsignalTest.Utils.with_config(%{request_headers: ["content-length"]}, fn ->
+        assert Appsignal.Plug.extract_request_headers(conn) == %{
+          "req_headers.content-length" => "1024"
+        }
+      end)
+    end
+
+    test "with fallback header keys", %{conn: conn} do
       assert Appsignal.Plug.extract_request_headers(conn) == %{
-               "req_headers.content-length" => "1024",
-               "req_headers.accept" => "text/html",
-               "req_headers.accept-charset" => "utf-8",
-               "req_headers.accept-encoding" => "gzip, deflate",
-               "req_headers.accept-language" => "en-us",
-               "req_headers.cache-control" => "no-cache",
-               "req_headers.connection" => "keep-alive",
-               "req_headers.user-agent" => "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3...",
-               "req_headers.from" => "webmaster@example.org",
-               "req_headers.referer" => "http://localhost:4001/",
-               "req_headers.range" => "bytes=0-1023",
-               "req_headers.x-real-ip" => "179.146.231.170"
-             }
+        "req_headers.content-length" => "1024",
+        "req_headers.accept" => "text/html",
+        "req_headers.accept-charset" => "utf-8",
+        "req_headers.accept-encoding" => "gzip, deflate",
+        "req_headers.accept-language" => "en-us",
+        "req_headers.cache-control" => "no-cache",
+        "req_headers.connection" => "keep-alive",
+        "req_headers.user-agent" => "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3...",
+        "req_headers.from" => "webmaster@example.org",
+        "req_headers.referer" => "http://localhost:4001/",
+        "req_headers.range" => "bytes=0-1023",
+        "req_headers.x-real-ip" => "179.146.231.170"
+      }
     end
   end
 

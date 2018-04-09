@@ -4,6 +4,8 @@ if Appsignal.plug?() do
     Plug handler for Phoenix requests
     """
 
+    alias Appsignal.Config
+
     defmacro __using__(_) do
       quote do
         @transaction Application.get_env(
@@ -154,7 +156,7 @@ if Appsignal.plug?() do
       }
     end
 
-    @header_keys ~w(
+    @fallback_request_headers ~w(
       accept accept-charset accept-encoding accept-language cache-control
       connection content-length user-agent from negotiate pragma referer range
 
@@ -167,7 +169,8 @@ if Appsignal.plug?() do
     )
 
     def extract_request_headers(%Plug.Conn{req_headers: req_headers}) do
-      for {key, value} <- req_headers, key in @header_keys do
+      for {key, value} <- req_headers,
+          key in (Config.request_headers() || @fallback_request_headers) do
         {"req_headers.#{key}", value}
       end
       |> Enum.into(%{})
