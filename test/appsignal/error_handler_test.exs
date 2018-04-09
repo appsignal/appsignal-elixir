@@ -54,20 +54,11 @@ defmodule Appsignal.ErrorHandlerTest do
     transaction = Transaction.start("id", :http_request)
     reason = "ArithmeticError"
     message = "bad argument in arithmetic expression"
-    stacktrace = System.stacktrace
     metadata = %{foo: "bar"}
 
-    ErrorHandler.submit_transaction(
-      transaction,
-      reason,
-      message,
-      stacktrace,
-      metadata
-    )
+    ErrorHandler.submit_transaction(transaction, reason, message, [], metadata)
 
-    assert called(
-      Transaction.set_error(transaction, reason, message, stacktrace)
-    )
+    assert called(Transaction.set_error(transaction, reason, message, []))
     assert called(Transaction.set_meta_data(transaction, metadata))
     assert called(Transaction.finish(transaction))
     assert called(Transaction.complete(transaction))
