@@ -89,6 +89,7 @@ defmodule Appsignal.Mixfile do
 
   defp deps do
     [
+      {:hackney, "~> 1.6"},
       {:httpoison, "~> 0.11 or ~> 1.0"},
       {:poison, ">= 1.3.0"},
       {:decorator, "~> 1.2.3"},
