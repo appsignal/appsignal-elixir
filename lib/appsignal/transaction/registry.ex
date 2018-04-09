@@ -36,7 +36,7 @@ defmodule Appsignal.TransactionRegistry do
     pid = self()
     if registry_alive?() do
       true = :ets.insert(@table, {pid, transaction})
-      GenServer.cast(__MODULE__, {:monitor, pid})
+      GenServer.call(__MODULE__, {:monitor, pid})
     else
       Logger.debug("AppSignal was not started, skipping transaction registration.")
       nil
@@ -111,9 +111,9 @@ defmodule Appsignal.TransactionRegistry do
     {:reply, reply, state}
   end
 
-  def handle_cast({:monitor, pid}, state) do
-    Process.monitor(pid)
-    {:noreply, state}
+  def handle_call({:monitor, pid}, state) do
+    monitor_reference = Process.monitor(pid)
+    {:reply, monitor_reference, state}
   end
 
   def handle_info({:DOWN, _ref, :process, pid, _reason}, state) do
