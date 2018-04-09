@@ -31,12 +31,14 @@ defmodule Appsignal.TransactionRegistry do
   @doc """
   Register the current process as the owner of the given transaction.
   """
-  @spec register(Transaction.t) :: :ok
+  @spec register(Transaction.t()) :: :ok
   def register(transaction) do
     pid = self()
+
     if registry_alive?() do
-      true = :ets.insert(@table, {pid, transaction})
-      GenServer.call(__MODULE__, {:monitor, pid})
+      monitor_reference = GenServer.call(__MODULE__, {:monitor, pid})
+      true = :ets.insert(@table, {pid, transaction, monitor_reference})
+      :ok
     else
       Logger.debug("AppSignal was not started, skipping transaction registration.")
       nil
@@ -49,7 +51,7 @@ defmodule Appsignal.TransactionRegistry do
   @spec lookup(pid) :: Transaction.t | nil
   def lookup(pid) do
     case registry_alive?() && :ets.lookup(@table, pid) do
-      [{^pid, %Transaction{} = transaction}] -> transaction
+      [{^pid, %Transaction{} = transaction, _}] -> transaction
       false ->
         Logger.debug("AppSignal was not started, skipping transaction lookup.")
         nil
@@ -68,11 +70,16 @@ defmodule Appsignal.TransactionRegistry do
           false -> nil
           true -> :removed
         end
-      [{^pid, transaction}] -> transaction
+
+      [{^pid, transaction, _}] ->
+        transaction
+
       false ->
         Logger.debug("AppSignal was not started, skipping transaction lookup.")
         nil
-      [] -> nil
+
+      [] ->
+        nil
     end
   end
 
@@ -99,19 +106,22 @@ defmodule Appsignal.TransactionRegistry do
 
   def handle_call({:remove, transaction}, _from, state) do
     reply =
-      case :ets.match(@table, {:'$1', transaction}) do
+      case :ets.match(@table, {:"$1", transaction, :_}) do
         [[_pid] | _] = pids ->
           for [pid] <- pids do
             true = :ets.delete(@table, pid)
           end
+
           :ok
+
         [] ->
           {:error, :not_found}
       end
+
     {:reply, reply, state}
   end
 
-  def handle_call({:monitor, pid}, state) do
+  def handle_call({:monitor, pid}, _from, state) do
     monitor_reference = Process.monitor(pid)
     {:reply, monitor_reference, state}
   end
