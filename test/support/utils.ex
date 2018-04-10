@@ -69,6 +69,14 @@ defmodule AppsignalTest.Utils do
     end
   end
 
+  def is_reference_or_binary(term) do
+    if System.otp_release >= "20" do
+      is_reference(term)
+    else
+      is_binary(term)
+    end
+  end
+
   defp put_merged_env(env) do
     System.get_env
     |> Map.merge(env)
