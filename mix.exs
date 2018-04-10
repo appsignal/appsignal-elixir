@@ -66,7 +66,7 @@ defmodule Appsignal.Mixfile do
 
   def application do
     [mod: {Appsignal, []},
-     applications: [:logger, :decorator, :httpoison]]
+     applications: [:logger, :decorator, :hackney]]
   end
 
   defp compilers(:test_phoenix), do: [:phoenix] ++ compilers(:prod)
@@ -90,7 +90,6 @@ defmodule Appsignal.Mixfile do
   defp deps do
     [
       {:hackney, "~> 1.6"},
-      {:httpoison, "~> 0.11 or ~> 1.0"},
       {:poison, ">= 1.3.0"},
       {:decorator, "~> 1.2.3"},
       {:plug, ">= 1.1.0", optional: true},
