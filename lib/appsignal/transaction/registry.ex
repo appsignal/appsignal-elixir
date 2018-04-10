@@ -88,6 +88,7 @@ defmodule Appsignal.TransactionRegistry do
   """
   @spec remove_transaction(Transaction.t) :: :ok | {:error, :not_found}
   def remove_transaction(%Transaction{} = transaction) do
+    GenServer.cast(__MODULE__, {:demonitor, transaction})
     GenServer.call(__MODULE__, {:remove, transaction})
   end
 
@@ -124,6 +125,15 @@ defmodule Appsignal.TransactionRegistry do
   def handle_call({:monitor, pid}, _from, state) do
     monitor_reference = Process.monitor(pid)
     {:reply, monitor_reference, state}
+  end
+
+  def handle_cast({:demonitor, %Transaction{} = transaction}, state) do
+    transaction
+    |> pids_and_monitor_references()
+    |> Enum.each(fn([_pid, reference]) ->
+      Process.demonitor(reference)
+    end)
+    {:noreply, state}
   end
 
   def handle_info({:DOWN, _ref, :process, pid, _reason}, state) do
