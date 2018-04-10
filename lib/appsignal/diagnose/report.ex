@@ -7,7 +7,6 @@ defmodule Appsignal.Diagnose.Report do
 
   @spec send(%{}, %{}) :: {:ok | :error, String.t}
   def send(config, report) do
-    HTTPoison.start
     params = URI.encode_query(%{
       api_key: config[:push_api_key],
       name: config[:name],
@@ -17,15 +16,21 @@ defmodule Appsignal.Diagnose.Report do
     url = "#{config[:diagnose_endpoint]}?#{params}"
     body = Poison.encode!(%{diagnose: report})
     headers = [{"Content-Type", "application/json; charset=UTF-8"}]
-    case HTTPoison.post url, body, headers do
-      {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
+
+    case :hackney.request(:post, url, headers, body) do
+      {:ok, 200, _, reference} ->
+        {:ok, body} = :hackney.body(reference)
+
         case Poison.decode(body) do
           {:ok, response} -> {:ok, response["token"]}
           {:error, _} -> {:error, %{status_code: 200, body: body}}
         end
-      {_, %HTTPoison.Response{status_code: status_code, body: body}} ->
+
+      {:ok, status_code, _, reference} ->
+        {:ok, body} = :hackney.body(reference)
         {:error, %{status_code: status_code, body: body}}
-      {:error, %HTTPoison.Error{reason: reason}} ->
+
+      {:error, reason} ->
         {:error, %{reason: reason}}
     end
   end
