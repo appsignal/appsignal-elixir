@@ -107,8 +107,8 @@ defmodule Appsignal.TransactionRegistry do
   def handle_call({:remove, transaction}, _from, state) do
     reply =
       case pids_and_monitor_references(transaction) do
-        [[_pid] | _] = pids ->
-          for [pid] <- pids do
+        [[_pid, _reference] | _] = pids_and_refs ->
+          for [pid, _reference] <- pids_and_refs do
             true = :ets.delete(@table, pid)
           end
 
@@ -147,6 +147,6 @@ defmodule Appsignal.TransactionRegistry do
   end
 
   defp pids_and_monitor_references(transaction) do
-    :ets.match(@table, {:'$1', transaction, :'_'})
+    :ets.match(@table, {:'$1', transaction, :'$2'})
   end
 end
