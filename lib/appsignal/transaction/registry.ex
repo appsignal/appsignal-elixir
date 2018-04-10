@@ -106,7 +106,7 @@ defmodule Appsignal.TransactionRegistry do
 
   def handle_call({:remove, transaction}, _from, state) do
     reply =
-      case :ets.match(@table, {:"$1", transaction, :_}) do
+      case pids_and_monitor_references(transaction) do
         [[_pid] | _] = pids ->
           for [pid] <- pids do
             true = :ets.delete(@table, pid)
@@ -144,5 +144,9 @@ defmodule Appsignal.TransactionRegistry do
   defp registry_alive? do
     pid = Process.whereis(__MODULE__)
     !is_nil(pid) && Process.alive?(pid)
+  end
+
+  defp pids_and_monitor_references(transaction) do
+    :ets.match(@table, {:'$1', transaction, :'_'})
   end
 end
