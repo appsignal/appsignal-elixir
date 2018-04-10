@@ -89,8 +89,6 @@ defmodule Appsignal.TransactionRegistry do
         [[_pid] | _] = pids ->
           for [pid] <- pids do
             true = :ets.delete(@table, pid)
-            true = :ets.insert(@table, {pid, :removed})
-            Process.send_after(self(), {:delete, pid}, 5000)
           end
           :ok
         [] ->
