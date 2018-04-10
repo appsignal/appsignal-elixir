@@ -46,7 +46,7 @@ defmodule Appsignal.Transaction do
   @type t :: %Transaction{}
 
   @doc """
-  Start a transaction
+  Create and register a transaction.
 
   Call this when a transaction such as a http request or background job starts.
 
@@ -65,9 +65,23 @@ defmodule Appsignal.Transaction do
   """
   @spec start(String.t, atom) :: Transaction.t
   def start(transaction_id, namespace) when is_binary(transaction_id) do
+    transaction_id
+    |> create(namespace)
+    |> register
+  end
+
+  @doc """
+  Create a transaction with a transaction resource.
+  """
+  @spec create(String.t, atom) :: Transaction.t
+  def create(transaction_id, namespace) when is_binary(transaction_id) and is_atom(namespace) do
     {:ok, resource} = Nif.start_transaction(transaction_id, Atom.to_string(namespace))
-    transaction = %Appsignal.Transaction{resource: resource, id: transaction_id}
-    TransactionRegistry.register(transaction)
+    %Transaction{resource: resource, id: transaction_id}
+  end
+
+  @spec register(Transaction.t) :: Transaction.t
+  defp register(transaction) do
+    :ok = TransactionRegistry.register(transaction)
     transaction
   end
 
