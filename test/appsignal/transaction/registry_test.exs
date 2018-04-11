@@ -41,6 +41,19 @@ defmodule Appsignal.Transaction.RegistryTest do
     end
   end
 
+  describe "lookup/1, with an existing transaction without a monitor" do
+    setup do
+      transaction = %Transaction{id: Transaction.generate_id()}
+      true = :ets.insert(:'$appsignal_transaction_registry', {self(), transaction})
+
+      [transaction: transaction]
+    end
+
+    test "finds an existing transaction by pid", %{transaction: transaction} do
+      assert TransactionRegistry.lookup(self()) == transaction
+    end
+  end
+
   describe "register/1, when the registry is not running" do
     setup :terminate_registry
 

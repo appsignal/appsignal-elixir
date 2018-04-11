@@ -48,14 +48,21 @@ defmodule Appsignal.TransactionRegistry do
   @doc """
   Given a process ID, return its associated transaction.
   """
-  @spec lookup(pid) :: Transaction.t | nil
+  @spec lookup(pid) :: Transaction.t() | nil
   def lookup(pid) do
     case registry_alive?() && :ets.lookup(@table, pid) do
-      [{^pid, %Transaction{} = transaction, _}] -> transaction
+      [{^pid, %Transaction{} = transaction, _}] ->
+        transaction
+
+      [{^pid, %Transaction{} = transaction}] ->
+        transaction
+
       false ->
         Logger.debug("AppSignal was not started, skipping transaction lookup.")
         nil
-      _ -> nil
+
+      _ ->
+        nil
     end
   end
 
@@ -72,6 +79,9 @@ defmodule Appsignal.TransactionRegistry do
         end
 
       [{^pid, transaction, _}] ->
+        transaction
+
+      [{^pid, transaction}] ->
         transaction
 
       false ->
