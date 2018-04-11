@@ -184,7 +184,7 @@ defmodule AppsignalTransactionTest do
     end
 
     test "creates a transaction_reference", %{transaction: transaction} do
-      assert is_reference(transaction.resource)
+      assert is_reference_or_binary(transaction.resource)
     end
   end
 
