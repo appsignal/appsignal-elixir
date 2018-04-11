@@ -6,16 +6,21 @@ defmodule AppsignalTest do
   test "set gauge" do
     Appsignal.set_gauge("key", 10.0)
     Appsignal.set_gauge("key", 10)
+    Appsignal.set_gauge("key", 10.0, %{:a => "b"})
+    Appsignal.set_gauge("key", 10.0, %{:a => "b"})
   end
 
   test "increment counter" do
     Appsignal.increment_counter("counter")
     Appsignal.increment_counter("counter", 5)
+    Appsignal.increment_counter("counter", 5, %{:a => "b"})
   end
 
   test "add distribution value" do
     Appsignal.add_distribution_value("dist_key", 10.0)
     Appsignal.add_distribution_value("dist_key", 10)
+    Appsignal.add_distribution_value("dist_key", 10.0, %{:a => "b"})
+    Appsignal.add_distribution_value("dist_key", 10, %{:a => "b"})
   end
 
   describe "plug?/0" do

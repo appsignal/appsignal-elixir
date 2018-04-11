@@ -90,20 +90,23 @@ defmodule Appsignal do
   @doc """
   Set a gauge for a measurement of some metric.
   """
-  @spec set_gauge(String.t, float | integer) :: :ok
-  def set_gauge(key, value) when is_integer(value) do
-    set_gauge(key, value + 0.0)
+  @spec set_gauge(String.t, float | integer, Map) :: :ok
+  def set_gauge(key, value, tags \\ %{})
+  def set_gauge(key, value, tags) when is_integer(value) do
+    set_gauge(key, value + 0.0, tags)
   end
-  def set_gauge(key, value) when is_float(value) do
-    Appsignal.Nif.set_gauge(key, value)
+  def set_gauge(key, value, %{} = tags) when is_float(value) do
+    encoded_tags = Appsignal.Utils.DataEncoder.encode(tags)
+    :ok = Appsignal.Nif.set_gauge(key, value, encoded_tags)
   end
 
   @doc """
   Increment a counter of some metric.
   """
-  @spec increment_counter(String.t, integer) :: :ok
-  def increment_counter(key, count \\ 1) when is_integer(count) do
-    Appsignal.Nif.increment_counter(key, count)
+  @spec increment_counter(String.t, integer, Map) :: :ok
+  def increment_counter(key, count \\ 1, %{} = tags \\ %{}) when is_integer(count) do
+    encoded_tags = Appsignal.Utils.DataEncoder.encode(tags)
+    :ok = Appsignal.Nif.increment_counter(key, count, encoded_tags)
   end
 
   @doc """
@@ -112,12 +115,14 @@ defmodule Appsignal do
   Use this to collect multiple data points that will be merged into a
   graph.
   """
-  @spec add_distribution_value(String.t, float | integer) :: :ok
-  def add_distribution_value(key, value) when is_integer(value) do
-    add_distribution_value(key, value + 0.0)
+  @spec add_distribution_value(String.t, float | integer, Map) :: :ok
+  def add_distribution_value(key, value, tags \\ %{})
+  def add_distribution_value(key, value, tags) when is_integer(value) do
+    add_distribution_value(key, value + 0.0, tags)
   end
-  def add_distribution_value(key, value) when is_float(value) do
-    Appsignal.Nif.add_distribution_value(key, value)
+  def add_distribution_value(key, value, %{} = tags) when is_float(value) do
+    encoded_tags = Appsignal.Utils.DataEncoder.encode(tags)
+    :ok = Appsignal.Nif.add_distribution_value(key, value, encoded_tags)
   end
 
   @doc """
