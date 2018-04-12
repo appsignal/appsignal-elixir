@@ -7,7 +7,7 @@ defmodule AppsignalTest do
     Appsignal.set_gauge("key", 10.0)
     Appsignal.set_gauge("key", 10)
     Appsignal.set_gauge("key", 10.0, %{:a => "b"})
-    Appsignal.set_gauge("key", 10.0, %{:a => "b"})
+    Appsignal.set_gauge("key", 10, %{:a => "b"})
   end
 
   test "increment counter" do
