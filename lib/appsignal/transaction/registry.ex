@@ -119,11 +119,10 @@ defmodule Appsignal.TransactionRegistry do
     reply =
       case pids_and_monitor_references(transaction) do
         [[_pid, _reference] | _] = pids_and_refs ->
-          for [pid, _reference] <- pids_and_refs do
-            true = :ets.delete(@table, pid)
-          end
+          delete(pids_and_refs)
 
-          :ok
+        [[_pid] | _] = pids ->
+          delete(pids)
 
         [] ->
           {:error, :not_found}
@@ -140,9 +139,8 @@ defmodule Appsignal.TransactionRegistry do
   def handle_cast({:demonitor, %Transaction{} = transaction}, state) do
     transaction
     |> pids_and_monitor_references()
-    |> Enum.each(fn([_pid, reference]) ->
-      Process.demonitor(reference)
-    end)
+    |> demonitor
+
     {:noreply, state}
   end
 
@@ -161,12 +159,30 @@ defmodule Appsignal.TransactionRegistry do
     {:noreply, state}
   end
 
+  defp delete([[pid, _] | tail]) do
+    :ets.delete(@table, pid)
+    delete(tail)
+  end
+  defp delete([[pid] | tail]) do
+    :ets.delete(@table, pid)
+    delete(tail)
+  end
+  defp delete([]), do: :ok
+
+  defp demonitor([[_, reference] | tail]) do
+    Process.demonitor(reference)
+    demonitor(tail)
+  end
+  defp demonitor([_ | tail]), do: demonitor(tail)
+  defp demonitor([]), do: :ok
+
   defp registry_alive? do
     pid = Process.whereis(__MODULE__)
     !is_nil(pid) && Process.alive?(pid)
   end
 
   defp pids_and_monitor_references(transaction) do
-    :ets.match(@table, {:'$1', transaction, :'$2'})
+    :ets.match(@table, {:'$1', transaction, :'$2'}) ++
+      :ets.match(@table, {:'$1', transaction})
   end
 end
