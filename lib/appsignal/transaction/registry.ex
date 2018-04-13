@@ -46,8 +46,22 @@ defmodule Appsignal.TransactionRegistry do
   @doc """
   Given a process ID, return its associated transaction.
   """
+  @spec lookup(pid) :: Transaction.t | nil
+  def lookup(pid) do
+    case registry_alive?() && :ets.lookup(@table, pid) do
+      [{^pid, %Transaction{} = transaction}] -> transaction
+      false ->
+        Logger.debug("AppSignal was not started, skipping transaction lookup.")
+        nil
+      _ -> nil
+    end
+  end
+
   @spec lookup(pid, boolean) :: Transaction.t | nil | :removed
-  def lookup(pid, return_removed \\ false) do
+  @doc false
+  def lookup(pid, return_removed) do
+    IO.warn "Appsignal.TransactionRegistry.lookup/2 is deprecated. Use Appsignal.TransactionRegistry.lookup/1 instead"
+
     case registry_alive?() && :ets.lookup(@table, pid) do
       [{^pid, :removed}] ->
         case return_removed do
@@ -89,8 +103,6 @@ defmodule Appsignal.TransactionRegistry do
         [[_pid] | _] = pids ->
           for [pid] <- pids do
             true = :ets.delete(@table, pid)
-            true = :ets.insert(@table, {pid, :removed})
-            Process.send_after(self(), {:delete, pid}, 5000)
           end
           :ok
         [] ->

@@ -27,9 +27,6 @@ defmodule Appsignal.Transaction.RegistryTest do
     :ok = TransactionRegistry.remove_transaction(transaction)
 
     assert nil == TransactionRegistry.lookup(pid)
-
-    # Lookup removed status
-    assert :removed == TransactionRegistry.lookup(pid, true)
   end
 
   test "delete entry by transaction" do
