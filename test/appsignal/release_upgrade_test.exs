@@ -7,10 +7,10 @@ defmodule Appsignal.ReleaseUpgradeTest do
   test "config_change/3" do
     assert System.get_env("_APPSIGNAL_APP_NAME") == nil
 
-    with_config(valid_configuration(), fn() ->
+    with_config(valid_configuration(), fn ->
       # First start
       # Basically the contents of `Appsignal.initialize`
-      Appsignal.initialize
+      Appsignal.initialize()
 
       # Sets config to Application environment
       assert config()[:name] == "AppSignal test suite app v1"
@@ -18,19 +18,23 @@ defmodule Appsignal.ReleaseUpgradeTest do
       assert System.get_env("_APPSIGNAL_APP_NAME") == "AppSignal test suite app v1"
 
       # The system reloads the application config (set in Mix) during the upgrade.
-      new_config = valid_configuration()
-      |> Map.put(:name, "AppSignal test suite app v2")
+      new_config =
+        valid_configuration()
+        |> Map.put(:name, "AppSignal test suite app v2")
 
-      with_config(new_config, fn() ->
+      with_config(new_config, fn ->
         # Hot reload / upgrade
         config_reload_pid = Appsignal.config_change([], [], [])
         # The config is reloaded in a separate process so we wait for it here
         assert Process.alive?(config_reload_pid)
-        :timer.sleep 3500
-        refute Process.alive?(config_reload_pid)
 
-        assert config()[:name] == "AppSignal test suite app v2"
-        assert System.get_env("_APPSIGNAL_APP_NAME") == "AppSignal test suite app v2"
+        ref = Process.monitor(config_reload_pid)
+
+        receive do
+          {:DOWN, ^ref, _, _, _} ->
+            assert config()[:name] == "AppSignal test suite app v2"
+            assert System.get_env("_APPSIGNAL_APP_NAME") == "AppSignal test suite app v2"
+        end
       end)
     end)
   end
