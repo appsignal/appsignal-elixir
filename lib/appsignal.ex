@@ -138,10 +138,9 @@ defmodule Appsignal do
   def send_error(reason, message \\ "", stack \\ nil, metadata \\ %{}, conn \\ nil, fun \\ fn(t) -> t end, namespace \\ :http_request) do
     stack = stack || System.stacktrace()
 
-    transaction = Appsignal.Transaction.start("_" <> Appsignal.Transaction.generate_id(), namespace)
+    transaction = Appsignal.Transaction.create("_" <> Appsignal.Transaction.generate_id(), namespace)
     fun.(transaction)
     {reason, message} = Appsignal.ErrorHandler.extract_reason_and_message(reason, message)
-    Appsignal.TransactionRegistry.remove_transaction(transaction)
     Appsignal.ErrorHandler.submit_transaction(transaction, reason, message, stack, metadata, conn)
   end
 end

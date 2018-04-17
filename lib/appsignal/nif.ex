@@ -218,7 +218,11 @@ defmodule Appsignal.Nif do
   end
 
   def _start_transaction(_id, _namespace) do
-    {:ok, <<>>}
+    if System.otp_release >= "20" do
+      {:ok, make_ref()}
+    else
+      {:ok, <<>>}
+    end
   end
 
   def _start_event(_transaction_resource) do

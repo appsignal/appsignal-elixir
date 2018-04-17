@@ -169,6 +169,40 @@ defmodule AppsignalTransactionTest do
     end
   end
 
+  describe "creating a transaction" do
+    setup do
+      id = Transaction.generate_id
+      [id: id, transaction: Transaction.create(id, :http_request)]
+    end
+
+    test "returns a transaction", %{transaction: transaction} do
+      assert %Transaction{} = transaction
+    end
+
+    test "uses the passed transaction ID", %{id: id, transaction: transaction} do
+      assert %{id: ^id} = transaction
+    end
+
+    test "creates a transaction_reference", %{transaction: transaction} do
+      assert is_reference_or_binary(transaction.resource)
+    end
+  end
+
+  describe "starting a transaction" do
+    setup do
+      id = Transaction.generate_id
+      [id: id, transaction: Transaction.start(id, :http_request)]
+    end
+
+    test "creates a transaction", %{transaction: transaction} do
+      assert %Transaction{id: id} = transaction
+    end
+
+    test "registers the transaction", %{transaction: transaction} do
+      assert :ok == TransactionRegistry.remove_transaction(transaction)
+    end
+  end
+
   describe "completing a transaction" do
     test "removes the transaction from the registry" do
       transaction = Transaction.start(Transaction.generate_id, :http_request)
