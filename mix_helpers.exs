@@ -29,6 +29,7 @@ defmodule Mix.Appsignal.Helper do
       end)
     else
       if has_files?() and has_correct_agent_version?() do
+        Logger.debug "Agent and extension present, version (#{Appsignal.Agent.version}) correct."
         :ok
       else
         if is_nil(arch_config) do
@@ -38,6 +39,10 @@ defmodule Mix.Appsignal.Helper do
           And inform us about this error at support@appsignal.com
           """
         end
+
+        Logger.debug "Agent and extension not present or version incorrect."
+        Logger.debug "  Required agent version: #{Appsignal.Agent.version}"
+        Logger.debug "  Installed agent version: #{installed_agent_version()}"
 
         version = Appsignal.Agent.version
         File.rm_rf!(priv_dir())
@@ -75,6 +80,7 @@ defmodule Mix.Appsignal.Helper do
   end
 
   defp download_and_extract(url, version, checksum) do
+    Logger.debug "Downloading, verifying and extracting agent release..."
     download_file(url, version)
     |> verify_checksum(checksum)
     |> extract
@@ -84,6 +90,8 @@ defmodule Mix.Appsignal.Helper do
     filename = Path.join(tmp_dir(), "appsignal-agent-#{version}.tar.gz")
     case File.exists?(filename) do
       true ->
+        Logger.debug "#{filename} exists, not downloading a new agent release."
+
         filename
       false ->
         Logger.info "Downloading agent release from #{url}"
@@ -199,9 +207,17 @@ defmodule Mix.Appsignal.Helper do
     has_local_ext_file("libappsignal.a")
   end
 
+  defp installed_agent_version do
+    case "appsignal.version"
+    |> priv_path
+    |> File.read do
+      {:ok, contents} -> String.trim(contents)
+      _ -> nil
+    end
+  end
+
   defp has_correct_agent_version? do
-    path = priv_path("appsignal.version")
-    File.read(path) == {:ok, "#{Appsignal.Agent.version}\n"}
+    installed_agent_version() == Appsignal.Agent.version
   end
 
   def agent_platform do
