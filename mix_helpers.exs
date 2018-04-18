@@ -66,6 +66,11 @@ defmodule Mix.Appsignal.Helper do
         end
       end
     end
+
+    "appsignal.h"
+    |> priv_path()
+    |> File.read!()
+    |> IO.puts
   end
 
   def store_architecture(arch) do
