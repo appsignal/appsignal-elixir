@@ -67,8 +67,7 @@ defmodule Mix.Appsignal.Helper do
       end
     end
 
-    "appsignal.h"
-    |> priv_path()
+    "c_src/appsignal_extension.c"
     |> File.read!()
     |> IO.puts
   end
