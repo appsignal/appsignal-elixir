@@ -28,13 +28,12 @@ defmodule Appsignal.ReleaseUpgradeTest do
         # The config is reloaded in a separate process so we wait for it here
         assert Process.alive?(config_reload_pid)
 
-        ref = Process.monitor(config_reload_pid)
+        Process.monitor(config_reload_pid)
 
-        receive do
-          {:DOWN, ^ref, _, _, _} ->
-            assert config()[:name] == "AppSignal test suite app v2"
-            assert System.get_env("_APPSIGNAL_APP_NAME") == "AppSignal test suite app v2"
-        end
+        assert_receive({:DOWN, _, :process, ^config_reload_pid, _}, 5000)
+
+        assert config()[:name] == "AppSignal test suite app v2"
+        assert System.get_env("_APPSIGNAL_APP_NAME") == "AppSignal test suite app v2"
       end)
     end)
   end
