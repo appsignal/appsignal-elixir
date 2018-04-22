@@ -1,5 +1,5 @@
 defmodule Appsignal.NifTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   import AppsignalTest.Utils, only: [is_reference_or_binary: 1]
 
   test "whether the agent starts" do

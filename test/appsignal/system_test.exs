@@ -1,5 +1,5 @@
 defmodule Appsignal.SystemTest do
-  use ExUnit.Case, async: false
+  use ExUnit.Case, async: true
   import Mock
   import AppsignalTest.Utils
 

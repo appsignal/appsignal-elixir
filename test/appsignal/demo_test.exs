@@ -1,5 +1,5 @@
 defmodule AppsignalDemoTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   import Mock
 
   test_with_mock "sends a demonstration error", Appsignal.Transaction, [:passthrough], [] do
