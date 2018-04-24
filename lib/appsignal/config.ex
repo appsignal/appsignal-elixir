@@ -190,7 +190,6 @@ defmodule Appsignal.Config do
     System.put_env("_APPSIGNAL_DNS_SERVERS", config[:dns_servers] |> Enum.join(","))
     System.put_env("_APPSIGNAL_ENABLE_HOST_METRICS", to_string(config[:enable_host_metrics]))
     System.put_env("_APPSIGNAL_ENVIRONMENT", to_string(config[:env]))
-    System.put_env("_APPSIGNAL_FILTER_PARAMETERS", config[:filter_parameters] |> Enum.join(","))
     System.put_env("_APPSIGNAL_HOSTNAME", config[:hostname])
     System.put_env("_APPSIGNAL_HTTP_PROXY", to_string(config[:http_proxy]))
     System.put_env("_APPSIGNAL_IGNORE_ACTIONS", config[:ignore_actions] |> Enum.join(","))
