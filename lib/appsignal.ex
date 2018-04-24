@@ -62,28 +62,30 @@ defmodule Appsignal do
 
   @doc false
   def initialize() do
-    case {Config.initialize, Config.active?} do
+    case {Config.initialize(), Config.active?()} do
+      {_, false} ->
+        Logger.info("AppSignal disabled.")
+
       {:ok, true} ->
         Logger.debug("AppSignal starting.")
-        Config.write_to_environment
-        Appsignal.Nif.start
-        if Appsignal.Nif.loaded? do
+        Config.write_to_environment()
+        Appsignal.Nif.start()
+
+        if Appsignal.Nif.loaded?() do
           Logger.debug("AppSignal started.")
         else
-          Logger.error("Failed to start AppSignal. Please run the diagnose task (https://docs.appsignal.com/elixir/command-line/diagnose.html) to debug your installation.")
+          Logger.error(
+            "Failed to start AppSignal. Please run the diagnose task " <>
+              "(https://docs.appsignal.com/elixir/command-line/diagnose.html) " <>
+              "to debug your installation."
+          )
         end
-      {:ok, false} ->
-        Logger.info("AppSignal disabled.")
-        :ok
-      {{:error, :invalid_config}, _} ->
-        # show warning that Appsignal is not configured; but not when we run the tests.
-        spawn_link(fn ->
-          :timer.sleep 100 # FIXME, this timeout is kind of cludgy.
-          unless Process.whereis(ExUnit.Server) do
-            Logger.warn("Warning: No valid AppSignal configuration found, continuing with AppSignal metrics disabled.")
-          end
-        end)
-        :ok
+
+      {{:error, :invalid_config}, true} ->
+        Logger.warn(
+          "Warning: No valid AppSignal configuration found, continuing with " <>
+            "AppSignal metrics disabled."
+        )
     end
   end
 
