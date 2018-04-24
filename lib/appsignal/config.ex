@@ -56,10 +56,7 @@ defmodule Appsignal.Config do
   Returns whether the AppSignal agent is configured to start on application launch.
   """
   @spec active?() :: boolean
-  def active? do
-    config = Application.fetch_env!(:appsignal, :config)
-    config.valid && config.active
-  end
+  def active?, do: Application.fetch_env!(:appsignal, :config).active
 
   def request_headers do
     Application.fetch_env!(:appsignal, :config)[:request_headers]
