@@ -450,7 +450,6 @@ defmodule Appsignal.ConfigTest do
       write_to_environment()
       assert System.get_env("_APPSIGNAL_APP_NAME") == ""
       assert System.get_env("_APPSIGNAL_CA_FILE_PATH") == ""
-      assert System.get_env("_APPSIGNAL_FILTER_PARAMETERS") == ""
       assert System.get_env("_APPSIGNAL_HTTP_PROXY") == ""
       assert System.get_env("_APPSIGNAL_IGNORE_ACTIONS") == ""
       assert System.get_env("_APPSIGNAL_IGNORE_ERRORS") == ""
@@ -484,7 +483,6 @@ defmodule Appsignal.ConfigTest do
         enable_host_metrics: false,
         endpoint: "https://push.staging.lol",
         env: :prod,
-        filter_parameters: ~w(password secret),
         push_api_key: "00000000-0000-0000-0000-000000000000",
         hostname: "My hostname",
         http_proxy: "http://10.10.10.10:8888",
@@ -512,7 +510,6 @@ defmodule Appsignal.ConfigTest do
         assert System.get_env("_APPSIGNAL_DNS_SERVERS") == "8.8.8.8,8.8.4.4"
         assert System.get_env("_APPSIGNAL_ENABLE_HOST_METRICS") == "false"
         assert System.get_env("_APPSIGNAL_ENVIRONMENT") == "prod"
-        assert System.get_env("_APPSIGNAL_FILTER_PARAMETERS") == "password,secret"
         assert System.get_env("_APPSIGNAL_HOSTNAME") == "My hostname"
         assert System.get_env("_APPSIGNAL_HTTP_PROXY") == "http://10.10.10.10:8888"
         assert System.get_env("_APPSIGNAL_IGNORE_ACTIONS") == "ExampleApplication.PageController#ignored,ExampleApplication.PageController#also_ignored"
