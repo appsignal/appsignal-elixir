@@ -498,7 +498,7 @@ defmodule Mix.Appsignal.Helper do
   end
 
   defp write_report_file(file, report) do
-    case Poison.encode(report) do
+    case Jason.encode(report) do
       {:ok, body} ->
         File.mkdir_p!(priv_dir())
 

@@ -18,14 +18,14 @@ defmodule Appsignal.Diagnose.Report do
       })
 
     url = "#{config[:diagnose_endpoint]}?#{params}"
-    body = Poison.encode!(%{diagnose: report})
+    body = Jason.encode!(%{diagnose: report})
     headers = [{"Content-Type", "application/json; charset=UTF-8"}]
 
     case Transmitter.request(:post, url, headers, body) do
       {:ok, 200, _, reference} ->
         {:ok, body} = :hackney.body(reference)
 
-        case Poison.decode(body) do
+        case Jason.decode(body) do
           {:ok, response} -> {:ok, response["token"]}
           {:error, _} -> {:error, %{status_code: 200, body: body}}
         end

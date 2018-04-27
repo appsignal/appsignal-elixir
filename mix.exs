@@ -57,7 +57,7 @@ defmodule Appsignal.Mixfile do
   end
 
   def application do
-    [mod: {Appsignal, []}, applications: [:logger, :decorator, :hackney, :poison]]
+    [mod: {Appsignal, []}, applications: [:logger, :decorator, :hackney]]
   end
 
   defp compilers(:test_phoenix), do: [:phoenix] ++ compilers(:prod)
@@ -82,12 +82,6 @@ defmodule Appsignal.Mixfile do
   defp deps do
     system_version = System.version()
 
-    poison_version =
-      case Version.compare(system_version, "1.6.0") do
-        :lt -> ">= 1.3.0 and < 4.0.0"
-        _ -> ">= 1.3.0"
-      end
-
     phoenix_version =
       case Version.compare(system_version, "1.4.0") do
         :lt -> ">= 1.2.0 and < 1.4.0"
@@ -97,7 +91,7 @@ defmodule Appsignal.Mixfile do
     [
       {:benchee, "~> 1.0", only: :bench},
       {:hackney, "~> 1.6"},
-      {:poison, poison_version},
+      {:jason, "~> 1.0"},
       {:decorator, "~> 1.2.3"},
       {:plug, ">= 1.1.0", optional: true},
       {:phoenix, phoenix_version, optional: true, only: [:prod, :test_phoenix, :dev]},
