@@ -589,8 +589,7 @@ defmodule Appsignal.ConfigTest do
       skip_session_data: false,
       files_world_accessible: true,
       valid: false,
-      log: "file",
-      hostname: "Alices-MBP.example.com"
+      log: "file"
     }
   end
 

@@ -46,7 +46,6 @@ defmodule Appsignal.ReleaseUpgradeTest do
       endpoint: "https://push.appsignal.com",
       env: :dev,
       filter_parameters: [],
-      hostname: "Alices-MBP.example.com",
       ignore_actions: [],
       ignore_errors: [],
       log: "file",
