@@ -38,6 +38,23 @@ defmodule Appsignal.ConfigTest do
     assert default_configuration() == init_config()
   end
 
+  describe "configured_as_active?" do
+    test "when active" do
+      assert with_config(
+        %{active: true, valid: true},
+        &Config.configured_as_active?/0
+      )
+    end
+
+    test "when not active" do
+      refute with_config(
+        %{active: false, valid: true},
+        &Config.configured_as_active?/0
+      )
+    end
+  end
+
+
   describe "active?" do
     test "when active and valid" do
       assert with_config(
