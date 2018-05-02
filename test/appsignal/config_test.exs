@@ -39,12 +39,25 @@ defmodule Appsignal.ConfigTest do
   end
 
   describe "active?" do
-    test "returns true when active" do
-      assert with_config(%{active: true}, &Config.active?/0)
+    test "when active and valid" do
+      assert with_config(
+        %{active: true, valid: true},
+        &Config.active?/0
+      )
     end
 
-    test "returns false when not active" do
-      assert with_config(%{active: true}, &Config.active?/0)
+    test "when active but not valid" do
+      refute with_config(
+        %{active: true, valid: false},
+        &Config.active?/0
+      )
+    end
+
+    test "when not active and not valid" do
+      refute with_config(
+        %{active: false, valid: true},
+        &Config.active?/0
+      )
     end
   end
 
