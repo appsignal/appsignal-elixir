@@ -1,4 +1,4 @@
-defmodule Appsignal.Utils.ParamsFilter do
+defmodule Appsignal.Utils.MapFilter do
   @moduledoc """
   Helper functions for filtering parameters to prevent sensitive data
   to be submitted to AppSignal.
@@ -30,5 +30,4 @@ defmodule Appsignal.Utils.ParamsFilter do
     Enum.map(list, &filter_values(&1, filter_params))
   end
   def filter_values(other, _filter_params), do: other
-
 end

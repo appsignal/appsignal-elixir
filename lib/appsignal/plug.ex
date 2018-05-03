@@ -140,7 +140,7 @@ if Appsignal.plug?() do
           } = conn
         ) do
       %{
-        "params" => Appsignal.Utils.ParamsFilter.filter_values(params),
+        "params" => Appsignal.Utils.MapFilter.filter_values(params),
         "environment" =>
           %{
             "host" => host,
