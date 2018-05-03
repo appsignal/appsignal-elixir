@@ -129,6 +129,11 @@ defmodule Appsignal.ConfigTest do
         == default_configuration() |> Map.put(:filter_parameters, ~w(password secret))
     end
 
+    test "filter_session_data" do
+      assert with_config(%{filter_session_data: ~w(accept connection)}, &init_config/0)
+        == default_configuration() |> Map.put(:filter_session_data, ~w(accept connection))
+    end
+
     test "frontend_error_catching_path" do
       assert with_config(%{frontend_error_catching_path: "/appsignal_error_catcher"}, &init_config/0)
         == default_configuration() |> Map.put(:frontend_error_catching_path, "/appsignal_error_catcher")
@@ -279,6 +284,13 @@ defmodule Appsignal.ConfigTest do
         %{"APPSIGNAL_FILTER_PARAMETERS" => "password,secret"},
         &init_config/0
       ) == default_configuration() |> Map.put(:filter_parameters, ~w(password secret))
+    end
+
+    test "filter_session_data" do
+      assert with_env(
+        %{"APPSIGNAL_FILTER_SESSION_DATA" => "accept,connection"},
+        &init_config/0
+      ) == default_configuration() |> Map.put(:filter_session_data, ~w(accept connection))
     end
 
     test "frontend_error_catching_path" do
@@ -599,6 +611,7 @@ defmodule Appsignal.ConfigTest do
       diagnose_endpoint: "https://appsignal.com/diag",
       env: :dev,
       filter_parameters: [],
+      filter_session_data: [],
       ignore_actions: [],
       ignore_errors: [],
       ignore_namespaces: [],

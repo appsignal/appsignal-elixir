@@ -10,8 +10,8 @@ defmodule Appsignal.Utils.MapFilter do
     || []
   end
 
-  def filter_values(values) do
-    filter_values(values, get_filter_parameters())
+  def get_filter_session_data do
+    Application.get_env(:appsignal, :config)[:filter_session_data] || []
   end
 
   def filter_values(%{__struct__: mod} = struct, _filter_params) when is_atom(mod) do
