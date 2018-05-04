@@ -175,8 +175,8 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
         ~s(  push_api_key: "my_push_api_key",\n) <>
         ~s{  request_headers: ~w(\n} <>
         ~s{    accept accept-charset accept-encoding accept-language cache-control\n} <>
-        ~s{    connection content-length path-info range request-method\n} <>
-        ~s{    request-uri server-name server-port server-protocol\n} <>
+        ~s{    connection content-length path-info range request-method request-uri\n} <>
+        ~s{    server-name server-port server-protocol\n} <>
         ~s{  ),\n} <>
         ~s(  env: Mix.env\n)
 
@@ -216,8 +216,8 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
         ~s(  push_api_key: "my_push_api_key",\n) <>
         ~s{  request_headers: ~w(\n} <>
         ~s{    accept accept-charset accept-encoding accept-language cache-control\n} <>
-        ~s{    connection content-length path-info range request-method\n} <>
-        ~s{    request-uri server-name server-port server-protocol\n} <>
+        ~s{    connection content-length path-info range request-method request-uri\n} <>
+        ~s{    server-name server-port server-protocol\n} <>
         ~s{  ),\n} <>
         ~s(  env: Mix.env\n)
 

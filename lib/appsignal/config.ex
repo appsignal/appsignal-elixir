@@ -21,8 +21,8 @@ defmodule Appsignal.Config do
 
   @suggested_request_headers [
     ~w(accept accept-charset accept-encoding accept-language cache-control),
-    ~w(connection content-length path-info range request-method),
-    ~w(request-uri server-name server-port server-protocol)
+    ~w(connection content-length path-info range request-method request-uri),
+    ~w(server-name server-port server-protocol)
   ]
 
   @doc """
