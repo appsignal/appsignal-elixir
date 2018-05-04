@@ -14,7 +14,7 @@ defmodule Mix.Tasks.Appsignal.Install do
   end
 
   def run([push_api_key]) do
-    config = %{active: true, push_api_key: push_api_key}
+    config = %{active: true, push_api_key: push_api_key, request_headers: []}
     Application.put_env(:appsignal, :config, config)
     Config.initialize
 
