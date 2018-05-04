@@ -415,7 +415,12 @@ defmodule Appsignal.Transaction do
       # Add session data
       if !config()[:skip_session_data] and conn.private[:plug_session_fetch] == :done do
         Transaction.set_sample_data(
-          transaction, "session_data", conn.private[:plug_session]
+          transaction,
+          "session_data",
+          Appsignal.Utils.MapFilter.filter_values(
+            conn.private[:plug_session],
+            Appsignal.Utils.MapFilter.get_filter_session_data()
+          )
         )
       else
         transaction

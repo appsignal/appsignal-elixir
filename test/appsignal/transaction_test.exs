@@ -119,6 +119,7 @@ defmodule AppsignalTransactionTest do
       assert called Transaction.set_meta_data(transaction, "method", "GET")
     end
   end
+
   describe "concerning skipping session data" do
     setup do
       conn = %Plug.Conn{peer: {{127, 0, 0, 1}, 12345}}
@@ -165,6 +166,30 @@ defmodule AppsignalTransactionTest do
 
       assert not called Appsignal.Transaction.set_sample_data(
         transaction, "session_data", context[:conn].private.plug_session
+      )
+    end
+  end
+
+  describe "concerning filtering session data" do
+    setup do
+      conn = %Plug.Conn{peer: {{127, 0, 0, 1}, 12345}}
+      |> Plug.Conn.put_private(:plug_session, %{password: "secret", foo: "bar"})
+      |> Plug.Conn.put_private(:plug_session_fetch, :done)
+
+      {:ok, conn: conn}
+    end
+
+    @tag :skip_env_test_no_nif
+    @tag :skip_env_test
+    test_with_mock "takes out filtered session keys", context, Appsignal.Transaction, [:passthrough], [] do
+      transaction = with_config(%{filter_session_data: ~w(password)}, fn() ->
+        "test5"
+        |> Transaction.start(:http_request)
+        |> Transaction.set_request_metadata(context[:conn])
+      end)
+
+      assert called Appsignal.Transaction.set_sample_data(
+        transaction, "session_data", %{foo: "bar"}
       )
     end
   end
