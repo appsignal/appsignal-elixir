@@ -1,5 +1,7 @@
-# 1.6.0-alpha.1
-* Log with :info level instead of :warn when AppSignal is disabled #340
+# 1.6.0-beta.1
+* Explicit header whitelist in configuration (#336)
+* Add filter_session_data config option (#343)
+* Log with :info level instead of :warn when AppSignal is disabled (#340)
 * Remove default hostname (#339)
 * Remove filter_parameters config for extension (#337)
 * Demonitor processes when the transaction completes (#333)
