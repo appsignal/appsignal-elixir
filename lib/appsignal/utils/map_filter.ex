@@ -1,4 +1,4 @@
-defmodule Appsignal.Utils.ParamsFilter do
+defmodule Appsignal.Utils.MapFilter do
   @moduledoc """
   Helper functions for filtering parameters to prevent sensitive data
   to be submitted to AppSignal.
@@ -10,8 +10,8 @@ defmodule Appsignal.Utils.ParamsFilter do
     || []
   end
 
-  def filter_values(values) do
-    filter_values(values, get_filter_parameters())
+  def get_filter_session_data do
+    Application.get_env(:appsignal, :config)[:filter_session_data] || []
   end
 
   def filter_values(%{__struct__: mod} = struct, _filter_params) when is_atom(mod) do
@@ -30,5 +30,4 @@ defmodule Appsignal.Utils.ParamsFilter do
     Enum.map(list, &filter_values(&1, filter_params))
   end
   def filter_values(other, _filter_params), do: other
-
 end

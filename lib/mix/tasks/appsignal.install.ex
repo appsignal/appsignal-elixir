@@ -1,6 +1,6 @@
 defmodule Mix.Tasks.Appsignal.Install do
   use Mix.Task
-  alias Appsignal.Utils.PushApiKeyValidator
+  alias Appsignal.{Utils.PushApiKeyValidator, Config}
 
   @demo Application.get_env(:appsignal, :appsignal_demo, Appsignal.Demo)
 
@@ -14,9 +14,9 @@ defmodule Mix.Tasks.Appsignal.Install do
   end
 
   def run([push_api_key]) do
-    config = %{active: true, push_api_key: push_api_key}
+    config = %{active: true, push_api_key: push_api_key, request_headers: []}
     Application.put_env(:appsignal, :config, config)
-    Appsignal.Config.initialize
+    Config.initialize
 
     header()
     validate_push_api_key()
@@ -97,6 +97,7 @@ defmodule Mix.Tasks.Appsignal.Install do
     IO.puts ~s(  export APPSIGNAL_APP_NAME="#{config[:name]}")
     IO.puts ~s(  export APPSIGNAL_APP_ENV="production")
     IO.puts ~s(  export APPSIGNAL_PUSH_API_KEY="#{config[:push_api_key]}")
+    IO.puts ~s(  export APPSIGNAL_REQUEST_HEADERS="#{Config.single_line_suggested_request_headers()}")
   end
 
   defp write_config_file(config) do
@@ -155,19 +156,22 @@ defmodule Mix.Tasks.Appsignal.Install do
   # Contents for the config/appsignal.exs file.
   defp appsignal_config_file_contents(config) do
     options = [
-      ~s(  name: "#{config[:name]}"),
-      ~s(  push_api_key: "#{config[:push_api_key]}"),
+      ~s(  name: "#{config[:name]}",),
+      ~s(  push_api_key: "#{config[:push_api_key]}",),
+      ~s{  request_headers: ~w(},
+      Config.multiline_suggested_request_headers(),
+      ~s{  ),},
       ~s(  env: Mix.env)
     ]
 
     options_with_active = case has_environment_configuration_files?() do
-      false -> [~s(  active: true)] ++ options
+      false -> [~s(  active: true,)] ++ options
       true -> options
     end
 
     "use Mix.Config\n\n" <>
       "config :appsignal, :config,\n" <>
-      Enum.join(options_with_active, ",\n") <>
+      Enum.join(options_with_active, "\n") <>
       "\n"
   end
 

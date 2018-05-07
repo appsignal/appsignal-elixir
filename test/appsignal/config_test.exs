@@ -38,6 +38,23 @@ defmodule Appsignal.ConfigTest do
     assert default_configuration() == init_config()
   end
 
+  describe "configured_as_active?" do
+    test "when active" do
+      assert with_config(
+        %{active: true, valid: true},
+        &Config.configured_as_active?/0
+      )
+    end
+
+    test "when not active" do
+      refute with_config(
+        %{active: false, valid: true},
+        &Config.configured_as_active?/0
+      )
+    end
+  end
+
+
   describe "active?" do
     test "when active and valid" do
       assert with_config(
@@ -58,6 +75,16 @@ defmodule Appsignal.ConfigTest do
         %{active: false, valid: true},
         &Config.active?/0
       )
+    end
+  end
+
+  describe "request_headers" do
+    test "is nil by default" do
+      assert with_config(%{}, &Config.request_headers/0) == nil
+    end
+
+    test "returns the request_headers config" do
+      assert with_config(%{request_headers: []}, &Config.request_headers/0) == []
     end
   end
 
@@ -100,6 +127,11 @@ defmodule Appsignal.ConfigTest do
     test "filter_parameters" do
       assert with_config(%{filter_parameters: ~w(password secret)}, &init_config/0)
         == default_configuration() |> Map.put(:filter_parameters, ~w(password secret))
+    end
+
+    test "filter_session_data" do
+      assert with_config(%{filter_session_data: ~w(accept connection)}, &init_config/0)
+        == default_configuration() |> Map.put(:filter_session_data, ~w(accept connection))
     end
 
     test "frontend_error_catching_path" do
@@ -186,6 +218,11 @@ defmodule Appsignal.ConfigTest do
         == default_configuration() |> Map.put(:working_dir_path, "/tmp/appsignal")
     end
 
+    test "request_headers" do
+      assert with_config(%{request_headers: ~w(accept accept-charset)}, &init_config/0)
+        == default_configuration() |> Map.put(:request_headers, ~w(accept accept-charset))
+    end
+
     test "revision" do
       assert with_config(%{revision: "03bd9e"}, &init_config/0)
         == default_configuration() |> Map.put(:revision, "03bd9e")
@@ -247,6 +284,13 @@ defmodule Appsignal.ConfigTest do
         %{"APPSIGNAL_FILTER_PARAMETERS" => "password,secret"},
         &init_config/0
       ) == default_configuration() |> Map.put(:filter_parameters, ~w(password secret))
+    end
+
+    test "filter_session_data" do
+      assert with_env(
+        %{"APPSIGNAL_FILTER_SESSION_DATA" => "accept,connection"},
+        &init_config/0
+      ) == default_configuration() |> Map.put(:filter_session_data, ~w(accept connection))
     end
 
     test "frontend_error_catching_path" do
@@ -357,6 +401,13 @@ defmodule Appsignal.ConfigTest do
       ) == default_configuration() |> Map.put(:working_dir_path, "/tmp/appsignal")
     end
 
+    test "request_headers" do
+      assert with_env(
+        %{"APPSIGNAL_REQUEST_HEADERS" => "accept,accept-charset"},
+        &init_config/0
+      ) == default_configuration() |> Map.put(:request_headers, ~w(accept accept-charset))
+    end
+
     test "revision" do
       assert with_env(
         %{"APP_REVISION" => "03bd9e"},
@@ -428,7 +479,6 @@ defmodule Appsignal.ConfigTest do
       write_to_environment()
       assert System.get_env("_APPSIGNAL_APP_NAME") == ""
       assert System.get_env("_APPSIGNAL_CA_FILE_PATH") == ""
-      assert System.get_env("_APPSIGNAL_FILTER_PARAMETERS") == ""
       assert System.get_env("_APPSIGNAL_HTTP_PROXY") == ""
       assert System.get_env("_APPSIGNAL_IGNORE_ACTIONS") == ""
       assert System.get_env("_APPSIGNAL_IGNORE_ERRORS") == ""
@@ -462,7 +512,6 @@ defmodule Appsignal.ConfigTest do
         enable_host_metrics: false,
         endpoint: "https://push.staging.lol",
         env: :prod,
-        filter_parameters: ~w(password secret),
         push_api_key: "00000000-0000-0000-0000-000000000000",
         hostname: "My hostname",
         http_proxy: "http://10.10.10.10:8888",
@@ -490,7 +539,6 @@ defmodule Appsignal.ConfigTest do
         assert System.get_env("_APPSIGNAL_DNS_SERVERS") == "8.8.8.8,8.8.4.4"
         assert System.get_env("_APPSIGNAL_ENABLE_HOST_METRICS") == "false"
         assert System.get_env("_APPSIGNAL_ENVIRONMENT") == "prod"
-        assert System.get_env("_APPSIGNAL_FILTER_PARAMETERS") == "password,secret"
         assert System.get_env("_APPSIGNAL_HOSTNAME") == "My hostname"
         assert System.get_env("_APPSIGNAL_HTTP_PROXY") == "http://10.10.10.10:8888"
         assert System.get_env("_APPSIGNAL_IGNORE_ACTIONS") == "ExampleApplication.PageController#ignored,ExampleApplication.PageController#also_ignored"
@@ -563,6 +611,7 @@ defmodule Appsignal.ConfigTest do
       diagnose_endpoint: "https://appsignal.com/diag",
       env: :dev,
       filter_parameters: [],
+      filter_session_data: [],
       ignore_actions: [],
       ignore_errors: [],
       ignore_namespaces: [],
@@ -570,8 +619,7 @@ defmodule Appsignal.ConfigTest do
       skip_session_data: false,
       files_world_accessible: true,
       valid: false,
-      log: "file",
-      hostname: "Alices-MBP.example.com"
+      log: "file"
     }
   end
 

@@ -1,3 +1,18 @@
+# 1.6.0
+* Explicit header whitelist in configuration (#336)
+* Add filter_session_data config option (#343)
+* Log with :info level instead of :warn when AppSignal is disabled (#340)
+* Remove default hostname (#339)
+* Remove filter_parameters config for extension (#337)
+* Demonitor processes when the transaction completes (#333)
+* Hard-remove transactions from the Registry (#332)
+* Accept tags for (custom) metrics (#331)
+* Don't register Transactions created by `Appsignal.send_error/7`  (#330)
+* Remove transaction when calling `Transaction.complete` (#329)
+* Add :request_headers and APPSIGNAL_REQUEST_HEADERS configuration (#327)
+* Filter arguments in backtraces (#326)
+* Relax :httpoison dependency to allow ~> 1.0 (#322)
+
 # 1.5.0
 * Add agent.exs file to package in mix.exs (#323)
 * Restore :revision config (#315)

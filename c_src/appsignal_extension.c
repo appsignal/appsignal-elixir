@@ -410,8 +410,9 @@ static ERL_NIF_TERM _set_gauge(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv
 {
     ErlNifBinary key;
     double value;
+    data_ptr *data_ptr;
 
-    if (argc != 2) {
+    if (argc != 3) {
       return enif_make_badarg(env);
     }
     if(!enif_inspect_iolist_as_binary(env, argv[0], &key)) {
@@ -420,8 +421,11 @@ static ERL_NIF_TERM _set_gauge(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv
     if(!enif_get_double(env, argv[1], &value)) {
         return enif_make_badarg(env);
     }
+    if(!enif_get_resource(env, argv[2], appsignal_data_type, (void**) &data_ptr)) {
+      return enif_make_badarg(env);
+    }
 
-    appsignal_set_gauge(make_appsignal_string(key), value);
+    appsignal_set_gauge(make_appsignal_string(key), value, data_ptr->data);
 
     return enif_make_atom(env, "ok");
 }
@@ -430,8 +434,9 @@ static ERL_NIF_TERM _increment_counter(ErlNifEnv* env, int argc, const ERL_NIF_T
 {
     ErlNifBinary key;
     int count;
+    data_ptr *data_ptr;
 
-    if (argc != 2) {
+    if (argc != 3) {
       return enif_make_badarg(env);
     }
     if(!enif_inspect_iolist_as_binary(env, argv[0], &key)) {
@@ -440,8 +445,11 @@ static ERL_NIF_TERM _increment_counter(ErlNifEnv* env, int argc, const ERL_NIF_T
     if(!enif_get_int(env, argv[1], &count)) {
         return enif_make_badarg(env);
     }
+    if(!enif_get_resource(env, argv[2], appsignal_data_type, (void**) &data_ptr)) {
+      return enif_make_badarg(env);
+    }
 
-    appsignal_increment_counter(make_appsignal_string(key), count);
+    appsignal_increment_counter(make_appsignal_string(key), count, data_ptr->data);
 
     return enif_make_atom(env, "ok");
 }
@@ -450,8 +458,9 @@ static ERL_NIF_TERM _add_distribution_value(ErlNifEnv* env, int argc, const ERL_
 {
     ErlNifBinary key;
     double value;
+    data_ptr *data_ptr;
 
-    if (argc != 2) {
+    if (argc != 3) {
       return enif_make_badarg(env);
     }
     if(!enif_inspect_iolist_as_binary(env, argv[0], &key)) {
@@ -460,8 +469,11 @@ static ERL_NIF_TERM _add_distribution_value(ErlNifEnv* env, int argc, const ERL_
     if(!enif_get_double(env, argv[1], &value)) {
         return enif_make_badarg(env);
     }
+    if(!enif_get_resource(env, argv[2], appsignal_data_type, (void**) &data_ptr)) {
+      return enif_make_badarg(env);
+    }
 
-    appsignal_add_distribution_value(make_appsignal_string(key), value);
+    appsignal_add_distribution_value(make_appsignal_string(key), value, data_ptr->data);
 
     return enif_make_atom(env, "ok");
 }
@@ -792,9 +804,9 @@ static ErlNifFunc nif_funcs[] =
     {"_set_meta_data", 3, _set_meta_data, 0},
     {"_finish", 1, _finish, 0},
     {"_complete", 1, _complete, 0},
-    {"_set_gauge", 2, _set_gauge, 0},
-    {"_increment_counter", 2, _increment_counter, 0},
-    {"_add_distribution_value", 2, _add_distribution_value, 0},
+    {"_set_gauge", 3, _set_gauge, 0},
+    {"_increment_counter", 3, _increment_counter, 0},
+    {"_add_distribution_value", 3, _add_distribution_value, 0},
     {"_data_map_new", 0, _data_map_new, 0},
     {"_data_set_string", 3, _data_set_string, 0},
     {"_data_set_string", 2, _data_set_string, 0},

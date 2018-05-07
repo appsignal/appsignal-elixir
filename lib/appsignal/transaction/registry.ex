@@ -31,12 +31,14 @@ defmodule Appsignal.TransactionRegistry do
   @doc """
   Register the current process as the owner of the given transaction.
   """
-  @spec register(Transaction.t) :: :ok
+  @spec register(Transaction.t()) :: :ok
   def register(transaction) do
     pid = self()
+
     if registry_alive?() do
-      true = :ets.insert(@table, {pid, transaction})
-      GenServer.cast(__MODULE__, {:monitor, pid})
+      monitor_reference = GenServer.call(__MODULE__, {:monitor, pid})
+      true = :ets.insert(@table, {pid, transaction, monitor_reference})
+      :ok
     else
       Logger.debug("AppSignal was not started, skipping transaction registration.")
       nil
@@ -46,19 +48,48 @@ defmodule Appsignal.TransactionRegistry do
   @doc """
   Given a process ID, return its associated transaction.
   """
+  @spec lookup(pid) :: Transaction.t() | nil
+  def lookup(pid) do
+    case registry_alive?() && :ets.lookup(@table, pid) do
+      [{^pid, %Transaction{} = transaction, _}] ->
+        transaction
+
+      [{^pid, %Transaction{} = transaction}] ->
+        transaction
+
+      false ->
+        Logger.debug("AppSignal was not started, skipping transaction lookup.")
+        nil
+
+      _ ->
+        nil
+    end
+  end
+
   @spec lookup(pid, boolean) :: Transaction.t | nil | :removed
-  def lookup(pid, return_removed \\ false) do
+  @doc false
+  def lookup(pid, return_removed) do
+    IO.warn "Appsignal.TransactionRegistry.lookup/2 is deprecated. Use Appsignal.TransactionRegistry.lookup/1 instead"
+
     case registry_alive?() && :ets.lookup(@table, pid) do
       [{^pid, :removed}] ->
         case return_removed do
           false -> nil
           true -> :removed
         end
-      [{^pid, transaction}] -> transaction
+
+      [{^pid, transaction, _}] ->
+        transaction
+
+      [{^pid, transaction}] ->
+        transaction
+
       false ->
         Logger.debug("AppSignal was not started, skipping transaction lookup.")
         nil
-      [] -> nil
+
+      [] ->
+        nil
     end
   end
 
@@ -67,6 +98,7 @@ defmodule Appsignal.TransactionRegistry do
   """
   @spec remove_transaction(Transaction.t) :: :ok | {:error, :not_found}
   def remove_transaction(%Transaction{} = transaction) do
+    GenServer.cast(__MODULE__, {:demonitor, transaction})
     GenServer.call(__MODULE__, {:remove, transaction})
   end
 
@@ -85,22 +117,30 @@ defmodule Appsignal.TransactionRegistry do
 
   def handle_call({:remove, transaction}, _from, state) do
     reply =
-      case :ets.match(@table, {:'$1', transaction}) do
+      case pids_and_monitor_references(transaction) do
+        [[_pid, _reference] | _] = pids_and_refs ->
+          delete(pids_and_refs)
+
         [[_pid] | _] = pids ->
-          for [pid] <- pids do
-            true = :ets.delete(@table, pid)
-            true = :ets.insert(@table, {pid, :removed})
-            Process.send_after(self(), {:delete, pid}, 5000)
-          end
-          :ok
+          delete(pids)
+
         [] ->
           {:error, :not_found}
       end
+
     {:reply, reply, state}
   end
 
-  def handle_cast({:monitor, pid}, state) do
-    Process.monitor(pid)
+  def handle_call({:monitor, pid}, _from, state) do
+    monitor_reference = Process.monitor(pid)
+    {:reply, monitor_reference, state}
+  end
+
+  def handle_cast({:demonitor, %Transaction{} = transaction}, state) do
+    transaction
+    |> pids_and_monitor_references()
+    |> demonitor
+
     {:noreply, state}
   end
 
@@ -119,8 +159,30 @@ defmodule Appsignal.TransactionRegistry do
     {:noreply, state}
   end
 
+  defp delete([[pid, _] | tail]) do
+    :ets.delete(@table, pid)
+    delete(tail)
+  end
+  defp delete([[pid] | tail]) do
+    :ets.delete(@table, pid)
+    delete(tail)
+  end
+  defp delete([]), do: :ok
+
+  defp demonitor([[_, reference] | tail]) do
+    Process.demonitor(reference)
+    demonitor(tail)
+  end
+  defp demonitor([_ | tail]), do: demonitor(tail)
+  defp demonitor([]), do: :ok
+
   defp registry_alive? do
     pid = Process.whereis(__MODULE__)
     !is_nil(pid) && Process.alive?(pid)
+  end
+
+  defp pids_and_monitor_references(transaction) do
+    :ets.match(@table, {:'$1', transaction, :'$2'}) ++
+      :ets.match(@table, {:'$1', transaction})
   end
 end

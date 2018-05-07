@@ -32,7 +32,7 @@ defmodule Appsignal.Mixfile do
 
   def project do
     [app: :appsignal,
-     version: "1.5.0",
+     version: "1.6.0",
      name: "AppSignal",
      description: description(),
      package: package(),
@@ -59,7 +59,7 @@ defmodule Appsignal.Mixfile do
   defp package do
     %{files: ["lib", "c_src/*.[ch]", "mix.exs", "mix_helpers.exs",
               "*.md", "LICENSE", "Makefile", "agent.exs"],
-      maintainers: ["Arjan Scherpenisse", "Jeff Kreeftmeijer", "Tom de Bruijn"],
+      maintainers: ["Jeff Kreeftmeijer", "Tom de Bruijn"],
       licenses: ["MIT"],
       links: %{"GitHub" => "https://github.com/appsignal/appsignal-elixir"}}
   end
@@ -89,7 +89,7 @@ defmodule Appsignal.Mixfile do
 
   defp deps do
     [
-      {:httpoison, "~> 0.11"},
+      {:httpoison, "~> 0.11 or ~> 1.0"},
       {:poison, ">= 1.3.0"},
       {:decorator, "~> 1.2.3"},
       {:plug, ">= 1.1.0", optional: true},

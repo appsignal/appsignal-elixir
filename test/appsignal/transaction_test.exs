@@ -3,7 +3,7 @@ defmodule AppsignalTransactionTest do
   import Mock
   import AppsignalTest.Utils
 
-  alias Appsignal.Transaction
+  alias Appsignal.{Transaction, TransactionRegistry}
 
   test "transaction lifecycle" do
     transaction = Transaction.start("test1", :http_request)
@@ -119,6 +119,7 @@ defmodule AppsignalTransactionTest do
       assert called Transaction.set_meta_data(transaction, "method", "GET")
     end
   end
+
   describe "concerning skipping session data" do
     setup do
       conn = %Plug.Conn{peer: {{127, 0, 0, 1}, 12345}}
@@ -166,6 +167,73 @@ defmodule AppsignalTransactionTest do
       assert not called Appsignal.Transaction.set_sample_data(
         transaction, "session_data", context[:conn].private.plug_session
       )
+    end
+  end
+
+  describe "concerning filtering session data" do
+    setup do
+      conn = %Plug.Conn{peer: {{127, 0, 0, 1}, 12345}}
+      |> Plug.Conn.put_private(:plug_session, %{password: "secret", foo: "bar"})
+      |> Plug.Conn.put_private(:plug_session_fetch, :done)
+
+      {:ok, conn: conn}
+    end
+
+    @tag :skip_env_test_no_nif
+    @tag :skip_env_test
+    test_with_mock "takes out filtered session keys", context, Appsignal.Transaction, [:passthrough], [] do
+      transaction = with_config(%{filter_session_data: ~w(password)}, fn() ->
+        "test5"
+        |> Transaction.start(:http_request)
+        |> Transaction.set_request_metadata(context[:conn])
+      end)
+
+      assert called Appsignal.Transaction.set_sample_data(
+        transaction, "session_data", %{foo: "bar"}
+      )
+    end
+  end
+
+  describe "creating a transaction" do
+    setup do
+      id = Transaction.generate_id
+      [id: id, transaction: Transaction.create(id, :http_request)]
+    end
+
+    test "returns a transaction", %{transaction: transaction} do
+      assert %Transaction{} = transaction
+    end
+
+    test "uses the passed transaction ID", %{id: id, transaction: transaction} do
+      assert %{id: ^id} = transaction
+    end
+
+    test "creates a transaction_reference", %{transaction: transaction} do
+      assert is_reference_or_binary(transaction.resource)
+    end
+  end
+
+  describe "starting a transaction" do
+    setup do
+      id = Transaction.generate_id
+      [id: id, transaction: Transaction.start(id, :http_request)]
+    end
+
+    test "creates a transaction", %{transaction: transaction} do
+      assert %Transaction{id: id} = transaction
+    end
+
+    test "registers the transaction", %{transaction: transaction} do
+      assert :ok == TransactionRegistry.remove_transaction(transaction)
+    end
+  end
+
+  describe "completing a transaction" do
+    test "removes the transaction from the registry" do
+      transaction = Transaction.start(Transaction.generate_id, :http_request)
+      Transaction.finish(transaction)
+      :ok = Transaction.complete(transaction)
+      {:error, :not_found} = TransactionRegistry.remove_transaction(transaction)
     end
   end
 end

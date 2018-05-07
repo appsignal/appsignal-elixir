@@ -24,7 +24,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
       {:noreply, nil}
     end
     def handle_info(:timeout, :function_error) do
-      String.length(:notastring)
+      Float.ceil(1)
       {:noreply, nil}
     end
   end
@@ -102,13 +102,13 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
 
   test "proc_lib.spawn + function error" do
     :proc_lib.spawn(fn() ->
-      String.length(:notastring)
+      Float.ceil(1)
     end)
     |> assert_crash_caught
     |> reason("{:error, :function_clause}")
     |> message(~r(Process #PID<[\d.]+> terminating$))
     |> stacktrace([
-      ~r{\(elixir\) (lib/elixir/)?unicode/unicode.ex:\d+: String.Unicode.length/1},
+      ~r{\(elixir\) lib/float.ex:\d+: Float.ceil/2},
       ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p/3}
     ])
   end
@@ -173,7 +173,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
 
     if System.otp_release >= "20" do
       stacktrace(result, [
-        ~r{\(elixir\) (lib/elixir/)?unicode/unicode.ex:\d+: String.Unicode.length/1},
+        ~r{\(elixir\) lib/float.ex:\d+: Float.ceil/2},
         ~r{test/appsignal/error_handler/error_matcher_test.exs:\d+: Appsignal.ErrorHandler.ErrorMatcherTest.CrashingGenServer.handle_info/2},
         ~r{\(stdlib\) gen_server.erl:\d+: :gen_server.try_dispatch/4},
         ~r{\(stdlib\) gen_server.erl:\d+: :gen_server.handle_msg/6},
@@ -181,7 +181,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
       ])
     else
       stacktrace(result, [
-        ~r{\(elixir\) (lib/elixir/)?unicode/unicode.ex:\d+: String.Unicode.length/1},
+        ~r{\(elixir\) lib/float.ex:\d+: Float.ceil/2},
         ~r{test/appsignal/error_handler/error_matcher_test.exs:\d+: Appsignal.ErrorHandler.ErrorMatcherTest.CrashingGenServer.handle_info/2},
         ~r{\(stdlib\) gen_server.erl:\d+: :gen_server.try_dispatch/4},
         ~r{\(stdlib\) gen_server.erl:\d+: :gen_server.handle_msg/5},
@@ -192,15 +192,15 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
 
   test "Task" do
     Task.start(fn() ->
-      String.length(:notastring)
+      Float.ceil(1)
     end)
     |> assert_crash_caught
     |> reason(":function_clause")
     |> message(
-      ~r(Process #PID<[\d.]+> terminating: {:function_clause, \[{String.Uni...)
+      ~r(Process #PID<[\d.]+> terminating: {:function_clause, \[{Float, :cei...)
     )
     |> stacktrace([
-      ~r{\(elixir\) (lib/elixir/)?unicode/unicode.ex:\d+: String.Unicode.length/1},
+      ~r{\(elixir\) lib/float.ex:\d+: Float.ceil/2},
       ~r{\(elixir\) lib/task/supervised.ex:\d+: Task.Supervised.do_apply/2},
       ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p_do_apply/3}
     ])

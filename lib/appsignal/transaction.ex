@@ -46,7 +46,7 @@ defmodule Appsignal.Transaction do
   @type t :: %Transaction{}
 
   @doc """
-  Start a transaction
+  Create and register a transaction.
 
   Call this when a transaction such as a http request or background job starts.
 
@@ -65,9 +65,23 @@ defmodule Appsignal.Transaction do
   """
   @spec start(String.t, atom) :: Transaction.t
   def start(transaction_id, namespace) when is_binary(transaction_id) do
+    transaction_id
+    |> create(namespace)
+    |> register
+  end
+
+  @doc """
+  Create a transaction with a transaction resource.
+  """
+  @spec create(String.t, atom) :: Transaction.t
+  def create(transaction_id, namespace) when is_binary(transaction_id) and is_atom(namespace) do
     {:ok, resource} = Nif.start_transaction(transaction_id, Atom.to_string(namespace))
-    transaction = %Appsignal.Transaction{resource: resource, id: transaction_id}
-    TransactionRegistry.register(transaction)
+    %Transaction{resource: resource, id: transaction_id}
+  end
+
+  @spec register(Transaction.t) :: Transaction.t
+  defp register(transaction) do
+    :ok = TransactionRegistry.register(transaction)
     transaction
   end
 
@@ -358,6 +372,7 @@ defmodule Appsignal.Transaction do
   @spec complete(Transaction.t | nil) :: :ok
   def complete(nil), do: nil
   def complete(%Transaction{} = transaction) do
+    TransactionRegistry.remove_transaction(transaction)
     :ok = Nif.complete(transaction.resource)
   end
 
@@ -400,7 +415,12 @@ defmodule Appsignal.Transaction do
       # Add session data
       if !config()[:skip_session_data] and conn.private[:plug_session_fetch] == :done do
         Transaction.set_sample_data(
-          transaction, "session_data", conn.private[:plug_session]
+          transaction,
+          "session_data",
+          Appsignal.Utils.MapFilter.filter_values(
+            conn.private[:plug_session],
+            Appsignal.Utils.MapFilter.get_filter_session_data()
+          )
         )
       else
         transaction
@@ -426,24 +446,13 @@ defmodule Appsignal.Transaction do
   defp to_s(value) when is_integer(value), do: Integer.to_string(value)
   defp to_s(value) when is_binary(value), do: value
 
-
   @doc """
   Return the transaction for the given process
 
   Creates a new one when not found. Can also return `nil`; in that
   case, we should not continue submitting the transaction.
   """
-  def lookup_or_create_transaction(origin \\ nil, namespace \\ :background_job) do
-    origin = origin || self()
-    case TransactionRegistry.lookup(origin, true) do
-      :removed ->
-        # transaction existed but has already been submitted, on the timer to be removed
-        nil
-      nil ->
-        # could not find a linked transaction; start new transaction
-        start("_" <> generate_id(), namespace)
-      t ->
-        t
-    end
+  def lookup_or_create_transaction(origin \\ self(), namespace \\ :background_job) do
+    TransactionRegistry.lookup(origin) || Transaction.start("_" <> generate_id(), namespace)
   end
 end

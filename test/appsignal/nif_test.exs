@@ -1,5 +1,6 @@
 defmodule Appsignal.NifTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
+  import AppsignalTest.Utils, only: [is_reference_or_binary: 1]
 
   test "whether the agent starts" do
     assert :ok = Appsignal.Nif.start
@@ -9,18 +10,10 @@ defmodule Appsignal.NifTest do
     assert :ok = Appsignal.Nif.stop
   end
 
-  if System.otp_release >= "20" do
-    @tag :skip_env_test_no_nif
-    test "starting transaction returns a reference to the transaction resource" do
-      assert {:ok, transaction} = Appsignal.Nif.start_transaction("transaction id", "http_request")
-      assert is_reference(transaction)
-    end
-  else
-    @tag :skip_env_test_no_nif
-    test "starting transaction returns a resource term" do
-      assert {:ok, transaction} = Appsignal.Nif.start_transaction("transaction id", "http_request")
-      assert is_binary(transaction)
-    end
+  @tag :skip_env_test_no_nif
+  test "starting transaction returns a reference to the transaction resource" do
+    assert {:ok, reference} = Appsignal.Nif.start_transaction("transaction id", "http_request")
+    assert is_reference_or_binary(reference)
   end
 
   if not(Mix.env in [:test_no_nif]) do

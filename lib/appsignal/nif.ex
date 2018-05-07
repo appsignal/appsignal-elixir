@@ -123,16 +123,16 @@ defmodule Appsignal.Nif do
     _complete(transaction_resource)
   end
 
-  def set_gauge(key, value) do
-    _set_gauge(key, value)
+  def set_gauge(key, value, tags) do
+    _set_gauge(key, value, tags)
   end
 
-  def increment_counter(key, count) do
-    _increment_counter(key, count)
+  def increment_counter(key, count, tags) do
+    _increment_counter(key, count, tags)
   end
 
-  def add_distribution_value(key, value) do
-    _add_distribution_value(key, value)
+  def add_distribution_value(key, value, tags) do
+    _add_distribution_value(key, value, tags)
   end
 
   def data_map_new do
@@ -218,7 +218,11 @@ defmodule Appsignal.Nif do
   end
 
   def _start_transaction(_id, _namespace) do
-    {:ok, <<>>}
+    if System.otp_release >= "20" do
+      {:ok, make_ref()}
+    else
+      {:ok, <<>>}
+    end
   end
 
   def _start_event(_transaction_resource) do
@@ -267,15 +271,15 @@ defmodule Appsignal.Nif do
     :ok
   end
 
-  def _set_gauge(_key, _value) do
+  def _set_gauge(_key, _value, _tags) do
     :ok
   end
 
-  def _increment_counter(_key, _count) do
+  def _increment_counter(_key, _count, _tags) do
     :ok
   end
 
-  def _add_distribution_value(_key, _value) do
+  def _add_distribution_value(_key, _value, _tags) do
     :ok
   end
 

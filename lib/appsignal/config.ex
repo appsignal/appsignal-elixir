@@ -1,6 +1,4 @@
 defmodule Appsignal.Config do
-  @system Application.get_env(:appsignal, :appsignal_system, Appsignal.System)
-
   @default_config %{
     active: false,
     debug: false,
@@ -10,6 +8,7 @@ defmodule Appsignal.Config do
     diagnose_endpoint: "https://appsignal.com/diag",
     env: :dev,
     filter_parameters: [],
+    filter_session_data: [],
     ignore_actions: [],
     ignore_errors: [],
     ignore_namespaces: [],
@@ -18,6 +17,12 @@ defmodule Appsignal.Config do
     files_world_accessible: true,
     log: "file"
   }
+
+  @suggested_request_headers [
+    ~w(accept accept-charset accept-encoding accept-language cache-control),
+    ~w(connection content-length path-info range request-method request-uri),
+    ~w(server-name server-port server-protocol)
+  ]
 
   @doc """
   Initializes the AppSignal config. Looks at the config default, the
@@ -36,12 +41,31 @@ defmodule Appsignal.Config do
       |> Map.merge(app_config)
       |> Map.merge(env_config)
 
+
     # Config is valid when we have a push api key
     config =
       config
       |> Map.put(:valid, !empty?(config[:push_api_key]))
 
     Application.put_env(:appsignal, :config, config)
+
+    if config[:valid] && !config[:request_headers] && !test?() do
+      require Logger
+
+      Logger.warn("""
+      The :request_headers config was not set in the AppSignal configuration, falling back to the default list. Please explicitly list response headers to send to AppSignal in config/appsignal.exs:
+
+        request_headers: ~w(
+      #{multiline_suggested_request_headers()}
+        )
+
+      Or set the APPSIGNAL_REQUEST_HEADERS environment variable:
+
+        $ export APPSIGNAL_REQUEST_HEADERS="#{single_line_suggested_request_headers()}"
+
+      Please check https://github.com/appsignal/appsignal-elixir/pull/336 for more information on this change.
+      """)
+    end
 
     case config[:valid] do
       true ->
@@ -53,12 +77,26 @@ defmodule Appsignal.Config do
   end
 
   @doc """
-  Returns whether the AppSignal agent is configured to start on application launch.
+  Returns whether the AppSignal agent is configured to start on application
+  launch.
+  """
+  @spec configured_as_active?() :: boolean
+  def configured_as_active? do
+    Application.fetch_env!(:appsignal, :config).active
+  end
+
+  @doc """
+  Returns true if the configuration is valid and the AppSignal agent is
+  configured to start on application launch.
   """
   @spec active?() :: boolean
   def active? do
     config = Application.fetch_env!(:appsignal, :config)
     config.valid && config.active
+  end
+
+  def request_headers do
+    Application.fetch_env!(:appsignal, :config)[:request_headers]
   end
 
   @env_to_key_mapping %{
@@ -71,6 +109,7 @@ defmodule Appsignal.Config do
     "APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH" => :frontend_error_catching_path,
     "APPSIGNAL_HOSTNAME" => :hostname,
     "APPSIGNAL_FILTER_PARAMETERS" => :filter_parameters,
+    "APPSIGNAL_FILTER_SESSION_DATA" => :filter_session_data,
     "APPSIGNAL_DEBUG" => :debug,
     "APPSIGNAL_DNS_SERVERS" => :dns_servers,
     "APPSIGNAL_LOG" => :log,
@@ -84,13 +123,14 @@ defmodule Appsignal.Config do
     "APPSIGNAL_ENABLE_HOST_METRICS" => :enable_host_metrics,
     "APPSIGNAL_SKIP_SESSION_DATA" => :skip_session_data,
     "APPSIGNAL_FILES_WORLD_ACCESSIBLE" => :files_world_accessible,
+    "APPSIGNAL_REQUEST_HEADERS" => :request_headers,
     "APP_REVISION" => :revision
   }
 
   @string_keys ~w(APPSIGNAL_APP_NAME APPSIGNAL_PUSH_API_KEY APPSIGNAL_PUSH_API_ENDPOINT APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH APPSIGNAL_HOSTNAME APPSIGNAL_HTTP_PROXY APPSIGNAL_LOG APPSIGNAL_LOG_PATH APPSIGNAL_WORKING_DIR_PATH APPSIGNAL_CA_FILE_PATH APP_REVISION)
   @bool_keys ~w(APPSIGNAL_ACTIVE APPSIGNAL_DEBUG APPSIGNAL_INSTRUMENT_NET_HTTP APPSIGNAL_ENABLE_FRONTEND_ERROR_CATCHING APPSIGNAL_ENABLE_ALLOCATION_TRACKING APPSIGNAL_ENABLE_GC_INSTRUMENTATION APPSIGNAL_RUNNING_IN_CONTAINER APPSIGNAL_ENABLE_HOST_METRICS APPSIGNAL_SKIP_SESSION_DATA APPSIGNAL_FILES_WORLD_ACCESSIBLE)
   @atom_keys ~w(APPSIGNAL_APP_ENV)
-  @string_list_keys ~w(APPSIGNAL_FILTER_PARAMETERS APPSIGNAL_IGNORE_ACTIONS APPSIGNAL_IGNORE_ERRORS APPSIGNAL_IGNORE_NAMESPACES APPSIGNAL_DNS_SERVERS)
+  @string_list_keys ~w(APPSIGNAL_FILTER_PARAMETERS APPSIGNAL_IGNORE_ACTIONS APPSIGNAL_IGNORE_ERRORS APPSIGNAL_IGNORE_NAMESPACES APPSIGNAL_DNS_SERVERS APPSIGNAL_FILTER_SESSION_DATA APPSIGNAL_REQUEST_HEADERS)
 
   defp load_environment(config, list, converter) do
     list
@@ -106,7 +146,7 @@ defmodule Appsignal.Config do
   end
 
   defp load_from_system() do
-    config = %{hostname: @system.hostname_with_domain}
+    config = %{}
 
     # Make AppSignal active by default if the APPSIGNAL_PUSH_API_KEY
     # environment variable is present.
@@ -185,8 +225,7 @@ defmodule Appsignal.Config do
     System.put_env("_APPSIGNAL_DNS_SERVERS", config[:dns_servers] |> Enum.join(","))
     System.put_env("_APPSIGNAL_ENABLE_HOST_METRICS", to_string(config[:enable_host_metrics]))
     System.put_env("_APPSIGNAL_ENVIRONMENT", to_string(config[:env]))
-    System.put_env("_APPSIGNAL_FILTER_PARAMETERS", config[:filter_parameters] |> Enum.join(","))
-    System.put_env("_APPSIGNAL_HOSTNAME", config[:hostname])
+    System.put_env("_APPSIGNAL_HOSTNAME", to_string(config[:hostname]))
     System.put_env("_APPSIGNAL_HTTP_PROXY", to_string(config[:http_proxy]))
     System.put_env("_APPSIGNAL_IGNORE_ACTIONS", config[:ignore_actions] |> Enum.join(","))
     System.put_env("_APPSIGNAL_IGNORE_ERRORS", config[:ignore_errors] |> Enum.join(","))
@@ -226,6 +265,24 @@ defmodule Appsignal.Config do
       _ -> false
     end)
     |> Enum.into(%{})
+  end
+
+  def single_line_suggested_request_headers do
+    @suggested_request_headers
+    |> List.flatten
+    |> Enum.join(",")
+  end
+
+  def multiline_suggested_request_headers do
+    Enum.map_join(@suggested_request_headers, "\n", fn(row) ->
+      "    #{Enum.join(row, " ")}"
+    end)
+  end
+
+  defp test? do
+    Mix.env
+    |> Atom.to_string()
+    |> String.starts_with?("test")
   end
 
   # When you use Appsignal.Config you get a handy config macro which

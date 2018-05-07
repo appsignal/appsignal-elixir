@@ -6,16 +6,21 @@ defmodule AppsignalTest do
   test "set gauge" do
     Appsignal.set_gauge("key", 10.0)
     Appsignal.set_gauge("key", 10)
+    Appsignal.set_gauge("key", 10.0, %{:a => "b"})
+    Appsignal.set_gauge("key", 10, %{:a => "b"})
   end
 
   test "increment counter" do
     Appsignal.increment_counter("counter")
     Appsignal.increment_counter("counter", 5)
+    Appsignal.increment_counter("counter", 5, %{:a => "b"})
   end
 
   test "add distribution value" do
     Appsignal.add_distribution_value("dist_key", 10.0)
     Appsignal.add_distribution_value("dist_key", 10)
+    Appsignal.add_distribution_value("dist_key", 10.0, %{:a => "b"})
+    Appsignal.add_distribution_value("dist_key", 10, %{:a => "b"})
   end
 
   describe "plug?/0" do
@@ -56,12 +61,11 @@ defmodule AppsignalTest do
       {Appsignal.Transaction, [:passthrough], []},
       {Appsignal.TransactionRegistry, [:passthrough], [remove_transaction: fn(_) -> :ok end]},
     ]) do
-      stack = System.stacktrace()
-      t = %Transaction{} = Appsignal.send_error(%RuntimeError{message: "Some bad stuff happened"}, "Oops", stack)
+      t = %Transaction{} = Appsignal.send_error(%RuntimeError{message: "Some bad stuff happened"}, "Oops", [])
 
       assert called TransactionRegistry.remove_transaction(t)
 
-      assert called Transaction.set_error(t, "RuntimeError", "Oops: Some bad stuff happened", stack)
+      assert called Transaction.set_error(t, "RuntimeError", "Oops: Some bad stuff happened", [])
       assert called Transaction.finish(t)
       assert called Transaction.complete(t)
     end
@@ -72,12 +76,11 @@ defmodule AppsignalTest do
       {Appsignal.Transaction, [:passthrough], []},
       {Appsignal.TransactionRegistry, [:passthrough], [remove_transaction: fn(_) -> :ok end]},
     ]) do
-      stack = System.stacktrace()
-      t = %Transaction{} = Appsignal.send_error(%RuntimeError{message: "Some bad stuff happened"}, "Oops", stack, %{foo: "bar"})
+      t = %Transaction{} = Appsignal.send_error(%RuntimeError{message: "Some bad stuff happened"}, "Oops", [], %{foo: "bar"})
 
       assert called TransactionRegistry.remove_transaction(t)
 
-      assert called Transaction.set_error(t, "RuntimeError", "Oops: Some bad stuff happened", stack)
+      assert called Transaction.set_error(t, "RuntimeError", "Oops: Some bad stuff happened", [])
       assert called Transaction.set_meta_data(t, :foo, "bar")
       assert called Transaction.finish(t)
       assert called Transaction.complete(t)
@@ -91,8 +94,7 @@ defmodule AppsignalTest do
     ]) do
 
       conn = %Plug.Conn{peer: {{127, 0, 0, 1}, 12345}, req_headers: [{"accept", "text/plain"}]}
-      stack = System.stacktrace()
-      t = %Transaction{} = Appsignal.send_error(%RuntimeError{message: "Some bad stuff happened"}, "Oops", stack, %{foo: "bar"}, conn)
+      t = %Transaction{} = Appsignal.send_error(%RuntimeError{message: "Some bad stuff happened"}, "Oops", [], %{foo: "bar"}, conn)
 
       env = %{
         "host" => "www.example.com", "method" => "GET",
@@ -103,7 +105,7 @@ defmodule AppsignalTest do
 
       assert called TransactionRegistry.remove_transaction(t)
 
-      assert called Transaction.set_error(t, "RuntimeError", "Oops: Some bad stuff happened", stack)
+      assert called Transaction.set_error(t, "RuntimeError", "Oops: Some bad stuff happened", [])
       assert called Transaction.set_meta_data(t, :foo, "bar")
       assert called Transaction.set_sample_data(t, "environment", env)
       assert called Transaction.set_request_metadata(t, conn)
@@ -117,11 +119,10 @@ defmodule AppsignalTest do
       {Appsignal.Transaction, [:passthrough], []},
       {Appsignal.TransactionRegistry, [:passthrough], [remove_transaction: fn(_) -> :ok end]},
     ]) do
-      stack = System.stacktrace()
       t = %Transaction{} = Appsignal.send_error(
         %RuntimeError{message: "Some bad stuff happened"},
         "Oops",
-        stack,
+        [],
         %{},
         nil,
         fn(t) -> Transaction.set_sample_data(t, "key", %{foo: "bar"}) end
@@ -129,8 +130,8 @@ defmodule AppsignalTest do
 
       assert called TransactionRegistry.remove_transaction(t)
 
-      assert called Transaction.start(:_, :http_request)
-      assert called Transaction.set_error(t, "RuntimeError", "Oops: Some bad stuff happened", stack)
+      assert called Transaction.create(:_, :http_request)
+      assert called Transaction.set_error(t, "RuntimeError", "Oops: Some bad stuff happened", [])
       assert called Transaction.set_sample_data(t, "key", %{foo: "bar"})
       assert called Transaction.finish(t)
       assert called Transaction.complete(t)
@@ -142,11 +143,10 @@ defmodule AppsignalTest do
       {Appsignal.Transaction, [:passthrough], []},
       {Appsignal.TransactionRegistry, [:passthrough], [remove_transaction: fn(_) -> :ok end]},
     ]) do
-      stack = System.stacktrace()
       t = %Transaction{} = Appsignal.send_error(
         %RuntimeError{message: "Some bad stuff happened"},
         "Oops",
-        stack,
+        [],
         %{},
         nil,
         fn(transaction) -> transaction end,
@@ -155,8 +155,8 @@ defmodule AppsignalTest do
 
       assert called TransactionRegistry.remove_transaction(t)
 
-      assert called Transaction.start(:_, :background_job)
-      assert called Transaction.set_error(t, "RuntimeError", "Oops: Some bad stuff happened", stack)
+      assert called Transaction.create(:_, :background_job)
+      assert called Transaction.set_error(t, "RuntimeError", "Oops: Some bad stuff happened", [])
       assert called Transaction.finish(t)
       assert called Transaction.complete(t)
     end
