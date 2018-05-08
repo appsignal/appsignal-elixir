@@ -1,3 +1,7 @@
+# 1.6.1
+* Remove request_headers warning and use sane default. PR #346
+* Fix metrics format for internal agent metrics. PR #347
+
 # 1.6.0
 * Explicit header whitelist in configuration (#336)
 * Add filter_session_data config option (#343)
