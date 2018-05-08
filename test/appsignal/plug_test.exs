@@ -439,11 +439,7 @@ defmodule Appsignal.PlugTest do
         "req_headers.accept-language" => "en-us",
         "req_headers.cache-control" => "no-cache",
         "req_headers.connection" => "keep-alive",
-        "req_headers.user-agent" => "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3...",
-        "req_headers.from" => "webmaster@example.org",
-        "req_headers.referer" => "http://localhost:4001/",
-        "req_headers.range" => "bytes=0-1023",
-        "req_headers.x-real-ip" => "179.146.231.170"
+        "req_headers.range" => "bytes=0-1023"
       }
     end
   end

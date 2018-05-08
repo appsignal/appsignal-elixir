@@ -15,14 +15,13 @@ defmodule Appsignal.Config do
     send_params: true,
     skip_session_data: false,
     files_world_accessible: true,
-    log: "file"
+    log: "file",
+    request_headers: ~w(
+      accept accept-charset accept-encoding accept-language cache-control
+      connection content-length path-info range request-method request-uri
+      server-name server-port server-protocol
+    )
   }
-
-  @suggested_request_headers [
-    ~w(accept accept-charset accept-encoding accept-language cache-control),
-    ~w(connection content-length path-info range request-method request-uri),
-    ~w(server-name server-port server-protocol)
-  ]
 
   @doc """
   Initializes the AppSignal config. Looks at the config default, the
@@ -48,24 +47,6 @@ defmodule Appsignal.Config do
       |> Map.put(:valid, !empty?(config[:push_api_key]))
 
     Application.put_env(:appsignal, :config, config)
-
-    if config[:valid] && !config[:request_headers] && !test?() do
-      require Logger
-
-      Logger.warn("""
-      The :request_headers config was not set in the AppSignal configuration, falling back to the default list. Please explicitly list response headers to send to AppSignal in config/appsignal.exs:
-
-        request_headers: ~w(
-      #{multiline_suggested_request_headers()}
-        )
-
-      Or set the APPSIGNAL_REQUEST_HEADERS environment variable:
-
-        $ export APPSIGNAL_REQUEST_HEADERS="#{single_line_suggested_request_headers()}"
-
-      Please check https://github.com/appsignal/appsignal-elixir/pull/336 for more information on this change.
-      """)
-    end
 
     case config[:valid] do
       true ->
@@ -265,24 +246,6 @@ defmodule Appsignal.Config do
       _ -> false
     end)
     |> Enum.into(%{})
-  end
-
-  def single_line_suggested_request_headers do
-    @suggested_request_headers
-    |> List.flatten
-    |> Enum.join(",")
-  end
-
-  def multiline_suggested_request_headers do
-    Enum.map_join(@suggested_request_headers, "\n", fn(row) ->
-      "    #{Enum.join(row, " ")}"
-    end)
-  end
-
-  defp test? do
-    Mix.env
-    |> Atom.to_string()
-    |> String.starts_with?("test")
   end
 
   # When you use Appsignal.Config you get a handy config macro which

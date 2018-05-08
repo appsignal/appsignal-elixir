@@ -97,7 +97,6 @@ defmodule Mix.Tasks.Appsignal.Install do
     IO.puts ~s(  export APPSIGNAL_APP_NAME="#{config[:name]}")
     IO.puts ~s(  export APPSIGNAL_APP_ENV="production")
     IO.puts ~s(  export APPSIGNAL_PUSH_API_KEY="#{config[:push_api_key]}")
-    IO.puts ~s(  export APPSIGNAL_REQUEST_HEADERS="#{Config.single_line_suggested_request_headers()}")
   end
 
   defp write_config_file(config) do
@@ -158,9 +157,6 @@ defmodule Mix.Tasks.Appsignal.Install do
     options = [
       ~s(  name: "#{config[:name]}",),
       ~s(  push_api_key: "#{config[:push_api_key]}",),
-      ~s{  request_headers: ~w(},
-      Config.multiline_suggested_request_headers(),
-      ~s{  ),},
       ~s(  env: Mix.env)
     ]
 
