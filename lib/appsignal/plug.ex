@@ -159,15 +159,9 @@ if Appsignal.plug?() do
       }
     end
 
-    @fallback_request_headers ~w(
-      accept accept-charset accept-encoding accept-language cache-control
-      connection content-length path-info range request-method request-uri
-      server-name server-port server-protocol
-    )
-
     def extract_request_headers(%Plug.Conn{req_headers: req_headers}) do
       for {key, value} <- req_headers,
-          key in (Config.request_headers() || @fallback_request_headers) do
+          key in (Config.request_headers()) do
         {"req_headers.#{key}", value}
       end
       |> Enum.into(%{})

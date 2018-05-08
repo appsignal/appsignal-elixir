@@ -619,7 +619,12 @@ defmodule Appsignal.ConfigTest do
       skip_session_data: false,
       files_world_accessible: true,
       valid: false,
-      log: "file"
+      log: "file",
+      request_headers: ~w(
+        accept accept-charset accept-encoding accept-language cache-control
+        connection content-length path-info range request-method request-uri
+        server-name server-port server-protocol
+      )
     }
   end
 
