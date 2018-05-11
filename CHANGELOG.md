@@ -1,3 +1,6 @@
+# 1.6.2
+* Merge instead of ignore Phoenix's :filter_parameters if also configured in AppSignal. PR #349
+
 # 1.6.1
 * Remove request_headers warning and use sane default. PR #346
 * Fix metrics format for internal agent metrics. PR #347
