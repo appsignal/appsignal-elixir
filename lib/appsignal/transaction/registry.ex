@@ -16,7 +16,7 @@ defmodule Appsignal.TransactionRegistry do
   """
 
   use GenServer
-
+  alias Appsignal.Transaction
   require Logger
 
   @table :'$appsignal_transaction_registry'
@@ -38,6 +38,8 @@ defmodule Appsignal.TransactionRegistry do
     if registry_alive?() do
       monitor_reference = GenServer.call(__MODULE__, {:monitor, pid})
       true = :ets.insert(@table, {pid, transaction, monitor_reference})
+      GenServer.cast(__MODULE__, {:register, {transaction.id, transaction}})
+
       :ok
     else
       Logger.debug("AppSignal was not started, skipping transaction registration.")
@@ -98,6 +100,7 @@ defmodule Appsignal.TransactionRegistry do
   """
   @spec remove_transaction(Transaction.t) :: :ok | {:error, :not_found}
   def remove_transaction(%Transaction{} = transaction) do
+    GenServer.cast(__MODULE__, {:deregister, transaction.id})
     GenServer.cast(__MODULE__, {:demonitor, transaction})
     GenServer.call(__MODULE__, {:remove, transaction})
   end
@@ -134,6 +137,36 @@ defmodule Appsignal.TransactionRegistry do
   def handle_call({:monitor, pid}, _from, state) do
     monitor_reference = Process.monitor(pid)
     {:reply, monitor_reference, state}
+  end
+
+  def handle_call({:action, id}, _from, state) do
+    action =
+      state
+      |> Map.get(id, %{})
+      |> Map.get(:action)
+
+    {:reply, action, state}
+  end
+
+  def handle_cast({:register, {id, transaction}}, state) do
+    state = Map.merge(state, %{id => transaction})
+
+    {:noreply, state}
+  end
+
+  def handle_cast({:deregister, id}, state) do
+    state = Map.delete(state, id)
+
+    {:noreply, state}
+  end
+
+  def handle_cast({:set_action, {id, action}}, state) do
+    {_, state} =
+      Map.get_and_update(state, id, fn transaction ->
+        {transaction, %{transaction | action: action}}
+      end)
+
+    {:noreply, state}
   end
 
   def handle_cast({:demonitor, %Transaction{} = transaction}, state) do
