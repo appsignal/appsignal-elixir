@@ -9,30 +9,34 @@ defmodule Appsignal.Transaction.FilterTest do
     test "uses parameter filters from the appsignal config" do
       with_config(%{filter_parameters: ["password"]}, fn() ->
         Config.initialize()
-        assert ParamsFilter.get_filter_parameters() == ["password"]
+        assert Enum.member?(ParamsFilter.get_filter_parameters(), "password")
       end)
     end
 
     test "uses parameter filters from the phoenix config" do
-      with_config(%{filter_parameters: ["secret1"]}, fn() ->
-        Config.initialize()
-        assert ParamsFilter.get_filter_parameters() == ["secret1"]
-      end)
+      Application.put_env(:phoenix, :filter_parameters, ~w(secret1))
+      Config.initialize()
+      assert Enum.member?(ParamsFilter.get_filter_parameters(), "secret1")
+      Application.delete_env(:phoenix, :filter_parameters)
     end
 
-    test "appsignal's paramter filters override Phoenix' parameter filters" do
-      with_config(:phoenix, %{filter_parameters: ["secret1"]}, fn() ->
-        with_config(%{filter_parameters: ["secret2"]}, fn() ->
-          Config.initialize()
-          assert ParamsFilter.get_filter_parameters() == ["secret2"]
-        end)
+    test "appsignal's parameter filters merge with Phoenix' parameter filters" do
+      Application.put_env(:phoenix, :filter_parameters, ~w(secret1))
+      with_config(%{filter_parameters: ["secret2"]}, fn() ->
+        Config.initialize()
+        filter_parameters = ParamsFilter.get_filter_parameters()
+        assert Enum.member?(filter_parameters, "secret1")
+        assert Enum.member?(filter_parameters, "secret2")
       end)
+      Application.delete_env(:phoenix, :filter_parameters)
     end
 
     test "uses filter parameters from the OS environment" do
-      with_env(%{"APPSIGNAL_FILTER_PARAMETERS" => "foo,bar"}, fn() ->
+      with_env(%{"APPSIGNAL_FILTER_PARAMETERS" => "secret3,secret4"}, fn() ->
         Config.initialize()
-        assert ParamsFilter.get_filter_parameters() == ["foo", "bar"]
+        filter_parameters = ParamsFilter.get_filter_parameters()
+        assert Enum.member?(filter_parameters, "secret3")
+        assert Enum.member?(filter_parameters, "secret4")
       end)
     end
 
