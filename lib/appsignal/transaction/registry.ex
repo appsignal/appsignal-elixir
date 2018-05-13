@@ -100,12 +100,16 @@ defmodule Appsignal.TransactionRegistry do
   Unregister the current process as the owner of the given transaction.
   """
   @spec remove_transaction(Transaction.t) :: :ok | {:error, :not_found}
-  def remove_transaction(%Transaction{} = transaction) do
-    GenServer.cast(__MODULE__, {:demonitor, transaction})
-    GenServer.call(__MODULE__, {:remove, transaction})
+  def remove_transaction(%Transaction{id: id}) do
+    case :ets.lookup(@index, id) do
+      [{^id, pid}] ->
+        transaction = lookup(pid)
+        GenServer.cast(__MODULE__, {:demonitor, transaction})
+        GenServer.call(__MODULE__, {:remove, transaction})
+      [] ->
+        {:error, :not_found}
+    end
   end
-
-  ##
 
   defmodule State do
     @moduledoc false
@@ -136,10 +140,8 @@ defmodule Appsignal.TransactionRegistry do
     {:reply, monitor_reference, state}
   end
 
-  def handle_cast({:demonitor, %Transaction{} = transaction}, state) do
-    transaction
-    |> pids_and_monitor_references()
-    |> demonitor
+  def handle_cast({:demonitor, %Transaction{monitor_reference: monitor_reference}}, state) do
+    Process.demonitor(monitor_reference)
 
     {:noreply, state}
   end
@@ -164,20 +166,8 @@ defmodule Appsignal.TransactionRegistry do
     {:noreply, state}
   end
 
-  defp demonitor([[_, reference] | tail]) do
-    Process.demonitor(reference)
-    demonitor(tail)
-  end
-  defp demonitor([_ | tail]), do: demonitor(tail)
-  defp demonitor([]), do: :ok
-
   defp registry_alive? do
     pid = Process.whereis(__MODULE__)
     !is_nil(pid) && Process.alive?(pid)
-  end
-
-  defp pids_and_monitor_references(transaction) do
-    :ets.match(@table, {:'$1', transaction, :'$2'}) ++
-      :ets.match(@table, {:'$1', transaction})
   end
 end

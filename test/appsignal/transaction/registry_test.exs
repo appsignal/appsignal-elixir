@@ -47,7 +47,7 @@ defmodule Appsignal.Transaction.RegistryTest do
     setup :register_transaction
 
     test "finds an existing transaction by pid", %{transaction: %{id: id}} do
-      assert %Transaction{id: id} = TransactionRegistry.lookup(self())
+      assert %Transaction{id: ^id} = TransactionRegistry.lookup(self())
     end
   end
 
@@ -83,28 +83,9 @@ defmodule Appsignal.Transaction.RegistryTest do
     end
   end
 
-  describe "remove_transaction/1, with an existing transaction with a separate monitor" do
-    setup :register_transaction_with_separate_monitor
-
-    test "removes the transaction from the registry", %{transaction: transaction} do
-      assert TransactionRegistry.remove_transaction(transaction) == :ok
-      assert TransactionRegistry.lookup(self()) == nil
-    end
-
-  end
-
   def register_transaction(_) do
     transaction = %Transaction{id: Transaction.generate_id()}
     TransactionRegistry.register(transaction)
-
-    [transaction: transaction]
-  end
-
-  defp register_transaction_with_separate_monitor(_) do
-    id = Transaction.generate_id()
-    transaction = %Transaction{id: id}
-    true = :ets.insert(:'$appsignal_transaction_registry', {self(), transaction, Process.monitor(self())})
-    true = :ets.insert(:'$appsignal_transaction_index', {id, self()})
 
     [transaction: transaction]
   end
