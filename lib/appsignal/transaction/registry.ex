@@ -160,7 +160,7 @@ defmodule Appsignal.TransactionRegistry do
   end
 
   defp delete([[pid | _] | tail]) do
-    :ets.delete(@table, pid)
+    Process.send(self(), {:delete, pid}, [])
     delete(tail)
   end
   defp delete([]), do: :ok
