@@ -68,9 +68,16 @@ defmodule Appsignal.Transaction.RegistryTest do
   describe "remove_transaction/1, with an existing transaction" do
     setup :register_transaction
 
-    test "removes the transaction from the registry", %{transaction: transaction} do
-      assert TransactionRegistry.remove_transaction(transaction) == :ok
+    setup %{transaction: transaction} do
+      :ok = TransactionRegistry.remove_transaction(transaction)
+    end
+
+    test "removes the transaction from the registry" do
       assert TransactionRegistry.lookup(self()) == nil
+    end
+
+    test "removes the transaction ID from the index", %{transaction: %{id: id}} do
+      assert :ets.lookup(:'$appsignal_transaction_index', id) == []
     end
   end
 
@@ -91,8 +98,10 @@ defmodule Appsignal.Transaction.RegistryTest do
   end
 
   def register_transaction_without_monitor(_) do
-    transaction = %Transaction{id: Transaction.generate_id()}
+    id = Transaction.generate_id()
+    transaction = %Transaction{id: id}
     true = :ets.insert(:'$appsignal_transaction_registry', {self(), transaction})
+    true = :ets.insert(:'$appsignal_transaction_index', {id, self()})
 
     [transaction: transaction]
   end

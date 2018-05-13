@@ -19,7 +19,8 @@ defmodule Appsignal.TransactionRegistry do
 
   require Logger
 
-  @table :'$appsignal_transaction_registry'
+  @table :"$appsignal_transaction_registry"
+  @index :"$appsignal_transaction_index"
 
   alias Appsignal.Transaction
 
@@ -38,6 +39,7 @@ defmodule Appsignal.TransactionRegistry do
     if registry_alive?() do
       monitor_reference = GenServer.call(__MODULE__, {:monitor, pid})
       true = :ets.insert(@table, {pid, transaction, monitor_reference})
+      true = :ets.insert(@index, {transaction.id, pid})
       :ok
     else
       Logger.debug("AppSignal was not started, skipping transaction registration.")
@@ -110,22 +112,19 @@ defmodule Appsignal.TransactionRegistry do
   end
 
   def init([]) do
-    table = :ets.new(@table, [:set, :named_table,
-                              {:keypos, 1}, :public, {:write_concurrency, true}])
+    :ets.new(@index, [:set, :named_table, :public, {:write_concurrency, true}])
+
+    table =
+      :ets.new(@table, [:set, :named_table, {:keypos, 1}, :public, {:write_concurrency, true}])
+
     {:ok, %State{table: table}}
   end
 
-  def handle_call({:remove, transaction}, _from, state) do
+  def handle_call({:remove, %Transaction{id: id}}, _from, state) do
     reply =
-      case pids_and_monitor_references(transaction) do
-        [[_pid, _reference] | _] = pids_and_refs ->
-          delete(pids_and_refs)
-
-        [[_pid] | _] = pids ->
-          delete(pids)
-
-        [] ->
-          {:error, :not_found}
+      case :ets.lookup(@index, id) do
+        [{^id, pid}] when is_pid(pid) -> Process.send(self(), {:delete, pid}, [])
+        _ -> {:error, :not_found}
       end
 
     {:reply, reply, state}
@@ -151,6 +150,11 @@ defmodule Appsignal.TransactionRegistry do
   end
 
   def handle_info({:delete, pid}, state) do
+    case lookup(pid) do
+      %Transaction{id: id} -> :ets.delete(@index, id)
+      _ -> :ok
+    end
+
     :ets.delete(@table, pid)
     {:noreply, state}
   end
@@ -158,12 +162,6 @@ defmodule Appsignal.TransactionRegistry do
   def handle_info(_msg, state) do
     {:noreply, state}
   end
-
-  defp delete([[pid | _] | tail]) do
-    Process.send(self(), {:delete, pid}, [])
-    delete(tail)
-  end
-  defp delete([]), do: :ok
 
   defp demonitor([[_, reference] | tail]) do
     Process.demonitor(reference)
