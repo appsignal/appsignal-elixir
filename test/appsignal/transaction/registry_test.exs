@@ -90,6 +90,48 @@ defmodule Appsignal.Transaction.RegistryTest do
     end
   end
 
+  describe "action/1, without an action set" do
+    setup :register_transaction
+
+    test "fails to get an unregistered transaction's action" do
+      assert TransactionRegistry.action(%Transaction{}) == {:error, :not_found}
+    end
+
+    test "get a registered transaction's action", %{transaction: transaction} do
+      assert TransactionRegistry.action(transaction) == {:ok, nil}
+    end
+  end
+
+  describe "action/1, with an action set" do
+    setup :register_transaction_with_action_name
+
+    test "get the action", %{transaction: transaction} do
+      assert TransactionRegistry.action(transaction) == {:ok, "action"}
+    end
+  end
+
+  describe "set_action/1" do
+    setup :register_transaction
+
+    test "fails to set an unregistered transaction's action" do
+      assert TransactionRegistry.set_action(%Transaction{}, "custom") == {:error, :not_found}
+    end
+
+    test "set a registered transaction's action", %{transaction: transaction} do
+      assert TransactionRegistry.set_action(transaction, "custom") ==  :ok
+      assert TransactionRegistry.action(transaction) == {:ok, "custom"}
+    end
+  end
+
+  describe "set_action/1, with an action set" do
+    setup :register_transaction_with_action_name
+
+    test "overwrite the action", %{transaction: transaction} do
+      assert TransactionRegistry.set_action(transaction, "custom") == :ok
+      assert TransactionRegistry.action(transaction) == {:ok, "custom"}
+    end
+  end
+
   defp register_transaction(_) do
     transaction = %Transaction{id: Transaction.generate_id()}
     TransactionRegistry.register(transaction)
@@ -102,6 +144,13 @@ defmodule Appsignal.Transaction.RegistryTest do
     transaction = %Transaction{id: id}
     true = :ets.insert(:"$appsignal_transaction_registry", {self(), transaction})
     true = :ets.insert(:"$appsignal_transaction_index", {id, self()})
+
+    [transaction: transaction]
+  end
+
+  defp register_transaction_with_action_name(_) do
+    transaction = %Transaction{id: Transaction.generate_id(), action: "action"}
+    TransactionRegistry.register(transaction)
 
     [transaction: transaction]
   end

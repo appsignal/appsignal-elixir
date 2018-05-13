@@ -104,7 +104,32 @@ defmodule Appsignal.TransactionRegistry do
     GenServer.call(__MODULE__, {:remove, transaction})
   end
 
-  ##
+  @doc """
+  Set the Transaction's action name
+  """
+  @spec set_action(Transaction.t, String.t) :: :ok | {:error, :not_found}
+  def set_action(%Transaction{id: id}, action) do
+    case :ets.lookup(@index, id) do
+      [{^id, pid}] ->
+        transaction = %{lookup(pid) | action: action}
+
+        true = :ets.insert(@table, {pid, transaction})
+        :ok
+      [] ->
+        {:error, :not_found}
+    end
+  end
+
+  @doc """
+  Get the Transaction's action name
+  """
+  @spec action(Transaction.t) :: {:ok, String.t | nil} | {:error, :not_found}
+  def action(%Transaction{id: id}) do
+    case :ets.lookup(@index, id) do
+      [{^id, pid}] -> {:ok, lookup(pid).action}
+      [] -> {:error, :not_found}
+    end
+  end
 
   defmodule State do
     @moduledoc false
