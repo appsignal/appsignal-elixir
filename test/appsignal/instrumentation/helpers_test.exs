@@ -13,10 +13,10 @@ defmodule AppsignalHelpersTest do
   end
 
   test_with_mock "instrument with pid", Appsignal.Transaction, [:passthrough], [] do
-    t = Transaction.start("bar", :http_request)
+    Transaction.start("bar", :http_request)
     call_instrument(self())
-    assert called Transaction.start_event(t)
-    assert called Transaction.finish_event(t, "name", "title", "", 0)
+    assert called Transaction.start_event(:_)
+    assert called Transaction.finish_event(:_, "name", "title", "", 0)
   end
 
   test "instrument with nil" do

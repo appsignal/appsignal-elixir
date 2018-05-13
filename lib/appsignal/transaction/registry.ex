@@ -38,6 +38,7 @@ defmodule Appsignal.TransactionRegistry do
 
     if registry_alive?() do
       monitor_reference = GenServer.call(__MODULE__, {:monitor, pid})
+      transaction = %{transaction | monitor_reference: monitor_reference}
       true = :ets.insert(@table, {pid, transaction, monitor_reference})
       true = :ets.insert(@index, {transaction.id, pid})
       :ok

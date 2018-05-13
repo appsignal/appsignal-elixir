@@ -4,16 +4,18 @@ defmodule Appsignal.Transaction.RegistryTest do
   alias Appsignal.{Transaction, TransactionRegistry}
 
   test "lookup/1 returns nil after process has ended" do
-    transaction = %Transaction{id: Transaction.generate_id()}
+    id = Transaction.generate_id()
+    transaction = %Transaction{id: id}
 
-    pid = spawn(fn() ->
-      TransactionRegistry.register(transaction)
-      assert transaction == TransactionRegistry.lookup(self())
-    end)
+    pid =
+      spawn(fn ->
+        TransactionRegistry.register(transaction)
+        assert %Transaction{id: ^id} = TransactionRegistry.lookup(self())
+      end)
 
     :ok = wait_for_process_to_exit(pid)
 
-    assert transaction == TransactionRegistry.lookup(pid)
+    assert %Transaction{id: ^id} = TransactionRegistry.lookup(pid)
 
     :ok = TransactionRegistry.remove_transaction(transaction)
 
@@ -30,8 +32,8 @@ defmodule Appsignal.Transaction.RegistryTest do
   describe "register/1 and lookup/1, with an existing transaction" do
     setup :register_transaction
 
-    test "finds an existing transaction by pid", %{transaction: transaction} do
-      assert TransactionRegistry.lookup(self()) == transaction
+    test "finds an existing transaction by pid", %{transaction: %{id: id}} do
+      assert %Transaction{id: ^id} = TransactionRegistry.lookup(self())
     end
   end
 

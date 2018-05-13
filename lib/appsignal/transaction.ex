@@ -36,7 +36,7 @@ defmodule Appsignal.Transaction do
 
   """
 
-  defstruct [:resource, :id]
+  defstruct [:resource, :id, :monitor_reference]
 
   alias Appsignal.{Nif, Transaction, TransactionRegistry, Backtrace}
 
