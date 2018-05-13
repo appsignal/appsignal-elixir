@@ -22,21 +22,33 @@ defmodule AppsignalTransactionTest do
   end
 
   test "use default transaction in Transaction calls" do
+    id = Transaction.generate_id()
+    transaction = Transaction.start(id, :http_request)
+    assert %Transaction{id: ^id} = transaction
 
-    transaction = Transaction.start("test2", :http_request)
-    assert %Transaction{} = transaction
+    assert %Transaction{id: ^id} = Transaction.start_event()
 
-    assert ^transaction = Transaction.start_event()
-    assert ^transaction = Transaction.finish_event("sql.query", "Model load", "SELECT * FROM table;", 1)
-    assert ^transaction = Transaction.record_event("sql.query", "Model load", "SELECT * FROM table;", 1000 * 1000 * 3, 1)
-    assert ^transaction = Transaction.set_error("Error", "error message", System.stacktrace)
-    assert ^transaction = Transaction.set_sample_data("key", %{user_id: 1})
-    assert ^transaction = Transaction.set_action("GET:/")
-    assert ^transaction = Transaction.set_queue_start(1000)
-    assert ^transaction = Transaction.set_meta_data("email", "info@info.com")
+    assert %Transaction{id: ^id} =
+             Transaction.finish_event("sql.query", "Model load", "SELECT * FROM table;", 1)
+
+    assert %Transaction{id: ^id} =
+             Transaction.record_event(
+               "sql.query",
+               "Model load",
+               "SELECT * FROM table;",
+               1000 * 1000 * 3,
+               1
+             )
+
+    assert %Transaction{id: ^id} =
+             Transaction.set_error("Error", "error message", System.stacktrace())
+
+    assert %Transaction{id: ^id} = Transaction.set_sample_data("key", %{user_id: 1})
+    assert %Transaction{id: ^id} = Transaction.set_action("GET:/")
+    assert %Transaction{id: ^id} = Transaction.set_queue_start(1000)
+    assert %Transaction{id: ^id} = Transaction.set_meta_data("email", "info@info.com")
     assert [:sample, :no_sample] |> Enum.member?(Transaction.finish())
     assert :ok = Transaction.complete()
-
   end
 
 
@@ -75,16 +87,18 @@ defmodule AppsignalTransactionTest do
   end
 
   test "data encoding" do
-    transaction = Transaction.start("test3", :http_request)
+    id = Transaction.generate_id()
+    Transaction.start(id, :http_request)
 
     # Map
-    assert ^transaction = Transaction.set_sample_data("key", %{"user_id" => 1})
+    assert %Transaction{id: ^id} = Transaction.set_sample_data("key", %{"user_id" => 1})
 
     # Atom
-    assert ^transaction = Transaction.set_sample_data("key", %{user_id: 1})
+    assert %Transaction{id: ^id} = Transaction.set_sample_data("key", %{user_id: 1})
 
     # complex
-    assert ^transaction = Transaction.set_sample_data("key", %{values: %{1 => 2, 3 => 4}})
+    assert %Transaction{id: ^id} =
+             Transaction.set_sample_data("key", %{values: %{1 => 2, 3 => 4}})
   end
 
   test "finishing an event with a non-string body" do
