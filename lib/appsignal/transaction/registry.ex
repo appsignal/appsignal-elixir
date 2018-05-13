@@ -111,6 +111,25 @@ defmodule Appsignal.TransactionRegistry do
     end
   end
 
+  def set_action(%Transaction{id: id}, action) do
+    case :ets.lookup(@index, id) do
+      [{^id, pid}] ->
+        transaction = %{lookup(pid) | action: action}
+
+        true = :ets.insert(@table, {pid, transaction})
+        :ok
+      [] ->
+        {:error, :not_found}
+    end
+  end
+
+  def action(%Transaction{id: id}) do
+    case :ets.lookup(@index, id) do
+      [{^id, pid}] -> lookup(pid).action
+      [] -> {:error, :not_found}
+    end
+  end
+
   defmodule State do
     @moduledoc false
     defstruct table: nil

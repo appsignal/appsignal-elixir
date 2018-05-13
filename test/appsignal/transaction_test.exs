@@ -48,6 +48,7 @@ defmodule AppsignalTransactionTest do
     assert %Transaction{id: ^id} = Transaction.set_queue_start(1000)
     assert %Transaction{id: ^id} = Transaction.set_meta_data("email", "info@info.com")
     assert [:sample, :no_sample] |> Enum.member?(Transaction.finish())
+    assert TransactionRegistry.action(transaction) == "GET:/"
     assert :ok = Transaction.complete()
   end
 
