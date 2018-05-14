@@ -29,6 +29,11 @@ defmodule UsingAppsignalPlug do
     }
   end
 
+  def call(%Plug.Conn{private: %{phoenix_action: :custom_action_name}} = conn, _opts) do
+    Appsignal.Transaction.set_action("custom")
+    conn
+  end
+
   def call(%Plug.Conn{} = conn, _opts) do
     conn |> Plug.Conn.assign(:called?, true)
   end
@@ -183,6 +188,22 @@ defmodule Appsignal.PlugTest do
 
     test "completes the transaction", %{fake_transaction: fake_transaction} do
       assert [%Appsignal.Transaction{}] = FakeTransaction.completed_transactions(fake_transaction)
+    end
+  end
+
+  describe "for a transaction with a custom action name" do
+    setup do
+      conn =
+        %Plug.Conn{}
+        |> Plug.Conn.put_private(:phoenix_controller, AppsignalPhoenixExample.PageController)
+        |> Plug.Conn.put_private(:phoenix_action, :custom_action_name)
+        |> UsingAppsignalPlug.call(%{})
+
+      [conn: conn]
+    end
+
+    test "does not overwrite the transaction's action name", %{fake_transaction: fake_transaction} do
+      assert FakeTransaction.action(fake_transaction) == nil
     end
   end
 
