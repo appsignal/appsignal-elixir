@@ -1,3 +1,7 @@
+# 1.5.1
+* Merge instead of ignore Phoenix's :filter_parameters if also configured in
+  AppSignal (#350)
+
 # 1.5.0
 * Add agent.exs file to package in mix.exs (#323)
 * Restore :revision config (#315)
