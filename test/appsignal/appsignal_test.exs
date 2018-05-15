@@ -97,10 +97,9 @@ defmodule AppsignalTest do
       t = %Transaction{} = Appsignal.send_error(%RuntimeError{message: "Some bad stuff happened"}, "Oops", [], %{foo: "bar"}, conn)
 
       env = %{
-        "host" => "www.example.com", "method" => "GET",
-        "peer" => "127.0.0.1:12345", "port" => 0, "query_string" => "",
+        "host" => "www.example.com", "method" => "GET", "port" => 0,
         "request_path" => "", "request_uri" => "http://www.example.com:0",
-        "script_name" => [], "req_headers.accept" => "text/plain",
+        "req_headers.accept" => "text/plain",
       }
 
       assert called TransactionRegistry.remove_transaction(t)

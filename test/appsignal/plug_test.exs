@@ -380,11 +380,8 @@ defmodule Appsignal.PlugTest do
                "environment" => %{
                  "host" => "www.example.com",
                  "method" => "GET",
-                 "script_name" => ["foo", "bar"],
                  "request_path" => "/foo/bar",
                  "port" => 80,
-                 "query_string" => "foo=bar",
-                 "peer" => "127.0.0.1:12345",
                  "request_uri" => "http://www.example.com:80/foo/bar",
                  "req_headers.accept" => "text/html"
                }
