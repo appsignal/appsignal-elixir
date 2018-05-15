@@ -1,3 +1,6 @@
+# 1.6.3
+* Remove script_name, query_string and peer from Plug.extract_sample_data/1. PR #351
+
 # 1.6.2
 * Merge instead of ignore Phoenix's :filter_parameters if also configured in AppSignal. PR #349
 
