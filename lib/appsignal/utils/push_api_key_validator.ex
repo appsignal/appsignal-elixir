@@ -1,5 +1,7 @@
 defmodule Appsignal.Utils.PushApiKeyValidator do
   def validate(config) do
+    :application.ensure_all_started(:hackney)
+
     url = "#{config[:endpoint]}/1/auth?api_key=#{config[:push_api_key]}"
 
     case :hackney.request(:get, url) do

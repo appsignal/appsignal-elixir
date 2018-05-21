@@ -7,12 +7,16 @@ defmodule Appsignal.Diagnose.Report do
 
   @spec send(%{}, %{}) :: {:ok | :error, String.t}
   def send(config, report) do
-    params = URI.encode_query(%{
-      api_key: config[:push_api_key],
-      name: config[:name],
-      environment: config[:environment],
-      hostname: config[:hostname]
-    })
+    :application.ensure_all_started(:hackney)
+
+    params =
+      URI.encode_query(%{
+        api_key: config[:push_api_key],
+        name: config[:name],
+        environment: config[:environment],
+        hostname: config[:hostname]
+      })
+
     url = "#{config[:diagnose_endpoint]}?#{params}"
     body = Poison.encode!(%{diagnose: report})
     headers = [{"Content-Type", "application/json; charset=UTF-8"}]
