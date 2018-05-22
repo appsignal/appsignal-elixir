@@ -228,6 +228,23 @@ defmodule AppsignalTransactionTest do
     end
   end
 
+  describe "starting a transaction when the registry is not running" do
+    setup do
+      :ok = Supervisor.terminate_child(Appsignal.Supervisor, TransactionRegistry)
+
+      on_exit(fn ->
+        {:ok, _} = Supervisor.restart_child(Appsignal.Supervisor, TransactionRegistry)
+      end)
+    end
+
+    test "creates a transaction" do
+      id = Transaction.generate_id
+      transaction = Transaction.start(id, :http_request)
+
+      assert %Transaction{id: id} = transaction
+    end
+  end
+
   describe "completing a transaction" do
     test "removes the transaction from the registry" do
       transaction = Transaction.start(Transaction.generate_id, :http_request)
