@@ -1,3 +1,6 @@
+# 1.7.0 Alpha 1
+* Fix reporting of memory host metrics for containerized hosts. PR #353
+
 # 1.6.3
 * Remove script_name, query_string and peer from Plug.extract_sample_data/1. PR #351
 
