@@ -1,9 +1,9 @@
 # 1.7.0 Alpha 3
 * Fix reporting of memory host metrics for containerized hosts. PR #353
 * Detect Kubernetes containers as containers in probes-rs library.
-  Commit 76da04b3c490f64b7c8f497aef0614fa46e34744.
+  Commit c58af6c4d72019427ef209112ad6920a9159c0de.
 * Detect Kubernetes containers as containers for `running_in_container`
-  config option. Commit 76da04b3c490f64b7c8f497aef0614fa46e34744.
+  config option. Commit c58af6c4d72019427ef209112ad6920a9159c0de.
 
 # 1.6.3
 * Remove script_name, query_string and peer from Plug.extract_sample_data/1. PR #351
