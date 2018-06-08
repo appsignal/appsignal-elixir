@@ -69,4 +69,25 @@ defmodule Appsignal.ErrorHandler.ErrorExtracterTest do
     assert "RuntimeError" == r
     assert "Foo error: Exception!" == m
   end
+
+  @tag :skip_env_test
+  @tag :skip_env_test_no_nif
+  test "Phoenix.ActionClauseError" do
+    {reason, message} =
+      [
+        controller: MyApp.PageController,
+        action: "index",
+        params: %{foo: "bar"}
+      ]
+      |> Phoenix.ActionClauseError.exception()
+      |> ErrorHandler.extract_reason_and_message("HTTP error")
+
+    assert reason == "Phoenix.ActionClauseError"
+
+    assert message == """
+           HTTP error: could not find a matching clause to process request.
+           This typically happens when there is a parameter mismatch but may
+           also happen when any of the other action arguments do not match.
+           """
+  end
 end

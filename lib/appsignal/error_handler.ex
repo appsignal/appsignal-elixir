@@ -140,6 +140,16 @@ defmodule Appsignal.ErrorHandler do
   end
 
   if Appsignal.phoenix? do
+    def extract_reason_and_message(%Phoenix.ActionClauseError{}, prefix) do
+      message = """
+      could not find a matching clause to process request.
+      This typically happens when there is a parameter mismatch but may
+      also happen when any of the other action arguments do not match.
+      """
+
+      {"Phoenix.ActionClauseError", prefixed(prefix, message)}
+    end
+
     def extract_reason_and_message(%Phoenix.Template.UndefinedError{assigns: %{conn: %{assigns: %{kind: :error, reason: reason}}}}, message) do
       extract_reason_and_message(reason, message)
     end
