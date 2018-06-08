@@ -1,3 +1,6 @@
+# 1.6.4
+* Overwrite message for Phoenix.ActionClauseError. PR #355
+
 # 1.6.3
 * Remove script_name, query_string and peer from Plug.extract_sample_data/1. PR #351
 
