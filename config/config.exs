@@ -15,6 +15,6 @@ if Mix.env in [:test, :test_phoenix, :test_no_nif] do
   config :appsignal, :config,
     push_api_key: "00000000-0000-0000-0000-000000000000",
     name: "AppSignal test suite app v0",
-    env: "baz",
+    env: "test",
     active: true
 end
