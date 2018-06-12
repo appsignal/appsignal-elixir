@@ -8,7 +8,7 @@ defmodule Appsignal.Diagnose.Validation do
       {:error, :invalid} ->
         %{push_api_key: "invalid"}
       {:error, reason} ->
-        %{push_api_key: "error: #{reason}"}
+        %{push_api_key: "error: #{inspect reason}"}
     end
   end
 end
