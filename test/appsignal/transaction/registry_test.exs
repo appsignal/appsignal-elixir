@@ -4,16 +4,18 @@ defmodule Appsignal.Transaction.RegistryTest do
   alias Appsignal.{Transaction, TransactionRegistry}
 
   test "lookup/1 returns nil after process has ended" do
-    transaction = %Transaction{id: Transaction.generate_id()}
+    id = Transaction.generate_id()
+    transaction = %Transaction{id: id}
 
-    pid = spawn(fn() ->
-      TransactionRegistry.register(transaction)
-      assert transaction == TransactionRegistry.lookup(self())
-    end)
+    pid =
+      spawn(fn ->
+        TransactionRegistry.register(transaction)
+        assert %Transaction{id: ^id} = TransactionRegistry.lookup(self())
+      end)
 
     :ok = wait_for_process_to_exit(pid)
 
-    assert transaction == TransactionRegistry.lookup(pid)
+    assert %Transaction{id: ^id} = TransactionRegistry.lookup(pid)
 
     :ok = TransactionRegistry.remove_transaction(transaction)
 
@@ -30,14 +32,12 @@ defmodule Appsignal.Transaction.RegistryTest do
   describe "register/1 and lookup/1, with an existing transaction" do
     setup :register_transaction
 
-    test "finds an existing transaction by pid", %{transaction: transaction} do
-      assert TransactionRegistry.lookup(self()) == transaction
+    test "finds an existing transaction by pid", %{transaction: %{id: id}} do
+      assert %Transaction{id: ^id} = TransactionRegistry.lookup(self())
     end
-  end
 
-  describe "lookup/1, without an existing transaction" do
-    test "does not find an existing transaction by pid" do
-      assert TransactionRegistry.lookup(self()) == nil
+    test "finds the transaction ID from the index", %{transaction: %{id: id} = transaction} do
+      assert :ets.lookup(:"$appsignal_transaction_index", id) == [{transaction.id, self()}]
     end
   end
 
@@ -68,9 +68,16 @@ defmodule Appsignal.Transaction.RegistryTest do
   describe "remove_transaction/1, with an existing transaction" do
     setup :register_transaction
 
-    test "removes the transaction from the registry", %{transaction: transaction} do
-      assert TransactionRegistry.remove_transaction(transaction) == :ok
+    setup %{transaction: transaction} do
+      :ok = TransactionRegistry.remove_transaction(transaction)
+    end
+
+    test "removes the transaction from the registry" do
       assert TransactionRegistry.lookup(self()) == nil
+    end
+
+    test "removes the transaction ID from the index", %{transaction: %{id: id}} do
+      assert :ets.lookup(:"$appsignal_transaction_index", id) == []
     end
   end
 
@@ -83,6 +90,48 @@ defmodule Appsignal.Transaction.RegistryTest do
     end
   end
 
+  describe "action/1, without an action set" do
+    setup :register_transaction
+
+    test "fails to get an unregistered transaction's action" do
+      assert TransactionRegistry.action(%Transaction{}) == {:error, :not_found}
+    end
+
+    test "get a registered transaction's action", %{transaction: transaction} do
+      assert TransactionRegistry.action(transaction) == {:ok, nil}
+    end
+  end
+
+  describe "action/1, with an action set" do
+    setup :register_transaction_with_action_name
+
+    test "get the action", %{transaction: transaction} do
+      assert TransactionRegistry.action(transaction) == {:ok, "action"}
+    end
+  end
+
+  describe "set_action/1" do
+    setup :register_transaction
+
+    test "fails to set an unregistered transaction's action" do
+      assert TransactionRegistry.set_action(%Transaction{}, "custom") == {:error, :not_found}
+    end
+
+    test "set a registered transaction's action", %{transaction: transaction} do
+      assert TransactionRegistry.set_action(transaction, "custom") ==  :ok
+      assert TransactionRegistry.action(transaction) == {:ok, "custom"}
+    end
+  end
+
+  describe "set_action/1, with an action set" do
+    setup :register_transaction_with_action_name
+
+    test "overwrite the action", %{transaction: transaction} do
+      assert TransactionRegistry.set_action(transaction, "custom") == :ok
+      assert TransactionRegistry.action(transaction) == {:ok, "custom"}
+    end
+  end
+
   defp register_transaction(_) do
     transaction = %Transaction{id: Transaction.generate_id()}
     TransactionRegistry.register(transaction)
@@ -91,8 +140,17 @@ defmodule Appsignal.Transaction.RegistryTest do
   end
 
   def register_transaction_without_monitor(_) do
-    transaction = %Transaction{id: Transaction.generate_id()}
-    true = :ets.insert(:'$appsignal_transaction_registry', {self(), transaction})
+    id = Transaction.generate_id()
+    transaction = %Transaction{id: id}
+    true = :ets.insert(:"$appsignal_transaction_registry", {self(), transaction})
+    true = :ets.insert(:"$appsignal_transaction_index", {id, self()})
+
+    [transaction: transaction]
+  end
+
+  defp register_transaction_with_action_name(_) do
+    transaction = %Transaction{id: Transaction.generate_id(), action: "action"}
+    TransactionRegistry.register(transaction)
 
     [transaction: transaction]
   end

@@ -20,13 +20,6 @@ defmodule Appsignal.Phoenix.InstrumenterTest do
       Instrumenter.phoenix_controller_call(:start, nil, arguments)
   end
 
-  test "sets the action name in phoenix_controller_call", %{transaction: transaction, conn: conn, fake_transaction: fake_transaction} do
-    arguments = %{conn: conn, transaction: transaction}
-
-    Instrumenter.phoenix_controller_call(:start, nil, arguments)
-    assert "foo#bar" == FakeTransaction.action(fake_transaction)
-  end
-
   test "starts an event in phoenix_controller_render", context do
     arguments = %{foo: "bar"}
     assert {context[:transaction], arguments} ==

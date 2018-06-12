@@ -48,11 +48,11 @@ defmodule Appsignal.Instrumentation.DecoratorsTest do
   alias Appsignal.Transaction
 
   test_with_mock "instrument module function", Appsignal.Transaction, [:passthrough], [] do
-    t = Transaction.start("bar", :http_request)
+    Transaction.start("bar", :http_request)
     UsingAppsignalDecorators.bar(123)
-    assert called Transaction.start_event(t)
-    assert called Transaction.finish_event(t, "bar", "Elixir.UsingAppsignalDecorators.bar", "", 0)
-    assert called Transaction.finish_event(t, "nested", "Elixir.UsingAppsignalDecorators.nested", "", 0)
+    assert called Transaction.start_event(:_)
+    assert called Transaction.finish_event(:_, "bar", "Elixir.UsingAppsignalDecorators.bar", "", 0)
+    assert called Transaction.finish_event(:_, "nested", "Elixir.UsingAppsignalDecorators.nested", "", 0)
   end
 
   test_with_mock "instrument transaction", Appsignal.Transaction, [:passthrough], [] do
@@ -82,11 +82,11 @@ defmodule Appsignal.Instrumentation.DecoratorsTest do
 
 
   test_with_mock "instrument module function with category", Appsignal.Transaction, [:passthrough], [] do
-    t = Transaction.start("bar", :http_request)
+    Transaction.start("bar", :http_request)
     UsingAppsignalDecoratorsWithCustomNamespaces.bar(123)
-    assert called Transaction.start_event(t)
-    assert called Transaction.finish_event(t, "bar.http", "Elixir.UsingAppsignalDecoratorsWithCustomNamespaces.bar", "", 0)
-    assert called Transaction.finish_event(t, "nested.db", "Elixir.UsingAppsignalDecoratorsWithCustomNamespaces.nested", "", 0)
+    assert called Transaction.start_event(:_)
+    assert called Transaction.finish_event(:_, "bar.http", "Elixir.UsingAppsignalDecoratorsWithCustomNamespaces.bar", "", 0)
+    assert called Transaction.finish_event(:_, "nested.db", "Elixir.UsingAppsignalDecoratorsWithCustomNamespaces.nested", "", 0)
   end
 
 end

@@ -18,7 +18,6 @@ if Appsignal.plug?() do
           transaction =
             @transaction.generate_id()
             |> @transaction.start(:http_request)
-            |> Appsignal.Plug.try_set_action(conn)
 
           conn = Plug.Conn.put_private(conn, :appsignal_transaction, transaction)
 
@@ -75,6 +74,11 @@ if Appsignal.plug?() do
     end
 
     def finish_with_conn(transaction, conn) do
+      case Appsignal.TransactionRegistry.action(transaction) do
+        {:ok, action} when is_binary(action) -> :ok
+        _ -> try_set_action(transaction, conn)
+      end
+
       if @transaction.finish(transaction) == :sample do
         @transaction.set_request_metadata(transaction, conn)
       end

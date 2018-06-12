@@ -36,7 +36,7 @@ defmodule Appsignal.Transaction do
 
   """
 
-  defstruct [:resource, :id]
+  defstruct [:resource, :id, :action]
 
   alias Appsignal.{Nif, Transaction, TransactionRegistry, Backtrace}
 
@@ -257,6 +257,7 @@ defmodule Appsignal.Transaction do
   @spec set_action(Transaction.t | nil, String.t) :: Transaction.t
   def set_action(nil, _action), do: nil
   def set_action(%Transaction{} = transaction, action) do
+    :ok = TransactionRegistry.set_action(transaction, action)
     :ok = Nif.set_action(transaction.resource, action)
     transaction
   end
