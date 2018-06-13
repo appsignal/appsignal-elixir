@@ -79,6 +79,14 @@ defmodule Appsignal.Transaction do
     %Transaction{resource: resource, id: transaction_id}
   end
 
+  if Mix.env in [:test, :test_phoenix] do
+    @spec to_map(Appsignal.Transaction.t) :: map()
+    def to_map(transaction) do
+      {:ok, json} =  Nif.transaction_to_json(transaction.resource)
+      Poison.decode!(json)
+    end
+  end
+
   @spec register(Transaction.t) :: Transaction.t
   defp register(transaction) do
     :ok = TransactionRegistry.register(transaction)

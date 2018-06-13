@@ -6,9 +6,17 @@ defmodule Mix.Tasks.Compile.Appsignal do
 
     case Mix.Appsignal.Helper.verify_system_architecture() do
       {:ok, arch} ->
-        :ok = Mix.Appsignal.Helper.ensure_downloaded(arch)
-        :ok = Mix.Appsignal.Helper.compile
-        :ok = Mix.Appsignal.Helper.store_architecture(arch)
+        case Mix.Appsignal.Helper.ensure_downloaded(arch) do
+          :ok ->
+            :ok = Mix.Appsignal.Helper.compile()
+            :ok = Mix.Appsignal.Helper.store_architecture(arch)
+
+          {:error, _reason} ->
+            Mix.Shell.IO.error(
+              "Failed to download AppSignal agent. AppSignal integration disabled!"
+            )
+        end
+
       {:error, {:unsupported, arch}} ->
         Mix.Shell.IO.error(
           "Unsupported target platform #{arch}, AppSignal integration " <>
@@ -66,7 +74,7 @@ defmodule Appsignal.Mixfile do
 
   def application do
     [mod: {Appsignal, []},
-     applications: [:logger, :decorator, :httpoison]]
+     applications: [:logger, :decorator]]
   end
 
   defp compilers(:test_phoenix), do: [:phoenix] ++ compilers(:prod)
@@ -89,7 +97,7 @@ defmodule Appsignal.Mixfile do
 
   defp deps do
     [
-      {:httpoison, "~> 0.11 or ~> 1.0"},
+      {:hackney, "~> 1.6"},
       {:poison, ">= 1.3.0"},
       {:decorator, "~> 1.2.3"},
       {:plug, ">= 1.1.0", optional: true},
