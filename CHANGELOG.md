@@ -1,3 +1,6 @@
+# 1.6.5
+* Allow calling `Transaction.register/1` and `Transaction.complete/1` when the Registry is not alive. PR #356
+
 # 1.6.4
 * Overwrite message for Phoenix.ActionClauseError. PR #355
 
