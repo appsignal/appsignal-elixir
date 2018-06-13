@@ -107,6 +107,10 @@ defmodule Appsignal.Nif do
     _set_action(transaction_resource, action)
   end
 
+  def set_namespace(transaction_resource, namespace) do
+    _set_namespace(transaction_resource, namespace)
+  end
+
   def set_queue_start(transaction_resource, start) do
     _set_queue_start(transaction_resource, start)
   end
@@ -254,6 +258,10 @@ defmodule Appsignal.Nif do
   end
 
   def _set_action(_transaction_resource, _action) do
+    :ok
+  end
+
+  def _set_namespace(_transaction_resource, _action) do
     :ok
   end
 

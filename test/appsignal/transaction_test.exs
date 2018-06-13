@@ -270,4 +270,14 @@ defmodule AppsignalTransactionTest do
       assert :ok == Transaction.complete(transaction)
     end
   end
+
+  describe "setting a transaction's namespace" do
+    @tag :skip_env_test_no_nif
+    test "overwrites the transaction's namespace" do
+      transaction = Transaction.create(Transaction.generate_id(), :http_request)
+      Transaction.set_namespace(transaction, :background)
+
+      assert Transaction.to_map(transaction)["namespace"] == "background"
+    end
+  end
 end

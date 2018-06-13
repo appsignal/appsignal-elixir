@@ -270,6 +270,30 @@ defmodule Appsignal.Transaction do
   end
 
   @doc """
+  Set namespace of the current transaction. See `set_namespace/1`.
+  """
+  @spec set_namespace(atom()) :: Transaction.t()
+  def set_namespace(namespace) do
+    set_namespace(lookup(), namespace)
+  end
+
+  @doc """
+  Set namespace of a transaction
+
+  Call this to override the transaction's namespace.
+
+  - `transaction`: The pointer to the transaction this event occurred in
+  - `namespace`: This transaction's action (`:`)
+  """
+  @spec set_namespace(Transaction.t() | nil, atom()) :: Transaction.t()
+  def set_namespace(nil, _namespace), do: nil
+
+  def set_namespace(%Transaction{} = transaction, namespace) do
+    :ok = Nif.set_namespace(transaction.resource, Atom.to_string(namespace))
+    transaction
+  end
+
+  @doc """
   Set queue start time of the current transaction. See `set_queue_start/2`.
   """
   @spec set_queue_start(integer) :: Transaction.t
