@@ -236,4 +236,14 @@ defmodule AppsignalTransactionTest do
       {:error, :not_found} = TransactionRegistry.remove_transaction(transaction)
     end
   end
+
+  describe "setting a transaction's action name" do
+    @tag :skip_env_test_no_nif
+    test "stores the action name on the transaction" do
+      transaction = Transaction.create(Transaction.generate_id, :http_request)
+      Transaction.set_action(transaction, "ActionController#my_action")
+
+      assert Transaction.to_map(transaction)["action"] == "ActionController#my_action"
+    end
+  end
 end

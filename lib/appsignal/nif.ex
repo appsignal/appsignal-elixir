@@ -187,12 +187,6 @@ defmodule Appsignal.Nif do
     _data_set_data(resource, value)
   end
 
-  if Mix.env in [:test, :test_phoenix] do
-    def data_to_json(resource) do
-      _data_to_json(resource)
-    end
-  end
-
   def data_list_new do
     _data_list_new()
   end
@@ -203,6 +197,16 @@ defmodule Appsignal.Nif do
 
   def loaded? do
     _loaded()
+  end
+
+  if Mix.env in [:test, :test_phoenix] do
+    def data_to_json(resource) do
+      _data_to_json(resource)
+    end
+
+    def transaction_to_json(resource) do
+      _transaction_to_json(resource)
+    end
   end
 
   def _start do
@@ -351,6 +355,9 @@ defmodule Appsignal.Nif do
     def _data_to_json(resource) do
       resource
     end
-  end
 
+    def _transaction_to_json(resource) do
+      {:ok, resource}
+    end
+  end
 end

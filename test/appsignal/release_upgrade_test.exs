@@ -5,7 +5,7 @@ defmodule Appsignal.ReleaseUpgradeTest do
   import AppsignalTest.Utils
 
   test "config_change/3" do
-    assert System.get_env("_APPSIGNAL_APP_NAME") == nil
+    assert System.get_env("_APPSIGNAL_APP_NAME") == "AppSignal test suite app v0"
 
     with_config(valid_configuration(), fn ->
       # First start
