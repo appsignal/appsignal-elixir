@@ -1,6 +1,8 @@
 defmodule Appsignal.Config do
   alias Appsignal.Nif
 
+  require Logger
+
   @default_config %{
     active: false,
     debug: false,
@@ -43,11 +45,18 @@ defmodule Appsignal.Config do
       |> Map.merge(app_config)
       |> Map.merge(env_config)
 
-
     # Config is valid when we have a push api key
     config =
       config
       |> Map.put(:valid, !empty?(config[:push_api_key]))
+
+    if !empty?(config[:working_dir_path]) do
+      Logger.warn(fn() ->
+        "'working_dir_path' is deprecated, please use " <>
+        "'working_directory_path' instead and specify the " <>
+        "full path to the working directory"
+      end)
+    end
 
     Application.put_env(:appsignal, :config, config)
 
@@ -112,6 +121,7 @@ defmodule Appsignal.Config do
     "APPSIGNAL_HTTP_PROXY" => :http_proxy,
     "APPSIGNAL_RUNNING_IN_CONTAINER" => :running_in_container,
     "APPSIGNAL_WORKING_DIR_PATH" => :working_dir_path,
+    "APPSIGNAL_WORKING_DIRECTORY_PATH" => :working_directory_path,
     "APPSIGNAL_ENABLE_HOST_METRICS" => :enable_host_metrics,
     "APPSIGNAL_SKIP_SESSION_DATA" => :skip_session_data,
     "APPSIGNAL_FILES_WORLD_ACCESSIBLE" => :files_world_accessible,
@@ -119,7 +129,7 @@ defmodule Appsignal.Config do
     "APP_REVISION" => :revision
   }
 
-  @string_keys ~w(APPSIGNAL_APP_NAME APPSIGNAL_PUSH_API_KEY APPSIGNAL_PUSH_API_ENDPOINT APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH APPSIGNAL_HOSTNAME APPSIGNAL_HTTP_PROXY APPSIGNAL_LOG APPSIGNAL_LOG_PATH APPSIGNAL_WORKING_DIR_PATH APPSIGNAL_CA_FILE_PATH APP_REVISION)
+  @string_keys ~w(APPSIGNAL_APP_NAME APPSIGNAL_PUSH_API_KEY APPSIGNAL_PUSH_API_ENDPOINT APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH APPSIGNAL_HOSTNAME APPSIGNAL_HTTP_PROXY APPSIGNAL_LOG APPSIGNAL_LOG_PATH APPSIGNAL_WORKING_DIR_PATH APPSIGNAL_WORKING_DIRECTORY_PATH APPSIGNAL_CA_FILE_PATH APP_REVISION)
   @bool_keys ~w(APPSIGNAL_ACTIVE APPSIGNAL_DEBUG APPSIGNAL_INSTRUMENT_NET_HTTP APPSIGNAL_ENABLE_FRONTEND_ERROR_CATCHING APPSIGNAL_ENABLE_ALLOCATION_TRACKING APPSIGNAL_ENABLE_GC_INSTRUMENTATION APPSIGNAL_RUNNING_IN_CONTAINER APPSIGNAL_ENABLE_HOST_METRICS APPSIGNAL_SKIP_SESSION_DATA APPSIGNAL_FILES_WORLD_ACCESSIBLE)
   @atom_keys ~w(APPSIGNAL_APP_ENV)
   @string_list_keys ~w(APPSIGNAL_FILTER_PARAMETERS APPSIGNAL_IGNORE_ACTIONS APPSIGNAL_IGNORE_ERRORS APPSIGNAL_IGNORE_NAMESPACES APPSIGNAL_DNS_SERVERS APPSIGNAL_FILTER_SESSION_DATA APPSIGNAL_REQUEST_HEADERS)
@@ -240,6 +250,7 @@ defmodule Appsignal.Config do
     Nif.env_put("_APPSIGNAL_RUNNING_IN_CONTAINER", to_string(config[:running_in_container]))
     Nif.env_put("_APPSIGNAL_SEND_PARAMS", to_string(config[:send_params]))
     Nif.env_put("_APPSIGNAL_WORKING_DIR_PATH", to_string(config[:working_dir_path]))
+    Nif.env_put("_APPSIGNAL_WORKING_DIRECTORY_PATH", to_string(config[:working_directory_path]))
 
     Nif.env_put(
       "_APPSIGNAL_FILES_WORLD_ACCESSIBLE",
