@@ -11,7 +11,7 @@ defmodule Mix.Tasks.Compile.Appsignal do
             :ok = Mix.Appsignal.Helper.compile()
             :ok = Mix.Appsignal.Helper.store_architecture(arch)
 
-          {:error, reason} ->
+          {:error, _reason} ->
             Mix.Shell.IO.error(
               "Failed to download AppSignal agent. AppSignal integration disabled!"
             )
