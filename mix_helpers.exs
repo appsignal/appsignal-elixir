@@ -75,36 +75,54 @@ defmodule Mix.Appsignal.Helper do
   end
 
   defp download_and_extract(url, version, checksum) do
-    download_file(url, version)
-    |> verify_checksum(checksum)
-    |> extract
+    case download_file(url, version) do
+      {:ok, filename} ->
+        filename
+        |> verify_checksum(checksum)
+        |> extract
+
+      error ->
+        error
+    end
   end
 
   defp download_file(url, version) do
     filename = Path.join(tmp_dir(), "appsignal-agent-#{version}.tar.gz")
+
     case File.exists?(filename) do
       true ->
-        filename
+        {:ok, filename}
+
       false ->
-        Logger.info "Downloading agent release from #{url}"
-        case System.find_executable("curl") do
-          nil ->
-            raise Mix.Error, message: """
-            Could not find the curl executable. Please make sure curl is
-            installed on this system as it is needed to download the AppSignal
-            extension and agent.
-            """
-          _ ->
-            case System.cmd("curl", ["-s", "-S", "--retry", Integer.to_string(@max_retries), "-f", "-o", filename, url], stderr_to_stdout: true) do
-              {_, 0} ->
-                filename
-              {result, exitcode} ->
-                IO.binwrite(result)
-                raise Mix.Error, message: """
-                Download failed with code #{exitcode}
-                """
-            end
+        Logger.info("Downloading agent release from #{url}")
+        :application.ensure_all_started(:hackney)
+
+        case do_download_file!(url, filename, @max_retries) do
+          :ok -> {:ok, filename}
+          error -> error
         end
+    end
+  end
+
+  defp do_download_file!(url, filename, retries \\ 0)
+
+  defp do_download_file!(url, filename, 0) do
+    case :hackney.request(:get, url) do
+      {:ok, 200, _, reference} ->
+        case :hackney.body(reference) do
+          {:ok, body} -> File.write(filename, body)
+          {:error, reason} -> {:error, reason}
+        end
+
+      response ->
+        {:error, response}
+    end
+  end
+
+  defp do_download_file!(url, filename, retries) do
+    case do_download_file!(url, filename) do
+      :ok -> :ok
+      _ -> do_download_file!(url, filename, retries - 1)
     end
   end
 
