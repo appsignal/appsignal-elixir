@@ -236,4 +236,28 @@ defmodule AppsignalTransactionTest do
       {:error, :not_found} = TransactionRegistry.remove_transaction(transaction)
     end
   end
+
+  describe "when the registry is not running" do
+    setup do
+      transaction = Transaction.start(Transaction.generate_id, :http_request)
+      :ok = Supervisor.terminate_child(Appsignal.Supervisor, TransactionRegistry)
+
+      on_exit(fn ->
+        {:ok, _} = Supervisor.restart_child(Appsignal.Supervisor, TransactionRegistry)
+      end)
+
+      [transaction: transaction]
+    end
+
+    test "creates a transaction" do
+      id = Transaction.generate_id
+      transaction = Transaction.start(id, :http_request)
+
+      assert %Transaction{id: id} = transaction
+    end
+
+    test "does not crash when trying to complete a transaction", %{transaction: transaction} do
+      assert :ok == Transaction.complete(transaction)
+    end
+  end
 end
