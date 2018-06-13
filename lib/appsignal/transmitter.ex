@@ -1,7 +1,39 @@
 defmodule Appsignal.Transmitter do
-  def request(method, url, headers \\ [], body \\ "") do
-    :application.ensure_all_started(:hackney)
+  require Logger
 
-    :hackney.request(method, url, headers, body)
+  @http_client Application.get_env(:appsignal, :http_client, :hackney)
+
+  def request(method, url, headers \\ [], body \\ "") do
+    :application.ensure_all_started(@http_client)
+
+    @http_client.request(method, url, headers, body, options())
+  end
+
+  defp options do
+    ca_file_path = Appsignal.Config.ca_file_path()
+
+    options =
+      case File.stat(ca_file_path) do
+        {:ok, %{access: access}} when access in [:read, :read_write] ->
+          {:ok, [ssl_options: [cacertfile: ca_file_path]]}
+
+        {:ok, %{access: access}} ->
+          {:error, "File access is #{inspect access}"}
+
+        {:error, reason} ->
+          {:error, reason}
+      end
+
+    case options do
+      {:ok, options} ->
+        options
+
+      {:error, message} ->
+        Logger.warn(
+          "Ignoring non-existing or unreadable ca_file_path (#{ca_file_path}): #{inspect(message)}"
+        )
+
+        []
+    end
   end
 end
