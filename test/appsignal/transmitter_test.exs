@@ -4,6 +4,14 @@ defmodule Appsignal.TransmitterTest do
   import AppsignalTest.Utils
   import ExUnit.CaptureLog
 
+  setup do
+    Application.put_env(:appsignal, :http_client, FakeHackney)
+
+    on_exit fn() ->
+      Application.delete_env(:appsignal, :http_client)
+    end
+  end
+
   test "uses the default CA certificate" do
     path = Config.ca_file_path()
 
