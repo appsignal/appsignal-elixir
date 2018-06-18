@@ -83,6 +83,14 @@ defmodule Appsignal.Transaction.RegistryTest do
     end
   end
 
+  describe "remove_transaction/1, when the registry is not running" do
+    setup [:register_transaction, :terminate_registry]
+
+    test "returns no registry error", %{transaction: transaction} do
+      assert TransactionRegistry.remove_transaction(transaction) == {:error, :no_registry}
+    end
+  end
+
   defp register_transaction(_) do
     transaction = %Transaction{id: Transaction.generate_id()}
     TransactionRegistry.register(transaction)

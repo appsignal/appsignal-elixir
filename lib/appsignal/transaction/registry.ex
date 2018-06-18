@@ -96,10 +96,14 @@ defmodule Appsignal.TransactionRegistry do
   @doc """
   Unregister the current process as the owner of the given transaction.
   """
-  @spec remove_transaction(Transaction.t) :: :ok | {:error, :not_found}
+  @spec remove_transaction(Transaction.t) :: :ok | {:error, :not_found} | {:error, :no_registry}
   def remove_transaction(%Transaction{} = transaction) do
-    GenServer.cast(__MODULE__, {:demonitor, transaction})
-    GenServer.call(__MODULE__, {:remove, transaction})
+    if registry_alive?() do
+      GenServer.cast(__MODULE__, {:demonitor, transaction})
+      GenServer.call(__MODULE__, {:remove, transaction})
+    else
+      {:error, :no_registry}
+    end
   end
 
   ##
