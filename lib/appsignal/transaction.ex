@@ -285,11 +285,15 @@ defmodule Appsignal.Transaction do
   - `transaction`: The pointer to the transaction this event occurred in
   - `namespace`: This transaction's action (`:`)
   """
-  @spec set_namespace(Transaction.t() | nil, atom()) :: Transaction.t()
+  @spec set_namespace(Transaction.t() | nil, String.t() | atom()) :: Transaction.t()
   def set_namespace(nil, _namespace), do: nil
 
-  def set_namespace(%Transaction{} = transaction, namespace) do
-    :ok = Nif.set_namespace(transaction.resource, Atom.to_string(namespace))
+  def set_namespace(%Transaction{} = transaction, namespace) when is_atom(namespace) do
+    set_namespace(transaction, Atom.to_string(namespace))
+  end
+
+  def set_namespace(%Transaction{} = transaction, namespace) when is_binary(namespace) do
+    :ok = Nif.set_namespace(transaction.resource, namespace)
     transaction
   end
 
