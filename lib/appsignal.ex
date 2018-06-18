@@ -141,7 +141,7 @@ defmodule Appsignal do
       Appsignal.send_error(%RuntimeError{}, "Oops!")
       Appsignal.send_error(%RuntimeError{}, "", System.stacktrace())
       Appsignal.send_error(%RuntimeError{}, "", nil, %{foo: "bar"})
-      Appsignal.send_error(%RuntimeError{}, "", nil, %{}, %Plug.Conn{peer: {{127, 0, 0, 1}, 12345}})
+      Appsignal.send_error(%RuntimeError{}, "", nil, %{}, %Plug.Conn{})
       Appsignal.send_error(%RuntimeError{}, "", nil, %{}, nil, fn(transaction) ->
         Appsignal.Transaction.set_sample_data(transaction, "key", %{foo: "bar"})
       end)
