@@ -624,7 +624,7 @@ defmodule Appsignal.ConfigTest do
         connection content-length path-info range request-method request-uri
         server-name server-port server-protocol
       ),
-      ca_file_path: Path.expand("_build/test/lib/appsignal/priv/cacert.pem")
+      ca_file_path: Path.expand("_build/#{Mix.env}/lib/appsignal/priv/cacert.pem")
     }
   end
 
