@@ -309,6 +309,29 @@ static ERL_NIF_TERM _set_action(ErlNifEnv* env, int argc, const ERL_NIF_TERM arg
     return enif_make_atom(env, "ok");
 }
 
+static ERL_NIF_TERM _set_namespace(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    transaction_ptr *ptr;
+    ErlNifBinary namespace;
+
+    if (argc != 2) {
+      return enif_make_badarg(env);
+    }
+    if(!enif_get_resource(env, argv[0], appsignal_transaction_type, (void**) &ptr)) {
+      return enif_make_badarg(env);
+    }
+    if(!enif_inspect_iolist_as_binary(env, argv[1], &namespace)) {
+        return enif_make_badarg(env);
+    }
+
+    appsignal_set_transaction_namespace(
+        ptr->transaction,
+        make_appsignal_string(namespace)
+    );
+
+    return enif_make_atom(env, "ok");
+}
+
 static ERL_NIF_TERM _set_queue_start(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     transaction_ptr *ptr;
@@ -815,6 +838,7 @@ static ErlNifFunc nif_funcs[] =
     {"_set_error", 4, _set_error, 0},
     {"_set_sample_data", 3, _set_sample_data, 0},
     {"_set_action", 2, _set_action, 0},
+    {"_set_namespace", 2, _set_namespace, 0},
     {"_set_queue_start", 2, _set_queue_start, 0},
     {"_set_meta_data", 3, _set_meta_data, 0},
     {"_finish", 1, _finish, 0},
