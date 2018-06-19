@@ -38,15 +38,4 @@ defmodule Appsignal.TransmitterTest do
       end) =~ "[warn]  Ignoring non-existing or unreadable ca_file_path (test/fixtures/does_not_exist.pem): :enoent"
     end)
   end
-
-  test "logs a warning when the CA certificate file is not readable" do
-    path = "test/fixtures/unreadable.pem"
-
-    with_config(%{ca_file_path: path}, fn ->
-      assert capture_log(fn ->
-        assert [_method, _url, _headers, _body, []] =
-                Transmitter.request(:get, "https://example.com")
-      end) =~ "[warn]  Ignoring non-existing or unreadable ca_file_path (test/fixtures/unreadable.pem): \"File access is :none\""
-    end)
-  end
 end
