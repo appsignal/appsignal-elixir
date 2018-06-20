@@ -28,11 +28,19 @@ defmodule Appsignal.Transmitter do
         options
 
       {:error, message} ->
-        Logger.warn(
-          "Ignoring non-existing or unreadable ca_file_path (#{ca_file_path}): #{inspect(message)}"
-        )
+        unless ca_file_path == packaged_ca_file_path() do
+          Logger.warn(
+            "Ignoring non-existing or unreadable ca_file_path (#{ca_file_path}): #{
+              inspect(message)
+            }"
+          )
+        end
 
         []
     end
+  end
+
+  defp packaged_ca_file_path do
+    Path.join(:code.priv_dir(:appsignal), "cacert.pem")
   end
 end
