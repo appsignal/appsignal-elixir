@@ -219,8 +219,8 @@ defmodule AppsignalTransactionTest do
       [id: id, transaction: Transaction.start(id, :http_request)]
     end
 
-    test "creates a transaction", %{transaction: transaction} do
-      assert %Transaction{id: id} = transaction
+    test "creates a transaction", %{transaction: transaction, id: id} do
+      assert %Transaction{id: ^id} = transaction
     end
 
     test "registers the transaction", %{transaction: transaction} do
@@ -263,7 +263,7 @@ defmodule AppsignalTransactionTest do
       id = Transaction.generate_id
       transaction = Transaction.start(id, :http_request)
 
-      assert %Transaction{id: id} = transaction
+      assert %Transaction{id: ^id} = transaction
     end
 
     test "does not crash when trying to complete a transaction", %{transaction: transaction} do
