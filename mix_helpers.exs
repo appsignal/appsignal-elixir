@@ -22,8 +22,8 @@ defmodule Mix.Appsignal.Helper do
 
     if has_local_release_files?() do
       IO.puts "AppSignal: Using local agent release."
-      File.rm_rf!(priv_dir())
       File.mkdir_p!(priv_dir())
+      clean_up_extension_files()
       Enum.each(["appsignal.h", "appsignal-agent", "appsignal.version", "libappsignal.a"], fn(file) ->
         File.cp(project_ext_path(file), priv_path(file))
       end)
@@ -40,8 +40,8 @@ defmodule Mix.Appsignal.Helper do
         end
 
         version = Appsignal.Agent.version
-        File.rm_rf!(priv_dir())
         File.mkdir_p!(priv_dir())
+        clean_up_extension_files()
 
         try do
           download_and_extract(arch_config[:download_url], version, arch_config[:checksum])
@@ -220,6 +220,13 @@ defmodule Mix.Appsignal.Helper do
   defp has_correct_agent_version? do
     path = priv_path("appsignal.version")
     File.read(path) == {:ok, "#{Appsignal.Agent.version}\n"}
+  end
+
+  defp clean_up_extension_files do
+    priv_dir()
+    |> Path.join("*appsignal*")
+    |> Path.wildcard
+    |> Enum.each(&File.rm_rf!/1)
   end
 
   def agent_platform do
