@@ -28,5 +28,5 @@ script:
   - mix dialyzer --halt-exit-status --no-compile --no-check
 cache:
   directories:
-    - _build
+    - _build/dev
     - deps
