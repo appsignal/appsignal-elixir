@@ -359,7 +359,7 @@ defmodule Appsignal.Nif do
     false
   end
 
-  if Mix.env in [:test, :test_phoenix] do
+  if Mix.env in [:test, :test_phoenix, :test_no_nif] do
     def _data_to_json(resource) do
       resource
     end
