@@ -16,17 +16,7 @@ matrix:
       elixir: 1.5.3
   allow_failures:
     - otp_release: 18.3
-before_script:
-  - MIX_ENV=test mix compile --warnings-as-errors
-  - MIX_ENV=test_phoenix mix compile --warnings-as-errors
-  - MIX_ENV=test_no_nif mix compile --warnings-as-errors
-  - mix dialyzer --plt --no-compile
 script:
-  - MIX_ENV=test mix test
-  - MIX_ENV=test_phoenix mix test
   - MIX_ENV=test_no_nif mix test
-  - mix dialyzer --halt-exit-status --no-compile --no-check
-cache:
-  directories:
-    - _build/dev
-    - deps
+  - MIX_ENV=test_phoenix mix test
+  - MIX_ENV=test mix test

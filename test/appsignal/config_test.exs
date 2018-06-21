@@ -478,7 +478,6 @@ defmodule Appsignal.ConfigTest do
     test "empty config options get written to the env" do
       write_to_environment()
       assert System.get_env("_APPSIGNAL_APP_NAME") == ""
-      assert System.get_env("_APPSIGNAL_CA_FILE_PATH") == ""
       assert System.get_env("_APPSIGNAL_HTTP_PROXY") == ""
       assert System.get_env("_APPSIGNAL_IGNORE_ACTIONS") == ""
       assert System.get_env("_APPSIGNAL_IGNORE_ERRORS") == ""
@@ -624,7 +623,8 @@ defmodule Appsignal.ConfigTest do
         accept accept-charset accept-encoding accept-language cache-control
         connection content-length path-info range request-method request-uri
         server-name server-port server-protocol
-      )
+      ),
+      ca_file_path: Path.expand("_build/#{Mix.env}/lib/appsignal/priv/cacert.pem")
     }
   end
 

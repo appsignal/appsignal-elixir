@@ -16,6 +16,7 @@ defmodule Appsignal.Config do
     skip_session_data: false,
     files_world_accessible: true,
     log: "file",
+    ca_file_path: Path.join(:code.priv_dir(:appsignal), "cacert.pem"),
     request_headers: ~w(
       accept accept-charset accept-encoding accept-language cache-control
       connection content-length path-info range request-method request-uri
@@ -78,6 +79,10 @@ defmodule Appsignal.Config do
 
   def request_headers do
     Application.fetch_env!(:appsignal, :config)[:request_headers]
+  end
+
+  def ca_file_path do
+    Application.fetch_env!(:appsignal, :config)[:ca_file_path]
   end
 
   @env_to_key_mapping %{
