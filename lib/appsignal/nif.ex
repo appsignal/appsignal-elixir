@@ -71,6 +71,10 @@ defmodule Appsignal.Nif do
     _env_get(key)
   end
 
+  def env_delete(key) do
+    _env_delete(key)
+  end
+
   def start do
     _start()
   end
@@ -219,6 +223,10 @@ defmodule Appsignal.Nif do
 
   def _env_get(_key) do
     ''
+  end
+
+  def _env_delete(_key) do
+    :ok
   end
 
   def _start do

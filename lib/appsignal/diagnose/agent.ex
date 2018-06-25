@@ -9,7 +9,7 @@ defmodule Appsignal.Diagnose.Agent do
         {:ok, report} -> {:ok, report}
         {:error, _} -> {:error, report_string}
       end
-      System.delete_env("_APPSIGNAL_DIAGNOSE")
+      Appsignal.Nif.env_delete("_APPSIGNAL_DIAGNOSE")
       report
     else
       {:error, :nif_not_loaded}
