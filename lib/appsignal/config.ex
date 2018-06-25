@@ -1,4 +1,6 @@
 defmodule Appsignal.Config do
+  alias Appsignal.Nif
+
   @default_config %{
     active: false,
     debug: false,
@@ -197,30 +199,41 @@ defmodule Appsignal.Config do
   defp write_to_environment(config) do
     reset_environment_config!()
 
-    System.put_env("_APPSIGNAL_ACTIVE", to_string(config[:active]))
-    System.put_env("_APPSIGNAL_AGENT_PATH", List.to_string(:code.priv_dir(:appsignal)))
-    System.put_env("_APPSIGNAL_APP_PATH", List.to_string(:code.priv_dir(:appsignal))) # FIXME - app_path should not be necessary
-    System.put_env("_APPSIGNAL_APP_NAME", to_string(config[:name]))
-    System.put_env("_APPSIGNAL_CA_FILE_PATH", to_string(config[:ca_file_path]))
-    System.put_env("_APPSIGNAL_DEBUG_LOGGING", to_string(config[:debug]))
-    System.put_env("_APPSIGNAL_DNS_SERVERS", config[:dns_servers] |> Enum.join(","))
-    System.put_env("_APPSIGNAL_ENABLE_HOST_METRICS", to_string(config[:enable_host_metrics]))
-    System.put_env("_APPSIGNAL_ENVIRONMENT", to_string(config[:env]))
-    System.put_env("_APPSIGNAL_HOSTNAME", to_string(config[:hostname]))
-    System.put_env("_APPSIGNAL_HTTP_PROXY", to_string(config[:http_proxy]))
-    System.put_env("_APPSIGNAL_IGNORE_ACTIONS", config[:ignore_actions] |> Enum.join(","))
-    System.put_env("_APPSIGNAL_IGNORE_ERRORS", config[:ignore_errors] |> Enum.join(","))
-    System.put_env("_APPSIGNAL_IGNORE_NAMESPACES", config[:ignore_namespaces] |> Enum.join(","))
-    System.put_env("_APPSIGNAL_LANGUAGE_INTEGRATION_VERSION", "elixir-" <> @language_integration_version)
-    System.put_env("_APPSIGNAL_LOG", config[:log])
-    System.put_env("_APPSIGNAL_LOG_FILE_PATH", to_string(config[:log_path]))
-    System.put_env("_APPSIGNAL_PUSH_API_ENDPOINT", config[:endpoint] || "")
-    System.put_env("_APPSIGNAL_PUSH_API_KEY", config[:push_api_key] || "")
-    System.put_env("_APPSIGNAL_RUNNING_IN_CONTAINER", to_string(config[:running_in_container]))
-    System.put_env("_APPSIGNAL_SEND_PARAMS", to_string(config[:send_params]))
-    System.put_env("_APPSIGNAL_WORKING_DIR_PATH", to_string(config[:working_dir_path]))
-    System.put_env("_APPSIGNAL_FILES_WORLD_ACCESSIBLE", to_string(config[:files_world_accessible]))
-    System.put_env("_APP_REVISION", to_string(config[:revision]))
+    Nif.env_put("_APPSIGNAL_ACTIVE", to_string(config[:active]))
+    Nif.env_put("_APPSIGNAL_AGENT_PATH", List.to_string(:code.priv_dir(:appsignal)))
+    # FIXME - app_path should not be necessary
+    Nif.env_put("_APPSIGNAL_APP_PATH", List.to_string(:code.priv_dir(:appsignal)))
+    Nif.env_put("_APPSIGNAL_APP_NAME", to_string(config[:name]))
+    Nif.env_put("_APPSIGNAL_CA_FILE_PATH", to_string(config[:ca_file_path]))
+    Nif.env_put("_APPSIGNAL_DEBUG_LOGGING", to_string(config[:debug]))
+    Nif.env_put("_APPSIGNAL_DNS_SERVERS", config[:dns_servers] |> Enum.join(","))
+    Nif.env_put("_APPSIGNAL_ENABLE_HOST_METRICS", to_string(config[:enable_host_metrics]))
+    Nif.env_put("_APPSIGNAL_ENVIRONMENT", to_string(config[:env]))
+    Nif.env_put("_APPSIGNAL_HOSTNAME", to_string(config[:hostname]))
+    Nif.env_put("_APPSIGNAL_HTTP_PROXY", to_string(config[:http_proxy]))
+    Nif.env_put("_APPSIGNAL_IGNORE_ACTIONS", config[:ignore_actions] |> Enum.join(","))
+    Nif.env_put("_APPSIGNAL_IGNORE_ERRORS", config[:ignore_errors] |> Enum.join(","))
+    Nif.env_put("_APPSIGNAL_IGNORE_NAMESPACES", config[:ignore_namespaces] |> Enum.join(","))
+
+    Nif.env_put(
+      "_APPSIGNAL_LANGUAGE_INTEGRATION_VERSION",
+      "elixir-" <> @language_integration_version
+    )
+
+    Nif.env_put("_APPSIGNAL_LOG", config[:log])
+    Nif.env_put("_APPSIGNAL_LOG_FILE_PATH", to_string(config[:log_path]))
+    Nif.env_put("_APPSIGNAL_PUSH_API_ENDPOINT", config[:endpoint] || "")
+    Nif.env_put("_APPSIGNAL_PUSH_API_KEY", config[:push_api_key] || "")
+    Nif.env_put("_APPSIGNAL_RUNNING_IN_CONTAINER", to_string(config[:running_in_container]))
+    Nif.env_put("_APPSIGNAL_SEND_PARAMS", to_string(config[:send_params]))
+    Nif.env_put("_APPSIGNAL_WORKING_DIR_PATH", to_string(config[:working_dir_path]))
+
+    Nif.env_put(
+      "_APPSIGNAL_FILES_WORLD_ACCESSIBLE",
+      to_string(config[:files_world_accessible])
+    )
+
+    Nif.env_put("_APP_REVISION", to_string(config[:revision]))
   end
 
   @doc """

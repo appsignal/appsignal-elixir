@@ -63,6 +63,10 @@ defmodule Appsignal.Nif do
     end
   end
 
+  def env_put(key, value) do
+    _env_put(key, value)
+  end
+
   def start do
     _start()
   end
@@ -203,6 +207,10 @@ defmodule Appsignal.Nif do
 
   def loaded? do
     _loaded()
+  end
+
+  def _env_put(_key, _value) do
+    :ok
   end
 
   def _start do
