@@ -242,14 +242,7 @@ defmodule Appsignal.Config do
   agent gets set again.
   """
   def reset_environment_config! do
-    System.get_env()
-    |> Enum.filter(fn
-      {"_APPSIGNAL_" <> _, _} -> true
-      _ -> false
-    end)
-    |> Enum.each(fn {key, _} ->
-      System.delete_env(key)
-    end)
+    Nif.env_clear()
   end
 
   def get_system_env do

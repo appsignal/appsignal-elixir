@@ -103,6 +103,13 @@ static ERL_NIF_TERM _env_delete(ErlNifEnv* env, int argc, const ERL_NIF_TERM arg
   return enif_make_atom(env, "ok");
 }
 
+static ERL_NIF_TERM _env_clear(ErlNifEnv* env, int UNUSED(argc), const ERL_NIF_TERM UNUSED(argv[]))
+{
+  appsignal_env_clear();
+
+  return enif_make_atom(env, "ok");
+}
+
 static ERL_NIF_TERM _start(ErlNifEnv* env, int UNUSED(arc), const ERL_NIF_TERM UNUSED(argv[]))
 {
     appsignal_start();
@@ -850,6 +857,7 @@ static ErlNifFunc nif_funcs[] =
     {"_env_put", 2, _env_put, 0},
     {"_env_get", 1, _env_get, 0},
     {"_env_delete", 1, _env_delete, 0},
+    {"_env_clear", 0, _env_clear, 0},
     {"_start", 0, _start, 0},
     {"_stop", 0, _stop, 0},
     {"_diagnose", 0, _diagnose, 0},
