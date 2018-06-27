@@ -1,4 +1,4 @@
-# 1.6.6-beta.1
+# 1.6.6-beta.2
 * Use local agent environment instead of system environment. PR #368
 
 # 1.6.5
