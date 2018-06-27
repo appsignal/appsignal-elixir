@@ -503,6 +503,7 @@ defmodule Appsignal.ConfigTest do
       end)
     end
 
+    @tag :skip_env_test_no_nif
     test "writes valid AppSignal config options to the env" do
       with_config(%{
         active: true,
@@ -557,6 +558,7 @@ defmodule Appsignal.ConfigTest do
       end)
     end
 
+    @tag :skip_env_test_no_nif
     test "name as atom" do
       with_config(%{name: :appsignal_test_suite_app}, fn() ->
         write_to_environment()
@@ -564,6 +566,7 @@ defmodule Appsignal.ConfigTest do
       end)
     end
 
+    @tag :skip_env_test_no_nif
     test "name as string" do
       with_config(%{name: "AppSignal test suite app"}, fn() ->
         write_to_environment()
@@ -578,6 +581,7 @@ defmodule Appsignal.ConfigTest do
       end)
     end
 
+    @tag :skip_env_test_no_nif
     test "handles atom fields as strings" do
       with_config(%{
         active: "true",
