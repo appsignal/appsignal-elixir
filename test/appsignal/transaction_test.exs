@@ -107,7 +107,7 @@ defmodule AppsignalTransactionTest do
     @tag :skip_env_test_no_nif
     @tag :skip_env_test
     test_with_mock "sets the request metadata", _,  Appsignal.Transaction, [:passthrough], [] do
-      conn = %Plug.Conn{peer: {{127, 0, 0, 1}, 12345}, request_path: "/pa/th", method: "GET"}
+      conn = %Plug.Conn{request_path: "/pa/th", method: "GET"}
       |> Plug.Conn.put_private(:plug_session, %{})
       |> Plug.Conn.put_private(:plug_session_fetch, :done)
 
@@ -122,7 +122,7 @@ defmodule AppsignalTransactionTest do
 
   describe "concerning skipping session data" do
     setup do
-      conn = %Plug.Conn{peer: {{127, 0, 0, 1}, 12345}}
+      conn = %Plug.Conn{}
       |> Plug.Conn.put_private(:plug_session, %{})
       |> Plug.Conn.put_private(:plug_session_fetch, :done)
 
@@ -172,7 +172,7 @@ defmodule AppsignalTransactionTest do
 
   describe "concerning filtering session data" do
     setup do
-      conn = %Plug.Conn{peer: {{127, 0, 0, 1}, 12345}}
+      conn = %Plug.Conn{}
       |> Plug.Conn.put_private(:plug_session, %{password: "secret", foo: "bar"})
       |> Plug.Conn.put_private(:plug_session_fetch, :done)
 

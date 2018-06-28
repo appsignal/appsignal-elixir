@@ -3,13 +3,13 @@ defmodule Appsignal.Diagnose.Agent do
 
   def report do
     if @nif.loaded? do
-      System.put_env("_APPSIGNAL_DIAGNOSE", "true")
+      Appsignal.Nif.env_put("_APPSIGNAL_DIAGNOSE", "true")
       report_string = @nif.diagnose
       report = case Poison.decode(report_string) do
         {:ok, report} -> {:ok, report}
         {:error, _} -> {:error, report_string}
       end
-      System.delete_env("_APPSIGNAL_DIAGNOSE")
+      Appsignal.Nif.env_delete("_APPSIGNAL_DIAGNOSE")
       report
     else
       {:error, :nif_not_loaded}

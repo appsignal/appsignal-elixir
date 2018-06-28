@@ -93,7 +93,7 @@ defmodule AppsignalTest do
       {Appsignal.TransactionRegistry, [:passthrough], [remove_transaction: fn(_) -> :ok end]},
     ]) do
 
-      conn = %Plug.Conn{peer: {{127, 0, 0, 1}, 12345}, req_headers: [{"accept", "text/plain"}]}
+      conn = %Plug.Conn{req_headers: [{"accept", "text/plain"}]}
       t = %Transaction{} = Appsignal.send_error(%RuntimeError{message: "Some bad stuff happened"}, "Oops", [], %{foo: "bar"}, conn)
 
       env = %{

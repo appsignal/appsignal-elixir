@@ -1,3 +1,6 @@
+# 1.6.6-beta.2
+* Use local agent environment instead of system environment. PR #368
+
 # 1.6.5
 * Allow calling `Transaction.register/1` and `Transaction.complete/1` when the Registry is not alive. PR #356
 
