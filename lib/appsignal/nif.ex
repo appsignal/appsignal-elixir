@@ -63,6 +63,22 @@ defmodule Appsignal.Nif do
     end
   end
 
+  def env_put(key, value) do
+    _env_put(key, value)
+  end
+
+  def env_get(key) do
+    _env_get(key)
+  end
+
+  def env_delete(key) do
+    _env_delete(key)
+  end
+
+  def env_clear() do
+    _env_clear()
+  end
+
   def start do
     _start()
   end
@@ -211,6 +227,22 @@ defmodule Appsignal.Nif do
     def transaction_to_json(resource) do
       _transaction_to_json(resource)
     end
+  end
+
+  def _env_put(_key, _value) do
+    :ok
+  end
+
+  def _env_get(_key) do
+    ''
+  end
+
+  def _env_delete(_key) do
+    :ok
+  end
+
+  def _env_clear() do
+    :ok
   end
 
   def _start do

@@ -5,7 +5,7 @@ defmodule Appsignal.ConfigTest do
 
   use ExUnit.Case
   import AppsignalTest.Utils
-  alias Appsignal.Config
+  alias Appsignal.{Config, Nif}
 
   setup do
     environment = freeze_environment()
@@ -463,9 +463,9 @@ defmodule Appsignal.ConfigTest do
         %{"_APPSIGNAL_APP_NAME" => "AppSignal test suite app"},
         fn() ->
           Appsignal.Config.reset_environment_config!
-          System.get_env("_APPSIGNAL_APP_NAME")
+          Nif.env_get("_APPSIGNAL_APP_NAME")
         end
-      ) == nil
+      ) == ''
     end
   end
 
@@ -477,15 +477,15 @@ defmodule Appsignal.ConfigTest do
 
     test "empty config options get written to the env" do
       write_to_environment()
-      assert System.get_env("_APPSIGNAL_APP_NAME") == ""
-      assert System.get_env("_APPSIGNAL_HTTP_PROXY") == ""
-      assert System.get_env("_APPSIGNAL_IGNORE_ACTIONS") == ""
-      assert System.get_env("_APPSIGNAL_IGNORE_ERRORS") == ""
-      assert System.get_env("_APPSIGNAL_IGNORE_NAMESPACES") == ""
-      assert System.get_env("_APPSIGNAL_LOG_FILE_PATH") == ""
-      assert System.get_env("_APPSIGNAL_WORKING_DIR_PATH") == ""
-      assert System.get_env("_APPSIGNAL_RUNNING_IN_CONTAINER") == ""
-      assert System.get_env("_APP_REVISION") == ""
+      assert Nif.env_get("_APPSIGNAL_APP_NAME") == ''
+      assert Nif.env_get("_APPSIGNAL_HTTP_PROXY") == ''
+      assert Nif.env_get("_APPSIGNAL_IGNORE_ACTIONS") == ''
+      assert Nif.env_get("_APPSIGNAL_IGNORE_ERRORS") == ''
+      assert Nif.env_get("_APPSIGNAL_IGNORE_NAMESPACES") == ''
+      assert Nif.env_get("_APPSIGNAL_LOG_FILE_PATH") == ''
+      assert Nif.env_get("_APPSIGNAL_WORKING_DIR_PATH") == ''
+      assert Nif.env_get("_APPSIGNAL_RUNNING_IN_CONTAINER") == ''
+      assert Nif.env_get("_APP_REVISION") == ''
     end
 
     test "deletes existing configuration in environment" do
@@ -497,11 +497,12 @@ defmodule Appsignal.ConfigTest do
           with_config(%{name: ""}, fn() ->
             write_to_environment()
             # So it doesn't get written to the new agent environment configuration
-            assert System.get_env("_APPSIGNAL_APP_NAME") == ""
+            assert Nif.env_get("_APPSIGNAL_APP_NAME") == ''
           end)
       end)
     end
 
+    @tag :skip_env_test_no_nif
     test "writes valid AppSignal config options to the env" do
       with_config(%{
         active: true,
@@ -530,53 +531,56 @@ defmodule Appsignal.ConfigTest do
       }, fn() ->
         write_to_environment()
 
-        assert System.get_env("_APPSIGNAL_ACTIVE") == "true"
-        assert System.get_env("_APPSIGNAL_AGENT_PATH") == List.to_string(:code.priv_dir(:appsignal))
-        assert System.get_env("_APPSIGNAL_APP_NAME") == "AppSignal test suite app"
-        assert System.get_env("_APPSIGNAL_CA_FILE_PATH") == "/foo/bar/zab.ca"
-        assert System.get_env("_APPSIGNAL_DEBUG_LOGGING") == "true"
-        assert System.get_env("_APPSIGNAL_DNS_SERVERS") == "8.8.8.8,8.8.4.4"
-        assert System.get_env("_APPSIGNAL_ENABLE_HOST_METRICS") == "false"
-        assert System.get_env("_APPSIGNAL_ENVIRONMENT") == "prod"
-        assert System.get_env("_APPSIGNAL_HOSTNAME") == "My hostname"
-        assert System.get_env("_APPSIGNAL_HTTP_PROXY") == "http://10.10.10.10:8888"
-        assert System.get_env("_APPSIGNAL_IGNORE_ACTIONS") == "ExampleApplication.PageController#ignored,ExampleApplication.PageController#also_ignored"
-        assert System.get_env("_APPSIGNAL_IGNORE_ERRORS") == "VerySpecificError,AnotherError"
-        assert System.get_env("_APPSIGNAL_IGNORE_NAMESPACES") == "admin,private_namespace"
-        assert System.get_env("_APPSIGNAL_LANGUAGE_INTEGRATION_VERSION") == "elixir-" <> Mix.Project.config[:version]
-        assert System.get_env("_APPSIGNAL_LOG") == "stdout"
-        assert System.get_env("_APPSIGNAL_LOG_FILE_PATH") == "log/appsignal.log"
-        assert System.get_env("_APPSIGNAL_PUSH_API_ENDPOINT") == "https://push.staging.lol"
-        assert System.get_env("_APPSIGNAL_PUSH_API_KEY") == "00000000-0000-0000-0000-000000000000"
-        assert System.get_env("_APPSIGNAL_RUNNING_IN_CONTAINER") == "false"
-        assert System.get_env("_APPSIGNAL_SEND_PARAMS") == "true"
-        assert System.get_env("_APPSIGNAL_WORKING_DIR_PATH") == "/tmp/appsignal"
-        assert System.get_env("_APPSIGNAL_FILES_WORLD_ACCESSIBLE") == "false"
-        assert System.get_env("_APP_REVISION") == "03bd9e"
+        assert Nif.env_get("_APPSIGNAL_ACTIVE") == 'true'
+        assert Nif.env_get("_APPSIGNAL_AGENT_PATH") == :code.priv_dir(:appsignal)
+        assert Nif.env_get("_APPSIGNAL_APP_NAME") == 'AppSignal test suite app'
+        assert Nif.env_get("_APPSIGNAL_CA_FILE_PATH") == '/foo/bar/zab.ca'
+        assert Nif.env_get("_APPSIGNAL_DEBUG_LOGGING") == 'true'
+        assert Nif.env_get("_APPSIGNAL_DNS_SERVERS") == '8.8.8.8,8.8.4.4'
+        assert Nif.env_get("_APPSIGNAL_ENABLE_HOST_METRICS") == 'false'
+        assert Nif.env_get("_APPSIGNAL_ENVIRONMENT") == 'prod'
+        assert Nif.env_get("_APPSIGNAL_HOSTNAME") == 'My hostname'
+        assert Nif.env_get("_APPSIGNAL_HTTP_PROXY") == 'http://10.10.10.10:8888'
+        assert Nif.env_get("_APPSIGNAL_IGNORE_ACTIONS") == 'ExampleApplication.PageController#ignored,ExampleApplication.PageController#also_ignored'
+        assert Nif.env_get("_APPSIGNAL_IGNORE_ERRORS") == 'VerySpecificError,AnotherError'
+        assert Nif.env_get("_APPSIGNAL_IGNORE_NAMESPACES") == 'admin,private_namespace'
+        assert Nif.env_get("_APPSIGNAL_LANGUAGE_INTEGRATION_VERSION") == 'elixir-' ++ String.to_charlist(Mix.Project.config[:version])
+        assert Nif.env_get("_APPSIGNAL_LOG") == 'stdout'
+        assert Nif.env_get("_APPSIGNAL_LOG_FILE_PATH") == 'log/appsignal.log'
+        assert Nif.env_get("_APPSIGNAL_PUSH_API_ENDPOINT") == 'https://push.staging.lol'
+        assert Nif.env_get("_APPSIGNAL_PUSH_API_KEY") == '00000000-0000-0000-0000-000000000000'
+        assert Nif.env_get("_APPSIGNAL_RUNNING_IN_CONTAINER") == 'false'
+        assert Nif.env_get("_APPSIGNAL_SEND_PARAMS") == 'true'
+        assert Nif.env_get("_APPSIGNAL_WORKING_DIR_PATH") == '/tmp/appsignal'
+        assert Nif.env_get("_APPSIGNAL_FILES_WORLD_ACCESSIBLE") == 'false'
+        assert Nif.env_get("_APP_REVISION") == '03bd9e'
       end)
     end
 
+    @tag :skip_env_test_no_nif
     test "name as atom" do
       with_config(%{name: :appsignal_test_suite_app}, fn() ->
         write_to_environment()
-        assert System.get_env("_APPSIGNAL_APP_NAME") == "appsignal_test_suite_app"
+        assert Nif.env_get("_APPSIGNAL_APP_NAME") == 'appsignal_test_suite_app'
       end)
     end
 
+    @tag :skip_env_test_no_nif
     test "name as string" do
       with_config(%{name: "AppSignal test suite app"}, fn() ->
         write_to_environment()
-        assert System.get_env("_APPSIGNAL_APP_NAME") == "AppSignal test suite app"
+        assert Nif.env_get("_APPSIGNAL_APP_NAME") == 'AppSignal test suite app'
       end)
     end
 
     test "writes dns_servers to env if empty" do
       with_config(%{dns_servers: []}, fn() ->
         write_to_environment()
-        assert System.get_env("_APPSIGNAL_DNS_SERVERS") == ""
+        assert Nif.env_get("_APPSIGNAL_DNS_SERVERS") == ''
       end)
     end
 
+    @tag :skip_env_test_no_nif
     test "handles atom fields as strings" do
       with_config(%{
         active: "true",
@@ -589,13 +593,13 @@ defmodule Appsignal.ConfigTest do
       }, fn() ->
         write_to_environment()
 
-        assert System.get_env("_APPSIGNAL_ACTIVE") == "true"
-        assert System.get_env("_APPSIGNAL_DEBUG_LOGGING") == "false"
-        assert System.get_env("_APPSIGNAL_ENABLE_HOST_METRICS") == "true"
-        assert System.get_env("_APPSIGNAL_ENVIRONMENT") == "prod"
-        assert System.get_env("_APPSIGNAL_RUNNING_IN_CONTAINER") == "false"
-        assert System.get_env("_APPSIGNAL_SEND_PARAMS") == "true"
-        assert System.get_env("_APPSIGNAL_FILES_WORLD_ACCESSIBLE") == "false"
+        assert Nif.env_get("_APPSIGNAL_ACTIVE") == 'true'
+        assert Nif.env_get("_APPSIGNAL_DEBUG_LOGGING") == 'false'
+        assert Nif.env_get("_APPSIGNAL_ENABLE_HOST_METRICS") == 'true'
+        assert Nif.env_get("_APPSIGNAL_ENVIRONMENT") == 'prod'
+        assert Nif.env_get("_APPSIGNAL_RUNNING_IN_CONTAINER") == 'false'
+        assert Nif.env_get("_APPSIGNAL_SEND_PARAMS") == 'true'
+        assert Nif.env_get("_APPSIGNAL_FILES_WORLD_ACCESSIBLE") == 'false'
       end)
     end
   end

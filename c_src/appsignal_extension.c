@@ -45,6 +45,71 @@ static ERL_NIF_TERM make_elixir_string(ErlNifEnv* env, appsignal_string_t binary
   return enif_make_string_len(env, binary.buf, binary.len, ERL_NIF_LATIN1);
 }
 
+static ERL_NIF_TERM _env_put(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+  ErlNifBinary key, value;
+
+  if (argc != 2) {
+    return enif_make_badarg(env);
+  }
+  if(!enif_inspect_iolist_as_binary(env, argv[0], &key)) {
+      return enif_make_badarg(env);
+  }
+  if(!enif_inspect_iolist_as_binary(env, argv[1], &value)) {
+      return enif_make_badarg(env);
+  }
+
+  appsignal_env_put(
+    make_appsignal_string(key),
+    make_appsignal_string(value)
+  );
+
+  return enif_make_atom(env, "ok");
+}
+
+static ERL_NIF_TERM _env_get(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+  ErlNifBinary key;
+  appsignal_string_t value;
+
+  if (argc != 1) {
+    return enif_make_badarg(env);
+  }
+  if(!enif_inspect_iolist_as_binary(env, argv[0], &key)) {
+      return enif_make_badarg(env);
+  }
+
+  value = appsignal_env_get(
+    make_appsignal_string(key)
+  );
+
+  return enif_make_string(env, value.buf, ERL_NIF_LATIN1);
+}
+
+static ERL_NIF_TERM _env_delete(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
+  ErlNifBinary key;
+
+  if (argc != 1) {
+    return enif_make_badarg(env);
+  }
+  if(!enif_inspect_iolist_as_binary(env, argv[0], &key)) {
+      return enif_make_badarg(env);
+  }
+
+  appsignal_env_delete(
+    make_appsignal_string(key)
+  );
+
+  return enif_make_atom(env, "ok");
+}
+
+static ERL_NIF_TERM _env_clear(ErlNifEnv* env, int UNUSED(argc), const ERL_NIF_TERM UNUSED(argv[]))
+{
+  appsignal_env_clear();
+
+  return enif_make_atom(env, "ok");
+}
+
 static ERL_NIF_TERM _start(ErlNifEnv* env, int UNUSED(arc), const ERL_NIF_TERM UNUSED(argv[]))
 {
     appsignal_start();
@@ -827,6 +892,10 @@ static int on_upgrade(ErlNifEnv* UNUSED(env), void** UNUSED(priv), void** UNUSED
 
 static ErlNifFunc nif_funcs[] =
 {
+    {"_env_put", 2, _env_put, 0},
+    {"_env_get", 1, _env_get, 0},
+    {"_env_delete", 1, _env_delete, 0},
+    {"_env_clear", 0, _env_clear, 0},
     {"_start", 0, _start, 0},
     {"_stop", 0, _stop, 0},
     {"_diagnose", 0, _diagnose, 0},
