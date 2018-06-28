@@ -1,3 +1,8 @@
+# 1.7.0-beta.1
+* Bundle CA certificate. PR #364
+* Add Appsignal.Transaction.set_namespace/1-2. PR #361
+* Use :hackney instead of cURL to download agent. PR #359
+
 # 1.6.6
 * Use local agent environment instead of system environment. PR #368
 
