@@ -1,4 +1,10 @@
+# 1.6.7
+* Revert container memory metrics fixes. PR #370
+* Fix _APP_REVISION read logic in extension. PR #370
+* Fix _APPSIGNAL_PROCESS_NAME read logic in extension. PR #370
+
 # 1.6.6
+* Add container memory metrics fixes.
 * Use local agent environment instead of system environment. PR #368
 
 # 1.6.5
