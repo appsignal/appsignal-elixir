@@ -40,7 +40,7 @@ defmodule Appsignal.Mixfile do
 
   def project do
     [app: :appsignal,
-     version: "1.7.0-beta.2",
+     version: "1.7.0",
      name: "AppSignal",
      description: description(),
      package: package(),
