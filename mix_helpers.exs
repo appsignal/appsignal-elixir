@@ -148,7 +148,11 @@ defmodule Mix.Appsignal.Helper do
   end
 
   def compile do
-    {result, error_code} = System.cmd("make", make_args(to_string(Mix.env)))
+    {result, error_code} = if Mix.Appsignal.Helper.agent_platform() == "freebsd" do
+      System.cmd("gmake", make_args(to_string(Mix.env)))
+    else
+      System.cmd("make", make_args(to_string(Mix.env)))
+    end
     IO.binwrite(result)
 
     if error_code != 0 do
