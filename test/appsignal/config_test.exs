@@ -88,6 +88,25 @@ defmodule Appsignal.ConfigTest do
     end
   end
 
+  describe "ca_file_path" do
+    setup do
+      Config.initialize()
+      :ok
+    end
+
+    test "uses the priv path by default" do
+      assert with_config(%{}, &Config.ca_file_path/0) == Path.join(:code.priv_dir(:appsignal), "cacert.pem")
+    end
+
+    test "returns user override when set" do
+      assert with_config(%{ca_file_path: "/foo/bar/bat.ca"}, &Config.ca_file_path/0) == "/foo/bar/bat.ca"
+    end
+
+    test "returns nil when set to nil" do
+      assert with_config(%{ca_file_path: nil}, &Config.ca_file_path/0) == nil
+    end
+  end
+
   describe "using the application environment" do
     test "active" do
       assert with_config(%{active: true}, &init_config/0)
@@ -627,8 +646,7 @@ defmodule Appsignal.ConfigTest do
         accept accept-charset accept-encoding accept-language cache-control
         connection content-length path-info range request-method request-uri
         server-name server-port server-protocol
-      ),
-      ca_file_path: Path.expand("_build/#{Mix.env}/lib/appsignal/priv/cacert.pem")
+      )
     }
   end
 
