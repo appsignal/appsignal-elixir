@@ -1,3 +1,6 @@
+# 1.7.1
+* Fix absolute path to CA certificate file. PR #380
+
 # 1.7.0
 * Bundle CA certificate. PR #364
 * Add Appsignal.Transaction.set_namespace/1-2. PR #361
