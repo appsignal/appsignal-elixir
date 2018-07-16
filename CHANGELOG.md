@@ -1,3 +1,7 @@
+# 1.7.2
+* Ensure ca_file_path is written to agent env. PR #381
+* Use gmake over make when gmake executable exists. PR #382
+
 # 1.7.1
 * Fix absolute path to CA certificate file. PR #380
 
