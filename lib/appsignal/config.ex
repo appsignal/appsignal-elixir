@@ -38,6 +38,7 @@ defmodule Appsignal.Config do
 
     config =
       @default_config
+      |> Map.merge(runtime_config())
       |> Map.merge(system_config)
       |> Map.merge(app_config)
       |> Map.merge(env_config)
@@ -83,12 +84,7 @@ defmodule Appsignal.Config do
   end
 
   def ca_file_path do
-    config = Application.fetch_env!(:appsignal, :config)
-    if Map.has_key?(config, :ca_file_path) do
-      config[:ca_file_path]
-    else
-      default_ca_file_path()
-    end
+    Application.fetch_env!(:appsignal, :config)[:ca_file_path]
   end
 
   defp default_ca_file_path do
@@ -139,6 +135,10 @@ defmodule Appsignal.Config do
         cfg
       end
     end)
+  end
+
+  defp runtime_config do
+    %{ca_file_path: default_ca_file_path()}
   end
 
   defp load_from_system() do

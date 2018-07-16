@@ -621,6 +621,24 @@ defmodule Appsignal.ConfigTest do
         assert Nif.env_get("_APPSIGNAL_FILES_WORLD_ACCESSIBLE") == 'false'
       end)
     end
+
+    @tag :skip_env_test_no_nif
+    test "writes default ca_file_path to env if not user configured" do
+      with_config(%{}, fn() ->
+        write_to_environment()
+
+        assert Nif.env_get("_APPSIGNAL_CA_FILE_PATH") == to_charlist(default_configuration()[:ca_file_path])
+      end)
+    end
+
+    @tag :skip_env_test_no_nif
+    test "writes empty strint ca_file_path to env if user configured to nil" do
+      with_config(%{ca_file_path: nil}, fn() ->
+        write_to_environment()
+
+        assert Nif.env_get("_APPSIGNAL_CA_FILE_PATH") == ''
+      end)
+    end
   end
 
   defp default_configuration() do
@@ -646,7 +664,8 @@ defmodule Appsignal.ConfigTest do
         accept accept-charset accept-encoding accept-language cache-control
         connection content-length path-info range request-method request-uri
         server-name server-port server-protocol
-      )
+      ),
+      ca_file_path: Path.join(:code.priv_dir(:appsignal), "cacert.pem")
     }
   end
 
