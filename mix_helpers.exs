@@ -148,11 +148,7 @@ defmodule Mix.Appsignal.Helper do
   end
 
   def compile do
-    {result, error_code} = if Mix.Appsignal.Helper.agent_platform() == "freebsd" do
-      System.cmd("gmake", make_args(to_string(Mix.env)))
-    else
-      System.cmd("make", make_args(to_string(Mix.env)))
-    end
+    {result, error_code} = System.cmd(make(), make_args(to_string(Mix.env())))
     IO.binwrite(result)
 
     if error_code != 0 do
@@ -280,5 +276,9 @@ defmodule Mix.Appsignal.Helper do
 
   defp force_musl_build? do
     !is_nil(System.get_env("APPSIGNAL_BUILD_FOR_MUSL"))
+  end
+
+  defp make do
+    if System.find_executable("gmake"), do: "gmake", else: "make"
   end
 end
