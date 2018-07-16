@@ -521,7 +521,7 @@ static ERL_NIF_TERM _set_gauge(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv
 static ERL_NIF_TERM _increment_counter(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     ErlNifBinary key;
-    int count;
+    double count;
     data_ptr *data_ptr;
 
     if (argc != 3) {
@@ -530,7 +530,7 @@ static ERL_NIF_TERM _increment_counter(ErlNifEnv* env, int argc, const ERL_NIF_T
     if(!enif_inspect_iolist_as_binary(env, argv[0], &key)) {
         return enif_make_badarg(env);
     }
-    if(!enif_get_int(env, argv[1], &count)) {
+    if(!enif_get_double(env, argv[1], &count)) {
         return enif_make_badarg(env);
     }
     if(!enif_get_resource(env, argv[2], appsignal_data_type, (void**) &data_ptr)) {

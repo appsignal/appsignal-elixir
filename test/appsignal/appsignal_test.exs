@@ -14,6 +14,8 @@ defmodule AppsignalTest do
     Appsignal.increment_counter("counter")
     Appsignal.increment_counter("counter", 5)
     Appsignal.increment_counter("counter", 5, %{:a => "b"})
+    Appsignal.increment_counter("counter", 5.0)
+    Appsignal.increment_counter("counter", 5.0, %{:a => "b"})
   end
 
   test "add distribution value" do
