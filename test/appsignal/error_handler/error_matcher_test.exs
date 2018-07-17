@@ -191,19 +191,22 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
   end
 
   test "Task" do
-    Task.start(fn() ->
+    result = Task.start(fn() ->
       Float.ceil(1)
     end)
     |> assert_crash_caught
     |> reason(":function_clause")
-    |> message(
-      ~r(Process #PID<[\d.]+> terminating: {:function_clause, \[{Float, :cei...)
-    )
     |> stacktrace([
       ~r{\(elixir\) lib/float.ex:\d+: Float.ceil/2},
       ~r{\(elixir\) lib/task/supervised.ex:\d+: Task.Supervised.do_apply/2},
       ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p_do_apply/3}
     ])
+
+    if Version.compare(System.version, "1.7.0-rc.0") != :lt do
+      message(result, ~r(Process #PID<[\d.]+> terminating))
+    else
+      message(result, ~r(Process #PID<[\d.]+> terminating: {:function_clause, \[{Float, :cei...))
+    end
   end
 
   test "Task await" do
