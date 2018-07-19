@@ -146,7 +146,14 @@ defmodule Appsignal do
         Appsignal.Transaction.set_sample_data(transaction, "key", %{foo: "bar"})
       end)
   """
-  def send_error(reason, message \\ "", stack \\ [], metadata \\ %{}, conn \\ nil, fun \\ fn(t) -> t end, namespace \\ :http_request) do
+  def send_error(reason, message \\ "", stack \\ nil, metadata \\ %{}, conn \\ nil, fun \\ fn(t) -> t end, namespace \\ :http_request) do
+    case stack do
+      nil ->
+        IO.warn "Appsignal.send_error/1-7 without passing a stack trace is deprecated, and defaults to passing an empty stacktrace. Please explicitly pass a stack trace or an empty list."
+        []
+      _ -> stack
+    end
+
     transaction = Appsignal.Transaction.create("_" <> Appsignal.Transaction.generate_id(), namespace)
     fun.(transaction)
     {reason, message} = Appsignal.ErrorHandler.extract_reason_and_message(reason, message)
