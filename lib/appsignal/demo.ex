@@ -15,7 +15,7 @@ defmodule Appsignal.Demo do
     |> Appsignal.Transaction.set_error(
       "TestError",
       "Hello world! This is an error used for demonstration purposes.",
-      System.stacktrace
+      []
     )
     |> finish_demo_transaction()
   end
