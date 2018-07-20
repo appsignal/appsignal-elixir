@@ -107,10 +107,11 @@ defmodule Appsignal do
   @doc """
   Increment a counter of some metric.
   """
-  @spec increment_counter(String.t(), integer, map) :: :ok
-  def increment_counter(key, count \\ 1, %{} = tags \\ %{}) when is_integer(count) do
+  @spec increment_counter(String.t(), number, map) :: :ok
+  def increment_counter(key, count \\ 1, tags \\ %{})
+  def increment_counter(key, count, %{} = tags) when is_number(count) do
     encoded_tags = Appsignal.Utils.DataEncoder.encode(tags)
-    :ok = Appsignal.Nif.increment_counter(key, count, encoded_tags)
+    :ok = Appsignal.Nif.increment_counter(key, count + 0.0, encoded_tags)
   end
 
   @doc """
