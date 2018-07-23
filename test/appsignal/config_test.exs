@@ -237,6 +237,11 @@ defmodule Appsignal.ConfigTest do
         == default_configuration() |> Map.put(:working_dir_path, "/tmp/appsignal")
     end
 
+    test "working_directory_path" do
+      assert with_config(%{working_directory_path: "/tmp/appsignal"}, &init_config/0)
+        == default_configuration() |> Map.put(:working_directory_path, "/tmp/appsignal")
+    end
+
     test "request_headers" do
       assert with_config(%{request_headers: ~w(accept accept-charset)}, &init_config/0)
         == default_configuration() |> Map.put(:request_headers, ~w(accept accept-charset))
@@ -420,6 +425,13 @@ defmodule Appsignal.ConfigTest do
       ) == default_configuration() |> Map.put(:working_dir_path, "/tmp/appsignal")
     end
 
+    test "working_directory_path" do
+      assert with_env(
+        %{"APPSIGNAL_WORKING_DIRECTORY_PATH" => "/tmp/appsignal"},
+        &init_config/0
+      ) == default_configuration() |> Map.put(:working_directory_path, "/tmp/appsignal")
+    end
+
     test "request_headers" do
       assert with_env(
         %{"APPSIGNAL_REQUEST_HEADERS" => "accept,accept-charset"},
@@ -503,6 +515,7 @@ defmodule Appsignal.ConfigTest do
       assert Nif.env_get("_APPSIGNAL_IGNORE_NAMESPACES") == ''
       assert Nif.env_get("_APPSIGNAL_LOG_FILE_PATH") == ''
       assert Nif.env_get("_APPSIGNAL_WORKING_DIR_PATH") == ''
+      assert Nif.env_get("_APPSIGNAL_WORKING_DIRECTORY_PATH") == ''
       assert Nif.env_get("_APPSIGNAL_RUNNING_IN_CONTAINER") == ''
       assert Nif.env_get("_APP_REVISION") == ''
     end
@@ -544,7 +557,8 @@ defmodule Appsignal.ConfigTest do
         log_path: "log/appsignal.log",
         name: "AppSignal test suite app",
         running_in_container: false,
-        working_dir_path: "/tmp/appsignal",
+        working_dir_path: "/tmp/appsignal-deprecated",
+        working_directory_path: "/tmp/appsignal",
         files_world_accessible: false,
         revision: "03bd9e"
       }, fn() ->
@@ -570,7 +584,8 @@ defmodule Appsignal.ConfigTest do
         assert Nif.env_get("_APPSIGNAL_PUSH_API_KEY") == '00000000-0000-0000-0000-000000000000'
         assert Nif.env_get("_APPSIGNAL_RUNNING_IN_CONTAINER") == 'false'
         assert Nif.env_get("_APPSIGNAL_SEND_PARAMS") == 'true'
-        assert Nif.env_get("_APPSIGNAL_WORKING_DIR_PATH") == '/tmp/appsignal'
+        assert Nif.env_get("_APPSIGNAL_WORKING_DIR_PATH") == '/tmp/appsignal-deprecated'
+        assert Nif.env_get("_APPSIGNAL_WORKING_DIRECTORY_PATH") == '/tmp/appsignal'
         assert Nif.env_get("_APPSIGNAL_FILES_WORLD_ACCESSIBLE") == 'false'
         assert Nif.env_get("_APP_REVISION") == '03bd9e'
       end)
