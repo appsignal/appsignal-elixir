@@ -3,6 +3,10 @@ defmodule Appsignal.DemoBehaviour do
   @callback create_transaction_performance_request :: Appsignal.Transaction.t
 end
 
+defmodule TestError do
+  defexception message: "Hello world! This is an error used for demonstration purposes."
+end
+
 defmodule Appsignal.Demo do
   import Appsignal.Instrumentation.Helpers, only: [instrument: 4]
 
@@ -11,13 +15,14 @@ defmodule Appsignal.Demo do
   @doc false
   @spec create_transaction_error_request :: Appsignal.Transaction.t
   def create_transaction_error_request do
-    create_demo_transaction()
-    |> Appsignal.Transaction.set_error(
-      "TestError",
-      "Hello world! This is an error used for demonstration purposes.",
-      System.stacktrace
-    )
-    |> finish_demo_transaction()
+    try do
+      raise TestError
+    rescue
+      error ->
+        create_demo_transaction()
+        |> Appsignal.Transaction.set_error("TestError", error.message, System.stacktrace())
+        |> finish_demo_transaction()
+    end
   end
 
   @doc false
