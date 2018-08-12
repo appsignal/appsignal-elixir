@@ -4,7 +4,7 @@ defmodule Appsignal.SystemTest do
 
   describe "when not on Heroku" do
     test "returns false" do
-      refute Appsignal.System.heroku?
+      refute Appsignal.System.heroku?()
     end
   end
 
@@ -12,7 +12,7 @@ defmodule Appsignal.SystemTest do
     setup do: setup_with_env(%{"DYNO" => "1"})
 
     test "returns true" do
-      assert Appsignal.System.heroku?
+      assert Appsignal.System.heroku?()
     end
   end
 
@@ -30,7 +30,7 @@ defmodule Appsignal.SystemTest do
 
   defp agent_architecture_path do
     :appsignal
-    |> Application.app_dir
+    |> Application.app_dir()
     |> Path.join("priv/appsignal.architecture")
   end
 end
