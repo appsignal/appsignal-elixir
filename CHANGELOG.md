@@ -1,3 +1,8 @@
+# 1.8.0
+* Add working_directory_path config option. PR #363
+* Use doubles values in custom metrics functions. PR #384
+* Support Elixir 1.7. PR #386
+
 # 1.7.2
 * Ensure ca_file_path is written to agent env. PR #381
 * Use gmake over make when gmake executable exists. PR #382
