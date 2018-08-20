@@ -25,7 +25,7 @@ matrix:
   allow_failures:
     - otp_release: 18.3
 script:
-  - mix format --check-formatted --dry-run
+  - MIX_ENV=test scripts/run_formatter
   - MIX_ENV=test_no_nif mix test
   - MIX_ENV=test_phoenix mix test
   - MIX_ENV=test mix test
