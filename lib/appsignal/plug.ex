@@ -138,10 +138,11 @@ if Appsignal.plug?() do
           } = conn
         ) do
       %{
-        "params" => Appsignal.Utils.MapFilter.filter_values(
-          params,
-          Appsignal.Utils.MapFilter.get_filter_parameters()
-        ),
+        "params" =>
+          Appsignal.Utils.MapFilter.filter_values(
+            params,
+            Appsignal.Utils.MapFilter.get_filter_parameters()
+          ),
         "environment" =>
           %{
             "host" => host,
@@ -156,7 +157,7 @@ if Appsignal.plug?() do
 
     def extract_request_headers(%Plug.Conn{req_headers: req_headers}) do
       for {key, value} <- req_headers,
-          key in (Config.request_headers()) do
+          key in Config.request_headers() do
         {"req_headers.#{key}", value}
       end
       |> Enum.into(%{})

@@ -31,7 +31,7 @@ defmodule Appsignal do
       worker(Appsignal.TransactionRegistry, [])
     ]
 
-    Supervisor.start_link(children, [strategy: :one_for_one, name: Appsignal.Supervisor])
+    Supervisor.start_link(children, strategy: :one_for_one, name: Appsignal.Supervisor)
   end
 
   def plug? do
@@ -109,6 +109,7 @@ defmodule Appsignal do
   """
   @spec increment_counter(String.t(), number, map) :: :ok
   def increment_counter(key, count \\ 1, tags \\ %{})
+
   def increment_counter(key, count, %{} = tags) when is_number(count) do
     encoded_tags = Appsignal.Utils.DataEncoder.encode(tags)
     :ok = Appsignal.Nif.increment_counter(key, count + 0.0, encoded_tags)
@@ -147,15 +148,30 @@ defmodule Appsignal do
         Appsignal.Transaction.set_sample_data(transaction, "key", %{foo: "bar"})
       end)
   """
-  def send_error(reason, message \\ "", stack \\ nil, metadata \\ %{}, conn \\ nil, fun \\ fn(t) -> t end, namespace \\ :http_request) do
+  def send_error(
+        reason,
+        message \\ "",
+        stack \\ nil,
+        metadata \\ %{},
+        conn \\ nil,
+        fun \\ fn t -> t end,
+        namespace \\ :http_request
+      ) do
     case stack do
       nil ->
-        IO.warn "Appsignal.send_error/1-7 without passing a stack trace is deprecated, and defaults to passing an empty stacktrace. Please explicitly pass a stack trace or an empty list."
+        IO.warn(
+          "Appsignal.send_error/1-7 without passing a stack trace is deprecated, and defaults to passing an empty stacktrace. Please explicitly pass a stack trace or an empty list."
+        )
+
         []
-      _ -> stack
+
+      _ ->
+        stack
     end
 
-    transaction = Appsignal.Transaction.create("_" <> Appsignal.Transaction.generate_id(), namespace)
+    transaction =
+      Appsignal.Transaction.create("_" <> Appsignal.Transaction.generate_id(), namespace)
+
     fun.(transaction)
     {reason, message} = Appsignal.ErrorHandler.extract_reason_and_message(reason, message)
     Appsignal.ErrorHandler.submit_transaction(transaction, reason, message, stack, metadata, conn)

@@ -6,10 +6,11 @@ defmodule Appsignal.Transaction.RegistryTest do
   test "lookup/1 returns nil after process has ended" do
     transaction = %Transaction{id: Transaction.generate_id()}
 
-    pid = spawn(fn() ->
-      TransactionRegistry.register(transaction)
-      assert transaction == TransactionRegistry.lookup(self())
-    end)
+    pid =
+      spawn(fn ->
+        TransactionRegistry.register(transaction)
+        assert transaction == TransactionRegistry.lookup(self())
+      end)
 
     :ok = wait_for_process_to_exit(pid)
 
@@ -100,7 +101,7 @@ defmodule Appsignal.Transaction.RegistryTest do
 
   def register_transaction_without_monitor(_) do
     transaction = %Transaction{id: Transaction.generate_id()}
-    true = :ets.insert(:'$appsignal_transaction_registry', {self(), transaction})
+    true = :ets.insert(:"$appsignal_transaction_registry", {self(), transaction})
 
     [transaction: transaction]
   end
@@ -115,6 +116,7 @@ defmodule Appsignal.Transaction.RegistryTest do
 
   defp wait_for_process_to_exit(pid) do
     ref = Process.monitor(pid)
+
     receive do
       {:DOWN, ^ref, _, _, _} -> :ok
     after

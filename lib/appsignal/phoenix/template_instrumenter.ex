@@ -1,4 +1,4 @@
-if Appsignal.phoenix? do
+if Appsignal.phoenix?() do
   defmodule Appsignal.Phoenix.TemplateInstrumenter do
     @moduledoc """
     Instrument Phoenix template engines
@@ -38,12 +38,13 @@ if Appsignal.phoenix? do
 
         def compile(path, name) do
           expr = unquote(opts[:engine]).compile(path, name)
+
           quote do
             Appsignal.Instrumentation.Helpers.instrument(
               self(),
               "render.phoenix_template",
               unquote(path),
-              fn() -> unquote(expr) end
+              fn -> unquote(expr) end
             )
           end
         end

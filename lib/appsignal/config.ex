@@ -51,10 +51,10 @@ defmodule Appsignal.Config do
       |> Map.put(:valid, !empty?(config[:push_api_key]))
 
     if !empty?(config[:working_dir_path]) do
-      Logger.warn(fn() ->
+      Logger.warn(fn ->
         "'working_dir_path' is deprecated, please use " <>
-        "'working_directory_path' instead and specify the " <>
-        "full path to the working directory"
+          "'working_directory_path' instead and specify the " <>
+          "full path to the working directory"
       end)
     end
 

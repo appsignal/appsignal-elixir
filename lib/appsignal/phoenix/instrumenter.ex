@@ -1,4 +1,4 @@
-if Appsignal.phoenix? do
+if Appsignal.phoenix?() do
   defmodule Appsignal.Phoenix.Instrumenter do
     @moduledoc """
     Phoenix instrumentation hooks
@@ -34,6 +34,7 @@ if Appsignal.phoenix? do
     def phoenix_controller_call(:stop, _diff, {%Appsignal.Transaction{} = transaction, args}) do
       finish_event(transaction, "call.phoenix_controller", args)
     end
+
     def phoenix_controller_call(:stop, _, _), do: nil
 
     @doc false
@@ -45,6 +46,7 @@ if Appsignal.phoenix? do
     def phoenix_controller_render(:stop, _diff, {%Appsignal.Transaction{} = transaction, args}) do
       finish_event(transaction, "render.phoenix_controller", args)
     end
+
     def phoenix_controller_render(:stop, _, _), do: nil
 
     defp finish_event(transaction, name, args) do

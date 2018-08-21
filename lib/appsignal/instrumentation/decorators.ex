@@ -44,11 +44,12 @@ defmodule Appsignal.Instrumentation.Decorators do
   @doc false
   def transaction(namespace, body, context) do
     quote do
-      transaction = Appsignal.Transaction.start(
-        Appsignal.Transaction.generate_id,
-        unquote(namespace)
-      )
-      |> Appsignal.Transaction.set_action(unquote("#{context.module}##{context.name}"))
+      transaction =
+        Appsignal.Transaction.start(
+          Appsignal.Transaction.generate_id(),
+          unquote(namespace)
+        )
+        |> Appsignal.Transaction.set_action(unquote("#{context.module}##{context.name}"))
 
       result = unquote(body)
 
@@ -75,7 +76,8 @@ defmodule Appsignal.Instrumentation.Decorators do
         self(),
         unquote("#{context.name}#{postfix}"),
         unquote("#{context.module}.#{context.name}"),
-        fn -> unquote(body) end)
+        fn -> unquote(body) end
+      )
     end
   end
 

@@ -24,7 +24,7 @@ defmodule Appsignal.Phoenix.ChannelTest do
   alias Appsignal.FakeTransaction
 
   setup do
-    {:ok, fake_transaction} = Appsignal.FakeTransaction.start_link
+    {:ok, fake_transaction} = Appsignal.FakeTransaction.start_link()
 
     [
       socket: %Phoenix.Socket{
@@ -40,51 +40,66 @@ defmodule Appsignal.Phoenix.ChannelTest do
     ]
   end
 
-  test "instruments a channel action with a decorator", %{socket: socket, fake_transaction: fake_transaction} do
+  test "instruments a channel action with a decorator", %{
+    socket: socket,
+    fake_transaction: fake_transaction
+  } do
     UsingAppsignalPhoenixChannel.handle_in("decorated", %{"body" => "Hello, world!"}, socket)
 
     assert [{"123", :channel}] == FakeTransaction.started_transactions(fake_transaction)
-    assert "UsingAppsignalPhoenixChannel#decorated"
-      == FakeTransaction.action(fake_transaction)
+    assert "UsingAppsignalPhoenixChannel#decorated" == FakeTransaction.action(fake_transaction)
+
     assert %{
-      "environment" => %{
-        channel: PhoenixChatExampleWeb.RoomChannel,
-        endpoint: PhoenixChatExampleWeb.Endpoint,
-        handler: PhoenixChatExampleWeb.UserSocket,
-        id: 1,
-        ref: 2,
-        topic: "room:lobby",
-        transport: Phoenix.Transports.WebSocket
-      },
-      "params" => %{}
-    } == FakeTransaction.sample_data(fake_transaction)
-    assert [%Appsignal.Transaction{id: "123"}] = FakeTransaction.finished_transactions(fake_transaction)
-    assert [%Appsignal.Transaction{id: "123"}] = FakeTransaction.completed_transactions(fake_transaction)
+             "environment" => %{
+               channel: PhoenixChatExampleWeb.RoomChannel,
+               endpoint: PhoenixChatExampleWeb.Endpoint,
+               handler: PhoenixChatExampleWeb.UserSocket,
+               id: 1,
+               ref: 2,
+               topic: "room:lobby",
+               transport: Phoenix.Transports.WebSocket
+             },
+             "params" => %{}
+           } == FakeTransaction.sample_data(fake_transaction)
+
+    assert [%Appsignal.Transaction{id: "123"}] =
+             FakeTransaction.finished_transactions(fake_transaction)
+
+    assert [%Appsignal.Transaction{id: "123"}] =
+             FakeTransaction.completed_transactions(fake_transaction)
   end
 
-  test "instruments a channel action with an instrumentation helper", %{socket: socket, fake_transaction: fake_transaction} do
+  test "instruments a channel action with an instrumentation helper", %{
+    socket: socket,
+    fake_transaction: fake_transaction
+  } do
     UsingAppsignalPhoenixChannel.handle_in("instrumented", %{"body" => "Hello, world!"}, socket)
 
     assert [{"123", :channel}] == FakeTransaction.started_transactions(fake_transaction)
     assert "UsingAppsignalPhoenixChannel#instrumented" == FakeTransaction.action(fake_transaction)
+
     assert %{
-      "environment" => %{
-        channel: PhoenixChatExampleWeb.RoomChannel,
-        endpoint: PhoenixChatExampleWeb.Endpoint,
-        handler: PhoenixChatExampleWeb.UserSocket,
-        id: 1,
-        ref: 2,
-        topic: "room:lobby",
-        transport: Phoenix.Transports.WebSocket
-      },
-      "params" => %{"body" => "Hello, world!"}
-    } == FakeTransaction.sample_data(fake_transaction)
-    assert [%Appsignal.Transaction{id: "123"}] = FakeTransaction.finished_transactions(fake_transaction)
-    assert [%Appsignal.Transaction{id: "123"}] = FakeTransaction.completed_transactions(fake_transaction)
+             "environment" => %{
+               channel: PhoenixChatExampleWeb.RoomChannel,
+               endpoint: PhoenixChatExampleWeb.Endpoint,
+               handler: PhoenixChatExampleWeb.UserSocket,
+               id: 1,
+               ref: 2,
+               topic: "room:lobby",
+               transport: Phoenix.Transports.WebSocket
+             },
+             "params" => %{"body" => "Hello, world!"}
+           } == FakeTransaction.sample_data(fake_transaction)
+
+    assert [%Appsignal.Transaction{id: "123"}] =
+             FakeTransaction.finished_transactions(fake_transaction)
+
+    assert [%Appsignal.Transaction{id: "123"}] =
+             FakeTransaction.completed_transactions(fake_transaction)
   end
 
   test "filters parameters", %{socket: socket, fake_transaction: fake_transaction} do
-    AppsignalTest.Utils.with_config(%{filter_parameters: ["password"]}, fn() ->
+    AppsignalTest.Utils.with_config(%{filter_parameters: ["password"]}, fn ->
       UsingAppsignalPhoenixChannel.handle_in("instrumented", %{"password" => "secret"}, socket)
       assert "[FILTERED]" == FakeTransaction.sample_data(fake_transaction)["params"]["password"]
     end)
