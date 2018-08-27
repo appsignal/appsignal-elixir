@@ -132,7 +132,7 @@ defmodule Appsignal.ErrorHandler do
     try do
       {Exception.message(reason.exception([])), message}
     rescue
-      UndefinedFunctionError -> {"#{inspect reason}", message}
+      _ -> {"#{inspect reason}", message}
     end
   end
   def extract_reason_and_message(%Protocol.UndefinedError{value: {:error, {error = %{}, _stack}}}, message) do
