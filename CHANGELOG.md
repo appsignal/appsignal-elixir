@@ -1,3 +1,6 @@
+# 1.9.0 (unreleased)
+* Support memory host metrics collection for containers. PR #395
+
 # 1.8.0
 * Add working_directory_path config option. PR #363
 * Use doubles values in custom metrics functions. PR #384
