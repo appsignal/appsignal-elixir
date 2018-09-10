@@ -2,6 +2,7 @@ defmodule AppsignalTest do
   use ExUnit.Case
   import Mock
   import AppsignalTest.Utils
+  import ExUnit.CaptureIO
 
   test "set gauge" do
     Appsignal.set_gauge("key", 10.0)
@@ -68,6 +69,31 @@ defmodule AppsignalTest do
       assert called TransactionRegistry.remove_transaction(t)
 
       assert called Transaction.set_error(t, "RuntimeError", "Oops: Some bad stuff happened", [])
+      assert called Transaction.finish(t)
+      assert called Transaction.complete(t)
+    end
+  end
+
+  test "send_error without a stack trace" do
+    with_mocks([
+      {Appsignal.Transaction, [:passthrough], []},
+      {Appsignal.TransactionRegistry, [:passthrough], [remove_transaction: fn(_) -> :ok end]},
+    ]) do
+
+      output = capture_io(:stderr, fn() ->
+        t = Appsignal.send_error(%RuntimeError{message: "Some bad stuff happened"})
+        send self(), t
+      end)
+
+      assert output =~ "Appsignal.send_error/1-7 without passing a stack trace is deprecated, and defaults to passing an empty stacktrace."
+
+      t = receive do
+        t = %Transaction{} -> t
+      end
+
+      assert called TransactionRegistry.remove_transaction(t)
+
+      assert called Transaction.set_error(t, "RuntimeError", "Some bad stuff happened", [])
       assert called Transaction.finish(t)
       assert called Transaction.complete(t)
     end

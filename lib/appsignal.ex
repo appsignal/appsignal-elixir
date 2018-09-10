@@ -148,7 +148,7 @@ defmodule Appsignal do
       end)
   """
   def send_error(reason, message \\ "", stack \\ nil, metadata \\ %{}, conn \\ nil, fun \\ fn(t) -> t end, namespace \\ :http_request) do
-    case stack do
+    stack = case stack do
       nil ->
         IO.warn "Appsignal.send_error/1-7 without passing a stack trace is deprecated, and defaults to passing an empty stacktrace. Please explicitly pass a stack trace or an empty list."
         []
