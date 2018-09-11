@@ -157,17 +157,18 @@ defmodule Appsignal do
         fun \\ fn t -> t end,
         namespace \\ :http_request
       ) do
-    case stack do
-      nil ->
-        IO.warn(
-          "Appsignal.send_error/1-7 without passing a stack trace is deprecated, and defaults to passing an empty stacktrace. Please explicitly pass a stack trace or an empty list."
-        )
+    stack =
+      case stack do
+        nil ->
+          IO.warn(
+            "Appsignal.send_error/1-7 without passing a stack trace is deprecated, and defaults to passing an empty stacktrace. Please explicitly pass a stack trace or an empty list."
+          )
 
-        []
+          []
 
-      _ ->
-        stack
-    end
+        _ ->
+          stack
+      end
 
     transaction =
       Appsignal.Transaction.create("_" <> Appsignal.Transaction.generate_id(), namespace)
