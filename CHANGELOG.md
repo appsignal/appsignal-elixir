@@ -1,4 +1,4 @@
-# 1.8.1-beta.1
+# 1.8.1-beta.2
 * Fix linking issues on Alpine
 
 # 1.8.0
