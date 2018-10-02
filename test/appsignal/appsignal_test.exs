@@ -79,25 +79,27 @@ defmodule AppsignalTest do
   test "send_error without a stack trace" do
     with_mocks([
       {Appsignal.Transaction, [:passthrough], []},
-      {Appsignal.TransactionRegistry, [:passthrough], [remove_transaction: fn(_) -> :ok end]},
+      {Appsignal.TransactionRegistry, [:passthrough], [remove_transaction: fn _ -> :ok end]}
     ]) do
+      output =
+        capture_io(:stderr, fn ->
+          t = Appsignal.send_error(%RuntimeError{message: "Some bad stuff happened"})
+          send(self(), t)
+        end)
 
-      output = capture_io(:stderr, fn() ->
-        t = Appsignal.send_error(%RuntimeError{message: "Some bad stuff happened"})
-        send self(), t
-      end)
+      assert output =~
+               "Appsignal.send_error/1-7 without passing a stack trace is deprecated, and defaults to passing an empty stacktrace."
 
-      assert output =~ "Appsignal.send_error/1-7 without passing a stack trace is deprecated, and defaults to passing an empty stacktrace."
+      t =
+        receive do
+          t = %Transaction{} -> t
+        end
 
-      t = receive do
-        t = %Transaction{} -> t
-      end
+      assert called(TransactionRegistry.remove_transaction(t))
 
-      assert called TransactionRegistry.remove_transaction(t)
-
-      assert called Transaction.set_error(t, "RuntimeError", "Some bad stuff happened", [])
-      assert called Transaction.finish(t)
-      assert called Transaction.complete(t)
+      assert called(Transaction.set_error(t, "RuntimeError", "Some bad stuff happened", []))
+      assert called(Transaction.finish(t))
+      assert called(Transaction.complete(t))
     end
   end
 
