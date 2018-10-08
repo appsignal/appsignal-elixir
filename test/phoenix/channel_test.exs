@@ -1,4 +1,4 @@
-defmodule UsingAppsignalPhoenixChannel do
+defmodule DecoratedPhoenixChannel do
   import Appsignal.Phoenix.Channel, only: [channel_action: 5]
   use Appsignal.Instrumentation.Decorators
 
@@ -6,11 +6,11 @@ defmodule UsingAppsignalPhoenixChannel do
   def handle_in("decorated", payload, socket) do
     {:reply, {:ok, payload}, socket}
   end
+end
 
-  @decorate channel_action()
-  def handle_in("decorated_with_unbound_payload", _, socket) do
-    {:reply, :ok, socket}
-  end
+defmodule InstrumentedPhoenixChannel do
+  import Appsignal.Phoenix.Channel, only: [channel_action: 5]
+  use Appsignal.Instrumentation.Decorators
 
   def handle_in("instrumented" = action, payload, socket) do
     channel_action(__MODULE__, action, socket, payload, fn ->
@@ -44,10 +44,10 @@ defmodule Appsignal.Phoenix.ChannelTest do
     socket: socket,
     fake_transaction: fake_transaction
   } do
-    UsingAppsignalPhoenixChannel.handle_in("decorated", %{"body" => "Hello, world!"}, socket)
+    DecoratedPhoenixChannel.handle_in("decorated", %{"body" => "Hello, world!"}, socket)
 
     assert [{"123", :channel}] == FakeTransaction.started_transactions(fake_transaction)
-    assert "UsingAppsignalPhoenixChannel#decorated" == FakeTransaction.action(fake_transaction)
+    assert "DecoratedPhoenixChannel#decorated" == FakeTransaction.action(fake_transaction)
 
     assert %{
              "environment" => %{
@@ -73,10 +73,10 @@ defmodule Appsignal.Phoenix.ChannelTest do
     socket: socket,
     fake_transaction: fake_transaction
   } do
-    UsingAppsignalPhoenixChannel.handle_in("instrumented", %{"body" => "Hello, world!"}, socket)
+    InstrumentedPhoenixChannel.handle_in("instrumented", %{"body" => "Hello, world!"}, socket)
 
     assert [{"123", :channel}] == FakeTransaction.started_transactions(fake_transaction)
-    assert "UsingAppsignalPhoenixChannel#instrumented" == FakeTransaction.action(fake_transaction)
+    assert "InstrumentedPhoenixChannel#instrumented" == FakeTransaction.action(fake_transaction)
 
     assert %{
              "environment" => %{
@@ -100,7 +100,7 @@ defmodule Appsignal.Phoenix.ChannelTest do
 
   test "filters parameters", %{socket: socket, fake_transaction: fake_transaction} do
     AppsignalTest.Utils.with_config(%{filter_parameters: ["password"]}, fn ->
-      UsingAppsignalPhoenixChannel.handle_in("instrumented", %{"password" => "secret"}, socket)
+      InstrumentedPhoenixChannel.handle_in("instrumented", %{"password" => "secret"}, socket)
       assert "[FILTERED]" == FakeTransaction.sample_data(fake_transaction)["params"]["password"]
     end)
   end
