@@ -1,19 +1,9 @@
-lib/appsignal/instrumentation/decorators.ex:32: The call _@1:'module'() requires that _@1 is of type atom() | tuple() not #{}
-lib/appsignal/instrumentation/decorators.ex:32: The call _@1:'module'() requires that _@1 is of type atom() | tuple() not #{}
-lib/appsignal/instrumentation/decorators.ex:32: The call _@2:'module'() requires that _@2 is of type atom() | tuple() not #{}
-lib/appsignal/instrumentation/decorators.ex:32: The call _@1:'module'() requires that _@1 is of type atom() | tuple() not #{}
-lib/appsignal/instrumentation/decorators.ex:32: The call _@2:'module'() requires that _@2 is of type atom() | tuple() not #{}
-lib/appsignal/instrumentation/decorators.ex:86: The call _@1:'module'() requires that _@1 is of type atom() | tuple() not #{}
-lib/appsignal/transaction.ex:94: The call _@1:'resource'() requires that _@1 is of type atom() | tuple() not #{}
-lib/appsignal/transaction.ex:120: The call _@1:'resource'() requires that _@1 is of type atom() | tuple() not #{}
-lib/appsignal/transaction.ex:126: The call _@1:'resource'() requires that _@1 is of type atom() | tuple() not #{}
-lib/appsignal/transaction.ex:157: The call _@1:'resource'() requires that _@1 is of type atom() | tuple() not #{}
-lib/appsignal/transaction.ex:190: The call _@1:'resource'() requires that _@1 is of type atom() | tuple() not #{}
-lib/appsignal/transaction.ex:223: The call _@1:'resource'() requires that _@1 is of type atom() | tuple() not #{}
-lib/appsignal/transaction.ex:246: The call _@1:'resource'() requires that _@1 is of type atom() | tuple() not #{}
-lib/appsignal/transaction.ex:269: The call _@1:'resource'() requires that _@1 is of type atom() | tuple() not #{}
-lib/appsignal/transaction.ex:312: The call _@1:'resource'() requires that _@1 is of type atom() | tuple() not #{}
-lib/appsignal/transaction.ex:340: The call _@1:'resource'() requires that _@1 is of type atom() | tuple() not #{}
-lib/appsignal/transaction.ex:361: The call _@1:'resource'() requires that _@1 is of type atom() | tuple() not #{}
-lib/appsignal/transaction.ex:401: The call _@2:'private'() requires that _@2 is of type atom() | tuple() not #{}
-lib/appsignal/transaction.ex:403: The call _@3:'private'() requires that _@3 is of type atom() | tuple() not #{}
+lib/appsignal/error_handler.ex:33: The pattern {Vorigin@1, Vreason@1, Vmessage@1, Vstack@1, Vconn@1} can never match the type 'nomatch'
+lib/appsignal/transaction.ex:211: Overloaded contract for 'Elixir.Appsignal.Transaction':set_sample_data/2 has overlapping domains; such contracts are currently unsupported and are simply ignored
+lib/appsignal/transaction.ex:298: Overloaded contract for 'Elixir.Appsignal.Transaction':set_meta_data/2 has overlapping domains; such contracts are currently unsupported and are simply ignored
+lib/appsignal/diagnose/agent.ex:8: The call 'Elixir.Poison':decode(Vreport_string@1::'error') will never return since it differs in the 1st argument from the success typing arguments: (binary() | maybe_improper_list(binary() | maybe_improper_list(any(),binary() | []) | byte(),binary() | []))
+lib/appsignal/diagnose/agent.ex:10: The pattern {'error', _} can never match the type {'ok','false' | 'nil' | 'true' | binary() | [any()] | number() | map()}
+lib/appsignal/diagnose/report.ex:24: The pattern {'error', _} can never match the type {'ok','false' | 'nil' | 'true' | binary() | [any()] | number() | map()}
+lib/mix/tasks/appsignal.diagnose.ex:31: The pattern {'ok', Vagent_report@1} can never match the type {'error','nif_not_loaded'}
+lib/mix/tasks/appsignal.diagnose.ex:38: The pattern {'error', Vraw_report@1} can never match since previous clauses completely covered the type {'error','nif_not_loaded'}
+lib/mix/tasks/appsignal.diagnose.ex:103: Function print_agent_diagnostics/1 will never be called

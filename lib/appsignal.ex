@@ -31,7 +31,7 @@ defmodule Appsignal do
       worker(Appsignal.TransactionRegistry, [])
     ]
 
-    Supervisor.start_link(children, [strategy: :one_for_one, name: Appsignal.Supervisor])
+    Supervisor.start_link(children, strategy: :one_for_one, name: Appsignal.Supervisor)
   end
 
   def plug? do
@@ -107,10 +107,12 @@ defmodule Appsignal do
   @doc """
   Increment a counter of some metric.
   """
-  @spec increment_counter(String.t(), integer, map) :: :ok
-  def increment_counter(key, count \\ 1, %{} = tags \\ %{}) when is_integer(count) do
+  @spec increment_counter(String.t(), number, map) :: :ok
+  def increment_counter(key, count \\ 1, tags \\ %{})
+
+  def increment_counter(key, count, %{} = tags) when is_number(count) do
     encoded_tags = Appsignal.Utils.DataEncoder.encode(tags)
-    :ok = Appsignal.Nif.increment_counter(key, count, encoded_tags)
+    :ok = Appsignal.Nif.increment_counter(key, count + 0.0, encoded_tags)
   end
 
   @doc """
@@ -140,16 +142,37 @@ defmodule Appsignal do
       Appsignal.send_error(%RuntimeError{})
       Appsignal.send_error(%RuntimeError{}, "Oops!")
       Appsignal.send_error(%RuntimeError{}, "", System.stacktrace())
-      Appsignal.send_error(%RuntimeError{}, "", nil, %{foo: "bar"})
-      Appsignal.send_error(%RuntimeError{}, "", nil, %{}, %Plug.Conn{peer: {{127, 0, 0, 1}, 12345}})
-      Appsignal.send_error(%RuntimeError{}, "", nil, %{}, nil, fn(transaction) ->
+      Appsignal.send_error(%RuntimeError{}, "", [], %{foo: "bar"})
+      Appsignal.send_error(%RuntimeError{}, "", [], %{}, %Plug.Conn{})
+      Appsignal.send_error(%RuntimeError{}, "", [], %{}, nil, fn(transaction) ->
         Appsignal.Transaction.set_sample_data(transaction, "key", %{foo: "bar"})
       end)
   """
-  def send_error(reason, message \\ "", stack \\ nil, metadata \\ %{}, conn \\ nil, fun \\ fn(t) -> t end, namespace \\ :http_request) do
-    stack = stack || System.stacktrace()
+  def send_error(
+        reason,
+        message \\ "",
+        stack \\ nil,
+        metadata \\ %{},
+        conn \\ nil,
+        fun \\ fn t -> t end,
+        namespace \\ :http_request
+      ) do
+    stack =
+      case stack do
+        nil ->
+          IO.warn(
+            "Appsignal.send_error/1-7 without passing a stack trace is deprecated, and defaults to passing an empty stacktrace. Please explicitly pass a stack trace or an empty list."
+          )
 
-    transaction = Appsignal.Transaction.create("_" <> Appsignal.Transaction.generate_id(), namespace)
+          []
+
+        _ ->
+          stack
+      end
+
+    transaction =
+      Appsignal.Transaction.create("_" <> Appsignal.Transaction.generate_id(), namespace)
+
     fun.(transaction)
     {reason, message} = Appsignal.ErrorHandler.extract_reason_and_message(reason, message)
     Appsignal.ErrorHandler.submit_transaction(transaction, reason, message, stack, metadata, conn)

@@ -3,7 +3,8 @@ defmodule Appsignal.Phoenix.TemplateEngineTest do
 
   test "Whether the template instrumenter compiles files" do
     path = "test/fixtures/test.txt.eex"
+
     assert {_, _, [_, "render.phoenix_template", ^path, _]} =
-      Appsignal.Phoenix.Template.EExEngine.compile(path, "test.txt")
+             Appsignal.Phoenix.Template.EExEngine.compile(path, "test.txt")
   end
 end

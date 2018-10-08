@@ -16,17 +16,20 @@ defmodule Appsignal.Utils.MapFilter do
   def filter_values(%{__struct__: mod} = struct, _filter_params) when is_atom(mod) do
     struct
   end
+
   def filter_values(%{} = map, filter_params) do
-    Enum.into map, %{}, fn{k, v} ->
+    Enum.into(map, %{}, fn {k, v} ->
       if is_binary(k) and String.contains?(k, filter_params) do
         {k, "[FILTERED]"}
       else
         {k, filter_values(v, filter_params)}
       end
-    end
+    end)
   end
-  def filter_values([_|_] = list, filter_params) do
+
+  def filter_values([_ | _] = list, filter_params) do
     Enum.map(list, &filter_values(&1, filter_params))
   end
+
   def filter_values(other, _filter_params), do: other
 end

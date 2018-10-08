@@ -39,13 +39,21 @@ defmodule Appsignal.Nif do
     path = :filename.join(:code.priv_dir(:appsignal), 'appsignal_extension')
 
     case :erlang.load_nif(path, 1) do
-      :ok -> :ok
+      :ok ->
+        :ok
+
       {:error, {:load_failed, reason}} ->
         arch = :erlang.system_info(:system_architecture)
-        message = "[#{DateTime.utc_now |> to_string}] Error loading NIF (Is your operating system (#{arch}) supported? Please check http://docs.appsignal.com/support/operating-systems.html):\n#{reason}\n\n"
+
+        message =
+          "[#{DateTime.utc_now() |> to_string}] Error loading NIF (Is your operating system (#{
+            arch
+          }) supported? Please check http://docs.appsignal.com/support/operating-systems.html):\n#{
+            reason
+          }\n\n"
 
         :appsignal
-        |> Application.app_dir
+        |> Application.app_dir()
         |> Path.join("install.log")
         |> File.write(message, [:append])
 
@@ -55,12 +63,28 @@ defmodule Appsignal.Nif do
 
   def agent_version do
     case :appsignal
-    |> :code.priv_dir
-    |> Path.join("appsignal.version")
-    |> File.read do
+         |> :code.priv_dir()
+         |> Path.join("appsignal.version")
+         |> File.read() do
       {:ok, contents} -> String.trim(contents)
       _ -> nil
     end
+  end
+
+  def env_put(key, value) do
+    _env_put(key, value)
+  end
+
+  def env_get(key) do
+    _env_get(key)
+  end
+
+  def env_delete(key) do
+    _env_delete(key)
+  end
+
+  def env_clear() do
+    _env_clear()
   end
 
   def start do
@@ -105,6 +129,10 @@ defmodule Appsignal.Nif do
 
   def set_action(transaction_resource, action) do
     _set_action(transaction_resource, action)
+  end
+
+  def set_namespace(transaction_resource, namespace) do
+    _set_namespace(transaction_resource, namespace)
   end
 
   def set_queue_start(transaction_resource, start) do
@@ -187,12 +215,6 @@ defmodule Appsignal.Nif do
     _data_set_data(resource, value)
   end
 
-  if Mix.env in [:test, :test_phoenix] do
-    def data_to_json(resource) do
-      _data_to_json(resource)
-    end
-  end
-
   def data_list_new do
     _data_list_new()
   end
@@ -203,6 +225,32 @@ defmodule Appsignal.Nif do
 
   def loaded? do
     _loaded()
+  end
+
+  if Mix.env() in [:test, :test_phoenix] do
+    def data_to_json(resource) do
+      _data_to_json(resource)
+    end
+
+    def transaction_to_json(resource) do
+      _transaction_to_json(resource)
+    end
+  end
+
+  def _env_put(_key, _value) do
+    :ok
+  end
+
+  def _env_get(_key) do
+    ''
+  end
+
+  def _env_delete(_key) do
+    :ok
+  end
+
+  def _env_clear() do
+    :ok
   end
 
   def _start do
@@ -218,7 +266,7 @@ defmodule Appsignal.Nif do
   end
 
   def _start_transaction(_id, _namespace) do
-    if System.otp_release >= "20" do
+    if System.otp_release() >= "20" do
       {:ok, make_ref()}
     else
       {:ok, <<>>}
@@ -250,6 +298,10 @@ defmodule Appsignal.Nif do
   end
 
   def _set_action(_transaction_resource, _action) do
+    :ok
+  end
+
+  def _set_namespace(_transaction_resource, _action) do
     :ok
   end
 
@@ -347,10 +399,13 @@ defmodule Appsignal.Nif do
     false
   end
 
-  if Mix.env in [:test, :test_phoenix] do
+  if Mix.env() in [:test, :test_phoenix, :test_no_nif] do
     def _data_to_json(resource) do
       resource
     end
-  end
 
+    def _transaction_to_json(resource) do
+      {:ok, resource}
+    end
+  end
 end

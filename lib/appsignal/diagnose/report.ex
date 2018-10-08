@@ -1,14 +1,14 @@
 defmodule Appsignal.Diagnose.ReportBehaviour do
-  @callback send(%{}, %{}) :: {:ok | :error, String.t}
+  @callback send(map(), map()) :: {:ok, String.t()} | {:error, map()}
 end
 
 defmodule Appsignal.Diagnose.Report do
+  alias Appsignal.Transmitter
+
   @behaviour Appsignal.Diagnose.ReportBehaviour
 
-  @spec send(%{}, %{}) :: {:ok | :error, String.t}
+  @spec send(map(), map()) :: {:ok, String.t()} | {:error, map()}
   def send(config, report) do
-    :application.ensure_all_started(:hackney)
-
     params =
       URI.encode_query(%{
         api_key: config[:push_api_key],
@@ -21,7 +21,7 @@ defmodule Appsignal.Diagnose.Report do
     body = Poison.encode!(%{diagnose: report})
     headers = [{"Content-Type", "application/json; charset=UTF-8"}]
 
-    case :hackney.request(:post, url, headers, body) do
+    case Transmitter.request(:post, url, headers, body) do
       {:ok, 200, _, reference} ->
         {:ok, body} = :hackney.body(reference)
 

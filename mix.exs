@@ -6,22 +6,33 @@ defmodule Mix.Tasks.Compile.Appsignal do
 
     case Mix.Appsignal.Helper.verify_system_architecture() do
       {:ok, arch} ->
-        :ok = Mix.Appsignal.Helper.ensure_downloaded(arch)
-        :ok = Mix.Appsignal.Helper.compile
-        :ok = Mix.Appsignal.Helper.store_architecture(arch)
+        case Mix.Appsignal.Helper.ensure_downloaded(arch) do
+          :ok ->
+            :ok = Mix.Appsignal.Helper.compile()
+            :ok = Mix.Appsignal.Helper.store_architecture(arch)
+
+          {:error, _reason} ->
+            Mix.Shell.IO.error(
+              "Failed to download AppSignal agent. AppSignal integration disabled!"
+            )
+        end
+
       {:error, {:unsupported, arch}} ->
         Mix.Shell.IO.error(
           "Unsupported target platform #{arch}, AppSignal integration " <>
-          "disabled!\nPlease check " <>
-          "http://docs.appsignal.com/support/operating-systems.html"
+            "disabled!\nPlease check " <>
+            "http://docs.appsignal.com/support/operating-systems.html"
         )
+
         :ok = Mix.Appsignal.Helper.store_architecture(arch)
+
       {:error, {:unknown, {arch, platform}}} ->
         Mix.Shell.IO.error(
           "Unknown target platform #{arch} - #{platform}, AppSignal " <>
-          "integration disabled!\nPlease check " <>
-          "http://docs.appsignal.com/support/operating-systems.html"
+            "integration disabled!\nPlease check " <>
+            "http://docs.appsignal.com/support/operating-systems.html"
         )
+
         :ok = Mix.Appsignal.Helper.store_architecture(arch)
     end
   end
@@ -31,24 +42,25 @@ defmodule Appsignal.Mixfile do
   use Mix.Project
 
   def project do
-    [app: :appsignal,
-     version: "1.6.3",
-     name: "AppSignal",
-     description: description(),
-     package: package(),
-     source_url: "https://github.com/appsignal/appsignal-elixir",
-     homepage_url: "https://appsignal.com",
-     test_paths: test_paths(Mix.env),
-     elixir: "~> 1.0",
-     compilers: compilers(Mix.env),
-     elixirc_paths: elixirc_paths(Mix.env),
-     deps: deps(),
-     docs: [main: "Appsignal", logo: "logo.png"],
-     dialyzer: [
-       plt_add_deps: :transitive,
-       plt_add_apps: [:mix],
-       ignore_warnings: "dialyzer.ignore-warnings"
-     ]
+    [
+      app: :appsignal,
+      version: "1.8.0",
+      name: "AppSignal",
+      description: description(),
+      package: package(),
+      source_url: "https://github.com/appsignal/appsignal-elixir",
+      homepage_url: "https://appsignal.com",
+      test_paths: test_paths(Mix.env()),
+      elixir: "~> 1.0",
+      compilers: compilers(Mix.env()),
+      elixirc_paths: elixirc_paths(Mix.env()),
+      deps: deps(),
+      docs: [main: "Appsignal", logo: "logo.png"],
+      dialyzer: [
+        plt_add_deps: :transitive,
+        plt_add_apps: [:mix],
+        ignore_warnings: "dialyzer.ignore-warnings"
+      ]
     ]
   end
 
@@ -57,20 +69,30 @@ defmodule Appsignal.Mixfile do
   end
 
   defp package do
-    %{files: ["lib", "c_src/*.[ch]", "mix.exs", "mix_helpers.exs",
-              "*.md", "LICENSE", "Makefile", "agent.exs"],
+    %{
+      files: [
+        "lib",
+        "c_src/*.[ch]",
+        "mix.exs",
+        "mix_helpers.exs",
+        "*.md",
+        "LICENSE",
+        "Makefile",
+        "agent.exs",
+        "priv/cacert.pem"
+      ],
       maintainers: ["Jeff Kreeftmeijer", "Tom de Bruijn"],
       licenses: ["MIT"],
-      links: %{"GitHub" => "https://github.com/appsignal/appsignal-elixir"}}
+      links: %{"GitHub" => "https://github.com/appsignal/appsignal-elixir"}
+    }
   end
 
   def application do
-    [mod: {Appsignal, []},
-     applications: [:logger, :decorator, :hackney]]
+    [mod: {Appsignal, []}, applications: [:logger, :decorator, :hackney]]
   end
 
   defp compilers(:test_phoenix), do: [:phoenix] ++ compilers(:prod)
-  defp compilers(_), do: [:appsignal] ++ Mix.compilers
+  defp compilers(_), do: [:appsignal] ++ Mix.compilers()
 
   defp test_paths(:test_phoenix), do: ["test/appsignal", "test/mix", "test/phoenix"]
   defp test_paths(_), do: ["test/appsignal", "test/mix"]

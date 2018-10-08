@@ -1,4 +1,8 @@
 defmodule Appsignal.Config do
+  alias Appsignal.Nif
+
+  require Logger
+
   @default_config %{
     active: false,
     debug: false,
@@ -36,15 +40,23 @@ defmodule Appsignal.Config do
 
     config =
       @default_config
+      |> Map.merge(runtime_config())
       |> Map.merge(system_config)
       |> Map.merge(app_config)
       |> Map.merge(env_config)
-
 
     # Config is valid when we have a push api key
     config =
       config
       |> Map.put(:valid, !empty?(config[:push_api_key]))
+
+    if !empty?(config[:working_dir_path]) do
+      Logger.warn(fn ->
+        "'working_dir_path' is deprecated, please use " <>
+          "'working_directory_path' instead and specify the " <>
+          "full path to the working directory"
+      end)
+    end
 
     Application.put_env(:appsignal, :config, config)
 
@@ -80,6 +92,14 @@ defmodule Appsignal.Config do
     Application.fetch_env!(:appsignal, :config)[:request_headers]
   end
 
+  def ca_file_path do
+    Application.fetch_env!(:appsignal, :config)[:ca_file_path]
+  end
+
+  defp default_ca_file_path do
+    Path.join(:code.priv_dir(:appsignal), "cacert.pem")
+  end
+
   @env_to_key_mapping %{
     "APPSIGNAL_ACTIVE" => :active,
     "APPSIGNAL_PUSH_API_KEY" => :push_api_key,
@@ -101,6 +121,7 @@ defmodule Appsignal.Config do
     "APPSIGNAL_HTTP_PROXY" => :http_proxy,
     "APPSIGNAL_RUNNING_IN_CONTAINER" => :running_in_container,
     "APPSIGNAL_WORKING_DIR_PATH" => :working_dir_path,
+    "APPSIGNAL_WORKING_DIRECTORY_PATH" => :working_directory_path,
     "APPSIGNAL_ENABLE_HOST_METRICS" => :enable_host_metrics,
     "APPSIGNAL_SKIP_SESSION_DATA" => :skip_session_data,
     "APPSIGNAL_FILES_WORLD_ACCESSIBLE" => :files_world_accessible,
@@ -108,7 +129,7 @@ defmodule Appsignal.Config do
     "APP_REVISION" => :revision
   }
 
-  @string_keys ~w(APPSIGNAL_APP_NAME APPSIGNAL_PUSH_API_KEY APPSIGNAL_PUSH_API_ENDPOINT APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH APPSIGNAL_HOSTNAME APPSIGNAL_HTTP_PROXY APPSIGNAL_LOG APPSIGNAL_LOG_PATH APPSIGNAL_WORKING_DIR_PATH APPSIGNAL_CA_FILE_PATH APP_REVISION)
+  @string_keys ~w(APPSIGNAL_APP_NAME APPSIGNAL_PUSH_API_KEY APPSIGNAL_PUSH_API_ENDPOINT APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH APPSIGNAL_HOSTNAME APPSIGNAL_HTTP_PROXY APPSIGNAL_LOG APPSIGNAL_LOG_PATH APPSIGNAL_WORKING_DIR_PATH APPSIGNAL_WORKING_DIRECTORY_PATH APPSIGNAL_CA_FILE_PATH APP_REVISION)
   @bool_keys ~w(APPSIGNAL_ACTIVE APPSIGNAL_DEBUG APPSIGNAL_INSTRUMENT_NET_HTTP APPSIGNAL_ENABLE_FRONTEND_ERROR_CATCHING APPSIGNAL_ENABLE_ALLOCATION_TRACKING APPSIGNAL_ENABLE_GC_INSTRUMENTATION APPSIGNAL_RUNNING_IN_CONTAINER APPSIGNAL_ENABLE_HOST_METRICS APPSIGNAL_SKIP_SESSION_DATA APPSIGNAL_FILES_WORLD_ACCESSIBLE)
   @atom_keys ~w(APPSIGNAL_APP_ENV)
   @string_list_keys ~w(APPSIGNAL_FILTER_PARAMETERS APPSIGNAL_IGNORE_ACTIONS APPSIGNAL_IGNORE_ERRORS APPSIGNAL_IGNORE_NAMESPACES APPSIGNAL_DNS_SERVERS APPSIGNAL_FILTER_SESSION_DATA APPSIGNAL_REQUEST_HEADERS)
@@ -124,6 +145,10 @@ defmodule Appsignal.Config do
         cfg
       end
     end)
+  end
+
+  defp runtime_config do
+    %{ca_file_path: default_ca_file_path()}
   end
 
   defp load_from_system() do
@@ -197,30 +222,42 @@ defmodule Appsignal.Config do
   defp write_to_environment(config) do
     reset_environment_config!()
 
-    System.put_env("_APPSIGNAL_ACTIVE", to_string(config[:active]))
-    System.put_env("_APPSIGNAL_AGENT_PATH", List.to_string(:code.priv_dir(:appsignal)))
-    System.put_env("_APPSIGNAL_APP_PATH", List.to_string(:code.priv_dir(:appsignal))) # FIXME - app_path should not be necessary
-    System.put_env("_APPSIGNAL_APP_NAME", to_string(config[:name]))
-    System.put_env("_APPSIGNAL_CA_FILE_PATH", to_string(config[:ca_file_path]))
-    System.put_env("_APPSIGNAL_DEBUG_LOGGING", to_string(config[:debug]))
-    System.put_env("_APPSIGNAL_DNS_SERVERS", config[:dns_servers] |> Enum.join(","))
-    System.put_env("_APPSIGNAL_ENABLE_HOST_METRICS", to_string(config[:enable_host_metrics]))
-    System.put_env("_APPSIGNAL_ENVIRONMENT", to_string(config[:env]))
-    System.put_env("_APPSIGNAL_HOSTNAME", to_string(config[:hostname]))
-    System.put_env("_APPSIGNAL_HTTP_PROXY", to_string(config[:http_proxy]))
-    System.put_env("_APPSIGNAL_IGNORE_ACTIONS", config[:ignore_actions] |> Enum.join(","))
-    System.put_env("_APPSIGNAL_IGNORE_ERRORS", config[:ignore_errors] |> Enum.join(","))
-    System.put_env("_APPSIGNAL_IGNORE_NAMESPACES", config[:ignore_namespaces] |> Enum.join(","))
-    System.put_env("_APPSIGNAL_LANGUAGE_INTEGRATION_VERSION", "elixir-" <> @language_integration_version)
-    System.put_env("_APPSIGNAL_LOG", config[:log])
-    System.put_env("_APPSIGNAL_LOG_FILE_PATH", to_string(config[:log_path]))
-    System.put_env("_APPSIGNAL_PUSH_API_ENDPOINT", config[:endpoint] || "")
-    System.put_env("_APPSIGNAL_PUSH_API_KEY", config[:push_api_key] || "")
-    System.put_env("_APPSIGNAL_RUNNING_IN_CONTAINER", to_string(config[:running_in_container]))
-    System.put_env("_APPSIGNAL_SEND_PARAMS", to_string(config[:send_params]))
-    System.put_env("_APPSIGNAL_WORKING_DIR_PATH", to_string(config[:working_dir_path]))
-    System.put_env("_APPSIGNAL_FILES_WORLD_ACCESSIBLE", to_string(config[:files_world_accessible]))
-    System.put_env("_APP_REVISION", to_string(config[:revision]))
+    Nif.env_put("_APPSIGNAL_ACTIVE", to_string(config[:active]))
+    Nif.env_put("_APPSIGNAL_AGENT_PATH", List.to_string(:code.priv_dir(:appsignal)))
+    # FIXME - app_path should not be necessary
+    Nif.env_put("_APPSIGNAL_APP_PATH", List.to_string(:code.priv_dir(:appsignal)))
+    Nif.env_put("_APPSIGNAL_APP_NAME", to_string(config[:name]))
+    Nif.env_put("_APPSIGNAL_CA_FILE_PATH", to_string(config[:ca_file_path]))
+    Nif.env_put("_APPSIGNAL_DEBUG_LOGGING", to_string(config[:debug]))
+    Nif.env_put("_APPSIGNAL_DNS_SERVERS", config[:dns_servers] |> Enum.join(","))
+    Nif.env_put("_APPSIGNAL_ENABLE_HOST_METRICS", to_string(config[:enable_host_metrics]))
+    Nif.env_put("_APPSIGNAL_ENVIRONMENT", to_string(config[:env]))
+    Nif.env_put("_APPSIGNAL_HOSTNAME", to_string(config[:hostname]))
+    Nif.env_put("_APPSIGNAL_HTTP_PROXY", to_string(config[:http_proxy]))
+    Nif.env_put("_APPSIGNAL_IGNORE_ACTIONS", config[:ignore_actions] |> Enum.join(","))
+    Nif.env_put("_APPSIGNAL_IGNORE_ERRORS", config[:ignore_errors] |> Enum.join(","))
+    Nif.env_put("_APPSIGNAL_IGNORE_NAMESPACES", config[:ignore_namespaces] |> Enum.join(","))
+
+    Nif.env_put(
+      "_APPSIGNAL_LANGUAGE_INTEGRATION_VERSION",
+      "elixir-" <> @language_integration_version
+    )
+
+    Nif.env_put("_APPSIGNAL_LOG", config[:log])
+    Nif.env_put("_APPSIGNAL_LOG_FILE_PATH", to_string(config[:log_path]))
+    Nif.env_put("_APPSIGNAL_PUSH_API_ENDPOINT", config[:endpoint] || "")
+    Nif.env_put("_APPSIGNAL_PUSH_API_KEY", config[:push_api_key] || "")
+    Nif.env_put("_APPSIGNAL_RUNNING_IN_CONTAINER", to_string(config[:running_in_container]))
+    Nif.env_put("_APPSIGNAL_SEND_PARAMS", to_string(config[:send_params]))
+    Nif.env_put("_APPSIGNAL_WORKING_DIR_PATH", to_string(config[:working_dir_path]))
+    Nif.env_put("_APPSIGNAL_WORKING_DIRECTORY_PATH", to_string(config[:working_directory_path]))
+
+    Nif.env_put(
+      "_APPSIGNAL_FILES_WORLD_ACCESSIBLE",
+      to_string(config[:files_world_accessible])
+    )
+
+    Nif.env_put("_APP_REVISION", to_string(config[:revision]))
   end
 
   @doc """
@@ -229,14 +266,7 @@ defmodule Appsignal.Config do
   agent gets set again.
   """
   def reset_environment_config! do
-    System.get_env()
-    |> Enum.filter(fn
-      {"_APPSIGNAL_" <> _, _} -> true
-      _ -> false
-    end)
-    |> Enum.each(fn {key, _} ->
-      System.delete_env(key)
-    end)
+    Nif.env_clear()
   end
 
   def get_system_env do

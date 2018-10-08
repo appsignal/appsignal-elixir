@@ -45,6 +45,71 @@ static ERL_NIF_TERM make_elixir_string(ErlNifEnv* env, appsignal_string_t binary
   return enif_make_string_len(env, binary.buf, binary.len, ERL_NIF_LATIN1);
 }
 
+static ERL_NIF_TERM _env_put(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+  ErlNifBinary key, value;
+
+  if (argc != 2) {
+    return enif_make_badarg(env);
+  }
+  if(!enif_inspect_iolist_as_binary(env, argv[0], &key)) {
+      return enif_make_badarg(env);
+  }
+  if(!enif_inspect_iolist_as_binary(env, argv[1], &value)) {
+      return enif_make_badarg(env);
+  }
+
+  appsignal_env_put(
+    make_appsignal_string(key),
+    make_appsignal_string(value)
+  );
+
+  return enif_make_atom(env, "ok");
+}
+
+static ERL_NIF_TERM _env_get(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+  ErlNifBinary key;
+  appsignal_string_t value;
+
+  if (argc != 1) {
+    return enif_make_badarg(env);
+  }
+  if(!enif_inspect_iolist_as_binary(env, argv[0], &key)) {
+      return enif_make_badarg(env);
+  }
+
+  value = appsignal_env_get(
+    make_appsignal_string(key)
+  );
+
+  return enif_make_string(env, value.buf, ERL_NIF_LATIN1);
+}
+
+static ERL_NIF_TERM _env_delete(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
+  ErlNifBinary key;
+
+  if (argc != 1) {
+    return enif_make_badarg(env);
+  }
+  if(!enif_inspect_iolist_as_binary(env, argv[0], &key)) {
+      return enif_make_badarg(env);
+  }
+
+  appsignal_env_delete(
+    make_appsignal_string(key)
+  );
+
+  return enif_make_atom(env, "ok");
+}
+
+static ERL_NIF_TERM _env_clear(ErlNifEnv* env, int UNUSED(argc), const ERL_NIF_TERM UNUSED(argv[]))
+{
+  appsignal_env_clear();
+
+  return enif_make_atom(env, "ok");
+}
+
 static ERL_NIF_TERM _start(ErlNifEnv* env, int UNUSED(arc), const ERL_NIF_TERM UNUSED(argv[]))
 {
     appsignal_start();
@@ -309,6 +374,29 @@ static ERL_NIF_TERM _set_action(ErlNifEnv* env, int argc, const ERL_NIF_TERM arg
     return enif_make_atom(env, "ok");
 }
 
+static ERL_NIF_TERM _set_namespace(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    transaction_ptr *ptr;
+    ErlNifBinary namespace;
+
+    if (argc != 2) {
+      return enif_make_badarg(env);
+    }
+    if(!enif_get_resource(env, argv[0], appsignal_transaction_type, (void**) &ptr)) {
+      return enif_make_badarg(env);
+    }
+    if(!enif_inspect_iolist_as_binary(env, argv[1], &namespace)) {
+        return enif_make_badarg(env);
+    }
+
+    appsignal_set_transaction_namespace(
+        ptr->transaction,
+        make_appsignal_string(namespace)
+    );
+
+    return enif_make_atom(env, "ok");
+}
+
 static ERL_NIF_TERM _set_queue_start(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     transaction_ptr *ptr;
@@ -433,7 +521,7 @@ static ERL_NIF_TERM _set_gauge(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv
 static ERL_NIF_TERM _increment_counter(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     ErlNifBinary key;
-    int count;
+    double count;
     data_ptr *data_ptr;
 
     if (argc != 3) {
@@ -442,7 +530,7 @@ static ERL_NIF_TERM _increment_counter(ErlNifEnv* env, int argc, const ERL_NIF_T
     if(!enif_inspect_iolist_as_binary(env, argv[0], &key)) {
         return enif_make_badarg(env);
     }
-    if(!enif_get_int(env, argv[1], &count)) {
+    if(!enif_get_double(env, argv[1], &count)) {
         return enif_make_badarg(env);
     }
     if(!enif_get_resource(env, argv[2], appsignal_data_type, (void**) &data_ptr)) {
@@ -732,12 +820,27 @@ static ERL_NIF_TERM _data_to_json(ErlNifEnv* env, int argc, const ERL_NIF_TERM a
   if (argc != 1) {
     return enif_make_badarg(env);
   }
-  if(!enif_get_resource(env, argv[0], appsignal_data_type, (void**) &ptr)) {
+  if (!enif_get_resource(env, argv[0], appsignal_data_type, (void**) &ptr)) {
     return enif_make_badarg(env);
   }
 
   json = appsignal_data_to_json(ptr->data);
   return make_ok_tuple(env, enif_make_string(env, json.buf, ERL_NIF_LATIN1));
+}
+
+static ERL_NIF_TERM _transaction_to_json(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
+  transaction_ptr *ptr;
+  appsignal_string_t json;
+
+  if (argc != 1) {
+    return enif_make_badarg(env);
+  }
+  if (!enif_get_resource(env, argv[0], appsignal_transaction_type, (void**) &ptr)) {
+    return enif_make_badarg(env);
+  }
+
+  json = appsignal_transaction_to_json(ptr->transaction);
+  return make_ok_tuple(env, make_elixir_string(env, json));
 }
 #endif
 
@@ -789,6 +892,10 @@ static int on_upgrade(ErlNifEnv* UNUSED(env), void** UNUSED(priv), void** UNUSED
 
 static ErlNifFunc nif_funcs[] =
 {
+    {"_env_put", 2, _env_put, 0},
+    {"_env_get", 1, _env_get, 0},
+    {"_env_delete", 1, _env_delete, 0},
+    {"_env_clear", 0, _env_clear, 0},
     {"_start", 0, _start, 0},
     {"_stop", 0, _stop, 0},
     {"_diagnose", 0, _diagnose, 0},
@@ -800,6 +907,7 @@ static ErlNifFunc nif_funcs[] =
     {"_set_error", 4, _set_error, 0},
     {"_set_sample_data", 3, _set_sample_data, 0},
     {"_set_action", 2, _set_action, 0},
+    {"_set_namespace", 2, _set_namespace, 0},
     {"_set_queue_start", 2, _set_queue_start, 0},
     {"_set_meta_data", 3, _set_meta_data, 0},
     {"_finish", 1, _finish, 0},
@@ -823,6 +931,7 @@ static ErlNifFunc nif_funcs[] =
     {"_data_list_new", 0, _data_list_new, 0},
     {"_running_in_container", 0, _running_in_container, 0},
 #ifdef TEST
+    {"_transaction_to_json", 1, _transaction_to_json, 0},
     {"_data_to_json", 1, _data_to_json, 0},
 #endif
     {"_loaded", 0, _loaded, 0}

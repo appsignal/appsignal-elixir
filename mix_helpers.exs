@@ -22,8 +22,8 @@ defmodule Mix.Appsignal.Helper do
 
     if has_local_release_files?() do
       IO.puts "AppSignal: Using local agent release."
-      File.rm_rf!(priv_dir())
       File.mkdir_p!(priv_dir())
+      clean_up_extension_files()
       Enum.each(["appsignal.h", "appsignal-agent", "appsignal.version", "libappsignal.a"], fn(file) ->
         File.cp(project_ext_path(file), priv_path(file))
       end)
@@ -40,8 +40,8 @@ defmodule Mix.Appsignal.Helper do
         end
 
         version = Appsignal.Agent.version
-        File.rm_rf!(priv_dir())
         File.mkdir_p!(priv_dir())
+        clean_up_extension_files()
 
         try do
           download_and_extract(arch_config[:download_url], version, arch_config[:checksum])
@@ -75,36 +75,54 @@ defmodule Mix.Appsignal.Helper do
   end
 
   defp download_and_extract(url, version, checksum) do
-    download_file(url, version)
-    |> verify_checksum(checksum)
-    |> extract
+    case download_file(url, version) do
+      {:ok, filename} ->
+        filename
+        |> verify_checksum(checksum)
+        |> extract
+
+      error ->
+        error
+    end
   end
 
   defp download_file(url, version) do
     filename = Path.join(tmp_dir(), "appsignal-agent-#{version}.tar.gz")
+
     case File.exists?(filename) do
       true ->
-        filename
+        {:ok, filename}
+
       false ->
-        Logger.info "Downloading agent release from #{url}"
-        case System.find_executable("curl") do
-          nil ->
-            raise Mix.Error, message: """
-            Could not find the curl executable. Please make sure curl is
-            installed on this system as it is needed to download the AppSignal
-            extension and agent.
-            """
-          _ ->
-            case System.cmd("curl", ["-s", "-S", "--retry", Integer.to_string(@max_retries), "-f", "-o", filename, url], stderr_to_stdout: true) do
-              {_, 0} ->
-                filename
-              {result, exitcode} ->
-                IO.binwrite(result)
-                raise Mix.Error, message: """
-                Download failed with code #{exitcode}
-                """
-            end
+        Logger.info("Downloading agent release from #{url}")
+        :application.ensure_all_started(:hackney)
+
+        case do_download_file!(url, filename, @max_retries) do
+          :ok -> {:ok, filename}
+          error -> error
         end
+    end
+  end
+
+  defp do_download_file!(url, filename, retries \\ 0)
+
+  defp do_download_file!(url, filename, 0) do
+    case :hackney.request(:get, url) do
+      {:ok, 200, _, reference} ->
+        case :hackney.body(reference) do
+          {:ok, body} -> File.write(filename, body)
+          {:error, reason} -> {:error, reason}
+        end
+
+      response ->
+        {:error, response}
+    end
+  end
+
+  defp do_download_file!(url, filename, retries) do
+    case do_download_file!(url, filename) do
+      :ok -> :ok
+      _ -> do_download_file!(url, filename, retries - 1)
     end
   end
 
@@ -130,7 +148,7 @@ defmodule Mix.Appsignal.Helper do
   end
 
   def compile do
-    {result, error_code} = System.cmd("make", make_args(to_string(Mix.env)))
+    {result, error_code} = System.cmd(make(), make_args(to_string(Mix.env())))
     IO.binwrite(result)
 
     if error_code != 0 do
@@ -204,6 +222,13 @@ defmodule Mix.Appsignal.Helper do
     File.read(path) == {:ok, "#{Appsignal.Agent.version}\n"}
   end
 
+  defp clean_up_extension_files do
+    priv_dir()
+    |> Path.join("*appsignal*")
+    |> Path.wildcard
+    |> Enum.each(&File.rm_rf!/1)
+  end
+
   def agent_platform do
     case force_musl_build?() do
       true -> "linux-musl"
@@ -251,5 +276,9 @@ defmodule Mix.Appsignal.Helper do
 
   defp force_musl_build? do
     !is_nil(System.get_env("APPSIGNAL_BUILD_FOR_MUSL"))
+  end
+
+  defp make do
+    if System.find_executable("gmake"), do: "gmake", else: "make"
   end
 end

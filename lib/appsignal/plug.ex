@@ -25,7 +25,7 @@ if Appsignal.plug?() do
           try do
             super(conn, opts)
           catch
-            kind, reason -> Appsignal.Plug.handle_error(conn, kind, reason)
+            kind, reason -> Appsignal.Plug.handle_error(conn, kind, reason, System.stacktrace())
           else
             conn -> Appsignal.Plug.finish_with_conn(transaction, conn)
           end
@@ -39,13 +39,13 @@ if Appsignal.plug?() do
                    Appsignal.Transaction
                  )
 
-    def handle_error(_conn, :error, %Plug.Conn.WrapperError{} = wrapper) do
+    def handle_error(_conn, :error, %Plug.Conn.WrapperError{} = wrapper, _stack) do
       %{conn: conn, kind: kind, reason: reason, stack: stack} = wrapper
       handle_error(conn, kind, wrapper, reason, stack)
     end
 
-    def handle_error(conn, kind, reason) do
-      handle_error(conn, kind, reason, reason, System.stacktrace())
+    def handle_error(conn, kind, reason, stack) do
+      handle_error(conn, kind, reason, reason, stack)
     end
 
     def handle_error(
@@ -138,10 +138,11 @@ if Appsignal.plug?() do
           } = conn
         ) do
       %{
-        "params" => Appsignal.Utils.MapFilter.filter_values(
-          params,
-          Appsignal.Utils.MapFilter.get_filter_parameters()
-        ),
+        "params" =>
+          Appsignal.Utils.MapFilter.filter_values(
+            params,
+            Appsignal.Utils.MapFilter.get_filter_parameters()
+          ),
         "environment" =>
           %{
             "host" => host,
@@ -156,7 +157,7 @@ if Appsignal.plug?() do
 
     def extract_request_headers(%Plug.Conn{req_headers: req_headers}) do
       for {key, value} <- req_headers,
-          key in (Config.request_headers()) do
+          key in Config.request_headers() do
         {"req_headers.#{key}", value}
       end
       |> Enum.into(%{})

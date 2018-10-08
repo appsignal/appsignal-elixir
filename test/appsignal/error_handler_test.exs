@@ -24,17 +24,17 @@ defmodule Appsignal.ErrorHandlerTest do
   alias Appsignal.{Transaction, ErrorHandler}
 
   test "whether we can send error reports without current transaction" do
-    :proc_lib.spawn(fn() ->
+    :proc_lib.spawn(fn ->
       :erlang.error(:error_task)
     end)
 
-    :timer.sleep 100
+    :timer.sleep(100)
   end
 
   test "whether we can send error reports with a current transaction" do
     id = Transaction.generate_id()
 
-    :proc_lib.spawn(fn() ->
+    :proc_lib.spawn(fn ->
       id
       |> Transaction.start(:http_request)
       |> Transaction.set_action("AppsignalErrorHandlerTest#test")
@@ -42,10 +42,10 @@ defmodule Appsignal.ErrorHandlerTest do
       :erlang.error(:error_http_request)
     end)
 
-    :timer.sleep 400
+    :timer.sleep(400)
 
     # check that the handler has processed the transaction
-    transaction = Appsignal.ErrorHandler.get_last_transaction
+    transaction = Appsignal.ErrorHandler.get_last_transaction()
     assert %Transaction{} = transaction
     assert id == transaction.id
   end
@@ -68,7 +68,7 @@ defmodule Appsignal.ErrorHandlerTest do
     :error_logger.add_report_handler(ErrorLoggerForwarder, self())
 
     :error_logger
-    |> Process.whereis
+    |> Process.whereis()
     |> send(:noise)
 
     refute_receive({:warning_msg, _, _})

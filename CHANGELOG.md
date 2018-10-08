@@ -1,3 +1,35 @@
+# 1.8.0
+* Add working_directory_path config option. PR #363
+* Use doubles values in custom metrics functions. PR #384
+* Support Elixir 1.7. PR #386
+
+# 1.7.2
+* Ensure ca_file_path is written to agent env. PR #381
+* Use gmake over make when gmake executable exists. PR #382
+
+# 1.7.1
+* Fix absolute path to CA certificate file. PR #380
+
+# 1.7.0
+* Bundle CA certificate. PR #364
+* Add Appsignal.Transaction.set_namespace/1-2. PR #361
+* Use :hackney instead of cURL to download agent. PR #359
+
+# 1.6.7
+* Revert container memory metrics fixes. PR #370
+* Fix _APP_REVISION read logic in extension. PR #370
+* Fix _APPSIGNAL_PROCESS_NAME read logic in extension. PR #370
+
+# 1.6.6
+* Add container memory metrics fixes.
+* Use local agent environment instead of system environment. PR #368
+
+# 1.6.5
+* Allow calling `Transaction.register/1` and `Transaction.complete/1` when the Registry is not alive. PR #356
+
+# 1.6.4
+* Overwrite message for Phoenix.ActionClauseError. PR #355
+
 # 1.6.3
 * Remove script_name, query_string and peer from Plug.extract_sample_data/1. PR #351
 
