@@ -607,7 +607,6 @@ defmodule Appsignal.ConfigTest do
           assert Nif.env_get("_APPSIGNAL_PUSH_API_ENDPOINT") == 'https://push.staging.lol'
           assert Nif.env_get("_APPSIGNAL_PUSH_API_KEY") == '00000000-0000-0000-0000-000000000000'
           assert Nif.env_get("_APPSIGNAL_RUNNING_IN_CONTAINER") == 'false'
-          assert Nif.env_get("_APPSIGNAL_SEND_PARAMS") == 'true'
           assert Nif.env_get("_APPSIGNAL_WORKING_DIR_PATH") == '/tmp/appsignal-deprecated'
           assert Nif.env_get("_APPSIGNAL_WORKING_DIRECTORY_PATH") == '/tmp/appsignal'
           assert Nif.env_get("_APPSIGNAL_FILES_WORLD_ACCESSIBLE") == 'false'
@@ -659,7 +658,6 @@ defmodule Appsignal.ConfigTest do
           assert Nif.env_get("_APPSIGNAL_ENABLE_HOST_METRICS") == 'true'
           assert Nif.env_get("_APPSIGNAL_ENVIRONMENT") == 'prod'
           assert Nif.env_get("_APPSIGNAL_RUNNING_IN_CONTAINER") == 'false'
-          assert Nif.env_get("_APPSIGNAL_SEND_PARAMS") == 'true'
           assert Nif.env_get("_APPSIGNAL_FILES_WORLD_ACCESSIBLE") == 'false'
         end
       )

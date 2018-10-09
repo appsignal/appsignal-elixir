@@ -248,7 +248,6 @@ defmodule Appsignal.Config do
     Nif.env_put("_APPSIGNAL_PUSH_API_ENDPOINT", config[:endpoint] || "")
     Nif.env_put("_APPSIGNAL_PUSH_API_KEY", config[:push_api_key] || "")
     Nif.env_put("_APPSIGNAL_RUNNING_IN_CONTAINER", to_string(config[:running_in_container]))
-    Nif.env_put("_APPSIGNAL_SEND_PARAMS", to_string(config[:send_params]))
     Nif.env_put("_APPSIGNAL_WORKING_DIR_PATH", to_string(config[:working_dir_path]))
     Nif.env_put("_APPSIGNAL_WORKING_DIRECTORY_PATH", to_string(config[:working_directory_path]))
 
