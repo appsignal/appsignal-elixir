@@ -21,7 +21,7 @@ defmodule Mix.Appsignal.Helper do
     System.put_env("LIB_DIR", priv_dir())
 
     if has_local_release_files?() do
-      IO.puts "AppSignal: Using local agent release."
+      debug "Using local agent release."
       File.mkdir_p!(priv_dir())
       clean_up_extension_files()
       Enum.each(["appsignal.h", "appsignal-agent", "appsignal.version", "libappsignal.a"], fn(file) ->
@@ -29,6 +29,7 @@ defmodule Mix.Appsignal.Helper do
       end)
     else
       if has_files?() and has_correct_agent_version?() do
+        debug "Correct version already present, not doing anything."
         :ok
       else
         if is_nil(arch_config) do
@@ -38,8 +39,10 @@ defmodule Mix.Appsignal.Helper do
           And inform us about this error at support@appsignal.com
           """
         end
-
+        debug "Correct version not found, downloading from remote server."
         version = Appsignal.Agent.version
+
+        debug "Creating directory #{priv_dir()}"
         File.mkdir_p!(priv_dir())
         clean_up_extension_files()
 
@@ -136,8 +139,22 @@ defmodule Mix.Appsignal.Helper do
   end
 
   defp extract(filename) do
+    debug "*** extract ***"
+    debug "current #{priv_dir()} content:"
+    priv_dir()
+    |> Path.join("*appsignal*")
+    |> Path.wildcard
+    |> Enum.each(&debug/1)
+    debug "Extracting #{filename}"
+
     case System.cmd("tar", ["zxf", filename, "--no-same-owner"], stderr_to_stdout: true, cd: priv_dir()) do
       {_, 0} ->
+          debug "new #{priv_dir()} content:"
+          priv_dir()
+          |> Path.join("*appsignal*")
+          |> Path.wildcard
+          |> Enum.each(&debug/1)
+
         :ok
       {result, _exitcode} ->
         IO.binwrite(result)
@@ -178,6 +195,10 @@ defmodule Mix.Appsignal.Helper do
     end
   end
 
+  defp debug(str) do
+    Mix.shell.info "[DEBUG] AppSignal: #{str}"
+  end
+
   defp tmp_dir do
     default_tmp_dir = "/tmp"
 
@@ -188,7 +209,6 @@ defmodule Mix.Appsignal.Helper do
     end
   end
 
-
   defp priv_path(filename) do
     Path.join(priv_dir(), filename)
   end
@@ -198,7 +218,9 @@ defmodule Mix.Appsignal.Helper do
   end
 
   defp has_file(filename) do
-    filename |> priv_path |> File.exists?
+    res = filename |> priv_path |> File.exists?
+    debug "AppSignal: Checking file #{filename |> priv_path}: #{res}"
+    res
   end
 
   defp has_local_ext_file(filename) do
@@ -206,6 +228,7 @@ defmodule Mix.Appsignal.Helper do
   end
 
   defp has_files? do
+    debug "*** has_files? ***"
     has_file("appsignal-agent") and
     has_file("appsignal.h") and
     has_file("appsignal_extension.so")
@@ -223,10 +246,16 @@ defmodule Mix.Appsignal.Helper do
   end
 
   defp clean_up_extension_files do
+    debug "*** clean_up_extension_files ***"
     priv_dir()
     |> Path.join("*appsignal*")
     |> Path.wildcard
-    |> Enum.each(&File.rm_rf!/1)
+    |> Enum.each(&clean_up_extension_file/1)
+  end
+
+  defp clean_up_extension_file(file) do
+    debug "Removing #{file}"
+    File.rm_rf!(file)
   end
 
   def agent_platform do
