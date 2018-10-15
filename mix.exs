@@ -101,7 +101,7 @@ defmodule Appsignal.Mixfile do
       {:poison, ">= 1.3.0"},
       {:decorator, "~> 1.2.3"},
       {:plug, ">= 1.1.0", optional: true},
-      {:phoenix, ">= 1.2.0", optional: true, only: [:prod, :test_phoenix, :dev]},
+      {:phoenix, ">= 1.4.0-rc.0", optional: true, only: [:prod, :test_phoenix, :dev]},
       {:mock, "~> 0.3.0", only: [:test, :test_phoenix, :test_no_nif]},
       {:bypass, "~> 0.6.0", only: [:test, :test_phoenix, :test_no_nif]},
       {:ex_doc, "~> 0.12", only: :dev, runtime: false},
