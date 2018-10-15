@@ -1,5 +1,5 @@
-# 1.8.1-beta.2
-* Fix linking issues on Alpine
+# 1.8.1
+* Fix linking issues on multi-stage build setups. PR #406
 
 # 1.8.0
 * Add working_directory_path config option. PR #363
