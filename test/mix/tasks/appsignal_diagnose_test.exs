@@ -457,12 +457,25 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     end
   end
 
-  test "outputs configuration" do
-    output = run()
-    assert String.contains? output, "Configuration"
+  describe "configuration" do
+    test "outputs configuration with string values" do
+      output = run()
+      assert String.contains? output, "Configuration"
 
-    Enum.each Application.get_env(:appsignal, :config), fn({key, value}) ->
-      assert String.contains? output, "  #{key}: #{value}"
+      config = Application.get_env(:appsignal, :config)
+               |> Enum.filter(fn({_, value}) -> !is_list(value) end)
+      Enum.each config, fn({key, value}) ->
+        assert String.contains? output, "  #{key}: #{value}"
+      end
+    end
+
+    test "outputs configuration with array values" do
+      output = run()
+      config = Application.get_env(:appsignal, :config)
+               |> Enum.filter(fn({_, value}) -> is_list(value) end)
+      Enum.each config, fn({key, value}) ->
+        assert String.contains? output, "  #{key}: #{Enum.join(value, ", ")}"
+      end
     end
   end
 
