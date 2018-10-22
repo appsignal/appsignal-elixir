@@ -6,8 +6,6 @@ defmodule Mix.Appsignal.Helper do
   """
   @os Application.get_env(:appsignal, :os, :os)
 
-  require Logger
-
   @max_retries 5
 
   def verify_system_architecture() do
@@ -21,7 +19,7 @@ defmodule Mix.Appsignal.Helper do
     System.put_env("LIB_DIR", priv_dir())
 
     if has_local_release_files?() do
-      IO.puts "AppSignal: Using local agent release."
+      Mix.shell.info "AppSignal: Using local agent release."
       File.mkdir_p!(priv_dir())
       clean_up_extension_files()
       Enum.each(["appsignal.h", "appsignal-agent", "appsignal.version", "libappsignal.a"], fn(file) ->
@@ -94,7 +92,7 @@ defmodule Mix.Appsignal.Helper do
         {:ok, filename}
 
       false ->
-        Logger.info("Downloading agent release from #{url}")
+        Mix.shell.info("Downloading agent release from #{url}")
         :application.ensure_all_started(:hackney)
 
         case do_download_file!(url, filename, @max_retries) do
