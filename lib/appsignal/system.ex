@@ -38,6 +38,4 @@ defmodule Appsignal.System do
       {:error, _} -> nil
     end
   end
-
-
 end

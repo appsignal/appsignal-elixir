@@ -45,10 +45,22 @@ defmodule Appsignal.Diagnose.Agent do
 
   defp print_test(report, definition) do
     IO.write "  #{definition[:label]}: "
-    case Map.fetch(definition[:values], report["result"]) do
-      {:ok, value} -> IO.puts value
-      :error -> IO.puts "-"
-    end
+    result = report["result"]
+    display_value =
+      case Map.has_key?(definition, :values) do
+        true ->
+          case Map.fetch(definition[:values], report["result"]) do
+            {:ok, value} -> value
+            :error -> nil
+          end
+        false -> result
+      end
+    display_value =
+      case display_value do
+        value when value in [nil, ""] -> "-"
+        value -> value
+      end
+    IO.puts display_value
     if report["error"], do: IO.puts "    Error: #{report["error"]}"
     if report["output"], do: IO.puts "    Output: #{report["output"]}"
   end
@@ -70,6 +82,10 @@ defmodule Appsignal.Diagnose.Agent do
             :values => %{ true => "started", false => "not started" }
           }
         },
+        "host" => %{
+          "uid" => %{ :label => "Agent user id" },
+          "gid" => %{ :label => "Agent user group id" }
+        },
         "config" => %{
           "valid" => %{
             :label => "Agent config",
@@ -81,6 +97,11 @@ defmodule Appsignal.Diagnose.Agent do
             :label => "Agent logger",
             :values => %{ true => "started", false => "not started" }
           }
+        },
+        "working_directory_stat" => %{
+          "uid" => %{ :label => "Agent working directory user id" },
+          "gid" => %{ :label => "Agent working directory user group id" },
+          "mode" => %{ :label => "Agent working directory permissions" }
         },
         "lock_path" => %{
           "created" => %{
