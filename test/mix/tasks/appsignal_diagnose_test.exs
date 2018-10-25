@@ -280,16 +280,17 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     output = run()
     {:ok, working_directory_stat} = File.stat("/tmp/appsignal")
     assert String.contains? output, "Agent diagnostics"
-    assert String.contains? output, "  Extension config: valid"
-    assert String.contains? output, "  Agent started: started"
-    assert String.contains? output, "  Agent user id: #{process_uid()}"
-    assert String.contains? output, "  Agent user group id: #{process_gid()}"
-    assert String.contains? output, "  Agent config: valid"
-    assert String.contains? output, "  Agent logger: started"
-    assert String.contains? output, "  Agent working directory user id: #{working_directory_stat.uid}"
-    assert String.contains? output, "  Agent working directory user group id: #{working_directory_stat.gid}"
-    assert String.contains? output, "  Agent working directory permissions: #{working_directory_stat.mode}"
-    assert String.contains? output, "  Agent lock path: writable"
+    assert String.contains? output, "  Extension tests\n    Configuration: valid"
+    assert String.contains? output, "  Agent tests"
+    assert String.contains? output, "    Started: started\n" <>
+      "    Configuration: valid"
+    assert String.contains? output, "    Process user id: #{process_uid()}"
+    assert String.contains? output, "    Process user group id: #{process_gid()}"
+    assert String.contains? output, "    Logger: started"
+    assert String.contains? output, "    Working directory user id: #{working_directory_stat.uid}"
+    assert String.contains? output, "    Working directory user group id: #{working_directory_stat.gid}"
+    assert String.contains? output, "    Working directory permissions: #{working_directory_stat.mode}"
+    assert String.contains? output, "    Lock path: writable"
   end
 
   @tag :skip_env_test_no_nif
@@ -326,13 +327,20 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       FakeNif.update(fake_nif, :run_diagnose, true)
 
       output = with_config(%{active: false}, &run/0)
+      {:ok, working_directory_stat} = File.stat("/tmp/appsignal")
       assert String.contains? output, "active: false"
       assert String.contains? output, "Agent diagnostics"
-      assert String.contains? output, "  Extension config: valid"
-      assert String.contains? output, "  Agent started: started"
-      assert String.contains? output, "  Agent config: valid"
-      assert String.contains? output, "  Agent lock path: writable"
-      assert String.contains? output, "  Agent logger: started"
+      assert String.contains? output, "  Extension tests\n    Configuration: valid"
+      assert String.contains? output, "  Agent tests"
+      assert String.contains? output, "    Started: started\n" <>
+        "    Configuration: valid"
+      assert String.contains? output, "    Process user id: #{process_uid()}"
+      assert String.contains? output, "    Process user group id: #{process_gid()}"
+      assert String.contains? output, "    Logger: started"
+      assert String.contains? output, "    Working directory user id: #{working_directory_stat.uid}"
+      assert String.contains? output, "    Working directory user group id: #{working_directory_stat.gid}"
+      assert String.contains? output, "    Working directory permissions: #{working_directory_stat.mode}"
+      assert String.contains? output, "    Lock path: writable"
     end
 
     @tag :skip_env_test_no_nif
@@ -414,11 +422,17 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     test "agent diagnostics report prints the tests, but shows a dash `-` for missed results" do
       output = run()
       assert String.contains? output, "Agent diagnostics"
-      assert String.contains? output, "  Extension config: valid"
-      assert String.contains? output, "  Agent started: -"
-      assert String.contains? output, "  Agent config: -"
-      assert String.contains? output, "  Agent lock path: -"
-      assert String.contains? output, "  Agent logger: -"
+      assert String.contains? output, "  Extension tests\n    Configuration: valid"
+      assert String.contains? output, "  Agent tests"
+      assert String.contains? output, "    Started: -"
+      assert String.contains? output, "    Configuration: -"
+      assert String.contains? output, "    Process user id: -"
+      assert String.contains? output, "    Process user group id: -"
+      assert String.contains? output, "    Lock path: -"
+      assert String.contains? output, "    Logger: -"
+      assert String.contains? output, "    Working directory user id: -"
+      assert String.contains? output, "    Working directory user group id: -"
+      assert String.contains? output, "    Working directory permissions: -"
     end
 
     test "missings tests are not added to report", %{fake_report: fake_report} do
@@ -462,7 +476,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     test "prints the error" do
       output = run()
       assert String.contains? output, "Agent diagnostics"
-      assert String.contains? output, "  Agent started: not started\n    Error: my error"
+      assert String.contains? output, "  Started: not started\n      Error: my error"
     end
   end
 
@@ -479,7 +493,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     test "prints the output" do
       output = run()
       assert String.contains? output, "Agent diagnostics"
-      assert String.contains? output, "  Agent started: not started\n    Output: my output"
+      assert String.contains? output, "  Started: not started\n      Output: my output"
     end
   end
 
