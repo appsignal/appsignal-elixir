@@ -24,8 +24,9 @@ defmodule Appsignal.Diagnose.Agent do
     if report["error"] do
       IO.puts "  Error: #{report["error"]}"
     else
-      Enum.each(report_definition(), fn({component, categories}) ->
-        print_component(report[component] || %{}, categories)
+      Enum.each(report_definition(), fn({component, definition}) ->
+        IO.puts "  #{definition[:label]}"
+        print_component(report[component] || %{}, definition[:tests])
       end)
     end
     IO.puts ""
@@ -44,7 +45,7 @@ defmodule Appsignal.Diagnose.Agent do
   end
 
   defp print_test(report, definition) do
-    IO.write "  #{definition[:label]}: "
+    IO.write "    #{definition[:label]}: "
     result = report["result"]
     display_value =
       case Map.has_key?(definition, :values) do
@@ -61,52 +62,58 @@ defmodule Appsignal.Diagnose.Agent do
         value -> value
       end
     IO.puts display_value
-    if report["error"], do: IO.puts "    Error: #{report["error"]}"
-    if report["output"], do: IO.puts "    Output: #{report["output"]}"
+    if report["error"], do: IO.puts "      Error: #{report["error"]}"
+    if report["output"], do: IO.puts "      Output: #{report["output"]}"
   end
 
   defp report_definition do
     %{
       "extension" => %{
-        "config" => %{
-          "valid" => %{
-            :label => "Extension config",
-            :values => %{ true => "valid", false => "invalid" }
+        :label => "Extension tests",
+        :tests => %{
+          "config" => %{
+            "valid" => %{
+              :label => "Configuration",
+              :values => %{ true => "valid", false => "invalid" }
+            }
           }
         }
       },
       "agent" => %{
-        "boot" => %{
-          "started" => %{
-            :label => "Agent started",
-            :values => %{ true => "started", false => "not started" }
-          }
-        },
-        "host" => %{
-          "uid" => %{ :label => "Agent user id" },
-          "gid" => %{ :label => "Agent user group id" }
-        },
-        "config" => %{
-          "valid" => %{
-            :label => "Agent config",
-            :values => %{ true => "valid", false => "invalid" }
-          }
-        },
-        "logger" => %{
-          "started" => %{
-            :label => "Agent logger",
-            :values => %{ true => "started", false => "not started" }
-          }
-        },
-        "working_directory_stat" => %{
-          "uid" => %{ :label => "Agent working directory user id" },
-          "gid" => %{ :label => "Agent working directory user group id" },
-          "mode" => %{ :label => "Agent working directory permissions" }
-        },
-        "lock_path" => %{
-          "created" => %{
-            :label => "Agent lock path",
-            :values => %{ true => "writable", false => "not writable" }
+        :label => "Agent tests",
+        :tests => %{
+          "boot" => %{
+            "started" => %{
+              :label => "Started",
+              :values => %{ true => "started", false => "not started" }
+            }
+          },
+          "host" => %{
+            "uid" => %{ :label => "Process user id" },
+            "gid" => %{ :label => "Process user group id" }
+          },
+          "config" => %{
+            "valid" => %{
+              :label => "Configuration",
+              :values => %{ true => "valid", false => "invalid" }
+            }
+          },
+          "logger" => %{
+            "started" => %{
+              :label => "Logger",
+              :values => %{ true => "started", false => "not started" }
+            }
+          },
+          "working_directory_stat" => %{
+            "uid" => %{ :label => "Working directory user id" },
+            "gid" => %{ :label => "Working directory user group id" },
+            "mode" => %{ :label => "Working directory permissions" }
+          },
+          "lock_path" => %{
+            "created" => %{
+              :label => "Lock path",
+              :values => %{ true => "writable", false => "not writable" }
+            }
           }
         }
       }
