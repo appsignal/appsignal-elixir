@@ -8,7 +8,15 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
 
   @shortdoc "Starts and tests AppSignal while validating the configuration."
 
-  def run(_args) do
+  def run(args) do
+    send_report =
+      cond do
+        is_nil(args) -> nil
+        Enum.member?(args, "--send-report") -> :send_report
+        Enum.member?(args, "--no-send-report") -> :no_send_report
+        true -> nil
+      end
+
     Application.load(:appsignal)
     report = %{process: %{uid: @system.uid}}
     configure_appsignal()
@@ -62,7 +70,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     report = Map.put(report, :logs, logs)
     print_logs(logs)
 
-    send_report_to_appsignal_if_agreed_upon(config, report)
+    send_report_to_appsignal_if_agreed_upon(config, report, send_report)
   end
 
   defp header do
@@ -171,7 +179,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     if path[:error], do: IO.puts("    - Error: #{path[:error]}")
   end
 
-  defp send_report_to_appsignal_if_agreed_upon(config, report) do
+  defp send_report_to_appsignal_if_agreed_upon(config, report, send_report) do
     IO.puts("\nDiagnostics report")
     IO.puts("  Do you want to send this diagnostics report to AppSignal?")
 
@@ -181,39 +189,48 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
         "  report when you contact us at support@appsignal.com\n"
     )
 
-    answer = yes_or_no?("  Send diagnostics report to AppSignal? (Y/n): ")
+    answer =
+      case send_report do
+        :send_report ->
+          IO.puts("  Confirmed sending report using --send-report option.")
+          true
+
+        :no_send_report ->
+          IO.puts("  Not sending report. (Specified with the --no-send-report option.)")
+          false
+
+        _ ->
+          yes_or_no?("  Send diagnostics report to AppSignal? (Y/n): ")
+      end
 
     case answer do
       true ->
         IO.puts("\n  Transmitting diagnostics report")
-
-        case @report.send(config, report) do
-          {:ok, support_token} ->
-            IO.puts("  Your diagnostics report has been sent to AppSignal.")
-            IO.puts("  Your support token: #{support_token}")
-
-          {:error, %{status_code: 200, body: body}} ->
-            IO.puts("  Error: Couldn't decode server response.")
-            IO.puts("  Response body: #{body}")
-
-          {:error, %{status_code: status_code, body: body}} ->
-            IO.puts(
-              "  Error: Something went wrong while submitting the " <> "report to AppSignal."
-            )
-
-            IO.puts("  Response code: #{status_code}")
-            IO.puts("  Response body: #{body}")
-
-          {:error, %{reason: reason}} ->
-            IO.puts(
-              "  Error: Something went wrong while submitting the " <> "report to AppSignal."
-            )
-
-            IO.puts(reason)
-        end
+        send_report_to_appsignal(config, report)
 
       false ->
         IO.puts("  Not sending diagnostics report to AppSignal.")
+    end
+  end
+
+  def send_report_to_appsignal(config, report) do
+    case @report.send(config, report) do
+      {:ok, support_token} ->
+        IO.puts("  Your diagnostics report has been sent to AppSignal.")
+        IO.puts("  Your support token: #{support_token}")
+
+      {:error, %{status_code: 200, body: body}} ->
+        IO.puts("  Error: Couldn't decode server response.")
+        IO.puts("  Response body: #{body}")
+
+      {:error, %{status_code: status_code, body: body}} ->
+        IO.puts("  Error: Something went wrong while submitting the report to AppSignal.")
+        IO.puts("  Response code: #{status_code}")
+        IO.puts("  Response body: #{body}")
+
+      {:error, %{reason: reason}} ->
+        IO.puts("  Error: Something went wrong while submitting the report to AppSignal.")
+        IO.puts(reason)
     end
   end
 
