@@ -278,12 +278,19 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   test "runs agent in diagnose mode", %{fake_nif: fake_nif} do
     FakeNif.update(fake_nif, :run_diagnose, true)
     output = run()
+    {:ok, working_directory_stat} = File.stat("/tmp/appsignal")
     assert String.contains? output, "Agent diagnostics"
-    assert String.contains? output, "  Extension config: valid"
-    assert String.contains? output, "  Agent started: started"
-    assert String.contains? output, "  Agent config: valid"
-    assert String.contains? output, "  Agent lock path: writable"
-    assert String.contains? output, "  Agent logger: started"
+    assert String.contains? output, "  Extension tests\n    Configuration: valid"
+    assert String.contains? output, "  Agent tests"
+    assert String.contains? output, "    Started: started\n" <>
+      "    Configuration: valid"
+    assert String.contains? output, "    Process user id: #{process_uid()}"
+    assert String.contains? output, "    Process user group id: #{process_gid()}"
+    assert String.contains? output, "    Logger: started"
+    assert String.contains? output, "    Working directory user id: #{working_directory_stat.uid}"
+    assert String.contains? output, "    Working directory user group id: #{working_directory_stat.gid}"
+    assert String.contains? output, "    Working directory permissions: #{working_directory_stat.mode}"
+    assert String.contains? output, "    Lock path: writable"
   end
 
   @tag :skip_env_test_no_nif
@@ -291,12 +298,22 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     FakeNif.update(fake_nif, :run_diagnose, true)
     run()
     report = received_report(fake_report)
+    {:ok, working_directory_stat} = File.stat("/tmp/appsignal")
     assert report[:agent] == %{
       "agent" => %{
         "boot" => %{"started" => %{"result" => true}},
+        "host" => %{
+          "uid" => %{"result" => process_uid()},
+          "gid" => %{"result" => process_gid()}
+        },
         "config" => %{"valid" => %{"result" => true}},
-        "lock_path" => %{"created" => %{"result" => true}},
-        "logger" => %{"started" => %{"result" => true}}
+        "logger" => %{"started" => %{"result" => true}},
+        "working_directory_stat" => %{
+          "uid" => %{"result" => working_directory_stat.uid},
+          "gid" => %{"result" => working_directory_stat.gid},
+          "mode" => %{"result" => working_directory_stat.mode},
+        },
+        "lock_path" => %{"created" => %{"result" => true}}
       },
       "extension" => %{
         "config" => %{"valid" => %{"result" => true}}
@@ -310,13 +327,20 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       FakeNif.update(fake_nif, :run_diagnose, true)
 
       output = with_config(%{active: false}, &run/0)
+      {:ok, working_directory_stat} = File.stat("/tmp/appsignal")
       assert String.contains? output, "active: false"
       assert String.contains? output, "Agent diagnostics"
-      assert String.contains? output, "  Extension config: valid"
-      assert String.contains? output, "  Agent started: started"
-      assert String.contains? output, "  Agent config: valid"
-      assert String.contains? output, "  Agent lock path: writable"
-      assert String.contains? output, "  Agent logger: started"
+      assert String.contains? output, "  Extension tests\n    Configuration: valid"
+      assert String.contains? output, "  Agent tests"
+      assert String.contains? output, "    Started: started\n" <>
+        "    Configuration: valid"
+      assert String.contains? output, "    Process user id: #{process_uid()}"
+      assert String.contains? output, "    Process user group id: #{process_gid()}"
+      assert String.contains? output, "    Logger: started"
+      assert String.contains? output, "    Working directory user id: #{working_directory_stat.uid}"
+      assert String.contains? output, "    Working directory user group id: #{working_directory_stat.gid}"
+      assert String.contains? output, "    Working directory permissions: #{working_directory_stat.mode}"
+      assert String.contains? output, "    Lock path: writable"
     end
 
     @tag :skip_env_test_no_nif
@@ -324,12 +348,22 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       FakeNif.update(fake_nif, :run_diagnose, true)
       run()
       report = received_report(fake_report)
+      {:ok, working_directory_stat} = File.stat("/tmp/appsignal")
       assert report[:agent] == %{
         "agent" => %{
           "boot" => %{"started" => %{"result" => true}},
+          "host" => %{
+            "uid" => %{"result" => process_uid()},
+            "gid" => %{"result" => process_gid()}
+          },
           "config" => %{"valid" => %{"result" => true}},
-          "lock_path" => %{"created" => %{"result" => true}},
-          "logger" => %{"started" => %{"result" => true}}
+          "logger" => %{"started" => %{"result" => true}},
+          "working_directory_stat" => %{
+            "uid" => %{"result" => working_directory_stat.uid},
+            "gid" => %{"result" => working_directory_stat.gid},
+            "mode" => %{"result" => working_directory_stat.mode},
+          },
+          "lock_path" => %{"created" => %{"result" => true}}
         },
         "extension" => %{
           "config" => %{"valid" => %{"result" => true}}
@@ -388,11 +422,17 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     test "agent diagnostics report prints the tests, but shows a dash `-` for missed results" do
       output = run()
       assert String.contains? output, "Agent diagnostics"
-      assert String.contains? output, "  Extension config: valid"
-      assert String.contains? output, "  Agent started: -"
-      assert String.contains? output, "  Agent config: -"
-      assert String.contains? output, "  Agent lock path: -"
-      assert String.contains? output, "  Agent logger: -"
+      assert String.contains? output, "  Extension tests\n    Configuration: valid"
+      assert String.contains? output, "  Agent tests"
+      assert String.contains? output, "    Started: -"
+      assert String.contains? output, "    Configuration: -"
+      assert String.contains? output, "    Process user id: -"
+      assert String.contains? output, "    Process user group id: -"
+      assert String.contains? output, "    Lock path: -"
+      assert String.contains? output, "    Logger: -"
+      assert String.contains? output, "    Working directory user id: -"
+      assert String.contains? output, "    Working directory user group id: -"
+      assert String.contains? output, "    Working directory permissions: -"
     end
 
     test "missings tests are not added to report", %{fake_report: fake_report} do
@@ -436,7 +476,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     test "prints the error" do
       output = run()
       assert String.contains? output, "Agent diagnostics"
-      assert String.contains? output, "  Agent started: not started\n    Error: my error"
+      assert String.contains? output, "  Started: not started\n      Error: my error"
     end
   end
 
@@ -453,7 +493,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     test "prints the output" do
       output = run()
       assert String.contains? output, "Agent diagnostics"
-      assert String.contains? output, "  Agent started: not started\n    Output: my output"
+      assert String.contains? output, "  Started: not started\n      Output: my output"
     end
   end
 
@@ -738,5 +778,27 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     :appsignal
     |> Application.app_dir
     |> Path.join("install.log")
+  end
+
+  defp process_uid() do
+    case System.cmd("id", ["-u"]) do
+      {id, 0} ->
+        case Integer.parse(List.first(String.split(id, "\n"))) do
+          {int, _} -> int
+          :error -> nil
+        end
+      {_, _} -> nil
+    end
+  end
+
+  defp process_gid() do
+    case System.cmd("id", ["-g"]) do
+      {id, 0} ->
+        case Integer.parse(List.first(String.split(id, "\n"))) do
+          {int, _} -> int
+          :error -> nil
+        end
+      {_, _} -> nil
+    end
   end
 end
