@@ -8,8 +8,9 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   @agent_version Appsignal.Nif.agent_version()
 
   defp run, do: capture_io("Y", &run_fn/0)
+  defp run(args) when is_list(args), do: capture_io(fn -> run_fn(args) end)
   defp run(input), do: capture_io(input, &run_fn/0)
-  defp run_fn, do: Mix.Tasks.Appsignal.Diagnose.run(nil)
+  defp run_fn(args \\ nil), do: Mix.Tasks.Appsignal.Diagnose.run(args)
 
   setup do
     {:ok, fake_report} = FakeReport.start_link()
@@ -771,7 +772,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   end
 
   describe "when user does not submit report to AppSignal" do
-    test "exits early", %{fake_report: fake_report} do
+    test "does not send the report", %{fake_report: fake_report} do
       output = run("n")
       assert String.contains?(output, "Diagnostics report")
       assert String.contains?(output, "Send diagnostics report to AppSignal? (Y/n):")
@@ -834,6 +835,40 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
                output,
                "Error: Something went wrong while submitting the report " <> "to AppSignal.\nfoo"
              )
+    end
+  end
+
+  describe "when user uses the --no-send-report option" do
+    test "does not send the report", %{fake_report: fake_report} do
+      assert FakeReport.update(fake_report, :response, {:ok, "0123456789abcdef"})
+      output = run(["--no-send-report"])
+      assert String.contains?(output, "Diagnostics report")
+
+      assert String.contains?(
+               output,
+               "Not sending report. (Specified with the --no-send-report option.)"
+             )
+
+      assert String.contains?(output, "Not sending diagnostics report to AppSignal.")
+
+      refute FakeReport.get(fake_report, :report_sent?)
+    end
+  end
+
+  describe "when user uses the --send-report option" do
+    test "sends diagnostics report to AppSignal and outputs a support token", %{
+      fake_report: fake_report
+    } do
+      assert FakeReport.update(fake_report, :response, {:ok, "0123456789abcdef"})
+      output = run(["--send-report"])
+      assert String.contains?(output, "Diagnostics report")
+      assert String.contains?(output, "Confirmed sending report using --send-report option.")
+      assert String.contains?(output, "Transmitting diagnostics report")
+      assert String.contains?(output, "Your diagnostics report has been sent to AppSignal.")
+      assert String.contains?(output, "Your support token: 0123456789abcdef")
+
+      assert FakeReport.get(fake_report, :report_sent?)
+      assert received_report(fake_report)
     end
   end
 
