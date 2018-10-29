@@ -111,9 +111,15 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
   defp print_configuration(config) do
     IO.puts("Configuration")
 
-    Enum.each(config, fn {key, value} ->
-      IO.puts("  #{key}: #{value}")
-    end)
+    Enum.each(config, &print_configuration_option/1)
+  end
+
+  defp print_configuration_option({key, value}) when is_list(value) do
+    IO.puts("  #{key}: #{Enum.join(value, ", ")}")
+  end
+
+  defp print_configuration_option({key, value}) do
+    IO.puts("  #{key}: #{value}")
   end
 
   defp print_validation(validation_report) do

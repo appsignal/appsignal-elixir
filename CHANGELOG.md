@@ -1,3 +1,6 @@
+# 1.8.1
+* Fix linking issues on multi-stage build setups. PR #406
+
 # 1.8.0
 * Add working_directory_path config option. PR #363
 * Use doubles values in custom metrics functions. PR #384
