@@ -19,7 +19,7 @@ defmodule Appsignal.TransactionRegistry do
 
   require Logger
 
-  @table :'$appsignal_transaction_registry'
+  @table :"$appsignal_transaction_registry"
 
   alias Appsignal.Transaction
 
@@ -66,10 +66,12 @@ defmodule Appsignal.TransactionRegistry do
     end
   end
 
-  @spec lookup(pid, boolean) :: Transaction.t | nil | :removed
+  @spec lookup(pid, boolean) :: Transaction.t() | nil | :removed
   @doc false
   def lookup(pid, return_removed) do
-    IO.warn "Appsignal.TransactionRegistry.lookup/2 is deprecated. Use Appsignal.TransactionRegistry.lookup/1 instead"
+    IO.warn(
+      "Appsignal.TransactionRegistry.lookup/2 is deprecated. Use Appsignal.TransactionRegistry.lookup/1 instead"
+    )
 
     case registry_alive?() && :ets.lookup(@table, pid) do
       [{^pid, :removed}] ->
@@ -96,7 +98,7 @@ defmodule Appsignal.TransactionRegistry do
   @doc """
   Unregister the current process as the owner of the given transaction.
   """
-  @spec remove_transaction(Transaction.t) :: :ok | {:error, :not_found} | {:error, :no_registry}
+  @spec remove_transaction(Transaction.t()) :: :ok | {:error, :not_found} | {:error, :no_registry}
   def remove_transaction(%Transaction{} = transaction) do
     if registry_alive?() do
       GenServer.cast(__MODULE__, {:demonitor, transaction})
@@ -114,8 +116,9 @@ defmodule Appsignal.TransactionRegistry do
   end
 
   def init([]) do
-    table = :ets.new(@table, [:set, :named_table,
-                              {:keypos, 1}, :public, {:write_concurrency, true}])
+    table =
+      :ets.new(@table, [:set, :named_table, {:keypos, 1}, :public, {:write_concurrency, true}])
+
     {:ok, %State{table: table}}
   end
 
@@ -167,16 +170,19 @@ defmodule Appsignal.TransactionRegistry do
     :ets.delete(@table, pid)
     delete(tail)
   end
+
   defp delete([[pid] | tail]) do
     :ets.delete(@table, pid)
     delete(tail)
   end
+
   defp delete([]), do: :ok
 
   defp demonitor([[_, reference] | tail]) do
     Process.demonitor(reference)
     demonitor(tail)
   end
+
   defp demonitor([_ | tail]), do: demonitor(tail)
   defp demonitor([]), do: :ok
 
@@ -186,7 +192,6 @@ defmodule Appsignal.TransactionRegistry do
   end
 
   defp pids_and_monitor_references(transaction) do
-    :ets.match(@table, {:'$1', transaction, :'$2'}) ++
-      :ets.match(@table, {:'$1', transaction})
+    :ets.match(@table, {:"$1", transaction, :"$2"}) ++ :ets.match(@table, {:"$1", transaction})
   end
 end

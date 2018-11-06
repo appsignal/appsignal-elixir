@@ -1,5 +1,5 @@
 defmodule Appsignal.Diagnose.ReportBehaviour do
-  @callback send(map(), map()) :: {:ok, String.t} | {:error, map()}
+  @callback send(map(), map()) :: {:ok, String.t()} | {:error, map()}
 end
 
 defmodule Appsignal.Diagnose.Report do
@@ -7,7 +7,7 @@ defmodule Appsignal.Diagnose.Report do
 
   @behaviour Appsignal.Diagnose.ReportBehaviour
 
-  @spec send(map(), map()) :: {:ok, String.t} | {:error, map()}
+  @spec send(map(), map()) :: {:ok, String.t()} | {:error, map()}
   def send(config, report) do
     params =
       URI.encode_query(%{

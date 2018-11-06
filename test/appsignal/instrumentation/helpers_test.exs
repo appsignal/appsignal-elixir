@@ -8,15 +8,15 @@ defmodule AppsignalHelpersTest do
   test_with_mock "instrument with transaction", Appsignal.Transaction, [:passthrough], [] do
     t = Transaction.start("foo", :http_request)
     call_instrument(t)
-    assert called Transaction.start_event(t)
-    assert called Transaction.finish_event(t, "name", "title", "", 0)
+    assert called(Transaction.start_event(t))
+    assert called(Transaction.finish_event(t, "name", "title", "", 0))
   end
 
   test_with_mock "instrument with pid", Appsignal.Transaction, [:passthrough], [] do
     t = Transaction.start("bar", :http_request)
     call_instrument(self())
-    assert called Transaction.start_event(t)
-    assert called Transaction.finish_event(t, "name", "title", "", 0)
+    assert called(Transaction.start_event(t))
+    assert called(Transaction.finish_event(t, "name", "title", "", 0))
   end
 
   test "instrument with nil" do
@@ -24,11 +24,13 @@ defmodule AppsignalHelpersTest do
   end
 
   defp call_instrument(arg) do
-    r = Helpers.instrument(arg, "name", "title", fn() ->
-      # some slow function
-      :timer.sleep(100)
-      :result
-    end)
+    r =
+      Helpers.instrument(arg, "name", "title", fn ->
+        # some slow function
+        :timer.sleep(100)
+        :result
+      end)
+
     assert :result == r
   end
 end

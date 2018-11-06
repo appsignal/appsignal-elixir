@@ -10,7 +10,8 @@ defmodule Mix.Tasks.Appsignal.Diagnose.ReportTest do
   end
 
   setup do
-    diagnose_bypass = Bypass.open
+    diagnose_bypass = Bypass.open()
+
     setup_with_config(%{
       api_key: "foo",
       name: "AppSignal test suite app",
@@ -23,11 +24,12 @@ defmodule Mix.Tasks.Appsignal.Diagnose.ReportTest do
 
   describe "with valid response" do
     setup %{diagnose_bypass: diagnose_bypass} do
-      Bypass.expect diagnose_bypass, fn conn ->
+      Bypass.expect(diagnose_bypass, fn conn ->
         assert "/diag" == conn.request_path
         assert "POST" == conn.method
         Plug.Conn.resp(conn, 200, ~s({"token": "support token"}))
-      end
+      end)
+
       :ok
     end
 
@@ -38,11 +40,12 @@ defmodule Mix.Tasks.Appsignal.Diagnose.ReportTest do
 
   describe "with invalid response" do
     setup %{diagnose_bypass: diagnose_bypass} do
-      Bypass.expect diagnose_bypass, fn conn ->
+      Bypass.expect(diagnose_bypass, fn conn ->
         assert "/diag" == conn.request_path
         assert "POST" == conn.method
         Plug.Conn.resp(conn, 200, ~s({"foo": bar}))
-      end
+      end)
+
       :ok
     end
 
@@ -53,11 +56,12 @@ defmodule Mix.Tasks.Appsignal.Diagnose.ReportTest do
 
   describe "with error response" do
     setup %{diagnose_bypass: diagnose_bypass} do
-      Bypass.expect diagnose_bypass, fn conn ->
+      Bypass.expect(diagnose_bypass, fn conn ->
         assert "/diag" == conn.request_path
         assert "POST" == conn.method
         Plug.Conn.resp(conn, 500, ~s(woops))
-      end
+      end)
+
       :ok
     end
 

@@ -9,6 +9,18 @@ defmodule Appsignal.Ecto do
     loggers: [Appsignal.Ecto, Ecto.LogEntry]
   ```
 
+  On Ecto 3, attach Appsignal.Ecto to Telemetry query events in your
+  application's start/2 function:
+
+  ```
+  Telemetry.attach(
+    "appsignal-ecto",
+    [:my_app, :repo, :query],
+    Appsignal.Ecto,
+    :handle_event,
+    nil
+  )
+  ```
   """
 
   require Logger
@@ -17,20 +29,24 @@ defmodule Appsignal.Ecto do
 
   @nano_seconds :erlang.convert_time_unit(1, :nano_seconds, :native)
 
-  def log(entry) do
+  def handle_event(_event, _latency, metadata, _config) do
+    log(metadata)
+  end
 
+  def log(entry) do
     # See if we have a transaction registered for the current process
     case TransactionRegistry.lookup(self()) do
       nil ->
         # skip
         :ok
+
       %Transaction{} = transaction ->
         # record the event
         total_time = (entry.queue_time || 0) + (entry.query_time || 0) + (entry.decode_time || 0)
         duration = trunc(total_time / @nano_seconds)
         Transaction.record_event(transaction, "query.ecto", "", entry.query, duration, 1)
     end
+
     entry
   end
-
 end

@@ -35,18 +35,20 @@ defmodule Appsignal.Utils.DataEncoderTest do
 
   test "encode a map with a struct key and string value" do
     resource = DataEncoder.encode(%{%DataEncoderExampleStruct{} => "baz"})
-    assert {:ok, '{"%DataEncoderExampleStruct{foo: \\"bar\\"}":"baz"}'} == Nif.data_to_json(resource)
+
+    assert {:ok, '{"%DataEncoderExampleStruct{foo: \\"bar\\"}":"baz"}'} ==
+             Nif.data_to_json(resource)
   end
 
   test "encode a map with an integer value" do
-    resource = DataEncoder.encode(%{foo: 9223372036854775807})
+    resource = DataEncoder.encode(%{foo: 9_223_372_036_854_775_807})
     assert {:ok, '{"foo":9223372036854775807}'} == Nif.data_to_json(resource)
   end
 
   test "encode a map with an integer too big for C-lang longs to fit" do
-    resource = DataEncoder.encode(%{foo: 9223372036854775808})
+    resource = DataEncoder.encode(%{foo: 9_223_372_036_854_775_808})
     assert {:ok, '{"foo":"bigint:9223372036854775808"}'} == Nif.data_to_json(resource)
-    resource = DataEncoder.encode(%{foo: 9223372036854775809})
+    resource = DataEncoder.encode(%{foo: 9_223_372_036_854_775_809})
     assert {:ok, '{"foo":"bigint:9223372036854775809"}'} == Nif.data_to_json(resource)
   end
 
@@ -90,7 +92,7 @@ defmodule Appsignal.Utils.DataEncoderTest do
 
   test "encode a map with a PID value" do
     resource = DataEncoder.encode(%{foo: self()})
-    assert {:ok, '{"foo":"#{inspect self()}"}'} == Nif.data_to_json(resource)
+    assert {:ok, '{"foo":"#{inspect(self())}"}'} == Nif.data_to_json(resource)
   end
 
   test "encode an empty list" do
@@ -109,14 +111,14 @@ defmodule Appsignal.Utils.DataEncoderTest do
   end
 
   test "encode a list with an integer item" do
-    resource = DataEncoder.encode([9223372036854775807])
+    resource = DataEncoder.encode([9_223_372_036_854_775_807])
     assert {:ok, '[9223372036854775807]'} == Nif.data_to_json(resource)
   end
 
   test "encode a list with an integer item too big for C-lang longs to fit" do
-    resource = DataEncoder.encode([9223372036854775808])
+    resource = DataEncoder.encode([9_223_372_036_854_775_808])
     assert {:ok, '["bigint:9223372036854775808"]'} == Nif.data_to_json(resource)
-    resource = DataEncoder.encode([9223372036854775809])
+    resource = DataEncoder.encode([9_223_372_036_854_775_809])
     assert {:ok, '["bigint:9223372036854775809"]'} == Nif.data_to_json(resource)
   end
 
@@ -158,17 +160,19 @@ defmodule Appsignal.Utils.DataEncoderTest do
     assert {:ok, '{"foo":"improper_list:[\\"foo\\" | \\"bar\\"]"}'} == Nif.data_to_json(resource)
 
     resource = DataEncoder.encode(%{foo: [1, "foo" | "bar"]})
-    assert {:ok, '{"foo":"improper_list:[1, \\"foo\\" | \\"bar\\"]"}'} == Nif.data_to_json(resource)
+
+    assert {:ok, '{"foo":"improper_list:[1, \\"foo\\" | \\"bar\\"]"}'} ==
+             Nif.data_to_json(resource)
   end
 
   test "encode a list with a tuple item" do
-    resource = DataEncoder.encode(["foo", {"foo","bar","baz"}])
+    resource = DataEncoder.encode(["foo", {"foo", "bar", "baz"}])
     assert {:ok, '["foo",["foo","bar","baz"]]'} == Nif.data_to_json(resource)
   end
 
   test "encode a list with a PID item" do
     resource = DataEncoder.encode([self()])
-    assert {:ok, '["#{inspect self()}"]'} == Nif.data_to_json(resource)
+    assert {:ok, '["#{inspect(self())}"]'} == Nif.data_to_json(resource)
   end
 
   test "encode a struct" do

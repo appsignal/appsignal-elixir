@@ -39,13 +39,21 @@ defmodule Appsignal.Nif do
     path = :filename.join(:code.priv_dir(:appsignal), 'appsignal_extension')
 
     case :erlang.load_nif(path, 1) do
-      :ok -> :ok
+      :ok ->
+        :ok
+
       {:error, {:load_failed, reason}} ->
         arch = :erlang.system_info(:system_architecture)
-        message = "[#{DateTime.utc_now |> to_string}] Error loading NIF (Is your operating system (#{arch}) supported? Please check http://docs.appsignal.com/support/operating-systems.html):\n#{reason}\n\n"
+
+        message =
+          "[#{DateTime.utc_now() |> to_string}] Error loading NIF (Is your operating system (#{
+            arch
+          }) supported? Please check http://docs.appsignal.com/support/operating-systems.html):\n#{
+            reason
+          }\n\n"
 
         :appsignal
-        |> Application.app_dir
+        |> Application.app_dir()
         |> Path.join("install.log")
         |> File.write(message, [:append])
 
@@ -55,9 +63,9 @@ defmodule Appsignal.Nif do
 
   def agent_version do
     case :appsignal
-    |> :code.priv_dir
-    |> Path.join("appsignal.version")
-    |> File.read do
+         |> :code.priv_dir()
+         |> Path.join("appsignal.version")
+         |> File.read() do
       {:ok, contents} -> String.trim(contents)
       _ -> nil
     end
@@ -219,7 +227,7 @@ defmodule Appsignal.Nif do
     _loaded()
   end
 
-  if Mix.env in [:test, :test_phoenix] do
+  if Mix.env() in [:test, :test_phoenix] do
     def data_to_json(resource) do
       _data_to_json(resource)
     end
@@ -258,7 +266,7 @@ defmodule Appsignal.Nif do
   end
 
   def _start_transaction(_id, _namespace) do
-    if System.otp_release >= "20" do
+    if System.otp_release() >= "20" do
       {:ok, make_ref()}
     else
       {:ok, <<>>}
@@ -391,7 +399,7 @@ defmodule Appsignal.Nif do
     false
   end
 
-  if Mix.env in [:test, :test_phoenix, :test_no_nif] do
+  if Mix.env() in [:test, :test_phoenix, :test_no_nif] do
     def _data_to_json(resource) do
       resource
     end

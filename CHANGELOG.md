@@ -1,3 +1,14 @@
+# 1.8.2
+* Add Appsignal.Ecto.handle_event/4 to support Ecto 3. PR #416
+* Add diagnose command --[no-]send-report option. PR #414
+* Group extension and agent tests in diagnose output. PR #413
+* Add new agent & extension diagnose report keys. PR #412
+* Pretty print lists in diagnose output. PR #408
+* Add :poison to :applications. PR #404
+* Add :hackney to :applications. PR #403
+* Allow Appsignal.send_error/1-7 to be called without a stack trace. PR #400
+* Use `Mix.shell.info` instead of `Logger.info` in mix helpers. PR #399
+
 # 1.8.1
 * Fix linking issues on multi-stage build setups. PR #406
 

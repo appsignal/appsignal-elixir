@@ -2,8 +2,8 @@ defmodule AppsignalTest.Utils do
   # Remove loaded from the app so the module is recompiled when called. Do this
   # if the module is already loaded before the test env, such as in `mix.exs`.
   def purge(mod) do
-    :code.purge mod
-    :code.delete mod
+    :code.purge(mod)
+    :code.delete(mod)
   end
 
   def with_frozen_environment(function) do
@@ -16,7 +16,7 @@ defmodule AppsignalTest.Utils do
   def freeze_environment do
     {
       Application.get_env(:appsignal, :config, %{}),
-      System.get_env
+      System.get_env()
     }
   end
 
@@ -30,16 +30,17 @@ defmodule AppsignalTest.Utils do
   end
 
   def with_config(app, config, function) do
-    with_frozen_environment(fn() ->
+    with_frozen_environment(fn ->
       put_merged_config_for(app, config)
       function.()
     end)
   end
 
   defp put_merged_config_for(app, config) do
-    config = app
-    |> Application.get_env(:config, %{})
-    |> Map.merge(config)
+    config =
+      app
+      |> Application.get_env(:config, %{})
+      |> Map.merge(config)
 
     Application.put_env(app, :config, config)
   end
@@ -48,13 +49,13 @@ defmodule AppsignalTest.Utils do
     environment = freeze_environment()
     put_merged_config_for(:appsignal, config)
 
-    ExUnit.Callbacks.on_exit fn() ->
+    ExUnit.Callbacks.on_exit(fn ->
       unfreeze_environment(environment)
-    end
+    end)
   end
 
   def with_env(env, function) do
-    with_frozen_environment(fn() ->
+    with_frozen_environment(fn ->
       put_merged_env(env)
       function.()
     end)
@@ -64,13 +65,13 @@ defmodule AppsignalTest.Utils do
     environment = freeze_environment()
     put_merged_env(env)
 
-    ExUnit.Callbacks.on_exit fn() ->
+    ExUnit.Callbacks.on_exit(fn ->
       unfreeze_environment(environment)
-    end
+    end)
   end
 
   def is_reference_or_binary(term) do
-    if System.otp_release >= "20" do
+    if System.otp_release() >= "20" do
       is_reference(term)
     else
       is_binary(term)
@@ -78,15 +79,15 @@ defmodule AppsignalTest.Utils do
   end
 
   defp put_merged_env(env) do
-    System.get_env
+    System.get_env()
     |> Map.merge(env)
-    |> System.put_env
+    |> System.put_env()
   end
 
   defp reset_env(before) do
     System.put_env(before)
 
-    Map.keys(System.get_env) -- Map.keys(before)
+    (Map.keys(System.get_env()) -- Map.keys(before))
     |> Enum.each(&System.delete_env/1)
   end
 end

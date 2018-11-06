@@ -3,7 +3,7 @@ defmodule Appsignal.Utils.PushApiKeyValidatorTest do
   alias Appsignal.Utils.PushApiKeyValidator
 
   setup do
-    bypass = Bypass.open
+    bypass = Bypass.open()
     config = %{endpoint: "http://localhost:#{bypass.port}", push_api_key: "foo"}
 
     {:ok, %{bypass: bypass, config: config}}
@@ -11,11 +11,11 @@ defmodule Appsignal.Utils.PushApiKeyValidatorTest do
 
   describe "with valid push api key" do
     setup %{bypass: bypass, config: config} do
-      Bypass.expect bypass, fn conn ->
+      Bypass.expect(bypass, fn conn ->
         assert "/1/auth" == conn.request_path
         assert "GET" == conn.method
         Plug.Conn.resp(conn, 200, "")
-      end
+      end)
 
       {:ok, %{config: config}}
     end
@@ -27,11 +27,11 @@ defmodule Appsignal.Utils.PushApiKeyValidatorTest do
 
   describe "with invalid push api key" do
     setup %{bypass: bypass, config: config} do
-      Bypass.expect bypass, fn conn ->
+      Bypass.expect(bypass, fn conn ->
         assert "/1/auth" == conn.request_path
         assert "GET" == conn.method
         Plug.Conn.resp(conn, 401, "")
-      end
+      end)
 
       {:ok, %{config: config}}
     end
@@ -43,11 +43,11 @@ defmodule Appsignal.Utils.PushApiKeyValidatorTest do
 
   describe "with a server side error" do
     setup %{bypass: bypass, config: config} do
-      Bypass.expect bypass, fn conn ->
+      Bypass.expect(bypass, fn conn ->
         assert "/1/auth" == conn.request_path
         assert "GET" == conn.method
         Plug.Conn.resp(conn, 500, "")
-      end
+      end)
 
       {:ok, %{config: config}}
     end

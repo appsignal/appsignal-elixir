@@ -6,10 +6,13 @@ defmodule Mix.Tasks.Appsignal.Demo do
 
   def run(_args) do
     {:ok, _} = Application.ensure_all_started(:appsignal)
-    Appsignal.Demo.create_transaction_performance_request
-    Appsignal.Demo.create_transaction_error_request
+    Appsignal.Demo.create_transaction_performance_request()
+    Appsignal.Demo.create_transaction_error_request()
     Appsignal.stop(nil)
     Logger.info("Demonstration sample data sent!")
-    Logger.info("It may take about a minute for the data to appear on https://appsignal.com/accounts")
+
+    Logger.info(
+      "It may take about a minute for the data to appear on https://appsignal.com/accounts"
+    )
   end
 end
