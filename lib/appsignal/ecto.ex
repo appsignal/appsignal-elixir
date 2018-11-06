@@ -17,6 +17,10 @@ defmodule Appsignal.Ecto do
 
   @nano_seconds :erlang.convert_time_unit(1, :nano_seconds, :native)
 
+  def handle_event(_event, _latency, metadata, _config) do
+    log(metadata)
+  end
+
   def log(entry) do
     # See if we have a transaction registered for the current process
     case TransactionRegistry.lookup(self()) do
