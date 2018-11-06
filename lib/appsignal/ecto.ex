@@ -9,6 +9,18 @@ defmodule Appsignal.Ecto do
     loggers: [Appsignal.Ecto, Ecto.LogEntry]
   ```
 
+  On Ecto 3, attach Appsignal.Ecto to Telemetry query events in your
+  application's start/2 function:
+
+  ```
+  Telemetry.attach(
+    "appsignal-ecto",
+    [:my_app, :repo, :query],
+    Appsignal.Ecto,
+    :handle_event,
+    nil
+  )
+  ```
   """
 
   require Logger
