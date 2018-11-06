@@ -22,7 +22,9 @@ defmodule Appsignal.System do
           {int, _} -> int
           :error -> nil
         end
-      {_, _} -> nil
+
+      {_, _} ->
+        nil
     end
   end
 
@@ -38,6 +40,4 @@ defmodule Appsignal.System do
       {:error, _} -> nil
     end
   end
-
-
 end

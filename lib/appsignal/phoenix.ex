@@ -1,4 +1,4 @@
-if Appsignal.phoenix? do
+if Appsignal.phoenix?() do
   defmodule Appsignal.Phoenix do
     @moduledoc """
     Instrumentation of Phoenix requests
@@ -29,25 +29,30 @@ if Appsignal.phoenix? do
 
     @doc false
     def extract_error_metadata(reason, conn, stack) do
-      IO.warn "Appsignal.Phoenix.extract_error_metadata/3 is deprecated. Use Appsignal.Plug.extract_error_metadata/1 instead."
+      IO.warn(
+        "Appsignal.Phoenix.extract_error_metadata/3 is deprecated. Use Appsignal.Plug.extract_error_metadata/1 instead."
+      )
+
       Appsignal.Plug.extract_error_metadata(reason, conn, stack)
     end
 
     @doc false
     def submit_http_error(reason, message, stack, transaction, conn) do
-      IO.warn "Appsignal.Phoenix.submit_http_error/5 is deprecated."
+      IO.warn("Appsignal.Phoenix.submit_http_error/5 is deprecated.")
 
       @transaction.set_error(transaction, reason, message, stack)
+
       if @transaction.finish(transaction) == :sample do
         @transaction.set_request_metadata(transaction, conn)
       end
+
       @transaction.complete(transaction)
 
       # explicitly remove the transaction here so the regular error handler doesn't submit it again
       :ok = TransactionRegistry.remove_transaction(transaction)
 
-      Logger.debug(fn() ->
-        "Submitting Phoenix error #{inspect transaction}: #{message}"
+      Logger.debug(fn ->
+        "Submitting Phoenix error #{inspect(transaction)}: #{message}"
       end)
     end
   end

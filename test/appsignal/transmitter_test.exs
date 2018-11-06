@@ -7,9 +7,9 @@ defmodule Appsignal.TransmitterTest do
   setup do
     Application.put_env(:appsignal, :http_client, FakeHackney)
 
-    on_exit fn() ->
+    on_exit(fn ->
       Application.delete_env(:appsignal, :http_client)
-    end
+    end)
   end
 
   test "uses the default CA certificate" do
@@ -33,9 +33,10 @@ defmodule Appsignal.TransmitterTest do
 
     with_config(%{ca_file_path: path}, fn ->
       assert capture_log(fn ->
-        assert [_method, _url, _headers, _body, []] =
-                Transmitter.request(:get, "https://example.com")
-      end) =~ "[warn]  Ignoring non-existing or unreadable ca_file_path (test/fixtures/does_not_exist.pem): :enoent"
+               assert [_method, _url, _headers, _body, []] =
+                        Transmitter.request(:get, "https://example.com")
+             end) =~
+               "[warn]  Ignoring non-existing or unreadable ca_file_path (test/fixtures/does_not_exist.pem): :enoent"
     end)
   end
 end

@@ -17,7 +17,7 @@ defmodule Appsignal.Transmitter do
           {:ok, [ssl_options: [cacertfile: ca_file_path]]}
 
         {:ok, %{access: access}} ->
-          {:error, "File access is #{inspect access}"}
+          {:error, "File access is #{inspect(access)}"}
 
         {:error, reason} ->
           {:error, reason}

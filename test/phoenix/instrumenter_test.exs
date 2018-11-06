@@ -3,12 +3,14 @@ defmodule Appsignal.Phoenix.InstrumenterTest do
   alias Appsignal.{Phoenix.Instrumenter, Transaction, FakeTransaction}
 
   setup do
-    {:ok, fake_transaction} = FakeTransaction.start_link
+    {:ok, fake_transaction} = FakeTransaction.start_link()
 
     transaction = Transaction.start("test", :http_request)
-    conn = %Plug.Conn{}
-    |> Plug.Conn.put_private(:phoenix_controller, "foo")
-    |> Plug.Conn.put_private(:phoenix_action, "bar")
+
+    conn =
+      %Plug.Conn{}
+      |> Plug.Conn.put_private(:phoenix_controller, "foo")
+      |> Plug.Conn.put_private(:phoenix_action, "bar")
 
     [transaction: transaction, conn: conn, fake_transaction: fake_transaction]
   end
@@ -17,10 +19,14 @@ defmodule Appsignal.Phoenix.InstrumenterTest do
     arguments = %{conn: conn}
 
     assert {transaction, arguments} ==
-      Instrumenter.phoenix_controller_call(:start, nil, arguments)
+             Instrumenter.phoenix_controller_call(:start, nil, arguments)
   end
 
-  test "sets the action name in phoenix_controller_call", %{transaction: transaction, conn: conn, fake_transaction: fake_transaction} do
+  test "sets the action name in phoenix_controller_call", %{
+    transaction: transaction,
+    conn: conn,
+    fake_transaction: fake_transaction
+  } do
     arguments = %{conn: conn, transaction: transaction}
 
     Instrumenter.phoenix_controller_call(:start, nil, arguments)
@@ -29,42 +35,55 @@ defmodule Appsignal.Phoenix.InstrumenterTest do
 
   test "starts an event in phoenix_controller_render", context do
     arguments = %{foo: "bar"}
+
     assert {context[:transaction], arguments} ==
-      Instrumenter.phoenix_controller_render(:start, nil, arguments)
+             Instrumenter.phoenix_controller_render(:start, nil, arguments)
   end
 
-  test "finishes an event in phoenix_controller_call", %{transaction: transaction, fake_transaction: fake_transaction} do
+  test "finishes an event in phoenix_controller_call", %{
+    transaction: transaction,
+    fake_transaction: fake_transaction
+  } do
     Instrumenter.phoenix_controller_call(:stop, nil, {transaction, %{conn: %Plug.Conn{}}})
+
     assert [
-      %{
-        transaction: transaction,
-        name: "call.phoenix_controller",
-        title: "call.phoenix_controller",
-        body: %{},
-        body_format: 0
-      }
-    ] == FakeTransaction.finished_events(fake_transaction)
+             %{
+               transaction: transaction,
+               name: "call.phoenix_controller",
+               title: "call.phoenix_controller",
+               body: %{},
+               body_format: 0
+             }
+           ] == FakeTransaction.finished_events(fake_transaction)
   end
 
-  test "does not finish an event in phoenix_controller_call without a transaction or conn", %{fake_transaction: fake_transaction} do
+  test "does not finish an event in phoenix_controller_call without a transaction or conn", %{
+    fake_transaction: fake_transaction
+  } do
     Instrumenter.phoenix_controller_call(:stop, nil, nil)
     assert [] == FakeTransaction.finished_events(fake_transaction)
   end
 
-  test "finishes an event in phoenix_controller_render", %{transaction: transaction, fake_transaction: fake_transaction} do
+  test "finishes an event in phoenix_controller_render", %{
+    transaction: transaction,
+    fake_transaction: fake_transaction
+  } do
     Instrumenter.phoenix_controller_render(:stop, nil, {transaction, %{conn: %Plug.Conn{}}})
+
     assert [
-      %{
-        transaction: transaction,
-        name: "render.phoenix_controller",
-        title: "render.phoenix_controller",
-        body: %{},
-        body_format: 0
-      }
-    ] == FakeTransaction.finished_events(fake_transaction)
+             %{
+               transaction: transaction,
+               name: "render.phoenix_controller",
+               title: "render.phoenix_controller",
+               body: %{},
+               body_format: 0
+             }
+           ] == FakeTransaction.finished_events(fake_transaction)
   end
 
-  test "does not finish an event in phoenix_controller_render without a transaction", %{fake_transaction: fake_transaction} do
+  test "does not finish an event in phoenix_controller_render without a transaction", %{
+    fake_transaction: fake_transaction
+  } do
     Instrumenter.phoenix_controller_render(:stop, nil, nil)
     assert [] == FakeTransaction.finished_events(fake_transaction)
   end
