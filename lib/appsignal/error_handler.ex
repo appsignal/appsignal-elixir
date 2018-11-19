@@ -90,6 +90,18 @@ defmodule Appsignal.ErrorHandler do
   defp match_error_report(origin, [
          [
            {:initial_call, _},
+           {:pid, _pid},
+           {:registered_name, _name},
+           {:error_info, {_kind, {%{}, _stack}, _}} | _
+         ],
+         _linked
+       ]) do
+    :nomatch
+  end
+
+  defp match_error_report(origin, [
+         [
+           {:initial_call, _},
            {:pid, pid},
            {:registered_name, name},
            {:error_info, {_kind, exception, stack}} | _
