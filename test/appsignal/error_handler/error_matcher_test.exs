@@ -238,7 +238,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
 
   test "Plug.Conn.WrapperError" do
     :proc_lib.spawn(fn ->
-      raise(%Plug.Conn.WrapperError{reason: :undef, kind: :error, stack: System.stacktrace()})
+      raise(%Plug.Conn.WrapperError{reason: :undef, kind: :error, stack: []})
     end)
     |> assert_crash_caught
     |> reason("UndefinedFunctionError")
