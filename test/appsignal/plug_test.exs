@@ -159,7 +159,7 @@ defmodule Appsignal.PlugTest do
                {
                  %Appsignal.Transaction{},
                  "RuntimeError",
-                 "HTTP request error: Exception!",
+                 "Exception!",
                  _stack
                }
              ] = FakeTransaction.errors(fake_transaction)
@@ -231,7 +231,7 @@ defmodule Appsignal.PlugTest do
                {
                  %Appsignal.Transaction{},
                  "UndefinedFunctionError",
-                 "HTTP request error: undefined function",
+                 "undefined function",
                  _stack
                }
              ] = FakeTransaction.errors(fake_transaction)
@@ -290,7 +290,7 @@ defmodule Appsignal.PlugTest do
                {
                  %Appsignal.Transaction{},
                  ":timeout",
-                 "HTTP request error: {:timeout, {Task, :await, [%Task{owner: " <> _,
+                 "{:timeout, {Task, :await, [%Task{owner: " <> _,
                  _stack
                }
              ] = FakeTransaction.errors(fake_transaction)
@@ -300,21 +300,21 @@ defmodule Appsignal.PlugTest do
   describe "extracting error metadata" do
     test "with a RuntimeError" do
       assert Appsignal.Plug.extract_error_metadata(%RuntimeError{}) ==
-               {"RuntimeError", "HTTP request error: runtime error"}
+               {"RuntimeError", "runtime error"}
     end
 
     test "with a Plug.Conn.WrapperError" do
       error = %Plug.Conn.WrapperError{reason: %RuntimeError{}}
 
       assert Appsignal.Plug.extract_error_metadata(error) ==
-               {"RuntimeError", "HTTP request error: runtime error"}
+               {"RuntimeError", "runtime error"}
     end
 
     test "with an error tuple" do
       error = {:timeout, {Task, :await, [%Task{owner: self(), pid: self(), ref: make_ref()}, 1]}}
 
       assert Appsignal.Plug.extract_error_metadata(error) ==
-               {":timeout", "HTTP request error: #{inspect(error)}"}
+               {":timeout", inspect(error)}
     end
 
     test "ignores errors with a plug_status < 500" do
@@ -472,7 +472,7 @@ defmodule Appsignal.PlugTest do
                {
                  %Appsignal.Transaction{},
                  "UndefinedFunctionError",
-                 "HTTP request error: undefined function",
+                 "undefined function",
                  []
                }
              ] == FakeTransaction.errors(fake_transaction)

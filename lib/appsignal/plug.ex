@@ -99,11 +99,11 @@ if Appsignal.plug?() do
     end
 
     def extract_error_metadata(%Plug.Conn.WrapperError{reason: reason = %{}}) do
-      Appsignal.ErrorHandler.extract_reason_and_message(reason, "HTTP request error")
+      Appsignal.ErrorHandler.extract_reason_and_message(reason, "")
     end
 
     def extract_error_metadata(reason) do
-      Appsignal.ErrorHandler.extract_reason_and_message(reason, "HTTP request error")
+      Appsignal.ErrorHandler.extract_reason_and_message(reason, "")
     end
 
     @doc false

@@ -82,7 +82,7 @@ defmodule Appsignal.PhoenixTest do
                {
                  %Appsignal.Transaction{} = transaction,
                  "RuntimeError",
-                 "HTTP request error: exception!",
+                 "exception!",
                  _stack
                }
              ] = FakeTransaction.errors(fake_transaction)
@@ -106,7 +106,7 @@ defmodule Appsignal.PhoenixTest do
                {
                  %Appsignal.Transaction{} = transaction,
                  ":timeout",
-                 "HTTP request error: {:timeout, {Task, :await, [%Task{owner: " <> _,
+                 "{:timeout, {Task, :await, [%Task{owner: " <> _,
                  _stack
                }
              ] = FakeTransaction.errors(fake_transaction)
