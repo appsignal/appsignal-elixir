@@ -15,7 +15,7 @@ defmodule UsingAppsignalPlug do
     raise %Plug.Conn.WrapperError{
       kind: :error,
       reason: :undef,
-      stack: System.stacktrace(),
+      stack: [],
       conn: %{conn | params: %{"foo" => "bar"}}
     }
   end
@@ -24,7 +24,7 @@ defmodule UsingAppsignalPlug do
     raise %Plug.Conn.WrapperError{
       kind: :error,
       reason: :undef,
-      stack: System.stacktrace(),
+      stack: [],
       conn: %Plug.Conn{}
     }
   end
