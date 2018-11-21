@@ -86,8 +86,8 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
       exit(:crash_proc_lib_spawn)
     end)
     |> assert_crash_caught
-    |> reason("{:exit, :crash_proc_lib_spawn}")
-    |> message(~r(^$))
+    |> reason(":crash_proc_lib_spawn")
+    |> message(~r(^Erlang error: :crash_proc_lib_spawn$))
     |> stacktrace([
       ~r{test\/appsignal\/error_handler\/error_matcher_test.exs:\d+: anonymous fn\/0 in Appsignal.ErrorHandler.ErrorMatcherTest."?test proc_lib.spawn \+ exit"?/1},
       ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p/3}
@@ -99,8 +99,8 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
       :erlang.error(:crash_proc_lib_error)
     end)
     |> assert_crash_caught
-    |> reason("{:error, :crash_proc_lib_error}")
-    |> message(~r(^$))
+    |> reason(":crash_proc_lib_error")
+    |> message("Erlang error: :crash_proc_lib_error")
     |> stacktrace([
       ~r{test/appsignal/error_handler/error_matcher_test.exs:\d+: anonymous fn/0 in Appsignal.ErrorHandler.ErrorMatcherTest."?test proc_lib.spawn \+ erlang.error"?/1},
       ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p/3}
@@ -112,8 +112,8 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
       Float.ceil(1)
     end)
     |> assert_crash_caught
-    |> reason("{:error, :function_clause}")
-    |> message(~r(^$))
+    |> reason("FunctionClauseError")
+    |> message("no function clause matches")
     |> stacktrace([
       ~r{\(elixir\) lib/float.ex:\d+: Float.ceil/2},
       ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p/3}
@@ -123,8 +123,8 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
   test "proc_lib.spawn + badmatch error" do
     :proc_lib.spawn(fn -> throw({:badmatch, [1, 2, 3]}) end)
     |> assert_crash_caught
-    |> reason("{:error, {:badmatch, [1, 2, 3]}}")
-    |> message(~r(^{:badmatch, \[1, 2, 3\]}))
+    |> reason("MatchError")
+    |> message("no match of right hand side value: [1, 2, 3]")
     |> stacktrace([
       ~r{test/appsignal/error_handler/error_matcher_test.exs:\d+: anonymous fn/0 in Appsignal.ErrorHandler.ErrorMatcherTest."?test proc_lib.spawn \+ badmatch error"?/1},
       ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p/3}
@@ -136,8 +136,8 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
       CrashingGenServer.start(:throw)
       |> assert_crash_caught
       # http://erlang.org/pipermail/erlang-bugs/2012-April/002862.html
-      |> reason("{:exit, {:bad_return_value, :crashed_gen_server_throw}}")
-      |> message(~r(^{:bad_return_valu...))
+      |> reason(":bad_return_value")
+      |> message(~r(^Erlang error: {:bad_return_valu...))
 
     if System.otp_release() >= "20" do
       stacktrace(result, [
@@ -156,8 +156,8 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     result =
       CrashingGenServer.start(:exit)
       |> assert_crash_caught
-      |> reason("{:exit, :crashed_gen_server_exit}")
-      |> message(~r(^$))
+      |> reason(":crashed_gen_server_exit")
+      |> message(~r(^Erlang error: :crashed_gen_server_exit$))
 
     if System.otp_release() >= "20" do
       stacktrace(result, [
@@ -178,8 +178,8 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     result =
       CrashingGenServer.start(:function_error)
       |> assert_crash_caught
-      |> reason(":function_clause")
-      |> message(~r(^$))
+      |> reason("FunctionClauseError")
+      |> message(~r(^no function clause matches$))
 
     if System.otp_release() >= "20" do
       stacktrace(result, [
@@ -206,18 +206,14 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
         Float.ceil(1)
       end)
       |> assert_crash_caught
-      |> reason(":function_clause")
+      |> reason("FunctionClauseError")
       |> stacktrace([
         ~r{\(elixir\) lib/float.ex:\d+: Float.ceil/2},
         ~r{\(elixir\) lib/task/supervised.ex:\d+: Task.Supervised.do_apply/2},
         ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p_do_apply/3}
       ])
 
-    if Version.compare(System.version(), "1.7.0-rc.0") != :lt do
-      message(result, ~r(^$))
-    else
-      message(result, ~r(^{:function_clause, \[{Float, :cei...))
-    end
+    message(result, ~r(^no function clause matches$))
   end
 
   test "Task await" do
@@ -229,7 +225,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     end)
     |> assert_crash_caught
     |> reason(":timeout")
-    |> message(~r(^{:timeout, {Task, :await, \[%Tas...))
+    |> message(~r(^Erlang error: {:timeout, {Task, :await, \[%Tas...))
     |> stacktrace([
       ~r{\(elixir\) lib/task.ex:\d+: Task.await/2},
       ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p/3}
@@ -238,7 +234,12 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
 
   test "Plug.Conn.WrapperError" do
     :proc_lib.spawn(fn ->
-      raise(%Plug.Conn.WrapperError{reason: :undef, kind: :error, stack: []})
+      try do
+        raise %UndefinedFunctionError{}
+      catch
+        kind, reason ->
+          raise(%Plug.Conn.WrapperError{reason: reason, kind: kind, stack: System.stacktrace()})
+      end
     end)
     |> assert_crash_caught
     |> reason("UndefinedFunctionError")
@@ -250,7 +251,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
   end
 
   defp reason({reason, _message, _stacktrace} = data, expected) do
-    assert expected =~ reason
+    assert expected == reason
     data
   end
 

@@ -51,6 +51,30 @@ defmodule Appsignal.ErrorTest do
     end
   end
 
+  describe "for an exit" do
+    setup do
+      {error, stacktrace} =
+        try do
+          exit(:exited)
+        catch
+          _kind, reason -> {reason, System.stacktrace()}
+        end
+
+      [metadata: Error.metadata(error, stacktrace)]
+    end
+
+    test "extracts the error's name", %{metadata: {name, _message, _backtrace}} do
+      assert name == ":exited"
+    end
+  end
+
+  describe "for an error without an atom name" do
+    test "falls back 'ErlangError' as the error's name" do
+      assert {"ErlangError", _, _} = Error.metadata("string!", [])
+      assert {"ErlangError", _, _} = Error.metadata({"string!", []}, [])
+    end
+  end
+
   defp assert_backtrace(actual, expected) do
     actual
     |> Enum.zip(expected)

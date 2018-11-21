@@ -34,7 +34,7 @@ defmodule Appsignal.ErrorHandler do
           transaction = Transaction.lookup_or_create_transaction(origin)
 
           if transaction != nil do
-            submit_transaction(transaction, normalize_reason(reason), message, stack, %{}, conn)
+            submit_transaction(transaction, reason, message, stack, %{}, conn)
           end
 
         :nomatch ->
@@ -79,36 +79,39 @@ defmodule Appsignal.ErrorHandler do
 
   @doc false
   @spec match_event(term) :: {pid, term, String.t(), list, %{}} | :nomatch
-  def match_event({:error_report, _gleader, {origin, :crash_report, report}}) do
-    match_error_report(origin, report)
+  def match_event({:error_report, _gleader, {origin, :crash_report, [report | _]}})
+      when is_list(report) do
+    try do
+      {exception, stack} = match_error_info(report[:error_info])
+
+      {reason, message, backtrace} = Appsignal.Error.metadata(exception, stack)
+      {origin, reason, message, backtrace, nil}
+    rescue
+      exception ->
+        Logger.warn(fn ->
+          """
+          AppSignal: Failed to match error report: #{Exception.message(exception)}
+          #{inspect(report[:error_info])}
+          """
+        end)
+
+        :nomatch
+    end
   end
 
   def match_event(_event) do
     :nomatch
   end
 
-  defp match_error_report(origin, [
-         [
-           {:initial_call, _},
-           {:pid, pid},
-           {:registered_name, name},
-           {:error_info, {_kind, exception, stack}} | _
-         ],
-         _linked
-       ]) do
-    stacktrace = extract_stacktrace(exception) || stack
-    {reason, message} = extract_reason_and_message(exception, "")
-    {origin, reason, message, Backtrace.from_stacktrace(stacktrace), nil}
-  end
-
-  defp extract_stacktrace({_, stacktrace}) do
-    case stacktrace?(stacktrace) do
-      true -> stacktrace
-      false -> nil
+  defp match_error_info({_kind, {exception, maybe_stack}, stack}) do
+    if stacktrace?(maybe_stack) do
+      {exception, maybe_stack}
+    else
+      {{exception, maybe_stack}, stack}
     end
   end
 
-  defp extract_stacktrace(_), do: nil
+  defp match_error_info({_kind, exception, stack}), do: {exception, stack}
 
   defp stacktrace?(stacktrace) when is_list(stacktrace) do
     Enum.all?(stacktrace, &stacktrace_line?/1)

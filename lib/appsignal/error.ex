@@ -5,6 +5,10 @@ defmodule Appsignal.Error do
   alias Appsignal.Backtrace
 
   @spec metadata(any, Exception.stactrace()) :: {String.t(), String.t(), list(String.t())}
+  def metadata(%Plug.Conn.WrapperError{reason: error, stack: _stacktrace}, stacktrace) do
+    metadata(error, stacktrace)
+  end
+
   def metadata(error, stacktrace) do
     exception = Exception.normalize(:error, error)
 
@@ -16,7 +20,11 @@ defmodule Appsignal.Error do
   end
 
   @spec name(Exception.t()) :: String.t()
-  defp name(%ErlangError{original: {name, _}}) do
+  defp name(%ErlangError{original: {name, _}}) when is_atom(name) do
+    inspect(name)
+  end
+
+  defp name(%ErlangError{original: name}) when is_atom(name) do
     inspect(name)
   end
 
