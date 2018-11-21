@@ -126,6 +126,8 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     assert String.contains?(output, "Architecture: #{:erlang.system_info(:system_architecture)}")
     assert String.contains?(output, "Elixir version: #{System.version()}")
     assert String.contains?(output, "OTP version: #{System.otp_release()}")
+    {_, os} = :os.type()
+    assert String.contains?(output, "Operating System: #{os}")
   end
 
   test "adds host information to report", %{fake_report: fake_report} do
@@ -135,10 +137,13 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       received_report(fake_report)[:host]
       |> Map.drop([:root, :running_in_container])
 
+    {_, os} = :os.type()
+
     assert report == %{
              architecture: to_string(:erlang.system_info(:system_architecture)),
              language_version: System.version(),
              otp_version: System.otp_release(),
+             os: os,
              heroku: false
            }
   end
