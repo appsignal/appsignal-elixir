@@ -34,6 +34,23 @@ defmodule Appsignal.ErrorTest do
     end
   end
 
+  describe "for a :timeout" do
+    setup do
+      {error, stacktrace} =
+        try do
+          Task.async(fn -> :timer.sleep(10) end) |> Task.await(1)
+        catch
+          _kind, reason -> {reason, System.stacktrace()}
+        end
+
+      [metadata: Error.metadata(error, stacktrace)]
+    end
+
+    test "extracts the error's name", %{metadata: {name, _message, _backtrace}} do
+      assert name == ":timeout"
+    end
+  end
+
   defp assert_backtrace(actual, expected) do
     actual
     |> Enum.zip(expected)

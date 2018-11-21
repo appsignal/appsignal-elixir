@@ -6,13 +6,22 @@ defmodule Appsignal.Error do
 
   @spec metadata(any, Exception.stactrace()) :: {String.t(), String.t(), list(String.t())}
   def metadata(error, stacktrace) do
-    %module{} = exception = Exception.normalize(:error, error)
+    exception = Exception.normalize(:error, error)
 
     {
-      module_name(module),
+      name(exception),
       Exception.message(exception),
       Backtrace.from_stacktrace(stacktrace)
     }
+  end
+
+  @spec name(Exception.t()) :: String.t()
+  defp name(%ErlangError{original: {name, _}}) do
+    inspect(name)
+  end
+
+  defp name(%module{}) do
+    module_name(module)
   end
 
   @spec module_name(atom | String.t()) :: String.t()

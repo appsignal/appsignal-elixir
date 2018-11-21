@@ -289,7 +289,7 @@ defmodule Appsignal.PlugTest do
       assert [
                {
                  %Appsignal.Transaction{},
-                 "ErlangError",
+                 ":timeout",
                  "Erlang error: {:timeout, {Task, :await, [%Task{owner: " <> _,
                  _stack
                }
