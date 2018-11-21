@@ -105,8 +105,8 @@ defmodule Appsignal.PhoenixTest do
       assert [
                {
                  %Appsignal.Transaction{} = transaction,
-                 ":timeout",
-                 "{:timeout, {Task, :await, [%Task{owner: " <> _,
+                 "ErlangError",
+                 "Erlang error: {:timeout, {Task, :await, [%Task{owner: " <> _,
                  _stack
                }
              ] = FakeTransaction.errors(fake_transaction)

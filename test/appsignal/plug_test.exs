@@ -289,36 +289,11 @@ defmodule Appsignal.PlugTest do
       assert [
                {
                  %Appsignal.Transaction{},
-                 ":timeout",
-                 "{:timeout, {Task, :await, [%Task{owner: " <> _,
+                 "ErlangError",
+                 "Erlang error: {:timeout, {Task, :await, [%Task{owner: " <> _,
                  _stack
                }
              ] = FakeTransaction.errors(fake_transaction)
-    end
-  end
-
-  describe "extracting error metadata" do
-    test "with a RuntimeError" do
-      assert Appsignal.Plug.extract_error_metadata(%RuntimeError{}) ==
-               {"RuntimeError", "runtime error"}
-    end
-
-    test "with a Plug.Conn.WrapperError" do
-      error = %Plug.Conn.WrapperError{reason: %RuntimeError{}}
-
-      assert Appsignal.Plug.extract_error_metadata(error) ==
-               {"RuntimeError", "runtime error"}
-    end
-
-    test "with an error tuple" do
-      error = {:timeout, {Task, :await, [%Task{owner: self(), pid: self(), ref: make_ref()}, 1]}}
-
-      assert Appsignal.Plug.extract_error_metadata(error) ==
-               {":timeout", inspect(error)}
-    end
-
-    test "ignores errors with a plug_status < 500" do
-      assert Appsignal.Plug.extract_error_metadata(%Plug.BadRequestError{}) == nil
     end
   end
 

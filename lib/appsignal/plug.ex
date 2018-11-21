@@ -48,26 +48,25 @@ if Appsignal.plug?() do
       handle_error(conn, kind, reason, reason, stack)
     end
 
+    def handle_error(_conn, kind, %{plug_status: status} = reason, _wrapped_reason, stack)
+        when status < 500 do
+      :erlang.raise(kind, reason, stack)
+    end
+
     def handle_error(
           %Plug.Conn{private: %{appsignal_transaction: transaction}} = conn,
           kind,
-          reason,
+          original_reason,
           wrapped_reason,
           stack
         ) do
-      exception = Exception.normalize(kind, wrapped_reason, stack)
+      {reason, message, backtrace} = Appsignal.Error.metadata(wrapped_reason, stack)
 
-      case Appsignal.Plug.extract_error_metadata(exception) do
-        {reason, message} ->
-          transaction
-          |> @transaction.set_error(reason, message, stack)
-          |> finish_with_conn(conn)
+      transaction
+      |> @transaction.set_error(reason, message, backtrace)
+      |> finish_with_conn(conn)
 
-        nil ->
-          :ok
-      end
-
-      :erlang.raise(kind, reason, stack)
+      :erlang.raise(kind, original_reason, stack)
     end
 
     def handle_error(_conn, kind, reason, _wrapped_reason, stack) do
@@ -90,29 +89,17 @@ if Appsignal.plug?() do
       end
     end
 
-    @doc """
-    Returns a tuple with the exception's reason and message unless the error has
-    a status code under 500.
-    """
-    def extract_error_metadata(%{plug_status: status}) when status < 500 do
-      nil
-    end
-
-    def extract_error_metadata(%Plug.Conn.WrapperError{reason: reason = %{}}) do
-      Appsignal.ErrorHandler.extract_reason_and_message(reason, "")
-    end
-
+    @doc false
+    @deprecated "Use Appsignal.Error.metadata/2 instead."
     def extract_error_metadata(reason) do
-      Appsignal.ErrorHandler.extract_reason_and_message(reason, "")
+      {reason, message, _} = Appsignal.Error.metadata(reason, [])
+      {reason, message}
     end
 
     @doc false
+    @deprecated "Use Appsignal.Error.metadata/2 instead."
     def extract_error_metadata(reason, conn, stack) do
-      IO.warn(
-        "Appsignal.Plug.extract_error_metadata/3 is deprecated. Use Appsignal.Plug.extract_error_metadata/1 instead."
-      )
-
-      {reason, message} = extract_error_metadata(reason)
+      {reason, message, _} = Appsignal.Error.metadata(reason, [])
       {reason, message, stack, conn}
     end
 
