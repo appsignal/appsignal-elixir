@@ -96,9 +96,8 @@ defmodule Appsignal.ErrorHandler do
          ],
          _linked
        ]) do
-    msg = "Process #{crash_name(pid, name)} terminating"
     stacktrace = extract_stacktrace(exception) || stack
-    {reason, message} = extract_reason_and_message(exception, msg)
+    {reason, message} = extract_reason_and_message(exception, "")
     {origin, reason, message, Backtrace.from_stacktrace(stacktrace), nil}
   end
 
@@ -128,9 +127,6 @@ defmodule Appsignal.ErrorHandler do
 
     Backtrace.from_stacktrace(stacktrace)
   end
-
-  defp crash_name(pid, []), do: inspect(pid)
-  defp crash_name(pid, name), do: "#{inspect(name)} (#{inspect(pid)})"
 
   @doc """
   Extract a consise reason from the given error reason, stripping it from long stack traces and the like.

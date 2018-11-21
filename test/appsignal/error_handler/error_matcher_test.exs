@@ -87,7 +87,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     end)
     |> assert_crash_caught
     |> reason("{:exit, :crash_proc_lib_spawn}")
-    |> message(~r(Process #PID<[\d.]+> terminating$))
+    |> message(~r(^$))
     |> stacktrace([
       ~r{test\/appsignal\/error_handler\/error_matcher_test.exs:\d+: anonymous fn\/0 in Appsignal.ErrorHandler.ErrorMatcherTest."?test proc_lib.spawn \+ exit"?/1},
       ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p/3}
@@ -100,7 +100,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     end)
     |> assert_crash_caught
     |> reason("{:error, :crash_proc_lib_error}")
-    |> message(~r(Process #PID<[\d.]+> terminating$))
+    |> message(~r(^$))
     |> stacktrace([
       ~r{test/appsignal/error_handler/error_matcher_test.exs:\d+: anonymous fn/0 in Appsignal.ErrorHandler.ErrorMatcherTest."?test proc_lib.spawn \+ erlang.error"?/1},
       ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p/3}
@@ -113,7 +113,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     end)
     |> assert_crash_caught
     |> reason("{:error, :function_clause}")
-    |> message(~r(Process #PID<[\d.]+> terminating$))
+    |> message(~r(^$))
     |> stacktrace([
       ~r{\(elixir\) lib/float.ex:\d+: Float.ceil/2},
       ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p/3}
@@ -124,7 +124,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     :proc_lib.spawn(fn -> throw({:badmatch, [1, 2, 3]}) end)
     |> assert_crash_caught
     |> reason("{:error, {:badmatch, [1, 2, 3]}}")
-    |> message(~r(Process #PID<[\d.]+> terminating: {:badmatch, \[1, 2, 3\]}))
+    |> message(~r(^{:badmatch, \[1, 2, 3\]}))
     |> stacktrace([
       ~r{test/appsignal/error_handler/error_matcher_test.exs:\d+: anonymous fn/0 in Appsignal.ErrorHandler.ErrorMatcherTest."?test proc_lib.spawn \+ badmatch error"?/1},
       ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p/3}
@@ -137,7 +137,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
       |> assert_crash_caught
       # http://erlang.org/pipermail/erlang-bugs/2012-April/002862.html
       |> reason("{:exit, {:bad_return_value, :crashed_gen_server_throw}}")
-      |> message(~r(Process #PID<[\d.]+> terminating: {:bad_return_valu...))
+      |> message(~r(^{:bad_return_valu...))
 
     if System.otp_release() >= "20" do
       stacktrace(result, [
@@ -157,7 +157,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
       CrashingGenServer.start(:exit)
       |> assert_crash_caught
       |> reason("{:exit, :crashed_gen_server_exit}")
-      |> message(~r(Process #PID<[\d.]+> terminating$))
+      |> message(~r(^$))
 
     if System.otp_release() >= "20" do
       stacktrace(result, [
@@ -179,7 +179,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
       CrashingGenServer.start(:function_error)
       |> assert_crash_caught
       |> reason(":function_clause")
-      |> message(~r(Process #PID<[\d.]+> terminating))
+      |> message(~r(^$))
 
     if System.otp_release() >= "20" do
       stacktrace(result, [
@@ -214,9 +214,9 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
       ])
 
     if Version.compare(System.version(), "1.7.0-rc.0") != :lt do
-      message(result, ~r(Process #PID<[\d.]+> terminating))
+      message(result, ~r(^$))
     else
-      message(result, ~r(Process #PID<[\d.]+> terminating: {:function_clause, \[{Float, :cei...))
+      message(result, ~r(^{:function_clause, \[{Float, :cei...))
     end
   end
 
@@ -229,7 +229,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     end)
     |> assert_crash_caught
     |> reason(":timeout")
-    |> message(~r(Process #PID<[\d.]+> terminating: {:timeout, {Task, :await, \[%Tas...))
+    |> message(~r(^{:timeout, {Task, :await, \[%Tas...))
     |> stacktrace([
       ~r{\(elixir\) lib/task.ex:\d+: Task.await/2},
       ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p/3}
@@ -242,7 +242,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     end)
     |> assert_crash_caught
     |> reason("UndefinedFunctionError")
-    |> message(~r(Process #PID<[\d.]+> terminating: undefined function))
+    |> message(~r(^undefined function$))
     |> stacktrace([
       ~r{test/appsignal/error_handler/error_matcher_test.exs:\d+: anonymous fn/0 in Appsignal.ErrorHandler.ErrorMatcherTest."?test Plug.Conn.WrapperError"?/1},
       ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p/3}
