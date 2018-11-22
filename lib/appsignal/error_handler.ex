@@ -92,7 +92,7 @@ defmodule Appsignal.ErrorHandler do
            {:initial_call, _},
            {:pid, _pid},
            {:registered_name, _name},
-           {:error_info, {_kind, {%{}, _stack}, _}} | _
+           {:error_info, {_kind, {{{%{}, _stack}, _}, _}, _}} | _
          ],
          _linked
        ]) do
