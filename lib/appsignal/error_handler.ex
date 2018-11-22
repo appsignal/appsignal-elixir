@@ -47,6 +47,21 @@ defmodule Appsignal.ErrorHandler do
     {:ok, state}
   end
 
+  @spec handle_error(Appsignal.Transaction.t(), Exception.t(), Exception.stacktrace(), map()) ::
+          :ok
+  def handle_error(_, %{plug_status: status}, _, _) when status < 500, do: :ok
+
+  def handle_error(transaction, exception, stack, conn) do
+    {reason, message, backtrace} = Appsignal.Error.metadata(exception, stack)
+    @transaction.set_error(transaction, reason, message, backtrace)
+
+    if @transaction.finish(transaction) == :sample do
+      @transaction.set_request_metadata(transaction, conn)
+    end
+
+    @transaction.complete(transaction)
+  end
+
   def submit_transaction(transaction, reason, message, stack, metadata, conn \\ nil)
 
   def submit_transaction(transaction, reason, message, stack, metadata, nil) do

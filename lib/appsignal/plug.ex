@@ -4,7 +4,7 @@ if Appsignal.plug?() do
     Plug handler for Phoenix requests
     """
 
-    alias Appsignal.Config
+    alias Appsignal.{Config, ErrorHandler}
 
     defmacro __using__(_) do
       quote do
@@ -57,21 +57,11 @@ if Appsignal.plug?() do
            stack,
            %Plug.Conn{private: %{appsignal_transaction: transaction}} = conn
          ) do
-      do_handle_error(transaction, exception, stack, conn)
+      ErrorHandler.handle_error(transaction, exception, stack, conn)
+      Appsignal.TransactionRegistry.ignore(self())
     end
 
     defp do_handle_error(_exception, _stack, _conn), do: :ok
-
-    defp do_handle_error(_transaction, %{plug_status: status}, _stack, _conn) when status < 500 do
-      :ok
-    end
-
-    defp do_handle_error(transaction, exception, stack, conn) do
-      {reason, message, backtrace} = Appsignal.Error.metadata(exception, stack)
-      @transaction.set_error(transaction, reason, message, backtrace)
-      finish_with_conn(transaction, conn)
-      Appsignal.TransactionRegistry.ignore(self())
-    end
 
     def finish_with_conn(transaction, conn) do
       if @transaction.finish(transaction) == :sample do

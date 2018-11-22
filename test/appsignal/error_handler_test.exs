@@ -83,4 +83,54 @@ defmodule Appsignal.ErrorHandlerTest do
 
     refute_receive({:warning_msg, _, _})
   end
+
+  describe "handle_error/2" do
+    test "adds an exception to the transaction and completes it", %{
+      fake_transaction: fake_transaction
+    } do
+      transaction = FakeTransaction.create("123", :http_request)
+      exception = %RuntimeError{}
+
+      :ok = ErrorHandler.handle_error(transaction, exception, [], %{})
+
+      assert [{^transaction, "RuntimeError", "runtime error", []}] =
+               FakeTransaction.errors(fake_transaction)
+
+      [^transaction] = FakeTransaction.completed_transactions(fake_transaction)
+    end
+
+    test "adds request metadata to the transaction", %{fake_transaction: fake_transaction} do
+      transaction = FakeTransaction.create("123", :http_request)
+      exception = %RuntimeError{}
+      conn = %Plug.Conn{}
+
+      :ok = ErrorHandler.handle_error(transaction, exception, [], conn)
+
+      assert conn == FakeTransaction.request_metadata(fake_transaction)
+    end
+
+    test "does not add request metadata for an unsampled transaction", %{
+      fake_transaction: fake_transaction
+    } do
+      FakeTransaction.update(fake_transaction, :finish, :no_sample)
+
+      transaction = FakeTransaction.create("123", :http_request)
+      exception = %RuntimeError{}
+      conn = %Plug.Conn{}
+
+      :ok = ErrorHandler.handle_error(transaction, exception, [], conn)
+
+      refute FakeTransaction.request_metadata(fake_transaction)
+    end
+
+    test "ignores errors with a plug_status lower than 500", %{fake_transaction: fake_transaction} do
+      transaction = FakeTransaction.create("123", :http_request)
+      exception = %Plug.BadRequestError{}
+
+      :ok = ErrorHandler.handle_error(transaction, exception, [], %{})
+
+      assert [] = FakeTransaction.errors(fake_transaction)
+      refute FakeTransaction.completed_transactions(fake_transaction)
+    end
+  end
 end
