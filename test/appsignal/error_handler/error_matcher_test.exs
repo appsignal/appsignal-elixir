@@ -255,6 +255,11 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     data
   end
 
+  defp message({_reason, message, _stacktrace} = data, expected) when is_binary(expected) do
+    assert message == expected
+    data
+  end
+
   defp message({_reason, message, _stacktrace} = data, expected) do
     assert message =~ expected
     data
