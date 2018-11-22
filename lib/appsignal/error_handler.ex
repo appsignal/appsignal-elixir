@@ -210,6 +210,7 @@ defmodule Appsignal.ErrorHandler do
   defp prefixed(pre, msg), do: pre <> ": " <> msg
 
   @pid_or_ref_regex ~r/\<(\d+\.)+\d+\>/
+  @deprecated "Use Appsignal.Error.metadata/2 instead."
   def normalize_reason(reason) do
     Regex.replace(@pid_or_ref_regex, reason, "<...>")
   end
