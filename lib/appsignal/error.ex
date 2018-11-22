@@ -18,7 +18,7 @@ defmodule Appsignal.Error do
   end
 
   def metadata(error, stacktrace) do
-    exception = Exception.normalize(:error, error)
+    exception = Exception.normalize(:error, error, stacktrace)
 
     {
       name(exception),

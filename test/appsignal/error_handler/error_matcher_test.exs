@@ -113,7 +113,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     end)
     |> assert_crash_caught
     |> reason("FunctionClauseError")
-    |> message("no function clause matches")
+    |> message("no function clause matching in Float.ceil/2")
     |> stacktrace([
       ~r{\(elixir\) lib/float.ex:\d+: Float.ceil/2},
       ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p/3}
@@ -179,7 +179,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
       CrashingGenServer.start(:function_error)
       |> assert_crash_caught
       |> reason("FunctionClauseError")
-      |> message(~r(^no function clause matches$))
+      |> message("no function clause matching in Float.ceil/2")
 
     if System.otp_release() >= "20" do
       stacktrace(result, [
@@ -213,7 +213,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
         ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p_do_apply/3}
       ])
 
-    message(result, ~r(^no function clause matches$))
+    message(result, "no function clause matching in Float.ceil/2")
   end
 
   test "Task await" do

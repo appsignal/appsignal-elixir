@@ -34,6 +34,25 @@ defmodule Appsignal.ErrorTest do
     end
   end
 
+  describe "for a FunctionClauseError" do
+    setup do
+      {error, stacktrace} =
+        catch_error_and_stacktrace(fn ->
+          Float.ceil(1)
+        end)
+
+      [metadata: Error.metadata(error, stacktrace)]
+    end
+
+    test "extracts the error's name", %{metadata: {name, _message, _backtrace}} do
+      assert name == "FunctionClauseError"
+    end
+
+    test "extracts the error's message", %{metadata: {_name, message, _backtrace}} do
+      assert message == "no function clause matching in Float.ceil/2"
+    end
+  end
+
   describe "for a :timeout" do
     setup do
       {error, stacktrace} =
