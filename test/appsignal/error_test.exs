@@ -5,11 +5,9 @@ defmodule Appsignal.ErrorTest do
   describe "for a RuntimeError" do
     setup do
       {error, stacktrace} =
-        try do
+        catch_error_and_stacktrace(fn ->
           raise "Exception!"
-        rescue
-          error -> {error, System.stacktrace()}
-        end
+        end)
 
       [metadata: Error.metadata(error, stacktrace)]
     end
@@ -24,6 +22,8 @@ defmodule Appsignal.ErrorTest do
 
     test "extracts the error's backtrace", %{metadata: {_name, _message, backtrace}} do
       assert_backtrace(backtrace, [
+        ~r{^test/appsignal/error_test.exs:\d+: anonymous fn/0 in Appsignal.ErrorTest.__ex_unit_setup_0/1$},
+        ~r{^test/appsignal/error_test.exs:\d+: Appsignal.ErrorTest.catch_error_and_stacktrace/1$},
         ~r{^test/appsignal/error_test.exs:\d+: Appsignal.ErrorTest.__ex_unit_setup_0/1$},
         ~r{^test/appsignal/error_test.exs:\d+: Appsignal.ErrorTest.__ex_unit__/2$},
         ~r{^\(ex_unit\) lib/ex_unit/runner.ex:\d+: ExUnit.Runner.exec_test_setup/2$},
@@ -37,11 +37,9 @@ defmodule Appsignal.ErrorTest do
   describe "for a :timeout" do
     setup do
       {error, stacktrace} =
-        try do
+        catch_error_and_stacktrace(fn ->
           Task.async(fn -> :timer.sleep(10) end) |> Task.await(1)
-        catch
-          _kind, reason -> {reason, System.stacktrace()}
-        end
+        end)
 
       [metadata: Error.metadata(error, stacktrace)]
     end
@@ -54,11 +52,9 @@ defmodule Appsignal.ErrorTest do
   describe "for an exit" do
     setup do
       {error, stacktrace} =
-        try do
+        catch_error_and_stacktrace(fn ->
           exit(:exited)
-        catch
-          _kind, reason -> {reason, System.stacktrace()}
-        end
+        end)
 
       [metadata: Error.metadata(error, stacktrace)]
     end
@@ -72,6 +68,14 @@ defmodule Appsignal.ErrorTest do
     test "falls back 'ErlangError' as the error's name" do
       assert {"ErlangError", _, _} = Error.metadata("string!", [])
       assert {"ErlangError", _, _} = Error.metadata({"string!", []}, [])
+    end
+  end
+
+  defp catch_error_and_stacktrace(fun) do
+    try do
+      fun.()
+    catch
+      _kind, reason -> {reason, System.stacktrace()}
     end
   end
 
