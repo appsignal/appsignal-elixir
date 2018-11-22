@@ -436,7 +436,7 @@ defmodule Appsignal.PlugTest do
 
       :ok =
         try do
-          Appsignal.Plug.handle_error(conn, kind, reason, wrapped_reason, stack)
+          Appsignal.Plug.handle_error(conn, kind, reason, stack)
         rescue
           Plug.Conn.WrapperError -> :ok
         end
@@ -472,7 +472,6 @@ defmodule Appsignal.PlugTest do
           Appsignal.Plug.handle_error(
             %Plug.Conn{private: %{appsignal_transaction: transaction}},
             :error,
-            %Plug.BadRequestError{},
             %Plug.BadRequestError{},
             []
           )

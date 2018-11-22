@@ -39,40 +39,38 @@ if Appsignal.plug?() do
                    Appsignal.Transaction
                  )
 
-    def handle_error(_conn, :error, %Plug.Conn.WrapperError{} = wrapper, _stack) do
-      %{conn: conn, kind: kind, reason: reason, stack: stack} = wrapper
-      handle_error(conn, kind, wrapper, reason, stack)
-    end
-
-    def handle_error(conn, kind, reason, stack) do
-      handle_error(conn, kind, reason, reason, stack)
-    end
-
-    def handle_error(_conn, kind, %{plug_status: status} = reason, _wrapped_reason, stack)
-        when status < 500 do
-      :erlang.raise(kind, reason, stack)
-    end
-
-    def handle_error(
-          %Plug.Conn{private: %{appsignal_transaction: transaction}} = conn,
-          kind,
-          original_reason,
-          wrapped_reason,
-          stack
-        ) do
-      {reason, message, backtrace} = Appsignal.Error.metadata(wrapped_reason, stack)
-
-      transaction
-      |> @transaction.set_error(reason, message, backtrace)
-      |> finish_with_conn(conn)
-
-      Appsignal.TransactionRegistry.ignore(self())
+    def handle_error(_conn, :error, %Plug.Conn.WrapperError{} = original_reason, _stack) do
+      %{conn: conn, kind: kind, reason: reason, stack: stack} = original_reason
+      do_handle_error(reason, stack, conn)
 
       :erlang.raise(kind, original_reason, stack)
     end
 
-    def handle_error(_conn, kind, reason, _wrapped_reason, stack) do
+    def handle_error(conn, kind, reason, stack) do
+      do_handle_error(reason, stack, conn)
+
       :erlang.raise(kind, reason, stack)
+    end
+
+    defp do_handle_error(
+           exception,
+           stack,
+           %Plug.Conn{private: %{appsignal_transaction: transaction}} = conn
+         ) do
+      do_handle_error(transaction, exception, stack, conn)
+    end
+
+    defp do_handle_error(_exception, _stack, _conn), do: :ok
+
+    defp do_handle_error(_transaction, %{plug_status: status}, _stack, _conn) when status < 500 do
+      :ok
+    end
+
+    defp do_handle_error(transaction, exception, stack, conn) do
+      {reason, message, backtrace} = Appsignal.Error.metadata(exception, stack)
+      @transaction.set_error(transaction, reason, message, backtrace)
+      finish_with_conn(transaction, conn)
+      Appsignal.TransactionRegistry.ignore(self())
     end
 
     def finish_with_conn(transaction, conn) do
