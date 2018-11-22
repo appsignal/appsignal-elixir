@@ -5,13 +5,9 @@ defmodule Appsignal.Error do
   alias Appsignal.Backtrace
 
   @spec metadata(any, Exception.stactrace()) :: {String.t(), String.t(), list(String.t())}
-  if Appsignal.plug?() do
-    def metadata(%Plug.Conn.WrapperError{reason: error, stack: _stacktrace}, stacktrace) do
-      metadata(error, stacktrace)
-    end
-  end
+  def metadata(error, stack) do
+    {exception, stacktrace} = normalize(error, stack)
 
-  def metadata(%_{__exception__: true} = exception, stacktrace) do
     {
       name(exception),
       Exception.message(exception),
@@ -19,15 +15,22 @@ defmodule Appsignal.Error do
     }
   end
 
-  def metadata({%_{__exception__: true} = exception, stacktrace}, _) do
-    metadata(exception, stacktrace)
+  @spec normalize(any, Exception.stactrace()) :: {Exception.t(), list(String.t())}
+  if Appsignal.plug?() do
+    defp normalize(%Plug.Conn.WrapperError{reason: error, stack: _stacktrace}, stacktrace) do
+      normalize(error, stacktrace)
+    end
   end
 
-  def metadata({{%_{__exception__: true} = exception, stacktrace}, _}, _) do
-    metadata(exception, stacktrace)
+  defp normalize({%_{__exception__: true} = exception, stacktrace}, _) do
+    normalize(exception, stacktrace)
   end
 
-  def metadata({maybe_error, maybe_stacktrace} = error, stacktrace) do
+  defp normalize({{%_{__exception__: true} = exception, stacktrace}, _}, _) do
+    normalize(exception, stacktrace)
+  end
+
+  defp normalize({maybe_error, maybe_stacktrace} = error, stacktrace) do
     {error, stacktrace} =
       if(stacktrace?(maybe_stacktrace)) do
         {maybe_error, maybe_stacktrace}
@@ -35,15 +38,15 @@ defmodule Appsignal.Error do
         {error, stacktrace}
       end
 
-    :error
-    |> Exception.normalize(error, stacktrace)
-    |> metadata(stacktrace)
+    do_normalize(error, stacktrace)
   end
 
-  def metadata(error, stacktrace) do
-    :error
-    |> Exception.normalize(error, stacktrace)
-    |> metadata(stacktrace)
+  defp normalize(error, stacktrace), do: do_normalize(error, stacktrace)
+
+  @spec do_normalize(any, Exception.stactrace()) :: {Exception.t(), list(String.t())}
+  defp do_normalize(error, stacktrace) do
+    exception = Exception.normalize(:error, error, stacktrace)
+    {exception, stacktrace}
   end
 
   @spec name(Exception.t()) :: String.t()
