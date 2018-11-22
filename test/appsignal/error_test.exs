@@ -64,6 +64,28 @@ defmodule Appsignal.ErrorTest do
     end
   end
 
+  describe "for an exit with a wrapped exception" do
+    setup do
+      {error, stacktrace} =
+        catch_error_and_stacktrace(fn ->
+          try do
+            raise("Exception!")
+          catch
+            :error, reason ->
+              stack = System.stacktrace()
+              exception = Exception.normalize(:error, reason, stack)
+              exit({{exception, stack}, {}})
+          end
+        end)
+
+      [metadata: Error.metadata(error, stacktrace)]
+    end
+
+    test "extracts the error's name", %{metadata: {name, _message, _backtrace}} do
+      assert name == "RuntimeError"
+    end
+  end
+
   describe "for an error without an atom name" do
     test "falls back 'ErlangError' as the error's name" do
       assert {"ErlangError", _, _} = Error.metadata("string!", [])
