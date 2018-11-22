@@ -30,9 +30,7 @@ end
 
 defmodule Appsignal.PhoenixTest do
   use ExUnit.Case
-  import Mock
-
-  alias Appsignal.{Transaction, FakeTransaction}
+  alias Appsignal.FakeTransaction
 
   setup do
     {:ok, fake_transaction} = FakeTransaction.start_link()
