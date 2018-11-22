@@ -131,78 +131,10 @@ defmodule Appsignal.ErrorHandler do
     Backtrace.from_stacktrace(stacktrace)
   end
 
-  @doc """
-  Extract a consise reason from the given error reason, stripping it from long stack traces and the like.
-  Also returns a 'message' which is supposed to contain extra error information.
-  """
-  @spec extract_reason_and_message(any(), binary()) :: {any(), binary()}
-  if Appsignal.plug?() do
-    def extract_reason_and_message(
-          %Plug.Conn.WrapperError{reason: reason, kind: kind, stack: stacktrace},
-          message
-        ) do
-      kind
-      |> Exception.normalize(reason, stacktrace)
-      |> extract_reason_and_message(message)
-    end
-  end
-
-  def extract_reason_and_message(reason, message) when is_binary(reason) do
-    {reason, message}
-  end
-
-  def extract_reason_and_message(reason, message) when is_atom(reason) do
-    try do
-      {Exception.message(reason.exception([])), message}
-    rescue
-      UndefinedFunctionError -> {"#{inspect(reason)}", message}
-    end
-  end
-
-  def extract_reason_and_message(
-        %Protocol.UndefinedError{value: {:error, {error = %{}, _stack}}},
-        message
-      ) do
-    extract_reason_and_message(error, message)
-  end
-
-  if Appsignal.phoenix?() do
-    def extract_reason_and_message(%Phoenix.ActionClauseError{}, prefix) do
-      message = """
-      could not find a matching clause to process request.
-      This typically happens when there is a parameter mismatch but may
-      also happen when any of the other action arguments do not match.
-      """
-
-      {"Phoenix.ActionClauseError", prefixed(prefix, message)}
-    end
-
-    def extract_reason_and_message(
-          %Phoenix.Template.UndefinedError{
-            assigns: %{conn: %{assigns: %{kind: :error, reason: reason}}}
-          },
-          message
-        ) do
-      extract_reason_and_message(reason, message)
-    end
-  end
-
-  def extract_reason_and_message(%{__struct__: struct} = reason, message) do
-    msg = Exception.message(reason)
-    {"#{inspect(struct)}", prefixed(message, msg)}
-  end
-
-  def extract_reason_and_message({r = %{}, _}, message) do
-    extract_reason_and_message(r, message)
-  end
-
-  def extract_reason_and_message({kind, _} = reason, message) do
-    {inspect(kind), prefixed(message, inspect(reason))}
-  end
-
-  def extract_reason_and_message(any, message) do
-    # inspect any term; truncate it
-    {"#{inspect(any)}", message}
+  @deprecated "Use Appsignal.Error.metadata/2 instead."
+  def extract_reason_and_message(any, prefix) do
+    {name, message, _} = Appsignal.Error.metadata(any, [])
+    {name, prefixed(prefix, message)}
   end
 
   defp prefixed(nil, msg), do: msg
