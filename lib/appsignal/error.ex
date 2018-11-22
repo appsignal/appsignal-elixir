@@ -13,6 +13,10 @@ defmodule Appsignal.Error do
     metadata(error, stacktrace)
   end
 
+  def metadata({%_{__exception__: true} = error, stacktrace}, _) do
+    metadata(error, stacktrace)
+  end
+
   def metadata(error, stacktrace) do
     exception = Exception.normalize(:error, error)
 
