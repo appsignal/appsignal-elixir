@@ -26,14 +26,14 @@ defmodule Appsignal.ErrorHandler do
 
   def handle_event(event, state) do
     case match_event(event) do
-      {origin, reason, message, stack, conn} ->
+      {origin, exception, stacktrace, conn} ->
         transaction =
           unless TransactionRegistry.ignored?(origin) do
             @transaction.lookup_or_create_transaction(origin)
           end
 
         if transaction != nil do
-          submit_transaction(transaction, reason, message, stack, %{}, conn)
+          handle_error(transaction, exception, stacktrace, conn)
         end
 
       _ ->
@@ -92,9 +92,9 @@ defmodule Appsignal.ErrorHandler do
   def match_event({:error_report, _gleader, {origin, :crash_report, [report | _]}})
       when is_list(report) do
     try do
-      {_kind, exception, stack} = report[:error_info]
-      {reason, message, backtrace} = Appsignal.Error.metadata(exception, stack)
-      {origin, reason, message, backtrace, nil}
+      {_kind, error, stack} = report[:error_info]
+      {exception, backtrace} = Appsignal.Error.normalize(error, stack)
+      {origin, exception, backtrace, %{}}
     rescue
       exception ->
         Logger.warn(fn ->
