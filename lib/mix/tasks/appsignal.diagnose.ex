@@ -184,9 +184,9 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     IO.puts("  Do you want to send this diagnostics report to AppSignal?")
 
     IO.puts(
-      "  If you share this diagnostics report you will be given\n" <>
-        "  a support token you can use to refer to your diagnotics \n" <>
-        "  report when you contact us at support@appsignal.com\n"
+      "  If you share this report you will be given a link to \n" <>
+        "  AppSignal.com to validate the report.\n" <>
+        "  You can also contact us at support@appsignal.com\n  with your support token.\n\n"
     )
 
     answer =
@@ -216,8 +216,8 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
   def send_report_to_appsignal(config, report) do
     case @report.send(config, report) do
       {:ok, support_token} ->
-        IO.puts("  Your diagnostics report has been sent to AppSignal.")
         IO.puts("  Your support token: #{support_token}")
+        IO.puts("  View this report:   https://appsignal.com/diagnose/#{support_token}")
 
       {:error, %{status_code: 200, body: body}} ->
         IO.puts("  Error: Couldn't decode server response.")

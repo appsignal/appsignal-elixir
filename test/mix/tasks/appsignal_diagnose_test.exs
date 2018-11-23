@@ -353,7 +353,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       assert String.contains?(output, "Agent diagnostics")
       assert String.contains?(output, "  Extension tests\n    Configuration: valid")
       assert String.contains?(output, "  Agent tests")
-      assert String.contains?(output, "    Started: started\n" <> "    Configuration: valid")
+      assert String.contains?(output, "    Started: started\n    Configuration: valid")
       assert String.contains?(output, "    Process user id: #{process_uid()}")
       assert String.contains?(output, "    Process user group id: #{process_gid()}")
       assert String.contains?(output, "    Logger: started")
@@ -786,13 +786,18 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     test "sends diagnostics report to AppSignal and outputs a support token", %{
       fake_report: fake_report
     } do
-      assert FakeReport.update(fake_report, :response, {:ok, "0123456789abcdef"})
+      token = "0123456789abcdef"
+      assert FakeReport.update(fake_report, :response, {:ok, token})
       output = run()
       assert String.contains?(output, "Diagnostics report")
       assert String.contains?(output, "Send diagnostics report to AppSignal? (Y/n):")
       assert String.contains?(output, "Transmitting diagnostics report")
-      assert String.contains?(output, "Your diagnostics report has been sent to AppSignal.")
-      assert String.contains?(output, "Your support token: 0123456789abcdef")
+      assert String.contains?(output, "Your support token: #{token}")
+
+      assert String.contains?(
+               output,
+               "View this report:   https://appsignal.com/diagnose/#{token}"
+             )
 
       assert FakeReport.get(fake_report, :report_sent?)
       assert received_report(fake_report)
@@ -817,7 +822,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
       assert String.contains?(
                output,
-               "Error: Something went wrong while submitting the report " <> "to AppSignal."
+               "Error: Something went wrong while submitting the report to AppSignal."
              )
 
       assert String.contains?(output, "Response code: 500")
@@ -833,7 +838,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
       assert String.contains?(
                output,
-               "Error: Something went wrong while submitting the report " <> "to AppSignal.\nfoo"
+               "Error: Something went wrong while submitting the report to AppSignal.\nfoo"
              )
     end
   end
@@ -859,13 +864,18 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     test "sends diagnostics report to AppSignal and outputs a support token", %{
       fake_report: fake_report
     } do
-      assert FakeReport.update(fake_report, :response, {:ok, "0123456789abcdef"})
+      token = "0123456789abcdef"
+      assert FakeReport.update(fake_report, :response, {:ok, token})
       output = run(["--send-report"])
       assert String.contains?(output, "Diagnostics report")
       assert String.contains?(output, "Confirmed sending report using --send-report option.")
       assert String.contains?(output, "Transmitting diagnostics report")
-      assert String.contains?(output, "Your diagnostics report has been sent to AppSignal.")
-      assert String.contains?(output, "Your support token: 0123456789abcdef")
+      assert String.contains?(output, "Your support token: #{token}")
+
+      assert String.contains?(
+               output,
+               "View this report:   https://appsignal.com/diagnose/#{token}"
+             )
 
       assert FakeReport.get(fake_report, :report_sent?)
       assert received_report(fake_report)
