@@ -110,9 +110,15 @@ defmodule Appsignal.Mixfile do
   defp test?(_), do: false
 
   defp deps do
+    poison_version =
+      case Version.compare(System.version(), "1.6.0") do
+        :lt -> ">= 1.3.0 and < 4.0.0"
+        _ -> ">= 1.3.0"
+      end
+
     [
       {:hackney, "~> 1.6"},
-      {:poison, ">= 1.3.0"},
+      {:poison, poison_version},
       {:decorator, "~> 1.2.3"},
       {:plug, ">= 1.1.0", optional: true},
       {:phoenix, ">= 1.2.0", optional: true, only: [:prod, :test_phoenix, :dev]},
