@@ -29,7 +29,7 @@ defmodule Appsignal.ErrorTest do
         ~r{^\(ex_unit\) lib/ex_unit/runner.ex:\d+: ExUnit.Runner.exec_test_setup/2$},
         ~r{^\(ex_unit\) lib/ex_unit/runner.ex:\d+: anonymous fn/2 in ExUnit.Runner.spawn_test/3$},
         ~r{^\(stdlib\) timer.erl:\d+: :timer.tc/1$},
-        ~r{^\(ex_unit\) lib/ex_unit/runner.ex:\d+: anonymous fn/4 in ExUnit.Runner.spawn_test/3$}
+        ~r{^\(ex_unit\) lib/ex_unit/runner.ex:\d+: anonymous fn/\d+ in ExUnit.Runner.spawn_test/3$}
       ])
     end
   end
