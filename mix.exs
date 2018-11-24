@@ -126,7 +126,7 @@ defmodule Appsignal.Mixfile do
       {:bypass, "~> 0.6.0", only: [:test, :test_phoenix, :test_no_nif]},
       {:plug_cowboy, "~> 1.0", only: [:test, :test_phoenix, :test_no_nif]},
       {:ex_doc, "~> 0.12", only: :dev, runtime: false},
-      {:credo, "~> 0.8", only: [:dev, :test], runtime: false},
+      {:credo, "~> 1.0.0", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 0.5", only: [:dev], runtime: false}
     ]
   end
