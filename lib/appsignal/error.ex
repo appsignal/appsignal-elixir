@@ -5,8 +5,10 @@ defmodule Appsignal.Error do
   alias Appsignal.Backtrace
 
   @spec metadata(any, Exception.stactrace()) :: {String.t(), String.t(), list(String.t())}
-  def metadata(%Plug.Conn.WrapperError{reason: error, stack: _stacktrace}, stacktrace) do
-    metadata(error, stacktrace)
+  if Appsignal.plug?() do
+    def metadata(%Plug.Conn.WrapperError{reason: error, stack: _stacktrace}, stacktrace) do
+      metadata(error, stacktrace)
+    end
   end
 
   def metadata({{%_{__exception__: true} = error, stacktrace}, _}, _) do
