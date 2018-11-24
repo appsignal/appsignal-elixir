@@ -87,7 +87,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     end)
     |> assert_crash_caught
     |> reason(":crash_proc_lib_spawn")
-    |> message(~r(^Erlang error: :crash_proc_lib_spawn$))
+    |> message(~r{^(E|e)rlang error: :crash_proc_lib_spawn$})
     |> stacktrace([
       ~r{test\/appsignal\/error_handler\/error_matcher_test.exs:\d+: anonymous fn\/0 in Appsignal.ErrorHandler.ErrorMatcherTest."?test proc_lib.spawn \+ exit"?/1},
       ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p/3}
@@ -100,7 +100,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     end)
     |> assert_crash_caught
     |> reason(":crash_proc_lib_error")
-    |> message("Erlang error: :crash_proc_lib_error")
+    |> message(~r{^(E|e)rlang error: :crash_proc_lib_error$})
     |> stacktrace([
       ~r{test/appsignal/error_handler/error_matcher_test.exs:\d+: anonymous fn/0 in Appsignal.ErrorHandler.ErrorMatcherTest."?test proc_lib.spawn \+ erlang.error"?/1},
       ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p/3}
@@ -137,7 +137,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
       |> assert_crash_caught
       # http://erlang.org/pipermail/erlang-bugs/2012-April/002862.html
       |> reason(":bad_return_value")
-      |> message(~r(^Erlang error: {:bad_return_valu...))
+      |> message(~r{^(E|e)rlang error: {:bad_return_valu...})
 
     if System.otp_release() >= "20" do
       stacktrace(result, [
@@ -157,7 +157,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
       CrashingGenServer.start(:exit)
       |> assert_crash_caught
       |> reason(":crashed_gen_server_exit")
-      |> message(~r(^Erlang error: :crashed_gen_server_exit$))
+      |> message(~r{^(E|e)rlang error: :crashed_gen_server_exit$})
 
     if System.otp_release() >= "20" do
       stacktrace(result, [
@@ -225,7 +225,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     end)
     |> assert_crash_caught
     |> reason(":timeout")
-    |> message(~r(^Erlang error: {:timeout, {Task, :await, \[%Tas...))
+    |> message(~r{^(E|e)rlang error: {:timeout, {Task, :await, \[%Tas...})
     |> stacktrace([
       ~r{\(elixir\) lib/task.ex:\d+: Task.await/2},
       ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p/3}
@@ -243,7 +243,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     end)
     |> assert_crash_caught
     |> reason("UndefinedFunctionError")
-    |> message(~r(^undefined function$))
+    |> message(~r{^undefined function$})
     |> stacktrace([
       ~r{test/appsignal/error_handler/error_matcher_test.exs:\d+: anonymous fn/0 in Appsignal.ErrorHandler.ErrorMatcherTest."?test Plug.Conn.WrapperError"?/1},
       ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p/3}
