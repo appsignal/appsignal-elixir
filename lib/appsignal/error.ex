@@ -11,22 +11,26 @@ defmodule Appsignal.Error do
     end
   end
 
-  def metadata({{%_{__exception__: true} = error, stacktrace}, _}, _) do
-    metadata(error, stacktrace)
-  end
-
-  def metadata({%_{__exception__: true} = error, stacktrace}, _) do
-    metadata(error, stacktrace)
-  end
-
-  def metadata(error, stacktrace) do
-    exception = Exception.normalize(:error, error, stacktrace)
-
+  def metadata(%_{__exception__: true} = exception, stacktrace) do
     {
       name(exception),
       Exception.message(exception),
       Backtrace.from_stacktrace(stacktrace)
     }
+  end
+
+  def metadata({%_{__exception__: true} = exception, stacktrace}, _) do
+    metadata(exception, stacktrace)
+  end
+
+  def metadata({{%_{__exception__: true} = exception, stacktrace}, _}, _) do
+    metadata(exception, stacktrace)
+  end
+
+  def metadata(error, stacktrace) do
+    :error
+    |> Exception.normalize(error, stacktrace)
+    |> metadata(stacktrace)
   end
 
   @spec name(Exception.t()) :: String.t()
