@@ -286,14 +286,11 @@ defmodule Appsignal.PlugTest do
           type, reason -> {type, reason}
         end
 
-      assert [
-               {
-                 %Appsignal.Transaction{},
-                 ":timeout",
-                 "Erlang error: {:timeout, {Task, :await, [%Task{owner: " <> _,
-                 _stack
-               }
-             ] = FakeTransaction.errors(fake_transaction)
+      [{%Appsignal.Transaction{}, name, message, _stack}] =
+        FakeTransaction.errors(fake_transaction)
+
+      assert name == ":timeout"
+      assert message =~ ~r({:timeout, {Task, :await, \[%Task{owner: ...)
     end
   end
 
