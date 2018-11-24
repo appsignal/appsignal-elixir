@@ -238,8 +238,10 @@ defmodule Appsignal.ConfigTest do
     end
 
     test "working_dir_path" do
-      assert with_config(%{working_dir_path: "/tmp/appsignal"}, &init_config/0) ==
-               default_configuration() |> Map.put(:working_dir_path, "/tmp/appsignal")
+      without_logger(fn ->
+        assert with_config(%{working_dir_path: "/tmp/appsignal"}, &init_config/0) ==
+                 default_configuration() |> Map.put(:working_dir_path, "/tmp/appsignal")
+      end)
     end
 
     test "working_directory_path" do
@@ -432,10 +434,12 @@ defmodule Appsignal.ConfigTest do
     end
 
     test "working_dir_path" do
-      assert with_env(
-               %{"APPSIGNAL_WORKING_DIR_PATH" => "/tmp/appsignal"},
-               &init_config/0
-             ) == default_configuration() |> Map.put(:working_dir_path, "/tmp/appsignal")
+      without_logger(fn ->
+        assert with_env(
+                 %{"APPSIGNAL_WORKING_DIR_PATH" => "/tmp/appsignal"},
+                 &init_config/0
+               ) == default_configuration() |> Map.put(:working_dir_path, "/tmp/appsignal")
+      end)
     end
 
     test "working_directory_path" do
@@ -580,7 +584,7 @@ defmodule Appsignal.ConfigTest do
           revision: "03bd9e"
         },
         fn ->
-          write_to_environment()
+          without_logger(&write_to_environment/0)
 
           assert Nif.env_get("_APPSIGNAL_ACTIVE") == 'true'
           assert Nif.env_get("_APPSIGNAL_AGENT_PATH") == :code.priv_dir(:appsignal)
@@ -721,5 +725,11 @@ defmodule Appsignal.ConfigTest do
   defp init_config() do
     Config.initialize()
     Application.get_all_env(:appsignal)[:config]
+  end
+
+  defp without_logger(fun) do
+    Logger.disable(self())
+    fun.()
+    Logger.enable(self())
   end
 end
