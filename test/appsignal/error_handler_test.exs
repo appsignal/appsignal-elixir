@@ -4,9 +4,13 @@ defmodule Appsignal.ErrorHandlerTest do
   """
 
   use ExUnit.Case, async: false
-  import Mock
 
-  alias Appsignal.{Transaction, ErrorHandler}
+  alias Appsignal.{Transaction, ErrorHandler, FakeTransaction}
+
+  setup do
+    {:ok, fake_transaction} = FakeTransaction.start_link()
+    [fake_transaction: fake_transaction]
+  end
 
   test "whether we can send error reports without current transaction" do
     :proc_lib.spawn(fn ->
@@ -17,22 +21,22 @@ defmodule Appsignal.ErrorHandlerTest do
   end
 
   test "whether we can send error reports with a current transaction" do
-    id = Transaction.generate_id()
+    pid =
+      :proc_lib.spawn(fn ->
+        self()
+        |> inspect
+        |> FakeTransaction.start(:http_request)
+        |> FakeTransaction.set_action("AppsignalErrorHandlerTest#test")
 
-    :proc_lib.spawn(fn ->
-      id
-      |> Transaction.start(:http_request)
-      |> Transaction.set_action("AppsignalErrorHandlerTest#test")
-
-      :erlang.error(:error_http_request)
-    end)
+        :erlang.error(:error_http_request)
+      end)
 
     :timer.sleep(400)
 
     # check that the handler has processed the transaction
     transaction = Appsignal.ErrorHandler.get_last_transaction()
     assert %Transaction{} = transaction
-    assert id == transaction.id
+    assert inspect(pid) == transaction.id
   end
 
   test "does not send error reports for ignored processes" do
@@ -51,18 +55,20 @@ defmodule Appsignal.ErrorHandlerTest do
     refute match?(%Transaction{id: ^id}, Appsignal.ErrorHandler.get_last_transaction())
   end
 
-  test_with_mock "submitting the transaction", Appsignal.Transaction, [:passthrough], [] do
+  test "submitting the transaction", %{fake_transaction: fake_transaction} do
     transaction = Transaction.start("id", :http_request)
     reason = "ArithmeticError"
     message = "bad argument in arithmetic expression"
     metadata = %{foo: "bar"}
 
-    ErrorHandler.submit_transaction(transaction, reason, message, [], metadata)
+    transaction = ErrorHandler.submit_transaction(transaction, reason, message, [], metadata)
 
-    assert called(Transaction.set_error(transaction, reason, message, []))
-    assert called(Transaction.set_meta_data(transaction, metadata))
-    assert called(Transaction.finish(transaction))
-    assert called(Transaction.complete(transaction))
+    assert [{%Appsignal.Transaction{}, ^reason, ^message, _stack}] =
+             FakeTransaction.errors(fake_transaction)
+
+    assert ^metadata = FakeTransaction.metadata(fake_transaction)
+    assert [^transaction] = FakeTransaction.finished_transactions(fake_transaction)
+    assert [^transaction] = FakeTransaction.completed_transactions(fake_transaction)
   end
 
   test "does not cause warnings for noise on handle_info" do
