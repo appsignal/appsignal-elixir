@@ -58,6 +58,10 @@ defmodule Appsignal.FakeTransaction do
     Agent.get(__MODULE__, &Map.get(&1, :finish, :sample))
   end
 
+  def set_meta_data(_transaction, conn) do
+    Agent.update(__MODULE__, &Map.put(&1, :metadata, conn))
+  end
+
   def set_request_metadata(_transaction, conn) do
     Agent.update(__MODULE__, &Map.put(&1, :request_metadata, conn))
   end
@@ -94,6 +98,10 @@ defmodule Appsignal.FakeTransaction do
     end)
 
     :ok
+  end
+
+  def lookup_or_create_transaction(pid) do
+    start(inspect(pid), :background_job)
   end
 
   def start(id, namespace) do
@@ -156,6 +164,10 @@ defmodule Appsignal.FakeTransaction do
 
   def completed_transactions(pid_or_module) do
     get(pid_or_module, :completed_transactions)
+  end
+
+  def metadata(pid_or_module) do
+    get(pid_or_module, :metadata)
   end
 
   def request_metadata(pid_or_module) do

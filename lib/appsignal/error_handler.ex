@@ -12,12 +12,18 @@ defmodule Appsignal.ErrorHandler do
 
   require Logger
 
-  alias Appsignal.{Transaction, TransactionRegistry, Backtrace}
+  alias Appsignal.{TransactionRegistry, Backtrace}
+
+  @transaction Application.get_env(
+                 :appsignal,
+                 :appsignal_transaction,
+                 Appsignal.Transaction
+               )
 
   @doc """
   Retrieve the last Appsignal.Transaction.t that the error logger picked up
   """
-  @spec get_last_transaction :: Transaction.t() | nil
+  @spec get_last_transaction :: Appsignal.Transaction.t() | nil
   def get_last_transaction do
     :gen_event.call(:error_logger, Appsignal.ErrorHandler, :get_last_transaction)
   end
@@ -33,7 +39,7 @@ defmodule Appsignal.ErrorHandler do
         {origin, reason, message, stack, conn} ->
           transaction =
             unless TransactionRegistry.ignored?(origin) do
-              Transaction.lookup_or_create_transaction(origin)
+              @transaction.lookup_or_create_transaction(origin)
             end
 
           if transaction do
@@ -54,10 +60,10 @@ defmodule Appsignal.ErrorHandler do
   def submit_transaction(transaction, reason, message, stack, metadata, conn \\ nil)
 
   def submit_transaction(transaction, reason, message, stack, metadata, nil) do
-    Transaction.set_error(transaction, reason, message, stack)
-    Transaction.set_meta_data(transaction, metadata)
-    Transaction.finish(transaction)
-    Transaction.complete(transaction)
+    @transaction.set_error(transaction, reason, message, stack)
+    @transaction.set_meta_data(transaction, metadata)
+    @transaction.finish(transaction)
+    @transaction.complete(transaction)
 
     Logger.debug(fn ->
       "Submitting #{inspect(transaction)}: #{message}"
@@ -69,7 +75,7 @@ defmodule Appsignal.ErrorHandler do
   if Appsignal.plug?() do
     def submit_transaction(transaction, reason, message, stack, metadata, conn) do
       if conn do
-        Transaction.set_request_metadata(transaction, conn)
+        @transaction.set_request_metadata(transaction, conn)
       end
 
       submit_transaction(transaction, reason, message, stack, metadata)
