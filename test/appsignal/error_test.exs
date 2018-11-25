@@ -142,6 +142,21 @@ defmodule Appsignal.ErrorTest do
     end
   end
 
+  describe "for a Plug.Conn.WrapperError" do
+    setup do
+      {error, stacktrace} =
+        catch_error_and_stacktrace(fn ->
+          raise %Plug.Conn.WrapperError{kind: :error, reason: :undef, stack: []}
+        end)
+
+      [metadata: Error.metadata(error, stacktrace)]
+    end
+
+    test "extracts the error's name", %{metadata: {name, _message, _backtrace}} do
+      assert name == "UndefinedFunctionError"
+    end
+  end
+
   describe "for an error without an atom name" do
     test "falls back 'ErlangError' as the error's name" do
       assert {"ErlangError", _, _} = Error.metadata("string!", [])
