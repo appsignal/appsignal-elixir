@@ -9,7 +9,11 @@ defmodule Appsignal.ErrorTest do
           raise "Exception!"
         end)
 
-      [metadata: Error.metadata(error, stacktrace)]
+      [normalize: Error.normalize(error, stacktrace), metadata: Error.metadata(error, stacktrace)]
+    end
+
+    test "returns the unchanged exception", %{normalize: {exception, _stacktrace}} do
+      assert %RuntimeError{message: "Exception!"} = exception
     end
 
     test "extracts the error's name", %{metadata: {name, _message, _backtrace}} do
@@ -41,11 +45,11 @@ defmodule Appsignal.ErrorTest do
           Float.ceil(1)
         end)
 
-      [metadata: Error.metadata(error, stacktrace)]
+      [normalize: Error.normalize(error, stacktrace), metadata: Error.metadata(error, stacktrace)]
     end
 
-    test "extracts the error's name", %{metadata: {name, _message, _backtrace}} do
-      assert name == "FunctionClauseError"
+    test "converts to a FunctionClauseError", %{normalize: {exception, _stacktrace}} do
+      assert %FunctionClauseError{arity: 2, function: :ceil, module: Float} = exception
     end
 
     test "extracts the error's message", %{metadata: {_name, message, _backtrace}} do
@@ -60,7 +64,11 @@ defmodule Appsignal.ErrorTest do
           Task.async(fn -> :timer.sleep(10) end) |> Task.await(1)
         end)
 
-      [metadata: Error.metadata(error, stacktrace)]
+      [normalize: Error.normalize(error, stacktrace), metadata: Error.metadata(error, stacktrace)]
+    end
+
+    test "converts to an ErlangError", %{normalize: {exception, _stacktrace}} do
+      assert %ErlangError{original: {:timeout, _}} = exception
     end
 
     test "extracts the error's name", %{metadata: {name, _message, _backtrace}} do
@@ -75,7 +83,11 @@ defmodule Appsignal.ErrorTest do
           exit(:exited)
         end)
 
-      [metadata: Error.metadata(error, stacktrace)]
+      [normalize: Error.normalize(error, stacktrace), metadata: Error.metadata(error, stacktrace)]
+    end
+
+    test "converts to an ErlangError", %{normalize: {exception, _stacktrace}} do
+      assert %ErlangError{original: :exited} = exception
     end
 
     test "extracts the error's name", %{metadata: {name, _message, _backtrace}} do
@@ -97,11 +109,11 @@ defmodule Appsignal.ErrorTest do
           end
         end)
 
-      [metadata: Error.metadata(error, stacktrace)]
+      [normalize: Error.normalize(error, stacktrace), metadata: Error.metadata(error, stacktrace)]
     end
 
-    test "extracts the error's name", %{metadata: {name, _message, _backtrace}} do
-      assert name == "RuntimeError"
+    test "converts to a RuntimeError", %{normalize: {exception, _stacktrace}} do
+      assert %RuntimeError{message: "Exception!"} = exception
     end
   end
 
@@ -119,11 +131,11 @@ defmodule Appsignal.ErrorTest do
           end
         end)
 
-      [metadata: Error.metadata(error, stacktrace)]
+      [normalize: Error.normalize(error, stacktrace), metadata: Error.metadata(error, stacktrace)]
     end
 
-    test "extracts the error's name", %{metadata: {name, _message, _backtrace}} do
-      assert name == "RuntimeError"
+    test "converts to a RuntimeError", %{normalize: {exception, _stacktrace}} do
+      assert %RuntimeError{message: "Exception!"} = exception
     end
   end
 
@@ -134,11 +146,11 @@ defmodule Appsignal.ErrorTest do
           Float.ceil(1)
         end)
 
-      [metadata: Error.metadata({error, stacktrace}, [])]
+      [normalize: Error.normalize(error, stacktrace), metadata: Error.metadata(error, stacktrace)]
     end
 
-    test "extracts the error's name", %{metadata: {name, _message, _backtrace}} do
-      assert name == "FunctionClauseError"
+    test "converts to a FunctionClauseError", %{normalize: {exception, _stacktrace}} do
+      assert %FunctionClauseError{arity: 2, function: :ceil, module: Float} = exception
     end
   end
 

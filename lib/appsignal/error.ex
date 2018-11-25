@@ -17,20 +17,20 @@ defmodule Appsignal.Error do
 
   @spec normalize(any, Exception.stactrace()) :: {Exception.t(), list(String.t())}
   if Appsignal.plug?() do
-    defp normalize(%Plug.Conn.WrapperError{reason: error, stack: _stacktrace}, stacktrace) do
+    def normalize(%Plug.Conn.WrapperError{reason: error, stack: _stacktrace}, stacktrace) do
       normalize(error, stacktrace)
     end
   end
 
-  defp normalize({%_{__exception__: true} = exception, stacktrace}, _) do
+  def normalize({%_{__exception__: true} = exception, stacktrace}, _) do
     normalize(exception, stacktrace)
   end
 
-  defp normalize({{%_{__exception__: true} = exception, stacktrace}, _}, _) do
+  def normalize({{%_{__exception__: true} = exception, stacktrace}, _}, _) do
     normalize(exception, stacktrace)
   end
 
-  defp normalize({maybe_error, maybe_stacktrace} = error, stacktrace) do
+  def normalize({maybe_error, maybe_stacktrace} = error, stacktrace) do
     {error, stacktrace} =
       if(stacktrace?(maybe_stacktrace)) do
         {maybe_error, maybe_stacktrace}
@@ -41,7 +41,7 @@ defmodule Appsignal.Error do
     do_normalize(error, stacktrace)
   end
 
-  defp normalize(error, stacktrace), do: do_normalize(error, stacktrace)
+  def normalize(error, stacktrace), do: do_normalize(error, stacktrace)
 
   @spec do_normalize(any, Exception.stactrace()) :: {Exception.t(), list(String.t())}
   defp do_normalize(error, stacktrace) do
