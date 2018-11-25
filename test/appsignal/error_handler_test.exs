@@ -3,7 +3,7 @@ defmodule Appsignal.ErrorHandlerTest do
   Test the actual Appsignal.ErrorHandler
   """
 
-  use ExUnit.Case, async: false
+  use ExUnit.Case, async: true
 
   alias Appsignal.{Transaction, ErrorHandler, FakeTransaction}
 
