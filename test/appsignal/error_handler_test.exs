@@ -20,7 +20,9 @@ defmodule Appsignal.ErrorHandlerTest do
     :timer.sleep(100)
   end
 
-  test "whether we can send error reports with a current transaction" do
+  test "whether we can send error reports with a current transaction", %{
+    fake_transaction: fake_transaction
+  } do
     pid =
       :proc_lib.spawn(fn ->
         self()
@@ -31,15 +33,15 @@ defmodule Appsignal.ErrorHandlerTest do
         :erlang.error(:error_http_request)
       end)
 
-    :timer.sleep(400)
+    :timer.sleep(20)
 
-    # check that the handler has processed the transaction
-    transaction = Appsignal.ErrorHandler.get_last_transaction()
-    assert %Transaction{} = transaction
-    assert inspect(pid) == transaction.id
+    [{transaction, reason, _message, _stack}] = FakeTransaction.errors(fake_transaction)
+
+    assert transaction.id == inspect(pid)
+    assert reason == ":error_http_request"
   end
 
-  test "does not send error reports for ignored processes" do
+  test "does not send error reports for ignored processes", %{fake_transaction: fake_transaction} do
     id = Transaction.generate_id()
 
     :proc_lib.spawn(fn ->
@@ -52,7 +54,7 @@ defmodule Appsignal.ErrorHandlerTest do
 
     :timer.sleep(50)
 
-    refute match?(%Transaction{id: ^id}, Appsignal.ErrorHandler.get_last_transaction())
+    assert FakeTransaction.errors(fake_transaction) == []
   end
 
   test "submitting the transaction", %{fake_transaction: fake_transaction} do
