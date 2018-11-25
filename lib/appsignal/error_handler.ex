@@ -20,35 +20,25 @@ defmodule Appsignal.ErrorHandler do
                  Appsignal.Transaction
                )
 
-  @doc """
-  Retrieve the last Appsignal.Transaction.t that the error logger picked up
-  """
-  @spec get_last_transaction :: Appsignal.Transaction.t() | nil
-  def get_last_transaction do
-    :gen_event.call(:error_logger, Appsignal.ErrorHandler, :get_last_transaction)
-  end
-
-  def init(_) do
-    # state of the error handler holds the last matched transaction
-    {:ok, nil}
+  def init(state) do
+    {:ok, state}
   end
 
   def handle_event(event, state) do
-    state =
-      case match_event(event) do
-        {origin, reason, message, stack, conn} ->
-          transaction =
-            unless TransactionRegistry.ignored?(origin) do
-              @transaction.lookup_or_create_transaction(origin)
-            end
-
-          if transaction do
-            submit_transaction(transaction, reason, message, stack, %{}, conn)
+    case match_event(event) do
+      {origin, reason, message, stack, conn} ->
+        transaction =
+          unless TransactionRegistry.ignored?(origin) do
+            @transaction.lookup_or_create_transaction(origin)
           end
 
-        :nomatch ->
-          state
-      end
+        if transaction != nil do
+          submit_transaction(transaction, reason, message, stack, %{}, conn)
+        end
+
+      _ ->
+        :ok
+    end
 
     {:ok, state}
   end
@@ -80,10 +70,6 @@ defmodule Appsignal.ErrorHandler do
 
       submit_transaction(transaction, reason, message, stack, metadata)
     end
-  end
-
-  def handle_call(:get_last_transaction, state) do
-    {:ok, state, state}
   end
 
   @doc false
