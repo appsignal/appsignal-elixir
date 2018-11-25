@@ -4,6 +4,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
   """
 
   use ExUnit.Case
+  alias Appsignal.{ErrorHandler, FakeTransaction}
 
   defmodule CrashingGenServer do
     use GenServer
@@ -38,7 +39,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     end
 
     def handle_event(event, _state) do
-      {:ok, Appsignal.ErrorHandler.match_event(event)}
+      {:ok, ErrorHandler.match_event(event)}
     end
 
     def handle_call(:get_matched_crash, state) do
@@ -46,7 +47,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     end
   end
 
-  @error_handler Appsignal.ErrorHandler.ErrorMatcherTest.CustomErrorHandler
+  @error_handler ErrorHandler.ErrorMatcherTest.CustomErrorHandler
 
   defp get_last_crash do
     :timer.sleep(20)
@@ -73,6 +74,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
 
   setup do
     :error_logger.add_report_handler(@error_handler)
+    {:ok, fake_transaction} = FakeTransaction.start_link()
 
     on_exit(fn ->
       :error_logger.delete_report_handler(@error_handler)
