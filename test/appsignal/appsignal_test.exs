@@ -1,8 +1,14 @@
 defmodule AppsignalTest do
   use ExUnit.Case
-  import Mock
   import AppsignalTest.Utils
   import ExUnit.CaptureIO
+
+  alias Appsignal.{Transaction, FakeTransaction}
+
+  setup do
+    {:ok, fake_transaction} = FakeTransaction.start_link()
+    [fake_transaction: fake_transaction]
+  end
 
   test "set gauge" do
     Appsignal.set_gauge("key", 10.0)
@@ -57,158 +63,109 @@ defmodule AppsignalTest do
     end)
   end
 
-  alias Appsignal.{Transaction, TransactionRegistry}
+  test "send_error", %{fake_transaction: fake_transaction} do
+    transaction = Appsignal.send_error(%RuntimeError{message: "Exception!"}, "Error occurred", [])
 
-  test "send_error" do
-    with_mocks([
-      {Appsignal.Transaction, [:passthrough], []},
-      {Appsignal.TransactionRegistry, [:passthrough], [remove_transaction: fn _ -> :ok end]}
-    ]) do
-      t =
-        %Transaction{} =
-        Appsignal.send_error(%RuntimeError{message: "Some bad stuff happened"}, "Oops", [])
+    assert [{^transaction, "RuntimeError", "Error occurred: Exception!", []}] =
+             FakeTransaction.errors(fake_transaction)
 
-      assert called(TransactionRegistry.remove_transaction(t))
-
-      assert called(Transaction.set_error(t, "RuntimeError", "Oops: Some bad stuff happened", []))
-      assert called(Transaction.finish(t))
-      assert called(Transaction.complete(t))
-    end
+    assert [^transaction] = FakeTransaction.finished_transactions(fake_transaction)
+    assert [^transaction] = FakeTransaction.completed_transactions(fake_transaction)
   end
 
-  test "send_error without a stack trace" do
-    with_mocks([
-      {Appsignal.Transaction, [:passthrough], []},
-      {Appsignal.TransactionRegistry, [:passthrough], [remove_transaction: fn _ -> :ok end]}
-    ]) do
-      output =
-        capture_io(:stderr, fn ->
-          t = Appsignal.send_error(%RuntimeError{message: "Some bad stuff happened"})
-          send(self(), t)
-        end)
+  test "send_error without a stack trace", %{fake_transaction: fake_transaction} do
+    output =
+      capture_io(:stderr, fn ->
+        transaction = Appsignal.send_error(%RuntimeError{message: "Exception!"})
+        send(self(), transaction)
+      end)
 
-      assert output =~
-               "Appsignal.send_error/1-7 without passing a stack trace is deprecated, and defaults to passing an empty stacktrace."
+    assert output =~
+             "Appsignal.send_error/1-7 without passing a stack trace is deprecated, and defaults to passing an empty stacktrace."
 
-      t =
-        receive do
-          t = %Transaction{} -> t
-        end
+    transaction =
+      receive do
+        transaction = %Transaction{} -> transaction
+      end
 
-      assert called(TransactionRegistry.remove_transaction(t))
+    assert [{^transaction, "RuntimeError", "Exception!", []}] =
+             FakeTransaction.errors(fake_transaction)
 
-      assert called(Transaction.set_error(t, "RuntimeError", "Some bad stuff happened", []))
-      assert called(Transaction.finish(t))
-      assert called(Transaction.complete(t))
-    end
+    assert [^transaction] = FakeTransaction.finished_transactions(fake_transaction)
+    assert [^transaction] = FakeTransaction.completed_transactions(fake_transaction)
   end
 
-  test "send_error with metadata" do
-    with_mocks([
-      {Appsignal.Transaction, [:passthrough], []},
-      {Appsignal.TransactionRegistry, [:passthrough], [remove_transaction: fn _ -> :ok end]}
-    ]) do
-      t =
-        %Transaction{} =
-        Appsignal.send_error(%RuntimeError{message: "Some bad stuff happened"}, "Oops", [], %{
-          foo: "bar"
-        })
+  test "send_error with metadata", %{fake_transaction: fake_transaction} do
+    transaction =
+      Appsignal.send_error(%RuntimeError{message: "Exception!"}, "Error occurred", [], %{
+        foo: "bar"
+      })
 
-      assert called(TransactionRegistry.remove_transaction(t))
+    assert [{^transaction, "RuntimeError", "Error occurred: Exception!", _stack}] =
+             FakeTransaction.errors(fake_transaction)
 
-      assert called(Transaction.set_error(t, "RuntimeError", "Oops: Some bad stuff happened", []))
-      assert called(Transaction.set_meta_data(t, :foo, "bar"))
-      assert called(Transaction.finish(t))
-      assert called(Transaction.complete(t))
-    end
+    assert %{foo: "bar"} = FakeTransaction.metadata(fake_transaction)
+    assert [^transaction] = FakeTransaction.finished_transactions(fake_transaction)
+    assert [^transaction] = FakeTransaction.completed_transactions(fake_transaction)
   end
 
-  test "send_error with metadata and conn" do
-    with_mocks([
-      {Appsignal.Transaction, [:passthrough], []},
-      {Appsignal.TransactionRegistry, [:passthrough], [remove_transaction: fn _ -> :ok end]}
-    ]) do
-      conn = %Plug.Conn{req_headers: [{"accept", "text/plain"}]}
+  test "send_error with metadata and conn", %{fake_transaction: fake_transaction} do
+    conn = %Plug.Conn{req_headers: [{"accept", "text/plain"}]}
 
-      t =
-        %Transaction{} =
-        Appsignal.send_error(
-          %RuntimeError{message: "Some bad stuff happened"},
-          "Oops",
-          [],
-          %{foo: "bar"},
-          conn
-        )
+    transaction =
+      Appsignal.send_error(
+        %RuntimeError{message: "Exception!"},
+        "Error occurred",
+        [],
+        %{foo: "bar"},
+        conn
+      )
 
-      env = %{
-        "host" => "www.example.com",
-        "method" => "GET",
-        "port" => 0,
-        "request_path" => "",
-        "request_uri" => "http://www.example.com:0",
-        "req_headers.accept" => "text/plain"
-      }
+    assert [{^transaction, "RuntimeError", "Error occurred: Exception!", _stack}] =
+             FakeTransaction.errors(fake_transaction)
 
-      assert called(TransactionRegistry.remove_transaction(t))
-
-      assert called(Transaction.set_error(t, "RuntimeError", "Oops: Some bad stuff happened", []))
-      assert called(Transaction.set_meta_data(t, :foo, "bar"))
-      assert called(Transaction.set_sample_data(t, "environment", env))
-      assert called(Transaction.set_request_metadata(t, conn))
-      assert called(Transaction.finish(t))
-      assert called(Transaction.complete(t))
-    end
+    assert %{foo: "bar"} = FakeTransaction.metadata(fake_transaction)
+    assert ^conn = FakeTransaction.request_metadata(fake_transaction)
+    assert [^transaction] = FakeTransaction.finished_transactions(fake_transaction)
+    assert [^transaction] = FakeTransaction.completed_transactions(fake_transaction)
   end
 
-  test "send_error with a passed function" do
-    with_mocks([
-      {Appsignal.Transaction, [:passthrough], []},
-      {Appsignal.TransactionRegistry, [:passthrough], [remove_transaction: fn _ -> :ok end]}
-    ]) do
-      t =
-        %Transaction{} =
-        Appsignal.send_error(
-          %RuntimeError{message: "Some bad stuff happened"},
-          "Oops",
-          [],
-          %{},
-          nil,
-          fn t -> Transaction.set_sample_data(t, "key", %{foo: "bar"}) end
-        )
+  test "send_error with a passed function", %{fake_transaction: fake_transaction} do
+    transaction =
+      Appsignal.send_error(
+        %RuntimeError{message: "Exception!"},
+        "Error occurred",
+        [],
+        %{},
+        nil,
+        fn t -> FakeTransaction.set_sample_data(t, "key", %{foo: "bar"}) end
+      )
 
-      assert called(TransactionRegistry.remove_transaction(t))
+    assert [{^transaction, "RuntimeError", "Error occurred: Exception!", _stack}] =
+             FakeTransaction.errors(fake_transaction)
 
-      assert called(Transaction.create(:_, :http_request))
-      assert called(Transaction.set_error(t, "RuntimeError", "Oops: Some bad stuff happened", []))
-      assert called(Transaction.set_sample_data(t, "key", %{foo: "bar"}))
-      assert called(Transaction.finish(t))
-      assert called(Transaction.complete(t))
-    end
+    assert %{"key" => %{foo: "bar"}} = FakeTransaction.sample_data(fake_transaction)
+    assert [^transaction] = FakeTransaction.finished_transactions(fake_transaction)
+    assert [^transaction] = FakeTransaction.completed_transactions(fake_transaction)
   end
 
-  test "send_error with a custom namespace" do
-    with_mocks([
-      {Appsignal.Transaction, [:passthrough], []},
-      {Appsignal.TransactionRegistry, [:passthrough], [remove_transaction: fn _ -> :ok end]}
-    ]) do
-      t =
-        %Transaction{} =
-        Appsignal.send_error(
-          %RuntimeError{message: "Some bad stuff happened"},
-          "Oops",
-          [],
-          %{},
-          nil,
-          fn transaction -> transaction end,
-          :background_job
-        )
+  test "send_error with a custom namespace", %{fake_transaction: fake_transaction} do
+    transaction =
+      Appsignal.send_error(
+        %RuntimeError{message: "Exception!"},
+        "Error occurred",
+        [],
+        %{},
+        nil,
+        fn transaction -> transaction end,
+        :background_job
+      )
 
-      assert called(TransactionRegistry.remove_transaction(t))
+    assert [{^transaction, "RuntimeError", "Error occurred: Exception!", _stack}] =
+             FakeTransaction.errors(fake_transaction)
 
-      assert called(Transaction.create(:_, :background_job))
-      assert called(Transaction.set_error(t, "RuntimeError", "Oops: Some bad stuff happened", []))
-      assert called(Transaction.finish(t))
-      assert called(Transaction.complete(t))
-    end
+    assert [{"_123", :background_job}] = FakeTransaction.created_transactions(fake_transaction)
+    assert [^transaction] = FakeTransaction.finished_transactions(fake_transaction)
+    assert [^transaction] = FakeTransaction.completed_transactions(fake_transaction)
   end
 end

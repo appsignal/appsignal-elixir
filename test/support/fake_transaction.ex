@@ -104,6 +104,22 @@ defmodule Appsignal.FakeTransaction do
     start(inspect(pid), :background_job)
   end
 
+  def create(id, namespace) do
+    Agent.update(__MODULE__, fn state ->
+      {_, new_state} =
+        Map.get_and_update(state, :created_transactions, fn current ->
+          case current do
+            nil -> {nil, [{id, namespace}]}
+            _ -> {current, [{id, namespace} | current]}
+          end
+        end)
+
+      new_state
+    end)
+
+    Appsignal.Transaction.create(id, namespace)
+  end
+
   def start(id, namespace) do
     Agent.update(__MODULE__, fn state ->
       {_, new_state} =
@@ -148,6 +164,10 @@ defmodule Appsignal.FakeTransaction do
 
   def action(pid_or_module) do
     get(pid_or_module, :action)
+  end
+
+  def created_transactions(pid_or_module) do
+    get(pid_or_module, :created_transactions)
   end
 
   def started_transactions(pid_or_module) do
