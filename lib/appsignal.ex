@@ -17,6 +17,12 @@ defmodule Appsignal do
 
   require Logger
 
+  @transaction Application.get_env(
+                 :appsignal,
+                 :appsignal_transaction,
+                 Appsignal.Transaction
+               )
+
   @doc """
   Application callback function
   """
@@ -170,8 +176,7 @@ defmodule Appsignal do
           stack
       end
 
-    transaction =
-      Appsignal.Transaction.create("_" <> Appsignal.Transaction.generate_id(), namespace)
+    transaction = @transaction.create("_" <> @transaction.generate_id(), namespace)
 
     fun.(transaction)
     {reason, message, backtrace} = Appsignal.Error.metadata(reason, stack)
