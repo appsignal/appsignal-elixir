@@ -82,8 +82,7 @@ defmodule Appsignal.ErrorHandler do
   def match_event({:error_report, _gleader, {origin, :crash_report, [report | _]}})
       when is_list(report) do
     try do
-      {exception, stack} = match_error_info(report[:error_info])
-
+      {_kind, exception, stack} = report[:error_info]
       {reason, message, backtrace} = Appsignal.Error.metadata(exception, stack)
       {origin, reason, message, backtrace, nil}
     rescue
@@ -102,25 +101,6 @@ defmodule Appsignal.ErrorHandler do
   def match_event(_event) do
     :nomatch
   end
-
-  defp match_error_info({_kind, {exception, maybe_stack}, stack}) do
-    if stacktrace?(maybe_stack) do
-      {exception, maybe_stack}
-    else
-      {{exception, maybe_stack}, stack}
-    end
-  end
-
-  defp match_error_info({_kind, exception, stack}), do: {exception, stack}
-
-  defp stacktrace?(stacktrace) when is_list(stacktrace) do
-    Enum.all?(stacktrace, &stacktrace_line?/1)
-  end
-
-  defp stacktrace?(_), do: false
-
-  defp stacktrace_line?({_, _, _, [file: _, line: _]}), do: true
-  defp stacktrace_line?(_), do: false
 
   @doc false
   def format_stack(stacktrace) do

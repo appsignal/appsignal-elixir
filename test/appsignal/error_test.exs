@@ -127,6 +127,21 @@ defmodule Appsignal.ErrorTest do
     end
   end
 
+  describe "for a nested error from an error report" do
+    setup do
+      {error, stacktrace} =
+        catch_error_and_stacktrace(fn ->
+          Float.ceil(1)
+        end)
+
+      [metadata: Error.metadata({error, stacktrace}, [])]
+    end
+
+    test "extracts the error's name", %{metadata: {name, _message, _backtrace}} do
+      assert name == "FunctionClauseError"
+    end
+  end
+
   describe "for an error without an atom name" do
     test "falls back 'ErlangError' as the error's name" do
       assert {"ErlangError", _, _} = Error.metadata("string!", [])

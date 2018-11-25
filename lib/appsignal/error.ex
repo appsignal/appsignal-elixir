@@ -27,6 +27,19 @@ defmodule Appsignal.Error do
     metadata(exception, stacktrace)
   end
 
+  def metadata({maybe_error, maybe_stacktrace} = error, stacktrace) do
+    {error, stacktrace} =
+      if(stacktrace?(maybe_stacktrace)) do
+        {maybe_error, maybe_stacktrace}
+      else
+        {error, stacktrace}
+      end
+
+    :error
+    |> Exception.normalize(error, stacktrace)
+    |> metadata(stacktrace)
+  end
+
   def metadata(error, stacktrace) do
     :error
     |> Exception.normalize(error, stacktrace)
@@ -54,4 +67,13 @@ defmodule Appsignal.Error do
   end
 
   defp module_name("Elixir." <> module), do: module
+
+  defp stacktrace?(stacktrace) when is_list(stacktrace) do
+    Enum.all?(stacktrace, &stacktrace_line?/1)
+  end
+
+  defp stacktrace?(_), do: false
+
+  defp stacktrace_line?({_, _, _, [file: _, line: _]}), do: true
+  defp stacktrace_line?(_), do: false
 end
