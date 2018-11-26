@@ -2,7 +2,6 @@ defmodule Appsignal.Error do
   @moduledoc """
   Functions for extracting information from Elixir exceptions and Erlang errors.
   """
-  alias Appsignal.Backtrace
 
   @spec metadata(Exception.t()) :: {String.t(), String.t()}
   def metadata(exception) do
