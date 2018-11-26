@@ -118,7 +118,7 @@ defmodule Appsignal.ErrorHandler do
     Backtrace.from_stacktrace(stacktrace)
   end
 
-  @deprecated "Use Appsignal.Error.metadata/2 instead."
+  @deprecated "Use Appsignal.Error.metadata/1 instead."
   def extract_reason_and_message(any, prefix) do
     {name, message, _} = Appsignal.Error.metadata(any, [])
     {name, prefixed(prefix, message)}
@@ -129,7 +129,7 @@ defmodule Appsignal.ErrorHandler do
   defp prefixed(pre, msg), do: pre <> ": " <> msg
 
   @pid_or_ref_regex ~r/\<(\d+\.)+\d+\>/
-  @deprecated "Use Appsignal.Error.metadata/2 instead."
+  @deprecated "Use Appsignal.Error.metadata/1 instead."
   def normalize_reason(reason) do
     Regex.replace(@pid_or_ref_regex, reason, "<...>")
   end

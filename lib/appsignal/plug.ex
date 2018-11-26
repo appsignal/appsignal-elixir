@@ -80,14 +80,14 @@ if Appsignal.plug?() do
     end
 
     @doc false
-    @deprecated "Use Appsignal.Error.metadata/2 instead."
+    @deprecated "Use Appsignal.Error.metadata/1 instead."
     def extract_error_metadata(reason) do
       {reason, message, _} = Appsignal.Error.metadata(reason, [])
       {reason, message}
     end
 
     @doc false
-    @deprecated "Use Appsignal.Error.metadata/2 instead."
+    @deprecated "Use Appsignal.Error.metadata/1 instead."
     def extract_error_metadata(reason, conn, stack) do
       {reason, message, _} = Appsignal.Error.metadata(reason, [])
       {reason, message, stack, conn}
