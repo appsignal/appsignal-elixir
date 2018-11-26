@@ -34,16 +34,20 @@ defmodule Appsignal.Config do
   """
   @spec initialize() :: :ok | {:error, :invalid_config}
   def initialize() do
-    system_config = load_from_system()
-    app_config = Application.get_env(:appsignal, :config, []) |> coerce_map
-    env_config = load_from_environment()
+    sources = %{
+      default: load_from_default(),
+      system: load_from_system(),
+      file: load_from_application(),
+      env: load_from_environment()
+    }
+
+    Application.put_env(:appsignal, :config_sources, sources)
 
     config =
-      @default_config
-      |> Map.merge(runtime_config())
-      |> Map.merge(system_config)
-      |> Map.merge(app_config)
-      |> Map.merge(env_config)
+      sources[:default]
+      |> Map.merge(sources[:system])
+      |> Map.merge(sources[:file])
+      |> Map.merge(sources[:env])
 
     # Config is valid when we have a push api key
     config =
@@ -100,6 +104,34 @@ defmodule Appsignal.Config do
     Path.join(:code.priv_dir(:appsignal), "cacert.pem")
   end
 
+  defp load_from_default do
+    @default_config
+    |> Map.merge(runtime_config())
+  end
+
+  defp load_from_system do
+    config = %{}
+
+    # Make AppSignal active by default if the APPSIGNAL_PUSH_API_KEY
+    # environment variable is present.
+    # Is overwritten by application config and env config.
+    config =
+      case System.get_env("APPSIGNAL_PUSH_API_KEY") do
+        nil -> config
+        _ -> Map.merge(config, %{active: true})
+      end
+
+    # Detect Heroku
+    case Appsignal.System.heroku?() do
+      false -> config
+      true -> Map.merge(config, %{running_in_container: true, log: "stdout"})
+    end
+  end
+
+  defp load_from_application do
+    Application.get_env(:appsignal, :config, []) |> coerce_map
+  end
+
   @env_to_key_mapping %{
     "APPSIGNAL_ACTIVE" => :active,
     "APPSIGNAL_PUSH_API_KEY" => :push_api_key,
@@ -134,6 +166,14 @@ defmodule Appsignal.Config do
   @atom_keys ~w(APPSIGNAL_APP_ENV)
   @string_list_keys ~w(APPSIGNAL_FILTER_PARAMETERS APPSIGNAL_IGNORE_ACTIONS APPSIGNAL_IGNORE_ERRORS APPSIGNAL_IGNORE_NAMESPACES APPSIGNAL_DNS_SERVERS APPSIGNAL_FILTER_SESSION_DATA APPSIGNAL_REQUEST_HEADERS)
 
+  defp load_from_environment do
+    %{}
+    |> load_environment(@string_keys, & &1)
+    |> load_environment(@bool_keys, &true?(&1))
+    |> load_environment(@atom_keys, &String.to_atom(&1))
+    |> load_environment(@string_list_keys, &String.split(&1, ","))
+  end
+
   defp load_environment(config, list, converter) do
     list
     |> Enum.reduce(config, fn key, cfg ->
@@ -149,33 +189,6 @@ defmodule Appsignal.Config do
 
   defp runtime_config do
     %{ca_file_path: default_ca_file_path()}
-  end
-
-  defp load_from_system() do
-    config = %{}
-
-    # Make AppSignal active by default if the APPSIGNAL_PUSH_API_KEY
-    # environment variable is present.
-    # Is overwritten by application config and env config.
-    config =
-      case System.get_env("APPSIGNAL_PUSH_API_KEY") do
-        nil -> config
-        _ -> Map.merge(config, %{active: true})
-      end
-
-    # Detect Heroku
-    case Appsignal.System.heroku?() do
-      false -> config
-      true -> Map.merge(config, %{running_in_container: true, log: "stdout"})
-    end
-  end
-
-  defp load_from_environment() do
-    %{}
-    |> load_environment(@string_keys, & &1)
-    |> load_environment(@bool_keys, &true?(&1))
-    |> load_environment(@atom_keys, &String.to_atom(&1))
-    |> load_environment(@string_list_keys, &String.split(&1, ","))
   end
 
   defp coerce_map(value) when is_list(value) do

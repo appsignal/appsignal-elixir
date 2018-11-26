@@ -10,10 +10,36 @@ defmodule Appsignal.ConfigTest do
   setup do
     environment = freeze_environment()
     Application.delete_env(:appsignal, :config)
+    Application.delete_env(:appsignal, :config_sources)
 
     ExUnit.Callbacks.on_exit(fn ->
       unfreeze_environment(environment)
     end)
+  end
+
+  describe "initialize" do
+    test "stores sources in Application" do
+      init_config()
+
+      assert Application.get_env(:appsignal, :config_sources) == %{
+               default: default_configuration() |> Map.delete(:valid),
+               system: %{},
+               file: %{},
+               env: %{}
+             }
+    end
+
+    test "stores file sources in Application" do
+      config = %{name: "My app", active: true}
+
+      assert with_config(
+               config,
+               fn ->
+                 init_config()
+                 Application.get_env(:appsignal, :config_sources)[:file]
+               end
+             ) == config
+    end
   end
 
   test "unconfigured" do
@@ -261,6 +287,16 @@ defmodule Appsignal.ConfigTest do
   end
 
   describe "using the system environment" do
+    test "stores system env source in Application" do
+      assert with_env(
+               %{"APPSIGNAL_ACTIVE" => "true", "APPSIGNAL_DEBUG" => "true"},
+               fn ->
+                 init_config()
+                 Application.get_env(:appsignal, :config_sources)[:env]
+               end
+             ) == %{active: true, debug: true}
+    end
+
     test "active" do
       assert with_env(
                %{"APPSIGNAL_ACTIVE" => "true"},
@@ -464,23 +500,54 @@ defmodule Appsignal.ConfigTest do
     end
   end
 
-  test "system environment overwrites application environment configuration" do
-    assert with_env(
-             %{"APPSIGNAL_PUSH_API_KEY" => "00000000-0000-0000-0000-000000000000"},
-             &init_config/0
-           ) == valid_configuration() |> Map.put(:active, true)
-
-    assert with_config(%{active: false}, fn ->
-             with_env(
+  describe "config based on system" do
+    test "system environment overwrites application environment configuration" do
+      assert with_env(
                %{"APPSIGNAL_PUSH_API_KEY" => "00000000-0000-0000-0000-000000000000"},
                &init_config/0
-             )
-           end) == valid_configuration() |> Map.put(:active, false)
+             ) == valid_configuration() |> Map.put(:active, true)
+
+      assert with_config(%{active: false}, fn ->
+               with_env(
+                 %{"APPSIGNAL_PUSH_API_KEY" => "00000000-0000-0000-0000-000000000000"},
+                 &init_config/0
+               )
+             end) == valid_configuration() |> Map.put(:active, false)
+    end
+
+    test "stores system source in Application" do
+      assert with_env(
+               %{"APPSIGNAL_PUSH_API_KEY" => "00000000-0000-0000-0000-000000000000"},
+               fn ->
+                 init_config()
+                 Application.get_env(:appsignal, :config_sources)[:system]
+               end
+             ) == %{active: true}
+
+      assert with_config(%{active: false}, fn ->
+               with_env(
+                 %{"APPSIGNAL_PUSH_API_KEY" => "00000000-0000-0000-0000-000000000000"},
+                 fn ->
+                   init_config()
+                   Application.get_env(:appsignal, :config_sources)[:system]
+                 end
+               )
+             end) == %{active: true}
+    end
   end
 
   describe "when on Heroku" do
     setup do
       setup_with_env(%{"DYNO" => "web.1"})
+    end
+
+    test "stores system source in Application" do
+      init_config()
+
+      assert Application.get_env(:appsignal, :config_sources)[:system] == %{
+               log: "stdout",
+               running_in_container: true
+             }
     end
 
     test ":running_in_container and :log" do
