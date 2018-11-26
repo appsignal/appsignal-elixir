@@ -4,7 +4,7 @@ if Appsignal.plug?() do
     Plug handler for Phoenix requests
     """
 
-    alias Appsignal.{Config, ErrorHandler, Error, Backtrace}
+    alias Appsignal.{Config, ErrorHandler, Error}
 
     defmacro __using__(_) do
       quote do
@@ -57,10 +57,7 @@ if Appsignal.plug?() do
            stack,
            %Plug.Conn{private: %{appsignal_transaction: transaction}} = conn
          ) do
-      {exception, stack} = Error.normalize(error, stack)
-      stacktrace = Backtrace.from_stacktrace(stack)
-
-      ErrorHandler.handle_error(transaction, exception, stacktrace, conn)
+      ErrorHandler.handle_error(transaction, error, stack, conn)
       Appsignal.TransactionRegistry.ignore(self())
     end
 

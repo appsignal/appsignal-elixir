@@ -99,6 +99,16 @@ defmodule Appsignal.ErrorHandlerTest do
       [^transaction] = FakeTransaction.completed_transactions(fake_transaction)
     end
 
+    test "normalizes errors before adding them to the transaction", %{
+      fake_transaction: fake_transaction
+    } do
+      transaction = FakeTransaction.create("123", :http_request)
+      :ok = ErrorHandler.handle_error(transaction, :undef, [], %{})
+
+      assert [{^transaction, "UndefinedFunctionError", "undefined function", []}] =
+               FakeTransaction.errors(fake_transaction)
+    end
+
     test "adds request metadata to the transaction", %{fake_transaction: fake_transaction} do
       transaction = FakeTransaction.create("123", :http_request)
       exception = %RuntimeError{}

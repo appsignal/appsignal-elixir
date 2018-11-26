@@ -26,14 +26,14 @@ defmodule Appsignal.ErrorHandler do
 
   def handle_event(event, state) do
     case match_event(event) do
-      {origin, exception, stacktrace, conn} ->
+      {origin, error, stack, conn} ->
         transaction =
           unless TransactionRegistry.ignored?(origin) do
             @transaction.lookup_or_create_transaction(origin)
           end
 
         if transaction != nil do
-          handle_error(transaction, exception, stacktrace, conn)
+          handle_error(transaction, error, stack, conn)
         end
 
       _ ->
@@ -47,11 +47,16 @@ defmodule Appsignal.ErrorHandler do
     {:ok, state}
   end
 
-  @spec handle_error(Appsignal.Transaction.t(), Exception.t(), Exception.stacktrace(), map()) ::
-          :ok
-  def handle_error(_, %{plug_status: status}, _, _) when status < 500, do: :ok
+  @spec handle_error(Appsignal.Transaction.t(), any, Exception.stacktrace(), map()) :: :ok
+  def handle_error(transaction, error, stack, conn) do
+    {exception, stacktrace} = Error.normalize(error, stack)
+    do_handle_error(transaction, exception, stacktrace, conn)
+  end
 
-  def handle_error(transaction, exception, stack, conn) do
+  @spec do_handle_error(Appsignal.Transaction.t(), Exception.t(), list(String.t()), map()) :: :ok
+  defp do_handle_error(_, %{plug_status: status}, _, _) when status < 500, do: :ok
+
+  defp do_handle_error(transaction, exception, stack, conn) do
     {reason, message} = Appsignal.Error.metadata(exception)
     backtrace = Backtrace.from_stacktrace(stack)
 
@@ -95,8 +100,7 @@ defmodule Appsignal.ErrorHandler do
       when is_list(report) do
     try do
       {_kind, error, stack} = report[:error_info]
-      {exception, backtrace} = Appsignal.Error.normalize(error, stack)
-      {origin, exception, backtrace, %{}}
+      {origin, error, stack, %{}}
     rescue
       exception ->
         Logger.warn(fn ->
