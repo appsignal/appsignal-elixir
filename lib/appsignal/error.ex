@@ -4,15 +4,9 @@ defmodule Appsignal.Error do
   """
   alias Appsignal.Backtrace
 
-  @spec metadata(any, Exception.stactrace()) :: {String.t(), String.t(), list(String.t())}
-  def metadata(error, stack) do
-    {exception, stacktrace} = normalize(error, stack)
-
-    {
-      name(exception),
-      Exception.message(exception),
-      Backtrace.from_stacktrace(stacktrace)
-    }
+  @spec metadata(Exception.t()) :: {String.t(), String.t()}
+  def metadata(exception) do
+    {name(exception), Exception.message(exception)}
   end
 
   @spec normalize(any, Exception.stactrace()) :: {Exception.t(), list(String.t())}
