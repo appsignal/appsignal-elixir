@@ -121,11 +121,8 @@ defmodule Appsignal.ErrorHandler do
   defp stacktrace_line?(_), do: false
 
   @doc false
+  @deprecated "Use Appsignal.Backtrace.from_stacktrace/1 instead."
   def format_stack(stacktrace) do
-    IO.warn(
-      "Appsignal.ErrorHandler.format_stack/1 is deprecated. Use Appsignal.Backtrace.from_stacktrace/1 instead."
-    )
-
     Backtrace.from_stacktrace(stacktrace)
   end
 
