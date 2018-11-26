@@ -52,7 +52,9 @@ defmodule Appsignal.ErrorHandler do
   def handle_error(_, %{plug_status: status}, _, _) when status < 500, do: :ok
 
   def handle_error(transaction, exception, stack, conn) do
-    {reason, message, backtrace} = Error.metadata(exception, stack)
+    {reason, message} = Appsignal.Error.metadata(exception)
+    backtrace = Backtrace.from_stacktrace(stack)
+
     @transaction.set_error(transaction, reason, message, backtrace)
 
     if @transaction.finish(transaction) == :sample do
@@ -120,7 +122,8 @@ defmodule Appsignal.ErrorHandler do
 
   @deprecated "Use Appsignal.Error.metadata/1 instead."
   def extract_reason_and_message(any, prefix) do
-    {name, message, _} = Error.metadata(any, [])
+    {exception, _} = Error.normalize(any, [])
+    {name, message} = Error.metadata(exception)
     {name, prefixed(prefix, message)}
   end
 

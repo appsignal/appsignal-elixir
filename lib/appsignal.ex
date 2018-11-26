@@ -13,7 +13,7 @@ defmodule Appsignal do
 
   use Application
 
-  alias Appsignal.Config
+  alias Appsignal.{Config, Error, Backtrace}
 
   require Logger
 
@@ -155,7 +155,7 @@ defmodule Appsignal do
       end)
   """
   def send_error(
-        reason,
+        error,
         prefix \\ "",
         stack \\ nil,
         metadata \\ %{},
@@ -179,11 +179,13 @@ defmodule Appsignal do
     transaction = @transaction.create("_" <> @transaction.generate_id(), namespace)
 
     fun.(transaction)
-    {reason, message, backtrace} = Appsignal.Error.metadata(reason, stack)
+    {exception, stacktrace} = Error.normalize(error, stack)
+    {name, message} = Error.metadata(exception)
+    backtrace = Backtrace.from_stacktrace(stacktrace)
 
     Appsignal.ErrorHandler.submit_transaction(
       transaction,
-      reason,
+      name,
       prefixed(prefix, message),
       backtrace,
       metadata,

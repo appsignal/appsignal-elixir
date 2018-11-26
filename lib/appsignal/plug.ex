@@ -4,7 +4,7 @@ if Appsignal.plug?() do
     Plug handler for Phoenix requests
     """
 
-    alias Appsignal.{Config, ErrorHandler}
+    alias Appsignal.{Config, ErrorHandler, Error, Backtrace}
 
     defmacro __using__(_) do
       quote do
@@ -53,11 +53,14 @@ if Appsignal.plug?() do
     end
 
     defp do_handle_error(
-           exception,
+           error,
            stack,
            %Plug.Conn{private: %{appsignal_transaction: transaction}} = conn
          ) do
-      ErrorHandler.handle_error(transaction, exception, stack, conn)
+      {exception, stack} = Error.normalize(error, stack)
+      stacktrace = Backtrace.from_stacktrace(stack)
+
+      ErrorHandler.handle_error(transaction, exception, stacktrace, conn)
       Appsignal.TransactionRegistry.ignore(self())
     end
 
@@ -81,16 +84,17 @@ if Appsignal.plug?() do
 
     @doc false
     @deprecated "Use Appsignal.Error.metadata/1 instead."
-    def extract_error_metadata(reason) do
-      {reason, message, _} = Appsignal.Error.metadata(reason, [])
-      {reason, message}
+    def extract_error_metadata(error) do
+      {exception, _stacktrace} = Error.normalize(error, [])
+      Error.metadata(exception)
     end
 
     @doc false
     @deprecated "Use Appsignal.Error.metadata/1 instead."
-    def extract_error_metadata(reason, conn, stack) do
-      {reason, message, _} = Appsignal.Error.metadata(reason, [])
-      {reason, message, stack, conn}
+    def extract_error_metadata(error, conn, stack) do
+      {exception, stacktrace} = Error.normalize(error, stack)
+      {name, message} = Error.metadata(exception)
+      {name, message, stacktrace, conn}
     end
 
     def extract_action(%Plug.Conn{

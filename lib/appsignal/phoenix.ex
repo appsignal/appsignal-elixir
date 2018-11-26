@@ -18,7 +18,7 @@ if Appsignal.phoenix?() do
     require Logger
 
     @transaction Application.get_env(:appsignal, :appsignal_transaction, Appsignal.Transaction)
-    alias Appsignal.TransactionRegistry
+    alias Appsignal.{TransactionRegistry, Error}
 
     @doc false
     defmacro __using__(_) do
@@ -28,12 +28,11 @@ if Appsignal.phoenix?() do
     end
 
     @doc false
-    def extract_error_metadata(reason, conn, stack) do
-      IO.warn(
-        "Appsignal.Phoenix.extract_error_metadata/3 is deprecated. Use Appsignal.Plug.extract_error_metadata/1 instead."
-      )
-
-      Appsignal.Plug.extract_error_metadata(reason, conn, stack)
+    @deprecated "Use Appsignal.Error.metadata/1 instead"
+    def extract_error_metadata(error, conn, stack) do
+      {exception, stacktrace} = Error.normalize(error, stack)
+      {name, message} = Error.metadata(exception)
+      {name, message, stacktrace, conn}
     end
 
     @doc false
