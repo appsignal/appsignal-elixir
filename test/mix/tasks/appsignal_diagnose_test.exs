@@ -13,6 +13,14 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   defp run_fn(args \\ nil), do: Mix.Tasks.Appsignal.Diagnose.run(args)
 
   setup do
+    environment = freeze_environment()
+    Application.delete_env(:appsignal, :config)
+    Application.delete_env(:appsignal, :config_sources)
+
+    ExUnit.Callbacks.on_exit(fn ->
+      unfreeze_environment(environment)
+    end)
+
     {:ok, fake_report} = FakeReport.start_link()
     {:ok, fake_system} = Appsignal.FakeSystem.start_link()
     {:ok, fake_nif} = Appsignal.FakeNif.start_link()
@@ -25,7 +33,10 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     auth_bypass = Bypass.open()
 
     setup_with_config(%{
+      active: true,
       valid: true,
+      name: "AppSignal test suite app v0",
+      env: "test",
       push_api_key: "foo",
       endpoint: "http://localhost:#{auth_bypass.port}"
     })
@@ -562,11 +573,56 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
         assert String.contains?(output, "  #{key}: #{Enum.join(value, ", ")}")
       end)
     end
+
+    test "outputs no source for option when only default source" do
+      output = run()
+
+      assert String.contains?(output, "  send_params: true\n")
+    end
+
+    test "outputs the source when there is only one source (not default)" do
+      output = run()
+
+      assert String.contains?(output, "  name: AppSignal test suite app v0 (Loaded from file)\n")
+    end
+
+    test "outputs sources for option with multiple sources" do
+      output = run()
+
+      assert String.contains?(
+               output,
+               "  active: true\n    Sources:\n      default: false\n      file: true"
+             )
+    end
+
+    test "outputs all different sources for option when available" do
+      output =
+        with_env(
+          %{"DYNO" => "true", "APPSIGNAL_PUSH_API_KEY" => "bar"},
+          fn ->
+            with_config(%{running_in_container: false}, &run/0)
+          end
+        )
+
+      assert String.contains?(
+               output,
+               "  push_api_key: bar\n    Sources:\n      file: foo\n      env: bar"
+             )
+
+      assert String.contains?(
+               output,
+               "  running_in_container: false\n    Sources:\n      system: true\n      file: false"
+             )
+    end
   end
 
   test "adds configuration to the report", %{fake_report: fake_report} do
     run()
-    assert received_report(fake_report)[:config] == Application.get_env(:appsignal, :config)
+
+    assert received_report(fake_report)[:config] == %{
+             options: Application.get_env(:appsignal, :config),
+             sources: Application.get_env(:appsignal, :config_sources)
+           }
   end
 
   describe "with valid Push API key" do
