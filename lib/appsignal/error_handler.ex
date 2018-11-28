@@ -12,7 +12,7 @@ defmodule Appsignal.ErrorHandler do
 
   require Logger
 
-  alias Appsignal.{Transaction, Backtrace}
+  alias Appsignal.{Transaction, TransactionRegistry, Backtrace}
 
   @doc """
   Retrieve the last Appsignal.Transaction.t that the error logger picked up
@@ -31,9 +31,12 @@ defmodule Appsignal.ErrorHandler do
     state =
       case match_event(event) do
         {origin, reason, message, stack, conn} ->
-          transaction = Transaction.lookup_or_create_transaction(origin)
+          transaction =
+            unless TransactionRegistry.ignored?(origin) do
+              Transaction.lookup_or_create_transaction(origin)
+            end
 
-          if transaction != nil do
+          if transaction do
             submit_transaction(transaction, reason, message, stack, %{}, conn)
           end
 
