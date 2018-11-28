@@ -184,6 +184,11 @@ defmodule Appsignal.PlugTest do
     test "completes the transaction", %{fake_transaction: fake_transaction} do
       assert [%Appsignal.Transaction{}] = FakeTransaction.completed_transactions(fake_transaction)
     end
+
+    test "ignores the process' pid" do
+      :timer.sleep(1)
+      assert Appsignal.TransactionRegistry.ignored?(self()) == true
+    end
   end
 
   describe "for a transaction with a bad request error" do

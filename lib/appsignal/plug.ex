@@ -66,6 +66,8 @@ if Appsignal.plug?() do
       |> @transaction.set_error(reason, message, backtrace)
       |> finish_with_conn(conn)
 
+      Appsignal.TransactionRegistry.ignore(self())
+
       :erlang.raise(kind, original_reason, stack)
     end
 
