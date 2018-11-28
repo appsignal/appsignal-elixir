@@ -108,7 +108,24 @@ defmodule Appsignal.TransactionRegistry do
     end
   end
 
-  ##
+  @doc """
+  Ignore a process in the error handler.
+  """
+  @spec ignore(pid()) :: :ok
+  def ignore(pid) do
+    GenServer.cast(__MODULE__, {:ignore, pid})
+  end
+
+  @doc """
+  Check if a progress is ignored.
+  """
+  @spec ignored?(pid()) :: boolean()
+  def ignored?(pid) do
+    case registry_alive?() && :ets.lookup(@table, pid) do
+      [{^pid, :ignore}] -> true
+      _ -> false
+    end
+  end
 
   defmodule State do
     @moduledoc false
@@ -147,6 +164,12 @@ defmodule Appsignal.TransactionRegistry do
     transaction
     |> pids_and_monitor_references()
     |> demonitor
+
+    {:noreply, state}
+  end
+
+  def handle_cast({:ignore, pid}, state) do
+    :ets.insert(@table, {pid, :ignore})
 
     {:noreply, state}
   end
