@@ -39,17 +39,16 @@ defmodule Appsignal.ErrorHandlerTest do
     id = Transaction.generate_id()
 
     :proc_lib.spawn(fn ->
-      TransactionRegistry.ignore(self())
-
       Transaction.start(id, :http_request)
+
+      Appsignal.TransactionRegistry.ignore(self())
 
       :erlang.error(:error_http_request)
     end)
 
-    :timer.sleep(10)
+    :timer.sleep(50)
 
-    transaction = Appsignal.ErrorHandler.get_last_transaction()
-    refute transaction.id == id
+    refute match?(%Transaction{id: ^id}, Appsignal.ErrorHandler.get_last_transaction())
   end
 
   test_with_mock "submitting the transaction", Appsignal.Transaction, [:passthrough], [] do
