@@ -47,12 +47,14 @@ defmodule Appsignal.ErrorHandlerTest do
     :proc_lib.spawn(fn ->
       Transaction.start(id, :http_request)
 
+      :timer.sleep(50)
+
       Appsignal.TransactionRegistry.ignore(self())
 
       :erlang.error(:error_http_request)
     end)
 
-    :timer.sleep(50)
+    :timer.sleep(100)
 
     assert FakeTransaction.errors(fake_transaction) == []
   end
