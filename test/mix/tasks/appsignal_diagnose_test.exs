@@ -591,7 +591,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
       assert String.contains?(
                output,
-               "  active: true\n    Sources:\n      default: false\n      file: true"
+               "  active: true\n    Sources:\n      default: false\n      file:    true"
              )
     end
 
@@ -606,12 +606,12 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
       assert String.contains?(
                output,
-               "  push_api_key: bar\n    Sources:\n      file: foo\n      env: bar"
+               "  push_api_key: bar\n    Sources:\n      file: foo\n      env:  bar"
              )
 
       assert String.contains?(
                output,
-               "  running_in_container: false\n    Sources:\n      system: true\n      file: false"
+               "  running_in_container: false\n    Sources:\n      system: true\n      file:   false"
              )
     end
   end

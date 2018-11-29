@@ -153,10 +153,23 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
   end
 
   defp configuration_option_source_label(key, sources, option_sources) do
+    max_source_label_length =
+      sources
+      |> Enum.map(fn source ->
+        source
+        |> to_string
+        |> String.length()
+      end)
+      |> Enum.max()
+
+    # + 1 to account for the : symbol
+    max_source_label_length = max_source_label_length + 1
+
     sources_label =
       sources
       |> Enum.map(fn source ->
-        "      #{source}: #{option_sources[source][key]}"
+        label = String.pad_trailing("#{source}:", max_source_label_length)
+        "      #{label} #{option_sources[source][key]}"
       end)
       |> Enum.join("\n")
 
