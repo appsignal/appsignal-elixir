@@ -35,6 +35,22 @@ defmodule Appsignal.ErrorHandlerTest do
     assert id == transaction.id
   end
 
+  test "does not send error reports for ignored processes" do
+    id = Transaction.generate_id()
+
+    :proc_lib.spawn(fn ->
+      Transaction.start(id, :http_request)
+
+      Appsignal.TransactionRegistry.ignore(self())
+
+      :erlang.error(:error_http_request)
+    end)
+
+    :timer.sleep(50)
+
+    refute match?(%Transaction{id: ^id}, Appsignal.ErrorHandler.get_last_transaction())
+  end
+
   test_with_mock "submitting the transaction", Appsignal.Transaction, [:passthrough], [] do
     transaction = Transaction.start("id", :http_request)
     reason = "ArithmeticError"

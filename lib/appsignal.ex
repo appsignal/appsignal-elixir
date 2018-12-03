@@ -150,7 +150,7 @@ defmodule Appsignal do
   """
   def send_error(
         reason,
-        message \\ "",
+        prefix \\ "",
         stack \\ nil,
         metadata \\ %{},
         conn \\ nil,
@@ -174,7 +174,19 @@ defmodule Appsignal do
       Appsignal.Transaction.create("_" <> Appsignal.Transaction.generate_id(), namespace)
 
     fun.(transaction)
-    {reason, message} = Appsignal.ErrorHandler.extract_reason_and_message(reason, message)
-    Appsignal.ErrorHandler.submit_transaction(transaction, reason, message, stack, metadata, conn)
+    {reason, message, backtrace} = Appsignal.Error.metadata(reason, stack)
+
+    Appsignal.ErrorHandler.submit_transaction(
+      transaction,
+      reason,
+      prefixed(prefix, message),
+      backtrace,
+      metadata,
+      conn
+    )
   end
+
+  defp prefixed("", message), do: message
+  defp prefixed(prefix, message) when is_binary(prefix), do: prefix <> ": " <> message
+  defp prefixed(_, message), do: message
 end

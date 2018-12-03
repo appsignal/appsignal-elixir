@@ -12,7 +12,7 @@ defmodule Appsignal.ErrorHandler do
 
   require Logger
 
-  alias Appsignal.{Transaction, Backtrace}
+  alias Appsignal.{Transaction, TransactionRegistry, Backtrace}
 
   @doc """
   Retrieve the last Appsignal.Transaction.t that the error logger picked up
@@ -31,10 +31,13 @@ defmodule Appsignal.ErrorHandler do
     state =
       case match_event(event) do
         {origin, reason, message, stack, conn} ->
-          transaction = Transaction.lookup_or_create_transaction(origin)
+          transaction =
+            unless TransactionRegistry.ignored?(origin) do
+              Transaction.lookup_or_create_transaction(origin)
+            end
 
-          if transaction != nil do
-            submit_transaction(transaction, normalize_reason(reason), message, stack, %{}, conn)
+          if transaction do
+            submit_transaction(transaction, reason, message, stack, %{}, conn)
           end
 
         :nomatch ->
@@ -79,46 +82,28 @@ defmodule Appsignal.ErrorHandler do
 
   @doc false
   @spec match_event(term) :: {pid, term, String.t(), list, %{}} | :nomatch
-  def match_event({:error_report, _gleader, {origin, :crash_report, report}}) do
-    match_error_report(origin, report)
+  def match_event({:error_report, _gleader, {origin, :crash_report, [report | _]}})
+      when is_list(report) do
+    try do
+      {_kind, exception, stack} = report[:error_info]
+      {reason, message, backtrace} = Appsignal.Error.metadata(exception, stack)
+      {origin, reason, message, backtrace, nil}
+    rescue
+      exception ->
+        Logger.warn(fn ->
+          """
+          AppSignal: Failed to match error report: #{Exception.message(exception)}
+          #{inspect(report[:error_info])}
+          """
+        end)
+
+        :nomatch
+    end
   end
 
   def match_event(_event) do
     :nomatch
   end
-
-  defp match_error_report(origin, [
-         [
-           {:initial_call, _},
-           {:pid, pid},
-           {:registered_name, name},
-           {:error_info, {_kind, exception, stack}} | _
-         ],
-         _linked
-       ]) do
-    msg = "Process #{crash_name(pid, name)} terminating"
-    stacktrace = extract_stacktrace(exception) || stack
-    {reason, message} = extract_reason_and_message(exception, msg)
-    {origin, reason, message, Backtrace.from_stacktrace(stacktrace), nil}
-  end
-
-  defp extract_stacktrace({_, stacktrace}) do
-    case stacktrace?(stacktrace) do
-      true -> stacktrace
-      false -> nil
-    end
-  end
-
-  defp extract_stacktrace(_), do: nil
-
-  defp stacktrace?(stacktrace) when is_list(stacktrace) do
-    Enum.all?(stacktrace, &stacktrace_line?/1)
-  end
-
-  defp stacktrace?(_), do: false
-
-  defp stacktrace_line?({_, _, _, [file: _, line: _]}), do: true
-  defp stacktrace_line?(_), do: false
 
   @doc false
   @deprecated "Use Appsignal.Backtrace.from_stacktrace/1 instead."
@@ -126,81 +111,10 @@ defmodule Appsignal.ErrorHandler do
     Backtrace.from_stacktrace(stacktrace)
   end
 
-  defp crash_name(pid, []), do: inspect(pid)
-  defp crash_name(pid, name), do: "#{inspect(name)} (#{inspect(pid)})"
-
-  @doc """
-  Extract a consise reason from the given error reason, stripping it from long stack traces and the like.
-  Also returns a 'message' which is supposed to contain extra error information.
-  """
-  @spec extract_reason_and_message(any(), binary()) :: {any(), binary()}
-  if Appsignal.plug?() do
-    def extract_reason_and_message(
-          %Plug.Conn.WrapperError{reason: reason, kind: kind, stack: stacktrace},
-          message
-        ) do
-      kind
-      |> Exception.normalize(reason, stacktrace)
-      |> extract_reason_and_message(message)
-    end
-  end
-
-  def extract_reason_and_message(reason, message) when is_binary(reason) do
-    {reason, message}
-  end
-
-  def extract_reason_and_message(reason, message) when is_atom(reason) do
-    try do
-      {Exception.message(reason.exception([])), message}
-    rescue
-      UndefinedFunctionError -> {"#{inspect(reason)}", message}
-    end
-  end
-
-  def extract_reason_and_message(
-        %Protocol.UndefinedError{value: {:error, {error = %{}, _stack}}},
-        message
-      ) do
-    extract_reason_and_message(error, message)
-  end
-
-  if Appsignal.phoenix?() do
-    def extract_reason_and_message(%Phoenix.ActionClauseError{}, prefix) do
-      message = """
-      could not find a matching clause to process request.
-      This typically happens when there is a parameter mismatch but may
-      also happen when any of the other action arguments do not match.
-      """
-
-      {"Phoenix.ActionClauseError", prefixed(prefix, message)}
-    end
-
-    def extract_reason_and_message(
-          %Phoenix.Template.UndefinedError{
-            assigns: %{conn: %{assigns: %{kind: :error, reason: reason}}}
-          },
-          message
-        ) do
-      extract_reason_and_message(reason, message)
-    end
-  end
-
-  def extract_reason_and_message(%{__struct__: struct} = reason, message) do
-    msg = Exception.message(reason)
-    {"#{inspect(struct)}", prefixed(message, msg)}
-  end
-
-  def extract_reason_and_message({r = %{}, _}, message) do
-    extract_reason_and_message(r, message)
-  end
-
-  def extract_reason_and_message({kind, _} = reason, message) do
-    {inspect(kind), prefixed(message, inspect(reason))}
-  end
-
-  def extract_reason_and_message(any, message) do
-    # inspect any term; truncate it
-    {"#{inspect(any)}", message}
+  @deprecated "Use Appsignal.Error.metadata/2 instead."
+  def extract_reason_and_message(any, prefix) do
+    {name, message, _} = Appsignal.Error.metadata(any, [])
+    {name, prefixed(prefix, message)}
   end
 
   defp prefixed(nil, msg), do: msg
@@ -208,6 +122,7 @@ defmodule Appsignal.ErrorHandler do
   defp prefixed(pre, msg), do: pre <> ": " <> msg
 
   @pid_or_ref_regex ~r/\<(\d+\.)+\d+\>/
+  @deprecated "Use Appsignal.Error.metadata/2 instead."
   def normalize_reason(reason) do
     Regex.replace(@pid_or_ref_regex, reason, "<...>")
   end
