@@ -4,6 +4,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
   """
 
   use ExUnit.Case
+  alias Appsignal.FakeTransaction
 
   defmodule CrashingGenServer do
     use GenServer
@@ -32,157 +33,134 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     end
   end
 
-  defmodule CustomErrorHandler do
-    def init(_) do
-      {:ok, nil}
-    end
-
-    def handle_event(event, _state) do
-      {:ok, Appsignal.ErrorHandler.match_event(event)}
-    end
-
-    def handle_call(:get_matched_crash, state) do
-      {:remove_handler, state}
-    end
-  end
-
-  @error_handler Appsignal.ErrorHandler.ErrorMatcherTest.CustomErrorHandler
-
-  defp get_last_crash do
-    :timer.sleep(20)
-    :gen_event.call(:error_logger, @error_handler, :get_matched_crash)
-  end
-
-  defp assert_crash_caught({:ok, pid}) when is_pid(pid) do
-    assert_crash_caught(pid)
-  end
-
-  defp assert_crash_caught(crasher) when is_pid(crasher) do
-    assert {^crasher, reason, message, stacktrace, conn} = get_last_crash()
-    assert is_list(stacktrace)
-    assert is_binary(reason)
-    assert is_binary(message)
-    assert is_nil(conn)
-
-    for s <- stacktrace do
-      assert is_binary(s)
-    end
-
-    {reason, message, stacktrace}
-  end
-
   setup do
-    :error_logger.add_report_handler(@error_handler)
-
-    on_exit(fn ->
-      :error_logger.delete_report_handler(@error_handler)
-    end)
-
-    :timer.sleep(100)
+    {:ok, fake_transaction} = FakeTransaction.start_link()
+    [fake_transaction: fake_transaction]
   end
 
-  test "proc_lib.spawn + exit" do
+  test "proc_lib.spawn + exit", %{fake_transaction: fake_transaction} do
     :proc_lib.spawn(fn ->
       exit(:crash_proc_lib_spawn)
     end)
-    |> assert_crash_caught
-    |> reason(":crash_proc_lib_spawn")
-    |> message(~r{^(E|e)rlang error: :crash_proc_lib_spawn$})
-    |> stacktrace([
+
+    :timer.sleep(20)
+
+    [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
+    assert reason == ":crash_proc_lib_spawn"
+    assert message =~ ~r{^(E|e)rlang error: :crash_proc_lib_spawn$}
+
+    assert_stacktrace(stacktrace, [
       ~r{test\/appsignal\/error_handler\/error_matcher_test.exs:\d+: anonymous fn\/0 in Appsignal.ErrorHandler.ErrorMatcherTest."?test proc_lib.spawn \+ exit"?/1},
       ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p/3}
     ])
   end
 
-  test "proc_lib.spawn + erlang.error" do
+  test "proc_lib.spawn + erlang.error", %{fake_transaction: fake_transaction} do
     :proc_lib.spawn(fn ->
       :erlang.error(:crash_proc_lib_error)
     end)
-    |> assert_crash_caught
-    |> reason(":crash_proc_lib_error")
-    |> message(~r{^(E|e)rlang error: :crash_proc_lib_error$})
-    |> stacktrace([
+
+    :timer.sleep(20)
+
+    [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
+    assert reason == ":crash_proc_lib_error"
+    assert message =~ ~r{^(E|e)rlang error: :crash_proc_lib_error$}
+
+    assert_stacktrace(stacktrace, [
       ~r{test/appsignal/error_handler/error_matcher_test.exs:\d+: anonymous fn/0 in Appsignal.ErrorHandler.ErrorMatcherTest."?test proc_lib.spawn \+ erlang.error"?/1},
       ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p/3}
     ])
   end
 
-  test "proc_lib.spawn + function error" do
+  test "proc_lib.spawn + function error", %{fake_transaction: fake_transaction} do
     :proc_lib.spawn(fn ->
       Float.ceil(1)
     end)
-    |> assert_crash_caught
-    |> reason("FunctionClauseError")
-    |> message("no function clause matching in Float.ceil/2")
-    |> stacktrace([
+
+    :timer.sleep(20)
+
+    [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
+    assert reason == "FunctionClauseError"
+    assert message == "no function clause matching in Float.ceil/2"
+
+    assert_stacktrace(stacktrace, [
       ~r{\(elixir\) lib/float.ex:\d+: Float.ceil/2},
       ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p/3}
     ])
   end
 
-  test "proc_lib.spawn + badmatch error" do
+  test "proc_lib.spawn + badmatch error", %{fake_transaction: fake_transaction} do
     :proc_lib.spawn(fn -> throw({:badmatch, [1, 2, 3]}) end)
-    |> assert_crash_caught
-    |> reason("MatchError")
-    |> message("no match of right hand side value: [1, 2, 3]")
-    |> stacktrace([
+
+    :timer.sleep(20)
+
+    [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
+    assert reason == "MatchError"
+    assert message == "no match of right hand side value: [1, 2, 3]"
+
+    assert_stacktrace(stacktrace, [
       ~r{test/appsignal/error_handler/error_matcher_test.exs:\d+: anonymous fn/0 in Appsignal.ErrorHandler.ErrorMatcherTest."?test proc_lib.spawn \+ badmatch error"?/1},
       ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p/3}
     ])
   end
 
-  test "Crashing GenServer with throw" do
-    result =
-      CrashingGenServer.start(:throw)
-      |> assert_crash_caught
-      # http://erlang.org/pipermail/erlang-bugs/2012-April/002862.html
-      |> reason(":bad_return_value")
-      |> message(~r{^(E|e)rlang error: {:bad_return_valu...})
+  test "Crashing GenServer with throw", %{fake_transaction: fake_transaction} do
+    CrashingGenServer.start(:throw)
+
+    :timer.sleep(20)
+
+    [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
+    assert reason == ":bad_return_value"
+    assert message =~ ~r{^(E|e)rlang error: {:bad_return_valu...}
 
     if System.otp_release() >= "20" do
-      stacktrace(result, [
+      assert_stacktrace(stacktrace, [
         ~r{\(stdlib\) gen_server.erl:\d+: :gen_server.handle_common_reply/8},
         ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p_do_apply/3}
       ])
     else
-      stacktrace(result, [
+      assert_stacktrace(stacktrace, [
         ~r{\(stdlib\) gen_server.erl:\d+: :gen_server.terminate/7},
         ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p_do_apply/3}
       ])
     end
   end
 
-  test "Crashing GenServer with exit" do
-    result =
-      CrashingGenServer.start(:exit)
-      |> assert_crash_caught
-      |> reason(":crashed_gen_server_exit")
-      |> message(~r{^(E|e)rlang error: :crashed_gen_server_exit$})
+  test "Crashing GenServer with exit", %{fake_transaction: fake_transaction} do
+    CrashingGenServer.start(:exit)
+
+    :timer.sleep(20)
+
+    [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
+    assert reason == ":crashed_gen_server_exit"
+    assert message =~ ~r{^(E|e)rlang error: :crashed_gen_server_exit$}
 
     if System.otp_release() >= "20" do
-      stacktrace(result, [
+      assert_stacktrace(stacktrace, [
         ~r{test/appsignal/error_handler/error_matcher_test.exs:\d+: Appsignal.ErrorHandler.ErrorMatcherTest.CrashingGenServer.handle_info/2},
         ~r{\(stdlib\) gen_server.erl:\d+: :gen_server.try_dispatch/4},
         ~r{\(stdlib\) gen_server.erl:\d+: :gen_server.handle_msg/6},
         ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p_do_apply/3}
       ])
     else
-      stacktrace(result, [
+      assert_stacktrace(stacktrace, [
         ~r{\(stdlib\) gen_server.erl:\d+: :gen_server.terminate/7},
         ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p_do_apply/3}
       ])
     end
   end
 
-  test "Crashing GenServer with function error" do
-    result =
-      CrashingGenServer.start(:function_error)
-      |> assert_crash_caught
-      |> reason("FunctionClauseError")
-      |> message("no function clause matching in Float.ceil/2")
+  test "Crashing GenServer with function error", %{fake_transaction: fake_transaction} do
+    CrashingGenServer.start(:function_error)
+
+    :timer.sleep(20)
+
+    [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
+    assert reason == "FunctionClauseError"
+    assert message == "no function clause matching in Float.ceil/2"
 
     if System.otp_release() >= "20" do
-      stacktrace(result, [
+      assert_stacktrace(stacktrace, [
         ~r{\(elixir\) lib/float.ex:\d+: Float.ceil/2},
         ~r{test/appsignal/error_handler/error_matcher_test.exs:\d+: Appsignal.ErrorHandler.ErrorMatcherTest.CrashingGenServer.handle_info/2},
         ~r{\(stdlib\) gen_server.erl:\d+: :gen_server.try_dispatch/4},
@@ -190,7 +168,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
         ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p_do_apply/3}
       ])
     else
-      stacktrace(result, [
+      assert_stacktrace(stacktrace, [
         ~r{\(elixir\) lib/float.ex:\d+: Float.ceil/2},
         ~r{test/appsignal/error_handler/error_matcher_test.exs:\d+: Appsignal.ErrorHandler.ErrorMatcherTest.CrashingGenServer.handle_info/2},
         ~r{\(stdlib\) gen_server.erl:\d+: :gen_server.try_dispatch/4},
@@ -200,39 +178,45 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     end
   end
 
-  test "Task" do
-    result =
-      Task.start(fn ->
-        Float.ceil(1)
-      end)
-      |> assert_crash_caught
-      |> reason("FunctionClauseError")
-      |> stacktrace([
-        ~r{\(elixir\) lib/float.ex:\d+: Float.ceil/2},
-        ~r{\(elixir\) lib/task/supervised.ex:\d+: Task.Supervised.do_apply/2},
-        ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p_do_apply/3}
-      ])
+  test "Task", %{fake_transaction: fake_transaction} do
+    Task.start(fn ->
+      Float.ceil(1)
+    end)
 
-    message(result, "no function clause matching in Float.ceil/2")
+    :timer.sleep(20)
+
+    [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
+    assert reason == "FunctionClauseError"
+    assert message == "no function clause matching in Float.ceil/2"
+
+    assert_stacktrace(stacktrace, [
+      ~r{\(elixir\) lib/float.ex:\d+: Float.ceil/2},
+      ~r{\(elixir\) lib/task/supervised.ex:\d+: Task.Supervised.do_apply/2},
+      ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p_do_apply/3}
+    ])
   end
 
-  test "Task await" do
+  test "Task await", %{fake_transaction: fake_transaction} do
     :proc_lib.spawn(fn ->
       Task.async(fn ->
         Process.sleep(2)
       end)
       |> Task.await(1)
     end)
-    |> assert_crash_caught
-    |> reason(":timeout")
-    |> message(~r{^(E|e)rlang error: {:timeout, {Task, :await, \[%Tas...})
-    |> stacktrace([
+
+    :timer.sleep(20)
+
+    [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
+    assert reason == ":timeout"
+    assert message =~ ~r{^(E|e)rlang error: {:timeout, {Task, :await, \[%Tas...}
+
+    assert_stacktrace(stacktrace, [
       ~r{\(elixir\) lib/task.ex:\d+: Task.await/2},
       ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p/3}
     ])
   end
 
-  test "Plug.Conn.WrapperError" do
+  test "Plug.Conn.WrapperError", %{fake_transaction: fake_transaction} do
     :proc_lib.spawn(fn ->
       try do
         raise %UndefinedFunctionError{}
@@ -241,33 +225,17 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
           raise(%Plug.Conn.WrapperError{reason: reason, kind: kind, stack: System.stacktrace()})
       end
     end)
-    |> assert_crash_caught
-    |> reason("UndefinedFunctionError")
-    |> message(~r{^undefined function$})
-    |> stacktrace([
+
+    :timer.sleep(20)
+
+    [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
+    assert reason == "UndefinedFunctionError"
+    assert message == "undefined function"
+
+    assert_stacktrace(stacktrace, [
       ~r{test/appsignal/error_handler/error_matcher_test.exs:\d+: anonymous fn/0 in Appsignal.ErrorHandler.ErrorMatcherTest."?test Plug.Conn.WrapperError"?/1},
       ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p/3}
     ])
-  end
-
-  defp reason({reason, _message, _stacktrace} = data, expected) do
-    assert expected == reason
-    data
-  end
-
-  defp message({_reason, message, _stacktrace} = data, expected) when is_binary(expected) do
-    assert message == expected
-    data
-  end
-
-  defp message({_reason, message, _stacktrace} = data, expected) do
-    assert message =~ expected
-    data
-  end
-
-  defp stacktrace({_reason, _message, stacktrace} = data, expected) do
-    assert_stacktrace(stacktrace, expected)
-    data
   end
 
   defp assert_stacktrace([line | tail], [expected | expected_tail]) do

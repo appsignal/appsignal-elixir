@@ -12,37 +12,33 @@ defmodule Appsignal.ErrorHandler do
 
   require Logger
 
-  alias Appsignal.{Transaction, TransactionRegistry, Backtrace}
+  alias Appsignal.{TransactionRegistry, Backtrace}
 
-  @doc """
-  Retrieve the last Appsignal.Transaction.t that the error logger picked up
-  """
-  @spec get_last_transaction :: Transaction.t() | nil
-  def get_last_transaction do
-    :gen_event.call(:error_logger, Appsignal.ErrorHandler, :get_last_transaction)
-  end
+  @transaction Application.get_env(
+                 :appsignal,
+                 :appsignal_transaction,
+                 Appsignal.Transaction
+               )
 
-  def init(_) do
-    # state of the error handler holds the last matched transaction
-    {:ok, nil}
+  def init(state) do
+    {:ok, state}
   end
 
   def handle_event(event, state) do
-    state =
-      case match_event(event) do
-        {origin, reason, message, stack, conn} ->
-          transaction =
-            unless TransactionRegistry.ignored?(origin) do
-              Transaction.lookup_or_create_transaction(origin)
-            end
-
-          if transaction do
-            submit_transaction(transaction, reason, message, stack, %{}, conn)
+    case match_event(event) do
+      {origin, reason, message, stack, conn} ->
+        transaction =
+          unless TransactionRegistry.ignored?(origin) do
+            @transaction.lookup_or_create_transaction(origin)
           end
 
-        :nomatch ->
-          state
-      end
+        if transaction != nil do
+          submit_transaction(transaction, reason, message, stack, %{}, conn)
+        end
+
+      _ ->
+        :ok
+    end
 
     {:ok, state}
   end
@@ -54,10 +50,10 @@ defmodule Appsignal.ErrorHandler do
   def submit_transaction(transaction, reason, message, stack, metadata, conn \\ nil)
 
   def submit_transaction(transaction, reason, message, stack, metadata, nil) do
-    Transaction.set_error(transaction, reason, message, stack)
-    Transaction.set_meta_data(transaction, metadata)
-    Transaction.finish(transaction)
-    Transaction.complete(transaction)
+    @transaction.set_error(transaction, reason, message, stack)
+    @transaction.set_meta_data(transaction, metadata)
+    @transaction.finish(transaction)
+    @transaction.complete(transaction)
 
     Logger.debug(fn ->
       "Submitting #{inspect(transaction)}: #{message}"
@@ -69,15 +65,11 @@ defmodule Appsignal.ErrorHandler do
   if Appsignal.plug?() do
     def submit_transaction(transaction, reason, message, stack, metadata, conn) do
       if conn do
-        Transaction.set_request_metadata(transaction, conn)
+        @transaction.set_request_metadata(transaction, conn)
       end
 
       submit_transaction(transaction, reason, message, stack, metadata)
     end
-  end
-
-  def handle_call(:get_last_transaction, state) do
-    {:ok, state, state}
   end
 
   @doc false
