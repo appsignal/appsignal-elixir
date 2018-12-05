@@ -4,88 +4,126 @@ defmodule Appsignal.ErrorTest do
 
   describe "for a RuntimeError" do
     setup do
-      {error, stacktrace} =
+      {error, stack} =
         catch_error_and_stacktrace(fn ->
           raise "Exception!"
         end)
 
-      [metadata: Error.metadata(error, stacktrace)]
+      {exception, stacktrace} = Error.normalize(error, stack)
+
+      [
+        error: error,
+        stack: stack,
+        exception: exception,
+        stacktrace: stacktrace,
+        metadata: Error.metadata(exception)
+      ]
     end
 
-    test "extracts the error's name", %{metadata: {name, _message, _backtrace}} do
+    test "returns the unchanged exception", %{error: error, exception: exception} do
+      assert exception == error
+    end
+
+    test "returns the unchanged stacktrace", %{stack: stack, stacktrace: stacktrace} do
+      assert stacktrace == stack
+    end
+
+    test "extracts the error's name", %{metadata: {name, _message}} do
       assert name == "RuntimeError"
     end
 
-    test "extracts the error's message", %{metadata: {_name, message, _backtrace}} do
+    test "extracts the error's message", %{metadata: {_name, message}} do
       assert message == "Exception!"
-    end
-
-    test "extracts the error's backtrace", %{metadata: {_name, _message, backtrace}} do
-      assert_backtrace(backtrace, [
-        ~r{^test/appsignal/error_test.exs:\d+: anonymous fn/0 in Appsignal.ErrorTest.__ex_unit_setup_0/1$},
-        ~r{^test/appsignal/error_test.exs:\d+: Appsignal.ErrorTest.catch_error_and_stacktrace/1$},
-        ~r{^test/appsignal/error_test.exs:\d+: Appsignal.ErrorTest.__ex_unit_setup_0/1$},
-        ~r{^test/appsignal/error_test.exs:\d+: Appsignal.ErrorTest.__ex_unit__/2$},
-        ~r{^\(ex_unit\) lib/ex_unit/runner.ex:\d+: ExUnit.Runner.exec_test_setup/2$},
-        ~r{^\(ex_unit\) lib/ex_unit/runner.ex:\d+: anonymous fn/2 in ExUnit.Runner.spawn_test/3$},
-        ~r{^\(stdlib\) timer.erl:\d+: :timer.tc/1$},
-        ~r{^\(ex_unit\) lib/ex_unit/runner.ex:\d+: anonymous fn/\d+ in ExUnit.Runner.spawn_test/3$}
-      ])
     end
   end
 
   describe "for a FunctionClauseError" do
     setup do
-      {error, stacktrace} =
+      {error, stack} =
         catch_error_and_stacktrace(fn ->
           Float.ceil(1)
         end)
 
-      [metadata: Error.metadata(error, stacktrace)]
+      {exception, stacktrace} = Error.normalize(error, stack)
+
+      [
+        stack: stack,
+        exception: exception,
+        stacktrace: stacktrace,
+        metadata: Error.metadata(exception)
+      ]
     end
 
-    test "extracts the error's name", %{metadata: {name, _message, _backtrace}} do
-      assert name == "FunctionClauseError"
+    test "converts to a FunctionClauseError", %{exception: exception} do
+      assert %FunctionClauseError{arity: 2, function: :ceil, module: Float} = exception
     end
 
-    test "extracts the error's message", %{metadata: {_name, message, _backtrace}} do
+    test "returns the unchanged stacktrace", %{stack: stack, stacktrace: stacktrace} do
+      assert stacktrace == stack
+    end
+
+    test "extracts the error's message", %{metadata: {_name, message}} do
       assert message == "no function clause matching in Float.ceil/2"
     end
   end
 
   describe "for a :timeout" do
     setup do
-      {error, stacktrace} =
+      {error, stack} =
         catch_error_and_stacktrace(fn ->
           Task.async(fn -> :timer.sleep(10) end) |> Task.await(1)
         end)
 
-      [metadata: Error.metadata(error, stacktrace)]
+      {exception, stacktrace} = Error.normalize(error, stack)
+
+      [
+        stack: stack,
+        exception: exception,
+        stacktrace: stacktrace,
+        metadata: Error.metadata(exception)
+      ]
     end
 
-    test "extracts the error's name", %{metadata: {name, _message, _backtrace}} do
+    test "converts to an ErlangError", %{exception: exception} do
+      assert %ErlangError{original: {:timeout, _}} = exception
+    end
+
+    test "returns the unchanged stacktrace", %{stack: stack, stacktrace: stacktrace} do
+      assert stacktrace == stack
+    end
+
+    test "extracts the error's name", %{metadata: {name, _message}} do
       assert name == ":timeout"
     end
   end
 
   describe "for an exit" do
     setup do
-      {error, stacktrace} =
+      {error, stack} =
         catch_error_and_stacktrace(fn ->
           exit(:exited)
         end)
 
-      [metadata: Error.metadata(error, stacktrace)]
+      {exception, _stacktrace} = Error.normalize(error, stack)
+
+      [
+        exception: exception,
+        metadata: Error.metadata(exception)
+      ]
     end
 
-    test "extracts the error's name", %{metadata: {name, _message, _backtrace}} do
+    test "converts to an ErlangError", %{exception: exception} do
+      assert %ErlangError{original: :exited} = exception
+    end
+
+    test "extracts the error's name", %{metadata: {name, _message}} do
       assert name == ":exited"
     end
   end
 
   describe "for an exception in a 2-tuple" do
     setup do
-      {error, stacktrace} =
+      {error, stack} =
         catch_error_and_stacktrace(fn ->
           try do
             raise("Exception!")
@@ -97,17 +135,28 @@ defmodule Appsignal.ErrorTest do
           end
         end)
 
-      [metadata: Error.metadata(error, stacktrace)]
+      {exception, stacktrace} = Error.normalize(error, stack)
+      {_, nested_stack} = error
+
+      [
+        stack: nested_stack,
+        exception: exception,
+        stacktrace: stacktrace
+      ]
     end
 
-    test "extracts the error's name", %{metadata: {name, _message, _backtrace}} do
-      assert name == "RuntimeError"
+    test "converts to a RuntimeError", %{exception: exception} do
+      assert %RuntimeError{message: "Exception!"} = exception
+    end
+
+    test "returns the nested stacktrace", %{stack: stack, stacktrace: stacktrace} do
+      assert stacktrace == stack
     end
   end
 
   describe "for an exit with a wrapped exception" do
     setup do
-      {error, stacktrace} =
+      {error, stack} =
         catch_error_and_stacktrace(fn ->
           try do
             raise("Exception!")
@@ -119,48 +168,68 @@ defmodule Appsignal.ErrorTest do
           end
         end)
 
-      [metadata: Error.metadata(error, stacktrace)]
+      {exception, stacktrace} = Error.normalize(error, stack)
+      {{_, nested_stack}, _} = error
+
+      [
+        stack: nested_stack,
+        exception: exception,
+        stacktrace: stacktrace
+      ]
     end
 
-    test "extracts the error's name", %{metadata: {name, _message, _backtrace}} do
-      assert name == "RuntimeError"
+    test "converts to a RuntimeError", %{exception: exception} do
+      assert %RuntimeError{message: "Exception!"} = exception
+    end
+
+    test "returns the nested stacktrace", %{stack: stack, stacktrace: stacktrace} do
+      assert stacktrace == stack
     end
   end
 
   describe "for a nested error from an error report" do
     setup do
-      {error, stacktrace} =
+      {error, stack} =
         catch_error_and_stacktrace(fn ->
           Float.ceil(1)
         end)
 
-      [metadata: Error.metadata({error, stacktrace}, [])]
+      {exception, stacktrace} = Error.normalize(error, stack)
+
+      [
+        stack: stack,
+        exception: exception,
+        stacktrace: stacktrace
+      ]
     end
 
-    test "extracts the error's name", %{metadata: {name, _message, _backtrace}} do
-      assert name == "FunctionClauseError"
+    test "converts to a FunctionClauseError", %{exception: exception} do
+      assert %FunctionClauseError{arity: 2, function: :ceil, module: Float} = exception
+    end
+
+    test "returns the unchanged stacktrace", %{stack: stack, stacktrace: stacktrace} do
+      assert stacktrace == stack
     end
   end
 
   describe "for a Plug.Conn.WrapperError" do
     setup do
-      {error, stacktrace} =
+      {error, stack} =
         catch_error_and_stacktrace(fn ->
           raise %Plug.Conn.WrapperError{kind: :error, reason: :undef, stack: []}
         end)
 
-      [metadata: Error.metadata(error, stacktrace)]
+      {exception, _stacktrace} = Error.normalize(error, stack)
+
+      [exception: exception]
     end
 
-    test "extracts the error's name", %{metadata: {name, _message, _backtrace}} do
-      assert name == "UndefinedFunctionError"
-    end
-  end
-
-  describe "for an error without an atom name" do
-    test "falls back 'ErlangError' as the error's name" do
-      assert {"ErlangError", _, _} = Error.metadata("string!", [])
-      assert {"ErlangError", _, _} = Error.metadata({"string!", []}, [])
+    test "converts to an UndefinedFunctionError", %{exception: exception} do
+      assert %UndefinedFunctionError{
+               arity: 0,
+               function: :"-__ex_unit_setup_7/1-fun-0-",
+               module: Appsignal.ErrorTest
+             } = exception
     end
   end
 
@@ -170,13 +239,5 @@ defmodule Appsignal.ErrorTest do
     catch
       _kind, reason -> {reason, System.stacktrace()}
     end
-  end
-
-  defp assert_backtrace(actual, expected) do
-    actual
-    |> Enum.zip(expected)
-    |> Enum.each(fn {actual, expected} ->
-      assert actual =~ expected
-    end)
   end
 end

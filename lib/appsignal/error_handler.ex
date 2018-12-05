@@ -12,7 +12,7 @@ defmodule Appsignal.ErrorHandler do
 
   require Logger
 
-  alias Appsignal.{TransactionRegistry, Backtrace}
+  alias Appsignal.{Backtrace, Error, TransactionRegistry}
 
   @transaction Application.get_env(
                  :appsignal,
@@ -26,14 +26,14 @@ defmodule Appsignal.ErrorHandler do
 
   def handle_event(event, state) do
     case match_event(event) do
-      {origin, reason, message, stack, conn} ->
+      {origin, error, stack, conn} ->
         transaction =
           unless TransactionRegistry.ignored?(origin) do
             @transaction.lookup_or_create_transaction(origin)
           end
 
         if transaction != nil do
-          submit_transaction(transaction, reason, message, stack, %{}, conn)
+          handle_error(transaction, error, stack, conn)
         end
 
       _ ->
@@ -45,6 +45,28 @@ defmodule Appsignal.ErrorHandler do
 
   def handle_info(_, state) do
     {:ok, state}
+  end
+
+  @spec handle_error(Appsignal.Transaction.t(), any, Exception.stacktrace(), map()) :: :ok
+  def handle_error(transaction, error, stack, conn) do
+    {exception, stacktrace} = Error.normalize(error, stack)
+    do_handle_error(transaction, exception, stacktrace, conn)
+  end
+
+  @spec do_handle_error(Appsignal.Transaction.t(), Exception.t(), list(String.t()), map()) :: :ok
+  defp do_handle_error(_, %{plug_status: status}, _, _) when status < 500, do: :ok
+
+  defp do_handle_error(transaction, exception, stack, conn) do
+    {reason, message} = Appsignal.Error.metadata(exception)
+    backtrace = Backtrace.from_stacktrace(stack)
+
+    @transaction.set_error(transaction, reason, message, backtrace)
+
+    if @transaction.finish(transaction) == :sample do
+      @transaction.set_request_metadata(transaction, conn)
+    end
+
+    @transaction.complete(transaction)
   end
 
   def submit_transaction(transaction, reason, message, stack, metadata, conn \\ nil)
@@ -77,9 +99,8 @@ defmodule Appsignal.ErrorHandler do
   def match_event({:error_report, _gleader, {origin, :crash_report, [report | _]}})
       when is_list(report) do
     try do
-      {_kind, exception, stack} = report[:error_info]
-      {reason, message, backtrace} = Appsignal.Error.metadata(exception, stack)
-      {origin, reason, message, backtrace, nil}
+      {_kind, error, stack} = report[:error_info]
+      {origin, error, stack, %{}}
     rescue
       exception ->
         Logger.warn(fn ->
@@ -103,9 +124,10 @@ defmodule Appsignal.ErrorHandler do
     Backtrace.from_stacktrace(stacktrace)
   end
 
-  @deprecated "Use Appsignal.Error.metadata/2 instead."
+  @deprecated "Use Appsignal.Error.metadata/1 instead."
   def extract_reason_and_message(any, prefix) do
-    {name, message, _} = Appsignal.Error.metadata(any, [])
+    {exception, _} = Error.normalize(any, [])
+    {name, message} = Error.metadata(exception)
     {name, prefixed(prefix, message)}
   end
 
@@ -114,7 +136,7 @@ defmodule Appsignal.ErrorHandler do
   defp prefixed(pre, msg), do: pre <> ": " <> msg
 
   @pid_or_ref_regex ~r/\<(\d+\.)+\d+\>/
-  @deprecated "Use Appsignal.Error.metadata/2 instead."
+  @deprecated "Use Appsignal.Error.metadata/1 instead."
   def normalize_reason(reason) do
     Regex.replace(@pid_or_ref_regex, reason, "<...>")
   end
