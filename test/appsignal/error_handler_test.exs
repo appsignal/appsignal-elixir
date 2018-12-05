@@ -42,21 +42,20 @@ defmodule Appsignal.ErrorHandlerTest do
   end
 
   test "does not send error reports for ignored processes", %{fake_transaction: fake_transaction} do
-    id = Transaction.generate_id()
-
     :proc_lib.spawn(fn ->
-      Transaction.start(id, :http_request)
-
+      Appsignal.TransactionRegistry.ignore(self())
       :timer.sleep(50)
 
-      Appsignal.TransactionRegistry.ignore(self())
-
-      :erlang.error(:error_http_request)
+      :erlang.error(:error_ignored)
     end)
 
     :timer.sleep(100)
 
-    assert FakeTransaction.errors(fake_transaction) == []
+    refute fake_transaction
+           |> FakeTransaction.errors()
+           |> Enum.any?(fn error ->
+             match?({%Transaction{}, ":error_ignored", _, _}, error)
+           end)
   end
 
   test "submitting the transaction", %{fake_transaction: fake_transaction} do
