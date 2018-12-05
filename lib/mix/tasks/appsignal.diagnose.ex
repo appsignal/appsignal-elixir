@@ -20,7 +20,10 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     Application.load(:appsignal)
     report = %{process: %{uid: @system.uid}}
     configure_appsignal()
-    config = Application.get_env(:appsignal, :config)
+    config_report = Diagnose.Config.config()
+    config = config_report[:options]
+    report = Map.put(report, :config, config_report)
+
     header()
     empty_line()
 
@@ -52,8 +55,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
           Map.put(report, :agent, %{output: raw_report})
       end
 
-    report = Map.put(report, :config, config)
-    print_configuration(config)
+    print_configuration(config_report)
     empty_line()
 
     validation_report = Diagnose.Validation.validate(config)
@@ -120,15 +122,68 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
   defp print_configuration(config) do
     IO.puts("Configuration")
 
-    Enum.each(config, &print_configuration_option/1)
+    Enum.each(config[:options], fn {key, _} = option ->
+      config_label = configuration_option_label(option)
+      option_sources = config[:sources]
+      sources = sources_for_option(key, option_sources)
+      sources_label = configuration_option_source_label(key, sources, option_sources)
+      IO.puts("#{config_label}#{sources_label}")
+    end)
+
+    IO.puts(
+      "\nRead more about how the diagnose config output is rendered\n" <>
+        "https://docs.appsignal.com/elixir/command-line/diagnose.html"
+    )
   end
 
-  defp print_configuration_option({key, value}) when is_list(value) do
-    IO.puts("  #{key}: #{Enum.join(value, ", ")}")
+  defp configuration_option_label({key, value}) when is_list(value) do
+    "  #{key}: #{Enum.join(value, ", ")}"
   end
 
-  defp print_configuration_option({key, value}) do
-    IO.puts("  #{key}: #{value}")
+  defp configuration_option_label({key, value}) do
+    "  #{key}: #{value}"
+  end
+
+  defp configuration_option_source_label(_, [], _), do: ""
+
+  defp configuration_option_source_label(_, [:default], _), do: ""
+
+  defp configuration_option_source_label(_, sources, _) when length(sources) == 1 do
+    " (Loaded from #{Enum.join(sources, ", ")})"
+  end
+
+  defp configuration_option_source_label(key, sources, option_sources) do
+    max_source_label_length =
+      sources
+      |> Enum.map(fn source ->
+        source
+        |> to_string
+        |> String.length()
+      end)
+      |> Enum.max()
+
+    # + 1 to account for the : symbol
+    max_source_label_length = max_source_label_length + 1
+
+    sources_label =
+      sources
+      |> Enum.map(fn source ->
+        label = String.pad_trailing("#{source}:", max_source_label_length)
+        "      #{label} #{option_sources[source][key]}"
+      end)
+      |> Enum.join("\n")
+
+    "\n    Sources:\n#{sources_label}"
+  end
+
+  defp sources_for_option(key, sources) do
+    [:default, :system, :file, :env]
+    |> Enum.map(fn source ->
+      if Map.has_key?(sources[source], key) do
+        source
+      end
+    end)
+    |> Enum.reject(fn value -> value == nil end)
   end
 
   defp print_validation(validation_report) do
