@@ -549,28 +549,16 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   end
 
   describe "configuration" do
-    test "outputs configuration with string values" do
+    test "outputs inspected configuration option values" do
       output = run()
       assert String.contains?(output, "Configuration")
 
-      config =
-        Application.get_env(:appsignal, :config)
-        |> Enum.filter(fn {_, value} -> !is_list(value) end)
+      config = Application.get_env(:appsignal, :config)
+
+      refute Enum.empty?(config)
 
       Enum.each(config, fn {key, value} ->
-        assert String.contains?(output, "  #{key}: #{value}")
-      end)
-    end
-
-    test "outputs configuration with array values" do
-      output = run()
-
-      config =
-        Application.get_env(:appsignal, :config)
-        |> Enum.filter(fn {_, value} -> is_list(value) end)
-
-      Enum.each(config, fn {key, value} ->
-        assert String.contains?(output, "  #{key}: #{Enum.join(value, ", ")}")
+        assert String.contains?(output, "  #{key}: #{inspect(value)}")
       end)
     end
 
@@ -583,7 +571,10 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     test "outputs the source when there is only one source (not default)" do
       output = run()
 
-      assert String.contains?(output, "  name: AppSignal test suite app v0 (Loaded from file)\n")
+      assert String.contains?(
+               output,
+               "  name: \"AppSignal test suite app v0\" (Loaded from file)\n"
+             )
     end
 
     test "outputs sources for option with multiple sources" do
@@ -606,7 +597,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
       assert String.contains?(
                output,
-               "  push_api_key: bar\n    Sources:\n      file: foo\n      env:  bar"
+               "  push_api_key: \"bar\"\n    Sources:\n      file: \"foo\"\n      env:  \"bar\""
              )
 
       assert String.contains?(

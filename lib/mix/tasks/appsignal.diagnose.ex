@@ -136,12 +136,8 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     )
   end
 
-  defp configuration_option_label({key, value}) when is_list(value) do
-    "  #{key}: #{Enum.join(value, ", ")}"
-  end
-
   defp configuration_option_label({key, value}) do
-    "  #{key}: #{value}"
+    "  #{key}: #{format_value(value)}"
   end
 
   defp configuration_option_source_label(_, [], _), do: ""
@@ -169,7 +165,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
       sources
       |> Enum.map(fn source ->
         label = String.pad_trailing("#{source}:", max_source_label_length)
-        "      #{label} #{option_sources[source][key]}"
+        "      #{label} #{format_value(option_sources[source][key])}"
       end)
       |> Enum.join("\n")
 
@@ -184,6 +180,10 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
       end
     end)
     |> Enum.reject(fn value -> value == nil end)
+  end
+
+  defp format_value(value) do
+    inspect(value)
   end
 
   defp print_validation(validation_report) do
