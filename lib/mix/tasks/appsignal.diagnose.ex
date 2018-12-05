@@ -68,10 +68,6 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     print_paths(path_report)
     empty_line()
 
-    logs = Diagnose.Logs.info()
-    report = Map.put(report, :logs, logs)
-    print_logs(logs)
-
     send_report_to_appsignal_if_agreed_upon(config, report, send_report)
   end
 
@@ -193,46 +189,33 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
 
   defp print_paths(path_report) do
     IO.puts("Paths")
+    labels = Diagnose.Paths.labels()
 
-    Enum.each(path_report, fn path ->
-      print_path(path)
+    Enum.each(path_report, fn {name, path} ->
+      print_path(path, Map.fetch!(labels, name))
     end)
   end
 
-  defp print_logs(logs) do
-    IO.puts("Log files")
-
-    Enum.each(logs, fn {filename, log} ->
-      IO.puts("  #{filename}:")
-      IO.puts("    Path: #{log[:path]}")
-
-      case log do
-        %{exists: false} ->
-          IO.puts("    File not found.")
-
-        %{content: lines} ->
-          IO.puts("    Contents:")
-          Enum.each(lines, &IO.puts/1)
-      end
-
-      empty_line()
-    end)
-  end
-
-  defp print_path({name, path}) do
-    IO.puts("  #{name}: #{path[:path]}")
+  defp print_path(path, label) do
+    IO.puts("  #{label}")
+    IO.puts("    Path: #{inspect(path[:path])}")
 
     if path[:exists] do
-      IO.puts("    - Writable?: #{yes_or_no(path[:writable])}")
+      IO.puts("    Writable?: #{yes_or_no(path[:writable])}")
       file_uid = path[:ownership][:uid]
       process_uid = @system.uid
-      IO.write("    - Ownership?: #{yes_or_no(file_uid == process_uid)}")
+      IO.write("    Ownership?: #{yes_or_no(file_uid == process_uid)}")
       IO.puts(" (file: #{file_uid}, process: #{process_uid})")
     else
-      IO.puts("    - Exists?: no")
+      IO.puts("    Exists?: no")
     end
 
-    if path[:error], do: IO.puts("    - Error: #{path[:error]}")
+    if path[:content] do
+      IO.puts("    Contents (last 10 lines):")
+      Enum.each(Enum.take(path[:content], -10), &IO.puts/1)
+    end
+
+    if path[:error], do: IO.puts("    Error: #{path[:error]}")
   end
 
   defp send_report_to_appsignal_if_agreed_upon(config, report, send_report) do

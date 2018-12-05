@@ -3,41 +3,109 @@ defmodule Appsignal.Diagnose.Paths do
     log_file_path = config[:log_path] || "/tmp/appsignal.log"
     log_dir_path = Path.dirname(log_file_path)
 
+    install_log_path =
+      :appsignal
+      |> Application.app_dir()
+      |> Path.join("install.log")
+
     %{
+      working_dir: path_report(System.cwd()),
       log_dir_path: path_report(log_dir_path),
-      log_file_path: path_report(log_file_path)
+      "appsignal.log": path_report(log_file_path),
+      "install.log": path_report(install_log_path)
+    }
+  end
+
+  def labels() do
+    %{
+      working_dir: "Working directory",
+      log_dir_path: "Log directory",
+      "appsignal.log": "AppSignal log",
+      "install.log": "Extension install log"
     }
   end
 
   defp path_report(path) do
     report = %{
       path: path,
-      configured: true,
-      exists: false,
-      writable: false
+      exists: false
     }
 
     path_details =
       if File.exists?(path) do
-        case File.stat(path) do
-          {:ok, %{access: access, uid: uid}} ->
-            case access do
-              p when p in [:write, :read_write] ->
-                %{writable: true}
+        result =
+          case File.stat(path) do
+            {:ok, %{access: access, uid: uid, gid: gid, type: type, mode: mode, size: size}} ->
+              r = %{
+                writable: file_writable(access),
+                type: file_type(type),
+                mode: mode,
+                ownership: %{uid: uid, gid: gid}
+              }
 
-              _ ->
-                %{}
-            end
-            |> Map.merge(%{ownership: %{uid: uid}})
+              file_result =
+                case r[:type] do
+                  :file ->
+                    case read_file_content(path, size) do
+                      {:ok, content} ->
+                        %{content: String.split(content, "\n")}
 
-          {:error, reason} ->
-            %{error: reason}
-        end
-        |> Map.merge(%{exists: true})
+                      {:error, reason} ->
+                        %{error: reason}
+                    end
+
+                  _ ->
+                    %{}
+                end
+
+              Map.merge(r, file_result)
+
+            {:error, reason} ->
+              %{error: reason}
+          end
+
+        Map.merge(result, %{exists: true})
       else
         %{}
       end
 
     Map.merge(report, path_details)
+  end
+
+  # Reads the last bytes of a file
+  # The last 2 Mebibytes by default
+  defp read_file_content(path, file_size, bytes_to_read \\ 2 * 1024 * 1024) do
+    {offset, read_length} =
+      if bytes_to_read > file_size do
+        # When the file is smaller than the bytes_to_read
+        # Read the whole file
+        {0, file_size}
+      else
+        # When the file is smaller than the bytes_to_read
+        # Read the last X bytes_to_read
+        {file_size - bytes_to_read, bytes_to_read}
+      end
+
+    {:ok, file} = :file.open(path, [:read, :binary])
+    result = :file.pread(file, offset, read_length)
+    :file.close(file)
+    result
+  end
+
+  defp file_type(type) do
+    case type do
+      :regular -> :file
+      value -> value
+    end
+  end
+
+  defp file_writable(access) do
+    case access do
+      p when p in [:write, :read_write] ->
+        true
+
+      _ ->
+        false
+    end
   end
 end
