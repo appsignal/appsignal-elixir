@@ -1,3 +1,11 @@
+# 1.9.0-beta.1
+* Add missing host OS field to diagnose report. PR #418
+* Link back to AppSignal diagnose report page. PR #420
+* Add `Error.metadata/2` to extract error metadata. PR #423
+* Format values printed in the diagnose. PR #426
+* Update diagnose paths section. PR #427
+* Add unified ErrorHandler. PR #425
+
 # 1.8.2
 * Add Appsignal.Ecto.handle_event/4 to support Ecto 3. PR #416
 * Add diagnose command --[no-]send-report option. PR #414
