@@ -1,23 +1,27 @@
 defmodule Mix.Tasks.Appsignal.Diagnose.PathsTest do
   use ExUnit.Case
+  import AppsignalTest.Utils
   alias Appsignal.Diagnose.Paths
 
   describe "with file bigger than 2 Mebibytes" do
     setup do
-      path = Path.join(System.tmp_dir(), "appsignal_test_file")
+      path = System.tmp_dir()
+      file_path = Path.join(path, "appsignal.log")
       bytes = more_than_two_mebibytes_of_data()
-      File.write!(path, bytes)
+      File.write!(file_path, bytes)
 
       on_exit(fn ->
-        File.rm!(path)
+        File.rm!(file_path)
       end)
 
       {:ok, %{path: path, bytes: bytes}}
     end
 
     test "only reads the last 2 Mebibytes", %{path: path, bytes: bytes} do
-      paths = Paths.info(%{log_path: path})
-      log = paths[:"appsignal.log"]
+      log =
+        with_config(%{log_path: path}, fn ->
+          Paths.info()[:"appsignal.log"]
+        end)
 
       bytes_to_read = 2 * 1024 * 1024
       max_length = byte_size(bytes)
@@ -30,19 +34,22 @@ defmodule Mix.Tasks.Appsignal.Diagnose.PathsTest do
 
   describe "with file smaller than 2 Mebibytes" do
     setup do
-      path = Path.join(System.tmp_dir(), "appsignal_test_file")
-      File.write!(path, "line 1\nline 2\nline 3")
+      path = System.tmp_dir()
+      file_path = Path.join(path, "appsignal.log")
+      File.write!(file_path, "line 1\nline 2\nline 3")
 
       on_exit(fn ->
-        File.rm!(path)
+        File.rm!(file_path)
       end)
 
       {:ok, %{path: path}}
     end
 
     test "reads the full file", %{path: path} do
-      paths = Paths.info(%{log_path: path})
-      log = paths[:"appsignal.log"]
+      log =
+        with_config(%{log_path: path}, fn ->
+          Paths.info()[:"appsignal.log"]
+        end)
 
       assert log[:content] == ["line 1", "line 2", "line 3"]
     end

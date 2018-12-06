@@ -734,75 +734,6 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     end
   end
 
-  describe "when log_dir_path does not exist" do
-    setup do
-      setup_with_config(%{log_path: "/foo/bar/baz.log"})
-    end
-
-    test "outputs exists: false" do
-      output = run()
-
-      assert String.contains?(output, "Log directory\n    Path: \"/foo/bar\"\n    Exists?: no")
-
-      assert String.contains?(
-               output,
-               "AppSignal log\n    Path: \"/foo/bar/baz.log\"\n    Exists?: no"
-             )
-    end
-
-    test "adds log exists: false to report", %{fake_report: fake_report} do
-      run()
-      paths = received_report(fake_report)[:paths]
-      assert paths[:log_dir_path] == %{path: "/foo/bar", exists: false}
-      assert paths[:"appsignal.log"] == %{path: "/foo/bar/baz.log", exists: false}
-    end
-  end
-
-  describe "when log_dir_path is not writable" do
-    setup do
-      log_dir_path = Path.expand("tmp/not_writable_path", File.cwd!())
-      log_file_path = Path.expand("appsignal.log", log_dir_path)
-
-      on_exit(:clean_up, fn ->
-        File.chmod!(log_dir_path, 0o755)
-        File.rm_rf!(log_dir_path)
-      end)
-
-      File.mkdir_p!(log_dir_path)
-      File.touch!(log_file_path)
-      File.chmod!(log_dir_path, 0o400)
-      setup_with_config(%{log_path: log_file_path})
-
-      {:ok, %{log_dir_path: log_dir_path, log_file_path: log_file_path}}
-    end
-
-    test "outputs writable: false", %{log_dir_path: log_dir_path, log_file_path: log_file_path} do
-      output = run()
-
-      assert String.contains?(
-               output,
-               "Log directory\n    Path: \"#{log_dir_path}\"\n    Writable?: no"
-             )
-
-      # Can't read inside the directory so it's assumed to not exist
-      assert String.contains?(
-               output,
-               "AppSignal log\n    Path: \"#{log_file_path}\"\n    Exists?: no"
-             )
-    end
-
-    test "adds log writable: false to report", %{fake_report: fake_report} do
-      run()
-      paths = received_report(fake_report)[:paths]
-      log_dir_report = paths[:log_dir_path]
-      assert log_dir_report[:exists] == true
-      assert log_dir_report[:writable] == false
-      log_file_report = paths[:"appsignal.log"]
-      assert log_file_report[:exists] == false
-      assert log_file_report[:writable] == nil
-    end
-  end
-
   describe "when path is owned by current user" do
     setup do
       %{log_dir_path: log_dir_path} = prepare_tmp_dir("not_owned_path")
@@ -966,7 +897,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     end)
 
     File.mkdir_p!(log_dir_path)
-    setup_with_config(%{log_path: log_file_path})
+    setup_with_config(%{log_path: log_dir_path})
     File.write!(log_file_path, "log line 1\nlog line 2\nlog line 3")
 
     %{log_dir_path: log_dir_path, "appsignal.log": log_file_path}

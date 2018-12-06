@@ -1,5 +1,6 @@
 defmodule Appsignal.Config do
   alias Appsignal.Nif
+  alias Appsignal.Utils.FileSystem
 
   require Logger
 
@@ -257,7 +258,7 @@ defmodule Appsignal.Config do
     )
 
     Nif.env_put("_APPSIGNAL_LOG", config[:log])
-    Nif.env_put("_APPSIGNAL_LOG_FILE_PATH", to_string(config[:log_path]))
+    Nif.env_put("_APPSIGNAL_LOG_FILE_PATH", to_string(log_file_path()))
     Nif.env_put("_APPSIGNAL_PUSH_API_ENDPOINT", config[:endpoint] || "")
     Nif.env_put("_APPSIGNAL_PUSH_API_KEY", config[:push_api_key] || "")
     Nif.env_put("_APPSIGNAL_RUNNING_IN_CONTAINER", to_string(config[:running_in_container]))
@@ -270,6 +271,65 @@ defmodule Appsignal.Config do
     )
 
     Nif.env_put("_APP_REVISION", to_string(config[:revision]))
+  end
+
+  @log_filename "appsignal.log"
+
+  def log_file_path do
+    config = Application.fetch_env!(:appsignal, :config)
+    do_log_file_path(config[:log_path])
+  end
+
+  defp do_log_file_path(nil), do: log_file_path_tmp_location()
+
+  defp do_log_file_path(log_path) do
+    log_path = normalized_log_path(log_path)
+
+    case FileSystem.writable?(log_path) do
+      true ->
+        Path.join(log_path, @log_filename)
+
+      false ->
+        IO.warn(log_file_path_warning_message(FileSystem.system_tmp_dir(), log_path))
+        log_file_path_tmp_location(log_path)
+    end
+  end
+
+  defp normalized_log_path(user_path) do
+    case Path.extname(user_path) do
+      extension when extension != "" ->
+        IO.warn(
+          "appsignal: Deprecation warning: File names are no longer supported in the " <>
+            "'log_path' config option. Changing the filename to '#{@log_filename}'."
+        )
+
+        Path.dirname(user_path)
+
+      _ ->
+        user_path
+    end
+  end
+
+  defp log_file_path_tmp_location(log_path \\ nil) do
+    system_tmp_dir = FileSystem.system_tmp_dir()
+
+    if FileSystem.writable?(system_tmp_dir) do
+      Path.join(system_tmp_dir, @log_filename)
+    else
+      IO.warn(log_file_path_warning_message(system_tmp_dir, log_path))
+      nil
+    end
+  end
+
+  defp log_file_path_warning_message(system_tmp_dir, nil) do
+    "appsignal: Unable to log to the '#{system_tmp_dir}' fallback. " <>
+      "Please check the write permissions for the log directory."
+  end
+
+  defp log_file_path_warning_message(system_tmp_dir, log_path) do
+    "appsignal: Unable to log to '#{log_path}' or the " <>
+      "'#{system_tmp_dir}' fallback. " <>
+      "Please check the write permissions for the log directory."
   end
 
   @doc """

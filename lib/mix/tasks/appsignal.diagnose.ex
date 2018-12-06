@@ -63,7 +63,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     print_validation(validation_report)
     empty_line()
 
-    path_report = Diagnose.Paths.info(config)
+    path_report = Diagnose.Paths.info()
     report = Map.put(report, :paths, path_report)
     print_paths(path_report)
     empty_line()
