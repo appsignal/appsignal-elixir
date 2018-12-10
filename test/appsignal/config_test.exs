@@ -5,6 +5,7 @@ defmodule Appsignal.ConfigTest do
 
   use ExUnit.Case
   import AppsignalTest.Utils
+  import ExUnit.CaptureIO
   alias Appsignal.{Config, Nif}
 
   setup do
@@ -21,8 +22,12 @@ defmodule Appsignal.ConfigTest do
     test "stores sources in Application" do
       init_config()
 
+      default =
+        default_configuration()
+        |> Map.delete(:valid)
+
       assert Application.get_env(:appsignal, :config_sources) == %{
-               default: default_configuration() |> Map.delete(:valid),
+               default: default,
                system: %{},
                file: %{},
                env: %{}
@@ -229,8 +234,10 @@ defmodule Appsignal.ConfigTest do
     end
 
     test "log_path" do
-      assert with_config(%{log_path: "log/appsignal.log"}, &init_config/0) ==
-               default_configuration() |> Map.put(:log_path, "log/appsignal.log")
+      log_path = System.cwd()
+
+      assert with_config(%{log_path: log_path}, &init_config/0) ==
+               default_configuration() |> Map.put(:log_path, log_path)
     end
 
     test "name" do
@@ -421,10 +428,12 @@ defmodule Appsignal.ConfigTest do
     end
 
     test "log_path" do
+      log_path = System.cwd()
+
       assert with_env(
-               %{"APPSIGNAL_LOG_PATH" => "log/appsignal.log"},
+               %{"APPSIGNAL_LOG_PATH" => log_path},
                &init_config/0
-             ) == default_configuration() |> Map.put(:log_path, "log/appsignal.log")
+             ) == default_configuration() |> Map.put(:log_path, log_path)
     end
 
     test "name" do
@@ -574,6 +583,46 @@ defmodule Appsignal.ConfigTest do
     end
   end
 
+  describe "log_file_path/0" do
+    test "defaults to /tmp/appsignal.log" do
+      system_tmp_dir = Appsignal.Utils.FileSystem.system_tmp_dir()
+
+      with_config(%{}, fn ->
+        assert Config.log_file_path() == Path.join(system_tmp_dir, "appsignal.log")
+      end)
+    end
+
+    test "overrides user specified filename when set" do
+      output =
+        capture_io(:stderr, fn ->
+          system_tmp_dir = Appsignal.Utils.FileSystem.system_tmp_dir()
+
+          with_config(%{log_path: Path.join(system_tmp_dir, "custom.log")}, fn ->
+            assert Config.log_file_path() == Path.join(system_tmp_dir, "appsignal.log")
+          end)
+        end)
+
+      assert output =~ "Deprecation warning: File names are no longer supported in the 'log_path'"
+    end
+
+    test "falls back on /tmp/appsignal.log when user path is not writable" do
+      log_path = "/non_existent_path"
+      system_tmp_dir = Appsignal.Utils.FileSystem.system_tmp_dir()
+
+      output =
+        capture_io(:stderr, fn ->
+          with_config(%{log_path: log_path}, fn ->
+            assert Config.log_file_path() == Path.join(system_tmp_dir, "appsignal.log")
+          end)
+        end)
+
+      assert output =~
+               "appsignal: Unable to log to '#{log_path}' or the " <>
+                 "'#{system_tmp_dir}' fallback. " <>
+                 "Please check the write permissions for the log directory."
+    end
+  end
+
   describe "reset_environment_config!" do
     test "deletes existing configuration in environment" do
       assert with_env(
@@ -592,6 +641,7 @@ defmodule Appsignal.ConfigTest do
       Appsignal.Config.write_to_environment()
     end
 
+    @tag :skip_env_test_no_nif
     test "empty config options get written to the env" do
       write_to_environment()
       assert Nif.env_get("_APPSIGNAL_APP_NAME") == ''
@@ -599,7 +649,7 @@ defmodule Appsignal.ConfigTest do
       assert Nif.env_get("_APPSIGNAL_IGNORE_ACTIONS") == ''
       assert Nif.env_get("_APPSIGNAL_IGNORE_ERRORS") == ''
       assert Nif.env_get("_APPSIGNAL_IGNORE_NAMESPACES") == ''
-      assert Nif.env_get("_APPSIGNAL_LOG_FILE_PATH") == ''
+      assert Nif.env_get("_APPSIGNAL_LOG_FILE_PATH") == '/tmp/appsignal.log'
       assert Nif.env_get("_APPSIGNAL_WORKING_DIR_PATH") == ''
       assert Nif.env_get("_APPSIGNAL_WORKING_DIRECTORY_PATH") == ''
       assert Nif.env_get("_APPSIGNAL_RUNNING_IN_CONTAINER") == ''
@@ -642,7 +692,7 @@ defmodule Appsignal.ConfigTest do
           ignore_errors: ~w(VerySpecificError AnotherError),
           ignore_namespaces: ~w(admin private_namespace),
           log: "stdout",
-          log_path: "log/appsignal.log",
+          log_path: "/tmp",
           name: "AppSignal test suite app",
           running_in_container: false,
           working_dir_path: "/tmp/appsignal-deprecated",
@@ -674,7 +724,7 @@ defmodule Appsignal.ConfigTest do
                    'elixir-' ++ String.to_charlist(Mix.Project.config()[:version])
 
           assert Nif.env_get("_APPSIGNAL_LOG") == 'stdout'
-          assert Nif.env_get("_APPSIGNAL_LOG_FILE_PATH") == 'log/appsignal.log'
+          assert Nif.env_get("_APPSIGNAL_LOG_FILE_PATH") == '/tmp/appsignal.log'
           assert Nif.env_get("_APPSIGNAL_PUSH_API_ENDPOINT") == 'https://push.staging.lol'
           assert Nif.env_get("_APPSIGNAL_PUSH_API_KEY") == '00000000-0000-0000-0000-000000000000'
           assert Nif.env_get("_APPSIGNAL_RUNNING_IN_CONTAINER") == 'false'

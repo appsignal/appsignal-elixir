@@ -16,12 +16,14 @@ defmodule AppsignalTest.Utils do
   def freeze_environment do
     {
       Application.get_env(:appsignal, :config, %{}),
+      Application.get_env(:appsignal, :config_sources, %{}),
       System.get_env()
     }
   end
 
-  def unfreeze_environment({config, env}) do
+  def unfreeze_environment({config, sources, env}) do
     Application.put_env(:appsignal, :config, config)
+    Application.put_env(:appsignal, :config_sources, sources)
     reset_env(env)
   end
 
