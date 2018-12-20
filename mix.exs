@@ -3,38 +3,7 @@ defmodule Mix.Tasks.Compile.Appsignal do
 
   def run(_args) do
     {_, _} = Code.eval_file("mix_helpers.exs")
-
-    case Mix.Appsignal.Helper.verify_system_architecture() do
-      {:ok, arch} ->
-        case Mix.Appsignal.Helper.ensure_downloaded(arch) do
-          :ok ->
-            :ok = Mix.Appsignal.Helper.compile()
-            :ok = Mix.Appsignal.Helper.store_architecture(arch)
-
-          {:error, _reason} ->
-            Mix.Shell.IO.error(
-              "Failed to download AppSignal agent. AppSignal integration disabled!"
-            )
-        end
-
-      {:error, {:unsupported, arch}} ->
-        Mix.Shell.IO.error(
-          "Unsupported target platform #{arch}, AppSignal integration " <>
-            "disabled!\nPlease check " <>
-            "http://docs.appsignal.com/support/operating-systems.html"
-        )
-
-        :ok = Mix.Appsignal.Helper.store_architecture(arch)
-
-      {:error, {:unknown, {arch, platform}}} ->
-        Mix.Shell.IO.error(
-          "Unknown target platform #{arch} - #{platform}, AppSignal " <>
-            "integration disabled!\nPlease check " <>
-            "http://docs.appsignal.com/support/operating-systems.html"
-        )
-
-        :ok = Mix.Appsignal.Helper.store_architecture(arch)
-    end
+    Mix.Appsignal.Helper.install()
   end
 end
 

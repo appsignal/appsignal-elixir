@@ -27,17 +27,4 @@ defmodule Appsignal.System do
         nil
     end
   end
-
-  # Returns the platform for which the agent was installed.
-  #
-  # This value is saved when the package is installed.
-  # We use this value to build the diagnose report with the installed
-  # platform, rather than the detected platform in .agent_platform during
-  # the diagnose run.
-  def installed_agent_architecture do
-    case File.read(Path.join([:code.priv_dir(:appsignal), "appsignal.architecture"])) do
-      {:ok, arch} -> arch
-      {:error, _} -> nil
-    end
-  end
 end
