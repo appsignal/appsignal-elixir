@@ -1,5 +1,6 @@
 defmodule Appsignal.Config do
   alias Appsignal.Nif
+  alias Appsignal.Utils.FileSystem
 
   require Logger
 
@@ -34,16 +35,20 @@ defmodule Appsignal.Config do
   """
   @spec initialize() :: :ok | {:error, :invalid_config}
   def initialize() do
-    system_config = load_from_system()
-    app_config = Application.get_env(:appsignal, :config, []) |> coerce_map
-    env_config = load_from_environment()
+    sources = %{
+      default: load_from_default(),
+      system: load_from_system(),
+      file: load_from_application(),
+      env: load_from_environment()
+    }
+
+    Application.put_env(:appsignal, :config_sources, sources)
 
     config =
-      @default_config
-      |> Map.merge(runtime_config())
-      |> Map.merge(system_config)
-      |> Map.merge(app_config)
-      |> Map.merge(env_config)
+      sources[:default]
+      |> Map.merge(sources[:system])
+      |> Map.merge(sources[:file])
+      |> Map.merge(sources[:env])
 
     # Config is valid when we have a push api key
     config =
@@ -100,6 +105,34 @@ defmodule Appsignal.Config do
     Path.join(:code.priv_dir(:appsignal), "cacert.pem")
   end
 
+  defp load_from_default do
+    @default_config
+    |> Map.merge(runtime_config())
+  end
+
+  defp load_from_system do
+    config = %{}
+
+    # Make AppSignal active by default if the APPSIGNAL_PUSH_API_KEY
+    # environment variable is present.
+    # Is overwritten by application config and env config.
+    config =
+      case System.get_env("APPSIGNAL_PUSH_API_KEY") do
+        nil -> config
+        _ -> Map.merge(config, %{active: true})
+      end
+
+    # Detect Heroku
+    case Appsignal.System.heroku?() do
+      false -> config
+      true -> Map.merge(config, %{running_in_container: true, log: "stdout"})
+    end
+  end
+
+  defp load_from_application do
+    Application.get_env(:appsignal, :config, []) |> coerce_map
+  end
+
   @env_to_key_mapping %{
     "APPSIGNAL_ACTIVE" => :active,
     "APPSIGNAL_PUSH_API_KEY" => :push_api_key,
@@ -134,6 +167,14 @@ defmodule Appsignal.Config do
   @atom_keys ~w(APPSIGNAL_APP_ENV)
   @string_list_keys ~w(APPSIGNAL_FILTER_PARAMETERS APPSIGNAL_IGNORE_ACTIONS APPSIGNAL_IGNORE_ERRORS APPSIGNAL_IGNORE_NAMESPACES APPSIGNAL_DNS_SERVERS APPSIGNAL_FILTER_SESSION_DATA APPSIGNAL_REQUEST_HEADERS)
 
+  defp load_from_environment do
+    %{}
+    |> load_environment(@string_keys, & &1)
+    |> load_environment(@bool_keys, &true?(&1))
+    |> load_environment(@atom_keys, &String.to_atom(&1))
+    |> load_environment(@string_list_keys, &String.split(&1, ","))
+  end
+
   defp load_environment(config, list, converter) do
     list
     |> Enum.reduce(config, fn key, cfg ->
@@ -149,33 +190,6 @@ defmodule Appsignal.Config do
 
   defp runtime_config do
     %{ca_file_path: default_ca_file_path()}
-  end
-
-  defp load_from_system() do
-    config = %{}
-
-    # Make AppSignal active by default if the APPSIGNAL_PUSH_API_KEY
-    # environment variable is present.
-    # Is overwritten by application config and env config.
-    config =
-      case System.get_env("APPSIGNAL_PUSH_API_KEY") do
-        nil -> config
-        _ -> Map.merge(config, %{active: true})
-      end
-
-    # Detect Heroku
-    case Appsignal.System.heroku?() do
-      false -> config
-      true -> Map.merge(config, %{running_in_container: true, log: "stdout"})
-    end
-  end
-
-  defp load_from_environment() do
-    %{}
-    |> load_environment(@string_keys, & &1)
-    |> load_environment(@bool_keys, &true?(&1))
-    |> load_environment(@atom_keys, &String.to_atom(&1))
-    |> load_environment(@string_list_keys, &String.split(&1, ","))
   end
 
   defp coerce_map(value) when is_list(value) do
@@ -244,7 +258,7 @@ defmodule Appsignal.Config do
     )
 
     Nif.env_put("_APPSIGNAL_LOG", config[:log])
-    Nif.env_put("_APPSIGNAL_LOG_FILE_PATH", to_string(config[:log_path]))
+    Nif.env_put("_APPSIGNAL_LOG_FILE_PATH", to_string(log_file_path()))
     Nif.env_put("_APPSIGNAL_PUSH_API_ENDPOINT", config[:endpoint] || "")
     Nif.env_put("_APPSIGNAL_PUSH_API_KEY", config[:push_api_key] || "")
     Nif.env_put("_APPSIGNAL_RUNNING_IN_CONTAINER", to_string(config[:running_in_container]))
@@ -257,6 +271,65 @@ defmodule Appsignal.Config do
     )
 
     Nif.env_put("_APP_REVISION", to_string(config[:revision]))
+  end
+
+  @log_filename "appsignal.log"
+
+  def log_file_path do
+    config = Application.fetch_env!(:appsignal, :config)
+    do_log_file_path(config[:log_path])
+  end
+
+  defp do_log_file_path(nil), do: log_file_path_tmp_location()
+
+  defp do_log_file_path(log_path) do
+    log_path = normalized_log_path(log_path)
+
+    case FileSystem.writable?(log_path) do
+      true ->
+        Path.join(log_path, @log_filename)
+
+      false ->
+        IO.warn(log_file_path_warning_message(FileSystem.system_tmp_dir(), log_path))
+        log_file_path_tmp_location(log_path)
+    end
+  end
+
+  defp normalized_log_path(user_path) do
+    case Path.extname(user_path) do
+      extension when extension != "" ->
+        IO.warn(
+          "appsignal: Deprecation warning: File names are no longer supported in the " <>
+            "'log_path' config option. Changing the filename to '#{@log_filename}'."
+        )
+
+        Path.dirname(user_path)
+
+      _ ->
+        user_path
+    end
+  end
+
+  defp log_file_path_tmp_location(log_path \\ nil) do
+    system_tmp_dir = FileSystem.system_tmp_dir()
+
+    if FileSystem.writable?(system_tmp_dir) do
+      Path.join(system_tmp_dir, @log_filename)
+    else
+      IO.warn(log_file_path_warning_message(system_tmp_dir, log_path))
+      nil
+    end
+  end
+
+  defp log_file_path_warning_message(system_tmp_dir, nil) do
+    "appsignal: Unable to log to the '#{system_tmp_dir}' fallback. " <>
+      "Please check the write permissions for the log directory."
+  end
+
+  defp log_file_path_warning_message(system_tmp_dir, log_path) do
+    "appsignal: Unable to log to '#{log_path}' or the " <>
+      "'#{system_tmp_dir}' fallback. " <>
+      "Please check the write permissions for the log directory."
   end
 
   @doc """

@@ -1,27 +1,16 @@
-defmodule ErrorLoggerForwarder do
-  def init(pid) do
-    {:ok, pid}
-  end
-
-  def handle_event(event, pid) do
-    send(pid, event)
-    {:ok, pid}
-  end
-
-  def handle_info(_, state) do
-    {:ok, state}
-  end
-end
-
 defmodule Appsignal.ErrorHandlerTest do
   @moduledoc """
   Test the actual Appsignal.ErrorHandler
   """
 
-  use ExUnit.Case, async: false
-  import Mock
+  use ExUnit.Case, async: true
 
-  alias Appsignal.{Transaction, ErrorHandler}
+  alias Appsignal.{Transaction, ErrorHandler, FakeTransaction}
+
+  setup do
+    {:ok, fake_transaction} = FakeTransaction.start_link()
+    [fake_transaction: fake_transaction]
+  end
 
   test "whether we can send error reports without current transaction" do
     :proc_lib.spawn(fn ->
@@ -31,37 +20,58 @@ defmodule Appsignal.ErrorHandlerTest do
     :timer.sleep(100)
   end
 
-  test "whether we can send error reports with a current transaction" do
-    id = Transaction.generate_id()
+  test "whether we can send error reports with a current transaction", %{
+    fake_transaction: fake_transaction
+  } do
+    pid =
+      :proc_lib.spawn(fn ->
+        self()
+        |> inspect
+        |> FakeTransaction.start(:http_request)
+        |> FakeTransaction.set_action("AppsignalErrorHandlerTest#test")
 
-    :proc_lib.spawn(fn ->
-      id
-      |> Transaction.start(:http_request)
-      |> Transaction.set_action("AppsignalErrorHandlerTest#test")
+        :erlang.error(:error_http_request)
+      end)
 
-      :erlang.error(:error_http_request)
-    end)
+    :timer.sleep(20)
 
-    :timer.sleep(400)
+    [{transaction, reason, _message, _stack}] = FakeTransaction.errors(fake_transaction)
 
-    # check that the handler has processed the transaction
-    transaction = Appsignal.ErrorHandler.get_last_transaction()
-    assert %Transaction{} = transaction
-    assert id == transaction.id
+    assert transaction.id == inspect(pid)
+    assert reason == ":error_http_request"
   end
 
-  test_with_mock "submitting the transaction", Appsignal.Transaction, [:passthrough], [] do
+  test "does not send error reports for ignored processes", %{fake_transaction: fake_transaction} do
+    :proc_lib.spawn(fn ->
+      Appsignal.TransactionRegistry.ignore(self())
+      :timer.sleep(50)
+
+      :erlang.error(:error_ignored)
+    end)
+
+    :timer.sleep(100)
+
+    refute fake_transaction
+           |> FakeTransaction.errors()
+           |> Enum.any?(fn error ->
+             match?({%Transaction{}, ":error_ignored", _, _}, error)
+           end)
+  end
+
+  test "submitting the transaction", %{fake_transaction: fake_transaction} do
     transaction = Transaction.start("id", :http_request)
     reason = "ArithmeticError"
     message = "bad argument in arithmetic expression"
     metadata = %{foo: "bar"}
 
-    ErrorHandler.submit_transaction(transaction, reason, message, [], metadata)
+    transaction = ErrorHandler.submit_transaction(transaction, reason, message, [], metadata)
 
-    assert called(Transaction.set_error(transaction, reason, message, []))
-    assert called(Transaction.set_meta_data(transaction, metadata))
-    assert called(Transaction.finish(transaction))
-    assert called(Transaction.complete(transaction))
+    assert [{%Appsignal.Transaction{}, ^reason, ^message, _stack}] =
+             FakeTransaction.errors(fake_transaction)
+
+    assert ^metadata = FakeTransaction.metadata(fake_transaction)
+    assert [^transaction] = FakeTransaction.finished_transactions(fake_transaction)
+    assert [^transaction] = FakeTransaction.completed_transactions(fake_transaction)
   end
 
   test "does not cause warnings for noise on handle_info" do
@@ -72,5 +82,65 @@ defmodule Appsignal.ErrorHandlerTest do
     |> send(:noise)
 
     refute_receive({:warning_msg, _, _})
+  end
+
+  describe "handle_error/2" do
+    test "adds an exception to the transaction and completes it", %{
+      fake_transaction: fake_transaction
+    } do
+      transaction = FakeTransaction.create("123", :http_request)
+      exception = %RuntimeError{}
+
+      :ok = ErrorHandler.handle_error(transaction, exception, [], %{})
+
+      assert [{^transaction, "RuntimeError", "runtime error", []}] =
+               FakeTransaction.errors(fake_transaction)
+
+      [^transaction] = FakeTransaction.completed_transactions(fake_transaction)
+    end
+
+    test "normalizes errors before adding them to the transaction", %{
+      fake_transaction: fake_transaction
+    } do
+      transaction = FakeTransaction.create("123", :http_request)
+      :ok = ErrorHandler.handle_error(transaction, :undef, [], %{})
+
+      assert [{^transaction, "UndefinedFunctionError", "undefined function", []}] =
+               FakeTransaction.errors(fake_transaction)
+    end
+
+    test "adds request metadata to the transaction", %{fake_transaction: fake_transaction} do
+      transaction = FakeTransaction.create("123", :http_request)
+      exception = %RuntimeError{}
+      conn = %Plug.Conn{}
+
+      :ok = ErrorHandler.handle_error(transaction, exception, [], conn)
+
+      assert conn == FakeTransaction.request_metadata(fake_transaction)
+    end
+
+    test "does not add request metadata for an unsampled transaction", %{
+      fake_transaction: fake_transaction
+    } do
+      FakeTransaction.update(fake_transaction, :finish, :no_sample)
+
+      transaction = FakeTransaction.create("123", :http_request)
+      exception = %RuntimeError{}
+      conn = %Plug.Conn{}
+
+      :ok = ErrorHandler.handle_error(transaction, exception, [], conn)
+
+      refute FakeTransaction.request_metadata(fake_transaction)
+    end
+
+    test "ignores errors with a plug_status lower than 500", %{fake_transaction: fake_transaction} do
+      transaction = FakeTransaction.create("123", :http_request)
+      exception = %Plug.BadRequestError{}
+
+      :ok = ErrorHandler.handle_error(transaction, exception, [], %{})
+
+      assert [] = FakeTransaction.errors(fake_transaction)
+      refute FakeTransaction.completed_transactions(fake_transaction)
+    end
   end
 end

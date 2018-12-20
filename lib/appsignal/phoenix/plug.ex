@@ -8,12 +8,11 @@ if Appsignal.plug?() do
       end
     end
 
-    def extract_error_metadata(reason, conn, stack) do
-      IO.warn(
-        "Appsignal.Phoenix.Plug.extract_error_metadata/3 is deprecated. Use Appsignal.Plug.extract_error_metadata/1 instead."
-      )
-
-      Appsignal.Plug.extract_error_metadata(reason, conn, stack)
+    @deprecated "Use Appsignal.Error.metadata/1 instead."
+    def extract_error_metadata(reason, conn, _stack) do
+      {exception, stack} = Appsignal.Error.normalize(reason, [])
+      {name, message} = Appsignal.Error.metadata(exception)
+      {name, message, stack, conn}
     end
   end
 end

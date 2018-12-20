@@ -13,6 +13,14 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   defp run_fn(args \\ nil), do: Mix.Tasks.Appsignal.Diagnose.run(args)
 
   setup do
+    environment = freeze_environment()
+    Application.delete_env(:appsignal, :config)
+    Application.delete_env(:appsignal, :config_sources)
+
+    ExUnit.Callbacks.on_exit(fn ->
+      unfreeze_environment(environment)
+    end)
+
     {:ok, fake_report} = FakeReport.start_link()
     {:ok, fake_system} = Appsignal.FakeSystem.start_link()
     {:ok, fake_nif} = Appsignal.FakeNif.start_link()
@@ -25,7 +33,10 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     auth_bypass = Bypass.open()
 
     setup_with_config(%{
+      active: true,
       valid: true,
+      name: "AppSignal test suite app v0",
+      env: "test",
       push_api_key: "foo",
       endpoint: "http://localhost:#{auth_bypass.port}"
     })
@@ -126,6 +137,8 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     assert String.contains?(output, "Architecture: #{:erlang.system_info(:system_architecture)}")
     assert String.contains?(output, "Elixir version: #{System.version()}")
     assert String.contains?(output, "OTP version: #{System.otp_release()}")
+    {_, os} = :os.type()
+    assert String.contains?(output, "Operating System: #{os}")
   end
 
   test "adds host information to report", %{fake_report: fake_report} do
@@ -135,70 +148,15 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       received_report(fake_report)[:host]
       |> Map.drop([:root, :running_in_container])
 
+    {_, os} = :os.type()
+
     assert report == %{
              architecture: to_string(:erlang.system_info(:system_architecture)),
              language_version: System.version(),
              otp_version: System.otp_release(),
+             os: os,
              heroku: false
            }
-  end
-
-  describe "when install.log exists" do
-    setup do
-      content =
-        "[2017-11-10 13:39:47.795755Z] Error!\n[2017-11-10 13:39:48.795755Z] Another Error!"
-
-      File.write!(install_log_path(), content)
-
-      {:ok, %{content: content}}
-    end
-
-    test "outputs the log", %{content: content} do
-      output = run()
-      assert String.contains?(output, "Log files")
-      assert String.contains?(output, "Path: #{install_log_path()}")
-      refute String.contains?(output, "File not found.")
-      assert String.contains?(output, content)
-    end
-
-    test "adds logs to report", %{content: content, fake_report: fake_report} do
-      run()
-      logs = received_report(fake_report)[:logs]
-
-      assert logs == %{
-               "install.log": %{
-                 path: install_log_path(),
-                 exists: true,
-                 content: content |> String.split("\n")
-               }
-             }
-    end
-  end
-
-  describe "when install.log does not exist" do
-    setup do
-      File.rm(install_log_path())
-      :ok
-    end
-
-    test "outputs the log" do
-      output = run()
-      assert String.contains?(output, "Log files")
-      assert String.contains?(output, "Path: #{install_log_path()}")
-      assert String.contains?(output, "File not found.")
-    end
-
-    test "adds logs to report", %{fake_report: fake_report} do
-      run()
-      logs = received_report(fake_report)[:logs]
-
-      assert logs == %{
-               "install.log": %{
-                 path: install_log_path(),
-                 exists: false
-               }
-             }
-    end
   end
 
   describe "when on Heroku" do
@@ -353,7 +311,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       assert String.contains?(output, "Agent diagnostics")
       assert String.contains?(output, "  Extension tests\n    Configuration: valid")
       assert String.contains?(output, "  Agent tests")
-      assert String.contains?(output, "    Started: started\n" <> "    Configuration: valid")
+      assert String.contains?(output, "    Started: started\n    Configuration: valid")
       assert String.contains?(output, "    Process user id: #{process_uid()}")
       assert String.contains?(output, "    Process user group id: #{process_gid()}")
       assert String.contains?(output, "    Logger: started")
@@ -533,35 +491,71 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   end
 
   describe "configuration" do
-    test "outputs configuration with string values" do
+    test "outputs inspected configuration option values" do
       output = run()
       assert String.contains?(output, "Configuration")
 
-      config =
-        Application.get_env(:appsignal, :config)
-        |> Enum.filter(fn {_, value} -> !is_list(value) end)
+      config = Application.get_env(:appsignal, :config)
+
+      refute Enum.empty?(config)
 
       Enum.each(config, fn {key, value} ->
-        assert String.contains?(output, "  #{key}: #{value}")
+        assert String.contains?(output, "  #{key}: #{inspect(value)}")
       end)
     end
 
-    test "outputs configuration with array values" do
+    test "outputs no source for option when only default source" do
       output = run()
 
-      config =
-        Application.get_env(:appsignal, :config)
-        |> Enum.filter(fn {_, value} -> is_list(value) end)
+      assert String.contains?(output, "  send_params: true\n")
+    end
 
-      Enum.each(config, fn {key, value} ->
-        assert String.contains?(output, "  #{key}: #{Enum.join(value, ", ")}")
-      end)
+    test "outputs the source when there is only one source (not default)" do
+      output = run()
+
+      assert String.contains?(
+               output,
+               "  name: \"AppSignal test suite app v0\" (Loaded from file)\n"
+             )
+    end
+
+    test "outputs sources for option with multiple sources" do
+      output = run()
+
+      assert String.contains?(
+               output,
+               "  active: true\n    Sources:\n      default: false\n      file:    true"
+             )
+    end
+
+    test "outputs all different sources for option when available" do
+      output =
+        with_env(
+          %{"DYNO" => "true", "APPSIGNAL_PUSH_API_KEY" => "bar"},
+          fn ->
+            with_config(%{running_in_container: false}, &run/0)
+          end
+        )
+
+      assert String.contains?(
+               output,
+               "  push_api_key: \"bar\"\n    Sources:\n      file: \"foo\"\n      env:  \"bar\""
+             )
+
+      assert String.contains?(
+               output,
+               "  running_in_container: false\n    Sources:\n      system: true\n      file:   false"
+             )
     end
   end
 
   test "adds configuration to the report", %{fake_report: fake_report} do
     run()
-    assert received_report(fake_report)[:config] == Application.get_env(:appsignal, :config)
+
+    assert received_report(fake_report)[:config] == %{
+             options: Application.get_env(:appsignal, :config),
+             sources: Application.get_env(:appsignal, :config_sources)
+           }
   end
 
   describe "with valid Push API key" do
@@ -600,127 +594,143 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     end
   end
 
+  describe "when install.log exists" do
+    setup do
+      content =
+        "[2017-11-10 13:39:47.795755Z] Error!\n[2017-11-10 13:39:48.795755Z] Another Error!"
+
+      File.write!(install_log_path(), content)
+
+      {:ok, %{content: content}}
+    end
+
+    test "outputs the log file", %{content: content} do
+      output = run()
+      assert String.contains?(output, "Extension install log")
+      assert String.contains?(output, "Path: #{inspect(install_log_path())}")
+      assert String.contains?(output, content)
+    end
+
+    test "adds log file to report", %{content: content, fake_report: fake_report} do
+      run()
+      path = install_log_path()
+      {:ok, %{mode: mode, uid: uid, gid: gid}} = File.stat(path)
+      paths = received_report(fake_report)[:paths]
+
+      assert paths[:"install.log"] == %{
+               path: path,
+               exists: true,
+               type: :file,
+               mode: mode,
+               writable: true,
+               ownership: %{uid: uid, gid: gid},
+               content: content |> String.split("\n")
+             }
+    end
+  end
+
+  describe "when install.log does not exist" do
+    setup do
+      File.rm(install_log_path())
+      :ok
+    end
+
+    test "outputs the log" do
+      output = run()
+      assert String.contains?(output, "Path: #{inspect(install_log_path())}\n    Exists?: no")
+    end
+
+    test "adds log file to report", %{fake_report: fake_report} do
+      run()
+      paths = received_report(fake_report)[:paths]
+
+      assert paths[:"install.log"] == %{
+               path: install_log_path(),
+               exists: false
+             }
+    end
+  end
+
   describe "without config" do
     test "it outputs tmp dir for log_dir_path" do
       output = with_config(%{log_path: nil}, &run/0)
-      assert String.contains?(output, "Paths")
-      assert String.contains?(output, "log_dir_path: /tmp")
-      assert String.contains?(output, "log_file_path: /tmp/appsignal.log")
+      assert String.contains?(output, "Log directory\n    Path: \"/tmp\"")
+      assert String.contains?(output, "AppSignal log\n    Path: \"/tmp/appsignal.log\"")
     end
 
     test "adds paths to report", %{fake_report: fake_report} do
       run()
-      assert Map.keys(received_report(fake_report)[:paths]) == [:log_dir_path, :log_file_path]
+
+      assert Map.keys(received_report(fake_report)[:paths]) == [
+               :"appsignal.log",
+               :"install.log",
+               :log_dir_path,
+               :working_dir
+             ]
     end
   end
 
   describe "when log_dir_path is writable" do
     setup do
-      %{log_dir_path: log_dir_path, log_file_path: log_file_path} =
+      %{log_dir_path: log_dir_path, "appsignal.log": log_file_path} =
         prepare_tmp_dir("writable_path")
 
-      {:ok, %{log_dir_path: log_dir_path, log_file_path: log_file_path}}
+      {:ok, %{log_dir_path: log_dir_path, "appsignal.log": log_file_path}}
     end
 
     @tag :skip_env_test_no_nif
     test "outputs writable and creates log file", %{
       log_dir_path: log_dir_path,
-      log_file_path: log_file_path,
+      "appsignal.log": log_file_path,
       fake_nif: fake_nif
     } do
       FakeNif.update(fake_nif, :run_diagnose, true)
       output = run()
-      assert String.contains?(output, "log_dir_path: #{log_dir_path}\n    - Writable?: yes")
-      assert String.contains?(output, "log_file_path: #{log_file_path}\n    - Writable?: yes")
+
+      assert String.contains?(
+               output,
+               "Log directory\n    Path: #{inspect(log_dir_path)}\n    Writable?: yes"
+             )
+
+      assert String.contains?(
+               output,
+               "AppSignal log\n    Path: #{inspect(log_file_path)}\n    Writable?: yes"
+             )
     end
 
     @tag :skip_env_test_no_nif
     test "adds writable log paths to report", %{
       log_dir_path: log_dir_path,
-      log_file_path: log_file_path,
+      "appsignal.log": log_file_path,
       fake_report: fake_report,
       fake_nif: fake_nif
     } do
       FakeNif.update(fake_nif, :run_diagnose, true)
       run()
-      %{uid: uid} = File.stat!(log_dir_path)
+      paths = received_report(fake_report)[:paths]
 
-      assert received_report(fake_report)[:paths] == %{
-               log_dir_path: %{
-                 path: log_dir_path,
-                 configured: true,
-                 exists: true,
-                 writable: true,
-                 ownership: %{uid: uid}
-               },
-               log_file_path: %{
-                 path: log_file_path,
-                 configured: true,
-                 exists: true,
-                 writable: true,
-                 ownership: %{uid: uid}
-               }
+      %{mode: mode, uid: uid, gid: gid} = File.stat!(log_dir_path)
+
+      assert paths[:log_dir_path] == %{
+               type: :directory,
+               path: log_dir_path,
+               exists: true,
+               mode: mode,
+               writable: true,
+               ownership: %{uid: uid, gid: gid}
              }
-    end
-  end
 
-  describe "when log_dir_path does not exist" do
-    setup do
-      setup_with_config(%{log_path: "/foo/bar/baz.log"})
-    end
+      %{mode: mode, uid: uid, gid: gid} = File.stat!(log_file_path)
 
-    test "outputs exists: false" do
-      output = run()
-
-      assert String.contains?(output, "log_dir_path: /foo/bar\n    - Exists?: no")
-      assert String.contains?(output, "log_file_path: /foo/bar/baz.log\n    - Exists?: no")
-    end
-
-    test "adds log exists: false to report", %{fake_report: fake_report} do
-      run()
-      log_dir_report = received_report(fake_report)[:paths][:log_dir_path]
-      assert log_dir_report[:exists] == false
-      assert log_dir_report[:writable] == false
-      log_file_report = received_report(fake_report)[:paths][:log_file_path]
-      assert log_file_report[:exists] == false
-      assert log_file_report[:writable] == false
-    end
-  end
-
-  describe "when log_dir_path is not writable" do
-    setup do
-      log_dir_path = Path.expand("tmp/not_writable_path", File.cwd!())
-      log_file_path = Path.expand("appsignal.log", log_dir_path)
-
-      on_exit(:clean_up, fn ->
-        File.chmod!(log_dir_path, 0o755)
-        File.rm_rf!(log_dir_path)
-      end)
-
-      File.mkdir_p!(log_dir_path)
-      File.touch!(log_file_path)
-      File.chmod!(log_dir_path, 0o400)
-      setup_with_config(%{log_path: log_file_path})
-
-      {:ok, %{log_dir_path: log_dir_path, log_file_path: log_file_path}}
-    end
-
-    test "outputs writable: false", %{log_dir_path: log_dir_path, log_file_path: log_file_path} do
-      output = run()
-
-      assert String.contains?(output, "log_dir_path: #{log_dir_path}\n    - Writable?: no")
-      # Can't read inside the directory so it's assumed to not exist
-      assert String.contains?(output, "log_file_path: #{log_file_path}\n    - Exists?: no")
-    end
-
-    test "adds log writable: false to report", %{fake_report: fake_report} do
-      run()
-      log_dir_report = received_report(fake_report)[:paths][:log_dir_path]
-      assert log_dir_report[:exists] == true
-      assert log_dir_report[:writable] == false
-      log_file_report = received_report(fake_report)[:paths][:log_file_path]
-      assert log_file_report[:exists] == false
-      assert log_file_report[:writable] == false
+      assert paths[:"appsignal.log"] == %{
+               type: :file,
+               path: log_file_path,
+               exists: true,
+               mode: mode,
+               writable: true,
+               ownership: %{uid: uid, gid: gid},
+               content: ["log line 1", "log line 2", "log line 3"]
+             }
     end
   end
 
@@ -742,10 +752,8 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
       assert String.contains?(
                output,
-               "log_dir_path: #{log_dir_path}\n    - Writable?: yes\n" <>
-                 "    - Ownership?: yes (file: #{uid}, process: #{
-                   FakeSystem.get(fake_system, :uid)
-                 })"
+               "Log directory\n    Path: \"#{log_dir_path}\"\n    Writable?: yes\n" <>
+                 "    Ownership?: yes (file: #{uid}, process: #{FakeSystem.get(fake_system, :uid)})"
              )
     end
   end
@@ -763,10 +771,8 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
       assert String.contains?(
                output,
-               "log_dir_path: #{log_dir_path}\n    - Writable?: yes\n" <>
-                 "    - Ownership?: no (file: #{uid}, process: #{
-                   FakeSystem.get(fake_system, :uid)
-                 })"
+               "Log directory\n    Path: \"#{log_dir_path}\"\n    Writable?: yes\n" <>
+                 "    Ownership?: no (file: #{uid}, process: #{FakeSystem.get(fake_system, :uid)})"
              )
     end
   end
@@ -786,13 +792,18 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     test "sends diagnostics report to AppSignal and outputs a support token", %{
       fake_report: fake_report
     } do
-      assert FakeReport.update(fake_report, :response, {:ok, "0123456789abcdef"})
+      token = "0123456789abcdef"
+      assert FakeReport.update(fake_report, :response, {:ok, token})
       output = run()
       assert String.contains?(output, "Diagnostics report")
       assert String.contains?(output, "Send diagnostics report to AppSignal? (Y/n):")
       assert String.contains?(output, "Transmitting diagnostics report")
-      assert String.contains?(output, "Your diagnostics report has been sent to AppSignal.")
-      assert String.contains?(output, "Your support token: 0123456789abcdef")
+      assert String.contains?(output, "Your support token: #{token}")
+
+      assert String.contains?(
+               output,
+               "View this report:   https://appsignal.com/diagnose/#{token}"
+             )
 
       assert FakeReport.get(fake_report, :report_sent?)
       assert received_report(fake_report)
@@ -817,7 +828,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
       assert String.contains?(
                output,
-               "Error: Something went wrong while submitting the report " <> "to AppSignal."
+               "Error: Something went wrong while submitting the report to AppSignal."
              )
 
       assert String.contains?(output, "Response code: 500")
@@ -833,7 +844,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
       assert String.contains?(
                output,
-               "Error: Something went wrong while submitting the report " <> "to AppSignal.\nfoo"
+               "Error: Something went wrong while submitting the report to AppSignal.\nfoo"
              )
     end
   end
@@ -859,13 +870,18 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     test "sends diagnostics report to AppSignal and outputs a support token", %{
       fake_report: fake_report
     } do
-      assert FakeReport.update(fake_report, :response, {:ok, "0123456789abcdef"})
+      token = "0123456789abcdef"
+      assert FakeReport.update(fake_report, :response, {:ok, token})
       output = run(["--send-report"])
       assert String.contains?(output, "Diagnostics report")
       assert String.contains?(output, "Confirmed sending report using --send-report option.")
       assert String.contains?(output, "Transmitting diagnostics report")
-      assert String.contains?(output, "Your diagnostics report has been sent to AppSignal.")
-      assert String.contains?(output, "Your support token: 0123456789abcdef")
+      assert String.contains?(output, "Your support token: #{token}")
+
+      assert String.contains?(
+               output,
+               "View this report:   https://appsignal.com/diagnose/#{token}"
+             )
 
       assert FakeReport.get(fake_report, :report_sent?)
       assert received_report(fake_report)
@@ -881,9 +897,10 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     end)
 
     File.mkdir_p!(log_dir_path)
-    setup_with_config(%{log_path: log_file_path})
+    setup_with_config(%{log_path: log_dir_path})
+    File.write!(log_file_path, "log line 1\nlog line 2\nlog line 3")
 
-    %{log_dir_path: log_dir_path, log_file_path: log_file_path}
+    %{log_dir_path: log_dir_path, "appsignal.log": log_file_path}
   end
 
   def install_log_path() do

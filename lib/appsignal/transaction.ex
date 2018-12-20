@@ -486,6 +486,8 @@ defmodule Appsignal.Transaction do
     end
   end
 
+  def set_request_metadata(transaction, %{}), do: transaction
+
   if Appsignal.phoenix?() do
     @doc """
     Given the transaction and a %Plug.Conn{}, try to set the Phoenix controller module / action in the transaction.

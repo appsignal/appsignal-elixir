@@ -15,7 +15,7 @@ defmodule UsingAppsignalPlug do
     raise %Plug.Conn.WrapperError{
       kind: :error,
       reason: :undef,
-      stack: System.stacktrace(),
+      stack: [],
       conn: %{conn | params: %{"foo" => "bar"}}
     }
   end
@@ -24,7 +24,7 @@ defmodule UsingAppsignalPlug do
     raise %Plug.Conn.WrapperError{
       kind: :error,
       reason: :undef,
-      stack: System.stacktrace(),
+      stack: [],
       conn: %Plug.Conn{}
     }
   end
@@ -159,7 +159,7 @@ defmodule Appsignal.PlugTest do
                {
                  %Appsignal.Transaction{},
                  "RuntimeError",
-                 "HTTP request error: Exception!",
+                 "Exception!",
                  _stack
                }
              ] = FakeTransaction.errors(fake_transaction)
@@ -183,6 +183,11 @@ defmodule Appsignal.PlugTest do
 
     test "completes the transaction", %{fake_transaction: fake_transaction} do
       assert [%Appsignal.Transaction{}] = FakeTransaction.completed_transactions(fake_transaction)
+    end
+
+    test "ignores the process' pid" do
+      :timer.sleep(1)
+      assert Appsignal.TransactionRegistry.ignored?(self()) == true
     end
   end
 
@@ -231,7 +236,7 @@ defmodule Appsignal.PlugTest do
                {
                  %Appsignal.Transaction{},
                  "UndefinedFunctionError",
-                 "HTTP request error: undefined function",
+                 "undefined function",
                  _stack
                }
              ] = FakeTransaction.errors(fake_transaction)
@@ -286,39 +291,11 @@ defmodule Appsignal.PlugTest do
           type, reason -> {type, reason}
         end
 
-      assert [
-               {
-                 %Appsignal.Transaction{},
-                 ":timeout",
-                 "HTTP request error: {:timeout, {Task, :await, [%Task{owner: " <> _,
-                 _stack
-               }
-             ] = FakeTransaction.errors(fake_transaction)
-    end
-  end
+      [{%Appsignal.Transaction{}, name, message, _stack}] =
+        FakeTransaction.errors(fake_transaction)
 
-  describe "extracting error metadata" do
-    test "with a RuntimeError" do
-      assert Appsignal.Plug.extract_error_metadata(%RuntimeError{}) ==
-               {"RuntimeError", "HTTP request error: runtime error"}
-    end
-
-    test "with a Plug.Conn.WrapperError" do
-      error = %Plug.Conn.WrapperError{reason: %RuntimeError{}}
-
-      assert Appsignal.Plug.extract_error_metadata(error) ==
-               {"RuntimeError", "HTTP request error: runtime error"}
-    end
-
-    test "with an error tuple" do
-      error = {:timeout, {Task, :await, [%Task{owner: self(), pid: self(), ref: make_ref()}, 1]}}
-
-      assert Appsignal.Plug.extract_error_metadata(error) ==
-               {":timeout", "HTTP request error: #{inspect(error)}"}
-    end
-
-    test "ignores errors with a plug_status < 500" do
-      assert Appsignal.Plug.extract_error_metadata(%Plug.BadRequestError{}) == nil
+      assert name == ":timeout"
+      assert message =~ ~r({:timeout, {Task, :await, \[%Task{owner: ...)
     end
   end
 
@@ -459,7 +436,7 @@ defmodule Appsignal.PlugTest do
 
       :ok =
         try do
-          Appsignal.Plug.handle_error(conn, kind, reason, wrapped_reason, stack)
+          Appsignal.Plug.handle_error(conn, kind, reason, stack)
         rescue
           Plug.Conn.WrapperError -> :ok
         end
@@ -472,7 +449,7 @@ defmodule Appsignal.PlugTest do
                {
                  %Appsignal.Transaction{},
                  "UndefinedFunctionError",
-                 "HTTP request error: undefined function",
+                 "undefined function",
                  []
                }
              ] == FakeTransaction.errors(fake_transaction)
@@ -495,7 +472,6 @@ defmodule Appsignal.PlugTest do
           Appsignal.Plug.handle_error(
             %Plug.Conn{private: %{appsignal_transaction: transaction}},
             :error,
-            %Plug.BadRequestError{},
             %Plug.BadRequestError{},
             []
           )

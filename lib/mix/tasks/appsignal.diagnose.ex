@@ -20,7 +20,10 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     Application.load(:appsignal)
     report = %{process: %{uid: @system.uid}}
     configure_appsignal()
-    config = Application.get_env(:appsignal, :config)
+    config_report = Diagnose.Config.config()
+    config = config_report[:options]
+    report = Map.put(report, :config, config_report)
+
     header()
     empty_line()
 
@@ -52,8 +55,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
           Map.put(report, :agent, %{output: raw_report})
       end
 
-    report = Map.put(report, :config, config)
-    print_configuration(config)
+    print_configuration(config_report)
     empty_line()
 
     validation_report = Diagnose.Validation.validate(config)
@@ -61,14 +63,10 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     print_validation(validation_report)
     empty_line()
 
-    path_report = Diagnose.Paths.info(config)
+    path_report = Diagnose.Paths.info()
     report = Map.put(report, :paths, path_report)
     print_paths(path_report)
     empty_line()
-
-    logs = Diagnose.Logs.info()
-    report = Map.put(report, :logs, logs)
-    print_logs(logs)
 
     send_report_to_appsignal_if_agreed_upon(config, report, send_report)
   end
@@ -97,6 +95,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     IO.puts("  Architecture: #{host_report[:architecture]}")
     IO.puts("  Elixir version: #{host_report[:language_version]}")
     IO.puts("  OTP version: #{host_report[:otp_version]}")
+    IO.puts("  Operating System: #{host_report[:os]}")
     root_user = if host_report[:root], do: "yes (not recommended)", else: "no"
     IO.puts("  root user: #{root_user}")
 
@@ -119,15 +118,68 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
   defp print_configuration(config) do
     IO.puts("Configuration")
 
-    Enum.each(config, &print_configuration_option/1)
+    Enum.each(config[:options], fn {key, _} = option ->
+      config_label = configuration_option_label(option)
+      option_sources = config[:sources]
+      sources = sources_for_option(key, option_sources)
+      sources_label = configuration_option_source_label(key, sources, option_sources)
+      IO.puts("#{config_label}#{sources_label}")
+    end)
+
+    IO.puts(
+      "\nRead more about how the diagnose config output is rendered\n" <>
+        "https://docs.appsignal.com/elixir/command-line/diagnose.html"
+    )
   end
 
-  defp print_configuration_option({key, value}) when is_list(value) do
-    IO.puts("  #{key}: #{Enum.join(value, ", ")}")
+  defp configuration_option_label({key, value}) do
+    "  #{key}: #{format_value(value)}"
   end
 
-  defp print_configuration_option({key, value}) do
-    IO.puts("  #{key}: #{value}")
+  defp configuration_option_source_label(_, [], _), do: ""
+
+  defp configuration_option_source_label(_, [:default], _), do: ""
+
+  defp configuration_option_source_label(_, sources, _) when length(sources) == 1 do
+    " (Loaded from #{Enum.join(sources, ", ")})"
+  end
+
+  defp configuration_option_source_label(key, sources, option_sources) do
+    max_source_label_length =
+      sources
+      |> Enum.map(fn source ->
+        source
+        |> to_string
+        |> String.length()
+      end)
+      |> Enum.max()
+
+    # + 1 to account for the : symbol
+    max_source_label_length = max_source_label_length + 1
+
+    sources_label =
+      sources
+      |> Enum.map(fn source ->
+        label = String.pad_trailing("#{source}:", max_source_label_length)
+        "      #{label} #{format_value(option_sources[source][key])}"
+      end)
+      |> Enum.join("\n")
+
+    "\n    Sources:\n#{sources_label}"
+  end
+
+  defp sources_for_option(key, sources) do
+    [:default, :system, :file, :env]
+    |> Enum.map(fn source ->
+      if Map.has_key?(sources[source], key) do
+        source
+      end
+    end)
+    |> Enum.reject(fn value -> value == nil end)
+  end
+
+  defp format_value(value) do
+    inspect(value)
   end
 
   defp print_validation(validation_report) do
@@ -137,46 +189,33 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
 
   defp print_paths(path_report) do
     IO.puts("Paths")
+    labels = Diagnose.Paths.labels()
 
-    Enum.each(path_report, fn path ->
-      print_path(path)
+    Enum.each(path_report, fn {name, path} ->
+      print_path(path, Map.fetch!(labels, name))
     end)
   end
 
-  defp print_logs(logs) do
-    IO.puts("Log files")
-
-    Enum.each(logs, fn {filename, log} ->
-      IO.puts("  #{filename}:")
-      IO.puts("    Path: #{log[:path]}")
-
-      case log do
-        %{exists: false} ->
-          IO.puts("    File not found.")
-
-        %{content: lines} ->
-          IO.puts("    Contents:")
-          Enum.each(lines, &IO.puts/1)
-      end
-
-      empty_line()
-    end)
-  end
-
-  defp print_path({name, path}) do
-    IO.puts("  #{name}: #{path[:path]}")
+  defp print_path(path, label) do
+    IO.puts("  #{label}")
+    IO.puts("    Path: #{inspect(path[:path])}")
 
     if path[:exists] do
-      IO.puts("    - Writable?: #{yes_or_no(path[:writable])}")
+      IO.puts("    Writable?: #{yes_or_no(path[:writable])}")
       file_uid = path[:ownership][:uid]
       process_uid = @system.uid
-      IO.write("    - Ownership?: #{yes_or_no(file_uid == process_uid)}")
+      IO.write("    Ownership?: #{yes_or_no(file_uid == process_uid)}")
       IO.puts(" (file: #{file_uid}, process: #{process_uid})")
     else
-      IO.puts("    - Exists?: no")
+      IO.puts("    Exists?: no")
     end
 
-    if path[:error], do: IO.puts("    - Error: #{path[:error]}")
+    if path[:content] do
+      IO.puts("    Contents (last 10 lines):")
+      Enum.each(Enum.take(path[:content], -10), &IO.puts/1)
+    end
+
+    if path[:error], do: IO.puts("    Error: #{path[:error]}")
   end
 
   defp send_report_to_appsignal_if_agreed_upon(config, report, send_report) do
@@ -184,9 +223,9 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     IO.puts("  Do you want to send this diagnostics report to AppSignal?")
 
     IO.puts(
-      "  If you share this diagnostics report you will be given\n" <>
-        "  a support token you can use to refer to your diagnotics \n" <>
-        "  report when you contact us at support@appsignal.com\n"
+      "  If you share this report you will be given a link to \n" <>
+        "  AppSignal.com to validate the report.\n" <>
+        "  You can also contact us at support@appsignal.com\n  with your support token.\n\n"
     )
 
     answer =
@@ -216,8 +255,8 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
   def send_report_to_appsignal(config, report) do
     case @report.send(config, report) do
       {:ok, support_token} ->
-        IO.puts("  Your diagnostics report has been sent to AppSignal.")
         IO.puts("  Your support token: #{support_token}")
+        IO.puts("  View this report:   https://appsignal.com/diagnose/#{support_token}")
 
       {:error, %{status_code: 200, body: body}} ->
         IO.puts("  Error: Couldn't decode server response.")

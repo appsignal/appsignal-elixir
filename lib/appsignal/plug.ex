@@ -4,7 +4,7 @@ if Appsignal.plug?() do
     Plug handler for Phoenix requests
     """
 
-    alias Appsignal.Config
+    alias Appsignal.{Config, ErrorHandler, Error}
 
     defmacro __using__(_) do
       quote do
@@ -39,40 +39,29 @@ if Appsignal.plug?() do
                    Appsignal.Transaction
                  )
 
-    def handle_error(_conn, :error, %Plug.Conn.WrapperError{} = wrapper, _stack) do
-      %{conn: conn, kind: kind, reason: reason, stack: stack} = wrapper
-      handle_error(conn, kind, wrapper, reason, stack)
+    def handle_error(_conn, :error, %Plug.Conn.WrapperError{} = original_reason, _stack) do
+      %{conn: conn, kind: kind, reason: reason, stack: stack} = original_reason
+      do_handle_error(reason, stack, conn)
+
+      :erlang.raise(kind, original_reason, stack)
     end
 
     def handle_error(conn, kind, reason, stack) do
-      handle_error(conn, kind, reason, reason, stack)
-    end
-
-    def handle_error(
-          %Plug.Conn{private: %{appsignal_transaction: transaction}} = conn,
-          kind,
-          reason,
-          wrapped_reason,
-          stack
-        ) do
-      exception = Exception.normalize(kind, wrapped_reason, stack)
-
-      case Appsignal.Plug.extract_error_metadata(exception) do
-        {reason, message} ->
-          transaction
-          |> @transaction.set_error(reason, message, stack)
-          |> finish_with_conn(conn)
-
-        nil ->
-          :ok
-      end
+      do_handle_error(reason, stack, conn)
 
       :erlang.raise(kind, reason, stack)
     end
 
-    def handle_error(_conn, kind, reason, _wrapped_reason, stack) do
-      :erlang.raise(kind, reason, stack)
+    defp do_handle_error(
+           error,
+           stack,
+           %Plug.Conn{private: %{appsignal_transaction: transaction}} = conn
+         ) do
+      ErrorHandler.handle_error(transaction, error, stack, conn)
+      Appsignal.TransactionRegistry.ignore(self())
     end
+
+    defp do_handle_error(_exception, _stack, _conn), do: :ok
 
     def finish_with_conn(transaction, conn) do
       if @transaction.finish(transaction) == :sample do
@@ -90,30 +79,19 @@ if Appsignal.plug?() do
       end
     end
 
-    @doc """
-    Returns a tuple with the exception's reason and message unless the error has
-    a status code under 500.
-    """
-    def extract_error_metadata(%{plug_status: status}) when status < 500 do
-      nil
-    end
-
-    def extract_error_metadata(%Plug.Conn.WrapperError{reason: reason = %{}}) do
-      Appsignal.ErrorHandler.extract_reason_and_message(reason, "HTTP request error")
-    end
-
-    def extract_error_metadata(reason) do
-      Appsignal.ErrorHandler.extract_reason_and_message(reason, "HTTP request error")
+    @doc false
+    @deprecated "Use Appsignal.Error.metadata/1 instead."
+    def extract_error_metadata(error) do
+      {exception, _stacktrace} = Error.normalize(error, [])
+      Error.metadata(exception)
     end
 
     @doc false
-    def extract_error_metadata(reason, conn, stack) do
-      IO.warn(
-        "Appsignal.Plug.extract_error_metadata/3 is deprecated. Use Appsignal.Plug.extract_error_metadata/1 instead."
-      )
-
-      {reason, message} = extract_error_metadata(reason)
-      {reason, message, stack, conn}
+    @deprecated "Use Appsignal.Error.metadata/1 instead."
+    def extract_error_metadata(error, conn, stack) do
+      {exception, stacktrace} = Error.normalize(error, stack)
+      {name, message} = Error.metadata(exception)
+      {name, message, stacktrace, conn}
     end
 
     def extract_action(%Plug.Conn{

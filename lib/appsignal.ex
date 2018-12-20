@@ -13,9 +13,15 @@ defmodule Appsignal do
 
   use Application
 
-  alias Appsignal.Config
+  alias Appsignal.{Config, Error, Backtrace}
 
   require Logger
+
+  @transaction Application.get_env(
+                 :appsignal,
+                 :appsignal_transaction,
+                 Appsignal.Transaction
+               )
 
   @doc """
   Application callback function
@@ -149,8 +155,8 @@ defmodule Appsignal do
       end)
   """
   def send_error(
-        reason,
-        message \\ "",
+        error,
+        prefix \\ "",
         stack \\ nil,
         metadata \\ %{},
         conn \\ nil,
@@ -170,11 +176,24 @@ defmodule Appsignal do
           stack
       end
 
-    transaction =
-      Appsignal.Transaction.create("_" <> Appsignal.Transaction.generate_id(), namespace)
+    transaction = @transaction.create("_" <> @transaction.generate_id(), namespace)
 
     fun.(transaction)
-    {reason, message} = Appsignal.ErrorHandler.extract_reason_and_message(reason, message)
-    Appsignal.ErrorHandler.submit_transaction(transaction, reason, message, stack, metadata, conn)
+    {exception, stacktrace} = Error.normalize(error, stack)
+    {name, message} = Error.metadata(exception)
+    backtrace = Backtrace.from_stacktrace(stacktrace)
+
+    Appsignal.ErrorHandler.submit_transaction(
+      transaction,
+      name,
+      prefixed(prefix, message),
+      backtrace,
+      metadata,
+      conn
+    )
   end
+
+  defp prefixed("", message), do: message
+  defp prefixed(prefix, message) when is_binary(prefix), do: prefix <> ": " <> message
+  defp prefixed(_, message), do: message
 end

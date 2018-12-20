@@ -44,7 +44,7 @@ defmodule Appsignal.Mixfile do
   def project do
     [
       app: :appsignal,
-      version: "1.8.2",
+      version: "1.9.0",
       name: "AppSignal",
       description: description(),
       package: package(),
@@ -110,9 +110,15 @@ defmodule Appsignal.Mixfile do
   defp test?(_), do: false
 
   defp deps do
+    poison_version =
+      case Version.compare(System.version(), "1.6.0") do
+        :lt -> ">= 1.3.0 and < 4.0.0"
+        _ -> ">= 1.3.0"
+      end
+
     [
       {:hackney, "~> 1.6"},
-      {:poison, ">= 1.3.0"},
+      {:poison, poison_version},
       {:decorator, "~> 1.2.3"},
       {:plug, ">= 1.1.0", optional: true},
       {:phoenix, ">= 1.2.0", optional: true, only: [:prod, :test_phoenix, :dev]},
@@ -120,7 +126,7 @@ defmodule Appsignal.Mixfile do
       {:bypass, "~> 0.6.0", only: [:test, :test_phoenix, :test_no_nif]},
       {:plug_cowboy, "~> 1.0", only: [:test, :test_phoenix, :test_no_nif]},
       {:ex_doc, "~> 0.12", only: :dev, runtime: false},
-      {:credo, "~> 0.8", only: [:dev, :test], runtime: false},
+      {:credo, "~> 1.0.0", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 0.5", only: [:dev], runtime: false}
     ]
   end

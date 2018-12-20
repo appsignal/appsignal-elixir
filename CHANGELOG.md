@@ -1,3 +1,15 @@
+# 1.9.0
+* Add missing host OS field to diagnose report. PR #418
+* Link back to AppSignal diagnose report page. PR #420
+* Add `Error.metadata/2` to extract error metadata. PR #423
+* Format values printed in the diagnose. PR #426
+* Update diagnose paths section. PR #427
+* Add unified ErrorHandler. PR #425
+* Fix appsignal.log default path. PR #429
+* Support container memory host metrics better. PR #431
+* Change files_world_accessible permissions to not make files executable. PR #431
+* Make agent debug logging for disk IO metrics more robust. PR #431
+
 # 1.8.2
 * Add Appsignal.Ecto.handle_event/4 to support Ecto 3. PR #416
 * Add diagnose command --[no-]send-report option. PR #414
