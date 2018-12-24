@@ -8,7 +8,7 @@ defmodule Appsignal.Error do
     {name(exception), Exception.message(exception)}
   end
 
-  @spec normalize(any, Exception.stactrace()) :: {Exception.t(), list(String.t())}
+  @spec normalize(any, Exception.stacktrace()) :: {Exception.t(), list(String.t())}
   if Appsignal.plug?() do
     def normalize(%Plug.Conn.WrapperError{reason: error, stack: _stacktrace}, stacktrace) do
       normalize(error, stacktrace)
@@ -36,7 +36,7 @@ defmodule Appsignal.Error do
 
   def normalize(error, stacktrace), do: do_normalize(error, stacktrace)
 
-  @spec do_normalize(any, Exception.stactrace()) :: {Exception.t(), list(String.t())}
+  @spec do_normalize(any, Exception.stacktrace()) :: {Exception.t(), list(String.t())}
   defp do_normalize(error, stacktrace) do
     exception = Exception.normalize(:error, error, stacktrace)
     {exception, stacktrace}
