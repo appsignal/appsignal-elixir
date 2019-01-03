@@ -27,6 +27,6 @@ matrix:
 script:
   - MIX_ENV=test mix compile --warnings-as-errors
   - MIX_ENV=test scripts/run_formatter
-  - MIX_ENV=test_no_nif mix test
-  - MIX_ENV=test_phoenix mix test
   - MIX_ENV=test mix test
+  - MIX_ENV=test_phoenix mix test
+  - rm -r priv/*appsignal* && MIX_ENV=test_no_nif mix test
