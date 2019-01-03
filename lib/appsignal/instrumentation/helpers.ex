@@ -4,8 +4,8 @@ defmodule Appsignal.Instrumentation.Helpers do
   """
 
   alias Appsignal.{Transaction, TransactionRegistry}
-
   @type instrument_arg :: Transaction.t() | Plug.Conn.t() | pid() | nil
+  @transaction Application.get_env(:appsignal, :appsignal_transaction, Appsignal.Transaction)
 
   @doc """
   Execute the given function in start / finish event calls in the current
@@ -58,9 +58,9 @@ defmodule Appsignal.Instrumentation.Helpers do
   end
 
   def instrument(%Transaction{} = transaction, name, title, body, body_format, function) do
-    Transaction.start_event(transaction)
+    @transaction.start_event(transaction)
     result = function.()
-    Transaction.finish_event(transaction, name, title, body, body_format)
+    @transaction.finish_event(transaction, name, title, body, body_format)
     result
   end
 

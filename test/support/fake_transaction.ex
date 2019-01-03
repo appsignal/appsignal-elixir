@@ -2,12 +2,33 @@ defmodule Appsignal.FakeTransaction do
   @behaviour Appsignal.TransactionBehaviour
   use TestAgent, %{
     started_transactions: [],
+    started_events: [],
     finished_events: [],
     finished_transactions: [],
     errors: []
   }
 
-  def start_event, do: Appsignal.Transaction.start_event()
+  def start_event() do
+    self()
+    |> Appsignal.TransactionRegistry.lookup()
+    |> start_event
+  end
+
+  def start_event(transaction) do
+    Agent.update(__MODULE__, fn state ->
+      {_, new_state} =
+        Map.get_and_update(state, :started_events, fn current ->
+          case current do
+            nil -> {nil, [transaction]}
+            _ -> {current, [transaction | current]}
+          end
+        end)
+
+      new_state
+    end)
+
+    transaction
+  end
 
   def finish_event(transaction, name, title, body, body_format) do
     Agent.update(__MODULE__, fn state ->
@@ -165,6 +186,9 @@ defmodule Appsignal.FakeTransaction do
   end
 
   # Convenience methods for testing
+  def started_events(pid_or_module) do
+    get(pid_or_module, :started_events)
+  end
 
   def finished_events(pid_or_module) do
     get(pid_or_module, :finished_events)
