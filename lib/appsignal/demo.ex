@@ -9,8 +9,8 @@ end
 
 defmodule Appsignal.Demo do
   import Appsignal.Instrumentation.Helpers, only: [instrument: 4]
-
   @behaviour Appsignal.DemoBehaviour
+  @transaction Application.get_env(:appsignal, :appsignal_transaction, Appsignal.Transaction)
 
   @doc false
   @spec create_transaction_error_request :: Appsignal.Transaction.t()
@@ -20,7 +20,7 @@ defmodule Appsignal.Demo do
     rescue
       error ->
         create_demo_transaction()
-        |> Appsignal.Transaction.set_error("TestError", error.message, System.stacktrace())
+        |> @transaction.set_error("TestError", error.message, System.stacktrace())
         |> finish_demo_transaction()
     end
   end
@@ -50,21 +50,21 @@ defmodule Appsignal.Demo do
   end
 
   defp create_demo_transaction do
-    Appsignal.Transaction.start(
-      Appsignal.Transaction.generate_id(),
+    @transaction.start(
+      @transaction.generate_id(),
       :http_request
     )
-    |> Appsignal.Transaction.set_action("DemoController#hello")
-    |> Appsignal.Transaction.set_meta_data("demo_sample", "true")
-    |> Appsignal.Transaction.set_sample_data(
+    |> @transaction.set_action("DemoController#hello")
+    |> @transaction.set_meta_data("demo_sample", "true")
+    |> @transaction.set_sample_data(
       "environment",
       %{request_path: "/hello", method: "GET"}
     )
   end
 
   defp finish_demo_transaction(transaction) do
-    Appsignal.Transaction.finish(transaction)
-    :ok = Appsignal.Transaction.complete(transaction)
+    @transaction.finish(transaction)
+    :ok = @transaction.complete(transaction)
 
     transaction
   end
