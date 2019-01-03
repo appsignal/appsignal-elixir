@@ -191,7 +191,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
 
     assert_stacktrace(stacktrace, [
       ~r{\(elixir\) lib/float.ex:\d+: Float.ceil/2},
-      ~r{\(elixir\) lib/task/supervised.ex:\d+: Task.Supervised.do_apply/2},
+      ~r{\(elixir\) lib/(task/)?supervised.ex:\d+: Task.Supervised\.\w+/2},
       ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p_do_apply/3}
     ])
   end
