@@ -153,7 +153,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
   test "Crashing GenServer with function error", %{fake_transaction: fake_transaction} do
     CrashingGenServer.start(:function_error)
 
-    :timer.sleep(20)
+    :timer.sleep(100)
 
     [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
     assert reason == "FunctionClauseError"
@@ -204,7 +204,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
       |> Task.await(1)
     end)
 
-    :timer.sleep(20)
+    :timer.sleep(100)
 
     [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
     assert reason == ":timeout"
