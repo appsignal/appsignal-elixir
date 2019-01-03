@@ -234,7 +234,7 @@ defmodule Appsignal.ConfigTest do
     end
 
     test "log_path" do
-      log_path = System.cwd()
+      log_path = File.cwd!()
 
       assert with_config(%{log_path: log_path}, &init_config/0) ==
                default_configuration() |> Map.put(:log_path, log_path)
@@ -428,7 +428,7 @@ defmodule Appsignal.ConfigTest do
     end
 
     test "log_path" do
-      log_path = System.cwd()
+      log_path = File.cwd!()
 
       assert with_env(
                %{"APPSIGNAL_LOG_PATH" => log_path},
