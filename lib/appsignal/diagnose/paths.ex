@@ -9,7 +9,7 @@ defmodule Appsignal.Diagnose.Paths do
       |> Path.join("install.log")
 
     %{
-      working_dir: path_report(System.cwd()),
+      working_dir: path_report(File.cwd!()),
       log_dir_path: path_report(log_dir_path),
       "appsignal.log": path_report(log_file_path),
       "install.log": path_report(install_log_path)
