@@ -34,9 +34,14 @@ defmodule Appsignal.Ecto do
   end
 
   def log(entry) do
+    Logger.debug("AppSignal.Ecto log: #{inspect(entry)}")
     # See if we have a transaction registered for the current process
     case TransactionRegistry.lookup(self()) do
       nil ->
+        Logger.debug(
+          "AppSignal.Ecto log: Skipping event. No transaction found for #{inspect(self())}"
+        )
+
         # skip
         :ok
 
@@ -44,6 +49,13 @@ defmodule Appsignal.Ecto do
         # record the event
         total_time = (entry.queue_time || 0) + (entry.query_time || 0) + (entry.decode_time || 0)
         duration = trunc(total_time / @nano_seconds)
+
+        Logger.debug(
+          "AppSignal.Ecto log: recording event for #{inspect(transaction.id)}: #{
+            inspect(entry.query)
+          }, duration: #{inspect(duration)}"
+        )
+
         Transaction.record_event(transaction, "query.ecto", "", entry.query, duration, 1)
     end
 
