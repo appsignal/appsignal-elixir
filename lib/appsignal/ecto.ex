@@ -17,7 +17,6 @@ defmodule Appsignal.Ecto do
     "appsignal-ecto",
     [:my_app, :repo, :query],
     &Appsignal.Ecto.handle_event/4,
-    :handle_event,
     nil
   )
   ```
