@@ -153,7 +153,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
   test "Crashing GenServer with function error", %{fake_transaction: fake_transaction} do
     CrashingGenServer.start(:function_error)
 
-    :timer.sleep(20)
+    :timer.sleep(100)
 
     [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
     assert reason == "FunctionClauseError"
@@ -191,7 +191,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
 
     assert_stacktrace(stacktrace, [
       ~r{\(elixir\) lib/float.ex:\d+: Float.ceil/2},
-      ~r{\(elixir\) lib/task/supervised.ex:\d+: Task.Supervised.do_apply/2},
+      ~r{\(elixir\) lib/(task/)?supervised.ex:\d+: Task.Supervised\.\w+/2},
       ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p_do_apply/3}
     ])
   end
@@ -204,7 +204,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
       |> Task.await(1)
     end)
 
-    :timer.sleep(20)
+    :timer.sleep(100)
 
     [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
     assert reason == ":timeout"
