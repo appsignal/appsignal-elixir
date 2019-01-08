@@ -5,6 +5,7 @@ defmodule Mix.Appsignal.Helper do
   Helper functions for downloading and compiling the AppSignal agent library.
   """
   @os Application.get_env(:appsignal, :os, :os)
+  @system Application.get_env(:appsignal, :mix_system, System)
 
   @max_retries 5
 
@@ -283,7 +284,7 @@ defmodule Mix.Appsignal.Helper do
 
   defp agent_platform_by_ldd_version do
     try do
-      {output, _} = System.cmd("ldd", ["--version"], stderr_to_stdout: true)
+      {output, _} = @system.cmd("ldd", ["--version"], stderr_to_stdout: true)
 
       case String.contains?(output, "musl") do
         true ->
