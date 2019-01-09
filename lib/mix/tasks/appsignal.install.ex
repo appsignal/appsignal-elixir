@@ -106,7 +106,7 @@ defmodule Mix.Tasks.Appsignal.Install do
     IO.puts("Configuring with environment variables.")
     IO.puts("Please put the following variables in your environment to configure AppSignal.\n")
     IO.puts(~s(  export APPSIGNAL_APP_NAME="#{config[:name]}"))
-    IO.puts(~s(  export APPSIGNAL_APP_ENV="production"))
+    IO.puts(~s(  export APPSIGNAL_APP_ENV="prod"))
     IO.puts(~s(  export APPSIGNAL_PUSH_API_KEY="#{config[:push_api_key]}"))
   end
 
