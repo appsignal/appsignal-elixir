@@ -15,7 +15,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose.ReportTest do
     setup_with_config(%{
       api_key: "foo",
       name: "AppSignal test suite app",
-      environment: "production",
+      environment: "prod",
       diagnose_endpoint: "http://localhost:#{diagnose_bypass.port}/diag"
     })
 
