@@ -42,8 +42,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     :proc_lib.spawn(fn ->
       exit(:crash_proc_lib_spawn)
     end)
-
-    :timer.sleep(20)
+    |> await
 
     [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
     assert reason == ":crash_proc_lib_spawn"
@@ -59,8 +58,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     :proc_lib.spawn(fn ->
       :erlang.error(:crash_proc_lib_error)
     end)
-
-    :timer.sleep(20)
+    |> await
 
     [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
     assert reason == ":crash_proc_lib_error"
@@ -76,8 +74,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     :proc_lib.spawn(fn ->
       Float.ceil(1)
     end)
-
-    :timer.sleep(20)
+    |> await
 
     [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
     assert reason == "FunctionClauseError"
@@ -91,8 +88,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
 
   test "proc_lib.spawn + badmatch error", %{fake_transaction: fake_transaction} do
     :proc_lib.spawn(fn -> throw({:badmatch, [1, 2, 3]}) end)
-
-    :timer.sleep(20)
+    |> await
 
     [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
     assert reason == "MatchError"
@@ -106,8 +102,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
 
   test "Crashing GenServer with throw", %{fake_transaction: fake_transaction} do
     CrashingGenServer.start(:throw)
-
-    :timer.sleep(20)
+    |> await
 
     [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
     assert reason == ":bad_return_value"
@@ -128,8 +123,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
 
   test "Crashing GenServer with exit", %{fake_transaction: fake_transaction} do
     CrashingGenServer.start(:exit)
-
-    :timer.sleep(20)
+    |> await
 
     [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
     assert reason == ":crashed_gen_server_exit"
@@ -152,8 +146,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
 
   test "Crashing GenServer with function error", %{fake_transaction: fake_transaction} do
     CrashingGenServer.start(:function_error)
-
-    :timer.sleep(100)
+    |> await
 
     [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
     assert reason == "FunctionClauseError"
@@ -182,8 +175,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     Task.start(fn ->
       Float.ceil(1)
     end)
-
-    :timer.sleep(20)
+    |> await
 
     [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
     assert reason == "FunctionClauseError"
@@ -203,8 +195,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
       end)
       |> Task.await(1)
     end)
-
-    :timer.sleep(100)
+    |> await
 
     [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
     assert reason == ":timeout"
@@ -225,8 +216,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
           raise(%Plug.Conn.WrapperError{reason: reason, kind: kind, stack: System.stacktrace()})
       end
     end)
-
-    :timer.sleep(20)
+    |> await
 
     [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
     assert reason == "UndefinedFunctionError"
@@ -245,4 +235,12 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
 
   defp assert_stacktrace([line], [expected]), do: assert(line =~ expected)
   defp assert_stacktrace([], []), do: true
+
+  defp await({:ok, pid}), do: await(pid)
+
+  defp await(pid) do
+    Process.monitor(pid)
+    assert_receive({:DOWN, _, :process, ^pid, _}, 5000)
+    :timer.sleep(20)
+  end
 end
