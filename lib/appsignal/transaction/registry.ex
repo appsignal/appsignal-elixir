@@ -50,6 +50,16 @@ defmodule Appsignal.TransactionRegistry do
   """
   @spec lookup(pid) :: Transaction.t() | nil
   def lookup(pid) do
+    case lookup_in_ets(pid) do
+      nil ->
+        pid_callers(pid) |> Enum.find_value(&lookup_in_ets/1)
+
+      transaction ->
+        transaction
+    end
+  end
+
+  defp lookup_in_ets(pid) do
     case registry_alive?() && :ets.lookup(@table, pid) do
       [{^pid, %Transaction{} = transaction, _}] ->
         transaction
@@ -63,6 +73,16 @@ defmodule Appsignal.TransactionRegistry do
 
       _ ->
         nil
+    end
+  end
+
+  defp pid_callers(pid) do
+    case Process.info(pid, :dictionary) do
+      {:dictionary, keywords} ->
+        Keyword.get(keywords, :"$callers", [])
+
+      _ ->
+        []
     end
   end
 

@@ -34,6 +34,15 @@ defmodule Appsignal.Transaction.RegistryTest do
     test "finds an existing transaction by pid", %{transaction: transaction} do
       assert TransactionRegistry.lookup(self()) == transaction
     end
+
+    @tag skip: !Version.match?(System.version, ">= 1.8.0")
+    test "finds an existing transaction by ancestors pid", %{transaction: transaction} do
+      task = Task.async(fn -> TransactionRegistry.lookup(self()) end)
+
+      spawned_process_transaction = Task.await(task)
+
+      assert spawned_process_transaction == transaction
+    end
   end
 
   describe "lookup/1, without an existing transaction" do
