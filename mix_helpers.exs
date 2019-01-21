@@ -8,7 +8,6 @@ defmodule Mix.Appsignal.Helper do
   @system Application.get_env(:appsignal, :mix_system, System)
 
   @max_retries 5
-  @env Mix.env
 
   def install() do
     report = initial_report()
@@ -374,7 +373,6 @@ defmodule Mix.Appsignal.Helper do
         otp_version: System.otp_release()
       },
       build: %{
-        env: @env,
         time: DateTime.to_iso8601(DateTime.utc_now()),
         package_path: priv_dir(),
         architecture: nil,
@@ -391,7 +389,7 @@ defmodule Mix.Appsignal.Helper do
 
   defp write_report(report) do
     write_download_report(report)
-    write_report_file("install_#{@env}", report)
+    write_report_file("install", report)
   end
 
   defp write_download_report(%{download: %{}} = report) do

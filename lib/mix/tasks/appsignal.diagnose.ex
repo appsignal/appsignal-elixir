@@ -5,7 +5,6 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
 
   @system Application.get_env(:appsignal, :appsignal_system, Appsignal.System)
   @report Application.get_env(:appsignal, :appsignal_diagnose_report, Appsignal.Diagnose.Report)
-  @env Mix.env()
 
   @shortdoc "Starts and tests AppSignal while validating the configuration."
 
@@ -108,7 +107,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
       end
 
     install_report =
-      case do_fetch_installation_report("install_#{@env}") do
+      case do_fetch_installation_report("install") do
         {:ok, report} ->
           report
 
@@ -123,8 +122,11 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     case File.read(Path.join([:code.priv_dir(:appsignal), "#{file}.report"])) do
       {:ok, raw_report} ->
         case Poison.decode(raw_report) do
-          {:ok, report} -> {:ok, report}
-          {:error, reason} -> {:error, %{"parsing_error" => %{"error" => reason, "raw" => raw_report}}}
+          {:ok, report} ->
+            {:ok, report}
+
+          {:error, reason} ->
+            {:error, %{"parsing_error" => %{"error" => reason, "raw" => raw_report}}}
         end
 
       {:error, reason} ->
@@ -136,11 +138,18 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     IO.puts("Extension installation report")
     download_parsing_error = Map.has_key?(report, "download_parsing_error")
     install_parsing_error = Map.has_key?(report, "installation_parsing_error")
-    if download_parsing_error do
-      do_print_parsing_error("download", report)
-    else
-      do_print_download_report(report)
+
+    cond do
+      download_parsing_error ->
+        do_print_parsing_error("download", report)
+
+      install_parsing_error ->
+        do_print_download_report(report)
+
+      true ->
+        nil
     end
+
     if install_parsing_error, do: do_print_parsing_error("installation", report)
 
     if !download_parsing_error && !install_parsing_error do

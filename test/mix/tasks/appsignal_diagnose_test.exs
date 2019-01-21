@@ -4,7 +4,6 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   import AppsignalTest.Utils
   alias Appsignal.{Diagnose.FakeReport, FakeSystem, FakeNif}
 
-  @env Mix.env()
   @appsignal_version Mix.Project.config()[:version]
   @agent_version Appsignal.Nif.agent_version()
 
@@ -107,7 +106,6 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     assert is_binary(build_report["time"])
     assert is_binary(build_report["package_path"])
     assert build_report["agent_version"] == @agent_version
-    assert build_report["env"] == Atom.to_string(@env)
     assert Enum.member?(valid_sources, build_report["source"])
     assert Enum.member?(valid_architectures, build_report["architecture"])
     assert Enum.member?(valid_targets, build_report["target"])
@@ -163,7 +161,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   describe "when the report file is not readable" do
     setup do
       download_report = Path.join([:code.priv_dir(:appsignal), "download.report"])
-      install_report = Path.join([:code.priv_dir(:appsignal), "install_#{@env}.report"])
+      install_report = Path.join([:code.priv_dir(:appsignal), "install.report"])
       File.chmod(download_report, 0o000)
       File.chmod(install_report, 0o000)
 
@@ -201,7 +199,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
   describe "when the install report file is not readable" do
     setup do
-      install_report = Path.join([:code.priv_dir(:appsignal), "install_#{@env}.report"])
+      install_report = Path.join([:code.priv_dir(:appsignal), "install.report"])
       File.chmod(install_report, 0o000)
 
       on_exit(:reset, fn ->
@@ -222,6 +220,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       assert String.contains?(output, "Extension installation report")
       refute String.contains?(output, "Error found while parsing the download report.")
       assert_output_contains_download_report(output)
+
       assert String.contains?(
                output,
                "  Error found while parsing the installation report.\n  Error: :eacces"
@@ -232,7 +231,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   describe "when the report file is not valid JSON" do
     setup do
       download_report = Path.join([:code.priv_dir(:appsignal), "download.report"])
-      install_report = Path.join([:code.priv_dir(:appsignal), "install_#{@env}.report"])
+      install_report = Path.join([:code.priv_dir(:appsignal), "install.report"])
       download_contents = File.read!(download_report)
       install_contents = File.read!(install_report)
       File.write(download_report, "download report")
