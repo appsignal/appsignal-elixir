@@ -100,20 +100,20 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
   defp fetch_installation_report do
     download_report =
       case do_fetch_installation_report("download") do
-        %{"parsing_error" => parsing_report} ->
-          %{"download_parsing_error" => parsing_report}
-
-        report ->
+        {:ok, report} ->
           report
+
+        {:error, %{"parsing_error" => parsing_report}} ->
+          %{"download_parsing_error" => parsing_report}
       end
 
     install_report =
       case do_fetch_installation_report("install_#{@env}") do
-        %{"parsing_error" => parsing_report} ->
-          %{"installation_parsing_error" => parsing_report}
-
-        report ->
+        {:ok, report} ->
           report
+
+        {:error, %{"parsing_error" => parsing_report}} ->
+          %{"installation_parsing_error" => parsing_report}
       end
 
     Map.merge(install_report, download_report)
@@ -123,12 +123,12 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     case File.read(Path.join([:code.priv_dir(:appsignal), "#{file}.report"])) do
       {:ok, raw_report} ->
         case Poison.decode(raw_report) do
-          {:ok, report} -> report
-          {:error, reason} -> %{"parsing_error" => %{"error" => reason, "raw" => raw_report}}
+          {:ok, report} -> {:ok, report}
+          {:error, reason} -> {:error, %{"parsing_error" => %{"error" => reason, "raw" => raw_report}}}
         end
 
       {:error, reason} ->
-        %{"parsing_error" => %{"error" => reason}}
+        {:error, %{"parsing_error" => %{"error" => reason}}}
     end
   end
 
