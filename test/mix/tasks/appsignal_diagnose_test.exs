@@ -123,14 +123,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     assert String.contains?(output, "  Elixir version: #{System.version()}")
     assert String.contains?(output, "  OTP version: #{System.otp_release()}")
 
-    assert String.contains?(output, "Download details")
-    assert String.contains?(output, "  Download time: \"20")
-    assert String.contains?(output, "  Download URL: \"https://")
-    assert output =~ ~r{Architecture: "x86(_64)?"}
-    assert output =~ ~r{Target: "[\w-]+"}
-    assert String.contains?(output, "  Musl override: false")
-    assert String.contains?(output, "  Library type: \"static\"")
-    assert output =~ ~r{Checksum: "(verified|unverified)"}
+    assert_output_contains_download_report(output)
 
     assert String.contains?(output, "Build details")
     assert String.contains?(output, "  Install time: \"20")
@@ -199,6 +192,36 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
                "  Error found while parsing the download report.\n  Error: :eacces"
              )
 
+      assert String.contains?(
+               output,
+               "  Error found while parsing the installation report.\n  Error: :eacces"
+             )
+    end
+  end
+
+  describe "when the install report file is not readable" do
+    setup do
+      install_report = Path.join([:code.priv_dir(:appsignal), "install_#{@env}.report"])
+      File.chmod(install_report, 0o000)
+
+      on_exit(:reset, fn ->
+        File.chmod(install_report, 0o644)
+      end)
+    end
+
+    test "adds an error to the installation report", %{fake_report: fake_report} do
+      run()
+      report = received_report(fake_report)
+
+      assert Map.keys(report[:installation]) == ["download", "installation_parsing_error"]
+      assert report[:installation]["installation_parsing_error"] == %{"error" => :eacces}
+    end
+
+    test "prints a parsing error" do
+      output = run()
+      assert String.contains?(output, "Extension installation report")
+      refute String.contains?(output, "Error found while parsing the download report.")
+      assert_output_contains_download_report(output)
       assert String.contains?(
                output,
                "  Error found while parsing the installation report.\n  Error: :eacces"
@@ -1115,5 +1138,16 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       {_, _} ->
         nil
     end
+  end
+
+  defp assert_output_contains_download_report(output) do
+    assert String.contains?(output, "Download details")
+    assert String.contains?(output, "  Download time: \"20")
+    assert String.contains?(output, "  Download URL: \"https://")
+    assert output =~ ~r{Architecture: "x86(_64)?"}
+    assert output =~ ~r{Target: "[\w-]+"}
+    assert String.contains?(output, "  Musl override: false")
+    assert String.contains?(output, "  Library type: \"static\"")
+    assert output =~ ~r{Checksum: "(verified|unverified)"}
   end
 end

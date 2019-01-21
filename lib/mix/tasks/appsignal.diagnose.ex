@@ -136,7 +136,11 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     IO.puts("Extension installation report")
     download_parsing_error = Map.has_key?(report, "download_parsing_error")
     install_parsing_error = Map.has_key?(report, "installation_parsing_error")
-    if download_parsing_error, do: do_print_parsing_error("download", report)
+    if download_parsing_error do
+      do_print_parsing_error("download", report)
+    else
+      do_print_download_report(report)
+    end
     if install_parsing_error, do: do_print_parsing_error("installation", report)
 
     if !download_parsing_error && !install_parsing_error do
@@ -171,15 +175,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     IO.puts("  Language details")
     IO.puts("    Elixir version: #{format_value(language_report["version"])}")
     IO.puts("    OTP version: #{format_value(language_report["otp_version"])}")
-    download_report = installation_report["download"]
-    IO.puts("  Download details")
-    IO.puts("    Download time: #{format_value(download_report["time"])}")
-    IO.puts("    Download URL: #{format_value(download_report["download_url"])}")
-    IO.puts("    Architecture: #{format_value(download_report["architecture"])}")
-    IO.puts("    Target: #{format_value(download_report["target"])}")
-    IO.puts("    Musl override: #{format_value(download_report["musl_override"])}")
-    IO.puts("    Library type: #{format_value(download_report["library_type"])}")
-    IO.puts("    Checksum: #{format_value(download_report["checksum"])}")
+    do_print_download_report(installation_report)
     build_report = installation_report["build"]
     IO.puts("  Build details")
     IO.puts("    Install time: #{format_value(build_report["time"])}")
@@ -193,6 +189,18 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     IO.puts("  Host details")
     IO.puts("    Root user: #{format_value(host_report["root_user"])}")
     IO.puts("    Dependencies: #{format_value(host_report["dependencies"])}")
+  end
+
+  defp do_print_download_report(installation_report) do
+    download_report = installation_report["download"]
+    IO.puts("  Download details")
+    IO.puts("    Download time: #{format_value(download_report["time"])}")
+    IO.puts("    Download URL: #{format_value(download_report["download_url"])}")
+    IO.puts("    Architecture: #{format_value(download_report["architecture"])}")
+    IO.puts("    Target: #{format_value(download_report["target"])}")
+    IO.puts("    Musl override: #{format_value(download_report["musl_override"])}")
+    IO.puts("    Library type: #{format_value(download_report["library_type"])}")
+    IO.puts("    Checksum: #{format_value(download_report["checksum"])}")
   end
 
   defp print_host_information(host_report) do
