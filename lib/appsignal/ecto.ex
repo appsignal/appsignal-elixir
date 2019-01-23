@@ -24,9 +24,9 @@ defmodule Appsignal.Ecto do
   """
 
   require Logger
+  alias Appsignal.TransactionRegistry
 
-  alias Appsignal.{Transaction, TransactionRegistry}
-
+  @transaction Application.get_env(:appsignal, :appsignal_transaction, Appsignal.Transaction)
   @nano_seconds :erlang.convert_time_unit(1, :nano_seconds, :native)
 
   def handle_event(_event, _latency, metadata, _config) do
@@ -40,11 +40,11 @@ defmodule Appsignal.Ecto do
         # skip
         :ok
 
-      %Transaction{} = transaction ->
+      transaction ->
         # record the event
         total_time = (entry.queue_time || 0) + (entry.query_time || 0) + (entry.decode_time || 0)
         duration = trunc(total_time / @nano_seconds)
-        Transaction.record_event(transaction, "query.ecto", "", entry.query, duration, 1)
+        @transaction.record_event(transaction, "query.ecto", "", entry.query, duration, 1)
     end
 
     entry
