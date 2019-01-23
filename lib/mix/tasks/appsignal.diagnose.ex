@@ -18,7 +18,9 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
       end
 
     Application.load(:appsignal)
+
     report = %{process: %{uid: @system.uid}}
+
     configure_appsignal()
     config_report = Diagnose.Config.config()
     config = config_report[:options]
@@ -30,6 +32,11 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     library_report = Diagnose.Library.info()
     report = Map.put(report, :library, library_report)
     print_library_info(library_report)
+    empty_line()
+
+    installation_report = fetch_installation_report()
+    report = Map.put(report, :installation, installation_report)
+    print_installation_report(installation_report)
     empty_line()
 
     host_report = Diagnose.Host.info()
@@ -86,8 +93,123 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     IO.puts("  Language: Elixir")
     IO.puts("  Package version: #{library_report[:package_version]}")
     IO.puts("  Agent version: #{library_report[:agent_version]}")
-    IO.puts("  Agent architecture: #{library_report[:agent_architecture]}")
     IO.puts("  Nif loaded: #{yes_or_no(library_report[:extension_loaded])}")
+  end
+
+  defp fetch_installation_report do
+    download_report =
+      case do_fetch_installation_report("download") do
+        {:ok, report} ->
+          report
+
+        {:error, %{"parsing_error" => parsing_report}} ->
+          %{"download_parsing_error" => parsing_report}
+      end
+
+    install_report =
+      case do_fetch_installation_report("install") do
+        {:ok, report} ->
+          report
+
+        {:error, %{"parsing_error" => parsing_report}} ->
+          %{"installation_parsing_error" => parsing_report}
+      end
+
+    Map.merge(install_report, download_report)
+  end
+
+  defp do_fetch_installation_report(file) do
+    case File.read(Path.join([:code.priv_dir(:appsignal), "#{file}.report"])) do
+      {:ok, raw_report} ->
+        case Poison.decode(raw_report) do
+          {:ok, report} ->
+            {:ok, report}
+
+          {:error, reason} ->
+            {:error, %{"parsing_error" => %{"error" => reason, "raw" => raw_report}}}
+        end
+
+      {:error, reason} ->
+        {:error, %{"parsing_error" => %{"error" => reason}}}
+    end
+  end
+
+  defp print_installation_report(report) do
+    IO.puts("Extension installation report")
+    download_parsing_error = Map.has_key?(report, "download_parsing_error")
+    install_parsing_error = Map.has_key?(report, "installation_parsing_error")
+
+    cond do
+      download_parsing_error ->
+        do_print_parsing_error("download", report)
+
+      install_parsing_error ->
+        do_print_download_report(report)
+
+      true ->
+        nil
+    end
+
+    if install_parsing_error, do: do_print_parsing_error("installation", report)
+
+    if !download_parsing_error && !install_parsing_error do
+      do_print_installation_report(report)
+    end
+  end
+
+  defp do_print_parsing_error(key, report) do
+    parsing_report = report["#{key}_parsing_error"]
+    IO.puts("  Error found while parsing the #{key} report.")
+    IO.puts("  Error: #{format_value(parsing_report["error"])}")
+
+    if Map.has_key?(parsing_report, "raw") do
+      IO.puts("  Raw report:\n#{format_value(parsing_report["raw"])}")
+    end
+  end
+
+  defp do_print_installation_report(installation_report) do
+    result_report = installation_report["result"]
+    IO.puts("  Installation result")
+    IO.puts("    Status: #{format_value(result_report["status"])}")
+
+    if Map.has_key?(result_report, "message") do
+      IO.puts("    Message: #{format_value(result_report["message"])}")
+    end
+
+    if Map.has_key?(result_report, "error") do
+      IO.puts("    Error: #{format_value(result_report["error"])}")
+    end
+
+    language_report = installation_report["language"]
+    IO.puts("  Language details")
+    IO.puts("    Elixir version: #{format_value(language_report["version"])}")
+    IO.puts("    OTP version: #{format_value(language_report["otp_version"])}")
+    do_print_download_report(installation_report)
+    build_report = installation_report["build"]
+    IO.puts("  Build details")
+    IO.puts("    Install time: #{format_value(build_report["time"])}")
+    IO.puts("    Source: #{format_value(build_report["source"])}")
+    IO.puts("    Agent version: #{format_value(build_report["agent_version"])}")
+    IO.puts("    Architecture: #{format_value(build_report["architecture"])}")
+    IO.puts("    Target: #{format_value(build_report["target"])}")
+    IO.puts("    Musl override: #{format_value(build_report["musl_override"])}")
+    IO.puts("    Library type: #{format_value(build_report["library_type"])}")
+    host_report = installation_report["host"]
+    IO.puts("  Host details")
+    IO.puts("    Root user: #{format_value(host_report["root_user"])}")
+    IO.puts("    Dependencies: #{format_value(host_report["dependencies"])}")
+  end
+
+  defp do_print_download_report(installation_report) do
+    download_report = installation_report["download"]
+    IO.puts("  Download details")
+    IO.puts("    Download time: #{format_value(download_report["time"])}")
+    IO.puts("    Download URL: #{format_value(download_report["download_url"])}")
+    IO.puts("    Architecture: #{format_value(download_report["architecture"])}")
+    IO.puts("    Target: #{format_value(download_report["target"])}")
+    IO.puts("    Musl override: #{format_value(download_report["musl_override"])}")
+    IO.puts("    Library type: #{format_value(download_report["library_type"])}")
+    IO.puts("    Checksum: #{format_value(download_report["checksum"])}")
   end
 
   defp print_host_information(host_report) do

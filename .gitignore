@@ -13,3 +13,4 @@ mix.lock
 /c_src/libappsignal.a
 /c_src/libappsignal.dylib
 /priv/*appsignal*
+/priv/*.report
