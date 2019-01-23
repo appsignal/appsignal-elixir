@@ -1,44 +1,69 @@
 defmodule AppsignalDemoTest do
-  use ExUnit.Case, async: true
-  import Mock
+  use ExUnit.Case
+  alias Appsignal.FakeTransaction
 
-  test_with_mock "sends a demonstration error", Appsignal.Transaction, [:passthrough], [] do
-    t = Appsignal.Demo.create_transaction_error_request()
-
-    assert called(Appsignal.Transaction.set_action(t, "DemoController#hello"))
-
-    assert called(
-             Appsignal.Transaction.set_error(
-               t,
-               "TestError",
-               "Hello world! This is an error used for demonstration purposes.",
-               :_
-             )
-           )
-
-    assert called(Appsignal.Transaction.set_meta_data(t, "demo_sample", "true"))
-    assert called(Appsignal.Transaction.finish(t))
-    assert called(Appsignal.Transaction.complete(t))
+  setup do
+    {:ok, fake_transaction} = FakeTransaction.start_link()
+    [fake_transaction: fake_transaction]
   end
 
-  test_with_mock "sends a performance issue", Appsignal.Transaction, [:passthrough], [] do
-    t = Appsignal.Demo.create_transaction_performance_request()
+  test "sends a demonstration error", %{fake_transaction: fake_transaction} do
+    transaction = Appsignal.Demo.create_transaction_error_request()
 
-    assert called(Appsignal.Transaction.set_action(t, "DemoController#hello"))
-    assert called(Appsignal.Transaction.set_meta_data(t, "demo_sample", "true"))
-    assert called(Appsignal.Transaction.start_event(t))
+    assert "DemoController#hello" = FakeTransaction.action(fake_transaction)
 
-    assert called(
-             Appsignal.Transaction.finish_event(
-               t,
-               "render.phoenix_template",
-               "Rendering something slow",
-               "",
-               0
-             )
-           )
+    assert [
+             {^transaction, "TestError",
+              "Hello world! This is an error used for demonstration purposes.", _stacktrace}
+           ] = FakeTransaction.errors(fake_transaction)
 
-    assert called(Appsignal.Transaction.finish(t))
-    assert called(Appsignal.Transaction.complete(t))
+    assert %{"demo_sample" => "true"} = FakeTransaction.metadata(fake_transaction)
+
+    assert [transaction] = FakeTransaction.finished_transactions(fake_transaction)
+    assert [^transaction] = FakeTransaction.completed_transactions(fake_transaction)
+  end
+
+  test "sends a performance issue", %{fake_transaction: fake_transaction} do
+    transaction = Appsignal.Demo.create_transaction_performance_request()
+
+    assert "DemoController#hello" = FakeTransaction.action(fake_transaction)
+    assert %{"demo_sample" => "true"} = FakeTransaction.metadata(fake_transaction)
+
+    assert [^transaction, ^transaction, ^transaction, ^transaction] =
+             FakeTransaction.started_events(fake_transaction)
+
+    assert [
+             %{
+               body: "",
+               body_format: 0,
+               name: "render.phoenix_template",
+               title: "Rendering something slow",
+               transaction: ^transaction
+             },
+             %{
+               body: "",
+               body_format: 0,
+               name: "render.phoenix_template",
+               title: "Rendering something slow",
+               transaction: ^transaction
+             },
+             %{
+               body: "",
+               body_format: 0,
+               name: "query.ecto",
+               title: "Slow query",
+               transaction: ^transaction
+             },
+             %{
+               body: "",
+               body_format: 0,
+               name: "query.ecto",
+               title: "Slow query",
+               transaction: ^transaction
+             }
+           ] = FakeTransaction.finished_events(fake_transaction)
+
+    assert [transaction] = FakeTransaction.finished_transactions(fake_transaction)
+    assert [^transaction] = FakeTransaction.completed_transactions(fake_transaction)
   end
 end
