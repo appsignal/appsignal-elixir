@@ -38,9 +38,8 @@ defmodule Appsignal.Ecto do
 
   @transaction Application.get_env(:appsignal, :appsignal_transaction, Appsignal.Transaction)
 
-  def handle_event(_event, _latency, metadata, _config) do
-    # @transaction.record_event("query.ecto", "", metadata.query, duration, 1)
-    log(metadata)
+  def handle_event(_event, duration, metadata, _config) do
+    @transaction.record_event("query.ecto", "", metadata.query, duration, 1)
   end
 
   def log(entry) do
