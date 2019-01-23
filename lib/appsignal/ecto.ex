@@ -37,15 +37,15 @@ defmodule Appsignal.Ecto do
   require Logger
 
   @transaction Application.get_env(:appsignal, :appsignal_transaction, Appsignal.Transaction)
-  @nano_seconds :erlang.convert_time_unit(1, :nano_seconds, :native)
 
   def handle_event(_event, _latency, metadata, _config) do
+    # @transaction.record_event("query.ecto", "", metadata.query, duration, 1)
     log(metadata)
   end
 
   def log(entry) do
     total_time = (entry.queue_time || 0) + (entry.query_time || 0) + (entry.decode_time || 0)
-    duration = trunc(total_time / @nano_seconds)
+    duration = System.convert_time_unit(total_time, :native, :nanosecond)
     @transaction.record_event("query.ecto", "", entry.query, duration, 1)
 
     entry
