@@ -32,7 +32,22 @@ defmodule Appsignal.FakeTransaction do
     end)
   end
 
-  def record_event(transaction, name, title, body, duration, body_format \\ 0) do
+  def record_event(name, title, body, duration, body_format) do
+    self()
+    |> Appsignal.TransactionRegistry.lookup()
+    |> record_event(name, title, body, duration, body_format)
+  end
+
+  def record_event(nil, _name, _title, _body, _duration, _body_format), do: :ok
+
+  def record_event(
+        %Appsignal.Transaction{} = transaction,
+        name,
+        title,
+        body,
+        duration,
+        body_format
+      ) do
     Agent.update(__MODULE__, fn state ->
       {_, new_state} =
         Map.get_and_update(state, :recorded_events, fn current ->
