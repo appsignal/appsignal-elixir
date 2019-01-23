@@ -58,7 +58,6 @@ defmodule Appsignal.Transaction.RegistryTest do
     test "ignores a pid" do
       pid = :c.pid(0, 991, 0)
       :ok = TransactionRegistry.ignore(pid)
-      :timer.sleep(1)
       assert TransactionRegistry.ignored?(pid) == true
     end
   end
@@ -68,7 +67,7 @@ defmodule Appsignal.Transaction.RegistryTest do
 
     test "can't ignore a pid" do
       pid = :c.pid(0, 992, 0)
-      :ok = TransactionRegistry.ignore(pid)
+      {:error, :no_registry} = TransactionRegistry.ignore(pid)
       assert TransactionRegistry.ignored?(pid) == false
     end
   end
