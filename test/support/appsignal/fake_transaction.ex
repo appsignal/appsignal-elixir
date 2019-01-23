@@ -5,6 +5,7 @@ defmodule Appsignal.FakeTransaction do
     started_events: [],
     finished_events: [],
     finished_transactions: [],
+    recorded_events: [],
     errors: []
   }
 
@@ -45,6 +46,29 @@ defmodule Appsignal.FakeTransaction do
           case current do
             nil -> {nil, [finished_event]}
             _ -> {current, [finished_event | current]}
+          end
+        end)
+
+      new_state
+    end)
+  end
+
+  def record_event(transaction, name, title, body, duration, body_format \\ 0) do
+    Agent.update(__MODULE__, fn state ->
+      {_, new_state} =
+        Map.get_and_update(state, :recorded_events, fn current ->
+          recorded_event = %{
+            transaction: transaction,
+            name: name,
+            title: title,
+            body: body,
+            duration: duration,
+            body_format: body_format
+          }
+
+          case current do
+            nil -> {nil, [recorded_event]}
+            _ -> {current, [recorded_event | current]}
           end
         end)
 
@@ -192,6 +216,10 @@ defmodule Appsignal.FakeTransaction do
 
   def finished_events(pid_or_module) do
     get(pid_or_module, :finished_events)
+  end
+
+  def recorded_events(pid_or_module) do
+    get(pid_or_module, :recorded_events)
   end
 
   def action(pid_or_module) do
