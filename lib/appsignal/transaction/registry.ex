@@ -113,7 +113,12 @@ defmodule Appsignal.TransactionRegistry do
   """
   @spec ignore(pid()) :: :ok
   def ignore(pid) do
-    GenServer.cast(__MODULE__, {:ignore, pid})
+    if registry_alive?() do
+      :ets.insert(@table, {pid, :ignore})
+      :ok
+    else
+      {:error, :no_registry}
+    end
   end
 
   @doc """
@@ -164,12 +169,6 @@ defmodule Appsignal.TransactionRegistry do
     transaction
     |> pids_and_monitor_references()
     |> demonitor
-
-    {:noreply, state}
-  end
-
-  def handle_cast({:ignore, pid}, state) do
-    :ets.insert(@table, {pid, :ignore})
 
     {:noreply, state}
   end
