@@ -1,3 +1,6 @@
+# 1.9.1-beta.1
+* Block on ignoring PIDs in TransactionRegistry. PR #448
+
 # 1.9.0
 * Add missing host OS field to diagnose report. PR #418
 * Link back to AppSignal diagnose report page. PR #420
