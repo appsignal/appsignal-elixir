@@ -170,8 +170,7 @@ defmodule Mix.Appsignal.Helper do
   end
 
   defp compile(report) do
-    {result, error_code} = System.cmd(make(), make_args(to_string(Mix.env())))
-    IO.binwrite(result)
+    {result, error_code} = System.cmd(make(), make_args(to_string(Mix.env())), [stderr_to_stdout: true])
     report = merge_report(report, %{build: %{agent_version: agent_version()}})
 
     if error_code == 0 do
@@ -180,7 +179,9 @@ defmodule Mix.Appsignal.Helper do
       :ok
     else
       reason = """
-      Could not run `make`. Please check if `make` and either `clang` or `gcc` are installed
+      Build error was encountered while running `make`:
+
+      #{result}
       """
 
       abort_installation(reason, report)
