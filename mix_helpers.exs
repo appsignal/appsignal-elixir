@@ -170,21 +170,30 @@ defmodule Mix.Appsignal.Helper do
   end
 
   defp compile(report) do
-    {result, error_code} = System.cmd(make(), make_args(to_string(Mix.env())), [stderr_to_stdout: true])
     report = merge_report(report, %{build: %{agent_version: agent_version()}})
+    {output, exit_code} = run_make()
 
-    if error_code == 0 do
+    if exit_code == 0 do
       Mix.shell().info("AppSignal extension installation successful")
       write_report(merge_report(report, %{result: %{status: :success}}))
       :ok
     else
-      reason = """
-      Build error was encountered while running `make`:
+      message = """
+      Build error was encountered while running `make` (exit code: #{exit_code}):
 
-      #{result}
+      #{output}
       """
 
-      abort_installation(reason, report)
+      abort_installation(message, report)
+    end
+  end
+
+  defp run_make do
+    try do
+      System.cmd(make(), make_args(to_string(Mix.env())), [stderr_to_stdout: true])
+    rescue
+      reason ->
+        {inspect(reason), 1}
     end
   end
 
