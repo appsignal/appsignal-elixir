@@ -843,63 +843,6 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     end
   end
 
-  describe "when install.log exists" do
-    setup do
-      content =
-        "[2017-11-10 13:39:47.795755Z] Error!\n[2017-11-10 13:39:48.795755Z] Another Error!"
-
-      File.write!(install_log_path(), content)
-
-      {:ok, %{content: content}}
-    end
-
-    test "outputs the log file", %{content: content} do
-      output = run()
-      assert String.contains?(output, "Extension install log")
-      assert String.contains?(output, "Path: #{inspect(install_log_path())}")
-      assert String.contains?(output, content)
-    end
-
-    test "adds log file to report", %{content: content, fake_report: fake_report} do
-      run()
-      path = install_log_path()
-      {:ok, %{mode: mode, uid: uid, gid: gid}} = File.stat(path)
-      paths = received_report(fake_report)[:paths]
-
-      assert paths[:"install.log"] == %{
-               path: path,
-               exists: true,
-               type: :file,
-               mode: mode,
-               writable: true,
-               ownership: %{uid: uid, gid: gid},
-               content: content |> String.split("\n")
-             }
-    end
-  end
-
-  describe "when install.log does not exist" do
-    setup do
-      File.rm(install_log_path())
-      :ok
-    end
-
-    test "outputs the log" do
-      output = run()
-      assert String.contains?(output, "Path: #{inspect(install_log_path())}\n    Exists?: no")
-    end
-
-    test "adds log file to report", %{fake_report: fake_report} do
-      run()
-      paths = received_report(fake_report)[:paths]
-
-      assert paths[:"install.log"] == %{
-               path: install_log_path(),
-               exists: false
-             }
-    end
-  end
-
   describe "without config" do
     test "it outputs tmp dir for log_dir_path" do
       output = with_config(%{log_path: nil}, &run/0)
@@ -912,7 +855,6 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
       assert Map.keys(received_report(fake_report)[:paths]) == [
                :"appsignal.log",
-               :"install.log",
                :log_dir_path,
                :working_dir
              ]
@@ -1150,12 +1092,6 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     File.write!(log_file_path, "log line 1\nlog line 2\nlog line 3")
 
     %{log_dir_path: log_dir_path, "appsignal.log": log_file_path}
-  end
-
-  def install_log_path() do
-    :appsignal
-    |> Application.app_dir()
-    |> Path.join("install.log")
   end
 
   defp process_uid() do
