@@ -1,4 +1,4 @@
-# 1.9.1-beta.1
+# 1.9.1
 * Block on ignoring PIDs in TransactionRegistry. PR #448
 
 # 1.9.0
