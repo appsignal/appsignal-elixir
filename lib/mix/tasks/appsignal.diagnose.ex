@@ -139,20 +139,15 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     download_parsing_error = Map.has_key?(report, "download_parsing_error")
     install_parsing_error = Map.has_key?(report, "installation_parsing_error")
 
-    cond do
-      download_parsing_error ->
-        do_print_parsing_error("download", report)
-
-      install_parsing_error ->
-        do_print_download_report(report)
-
-      true ->
-        nil
+    if download_parsing_error && install_parsing_error do
+      do_print_parsing_error("download", report)
+      do_print_parsing_error("installation", report)
     end
 
-    if install_parsing_error, do: do_print_parsing_error("installation", report)
-
-    if !download_parsing_error && !install_parsing_error do
+    if install_parsing_error do
+      do_print_download_report(report)
+      do_print_parsing_error("installation", report)
+    else
       do_print_installation_report(report)
     end
   end
@@ -198,6 +193,10 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     IO.puts("  Host details")
     IO.puts("    Root user: #{format_value(host_report["root_user"])}")
     IO.puts("    Dependencies: #{format_value(host_report["dependencies"])}")
+  end
+
+  defp do_print_download_report(%{"download_parsing_error" => %{}} = installation_report) do
+    do_print_parsing_error("download", installation_report)
   end
 
   defp do_print_download_report(installation_report) do
