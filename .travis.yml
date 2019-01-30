@@ -32,4 +32,4 @@ script:
   - MIX_ENV=test scripts/check_warnings
   - MIX_ENV=test mix test
   - MIX_ENV=test_phoenix mix test
-  - rm -r priv/*appsignal* && MIX_ENV=test_no_nif mix test
+  - (cd priv && rm -r *appsignal* *.report) && MIX_ENV=test_no_nif mix test

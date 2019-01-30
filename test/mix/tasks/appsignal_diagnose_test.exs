@@ -153,7 +153,6 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       assert String.contains?(output, "  Installation result")
       assert String.contains?(output, "  Status: \"failed\"")
       assert String.contains?(output, "  Message: \"Unknown target platform")
-      assert output =~ ~r{Checksum: "(verified|unverified)"}
       assert String.contains?(output, "  Source: nil")
     end
   end
@@ -171,6 +170,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       end)
     end
 
+    @tag :skip_env_test_no_nif
     test "adds an error to the installation report", %{fake_report: fake_report} do
       run()
       report = received_report(fake_report)
@@ -181,6 +181,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
              }
     end
 
+    @tag :skip_env_test_no_nif
     test "prints a parsing error" do
       output = run()
       assert String.contains?(output, "Extension installation report")
@@ -197,6 +198,44 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     end
   end
 
+  describe "when the download report file does not exist" do
+    @tag :skip_env_test
+    @tag :skip_env_test_phoenix
+    test "adds an error to the installation report", %{fake_report: fake_report} do
+      run()
+      report = received_report(fake_report)
+
+      assert Map.keys(report[:installation]) == [
+               "build",
+               "download_parsing_error",
+               "host",
+               "language",
+               "result"
+             ]
+
+      assert report[:installation]["result"]["status"] == "failed"
+      assert report[:installation]["download_parsing_error"] == %{"error" => :enoent}
+    end
+
+    @tag :skip_env_test
+    @tag :skip_env_test_phoenix
+    test "prints a parsing error" do
+      output = run()
+      assert String.contains?(output, "Extension installation report")
+      refute String.contains?(output, "Error found while parsing the installation report.")
+      assert String.contains?(output, "Error found while parsing the download report.")
+
+      assert String.contains?(
+               output,
+               "  Error found while parsing the download report.\n  Error: :enoent"
+             )
+
+      refute String.contains?(output, "  Error found while parsing the installation report")
+
+      assert String.contains?(output, "Installation result\n    Status: \"failed\"")
+    end
+  end
+
   describe "when the install report file is not readable" do
     setup do
       install_report = Path.join([:code.priv_dir(:appsignal), "install.report"])
@@ -205,8 +244,11 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       on_exit(:reset, fn ->
         File.chmod(install_report, 0o644)
       end)
+
+      [install_report_path: install_report]
     end
 
+    @tag :skip_env_test_no_nif
     test "adds an error to the installation report", %{fake_report: fake_report} do
       run()
       report = received_report(fake_report)
@@ -215,6 +257,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       assert report[:installation]["installation_parsing_error"] == %{"error" => :eacces}
     end
 
+    @tag :skip_env_test_no_nif
     test "prints a parsing error" do
       output = run()
       assert String.contains?(output, "Extension installation report")
@@ -243,6 +286,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       end)
     end
 
+    @tag :skip_env_test_no_nif
     test "adds an error to the installation report with the raw report", %{
       fake_report: fake_report
     } do
@@ -263,6 +307,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       assert installation_report["raw"] == "install report"
     end
 
+    @tag :skip_env_test_no_nif
     test "prints a parsing error" do
       output = run()
 
