@@ -104,7 +104,8 @@ request on `master`, if it's a new feature on `develop`.
 
 Thinking of contributing to our Elixir package? Awesome! 🚀
 
-Please follow our [Contributing guide][contributing-guide].
+Please follow our [Contributing guide][contributing-guide] in our
+documentation and follow our [Code of Conduct][coc].
 
 Also, we would be very happy to send you Stroopwafles. Have look at everyone
 we send a package to so far on our [Stroopwafles page][waffles-page].
@@ -122,4 +123,5 @@ Check the [LICENSE](LICENSE) file for more information.
 
 [contact]: mailto:support@appsignal.com
 [contributing-guide]: http://docs.appsignal.com/appsignal/contributing.html
+[coc]: https://docs.appsignal.com/appsignal/code-of-conduct.html
 [waffles-page]: https://appsignal.com/waffles
