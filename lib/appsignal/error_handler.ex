@@ -39,10 +39,24 @@ defmodule Appsignal.ErrorHandler do
     {:ok, state}
   end
 
-  @spec handle_error(Appsignal.Transaction.t(), any, Exception.stacktrace(), map()) :: :ok
-  def handle_error(transaction, error, stack, conn) do
+  @spec handle_error(Appsignal.Transaction.t() | pid(), any(), Exception.stacktrace(), map()) ::
+          :ok
+  def handle_error(pid_or_transaction, error, stack, conn \\ %{})
+
+  def handle_error(%Appsignal.Transaction{} = transaction, error, stack, conn) do
     {exception, stacktrace} = Error.normalize(error, stack)
     do_handle_error(transaction, exception, stacktrace, conn)
+  end
+
+  def handle_error(pid, error, stack, conn) do
+    transaction =
+      unless TransactionRegistry.ignored?(pid) do
+        @transaction.lookup_or_create_transaction(pid)
+      end
+
+    if transaction != nil do
+      handle_error(transaction, error, stack, conn)
+    end
   end
 
   @spec do_handle_error(Appsignal.Transaction.t(), Exception.t(), list(String.t()), map()) :: :ok

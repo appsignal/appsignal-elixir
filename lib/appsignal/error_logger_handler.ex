@@ -1,28 +1,15 @@
 defmodule Appsignal.ErrorLoggerHandler do
   require Logger
-  alias Appsignal.{TransactionRegistry, ErrorHandler}
-
-  @transaction Application.get_env(
-                 :appsignal,
-                 :appsignal_transaction,
-                 Appsignal.Transaction
-               )
+  alias Appsignal.ErrorHandler
 
   def init(state) do
     {:ok, state}
   end
 
-  def handle_event({:error_report, _gleader, {origin, :crash_report, [report | _]}}, state) do
+  def handle_event({:error_report, _gleader, {pid, :crash_report, [report | _]}}, state) do
     case match_report(report) do
       {error, stack} ->
-        transaction =
-          unless TransactionRegistry.ignored?(origin) do
-            @transaction.lookup_or_create_transaction(origin)
-          end
-
-        if transaction != nil do
-          ErrorHandler.handle_error(transaction, error, stack, %{})
-        end
+        ErrorHandler.handle_error(pid, error, stack)
 
       _ ->
         :ok
