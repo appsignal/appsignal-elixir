@@ -20,10 +20,6 @@ defmodule Appsignal.ErrorHandler do
                  Appsignal.Transaction
                )
 
-  def init(state) do
-    {:ok, state}
-  end
-
   def handle_event(event, state) do
     case match_event(event) do
       {origin, error, stack, conn} ->
@@ -40,10 +36,6 @@ defmodule Appsignal.ErrorHandler do
         :ok
     end
 
-    {:ok, state}
-  end
-
-  def handle_info(_, state) do
     {:ok, state}
   end
 
@@ -116,6 +108,16 @@ defmodule Appsignal.ErrorHandler do
 
   def match_event(_event) do
     :nomatch
+  end
+
+  @deprecated "Use Appsignal.ErrorLoggerHandler.init/1 instead."
+  def init(state) do
+    Appsignal.ErrorLoggerHandler.init(state)
+  end
+
+  @deprecated "Use Appsignal.ErrorLoggerHandler.handle_info/2 instead."
+  def handle_info(info, state) do
+    Appsignal.ErrorLoggerHandler.handle_info(info, state)
   end
 
   @doc false
