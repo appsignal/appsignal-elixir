@@ -31,7 +31,7 @@ defmodule Appsignal do
 
     initialize()
 
-    :error_logger.add_report_handler(Appsignal.ErrorHandler)
+    :error_logger.add_report_handler(Appsignal.ErrorLoggerHandler)
 
     children = [
       worker(Appsignal.TransactionRegistry, [])
