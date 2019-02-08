@@ -151,7 +151,7 @@ if Appsignal.plug?() do
         "method" => method,
         "path" => path,
         "request_id" => request_id,
-        "status" => status
+        "http_status_code" => status
       }
     end
 

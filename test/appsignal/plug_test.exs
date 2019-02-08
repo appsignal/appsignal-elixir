@@ -330,7 +330,7 @@ defmodule Appsignal.PlugTest do
                "method" => "GET",
                "path" => "/foo",
                "request_id" => "kk4hk5sis7c3b56t683nnmdig632c9ot",
-               "status" => 200
+               "http_status_code" => 200
              }
     end
   end
