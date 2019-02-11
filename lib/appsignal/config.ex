@@ -180,10 +180,10 @@ defmodule Appsignal.Config do
     |> Enum.reduce(config, fn key, cfg ->
       value = System.get_env(key)
 
-      if !empty?(value) do
-        Map.put(cfg, @env_to_key_mapping[key], converter.(value))
-      else
+      if empty?(value) do
         cfg
+      else
+        Map.put(cfg, @env_to_key_mapping[key], converter.(value))
       end
     end)
   end
