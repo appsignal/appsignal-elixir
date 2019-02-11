@@ -94,22 +94,18 @@ defmodule Appsignal do
     end
   end
 
-  @doc false
-  def add_report_handler do
-    if(Process.whereis(:logger)) do
-      Appsignal.LoggerHandler.add()
-    else
-      Appsignal.ErrorLoggerHandler.add()
-    end
-  end
+  if System.otp_release() >= "21" do
+    @doc false
+    def add_report_handler, do: Appsignal.LoggerHandler.add()
 
-  @doc false
-  def remove_report_handler do
-    if(Process.whereis(:logger)) do
-      Appsignal.LoggerHandler.remove()
-    else
-      Appsignal.ErrorLoggerHandler.remove()
-    end
+    @doc false
+    def remove_report_handler, do: Appsignal.LoggerHandler.remove()
+  else
+    @doc false
+    def add_report_handler, do: Appsignal.ErrorLoggerHandler.add()
+
+    @doc false
+    def remove_report_handler, do: Appsignal.ErrorLoggerHandler.remove()
   end
 
   @doc """
