@@ -37,7 +37,6 @@ defmodule Appsignal.Transaction do
   "current" transaction). This is the case after `Transaction.start/2`
   has been called from within the same process.
 
-
   """
 
   defstruct [:resource, :id]
