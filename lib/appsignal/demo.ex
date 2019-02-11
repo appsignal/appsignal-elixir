@@ -15,14 +15,12 @@ defmodule Appsignal.Demo do
   @doc false
   @spec create_transaction_error_request :: Appsignal.Transaction.t()
   def create_transaction_error_request do
-    try do
-      raise TestError
-    rescue
-      error ->
-        create_demo_transaction()
-        |> @transaction.set_error("TestError", error.message, System.stacktrace())
-        |> finish_demo_transaction()
-    end
+    raise TestError
+  rescue
+    error ->
+      create_demo_transaction()
+      |> @transaction.set_error("TestError", error.message, System.stacktrace())
+      |> finish_demo_transaction()
   end
 
   @doc false
