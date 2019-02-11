@@ -25,7 +25,7 @@ defmodule Appsignal.Error do
 
   def normalize({maybe_error, maybe_stacktrace} = error, stacktrace) do
     {error, stacktrace} =
-      if(stacktrace?(maybe_stacktrace)) do
+      if stacktrace?(maybe_stacktrace) do
         {maybe_error, maybe_stacktrace}
       else
         {error, stacktrace}
