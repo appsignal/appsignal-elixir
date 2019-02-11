@@ -1,4 +1,13 @@
 defmodule Appsignal.LoggerHandler do
+  @moduledoc """
+  Error handler to send crash reports to AppSignal.
+
+  AppSignal automatically adds `Appsignal.LoggerHandler` to Erlang's `:error`
+  as a report handler to receive error reports. It extracts the error and
+  stacktrace from the report and sends it over to `Appsignal.ErrorHandler` to
+  be reported to AppSignal.
+  """
+
   require Logger
 
   @doc false
