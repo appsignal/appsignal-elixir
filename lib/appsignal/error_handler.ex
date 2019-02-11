@@ -98,20 +98,18 @@ defmodule Appsignal.ErrorHandler do
   @spec match_event(term) :: {pid, term, String.t(), list, %{}} | :nomatch
   def match_event({:error_report, _gleader, {origin, :crash_report, [report | _]}})
       when is_list(report) do
-    try do
-      {_kind, error, stack} = report[:error_info]
-      {origin, error, stack, %{}}
-    rescue
-      exception ->
-        Logger.warn(fn ->
-          """
-          AppSignal: Failed to match error report: #{Exception.message(exception)}
-          #{inspect(report[:error_info])}
-          """
-        end)
+    {_kind, error, stack} = report[:error_info]
+    {origin, error, stack, %{}}
+  rescue
+    exception ->
+      Logger.warn(fn ->
+        """
+        AppSignal: Failed to match error report: #{Exception.message(exception)}
+        #{inspect(report[:error_info])}
+        """
+      end)
 
-        :nomatch
-    end
+      :nomatch
   end
 
   def match_event(_event) do
