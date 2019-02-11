@@ -4,10 +4,10 @@ defmodule Appsignal.ErrorLoggerHandlerTest do
 
   setup do
     Appsignal.remove_report_handler()
-    Appsignal.LoggerHandler.add()
+    Appsignal.ErrorLoggerHandler.add()
 
     on_exit(fn ->
-      Appsignal.LoggerHandler.remove()
+      Appsignal.ErrorLoggerHandler.remove()
       Appsignal.add_report_handler()
     end)
 
