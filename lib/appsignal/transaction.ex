@@ -41,7 +41,7 @@ defmodule Appsignal.Transaction do
 
   defstruct [:resource, :id]
 
-  alias Appsignal.{Nif, Transaction, TransactionRegistry, Backtrace}
+  alias Appsignal.{Nif, Transaction, TransactionRegistry}
 
   @typedoc """
   Datatype which is used as a handle to the current AppSignal transaction.
@@ -216,7 +216,7 @@ defmodule Appsignal.Transaction do
 
     backtrace_data =
       backtrace
-      |> Backtrace.from_stacktrace()
+      |> Appsignal.Backtrace.from_stacktrace()
       |> Appsignal.Utils.DataEncoder.encode()
 
     :ok = Nif.set_error(transaction.resource, name, message, backtrace_data)
