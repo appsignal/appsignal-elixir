@@ -67,7 +67,7 @@ defmodule Appsignal do
   end
 
   @doc false
-  def initialize() do
+  def initialize do
     case {Config.initialize(), Config.configured_as_active?()} do
       {_, false} ->
         Logger.info("AppSignal disabled.")
