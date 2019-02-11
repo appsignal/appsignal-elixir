@@ -8,7 +8,7 @@ defmodule Appsignal.FakeTransaction do
     errors: []
   }
 
-  def start_event() do
+  def start_event do
     self()
     |> Appsignal.TransactionRegistry.lookup()
     |> start_event
