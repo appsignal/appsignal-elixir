@@ -238,7 +238,6 @@ defmodule Appsignal.Config do
 
     Nif.env_put("_APPSIGNAL_ACTIVE", to_string(config[:active]))
     Nif.env_put("_APPSIGNAL_AGENT_PATH", List.to_string(:code.priv_dir(:appsignal)))
-    # FIXME - app_path should not be necessary
     Nif.env_put("_APPSIGNAL_APP_PATH", List.to_string(:code.priv_dir(:appsignal)))
     Nif.env_put("_APPSIGNAL_APP_NAME", to_string(config[:name]))
     Nif.env_put("_APPSIGNAL_CA_FILE_PATH", to_string(config[:ca_file_path]))
