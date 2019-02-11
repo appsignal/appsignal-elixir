@@ -13,7 +13,7 @@ defmodule Appsignal do
 
   use Application
 
-  alias Appsignal.{Config, Error, Backtrace}
+  alias Appsignal.{Backtrace, Config, Error}
 
   require Logger
 
