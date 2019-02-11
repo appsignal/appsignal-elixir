@@ -440,7 +440,9 @@ defmodule Appsignal.Transaction do
   """
   @spec generate_id :: String.t()
   def generate_id do
-    :crypto.strong_rand_bytes(8) |> Base.hex_encode32(case: :lower, padding: false)
+    8
+    |> :crypto.strong_rand_bytes()
+    |> Base.hex_encode32(case: :lower, padding: false)
   end
 
   # Lookup the current AppSignal transaction in the transaction registry.
