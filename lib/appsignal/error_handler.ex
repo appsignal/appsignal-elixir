@@ -20,25 +20,6 @@ defmodule Appsignal.ErrorHandler do
                  Appsignal.Transaction
                )
 
-  def handle_event(event, state) do
-    case match_event(event) do
-      {origin, error, stack, conn} ->
-        transaction =
-          unless TransactionRegistry.ignored?(origin) do
-            @transaction.lookup_or_create_transaction(origin)
-          end
-
-        if transaction != nil do
-          handle_error(transaction, error, stack, conn)
-        end
-
-      _ ->
-        :ok
-    end
-
-    {:ok, state}
-  end
-
   @spec handle_error(Appsignal.Transaction.t() | pid(), any(), Exception.stacktrace(), map()) ::
           :ok
   def handle_error(pid_or_transaction, error, stack, conn \\ %{})
@@ -128,6 +109,12 @@ defmodule Appsignal.ErrorHandler do
   @deprecated "Use Appsignal.ErrorLoggerHandler.init/1 instead."
   def init(state) do
     Appsignal.ErrorLoggerHandler.init(state)
+  end
+
+  @doc false
+  @deprecated "Use Appsignal.ErrorLoggerHandler.handle_event/2 instead."
+  def handle_event(event, state) do
+    Appsignal.ErrorLoggerHandler.handle_event(event, state)
   end
 
   @doc false
