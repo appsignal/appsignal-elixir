@@ -31,7 +31,11 @@ defmodule Appsignal do
 
     initialize()
 
-    :error_logger.add_report_handler(Appsignal.ErrorLoggerHandler)
+    if(Process.whereis(:logger)) do
+      :logger.add_handler(:appsignal, Appsignal.LoggerHandler, %{})
+    else
+      :error_logger.add_report_handler(Appsignal.ErrorLoggerHandler)
+    end
 
     children = [
       worker(Appsignal.TransactionRegistry, [])

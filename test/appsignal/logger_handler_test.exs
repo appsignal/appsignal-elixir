@@ -1,16 +1,11 @@
-defmodule Appsignal.ErrorLoggerHandlerTest do
+defmodule Appsignal.LoggerHandlerTest do
   use ExUnit.Case, async: false
   alias Appsignal.{Transaction, FakeTransaction}
 
   setup do
-    :logger.remove_handler(:appsignal)
     :error_logger.delete_report_handler(Appsignal.ErrorLoggerHandler)
-    :error_logger.add_report_handler(Appsignal.ErrorLoggerHandler)
-
-    on_exit(fn ->
-      :error_logger.delete_report_handler(Appsignal.ErrorLoggerHandler)
-      :logger.add_handler(:appsignal, Appsignal.LoggerHandler, %{})
-    end)
+    :logger.remove_handler(:appsignal)
+    :logger.add_handler(:appsignal, Appsignal.LoggerHandler, %{})
 
     {:ok, fake_transaction} = FakeTransaction.start_link()
     [fake_transaction: fake_transaction]
@@ -50,15 +45,5 @@ defmodule Appsignal.ErrorLoggerHandlerTest do
            |> Enum.any?(fn error ->
              match?({%Transaction{}, ":error_ignored", _, _}, error)
            end)
-  end
-
-  test "does not cause warnings for noise on handle_info" do
-    :error_logger.add_report_handler(ErrorLoggerForwarder, self())
-
-    :error_logger
-    |> Process.whereis()
-    |> send(:noise)
-
-    refute_receive({:warning_msg, _, _})
   end
 end
