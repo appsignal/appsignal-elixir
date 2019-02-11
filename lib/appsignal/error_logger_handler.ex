@@ -9,7 +9,6 @@ defmodule Appsignal.ErrorLoggerHandler do
   """
 
   require Logger
-  alias Appsignal.ErrorHandler
 
   @doc false
   def init(state) do
@@ -20,7 +19,7 @@ defmodule Appsignal.ErrorLoggerHandler do
   def handle_event({:error_report, _gleader, {pid, :crash_report, [report | _]}}, state) do
     try do
       {_kind, error, stack} = report[:error_info]
-      ErrorHandler.handle_error(pid, error, stack)
+      Appsignal.ErrorHandler.handle_error(pid, error, stack)
     rescue
       exception ->
         Logger.warn(fn ->
