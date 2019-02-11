@@ -100,7 +100,7 @@ defmodule Appsignal.Transaction do
   Start an event for the current transaction. See `start_event/1`
   """
   @spec start_event() :: Transaction.t()
-  def start_event() do
+  def start_event do
     start_event(lookup())
   end
 
@@ -390,7 +390,7 @@ defmodule Appsignal.Transaction do
   Finish the current transaction. See `finish/1`.
   """
   @spec finish() :: :sample | :no_sample
-  def finish() do
+  def finish do
     finish(lookup())
   end
 
@@ -415,7 +415,7 @@ defmodule Appsignal.Transaction do
   Complete the current transaction. See `complete/1`.
   """
   @spec complete() :: :ok
-  def complete() do
+  def complete do
     complete(lookup())
   end
 
@@ -445,7 +445,7 @@ defmodule Appsignal.Transaction do
   end
 
   # Lookup the current AppSignal transaction in the transaction registry.
-  defp lookup() do
+  defp lookup do
     TransactionRegistry.lookup(self())
   end
 
