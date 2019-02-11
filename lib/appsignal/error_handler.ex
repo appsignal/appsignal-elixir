@@ -124,11 +124,13 @@ defmodule Appsignal.ErrorHandler do
     :nomatch
   end
 
+  @doc false
   @deprecated "Use Appsignal.ErrorLoggerHandler.init/1 instead."
   def init(state) do
     Appsignal.ErrorLoggerHandler.init(state)
   end
 
+  @doc false
   @deprecated "Use Appsignal.ErrorLoggerHandler.handle_info/2 instead."
   def handle_info(info, state) do
     Appsignal.ErrorLoggerHandler.handle_info(info, state)
