@@ -34,7 +34,7 @@ defmodule Appsignal.Config do
   OS environment variables. Returns whether or not the configuration is valid.
   """
   @spec initialize() :: :ok | {:error, :invalid_config}
-  def initialize() do
+  def initialize do
     sources = %{
       default: load_from_default(),
       system: load_from_system(),
