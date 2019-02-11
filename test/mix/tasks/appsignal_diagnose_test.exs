@@ -2,7 +2,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   use ExUnit.Case
   import ExUnit.CaptureIO
   import AppsignalTest.Utils
-  alias Appsignal.{Diagnose.FakeReport, FakeSystem, FakeNif}
+  alias Appsignal.{Diagnose.FakeReport, FakeNif, FakeSystem}
 
   @appsignal_version Mix.Project.config()[:version]
   @agent_version Appsignal.Nif.agent_version()
