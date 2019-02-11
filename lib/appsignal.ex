@@ -30,12 +30,7 @@ defmodule Appsignal do
     import Supervisor.Spec, warn: false
 
     initialize()
-
-    if(Process.whereis(:logger)) do
-      :logger.add_handler(:appsignal, Appsignal.LoggerHandler, %{})
-    else
-      :error_logger.add_report_handler(Appsignal.ErrorLoggerHandler)
-    end
+    add_report_handler()
 
     children = [
       worker(Appsignal.TransactionRegistry, [])
@@ -96,6 +91,24 @@ defmodule Appsignal do
           "Warning: No valid AppSignal configuration found, continuing with " <>
             "AppSignal metrics disabled."
         )
+    end
+  end
+
+  @doc false
+  def add_report_handler do
+    if(Process.whereis(:logger)) do
+      :logger.add_handler(:appsignal, Appsignal.LoggerHandler, %{})
+    else
+      :error_logger.add_report_handler(Appsignal.ErrorLoggerHandler)
+    end
+  end
+
+  @doc false
+  def remove_report_handler do
+    if(Process.whereis(:logger)) do
+      :logger.remove_handler(:appsignal)
+    else
+      :error_logger.delete_report_handler(Appsignal.ErrorLoggerHandler)
     end
   end
 

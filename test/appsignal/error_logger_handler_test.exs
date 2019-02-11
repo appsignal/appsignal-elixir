@@ -3,13 +3,12 @@ defmodule Appsignal.ErrorLoggerHandlerTest do
   alias Appsignal.{Transaction, FakeTransaction}
 
   setup do
-    :logger.remove_handler(:appsignal)
-    :error_logger.delete_report_handler(Appsignal.ErrorLoggerHandler)
+    Appsignal.remove_report_handler()
     :error_logger.add_report_handler(Appsignal.ErrorLoggerHandler)
 
     on_exit(fn ->
       :error_logger.delete_report_handler(Appsignal.ErrorLoggerHandler)
-      :logger.add_handler(:appsignal, Appsignal.LoggerHandler, %{})
+      Appsignal.add_report_handler()
     end)
 
     {:ok, fake_transaction} = FakeTransaction.start_link()
