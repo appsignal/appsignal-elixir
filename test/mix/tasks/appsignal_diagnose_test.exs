@@ -1094,7 +1094,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     %{log_dir_path: log_dir_path, "appsignal.log": log_file_path}
   end
 
-  defp process_uid() do
+  defp process_uid do
     case System.cmd("id", ["-u"]) do
       {id, 0} ->
         case Integer.parse(List.first(String.split(id, "\n"))) do
@@ -1107,7 +1107,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     end
   end
 
-  defp process_gid() do
+  defp process_gid do
     case System.cmd("id", ["-g"]) do
       {id, 0} ->
         case Integer.parse(List.first(String.split(id, "\n"))) do
