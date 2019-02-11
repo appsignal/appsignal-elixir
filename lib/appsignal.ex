@@ -97,18 +97,18 @@ defmodule Appsignal do
   @doc false
   def add_report_handler do
     if(Process.whereis(:logger)) do
-      :logger.add_handler(:appsignal, Appsignal.LoggerHandler, %{})
+      Appsignal.LoggerHandler.add()
     else
-      :error_logger.add_report_handler(Appsignal.ErrorLoggerHandler)
+      Appsignal.ErrorLoggerHandler.add()
     end
   end
 
   @doc false
   def remove_report_handler do
     if(Process.whereis(:logger)) do
-      :logger.remove_handler(:appsignal)
+      Appsignal.LoggerHandler.remove()
     else
-      :error_logger.delete_report_handler(Appsignal.ErrorLoggerHandler)
+      Appsignal.ErrorLoggerHandler.remove()
     end
   end
 

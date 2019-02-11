@@ -10,6 +10,20 @@ defmodule Appsignal.ErrorLoggerHandler do
 
   require Logger
 
+  @doc """
+  Add `Appsignal.ErrorLoggerHandler` as a report handler for `:error_logger`.
+  """
+  def add do
+    :error_logger.add_report_handler(Appsignal.ErrorLoggerHandler)
+  end
+
+  @doc """
+  Remove `AppSignal.ErrorLoggerHandler` report handler from `:error_logger`.
+  """
+  def remove do
+    :error_logger.delete_report_handler(Appsignal.ErrorLoggerHandler)
+  end
+
   @doc false
   def init(state) do
     {:ok, state}

@@ -4,10 +4,10 @@ defmodule Appsignal.ErrorLoggerHandlerTest do
 
   setup do
     Appsignal.remove_report_handler()
-    :error_logger.add_report_handler(Appsignal.ErrorLoggerHandler)
+    Appsignal.LoggerHandler.add()
 
     on_exit(fn ->
-      :error_logger.delete_report_handler(Appsignal.ErrorLoggerHandler)
+      Appsignal.LoggerHandler.remove()
       Appsignal.add_report_handler()
     end)
 

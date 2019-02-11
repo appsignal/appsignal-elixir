@@ -5,10 +5,10 @@ if System.otp_release() >= "21" do
 
     setup do
       Appsignal.remove_report_handler()
-      :logger.add_handler(:appsignal, Appsignal.LoggerHandler, %{})
+      Appsignal.LoggerHandler.add()
 
       on_exit(fn ->
-        :logger.remove_handler(:appsignal)
+        Appsignal.LoggerHandler.remove()
         Appsignal.add_report_handler()
       end)
 

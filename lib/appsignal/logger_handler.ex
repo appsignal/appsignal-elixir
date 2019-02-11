@@ -10,6 +10,20 @@ defmodule Appsignal.LoggerHandler do
 
   require Logger
 
+  @doc """
+  Add `Appsignal.LoggerHandler` as a report handler for `:logger`.
+  """
+  def add do
+    :logger.add_handler(:appsignal, Appsignal.LoggerHandler, %{})
+  end
+
+  @doc """
+  Remove AppSignal report handlers from `:logger`.
+  """
+  def remove do
+    :logger.remove_handler(:appsignal)
+  end
+
   @doc false
   def log(
         %{
