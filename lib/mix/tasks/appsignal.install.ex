@@ -1,6 +1,5 @@
 defmodule Mix.Tasks.Appsignal.Install do
   use Mix.Task
-  alias Appsignal.{Utils.PushApiKeyValidator, Config}
 
   @demo Application.get_env(:appsignal, :appsignal_demo, Appsignal.Demo)
 
@@ -16,7 +15,7 @@ defmodule Mix.Tasks.Appsignal.Install do
   def run([push_api_key]) do
     config = %{active: true, push_api_key: push_api_key, request_headers: []}
     Application.put_env(:appsignal, :config, config)
-    Config.initialize()
+    Appsignal.Config.initialize()
 
     header()
     validate_push_api_key()
@@ -66,7 +65,7 @@ defmodule Mix.Tasks.Appsignal.Install do
     IO.write("Validating Push API key: ")
     config = Application.get_env(:appsignal, :config)
 
-    case PushApiKeyValidator.validate(config) do
+    case Appsignal.Utils.PushApiKeyValidator.validate(config) do
       :ok ->
         IO.puts("Valid! 🎉")
 
