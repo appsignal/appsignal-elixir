@@ -76,7 +76,7 @@ defmodule Appsignal.Instrumentation.Decorators do
   end
 
   @doc false
-  def channel_action(body, context = %{args: [action, _payload, socket]}) do
+  def channel_action(body, %{args: [action, _payload, socket]} = context) do
     quote do
       Appsignal.Phoenix.Channel.channel_action(
         unquote(context.module),

@@ -251,11 +251,15 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
 
     @tag :file_config
     test "file based config option doesn't crash if the config file is already linked" do
-      File.open!(Path.join(@test_config_directory, "config.exs"), [:write])
+      @test_config_directory
+      |> Path.join("config.exs")
+      |> File.open!([:write])
       |> IO.binwrite(~s(use Mix.Config\n# config\nimport_config "appsignal.exs"))
       |> File.close()
 
-      File.open!(Path.join(@test_config_directory, "dev.exs"), [:append])
+      @test_config_directory
+      |> Path.join("dev.exs")
+      |> File.open!([:append])
       |> IO.binwrite(~s(\nconfig :appsignal, :config, active: true\n))
       |> File.close()
 
@@ -316,7 +320,9 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
   end
 
   defp create_config_file_for_env_in(env, directory) do
-    File.open!(Path.join(directory, "#{env}.exs"), [:write])
+    directory
+    |> Path.join("#{env}.exs")
+    |> File.open!([:write])
     |> IO.binwrite("use Mix.Config\n# #{env}")
     |> File.close()
   end

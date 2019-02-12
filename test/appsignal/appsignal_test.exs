@@ -3,7 +3,7 @@ defmodule AppsignalTest do
   import AppsignalTest.Utils
   import ExUnit.CaptureIO
 
-  alias Appsignal.{Transaction, FakeTransaction}
+  alias Appsignal.{FakeTransaction, Transaction}
 
   setup do
     {:ok, fake_transaction} = FakeTransaction.start_link()

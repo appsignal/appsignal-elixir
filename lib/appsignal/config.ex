@@ -34,7 +34,7 @@ defmodule Appsignal.Config do
   OS environment variables. Returns whether or not the configuration is valid.
   """
   @spec initialize() :: :ok | {:error, :invalid_config}
-  def initialize() do
+  def initialize do
     sources = %{
       default: load_from_default(),
       system: load_from_system(),
@@ -175,7 +175,10 @@ defmodule Appsignal.Config do
     APPSIGNAL_SEND_PARAMS
   )
   @atom_keys ~w(APPSIGNAL_APP_ENV)
-  @string_list_keys ~w(APPSIGNAL_FILTER_PARAMETERS APPSIGNAL_IGNORE_ACTIONS APPSIGNAL_IGNORE_ERRORS APPSIGNAL_IGNORE_NAMESPACES APPSIGNAL_DNS_SERVERS APPSIGNAL_FILTER_SESSION_DATA APPSIGNAL_REQUEST_HEADERS)
+  @string_list_keys ~w(
+    APPSIGNAL_FILTER_PARAMETERS APPSIGNAL_IGNORE_ACTIONS APPSIGNAL_IGNORE_ERRORS APPSIGNAL_IGNORE_NAMESPACES
+    APPSIGNAL_DNS_SERVERS APPSIGNAL_FILTER_SESSION_DATA APPSIGNAL_REQUEST_HEADERS
+  )
 
   defp load_from_environment do
     %{}
@@ -190,10 +193,10 @@ defmodule Appsignal.Config do
     |> Enum.reduce(config, fn key, cfg ->
       value = System.get_env(key)
 
-      if !empty?(value) do
-        Map.put(cfg, @env_to_key_mapping[key], converter.(value))
-      else
+      if empty?(value) do
         cfg
+      else
+        Map.put(cfg, @env_to_key_mapping[key], converter.(value))
       end
     end)
   end
@@ -248,7 +251,6 @@ defmodule Appsignal.Config do
 
     Nif.env_put("_APPSIGNAL_ACTIVE", to_string(config[:active]))
     Nif.env_put("_APPSIGNAL_AGENT_PATH", List.to_string(:code.priv_dir(:appsignal)))
-    # FIXME - app_path should not be necessary
     Nif.env_put("_APPSIGNAL_APP_PATH", List.to_string(:code.priv_dir(:appsignal)))
     Nif.env_put("_APPSIGNAL_APP_NAME", to_string(config[:name]))
     Nif.env_put("_APPSIGNAL_CA_FILE_PATH", to_string(config[:ca_file_path]))

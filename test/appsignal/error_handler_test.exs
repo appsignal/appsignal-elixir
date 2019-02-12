@@ -5,7 +5,7 @@ defmodule Appsignal.ErrorHandlerTest do
 
   use ExUnit.Case, async: true
 
-  alias Appsignal.{Transaction, ErrorHandler, FakeTransaction}
+  alias Appsignal.{ErrorHandler, FakeTransaction, Transaction}
 
   setup do
     {:ok, fake_transaction} = FakeTransaction.start_link()

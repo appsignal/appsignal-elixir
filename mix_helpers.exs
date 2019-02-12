@@ -9,7 +9,7 @@ defmodule Mix.Appsignal.Helper do
 
   @max_retries 5
 
-  def install() do
+  def install do
     report = initial_report()
 
     case verify_system_architecture(report) do
@@ -488,7 +488,7 @@ defmodule Mix.Appsignal.Helper do
     Mix.Shell.IO.error("AppSignal installation failed: #{reason}")
   end
 
-  defp priv_dir() do
+  defp priv_dir do
     case :code.priv_dir(:appsignal) do
       {:error, :bad_name} ->
         # This happens on initial compilation
