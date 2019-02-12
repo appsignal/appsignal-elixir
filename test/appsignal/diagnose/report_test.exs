@@ -2,7 +2,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose.ReportTest do
   use ExUnit.Case
   import AppsignalTest.Utils
 
-  defp send() do
+  defp send do
     Appsignal.Diagnose.Report.send(
       Application.get_env(:appsignal, :config, %{}),
       %{}

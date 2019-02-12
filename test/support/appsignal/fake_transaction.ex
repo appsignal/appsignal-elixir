@@ -9,7 +9,7 @@ defmodule Appsignal.FakeTransaction do
     errors: []
   }
 
-  def start_event() do
+  def start_event do
     self()
     |> Appsignal.TransactionRegistry.lookup()
     |> start_event
@@ -250,7 +250,9 @@ defmodule Appsignal.FakeTransaction do
   end
 
   def started_transaction?(pid_or_module) do
-    started_transactions(pid_or_module) |> Enum.any?()
+    pid_or_module
+    |> started_transactions()
+    |> Enum.any?()
   end
 
   def finished_transactions(pid_or_module) do

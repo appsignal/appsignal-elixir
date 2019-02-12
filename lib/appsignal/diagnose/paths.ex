@@ -10,7 +10,7 @@ defmodule Appsignal.Diagnose.Paths do
     }
   end
 
-  def labels() do
+  def labels do
     %{
       working_dir: "Working directory",
       log_dir_path: "Log directory",

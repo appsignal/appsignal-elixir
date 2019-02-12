@@ -1,6 +1,6 @@
 defmodule AppsignalHelpersTest do
   use ExUnit.Case, async: false
-  alias Appsignal.{Instrumentation.Helpers, FakeTransaction}
+  alias Appsignal.{FakeTransaction, Instrumentation.Helpers}
 
   setup do
     {:ok, fake_transaction} = FakeTransaction.start_link()

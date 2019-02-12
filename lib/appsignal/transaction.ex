@@ -37,12 +37,11 @@ defmodule Appsignal.Transaction do
   "current" transaction). This is the case after `Transaction.start/2`
   has been called from within the same process.
 
-
   """
 
   defstruct [:resource, :id]
 
-  alias Appsignal.{Nif, Transaction, TransactionRegistry, Backtrace}
+  alias Appsignal.{Nif, Transaction, TransactionRegistry}
 
   @typedoc """
   Datatype which is used as a handle to the current AppSignal transaction.
@@ -101,7 +100,7 @@ defmodule Appsignal.Transaction do
   Start an event for the current transaction. See `start_event/1`
   """
   @spec start_event() :: Transaction.t()
-  def start_event() do
+  def start_event do
     start_event(lookup())
   end
 
@@ -217,7 +216,7 @@ defmodule Appsignal.Transaction do
 
     backtrace_data =
       backtrace
-      |> Backtrace.from_stacktrace()
+      |> Appsignal.Backtrace.from_stacktrace()
       |> Appsignal.Utils.DataEncoder.encode()
 
     :ok = Nif.set_error(transaction.resource, name, message, backtrace_data)
@@ -403,7 +402,7 @@ defmodule Appsignal.Transaction do
   Finish the current transaction. See `finish/1`.
   """
   @spec finish() :: :sample | :no_sample
-  def finish() do
+  def finish do
     finish(lookup())
   end
 
@@ -428,7 +427,7 @@ defmodule Appsignal.Transaction do
   Complete the current transaction. See `complete/1`.
   """
   @spec complete() :: :ok
-  def complete() do
+  def complete do
     complete(lookup())
   end
 
@@ -452,11 +451,13 @@ defmodule Appsignal.Transaction do
   """
   @spec generate_id :: String.t()
   def generate_id do
-    :crypto.strong_rand_bytes(8) |> Base.hex_encode32(case: :lower, padding: false)
+    8
+    |> :crypto.strong_rand_bytes()
+    |> Base.hex_encode32(case: :lower, padding: false)
   end
 
   # Lookup the current AppSignal transaction in the transaction registry.
-  defp lookup() do
+  defp lookup do
     TransactionRegistry.lookup(self())
   end
 
