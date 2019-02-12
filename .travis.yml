@@ -10,6 +10,9 @@ otp_release:
   - 21.2
   - 20.3
   - 19.3
+os:
+  - linux
+  - osx
 matrix:
   exclude:
     - otp_release: 21.2
