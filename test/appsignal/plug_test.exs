@@ -324,11 +324,13 @@ defmodule Appsignal.PlugTest do
       assert Appsignal.Plug.extract_meta_data(%Plug.Conn{
                method: "GET",
                request_path: "/foo",
-               resp_headers: [{"x-request-id", "kk4hk5sis7c3b56t683nnmdig632c9ot"}]
+               resp_headers: [{"x-request-id", "kk4hk5sis7c3b56t683nnmdig632c9ot"}],
+               status: 200
              }) == %{
                "method" => "GET",
                "path" => "/foo",
-               "request_id" => "kk4hk5sis7c3b56t683nnmdig632c9ot"
+               "request_id" => "kk4hk5sis7c3b56t683nnmdig632c9ot",
+               "http_status_code" => 200
              }
     end
   end
