@@ -141,7 +141,7 @@ if Appsignal.plug?() do
       |> Enum.into(%{})
     end
 
-    def extract_meta_data(%Plug.Conn{method: method, request_path: path} = conn) do
+    def extract_meta_data(%Plug.Conn{method: method, request_path: path, status: status} = conn) do
       request_id =
         conn
         |> Plug.Conn.get_resp_header("x-request-id")
@@ -150,7 +150,8 @@ if Appsignal.plug?() do
       %{
         "method" => method,
         "path" => path,
-        "request_id" => request_id
+        "request_id" => request_id,
+        "http_status_code" => status
       }
     end
 
