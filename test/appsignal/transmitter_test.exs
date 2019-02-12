@@ -1,6 +1,6 @@
 defmodule Appsignal.TransmitterTest do
   use ExUnit.Case
-  alias Appsignal.{Transmitter, Config}
+  alias Appsignal.{Config, Transmitter}
   import AppsignalTest.Utils
   import ExUnit.CaptureLog
 

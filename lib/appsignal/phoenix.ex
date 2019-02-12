@@ -18,7 +18,7 @@ if Appsignal.phoenix?() do
     require Logger
 
     @transaction Application.get_env(:appsignal, :appsignal_transaction, Appsignal.Transaction)
-    alias Appsignal.{TransactionRegistry, Error}
+    alias Appsignal.{Error, TransactionRegistry}
 
     @doc false
     defmacro __using__(_) do

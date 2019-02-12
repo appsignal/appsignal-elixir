@@ -804,7 +804,7 @@ defmodule Appsignal.ConfigTest do
     end
   end
 
-  defp default_configuration() do
+  defp default_configuration do
     %{
       active: false,
       debug: false,
@@ -832,14 +832,14 @@ defmodule Appsignal.ConfigTest do
     }
   end
 
-  defp valid_configuration() do
+  defp valid_configuration do
     default_configuration()
     |> Map.put(:active, true)
     |> Map.put(:valid, true)
     |> Map.put(:push_api_key, "00000000-0000-0000-0000-000000000000")
   end
 
-  defp init_config() do
+  defp init_config do
     Config.initialize()
     Application.get_all_env(:appsignal)[:config]
   end

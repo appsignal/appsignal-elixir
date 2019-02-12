@@ -1,6 +1,6 @@
 defmodule Appsignal.Phoenix.InstrumenterTest do
   use ExUnit.Case, async: true
-  alias Appsignal.{Phoenix.Instrumenter, Transaction, FakeTransaction}
+  alias Appsignal.{FakeTransaction, Phoenix.Instrumenter, Transaction}
 
   setup do
     {:ok, fake_transaction} = FakeTransaction.start_link()
