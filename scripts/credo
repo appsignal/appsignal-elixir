@@ -5,5 +5,5 @@ version() {
 }
 
 if [ $(version $TRAVIS_ELIXIR_VERSION) -ge $(version "1.8.0") ]; then
-  MIX_ENV=test mix credo --strict
+  mix credo --strict
 fi
