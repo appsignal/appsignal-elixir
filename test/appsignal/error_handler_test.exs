@@ -12,14 +12,6 @@ defmodule Appsignal.ErrorHandlerTest do
     [fake_transaction: fake_transaction]
   end
 
-  test "whether we can send error reports without current transaction" do
-    :proc_lib.spawn(fn ->
-      :erlang.error(:error_task)
-    end)
-
-    :timer.sleep(100)
-  end
-
   test "whether we can send error reports with a current transaction", %{
     fake_transaction: fake_transaction
   } do
@@ -72,16 +64,6 @@ defmodule Appsignal.ErrorHandlerTest do
     assert ^metadata = FakeTransaction.metadata(fake_transaction)
     assert [^transaction] = FakeTransaction.finished_transactions(fake_transaction)
     assert [^transaction] = FakeTransaction.completed_transactions(fake_transaction)
-  end
-
-  test "does not cause warnings for noise on handle_info" do
-    :error_logger.add_report_handler(ErrorLoggerForwarder, self())
-
-    :error_logger
-    |> Process.whereis()
-    |> send(:noise)
-
-    refute_receive({:warning_msg, _, _})
   end
 
   describe "handle_error/2" do

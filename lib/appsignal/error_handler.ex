@@ -20,37 +20,24 @@ defmodule Appsignal.ErrorHandler do
                  Appsignal.Transaction
                )
 
-  def init(state) do
-    {:ok, state}
-  end
+  @spec handle_error(Appsignal.Transaction.t() | pid(), any(), Exception.stacktrace(), map()) ::
+          :ok
+  def handle_error(pid_or_transaction, error, stack, conn \\ %{})
 
-  def handle_event(event, state) do
-    case match_event(event) do
-      {origin, error, stack, conn} ->
-        transaction =
-          unless TransactionRegistry.ignored?(origin) do
-            @transaction.lookup_or_create_transaction(origin)
-          end
-
-        if transaction != nil do
-          handle_error(transaction, error, stack, conn)
-        end
-
-      _ ->
-        :ok
-    end
-
-    {:ok, state}
-  end
-
-  def handle_info(_, state) do
-    {:ok, state}
-  end
-
-  @spec handle_error(Appsignal.Transaction.t(), any, Exception.stacktrace(), map()) :: :ok
-  def handle_error(transaction, error, stack, conn) do
+  def handle_error(%Appsignal.Transaction{} = transaction, error, stack, conn) do
     {exception, stacktrace} = Error.normalize(error, stack)
     do_handle_error(transaction, exception, stacktrace, conn)
+  end
+
+  def handle_error(pid, error, stack, conn) do
+    transaction =
+      unless TransactionRegistry.ignored?(pid) do
+        @transaction.lookup_or_create_transaction(pid)
+      end
+
+    if transaction != nil do
+      handle_error(transaction, error, stack, conn)
+    end
   end
 
   @spec do_handle_error(Appsignal.Transaction.t(), Exception.t(), list(String.t()), map()) :: :ok
@@ -114,6 +101,24 @@ defmodule Appsignal.ErrorHandler do
 
   def match_event(_event) do
     :nomatch
+  end
+
+  @doc false
+  @deprecated "Use Appsignal.ErrorLoggerHandler.init/1 instead."
+  def init(state) do
+    Appsignal.ErrorLoggerHandler.init(state)
+  end
+
+  @doc false
+  @deprecated "Use Appsignal.ErrorLoggerHandler.handle_event/2 instead."
+  def handle_event(event, state) do
+    Appsignal.ErrorLoggerHandler.handle_event(event, state)
+  end
+
+  @doc false
+  @deprecated "Use Appsignal.ErrorLoggerHandler.handle_info/2 instead."
+  def handle_info(info, state) do
+    Appsignal.ErrorLoggerHandler.handle_info(info, state)
   end
 
   @doc false
