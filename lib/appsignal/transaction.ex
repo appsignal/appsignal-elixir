@@ -253,7 +253,19 @@ defmodule Appsignal.Transaction do
   @spec set_sample_data(Transaction.t() | nil, String.t(), any) :: Transaction.t()
   def set_sample_data(nil, _key, _payload), do: nil
 
+  def set_sample_data(%Transaction{} = transaction, "params" = key, payload) do
+    if config()[:send_params] do
+      do_set_sample_data(transaction, key, payload)
+    else
+      transaction
+    end
+  end
+
   def set_sample_data(%Transaction{} = transaction, key, payload) do
+    do_set_sample_data(transaction, key, payload)
+  end
+
+  def do_set_sample_data(%Transaction{} = transaction, key, payload) do
     payload_data = Appsignal.Utils.DataEncoder.encode(payload)
     :ok = Nif.set_sample_data(transaction.resource, key, payload_data)
     transaction

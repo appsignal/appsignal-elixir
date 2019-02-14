@@ -254,6 +254,42 @@ defmodule AppsignalTransactionTest do
     end
   end
 
+  describe "concerning filtering params" do
+    setup do
+      conn = %Plug.Conn{params: %{"foo" => "bar", "password" => "secret"}}
+
+      {:ok, conn: conn}
+    end
+
+    @tag :skip_env_test_no_nif
+    @tag :skip_env_test
+    test "when send_params=true it sets params keys", %{conn: conn} do
+      transaction =
+        with_config(%{send_params: true}, fn ->
+          "test5"
+          |> Transaction.start(:http_request)
+          |> Transaction.set_request_metadata(conn)
+        end)
+
+      assert %{"sample_data" => %{"params" => params}} = Transaction.to_map(transaction)
+
+      assert params == %{"foo" => "bar", "password" => "[FILTERED]"}
+    end
+
+    @tag :skip_env_test_no_nif
+    @tag :skip_env_test
+    test "when send_params=false it doesn't set params keys", %{conn: conn} do
+      transaction =
+        with_config(%{send_params: false}, fn ->
+          "test5"
+          |> Transaction.start(:http_request)
+          |> Transaction.set_request_metadata(conn)
+        end)
+
+      refute Map.has_key?(Transaction.to_map(transaction), "params")
+    end
+  end
+
   describe "creating a transaction" do
     setup do
       id = Transaction.generate_id()
