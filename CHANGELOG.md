@@ -1,3 +1,7 @@
+# 1.9.2
+- Fix multi user permission issue for agent directories and files.
+  Commit fdd650097b702a8aa60ee90ee93ad4e3e3365d81
+
 # 1.9.1
 * Block on ignoring PIDs in TransactionRegistry. PR #448
 
