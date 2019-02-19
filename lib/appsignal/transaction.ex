@@ -253,9 +253,9 @@ defmodule Appsignal.Transaction do
   @spec set_sample_data(Transaction.t() | nil, String.t(), any) :: Transaction.t()
   def set_sample_data(nil, _key, _payload), do: nil
 
-  def set_sample_data(%Transaction{} = transaction, "params" = key, payload) do
+  def set_sample_data(%Transaction{} = transaction, "params", payload) do
     if config()[:send_params] do
-      do_set_sample_data(transaction, key, payload)
+      do_set_sample_data(transaction, "params", payload)
     else
       transaction
     end
