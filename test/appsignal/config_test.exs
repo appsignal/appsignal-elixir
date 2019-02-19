@@ -459,9 +459,9 @@ defmodule Appsignal.ConfigTest do
 
     test "send_params" do
       assert with_env(
-               %{"APPSIGNAL_SEND_PARAMS" => "true"},
+               %{"APPSIGNAL_SEND_PARAMS" => "false"},
                &init_config/0
-             ) == default_configuration() |> Map.put(:send_params, true)
+             ) == default_configuration() |> Map.put(:send_params, false)
     end
 
     test "skip_session_data" do
@@ -768,7 +768,6 @@ defmodule Appsignal.ConfigTest do
           enable_host_metrics: "true",
           env: "prod",
           running_in_container: "false",
-          send_params: "true",
           files_world_accessible: "false"
         },
         fn ->
