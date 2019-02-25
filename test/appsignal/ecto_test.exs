@@ -18,6 +18,24 @@ defmodule Appsignal.EctoTest do
                body:
                  "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0",
                body_format: 1,
+               duration: 8_829_000,
+               name: "query.ecto",
+               title: ""
+             }
+           ] = FakeTransaction.recorded_events(fake_transaction)
+  end
+
+  test "records an event from Telemetry 0.3.x", %{fake_transaction: fake_transaction} do
+    transaction = Transaction.start("test", :http_request)
+
+    perform_telemetry_0_3_event()
+
+    assert [
+             %{
+               transaction: ^transaction,
+               body:
+                 "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0",
+               body_format: 1,
                duration: 58_336_000,
                name: "query.ecto",
                title: ""
@@ -32,6 +50,28 @@ defmodule Appsignal.EctoTest do
   end
 
   defp perform_event do
+    Appsignal.Ecto.handle_event(
+      [:appsignal_phoenix_example, :repo, :query],
+      %{
+        decode_time: 2_204_000,
+        query_time: 5_386_000,
+        queue_time: 1_239_000,
+        total_time: 8_829_000
+      },
+      %{
+        params: [],
+        query:
+          "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0",
+        repo: AppsignalPhoenixExample.Repo,
+        result: :ok,
+        source: "users",
+        type: :ecto_sql_query
+      },
+      nil
+    )
+  end
+
+  defp perform_telemetry_0_3_event do
     Appsignal.Ecto.handle_event(
       [:appsignal_phoenix_example, :repo, :query],
       58_336_000,

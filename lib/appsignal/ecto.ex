@@ -27,7 +27,11 @@ defmodule Appsignal.Ecto do
 
   @transaction Application.get_env(:appsignal, :appsignal_transaction, Appsignal.Transaction)
 
-  def handle_event(_event, duration, metadata, _config) do
+  def handle_event(_event, %{total_time: duration}, metadata, _config) do
+    @transaction.record_event("query.ecto", "", metadata.query, duration, 1)
+  end
+
+  def handle_event(_event, duration, metadata, _config) when is_integer(duration) do
     @transaction.record_event("query.ecto", "", metadata.query, duration, 1)
   end
 
