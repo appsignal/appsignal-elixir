@@ -1,3 +1,6 @@
+# 1.9.3
+- Support send_params option. PR #456
+
 # 1.9.2
 - Fix multi user permission issue for agent directories and files.
   Commit fdd650097b702a8aa60ee90ee93ad4e3e3365d81
