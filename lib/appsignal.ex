@@ -43,7 +43,14 @@ defmodule Appsignal do
       worker(Appsignal.ProbesRegistry, [])
     ]
 
-    Supervisor.start_link(children, strategy: :one_for_one, name: Appsignal.Supervisor)
+    result = Supervisor.start_link(children, strategy: :one_for_one, name: Appsignal.Supervisor)
+
+    # Add our default system probes. It's important that this is called after
+    # the Suportvisor has started. Otherwise the GenServer cannot register the
+    # probe.
+    add_default_probes()
+
+    result
   end
 
   def plug? do
@@ -106,6 +113,18 @@ defmodule Appsignal do
 
   @doc false
   def remove_report_handler, do: @report_handler.remove()
+
+  @doc false
+  def add_default_probes do
+    Appsignal.ProbesRegistry.register(
+      {:erlang,
+       fn ->
+         Logger.debug("Calling the Erlang Probe")
+       end}
+    )
+
+    Appsignal.ProbesRegistry.register({:test_probe, &Appsignal.TestProbe.call/0})
+  end
 
   @doc """
   Set a gauge for a measurement of some metric.
