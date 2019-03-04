@@ -39,7 +39,8 @@ defmodule Appsignal do
     add_report_handler()
 
     children = [
-      worker(Appsignal.TransactionRegistry, [])
+      worker(Appsignal.TransactionRegistry, []),
+      worker(Appsignal.ProbesRegistry, [])
     ]
 
     Supervisor.start_link(children, strategy: :one_for_one, name: Appsignal.Supervisor)
