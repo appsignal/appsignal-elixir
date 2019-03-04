@@ -9,8 +9,15 @@ defmodule Appsignal.ProbesRegistry do
 
   def register({name, probe}) do
     if genserver_running?() do
-      Logger.debug(fn -> "Adding probe #{name}" end)
-      GenServer.cast(__MODULE__, {name, probe})
+      if :erlang.function_exported(probe, :call, 0) do
+        Logger.debug(fn -> "Adding probe #{name}" end)
+        GenServer.cast(__MODULE__, {name, probe})
+      else
+        Logger.error(
+          "Trying to register probe #{name}. Ignoring probe since it does not export .call/0"
+        )
+      end
+
       :ok
     else
       Logger.error("Probe registry is not running")
@@ -25,20 +32,11 @@ defmodule Appsignal.ProbesRegistry do
   end
 
   def handle_cast({name, probe}, probes) do
-    new_probes =
-      if :erlang.function_exported(probe, :call, 0) do
-        if Map.has_key?(probes, name) do
-          Logger.debug(fn -> "A probe with name '#{name}' already exists. Overriding that one" end)
-        end
+    if Map.has_key?(probes, name) do
+      Logger.debug(fn -> "A probe with name '#{name}' already exists. Overriding that one" end)
+    end
 
-        Map.put(probes, name, probe)
-      else
-        Logger.error(
-          "Trying to register probe #{name}. Ignoring probe since it does not export .call/0"
-        )
-      end
-
-    {:noreply, new_probes}
+    {:noreply, Map.put(probes, name, probe)}
   end
 
   def handle_info(:run_probes, probes) do
