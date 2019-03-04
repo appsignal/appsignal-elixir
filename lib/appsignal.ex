@@ -40,7 +40,7 @@ defmodule Appsignal do
 
     children = [
       worker(Appsignal.TransactionRegistry, []),
-      worker(Appsignal.ProbesRegistry, [])
+      worker(Appsignal.Probes, [])
     ]
 
     result = Supervisor.start_link(children, strategy: :one_for_one, name: Appsignal.Supervisor)
@@ -116,14 +116,14 @@ defmodule Appsignal do
 
   @doc false
   def add_default_probes do
-    Appsignal.ProbesRegistry.register(
+    Appsignal.Probes.register(
       {:erlang,
        fn ->
          Logger.debug("Calling the Erlang Probe")
        end}
     )
 
-    Appsignal.ProbesRegistry.register({:test_probe, &Appsignal.TestProbe.call/0})
+    Appsignal.Probes.register({:test_probe, &Appsignal.TestProbe.call/0})
   end
 
   @doc """

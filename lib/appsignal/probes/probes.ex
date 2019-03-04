@@ -1,4 +1,4 @@
-defmodule Appsignal.ProbesRegistry do
+defmodule Appsignal.Probes do
   use GenServer
 
   require Logger
