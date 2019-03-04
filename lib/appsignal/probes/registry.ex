@@ -11,7 +11,7 @@ defmodule Appsignal.ProbesRegistry do
     if genserver_running?() do
       if :erlang.function_exported(probe, :call, 0) do
         Logger.debug(fn -> "Adding probe #{name}" end)
-        GenServer.cast(__MODULE__, {name, probe})
+        GenServer.cast(__MODULE__, {name, &probe.call/0})
       else
         Logger.error(
           "Trying to register probe #{name}. Ignoring probe since it does not export .call/0"
@@ -47,7 +47,7 @@ defmodule Appsignal.ProbesRegistry do
 
       Task.start(fn ->
         try do
-          probe.call
+          probe.()
         rescue
           _ ->
             Logger.error("Error while calling probe #{name}")
