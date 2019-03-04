@@ -18,14 +18,10 @@ defmodule Appsignal.ProbesRegistry do
     end
   end
 
-  defmodule State do
-    defstruct probes: []
-  end
-
   def init([]) do
     register({:test_probe, Appsignal.TestProbe})
     schedule_probes()
-    {:ok, %State{probes: []}}
+    {:ok, %{probes: []}}
   end
 
   def handle_cast({name, probe}, state) do
