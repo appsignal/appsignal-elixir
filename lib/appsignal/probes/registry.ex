@@ -21,33 +21,30 @@ defmodule Appsignal.ProbesRegistry do
   def init([]) do
     register({:test_probe, Appsignal.TestProbe})
     schedule_probes()
-    {:ok, %{probes: []}}
+    {:ok, %{}}
   end
 
-  def handle_cast({name, probe}, state) do
-    new_state =
+  def handle_cast({name, probe}, probes) do
+    new_probes =
       if :erlang.function_exported(probe, :call, 0) do
-        if List.keyfind(state.probes, name, 0) do
+        if Map.has_key?(probes, name) do
           Logger.debug(fn -> "A probe with name '#{name}' already exists. Overriding that one" end)
-
-          new_probes_list = List.keyreplace(state.probes, name, 0, {name, probe})
-          %{state | probes: new_probes_list}
-        else
-          %{state | probes: [{name, probe} | state.probes]}
         end
+
+        Map.put(probes, name, probe)
       else
         Logger.error(
           "Trying to register probe #{name}. Ignoring probe since it does not export .call/0"
         )
       end
 
-    {:noreply, new_state}
+    {:noreply, new_probes}
   end
 
-  def handle_info(:run_probes, state) do
-    Logger.debug(fn -> "Running #{Enum.count(state.probes)} probes" end)
+  def handle_info(:run_probes, probes) do
+    Logger.debug(fn -> "Running #{Enum.count(probes)} probes" end)
 
-    Enum.each(state.probes, fn {name, probe} ->
+    Enum.each(probes, fn {name, probe} ->
       Logger.debug(fn -> "Creating task for #{name}" end)
 
       Task.start(fn ->
@@ -61,7 +58,7 @@ defmodule Appsignal.ProbesRegistry do
     end)
 
     schedule_probes()
-    {:noreply, state}
+    {:noreply, probes}
   end
 
   defp genserver_running? do
