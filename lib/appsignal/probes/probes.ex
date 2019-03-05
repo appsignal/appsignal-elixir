@@ -63,7 +63,7 @@ defmodule Appsignal.Probes do
     !is_nil(pid) && Process.alive?(pid)
   end
 
-  defp schedule_probes() do
+  defp schedule_probes do
     Process.send_after(self(), :run_probes, 60 * 1000)
   end
 end
