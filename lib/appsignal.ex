@@ -117,13 +117,13 @@ defmodule Appsignal do
   @doc false
   def add_default_probes do
     Appsignal.Probes.register(
-      {:erlang,
-       fn ->
-         Logger.debug("Calling the Erlang Probe")
-       end}
+      :erlang,
+      fn ->
+        Logger.debug("Calling the Erlang Probe")
+      end
     )
 
-    Appsignal.Probes.register({:test_probe, &Appsignal.TestProbe.call/0})
+    Appsignal.Probes.register(:test_probe, &Appsignal.TestProbe.call/0)
   end
 
   @doc """

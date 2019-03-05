@@ -7,21 +7,21 @@ defmodule Appsignal.Probes do
     GenServer.start_link(__MODULE__, [], name: __MODULE__)
   end
 
-  def register({name, probe}) do
+  def register(name, probe) do
     if genserver_running?() do
       if is_function(probe) do
         Logger.debug(fn -> "Adding probe #{name}" end)
         GenServer.cast(__MODULE__, {name, probe})
+        :ok
       else
-        Logger.error(
+        Logger.debug(fn ->
           "Trying to register probe #{name}. Ignoring probe since it's not a function."
-        )
-      end
+        end)
 
-      :ok
+        {:error, "Probe is not a function"}
+      end
     else
-      Logger.error("Probe registry is not running")
-      nil
+      {:error, "Probe genserver is not running"}
     end
   end
 
