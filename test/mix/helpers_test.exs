@@ -84,4 +84,37 @@ defmodule Mix.Appsignal.HelperTest do
       assert Mix.Appsignal.Helper.agent_platform() == "freebsd"
     end
   end
+
+  describe ".check_proxy" do
+    test "check_proxy returns nil if there's no proxy defined" do
+      assert Mix.Appsignal.Helper.check_proxy(%{}) == nil
+    end
+
+    test "check_proxy uses APPSIGNAL_HTTP_PROXY / https_proxy / HTTPS_PROXY (in that order)" do
+      env = %{"HTTPS_PROXY" => "MY_HTTPS_PROXY"}
+
+      assert Mix.Appsignal.Helper.check_proxy(env) == {"HTTPS_PROXY", "MY_HTTPS_PROXY"}
+
+      env = Map.put(env, "https_proxy", "my_https_proxy")
+
+      assert Mix.Appsignal.Helper.check_proxy(env) == {"https_proxy", "my_https_proxy"}
+
+      env = Map.put(env, "APPSIGNAL_HTTP_PROXY", "my_appsignal_proxy")
+
+      assert Mix.Appsignal.Helper.check_proxy(env) ==
+               {"APPSIGNAL_HTTP_PROXY", "my_appsignal_proxy"}
+    end
+
+    test "check_proxy ignores http_proxy / HTTP_PROXY" do
+      env = %{"http_proxy" => "my_http_proxy", "HTTP_PROXY" => "MY_HTTP_PROXY"}
+
+      assert Mix.Appsignal.Helper.check_proxy(env) == nil
+    end
+
+    test "check_proxy returns nil if the first found proxy variable is defined but empty" do
+      env = %{"APPSIGNAL_HTTP_PROXY" => "", "HTTPS_PROXY" => "MY_HTTPS_PROXY"}
+
+      assert Mix.Appsignal.Helper.check_proxy(env) == nil
+    end
+  end
 end

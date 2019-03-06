@@ -9,6 +9,12 @@ defmodule Mix.Appsignal.Helper do
 
   @max_retries 5
 
+  @proxy_env_vars [
+    "APPSIGNAL_HTTP_PROXY",
+    "https_proxy",
+    "HTTPS_PROXY"
+  ]
+
   def install do
     report = initial_report()
 
@@ -30,6 +36,29 @@ defmodule Mix.Appsignal.Helper do
         abort_installation(reason, report)
     end
   end
+
+  @doc """
+  Checks to see if a proxy is defined in any of the accepted OS enviroment
+  variables (as per `@proxy_env_vars`).
+
+  Returns `nil` if no proxy is defined, or a `{variable_name, proxy_url}` tuple
+  matching the first found variable.
+
+  _NOTE: If the first variable found is defined but empty (""), proxying is
+  disabled (eg. `nil` is returned).._
+  """
+  def check_proxy(environment \\ System.get_env()) do
+    Enum.reduce_while(@proxy_env_vars, nil, fn name, acc ->
+      if value = Map.get(environment, name) do
+        {:halt, proxy_or_nil(name, value)}
+      else
+        {:cont, acc}
+      end
+    end)
+  end
+
+  defp proxy_or_nil(_, ""), do: nil
+  defp proxy_or_nil(name, value), do: {name, value}
 
   defp find_package_source(arch, report) do
     architecture_key = arch_key(arch)
@@ -136,7 +165,16 @@ defmodule Mix.Appsignal.Helper do
   defp do_download_file!(url, filename, retries \\ 0)
 
   defp do_download_file!(url, filename, 0) do
-    case :hackney.request(:get, url) do
+    opts =
+      case check_proxy() do
+        nil ->
+          []
+        {var, url} ->
+          Mix.shell().info("- using proxy from #{var} (#{url})")
+          [{:proxy, url}]
+      end
+
+    case :hackney.request(:get, url, [], "", opts) do
       {:ok, 200, _, reference} ->
         case :hackney.body(reference) do
           {:ok, body} -> File.write(filename, body)
