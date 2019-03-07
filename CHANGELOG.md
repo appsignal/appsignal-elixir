@@ -1,3 +1,6 @@
+# 1.9.4
+- Update Ecto integration to support both Telemetry 0.3.x and 0.4.x. PR #459
+
 # 1.9.3
 - Support send_params option. PR #456
 
