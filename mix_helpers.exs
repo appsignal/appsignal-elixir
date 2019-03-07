@@ -12,7 +12,9 @@ defmodule Mix.Appsignal.Helper do
   @proxy_env_vars [
     "APPSIGNAL_HTTP_PROXY",
     "https_proxy",
-    "HTTPS_PROXY"
+    "HTTPS_PROXY",
+    "http_proxy",
+    "HTTP_PROXY"
   ]
 
   def install do
