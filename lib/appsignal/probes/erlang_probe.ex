@@ -13,18 +13,18 @@ defmodule Appsignal.Probes.ErlangProbe do
   end
 
   defp scheduler_metrics do
-    Appsignal.set_gauge("erlang_schedulers", :erlang.system_info(:schedulers), %{kind: "Total"})
+    Appsignal.set_gauge("erlang_schedulers", :erlang.system_info(:schedulers), %{kind: "total"})
 
     Appsignal.set_gauge(
       "erlang_schedulers",
       :erlang.system_info(:schedulers_online),
-      %{kind: "Online"}
+      %{kind: "online"}
     )
   end
 
   defp process_metrics() do
-    Appsignal.set_gauge("erlang_processes", :erlang.system_info(:process_limit), %{kind: "Limit"})
-    Appsignal.set_gauge("erlang_processes", :erlang.system_info(:process_count), %{kind: "Count"})
+    Appsignal.set_gauge("erlang_processes", :erlang.system_info(:process_limit), %{kind: "limit"})
+    Appsignal.set_gauge("erlang_processes", :erlang.system_info(:process_count), %{kind: "count"})
   end
 
   defp memory_metrics() do
