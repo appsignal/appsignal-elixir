@@ -1,10 +1,6 @@
 defmodule AppsignalHelpersTest do
   use ExUnit.Case, async: false
-<<<<<<< HEAD
   alias Appsignal.{FakeTransaction, Instrumentation.Helpers}
-=======
-  alias Appsignal.{Instrumentation.Helpers, FakeTransaction}
->>>>>>> Drop Mock dependency, use FakeTransaction, FakeSystem and Transaction.to_map/1 instead (#437)
 
   setup do
     {:ok, fake_transaction} = FakeTransaction.start_link()
