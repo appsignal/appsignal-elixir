@@ -47,7 +47,7 @@ defmodule Mix.Appsignal.Helper do
   matching the first found variable.
 
   _NOTE: If the first variable found is defined but empty (""), proxying is
-  disabled (eg. `nil` is returned).._
+  disabled (eg. `nil` is returned)._
   """
   def check_proxy(environment \\ System.get_env()) do
     Enum.reduce_while(@proxy_env_vars, nil, fn name, acc ->
