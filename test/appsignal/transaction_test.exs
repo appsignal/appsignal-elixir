@@ -30,7 +30,7 @@ defmodule AppsignalTransactionTest do
              )
 
     assert ^transaction =
-             Transaction.set_error(transaction, "Error", "error message", System.stacktrace())
+             Transaction.set_error(transaction, "Error", "error message", stacktrace())
 
     assert ^transaction = Transaction.set_sample_data(transaction, "key", %{user_id: 1})
     assert ^transaction = Transaction.set_action(transaction, "GET:/")
@@ -58,7 +58,7 @@ defmodule AppsignalTransactionTest do
                1
              )
 
-    assert ^transaction = Transaction.set_error("Error", "error message", System.stacktrace())
+    assert ^transaction = Transaction.set_error("Error", "error message", stacktrace)
     assert ^transaction = Transaction.set_sample_data("key", %{user_id: 1})
     assert ^transaction = Transaction.set_action("GET:/")
     assert ^transaction = Transaction.set_queue_start(1000)
@@ -382,6 +382,14 @@ defmodule AppsignalTransactionTest do
       Transaction.set_namespace(transaction, "background")
 
       assert Transaction.to_map(transaction)["namespace"] == "background"
+    end
+  end
+
+  def stacktrace() do
+    try do
+      raise "error message"
+    catch
+      _type, _reason -> System.stacktrace()
     end
   end
 end
