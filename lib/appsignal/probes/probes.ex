@@ -64,6 +64,6 @@ defmodule Appsignal.Probes do
   end
 
   defp schedule_probes do
-    Process.send_after(self(), :run_probes, (60 - Time.utc_now().second) * 1000)
+    Process.send_after(self(), :run_probes, (60 - DateTime.utc_now().second) * 1000)
   end
 end
