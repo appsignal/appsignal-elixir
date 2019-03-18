@@ -17,7 +17,7 @@ defmodule Appsignal.Probes.ProbesTest do
   describe "integration test for probing" do
     setup do
       {:ok, fake_probe} = FakeProbe.start_link()
-      {:ok, fake_probe: fake_probe}
+      [fake_probe: fake_probe]
     end
 
     test "once a probe is registered, it is called by the probes system", %{
@@ -31,6 +31,8 @@ defmodule Appsignal.Probes.ProbesTest do
       :timer.sleep(100)
 
       assert FakeProbe.get(fake_probe, :probe_called)
+
+      Probes.unregister(:test_probe)
     end
   end
 end

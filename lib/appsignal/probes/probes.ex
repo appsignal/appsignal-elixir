@@ -25,6 +25,11 @@ defmodule Appsignal.Probes do
     end
   end
 
+  def unregister(name) do
+    GenServer.cast(__MODULE__, name)
+    :ok
+  end
+
   def init([]) do
     schedule_probes()
     {:ok, %{}}
@@ -36,6 +41,10 @@ defmodule Appsignal.Probes do
     end
 
     {:noreply, Map.put(probes, name, probe)}
+  end
+
+  def handle_cast(name, probes) do
+    {:noreply, Map.delete(probes, name)}
   end
 
   def handle_info(:run_probes, probes) do
