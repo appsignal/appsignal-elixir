@@ -63,7 +63,13 @@ defmodule Appsignal.Probes do
     !is_nil(pid) && Process.alive?(pid)
   end
 
-  defp schedule_probes do
-    Process.send_after(self(), :run_probes, (60 - DateTime.utc_now().second) * 1000)
+  if Mix.env() == :test do
+    defp schedule_probes do
+      Process.send_after(self(), :run_probes, 10)
+    end
+  else
+    defp schedule_probes do
+      Process.send_after(self(), :run_probes, (60 - DateTime.utc_now().second) * 1000)
+    end
   end
 end
