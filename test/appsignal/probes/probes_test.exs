@@ -5,7 +5,7 @@ defmodule Appsignal.Probes.ProbesTest do
   alias FakeProbe
 
   describe "register/2" do
-    test "does register a probe when given a function as probe" do
+    test "registers a probe when given a function as probe" do
       assert :ok == Probes.register(:some_probe, fn -> nil end)
     end
 

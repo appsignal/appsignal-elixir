@@ -37,7 +37,7 @@ defmodule Appsignal.Probes do
 
   def handle_cast({name, probe}, probes) do
     if Map.has_key?(probes, name) do
-      Logger.debug(fn -> "A probe with name '#{name}' already exists. Overriding that one" end)
+      Logger.debug(fn -> "A probe with name '#{name}' already exists. Overriding that one." end)
     end
 
     {:noreply, Map.put(probes, name, probe)}
