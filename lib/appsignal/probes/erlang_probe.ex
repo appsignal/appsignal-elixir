@@ -27,7 +27,7 @@ defmodule Appsignal.Probes.ErlangProbe do
     Appsignal.set_gauge("erlang_processes", :erlang.system_info(:process_count), %{kind: "count"})
   end
 
-  defp memory_metrics() do
+  defp memory_metrics do
     memory = :erlang.memory()
 
     Enum.each(memory, fn {key, value} ->
