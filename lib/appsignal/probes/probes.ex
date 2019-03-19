@@ -74,6 +74,7 @@ defmodule Appsignal.Probes do
 
   if Mix.env() == :test do
     defp schedule_probes do
+      IO.puts "Schedule?"
       Process.send_after(self(), :run_probes, 1)
     end
   else

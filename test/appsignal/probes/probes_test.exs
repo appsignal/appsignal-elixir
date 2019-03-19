@@ -28,7 +28,7 @@ defmodule Appsignal.Probes.ProbesTest do
       refute FakeProbe.get(fake_probe, :probe_called)
 
       # Sleep for some time to give the Probe system time to do its work
-      :timer.sleep(500)
+      :timer.sleep(1000)
 
       assert FakeProbe.get(fake_probe, :probe_called)
 
