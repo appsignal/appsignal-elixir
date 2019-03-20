@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+
+MIX_ENV=test mix format --dry-run --check-formatted
+MIX_ENV=test mix compile --warnings-as-errors
+MIX_ENV=test mix credo --strict
+MIX_ENV=test mix test
+MIX_ENV=test_phoenix mix test
+(cd priv && rm -r *appsignal* *.report) && MIX_ENV=test_no_nif mix test
