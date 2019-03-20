@@ -116,7 +116,9 @@ defmodule Appsignal do
 
   @doc false
   def add_default_probes do
-    Appsignal.Probes.register(:erlang, &Appsignal.Probes.ErlangProbe.call/0)
+    unless Mix.env() in [:test, :test_phoenix, :test_no_nif] do
+      Appsignal.Probes.register(:erlang, &Appsignal.Probes.ErlangProbe.call/0)
+    end
   end
 
   @doc """
