@@ -1,7 +1,7 @@
 defmodule Appsignal.Probes.ErlangProbeTest do
   use ExUnit.Case
 
-  alias Appsignal.{Probes.ErlangProbe, FakeAppsignal}
+  alias Appsignal.{FakeAppsignal, Probes.ErlangProbe}
 
   setup do
     {:ok, fake_appsignal} = FakeAppsignal.start_link()
