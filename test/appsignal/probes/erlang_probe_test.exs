@@ -15,19 +15,19 @@ defmodule Appsignal.Probes.ErlangProbeTest do
     end
 
     test "gathers IO metrics", %{fake_appsignal: fake_appsignal} do
-      assert FakeAppsignal.get(fake_appsignal, "erlang_io")
+      assert length(FakeAppsignal.get_gauges(fake_appsignal, "erlang_io")) == 2
     end
 
     test "gathers scheduler metrics", %{fake_appsignal: fake_appsignal} do
-      assert FakeAppsignal.get(fake_appsignal, "erlang_schedulers")
+      assert length(FakeAppsignal.get_gauges(fake_appsignal, "erlang_schedulers")) == 2
     end
 
     test "gathers process metrics", %{fake_appsignal: fake_appsignal} do
-      assert FakeAppsignal.get(fake_appsignal, "erlang_processes")
+      assert length(FakeAppsignal.get_gauges(fake_appsignal, "erlang_processes")) == 2
     end
 
     test "gathers memory metrics", %{fake_appsignal: fake_appsignal} do
-      assert FakeAppsignal.get(fake_appsignal, "erlang_memory")
+      assert length(FakeAppsignal.get_gauges(fake_appsignal, "erlang_memory")) == 9
     end
   end
 end
