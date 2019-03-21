@@ -34,7 +34,7 @@ defmodule Appsignal.Probes.ErlangProbe do
     memory = :erlang.memory()
 
     Enum.each(memory, fn {key, value} ->
-      @appsignal.set_gauge("erlang_memory", Kernel.div(value, 1024), %{type: key})
+      @appsignal.set_gauge("erlang_memory", Kernel.div(value, 1024), %{type: to_string(key)})
     end)
   end
 end
