@@ -12,6 +12,7 @@ defmodule Appsignal.Probes.ErlangProbeTest do
   describe "call/0" do
     setup do
       ErlangProbe.call()
+      Appsignal.Probes.unregister(:erlang)
     end
 
     test "gathers IO metrics", %{fake_appsignal: fake_appsignal} do
