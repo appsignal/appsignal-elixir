@@ -3,38 +3,7 @@ defmodule Mix.Tasks.Compile.Appsignal do
 
   def run(_args) do
     {_, _} = Code.eval_file("mix_helpers.exs")
-
-    case Mix.Appsignal.Helper.verify_system_architecture() do
-      {:ok, arch} ->
-        case Mix.Appsignal.Helper.ensure_downloaded(arch) do
-          :ok ->
-            :ok = Mix.Appsignal.Helper.compile()
-            :ok = Mix.Appsignal.Helper.store_architecture(arch)
-
-          {:error, _reason} ->
-            Mix.Shell.IO.error(
-              "Failed to download AppSignal agent. AppSignal integration disabled!"
-            )
-        end
-
-      {:error, {:unsupported, arch}} ->
-        Mix.Shell.IO.error(
-          "Unsupported target platform #{arch}, AppSignal integration " <>
-            "disabled!\nPlease check " <>
-            "http://docs.appsignal.com/support/operating-systems.html"
-        )
-
-        :ok = Mix.Appsignal.Helper.store_architecture(arch)
-
-      {:error, {:unknown, {arch, platform}}} ->
-        Mix.Shell.IO.error(
-          "Unknown target platform #{arch} - #{platform}, AppSignal " <>
-            "integration disabled!\nPlease check " <>
-            "http://docs.appsignal.com/support/operating-systems.html"
-        )
-
-        :ok = Mix.Appsignal.Helper.store_architecture(arch)
-    end
+    Mix.Appsignal.Helper.install()
   end
 end
 
@@ -44,7 +13,7 @@ defmodule Appsignal.Mixfile do
   def project do
     [
       app: :appsignal,
-      version: "1.9.4",
+      version: "1.10.0",
       name: "AppSignal",
       description: description(),
       package: package(),
@@ -122,12 +91,11 @@ defmodule Appsignal.Mixfile do
       {:decorator, "~> 1.2.3"},
       {:plug, ">= 1.1.0", optional: true},
       {:phoenix, ">= 1.2.0", optional: true, only: [:prod, :test_phoenix, :dev]},
-      {:mock, "~> 0.3.0", only: [:test, :test_phoenix, :test_no_nif]},
       {:bypass, "~> 0.6.0", only: [:test, :test_phoenix, :test_no_nif]},
       {:plug_cowboy, "~> 1.0", only: [:test, :test_phoenix, :test_no_nif]},
       {:ex_doc, "~> 0.12", only: :dev, runtime: false},
-      {:credo, "~> 1.0.0", only: :dev, runtime: false},
-      {:dialyxir, "~> 0.5", only: [:dev], runtime: false}
+      {:credo, "~> 1.0.0", only: [:test, :dev], runtime: false},
+      {:dialyxir, "~> 1.0.0-rc4", only: [:dev], runtime: false}
     ]
   end
 end

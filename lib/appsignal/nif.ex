@@ -45,17 +45,11 @@ defmodule Appsignal.Nif do
       {:error, {:load_failed, reason}} ->
         arch = :erlang.system_info(:system_architecture)
 
-        message =
-          "[#{DateTime.utc_now() |> to_string}] Error loading NIF (Is your operating system (#{
-            arch
-          }) supported? Please check http://docs.appsignal.com/support/operating-systems.html):\n#{
+        IO.warn(
+          "Error loading NIF (Is your operating system (#{arch}) supported? Please check http://docs.appsignal.com/support/operating-systems.html):\n#{
             reason
-          }\n\n"
-
-        :appsignal
-        |> Application.app_dir()
-        |> Path.join("install.log")
-        |> File.write(message, [:append])
+          }"
+        )
 
         :ok
     end
@@ -83,7 +77,7 @@ defmodule Appsignal.Nif do
     _env_delete(key)
   end
 
-  def env_clear() do
+  def env_clear do
     _env_clear()
   end
 
@@ -249,7 +243,7 @@ defmodule Appsignal.Nif do
     :ok
   end
 
-  def _env_clear() do
+  def _env_clear do
     :ok
   end
 
@@ -387,7 +381,7 @@ defmodule Appsignal.Nif do
     resource
   end
 
-  def _data_list_new() do
+  def _data_list_new do
     {:ok, nil}
   end
 

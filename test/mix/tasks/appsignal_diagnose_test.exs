@@ -2,7 +2,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   use ExUnit.Case
   import ExUnit.CaptureIO
   import AppsignalTest.Utils
-  alias Appsignal.{Diagnose.FakeReport, FakeSystem, FakeNif}
+  alias Appsignal.{Diagnose.FakeReport, FakeNif, FakeSystem}
 
   @appsignal_version Mix.Project.config()[:version]
   @agent_version Appsignal.Nif.agent_version()
@@ -69,6 +69,256 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     assert String.contains?(output, "support@appsignal.com")
   end
 
+  @tag :skip_env_test_no_nif
+  test "adds extension install report to report", %{fake_report: fake_report} do
+    run()
+    report = received_report(fake_report)
+
+    install_report = report[:installation]
+    assert Map.keys(install_report) == ["build", "download", "host", "language", "result"]
+    assert install_report["result"] == %{"status" => "success"}
+
+    assert install_report["language"] == %{
+             "name" => "elixir",
+             "version" => System.version(),
+             "otp_version" => System.otp_release()
+           }
+
+    host_report = install_report["host"]
+    assert host_report["root_user"] == false
+    assert is_map(host_report["dependencies"])
+
+    # Incomplete list for common test values
+    valid_architectures = ["x86", "x86_64"]
+    valid_targets = ["darwin", "linux", "linux-gnu"]
+    valid_sources = ["remote", "cached_in_priv_dir", "cached_in_tmp_dir"]
+
+    download_report = install_report["download"]
+    assert is_binary(download_report["time"])
+    assert String.starts_with?(download_report["download_url"], "https://")
+    assert Enum.member?(valid_architectures, download_report["architecture"])
+    assert Enum.member?(valid_targets, download_report["target"])
+    assert download_report["musl_override"] == false
+    assert download_report["library_type"] == "static"
+    assert download_report["checksum"] == "verified"
+
+    build_report = install_report["build"]
+    assert is_binary(build_report["time"])
+    assert is_binary(build_report["package_path"])
+    assert build_report["agent_version"] == @agent_version
+    assert Enum.member?(valid_sources, build_report["source"])
+    assert Enum.member?(valid_architectures, build_report["architecture"])
+    assert Enum.member?(valid_targets, build_report["target"])
+    assert download_report["musl_override"] == false
+    assert build_report["library_type"] == "static"
+  end
+
+  @tag :skip_env_test_no_nif
+  test "prints the extension installation report" do
+    output = run()
+    assert String.contains?(output, "Extension installation report")
+    assert String.contains?(output, "Language details")
+    assert String.contains?(output, "  Elixir version: #{System.version()}")
+    assert String.contains?(output, "  OTP version: #{System.otp_release()}")
+
+    assert_output_contains_download_report(output)
+
+    assert String.contains?(output, "Build details")
+    assert String.contains?(output, "  Install time: \"20")
+    assert output =~ ~r{Source: "[\w]+"}
+    assert String.contains?(output, "  Agent version: \"#{@agent_version}\"")
+
+    assert String.contains?(output, "Host details")
+    assert output =~ ~r{Root user: (true|false)}
+    assert String.contains?(output, "  Dependencies: %{")
+  end
+
+  describe "when the extension installation failed" do
+    @tag :skip_env_test
+    @tag :skip_env_test_phoenix
+    test "adds an error to the installation report", %{fake_report: fake_report} do
+      run()
+      report = received_report(fake_report)
+
+      install_report = report[:installation]["result"]
+      assert install_report["status"] == "failed"
+      assert String.starts_with?(install_report["message"], "Unknown target platform")
+    end
+
+    @tag :skip_env_test
+    @tag :skip_env_test_phoenix
+    test "prints the report" do
+      output = run()
+      assert String.contains?(output, "Extension installation report")
+      assert String.contains?(output, "  Installation result")
+      assert String.contains?(output, "  Status: \"failed\"")
+      assert String.contains?(output, "  Message: \"Unknown target platform")
+      assert String.contains?(output, "  Source: nil")
+    end
+  end
+
+  describe "when the report file is not readable" do
+    setup do
+      download_report = Path.join([:code.priv_dir(:appsignal), "download.report"])
+      install_report = Path.join([:code.priv_dir(:appsignal), "install.report"])
+      File.chmod(download_report, 0o000)
+      File.chmod(install_report, 0o000)
+
+      on_exit(:reset, fn ->
+        File.chmod(download_report, 0o644)
+        File.chmod(install_report, 0o644)
+      end)
+    end
+
+    @tag :skip_env_test_no_nif
+    test "adds an error to the installation report", %{fake_report: fake_report} do
+      run()
+      report = received_report(fake_report)
+
+      assert report[:installation] == %{
+               "download_parsing_error" => %{"error" => :eacces},
+               "installation_parsing_error" => %{"error" => :eacces}
+             }
+    end
+
+    @tag :skip_env_test_no_nif
+    test "prints a parsing error" do
+      output = run()
+      assert String.contains?(output, "Extension installation report")
+
+      assert String.contains?(
+               output,
+               "  Error found while parsing the download report.\n  Error: :eacces"
+             )
+
+      assert String.contains?(
+               output,
+               "  Error found while parsing the installation report.\n  Error: :eacces"
+             )
+    end
+  end
+
+  describe "when the download report file does not exist" do
+    @tag :skip_env_test
+    @tag :skip_env_test_phoenix
+    test "adds an error to the installation report", %{fake_report: fake_report} do
+      run()
+      report = received_report(fake_report)
+
+      assert Map.keys(report[:installation]) == [
+               "build",
+               "download_parsing_error",
+               "host",
+               "language",
+               "result"
+             ]
+
+      assert report[:installation]["result"]["status"] == "failed"
+      assert report[:installation]["download_parsing_error"] == %{"error" => :enoent}
+    end
+
+    @tag :skip_env_test
+    @tag :skip_env_test_phoenix
+    test "prints a parsing error" do
+      output = run()
+      assert String.contains?(output, "Extension installation report")
+      refute String.contains?(output, "Error found while parsing the installation report.")
+      assert String.contains?(output, "Error found while parsing the download report.")
+
+      assert String.contains?(
+               output,
+               "  Error found while parsing the download report.\n  Error: :enoent"
+             )
+
+      refute String.contains?(output, "  Error found while parsing the installation report")
+
+      assert String.contains?(output, "Installation result\n    Status: \"failed\"")
+    end
+  end
+
+  describe "when the install report file is not readable" do
+    setup do
+      install_report = Path.join([:code.priv_dir(:appsignal), "install.report"])
+      File.chmod(install_report, 0o000)
+
+      on_exit(:reset, fn ->
+        File.chmod(install_report, 0o644)
+      end)
+
+      [install_report_path: install_report]
+    end
+
+    @tag :skip_env_test_no_nif
+    test "adds an error to the installation report", %{fake_report: fake_report} do
+      run()
+      report = received_report(fake_report)
+
+      assert Map.keys(report[:installation]) == ["download", "installation_parsing_error"]
+      assert report[:installation]["installation_parsing_error"] == %{"error" => :eacces}
+    end
+
+    @tag :skip_env_test_no_nif
+    test "prints a parsing error" do
+      output = run()
+      assert String.contains?(output, "Extension installation report")
+      refute String.contains?(output, "Error found while parsing the download report.")
+      assert_output_contains_download_report(output)
+
+      assert String.contains?(
+               output,
+               "  Error found while parsing the installation report.\n  Error: :eacces"
+             )
+    end
+  end
+
+  describe "when the report file is not valid JSON" do
+    setup do
+      download_report = Path.join([:code.priv_dir(:appsignal), "download.report"])
+      install_report = Path.join([:code.priv_dir(:appsignal), "install.report"])
+      download_contents = File.read!(download_report)
+      install_contents = File.read!(install_report)
+      File.write(download_report, "download report")
+      File.write(install_report, "install report")
+
+      on_exit(:reset, fn ->
+        File.write!(download_report, download_contents)
+        File.write!(install_report, install_contents)
+      end)
+    end
+
+    @tag :skip_env_test_no_nif
+    test "adds an error to the installation report with the raw report", %{
+      fake_report: fake_report
+    } do
+      run()
+      report = received_report(fake_report)
+
+      install_report = report[:installation]
+      assert Map.keys(install_report) == ["download_parsing_error", "installation_parsing_error"]
+
+      download_report = install_report["download_parsing_error"]
+      assert Map.keys(download_report) == ["error", "raw"]
+      refute download_report["error"] == nil
+      assert download_report["raw"] == "download report"
+
+      installation_report = install_report["installation_parsing_error"]
+      assert Map.keys(installation_report) == ["error", "raw"]
+      refute installation_report["error"] == nil
+      assert installation_report["raw"] == "install report"
+    end
+
+    @tag :skip_env_test_no_nif
+    test "prints a parsing error" do
+      output = run()
+
+      assert output =~
+               ~r{  Error found while parsing the download report.\n  Error: .+\n  Raw report:\n"download report"}
+
+      assert output =~
+               ~r{  Error found while parsing the installation report.\n  Error: .+\n  Raw report:\n"install report"}
+    end
+  end
+
   test "outputs library information" do
     output = run()
     assert String.contains?(output, "AppSignal agent")
@@ -83,7 +333,6 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
     assert report[:library] == %{
              agent_version: @agent_version,
-             agent_architecture: Appsignal.System.installed_agent_architecture(),
              extension_loaded: Appsignal.Nif.loaded?(),
              language: "elixir",
              package_version: @appsignal_version
@@ -594,63 +843,6 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     end
   end
 
-  describe "when install.log exists" do
-    setup do
-      content =
-        "[2017-11-10 13:39:47.795755Z] Error!\n[2017-11-10 13:39:48.795755Z] Another Error!"
-
-      File.write!(install_log_path(), content)
-
-      {:ok, %{content: content}}
-    end
-
-    test "outputs the log file", %{content: content} do
-      output = run()
-      assert String.contains?(output, "Extension install log")
-      assert String.contains?(output, "Path: #{inspect(install_log_path())}")
-      assert String.contains?(output, content)
-    end
-
-    test "adds log file to report", %{content: content, fake_report: fake_report} do
-      run()
-      path = install_log_path()
-      {:ok, %{mode: mode, uid: uid, gid: gid}} = File.stat(path)
-      paths = received_report(fake_report)[:paths]
-
-      assert paths[:"install.log"] == %{
-               path: path,
-               exists: true,
-               type: :file,
-               mode: mode,
-               writable: true,
-               ownership: %{uid: uid, gid: gid},
-               content: content |> String.split("\n")
-             }
-    end
-  end
-
-  describe "when install.log does not exist" do
-    setup do
-      File.rm(install_log_path())
-      :ok
-    end
-
-    test "outputs the log" do
-      output = run()
-      assert String.contains?(output, "Path: #{inspect(install_log_path())}\n    Exists?: no")
-    end
-
-    test "adds log file to report", %{fake_report: fake_report} do
-      run()
-      paths = received_report(fake_report)[:paths]
-
-      assert paths[:"install.log"] == %{
-               path: install_log_path(),
-               exists: false
-             }
-    end
-  end
-
   describe "without config" do
     test "it outputs tmp dir for log_dir_path" do
       output = with_config(%{log_path: nil}, &run/0)
@@ -663,7 +855,6 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
       assert Map.keys(received_report(fake_report)[:paths]) == [
                :"appsignal.log",
-               :"install.log",
                :log_dir_path,
                :working_dir
              ]
@@ -903,13 +1094,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     %{log_dir_path: log_dir_path, "appsignal.log": log_file_path}
   end
 
-  def install_log_path() do
-    :appsignal
-    |> Application.app_dir()
-    |> Path.join("install.log")
-  end
-
-  defp process_uid() do
+  defp process_uid do
     case System.cmd("id", ["-u"]) do
       {id, 0} ->
         case Integer.parse(List.first(String.split(id, "\n"))) do
@@ -922,7 +1107,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     end
   end
 
-  defp process_gid() do
+  defp process_gid do
     case System.cmd("id", ["-g"]) do
       {id, 0} ->
         case Integer.parse(List.first(String.split(id, "\n"))) do
@@ -933,5 +1118,16 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       {_, _} ->
         nil
     end
+  end
+
+  defp assert_output_contains_download_report(output) do
+    assert String.contains?(output, "Download details")
+    assert String.contains?(output, "  Download time: \"20")
+    assert String.contains?(output, "  Download URL: \"https://")
+    assert output =~ ~r{Architecture: "x86(_64)?"}
+    assert output =~ ~r{Target: "[\w-]+"}
+    assert String.contains?(output, "  Musl override: false")
+    assert String.contains?(output, "  Library type: \"static\"")
+    assert output =~ ~r{Checksum: "(verified|unverified)"}
   end
 end

@@ -234,7 +234,7 @@ defmodule Appsignal.ConfigTest do
     end
 
     test "log_path" do
-      log_path = System.cwd()
+      log_path = File.cwd!()
 
       assert with_config(%{log_path: log_path}, &init_config/0) ==
                default_configuration() |> Map.put(:log_path, log_path)
@@ -428,7 +428,7 @@ defmodule Appsignal.ConfigTest do
     end
 
     test "log_path" do
-      log_path = System.cwd()
+      log_path = File.cwd!()
 
       assert with_env(
                %{"APPSIGNAL_LOG_PATH" => log_path},
@@ -459,9 +459,9 @@ defmodule Appsignal.ConfigTest do
 
     test "send_params" do
       assert with_env(
-               %{"APPSIGNAL_SEND_PARAMS" => "true"},
+               %{"APPSIGNAL_SEND_PARAMS" => "false"},
                &init_config/0
-             ) == default_configuration() |> Map.put(:send_params, true)
+             ) == default_configuration() |> Map.put(:send_params, false)
     end
 
     test "skip_session_data" do
@@ -768,7 +768,6 @@ defmodule Appsignal.ConfigTest do
           enable_host_metrics: "true",
           env: "prod",
           running_in_container: "false",
-          send_params: "true",
           files_world_accessible: "false"
         },
         fn ->
@@ -804,7 +803,7 @@ defmodule Appsignal.ConfigTest do
     end
   end
 
-  defp default_configuration() do
+  defp default_configuration do
     %{
       active: false,
       debug: false,
@@ -832,14 +831,14 @@ defmodule Appsignal.ConfigTest do
     }
   end
 
-  defp valid_configuration() do
+  defp valid_configuration do
     default_configuration()
     |> Map.put(:active, true)
     |> Map.put(:valid, true)
     |> Map.put(:push_api_key, "00000000-0000-0000-0000-000000000000")
   end
 
-  defp init_config() do
+  defp init_config do
     Config.initialize()
     Application.get_all_env(:appsignal)[:config]
   end

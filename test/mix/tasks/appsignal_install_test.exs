@@ -168,7 +168,7 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
       assert String.contains?(output, "What is your preferred configuration method? (1/2): ")
       assert String.contains?(output, "Configuring with environment variables.")
       assert String.contains?(output, ~s(APPSIGNAL_APP_NAME="AppSignal test suite app"))
-      assert String.contains?(output, ~s(APPSIGNAL_APP_ENV="production"))
+      assert String.contains?(output, ~s(APPSIGNAL_APP_ENV="prod"))
       assert String.contains?(output, ~s(APPSIGNAL_PUSH_API_KEY="my_push_api_key"))
     end
 
@@ -251,11 +251,15 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
 
     @tag :file_config
     test "file based config option doesn't crash if the config file is already linked" do
-      File.open!(Path.join(@test_config_directory, "config.exs"), [:write])
+      @test_config_directory
+      |> Path.join("config.exs")
+      |> File.open!([:write])
       |> IO.binwrite(~s(use Mix.Config\n# config\nimport_config "appsignal.exs"))
       |> File.close()
 
-      File.open!(Path.join(@test_config_directory, "dev.exs"), [:append])
+      @test_config_directory
+      |> Path.join("dev.exs")
+      |> File.open!([:append])
       |> IO.binwrite(~s(\nconfig :appsignal, :config, active: true\n))
       |> File.close()
 
@@ -316,7 +320,9 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
   end
 
   defp create_config_file_for_env_in(env, directory) do
-    File.open!(Path.join(directory, "#{env}.exs"), [:write])
+    directory
+    |> Path.join("#{env}.exs")
+    |> File.open!([:write])
     |> IO.binwrite("use Mix.Config\n# #{env}")
     |> File.close()
   end

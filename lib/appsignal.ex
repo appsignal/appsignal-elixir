@@ -13,7 +13,7 @@ defmodule Appsignal do
 
   use Application
 
-  alias Appsignal.{Config, Error, Backtrace}
+  alias Appsignal.{Backtrace, Config, Error}
 
   require Logger
 
@@ -23,6 +23,12 @@ defmodule Appsignal do
                  Appsignal.Transaction
                )
 
+  if System.otp_release() >= "21" do
+    @report_handler Appsignal.LoggerHandler
+  else
+    @report_handler Appsignal.ErrorLoggerHandler
+  end
+
   @doc """
   Application callback function
   """
@@ -30,14 +36,21 @@ defmodule Appsignal do
     import Supervisor.Spec, warn: false
 
     initialize()
-
-    :error_logger.add_report_handler(Appsignal.ErrorHandler)
+    add_report_handler()
 
     children = [
-      worker(Appsignal.TransactionRegistry, [])
+      worker(Appsignal.TransactionRegistry, []),
+      worker(Appsignal.Probes, [])
     ]
 
-    Supervisor.start_link(children, strategy: :one_for_one, name: Appsignal.Supervisor)
+    result = Supervisor.start_link(children, strategy: :one_for_one, name: Appsignal.Supervisor)
+
+    # Add our default system probes. It's important that this is called after
+    # the Suportvisor has started. Otherwise the GenServer cannot register the
+    # probe.
+    add_default_probes()
+
+    result
   end
 
   def plug? do
@@ -67,7 +80,7 @@ defmodule Appsignal do
   end
 
   @doc false
-  def initialize() do
+  def initialize do
     case {Config.initialize(), Config.configured_as_active?()} do
       {_, false} ->
         Logger.info("AppSignal disabled.")
@@ -93,6 +106,17 @@ defmodule Appsignal do
             "AppSignal metrics disabled."
         )
     end
+  end
+
+  @doc false
+  def add_report_handler, do: @report_handler.add()
+
+  @doc false
+  def remove_report_handler, do: @report_handler.remove()
+
+  @doc false
+  def add_default_probes do
+    Appsignal.Probes.register(:erlang, &Appsignal.Probes.ErlangProbe.call/0)
   end
 
   @doc """

@@ -2,13 +2,34 @@ defmodule Appsignal.FakeTransaction do
   @behaviour Appsignal.TransactionBehaviour
   use TestAgent, %{
     started_transactions: [],
+    started_events: [],
     finished_events: [],
     finished_transactions: [],
     recorded_events: [],
     errors: []
   }
 
-  def start_event, do: Appsignal.Transaction.start_event()
+  def start_event do
+    self()
+    |> Appsignal.TransactionRegistry.lookup()
+    |> start_event
+  end
+
+  def start_event(transaction) do
+    Agent.update(__MODULE__, fn state ->
+      {_, new_state} =
+        Map.get_and_update(state, :started_events, fn current ->
+          case current do
+            nil -> {nil, [transaction]}
+            _ -> {current, [transaction | current]}
+          end
+        end)
+
+      new_state
+    end)
+
+    transaction
+  end
 
   def finish_event(transaction, name, title, body, body_format) do
     Agent.update(__MODULE__, fn state ->
@@ -97,8 +118,16 @@ defmodule Appsignal.FakeTransaction do
     Agent.get(__MODULE__, &Map.get(&1, :finish, :sample))
   end
 
-  def set_meta_data(_transaction, conn) do
+  def set_meta_data(transaction, conn) do
     Agent.update(__MODULE__, &Map.put(&1, :metadata, conn))
+
+    transaction
+  end
+
+  def set_meta_data(transaction, key, value) do
+    Agent.update(__MODULE__, &Map.put(&1, :metadata, %{key => value}))
+
+    transaction
   end
 
   def set_request_metadata(_transaction, conn) do
@@ -196,6 +225,9 @@ defmodule Appsignal.FakeTransaction do
   end
 
   # Convenience methods for testing
+  def started_events(pid_or_module) do
+    get(pid_or_module, :started_events)
+  end
 
   def finished_events(pid_or_module) do
     get(pid_or_module, :finished_events)
@@ -218,7 +250,9 @@ defmodule Appsignal.FakeTransaction do
   end
 
   def started_transaction?(pid_or_module) do
-    started_transactions(pid_or_module) |> Enum.any?()
+    pid_or_module
+    |> started_transactions()
+    |> Enum.any?()
   end
 
   def finished_transactions(pid_or_module) do

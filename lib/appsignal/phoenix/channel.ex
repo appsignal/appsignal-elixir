@@ -143,8 +143,7 @@ if Appsignal.phoenix?() do
     @spec request_environment(Phoenix.Socket.t()) :: map
     defp request_environment(socket) do
       @socket_fields
-      |> Enum.map(fn k -> {k, Map.get(socket, k)} end)
-      |> Enum.into(%{})
+      |> Enum.into(%{}, fn k -> {k, Map.get(socket, k)} end)
     end
   end
 end

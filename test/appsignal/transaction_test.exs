@@ -1,6 +1,5 @@
 defmodule AppsignalTransactionTest do
   use ExUnit.Case
-  import Mock
   import AppsignalTest.Utils
 
   alias Appsignal.{Transaction, TransactionRegistry}
@@ -31,7 +30,7 @@ defmodule AppsignalTransactionTest do
              )
 
     assert ^transaction =
-             Transaction.set_error(transaction, "Error", "error message", System.stacktrace())
+             Transaction.set_error(transaction, "Error", "error message", stacktrace())
 
     assert ^transaction = Transaction.set_sample_data(transaction, "key", %{user_id: 1})
     assert ^transaction = Transaction.set_action(transaction, "GET:/")
@@ -59,7 +58,7 @@ defmodule AppsignalTransactionTest do
                1
              )
 
-    assert ^transaction = Transaction.set_error("Error", "error message", System.stacktrace())
+    assert ^transaction = Transaction.set_error("Error", "error message", stacktrace)
     assert ^transaction = Transaction.set_sample_data("key", %{user_id: 1})
     assert ^transaction = Transaction.set_action("GET:/")
     assert ^transaction = Transaction.set_queue_start(1000)
@@ -94,18 +93,15 @@ defmodule AppsignalTransactionTest do
     assert nil == Transaction.complete()
   end
 
-  test_with_mock "use shorthand set_meta_data function", Appsignal.Nif, [],
-    start_transaction: fn _, _ -> {:ok, nil} end,
-    set_meta_data: fn _, _, _ -> :ok end do
+  @tag :skip_env_test_no_nif
+  test "use shorthand set_meta_data function" do
     transaction = Transaction.start("test3", :http_request)
     assert %Transaction{} = transaction
-
-    Transaction.set_meta_data(email: "email@email.com")
-    assert called(Appsignal.Nif.set_meta_data(transaction.resource, "email", "email@email.com"))
-
+    Transaction.set_meta_data(email: "alice@example.com")
     Transaction.set_meta_data(%{"foo" => "bar", "value" => 123})
-    assert called(Appsignal.Nif.set_meta_data(transaction.resource, "foo", "bar"))
-    assert called(Appsignal.Nif.set_meta_data(transaction.resource, "value", "123"))
+
+    assert %{"metadata" => %{"email" => "alice@example.com", "foo" => "bar", "value" => "123"}} =
+             Transaction.to_map(transaction)
   end
 
   test "data encoding" do
@@ -160,7 +156,7 @@ defmodule AppsignalTransactionTest do
   describe "concerning metadata" do
     @tag :skip_env_test_no_nif
     @tag :skip_env_test
-    test_with_mock "sets the request metadata", _, Appsignal.Transaction, [:passthrough], [] do
+    test "sets the request metadata" do
       conn =
         %Plug.Conn{request_path: "/pa/th", method: "GET"}
         |> Plug.Conn.put_private(:plug_session, %{})
@@ -171,8 +167,8 @@ defmodule AppsignalTransactionTest do
         |> Transaction.start(:http_request)
         |> Transaction.set_request_metadata(conn)
 
-      assert called(Transaction.set_meta_data(transaction, "path", "/pa/th"))
-      assert called(Transaction.set_meta_data(transaction, "method", "GET"))
+      assert %{"metadata" => %{"path" => "/pa/th", "method" => "GET"}} =
+               Transaction.to_map(transaction)
     end
   end
 
@@ -188,65 +184,46 @@ defmodule AppsignalTransactionTest do
 
     @tag :skip_env_test_no_nif
     @tag :skip_env_test
-    test_with_mock "sends session data", context, Appsignal.Transaction, [:passthrough], [] do
+    test "sends session data", %{conn: conn} do
       transaction =
         "test5"
         |> Transaction.start(:http_request)
-        |> Transaction.set_request_metadata(context[:conn])
+        |> Transaction.set_request_metadata(conn)
 
-      assert called(
-               Transaction.set_sample_data(
-                 transaction,
-                 "session_data",
-                 context[:conn].private.plug_session
-               )
-             )
+      assert %{"sample_data" => %{"session_data" => session_data}} =
+               Transaction.to_map(transaction)
+
+      assert session_data == conn.private.plug_session
     end
 
     @tag :skip_env_test_no_nif
     @tag :skip_env_test
-    test_with_mock "sends session data when skip_session_data is false",
-                   context,
-                   Appsignal.Transaction,
-                   [:passthrough],
-                   [] do
+    test "sends session data when skip_session_data is false", %{conn: conn} do
       transaction =
         with_config(%{skip_session_data: false}, fn ->
           "test5"
           |> Transaction.start(:http_request)
-          |> Transaction.set_request_metadata(context[:conn])
+          |> Transaction.set_request_metadata(conn)
         end)
 
-      assert called(
-               Appsignal.Transaction.set_sample_data(
-                 transaction,
-                 "session_data",
-                 context[:conn].private.plug_session
-               )
-             )
+      assert %{"sample_data" => %{"session_data" => session_data}} =
+               Transaction.to_map(transaction)
+
+      assert session_data == conn.private.plug_session
     end
 
     @tag :skip_env_test_no_nif
     @tag :skip_env_test
-    test_with_mock "does not send session data when skip_session_data is true",
-                   context,
-                   Appsignal.Transaction,
-                   [:passthrough],
-                   [] do
+    test "does not send session data when skip_session_data is true", %{conn: conn} do
       transaction =
         with_config(%{skip_session_data: true}, fn ->
           "test5"
           |> Transaction.start(:http_request)
-          |> Transaction.set_request_metadata(context[:conn])
+          |> Transaction.set_request_metadata(conn)
         end)
 
-      assert not called(
-               Appsignal.Transaction.set_sample_data(
-                 transaction,
-                 "session_data",
-                 context[:conn].private.plug_session
-               )
-             )
+      %{"sample_data" => sample_data} = Transaction.to_map(transaction)
+      refute sample_data["session_data"]
     end
   end
 
@@ -254,7 +231,7 @@ defmodule AppsignalTransactionTest do
     setup do
       conn =
         %Plug.Conn{}
-        |> Plug.Conn.put_private(:plug_session, %{password: "secret", foo: "bar"})
+        |> Plug.Conn.put_private(:plug_session, %{"password" => "secret", "foo" => "bar"})
         |> Plug.Conn.put_private(:plug_session_fetch, :done)
 
       {:ok, conn: conn}
@@ -262,25 +239,18 @@ defmodule AppsignalTransactionTest do
 
     @tag :skip_env_test_no_nif
     @tag :skip_env_test
-    test_with_mock "takes out filtered session keys",
-                   context,
-                   Appsignal.Transaction,
-                   [:passthrough],
-                   [] do
+    test "takes out filtered session keys", %{conn: conn} do
       transaction =
         with_config(%{filter_session_data: ~w(password)}, fn ->
           "test5"
           |> Transaction.start(:http_request)
-          |> Transaction.set_request_metadata(context[:conn])
+          |> Transaction.set_request_metadata(conn)
         end)
 
-      assert called(
-               Appsignal.Transaction.set_sample_data(
-                 transaction,
-                 "session_data",
-                 %{foo: "bar"}
-               )
-             )
+      assert %{"sample_data" => %{"session_data" => session_data}} =
+               Transaction.to_map(transaction)
+
+      assert session_data == %{"foo" => "bar", "password" => "[FILTERED]"}
     end
   end
 
@@ -412,6 +382,14 @@ defmodule AppsignalTransactionTest do
       Transaction.set_namespace(transaction, "background")
 
       assert Transaction.to_map(transaction)["namespace"] == "background"
+    end
+  end
+
+  def stacktrace do
+    try do
+      raise "error message"
+    catch
+      _type, _reason -> System.stacktrace()
     end
   end
 end

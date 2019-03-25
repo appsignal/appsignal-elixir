@@ -2,15 +2,20 @@ defmodule Appsignal.Ecto do
   @moduledoc """
   Integration for logging Ecto queries
 
-  To add query logging, add the following to you Repo configuration in `config.exs`:
+  If you're using Ecto 3, attach `Appsignal.Ecto` to Telemetry query events in
+  your application's `start/2` function:
 
   ```
-  config :my_app, MyApp.Repo,
-    loggers: [Appsignal.Ecto, Ecto.LogEntry]
+  :telemetry.attach(
+    "appsignal-ecto",
+    [:my_app, :repo, :query],
+    &Appsignal.Ecto.handle_event/4,
+    nil
+  )
   ```
 
-  On Ecto 3, attach Appsignal.Ecto to Telemetry query events in your
-  application's start/2 function:
+  For versions of Telemetry < 0.3.0, you'll need to call it slightly
+  differently:
 
   ```
   Telemetry.attach(
@@ -20,6 +25,16 @@ defmodule Appsignal.Ecto do
     :handle_event,
     nil
   )
+  ```
+
+  On Ecto 2, add the `Appsignal.Ecto` module to your Repo's logger
+  configuration instead. The `Ecto.LogEntry` logger is the default logger for
+  Ecto and needs to be set as well to keep the original Ecto logger behavior
+  intact.
+
+  ```
+  config :my_app, MyApp.Repo,
+    loggers: [Appsignal.Ecto, Ecto.LogEntry]
   ```
   """
 

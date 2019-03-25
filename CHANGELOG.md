@@ -1,3 +1,23 @@
+# 1.10.0
+* Store extension installation details in report. PR #433
+* Fail AppSignal extension installation on warnings
+  Commit 7b17a0b86f87ea7097315d1247ccd52c78be8e97
+* Rescue `make` command errors
+  Commit 69efc629eaa0a3f3a3e2d8c3871f3c7bba86c151
+* Add response status codes to Plug samples. PR #453
+* Use :logger instead of :error_logger on OTP >= 21. PR #454
+* Allow Appsignal.Plug.call/2 to be overridden. PR #464
+* Use proxy from system environment when downloading agent. PR #458
+* Bump agent to 4a275d3
+  Commit 0635e043d4b299d7ec838f89ca4d36c3ed3792ce
+  - Support container CPU host metrics.
+  - Support StatsD server in agent.
+  - Fix samples being reported for multiple namespaces.
+  - Report memory and swap usage in percent using the memory_usage and
+    swap_usage metrics.
+* Add Erlang Probe. PR #466
+* Minutely Probing for Custom Metrics. PR #461
+
 # 1.9.4
 - Update Ecto integration to support both Telemetry 0.3.x and 0.4.x. PR #459
 

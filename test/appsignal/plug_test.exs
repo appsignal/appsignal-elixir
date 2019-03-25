@@ -1,3 +1,15 @@
+defmodule ModuleWithCall do
+  defmacro __using__(_) do
+    quote do
+      def call(%Plug.Conn{} = conn, _opts) do
+        Plug.Conn.assign(conn, :called?, true)
+      end
+
+      defoverridable call: 2
+    end
+  end
+end
+
 defmodule UsingAppsignalPlug do
   def call(%Plug.Conn{private: %{phoenix_action: :exception}}, _opts) do
     raise("Exception!")
@@ -29,13 +41,18 @@ defmodule UsingAppsignalPlug do
     }
   end
 
-  def call(%Plug.Conn{} = conn, _opts) do
-    conn |> Plug.Conn.assign(:called?, true)
-  end
-
-  defoverridable call: 2
-
+  use ModuleWithCall
   use Appsignal.Plug
+end
+
+defmodule OverridingAppSignalPlug do
+  use ModuleWithCall
+  use Appsignal.Plug
+
+  def call(conn, opts) do
+    conn = super(conn, opts)
+    Plug.Conn.assign(conn, :overridden?, true)
+  end
 end
 
 defmodule Appsignal.PlugTest do
@@ -324,11 +341,13 @@ defmodule Appsignal.PlugTest do
       assert Appsignal.Plug.extract_meta_data(%Plug.Conn{
                method: "GET",
                request_path: "/foo",
-               resp_headers: [{"x-request-id", "kk4hk5sis7c3b56t683nnmdig632c9ot"}]
+               resp_headers: [{"x-request-id", "kk4hk5sis7c3b56t683nnmdig632c9ot"}],
+               status: 200
              }) == %{
                "method" => "GET",
                "path" => "/foo",
-               "request_id" => "kk4hk5sis7c3b56t683nnmdig632c9ot"
+               "request_id" => "kk4hk5sis7c3b56t683nnmdig632c9ot",
+               "http_status_code" => 200
              }
     end
   end
@@ -489,6 +508,26 @@ defmodule Appsignal.PlugTest do
         rescue
           UndefinedFunctionError -> :ok
         end
+    end
+  end
+
+  describe "when overriding the AppSignal Plug" do
+    setup do
+      conn = OverridingAppSignalPlug.call(%Plug.Conn{}, %{})
+
+      [conn: conn]
+    end
+
+    test "starts a transaction", %{fake_transaction: fake_transaction} do
+      assert FakeTransaction.started_transaction?(fake_transaction)
+    end
+
+    test "calls super and returns the conn", %{conn: conn} do
+      assert conn.assigns[:called?]
+    end
+
+    test "calls the overridden call/2", %{conn: conn} do
+      assert conn.assigns[:overridden?]
     end
   end
 end

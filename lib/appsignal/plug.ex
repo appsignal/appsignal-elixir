@@ -4,8 +4,6 @@ if Appsignal.plug?() do
     Plug handler for Phoenix requests
     """
 
-    alias Appsignal.{Config, ErrorHandler, Error}
-
     defmacro __using__(_) do
       quote do
         @transaction Application.get_env(
@@ -30,6 +28,8 @@ if Appsignal.plug?() do
             conn -> Appsignal.Plug.finish_with_conn(transaction, conn)
           end
         end
+
+        defoverridable call: 2
       end
     end
 
@@ -57,7 +57,7 @@ if Appsignal.plug?() do
            stack,
            %Plug.Conn{private: %{appsignal_transaction: transaction}} = conn
          ) do
-      ErrorHandler.handle_error(transaction, error, stack, conn)
+      Appsignal.ErrorHandler.handle_error(transaction, error, stack, conn)
       Appsignal.TransactionRegistry.ignore(self())
     end
 
@@ -82,15 +82,15 @@ if Appsignal.plug?() do
     @doc false
     @deprecated "Use Appsignal.Error.metadata/1 instead."
     def extract_error_metadata(error) do
-      {exception, _stacktrace} = Error.normalize(error, [])
-      Error.metadata(exception)
+      {exception, _stacktrace} = Appsignal.Error.normalize(error, [])
+      Appsignal.Error.metadata(exception)
     end
 
     @doc false
     @deprecated "Use Appsignal.Error.metadata/1 instead."
     def extract_error_metadata(error, conn, stack) do
-      {exception, stacktrace} = Error.normalize(error, stack)
-      {name, message} = Error.metadata(exception)
+      {exception, stacktrace} = Appsignal.Error.normalize(error, stack)
+      {name, message} = Appsignal.Error.metadata(exception)
       {name, message, stacktrace, conn}
     end
 
@@ -135,13 +135,13 @@ if Appsignal.plug?() do
 
     def extract_request_headers(%Plug.Conn{req_headers: req_headers}) do
       for {key, value} <- req_headers,
-          key in Config.request_headers() do
+          key in Appsignal.Config.request_headers() do
         {"req_headers.#{key}", value}
       end
       |> Enum.into(%{})
     end
 
-    def extract_meta_data(%Plug.Conn{method: method, request_path: path} = conn) do
+    def extract_meta_data(%Plug.Conn{method: method, request_path: path, status: status} = conn) do
       request_id =
         conn
         |> Plug.Conn.get_resp_header("x-request-id")
@@ -150,7 +150,8 @@ if Appsignal.plug?() do
       %{
         "method" => method,
         "path" => path,
-        "request_id" => request_id
+        "request_id" => request_id,
+        "http_status_code" => status
       }
     end
 

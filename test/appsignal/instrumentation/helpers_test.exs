@@ -1,22 +1,29 @@
 defmodule AppsignalHelpersTest do
   use ExUnit.Case, async: false
+  alias Appsignal.{FakeTransaction, Instrumentation.Helpers}
 
-  import Mock
-
-  alias Appsignal.{Transaction, Instrumentation.Helpers}
-
-  test_with_mock "instrument with transaction", Appsignal.Transaction, [:passthrough], [] do
-    t = Transaction.start("foo", :http_request)
-    call_instrument(t)
-    assert called(Transaction.start_event(t))
-    assert called(Transaction.finish_event(t, "name", "title", "", 0))
+  setup do
+    {:ok, fake_transaction} = FakeTransaction.start_link()
+    [fake_transaction: fake_transaction]
   end
 
-  test_with_mock "instrument with pid", Appsignal.Transaction, [:passthrough], [] do
-    t = Transaction.start("bar", :http_request)
+  test "instrument with transaction", %{fake_transaction: fake_transaction} do
+    transaction = FakeTransaction.start("123", :http_request)
+    call_instrument(transaction)
+
+    assert [^transaction] = FakeTransaction.started_events(fake_transaction)
+
+    assert [%{body: "", body_format: 0, name: "name", title: "title", transaction: ^transaction}] =
+             FakeTransaction.finished_events(fake_transaction)
+  end
+
+  test "instrument with pid", %{fake_transaction: fake_transaction} do
+    transaction = FakeTransaction.start("bar", :http_request)
     call_instrument(self())
-    assert called(Transaction.start_event(t))
-    assert called(Transaction.finish_event(t, "name", "title", "", 0))
+    assert [^transaction] = FakeTransaction.started_events(fake_transaction)
+
+    assert [%{body: "", body_format: 0, name: "name", title: "title", transaction: ^transaction}] =
+             FakeTransaction.finished_events(fake_transaction)
   end
 
   test "instrument with nil" do
@@ -26,7 +33,6 @@ defmodule AppsignalHelpersTest do
   defp call_instrument(arg) do
     r =
       Helpers.instrument(arg, "name", "title", fn ->
-        # some slow function
         :timer.sleep(100)
         :result
       end)

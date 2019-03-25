@@ -3,25 +3,18 @@ defmodule Appsignal.Diagnose.Paths do
     log_file_path = Appsignal.Config.log_file_path() || "/tmp/appsignal.log"
     log_dir_path = Path.dirname(log_file_path)
 
-    install_log_path =
-      :appsignal
-      |> Application.app_dir()
-      |> Path.join("install.log")
-
     %{
-      working_dir: path_report(System.cwd()),
+      working_dir: path_report(File.cwd!()),
       log_dir_path: path_report(log_dir_path),
-      "appsignal.log": path_report(log_file_path),
-      "install.log": path_report(install_log_path)
+      "appsignal.log": path_report(log_file_path)
     }
   end
 
-  def labels() do
+  def labels do
     %{
       working_dir: "Working directory",
       log_dir_path: "Log directory",
-      "appsignal.log": "AppSignal log",
-      "install.log": "Extension install log"
+      "appsignal.log": "AppSignal log"
     }
   end
 

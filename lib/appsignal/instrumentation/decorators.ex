@@ -36,6 +36,8 @@ defmodule Appsignal.Instrumentation.Decorators do
     transaction_event: 1,
     channel_action: 0
 
+  @transaction Application.get_env(:appsignal, :appsignal_transaction, Appsignal.Transaction)
+
   @doc false
   def transaction(body, context) do
     transaction(:http_request, body, context)
@@ -44,19 +46,11 @@ defmodule Appsignal.Instrumentation.Decorators do
   @doc false
   def transaction(namespace, body, context) do
     quote do
-      transaction =
-        Appsignal.Transaction.start(
-          Appsignal.Transaction.generate_id(),
-          unquote(namespace)
-        )
-        |> Appsignal.Transaction.set_action(unquote("#{context.module}##{context.name}"))
-
-      result = unquote(body)
-
-      Appsignal.Transaction.finish(transaction)
-      :ok = Appsignal.Transaction.complete(transaction)
-
-      result
+      Appsignal.Instrumentation.Decorators.in_transaction(
+        unquote(namespace),
+        unquote("#{context.module}##{context.name}"),
+        fn -> unquote(body) end
+      )
     end
   end
 
@@ -82,7 +76,7 @@ defmodule Appsignal.Instrumentation.Decorators do
   end
 
   @doc false
-  def channel_action(body, context = %{args: [action, _payload, socket]}) do
+  def channel_action(body, %{args: [action, _payload, socket]} = context) do
     quote do
       Appsignal.Phoenix.Channel.channel_action(
         unquote(context.module),
@@ -91,5 +85,20 @@ defmodule Appsignal.Instrumentation.Decorators do
         fn -> unquote(body) end
       )
     end
+  end
+
+  @doc false
+  def in_transaction(namespace, action, body) do
+    transaction =
+      @transaction.generate_id()
+      |> @transaction.start(namespace)
+      |> @transaction.set_action(action)
+
+    result = body.()
+
+    @transaction.finish(transaction)
+    :ok = @transaction.complete(transaction)
+
+    result
   end
 end
