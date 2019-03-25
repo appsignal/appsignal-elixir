@@ -116,7 +116,7 @@ defmodule Appsignal do
 
   @doc false
   def add_default_probes do
-    # Stub for adding default probes
+    Appsignal.Probes.register(:erlang, &Appsignal.Probes.ErlangProbe.call/0)
   end
 
   @doc """
