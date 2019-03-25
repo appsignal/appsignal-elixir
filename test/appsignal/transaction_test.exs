@@ -385,7 +385,7 @@ defmodule AppsignalTransactionTest do
     end
   end
 
-  def stacktrace() do
+  def stacktrace do
     try do
       raise "error message"
     catch
