@@ -50,6 +50,17 @@ defmodule Appsignal.Instrumentation.DecoratorsTest do
     [fake_transaction: fake_transaction]
   end
 
+  test "instrument transaction with event", %{fake_transaction: fake_transaction} do
+    UsingAppsignalDecorators.transaction()
+
+    assert [{"123", :http_request}] = FakeTransaction.started_transactions(fake_transaction)
+
+    assert [
+             %{title: "Elixir.UsingAppsignalDecorators.bar"},
+             %{title: "Elixir.UsingAppsignalDecorators.nested"}
+           ] = FakeTransaction.finished_events(fake_transaction)
+  end
+
   test "instrument module function", %{fake_transaction: fake_transaction} do
     transaction = FakeTransaction.start("123", :http_request)
     UsingAppsignalDecorators.bar(123)
