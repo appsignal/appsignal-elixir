@@ -4,15 +4,17 @@ defmodule Appsignal.Probes.ErlangProbeTest do
   alias Appsignal.{FakeAppsignal, Probes.ErlangProbe}
 
   setup do
-    {:ok, fake_appsignal} = FakeAppsignal.start_link()
+    # Ensure the default probe is unregistered, that way we only record metrics
+    # from this test
+    Appsignal.Probes.unregister(:erlang)
 
+    {:ok, fake_appsignal} = FakeAppsignal.start_link()
     [fake_appsignal: fake_appsignal]
   end
 
   describe "call/0" do
     setup do
       ErlangProbe.call()
-      Appsignal.Probes.unregister(:erlang)
     end
 
     test "gathers IO metrics", %{fake_appsignal: fake_appsignal} do
