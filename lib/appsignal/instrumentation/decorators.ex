@@ -49,7 +49,7 @@ defmodule Appsignal.Instrumentation.Decorators do
       Appsignal.Instrumentation.Decorators.in_transaction(
         unquote(namespace),
         unquote("#{context.module}##{context.name}"),
-        unquote(body)
+        fn -> unquote(body) end
       )
     end
   end
@@ -94,7 +94,7 @@ defmodule Appsignal.Instrumentation.Decorators do
       |> @transaction.start(namespace)
       |> @transaction.set_action(action)
 
-    result = body
+    result = body.()
 
     @transaction.finish(transaction)
     :ok = @transaction.complete(transaction)
