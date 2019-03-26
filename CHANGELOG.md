@@ -1,3 +1,8 @@
+# 1.10.1
+* Add enable_minutely_probes config option. PR #470
+* Tag hostnames in ErlangProbe. PR #469
+* Don't use fetch_env!/2 in ErlangProbe. PR #471
+
 # 1.10.0
 * Store extension installation details in report. PR #433
 * Fail AppSignal extension installation on warnings
