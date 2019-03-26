@@ -1,6 +1,6 @@
 defmodule Appsignal.Probes.ErlangProbeTest do
   use ExUnit.Case, async: false
-
+  import AppsignalTest.Utils
   alias Appsignal.{FakeAppsignal, Probes.ErlangProbe}
 
   setup do
@@ -110,6 +110,15 @@ defmodule Appsignal.Probes.ErlangProbeTest do
                  value: _
                }
              ] = FakeAppsignal.get_gauges(fake_appsignal, "erlang_memory")
+    end
+  end
+
+  describe "call/0, with a configured hostname" do
+    test "adds the configured hostname as a tag", %{fake_appsignal: fake_appsignal} do
+      with_config(%{hostname: "Alices-MBP.example.com"}, &ErlangProbe.call/0)
+
+      assert [%{tags: %{hostname: "Alices-MBP.example.com"}} | _] =
+               FakeAppsignal.get_gauges(fake_appsignal, "erlang_io")
     end
   end
 end
