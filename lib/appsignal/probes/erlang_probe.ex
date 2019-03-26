@@ -42,13 +42,18 @@ defmodule Appsignal.Probes.ErlangProbe do
     @appsignal.set_gauge(
       name,
       value,
-      Map.merge(tags, %{host_metric: "", hostname: hostname()})
+      Map.merge(tags, %{hostname: hostname()})
     )
   end
 
   defp hostname do
-    {:ok, hostname} = :inet.gethostname()
-    config = Application.get_env(:appsignal, :config)
-    config[:hostname] || hostname
+    case Application.fetch_env!(:appsignal, :config)[:hostname] do
+      nil ->
+        {:ok, hostname} = :inet.gethostname()
+        hostname
+
+      hostname ->
+        hostname
+    end
   end
 end
