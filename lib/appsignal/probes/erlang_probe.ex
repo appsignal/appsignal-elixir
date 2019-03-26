@@ -48,13 +48,13 @@ defmodule Appsignal.Probes.ErlangProbe do
   end
 
   defp hostname do
-    case Application.fetch_env!(:appsignal, :config)[:hostname] do
-      nil ->
+    case Application.fetch_env(:appsignal, :config) do
+      {:ok, %{hostname: hostname}} ->
+        hostname
+
+      _ ->
         {:ok, hostname} = @inet.gethostname()
         List.to_string(hostname)
-
-      hostname ->
-        hostname
     end
   end
 end
