@@ -165,6 +165,11 @@ defmodule Appsignal.ConfigTest do
                default_configuration() |> Map.put(:enable_host_metrics, false)
     end
 
+    test "enable_minutely_probes" do
+      assert with_config(%{enable_minutely_probes: false}, &init_config/0) ==
+               default_configuration() |> Map.put(:enable_minutely_probes, false)
+    end
+
     test "endpoint" do
       assert with_config(%{endpoint: "https://push.staging.lol"}, &init_config/0) ==
                default_configuration() |> Map.put(:endpoint, "https://push.staging.lol")
@@ -337,6 +342,13 @@ defmodule Appsignal.ConfigTest do
                %{"APPSIGNAL_ENABLE_HOST_METRICS" => "false"},
                &init_config/0
              ) == default_configuration() |> Map.put(:enable_host_metrics, false)
+    end
+
+    test "enable_minutely_probes" do
+      assert with_env(
+               %{"APPSIGNAL_ENABLE_MINUTELY_PROBES" => "false"},
+               &init_config/0
+             ) == default_configuration() |> Map.put(:enable_minutely_probes, false)
     end
 
     test "endpoint" do
@@ -809,6 +821,7 @@ defmodule Appsignal.ConfigTest do
       debug: false,
       dns_servers: [],
       enable_host_metrics: true,
+      enable_minutely_probes: true,
       endpoint: "https://push.appsignal.com",
       diagnose_endpoint: "https://appsignal.com/diag",
       env: :dev,

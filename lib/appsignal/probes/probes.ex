@@ -47,16 +47,18 @@ defmodule Appsignal.Probes do
   end
 
   def handle_info(:run_probes, probes) do
-    Enum.each(probes, fn {name, probe} ->
-      Task.start(fn ->
-        try do
-          probe.()
-        rescue
-          e ->
-            Logger.error("Error while calling probe #{name}: #{e}")
-        end
+    if Appsignal.Config.minutely_probes_enabled?() do
+      Enum.each(probes, fn {name, probe} ->
+        Task.start(fn ->
+          try do
+            probe.()
+          rescue
+            e ->
+              Logger.error("Error while calling probe #{name}: #{e}")
+          end
+        end)
       end)
-    end)
+    end
 
     schedule_probes()
     {:noreply, probes}
