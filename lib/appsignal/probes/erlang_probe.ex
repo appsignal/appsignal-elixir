@@ -1,5 +1,6 @@
 defmodule Appsignal.Probes.ErlangProbe do
   @appsignal Application.get_env(:appsignal, :appsignal, Appsignal)
+  @inet Application.get_env(:appsignal, :inet, :inet)
 
   def call do
     io_metrics()
@@ -49,8 +50,8 @@ defmodule Appsignal.Probes.ErlangProbe do
   defp hostname do
     case Application.fetch_env!(:appsignal, :config)[:hostname] do
       nil ->
-        {:ok, hostname} = :inet.gethostname()
-        hostname
+        {:ok, hostname} = @inet.gethostname()
+        List.to_string(hostname)
 
       hostname ->
         hostname
