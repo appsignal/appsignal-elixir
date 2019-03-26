@@ -12,6 +12,7 @@ if Mix.env() in [:test, :test_phoenix, :test_no_nif] do
   config :appsignal, appsignal_transaction: Appsignal.FakeTransaction
   config :appsignal, appsignal_diagnose_report: Appsignal.Diagnose.FakeReport
   config :appsignal, appsignal: Appsignal.FakeAppsignal
+  config :appsignal, inet: FakeInet
 
   config :appsignal, :config,
     push_api_key: "00000000-0000-0000-0000-000000000000",
