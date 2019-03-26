@@ -34,5 +34,22 @@ defmodule Appsignal.Probes.ProbesTest do
 
       Probes.unregister(:test_probe)
     end
+
+    test "a probe does not get called by the probes system if it's disabled", %{
+      fake_probe: fake_probe
+    } do
+      AppsignalTest.Utils.with_config(%{enable_minutely_probes: false}, fn ->
+        Probes.register(:test_probe, &FakeProbe.call/0)
+
+        refute FakeProbe.get(fake_probe, :probe_called)
+
+        # Sleep for some time to give the Probe system time to do its work
+        :timer.sleep(100)
+
+        refute FakeProbe.get(fake_probe, :probe_called)
+
+        Probes.unregister(:test_probe)
+      end)
+    end
   end
 end

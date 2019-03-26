@@ -9,6 +9,7 @@ defmodule Appsignal.Config do
     debug: false,
     dns_servers: [],
     enable_host_metrics: true,
+    enable_minutely_probes: true,
     endpoint: "https://push.appsignal.com",
     diagnose_endpoint: "https://appsignal.com/diag",
     env: :dev,
@@ -101,6 +102,13 @@ defmodule Appsignal.Config do
     Application.fetch_env!(:appsignal, :config)[:ca_file_path]
   end
 
+  def minutely_probes_enabled? do
+    case Application.fetch_env(:appsignal, :config) do
+      {:ok, value} -> !!value[:enable_minutely_probes]
+      _ -> false
+    end
+  end
+
   defp default_ca_file_path do
     Path.join(:code.priv_dir(:appsignal), "cacert.pem")
   end
@@ -157,6 +165,7 @@ defmodule Appsignal.Config do
     "APPSIGNAL_WORKING_DIR_PATH" => :working_dir_path,
     "APPSIGNAL_WORKING_DIRECTORY_PATH" => :working_directory_path,
     "APPSIGNAL_ENABLE_HOST_METRICS" => :enable_host_metrics,
+    "APPSIGNAL_ENABLE_MINUTELY_PROBES" => :enable_minutely_probes,
     "APPSIGNAL_SKIP_SESSION_DATA" => :skip_session_data,
     "APPSIGNAL_FILES_WORLD_ACCESSIBLE" => :files_world_accessible,
     "APPSIGNAL_REQUEST_HEADERS" => :request_headers,
@@ -172,7 +181,7 @@ defmodule Appsignal.Config do
     APPSIGNAL_ACTIVE APPSIGNAL_DEBUG APPSIGNAL_INSTRUMENT_NET_HTTP APPSIGNAL_ENABLE_FRONTEND_ERROR_CATCHING
     APPSIGNAL_ENABLE_ALLOCATION_TRACKING APPSIGNAL_ENABLE_GC_INSTRUMENTATION APPSIGNAL_RUNNING_IN_CONTAINER
     APPSIGNAL_ENABLE_HOST_METRICS APPSIGNAL_SKIP_SESSION_DATA APPSIGNAL_FILES_WORLD_ACCESSIBLE
-    APPSIGNAL_SEND_PARAMS
+    APPSIGNAL_SEND_PARAMS APPSIGNAL_ENABLE_MINUTELY_PROBES
   )
   @atom_keys ~w(APPSIGNAL_APP_ENV)
   @string_list_keys ~w(
