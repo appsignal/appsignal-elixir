@@ -28,4 +28,4 @@ matrix:
   allow_failures:
     - otp_release: 18.3
 script:
-  - scripts/run_tests
+  - scripts/test
