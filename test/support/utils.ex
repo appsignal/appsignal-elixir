@@ -110,4 +110,17 @@ defmodule AppsignalTest.Utils do
         with_retries(assertion, retries - 1)
     end
   end
+
+  def repeatedly(assertion) do
+    repeatedly(assertion, 10)
+  end
+
+  defp repeatedly(assertion, retries) when retries < 1 do
+    assertion.()
+  end
+
+  defp repeatedly(assertion, retries) do
+    assertion.()
+    repeatedly(assertion, retries - 1)
+  end
 end

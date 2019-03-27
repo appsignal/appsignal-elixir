@@ -44,13 +44,13 @@ defmodule Appsignal.ErrorLoggerHandlerTest do
       :erlang.error(:error_ignored)
     end)
 
-    :timer.sleep(100)
-
-    refute fake_transaction
-           |> FakeTransaction.errors()
-           |> Enum.any?(fn error ->
-             match?({%Transaction{}, ":error_ignored", _, _}, error)
-           end)
+    repeatedly(fn ->
+      refute fake_transaction
+             |> FakeTransaction.errors()
+             |> Enum.any?(fn error ->
+               match?({%Transaction{}, ":error_ignored", _, _}, error)
+             end)
+    end)
   end
 
   test "does not cause warnings for noise on handle_info" do
