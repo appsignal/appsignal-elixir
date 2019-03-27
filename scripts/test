@@ -10,9 +10,6 @@ fi
 
 if [ -z "$TRAVIS_ELIXIR_VERSION" ] || [ $(version $TRAVIS_ELIXIR_VERSION) -ge $(version "1.8.0") ]; then
   MIX_ENV=test mix format --dry-run --check-formatted
-fi
-
-if [ -z "$TRAVIS_ELIXIR_VERSION" ] || [ $(version $TRAVIS_ELIXIR_VERSION) -ge $(version "1.8.0") ]; then
   MIX_ENV=test mix credo --strict
 fi
 
