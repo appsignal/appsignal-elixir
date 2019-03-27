@@ -26,7 +26,7 @@ defmodule Appsignal.ErrorHandlerTest do
       end)
 
     [{transaction, reason, _message, _stack}] =
-      with_retries(fn ->
+      until(fn ->
         assert [{_, _, _, _}] = FakeTransaction.errors(fake_transaction)
       end)
 

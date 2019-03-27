@@ -93,21 +93,21 @@ defmodule AppsignalTest.Utils do
     |> Enum.each(&System.delete_env/1)
   end
 
-  def with_retries(assertion) do
-    with_retries(assertion, 50)
+  def until(assertion) do
+    until(assertion, 50)
   end
 
-  defp with_retries(assertion, retries) when retries < 1 do
+  defp until(assertion, retries) when retries < 1 do
     assertion.()
   end
 
-  defp with_retries(assertion, retries) do
+  defp until(assertion, retries) do
     try do
       assertion.()
     rescue
       ExUnit.AssertionError ->
         :timer.sleep(10)
-        with_retries(assertion, retries - 1)
+        until(assertion, retries - 1)
     end
   end
 

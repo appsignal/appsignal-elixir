@@ -45,7 +45,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     end)
 
     [{_, reason, message, stacktrace}] =
-      with_retries(fn ->
+      until(fn ->
         assert [{_, _, _, _}] = FakeTransaction.errors(fake_transaction)
       end)
 
@@ -64,7 +64,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     end)
 
     [{_, reason, message, stacktrace}] =
-      with_retries(fn ->
+      until(fn ->
         assert [{_, _, _, _}] = FakeTransaction.errors(fake_transaction)
       end)
 
@@ -83,7 +83,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     end)
 
     [{_, reason, message, stacktrace}] =
-      with_retries(fn ->
+      until(fn ->
         assert [{_, _, _, _}] = FakeTransaction.errors(fake_transaction)
       end)
 
@@ -100,7 +100,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     :proc_lib.spawn(fn -> throw({:badmatch, [1, 2, 3]}) end)
 
     [{_, reason, message, stacktrace}] =
-      with_retries(fn ->
+      until(fn ->
         assert [{_, _, _, _}] = FakeTransaction.errors(fake_transaction)
       end)
 
@@ -117,7 +117,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     CrashingGenServer.start(:throw)
 
     [{_, reason, message, stacktrace}] =
-      with_retries(fn ->
+      until(fn ->
         assert [{_, _, _, _}] = FakeTransaction.errors(fake_transaction)
       end)
 
@@ -141,7 +141,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     CrashingGenServer.start(:exit)
 
     [{_, reason, message, stacktrace}] =
-      with_retries(fn ->
+      until(fn ->
         assert [{_, _, _, _}] = FakeTransaction.errors(fake_transaction)
       end)
 
@@ -167,7 +167,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     CrashingGenServer.start(:function_error)
 
     [{_, reason, message, stacktrace}] =
-      with_retries(fn ->
+      until(fn ->
         assert [{_, _, _, _}] = FakeTransaction.errors(fake_transaction)
       end)
 
@@ -199,7 +199,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     end)
 
     [{_, reason, message, stacktrace}] =
-      with_retries(fn ->
+      until(fn ->
         assert [{_, _, _, _}] = FakeTransaction.errors(fake_transaction)
       end)
 
@@ -222,7 +222,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     end)
 
     [{_, reason, message, stacktrace}] =
-      with_retries(fn ->
+      until(fn ->
         assert [{_, _, _, _}] = FakeTransaction.errors(fake_transaction)
       end)
 
@@ -246,7 +246,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     end)
 
     [{_, reason, message, stacktrace}] =
-      with_retries(fn ->
+      until(fn ->
         assert [{_, _, _, _}] = FakeTransaction.errors(fake_transaction)
       end)
 
