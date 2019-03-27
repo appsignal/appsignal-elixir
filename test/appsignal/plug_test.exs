@@ -56,8 +56,9 @@ defmodule OverridingAppSignalPlug do
 end
 
 defmodule Appsignal.PlugTest do
-  use ExUnit.Case
   alias Appsignal.FakeTransaction
+  import AppsignalTest.Utils
+  use ExUnit.Case
 
   setup do
     {:ok, fake_transaction} = FakeTransaction.start_link()
@@ -203,8 +204,9 @@ defmodule Appsignal.PlugTest do
     end
 
     test "ignores the process' pid" do
-      :timer.sleep(1)
-      assert Appsignal.TransactionRegistry.ignored?(self()) == true
+      until(fn ->
+        assert Appsignal.TransactionRegistry.ignored?(self()) == true
+      end)
     end
   end
 

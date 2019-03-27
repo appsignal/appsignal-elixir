@@ -3,9 +3,9 @@ defmodule Appsignal.ErrorHandlerTest do
   Test the actual Appsignal.ErrorHandler
   """
 
-  use ExUnit.Case, async: true
-
   alias Appsignal.{ErrorHandler, FakeTransaction, Transaction}
+  import AppsignalTest.Utils
+  use ExUnit.Case, async: true
 
   setup do
     {:ok, fake_transaction} = FakeTransaction.start_link()
@@ -25,9 +25,10 @@ defmodule Appsignal.ErrorHandlerTest do
         :erlang.error(:error_http_request)
       end)
 
-    :timer.sleep(20)
-
-    [{transaction, reason, _message, _stack}] = FakeTransaction.errors(fake_transaction)
+    [{transaction, reason, _message, _stack}] =
+      until(fn ->
+        assert [{_, _, _, _}] = FakeTransaction.errors(fake_transaction)
+      end)
 
     assert transaction.id == inspect(pid)
     assert reason == ":error_http_request"
@@ -41,13 +42,13 @@ defmodule Appsignal.ErrorHandlerTest do
       :erlang.error(:error_ignored)
     end)
 
-    :timer.sleep(100)
-
-    refute fake_transaction
-           |> FakeTransaction.errors()
-           |> Enum.any?(fn error ->
-             match?({%Transaction{}, ":error_ignored", _, _}, error)
-           end)
+    repeatedly(fn ->
+      refute fake_transaction
+             |> FakeTransaction.errors()
+             |> Enum.any?(fn error ->
+               match?({%Transaction{}, ":error_ignored", _, _}, error)
+             end)
+    end)
   end
 
   test "submitting the transaction", %{fake_transaction: fake_transaction} do

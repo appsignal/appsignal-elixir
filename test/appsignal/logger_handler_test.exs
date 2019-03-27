@@ -1,7 +1,8 @@
 if System.otp_release() >= "21" do
   defmodule Appsignal.LoggerHandlerTest do
-    use ExUnit.Case, async: false
     alias Appsignal.{FakeTransaction, Transaction}
+    use ExUnit.Case, async: false
+    import AppsignalTest.Utils
 
     setup do
       Appsignal.remove_report_handler()
@@ -27,9 +28,10 @@ if System.otp_release() >= "21" do
           :erlang.error(:error_http_request)
         end)
 
-      :timer.sleep(20)
-
-      [{transaction, reason, _message, _stack}] = FakeTransaction.errors(fake_transaction)
+      [{transaction, reason, _, _}] =
+        until(fn ->
+          assert [{_, _, _, _}] = FakeTransaction.errors(fake_transaction)
+        end)
 
       assert transaction.id == inspect(pid)
       assert reason == ":error_http_request"
@@ -45,13 +47,13 @@ if System.otp_release() >= "21" do
         :erlang.error(:error_ignored)
       end)
 
-      :timer.sleep(100)
-
-      refute fake_transaction
-             |> FakeTransaction.errors()
-             |> Enum.any?(fn error ->
-               match?({%Transaction{}, ":error_ignored", _, _}, error)
-             end)
+      repeatedly(fn ->
+        refute fake_transaction
+               |> FakeTransaction.errors()
+               |> Enum.any?(fn error ->
+                 match?({%Transaction{}, ":error_ignored", _, _}, error)
+               end)
+      end)
     end
   end
 end

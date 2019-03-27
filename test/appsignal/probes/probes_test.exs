@@ -3,6 +3,7 @@ defmodule Appsignal.Probes.ProbesTest do
 
   alias Appsignal.Probes
   alias FakeProbe
+  import AppsignalTest.Utils
 
   describe "register/2" do
     test "registers a probe when given a function as probe" do
@@ -27,10 +28,9 @@ defmodule Appsignal.Probes.ProbesTest do
 
       refute FakeProbe.get(fake_probe, :probe_called)
 
-      # Sleep for some time to give the Probe system time to do its work
-      :timer.sleep(100)
-
-      assert FakeProbe.get(fake_probe, :probe_called)
+      until(fn ->
+        assert FakeProbe.get(fake_probe, :probe_called)
+      end)
 
       Probes.unregister(:test_probe)
     end
@@ -41,12 +41,9 @@ defmodule Appsignal.Probes.ProbesTest do
       AppsignalTest.Utils.with_config(%{enable_minutely_probes: false}, fn ->
         Probes.register(:test_probe, &FakeProbe.call/0)
 
-        refute FakeProbe.get(fake_probe, :probe_called)
-
-        # Sleep for some time to give the Probe system time to do its work
-        :timer.sleep(100)
-
-        refute FakeProbe.get(fake_probe, :probe_called)
+        repeatedly(fn ->
+          refute FakeProbe.get(fake_probe, :probe_called)
+        end)
 
         Probes.unregister(:test_probe)
       end)

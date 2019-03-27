@@ -92,4 +92,35 @@ defmodule AppsignalTest.Utils do
     (Map.keys(System.get_env()) -- Map.keys(before))
     |> Enum.each(&System.delete_env/1)
   end
+
+  def until(assertion) do
+    until(assertion, 50)
+  end
+
+  defp until(assertion, retries) when retries < 1 do
+    assertion.()
+  end
+
+  defp until(assertion, retries) do
+    try do
+      assertion.()
+    rescue
+      ExUnit.AssertionError ->
+        :timer.sleep(10)
+        until(assertion, retries - 1)
+    end
+  end
+
+  def repeatedly(assertion) do
+    repeatedly(assertion, 10)
+  end
+
+  defp repeatedly(assertion, retries) when retries < 1 do
+    assertion.()
+  end
+
+  defp repeatedly(assertion, retries) do
+    assertion.()
+    repeatedly(assertion, retries - 1)
+  end
 end
