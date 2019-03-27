@@ -31,11 +31,7 @@ defmodule AppsignalHelpersTest do
   end
 
   defp call_instrument(arg) do
-    r =
-      Helpers.instrument(arg, "name", "title", fn ->
-        :timer.sleep(100)
-        :result
-      end)
+    r = Helpers.instrument(arg, "name", "title", fn -> :result end)
 
     assert :result == r
   end
