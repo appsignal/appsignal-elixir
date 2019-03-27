@@ -97,11 +97,11 @@ defmodule AppsignalTest.Utils do
     with_retries(assertion, 50)
   end
 
-  def with_retries(assertion, retries) when retries < 1 do
+  defp with_retries(assertion, retries) when retries < 1 do
     assertion.()
   end
 
-  def with_retries(assertion, retries) do
+  defp with_retries(assertion, retries) do
     try do
       assertion.()
     rescue
