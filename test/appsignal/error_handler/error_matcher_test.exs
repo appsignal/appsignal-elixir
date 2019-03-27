@@ -3,8 +3,9 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
   Covers most cases of Appsignal.ErrorHandler.match_event/1
   """
 
-  use ExUnit.Case
   alias Appsignal.FakeTransaction
+  import AppsignalTest.Utils
+  use ExUnit.Case
 
   defmodule CrashingGenServer do
     use GenServer
@@ -43,9 +44,11 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
       exit(:crash_proc_lib_spawn)
     end)
 
-    :timer.sleep(20)
+    [{_, reason, message, stacktrace}] =
+      with_retries(fn ->
+        assert [{_, _, _, _}] = FakeTransaction.errors(fake_transaction)
+      end)
 
-    [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
     assert reason == ":crash_proc_lib_spawn"
     assert message =~ ~r{^(E|e)rlang error: :crash_proc_lib_spawn$}
 
@@ -60,9 +63,11 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
       :erlang.error(:crash_proc_lib_error)
     end)
 
-    :timer.sleep(20)
+    [{_, reason, message, stacktrace}] =
+      with_retries(fn ->
+        assert [{_, _, _, _}] = FakeTransaction.errors(fake_transaction)
+      end)
 
-    [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
     assert reason == ":crash_proc_lib_error"
     assert message =~ ~r{^(E|e)rlang error: :crash_proc_lib_error$}
 
@@ -77,9 +82,11 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
       Float.ceil(1)
     end)
 
-    :timer.sleep(20)
+    [{_, reason, message, stacktrace}] =
+      with_retries(fn ->
+        assert [{_, _, _, _}] = FakeTransaction.errors(fake_transaction)
+      end)
 
-    [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
     assert reason == "FunctionClauseError"
     assert message == "no function clause matching in Float.ceil/2"
 
@@ -92,9 +99,11 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
   test "proc_lib.spawn + badmatch error", %{fake_transaction: fake_transaction} do
     :proc_lib.spawn(fn -> throw({:badmatch, [1, 2, 3]}) end)
 
-    :timer.sleep(20)
+    [{_, reason, message, stacktrace}] =
+      with_retries(fn ->
+        assert [{_, _, _, _}] = FakeTransaction.errors(fake_transaction)
+      end)
 
-    [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
     assert reason == "MatchError"
     assert message == "no match of right hand side value: [1, 2, 3]"
 
@@ -107,9 +116,11 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
   test "Crashing GenServer with throw", %{fake_transaction: fake_transaction} do
     CrashingGenServer.start(:throw)
 
-    :timer.sleep(20)
+    [{_, reason, message, stacktrace}] =
+      with_retries(fn ->
+        assert [{_, _, _, _}] = FakeTransaction.errors(fake_transaction)
+      end)
 
-    [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
     assert reason == ":bad_return_value"
     assert message =~ ~r{^(E|e)rlang error: {:bad_return_valu...}
 
@@ -129,9 +140,11 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
   test "Crashing GenServer with exit", %{fake_transaction: fake_transaction} do
     CrashingGenServer.start(:exit)
 
-    :timer.sleep(20)
+    [{_, reason, message, stacktrace}] =
+      with_retries(fn ->
+        assert [{_, _, _, _}] = FakeTransaction.errors(fake_transaction)
+      end)
 
-    [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
     assert reason == ":crashed_gen_server_exit"
     assert message =~ ~r{^(E|e)rlang error: :crashed_gen_server_exit$}
 
@@ -153,9 +166,11 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
   test "Crashing GenServer with function error", %{fake_transaction: fake_transaction} do
     CrashingGenServer.start(:function_error)
 
-    :timer.sleep(100)
+    [{_, reason, message, stacktrace}] =
+      with_retries(fn ->
+        assert [{_, _, _, _}] = FakeTransaction.errors(fake_transaction)
+      end)
 
-    [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
     assert reason == "FunctionClauseError"
     assert message == "no function clause matching in Float.ceil/2"
 
@@ -183,9 +198,11 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
       Float.ceil(1)
     end)
 
-    :timer.sleep(20)
+    [{_, reason, message, stacktrace}] =
+      with_retries(fn ->
+        assert [{_, _, _, _}] = FakeTransaction.errors(fake_transaction)
+      end)
 
-    [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
     assert reason == "FunctionClauseError"
     assert message == "no function clause matching in Float.ceil/2"
 
@@ -204,9 +221,11 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
       |> Task.await(1)
     end)
 
-    :timer.sleep(100)
+    [{_, reason, message, stacktrace}] =
+      with_retries(fn ->
+        assert [{_, _, _, _}] = FakeTransaction.errors(fake_transaction)
+      end)
 
-    [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
     assert reason == ":timeout"
     assert message =~ ~r{^(E|e)rlang error: {:timeout, {Task, :await, \[%Tas...}
 
@@ -226,9 +245,11 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
       end
     end)
 
-    :timer.sleep(20)
+    [{_, reason, message, stacktrace}] =
+      with_retries(fn ->
+        assert [{_, _, _, _}] = FakeTransaction.errors(fake_transaction)
+      end)
 
-    [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
     assert reason == "UndefinedFunctionError"
     assert message == "undefined function"
 
