@@ -58,7 +58,7 @@ defmodule AppsignalTransactionTest do
                1
              )
 
-    assert ^transaction = Transaction.set_error("Error", "error message", stacktrace)
+    assert ^transaction = Transaction.set_error("Error", "error message", stacktrace())
     assert ^transaction = Transaction.set_sample_data("key", %{user_id: 1})
     assert ^transaction = Transaction.set_action("GET:/")
     assert ^transaction = Transaction.set_queue_start(1000)
