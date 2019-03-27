@@ -8,7 +8,7 @@ if [ -z "$TRAVIS_ELIXIR_VERSION" ] || [ $(version $TRAVIS_ELIXIR_VERSION) -ge $(
   MIX_ENV=test mix compile --warnings-as-errors
 fi
 
-if [ -z "$TRAVIS_ELIXIR_VERSION" ] || [ $(version $TRAVIS_ELIXIR_VERSION) -ge $(version "1.6.6") ]; then
+if [ -z "$TRAVIS_ELIXIR_VERSION" ] || [ $(version $TRAVIS_ELIXIR_VERSION) -ge $(version "1.8.0") ]; then
   MIX_ENV=test mix format --dry-run --check-formatted
 fi
 
