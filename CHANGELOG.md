@@ -1,3 +1,7 @@
+# 1.10.2
+- Fix memory leak in custom metrics key names.
+  Commit 91c65e51cc949e66b3f504444f3570858a598352
+
 # 1.10.1
 * Add enable_minutely_probes config option. PR #470
 * Tag hostnames in ErlangProbe. PR #469
