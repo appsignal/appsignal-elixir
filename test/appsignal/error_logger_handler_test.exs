@@ -1,6 +1,7 @@
 defmodule Appsignal.ErrorLoggerHandlerTest do
-  use ExUnit.Case, async: false
   alias Appsignal.{FakeTransaction, Transaction}
+  import AppsignalTest.Utils
+  use ExUnit.Case, async: false
 
   setup do
     Appsignal.remove_report_handler()
@@ -26,9 +27,10 @@ defmodule Appsignal.ErrorLoggerHandlerTest do
         :erlang.error(:error_http_request)
       end)
 
-    :timer.sleep(20)
-
-    [{transaction, reason, _message, _stack}] = FakeTransaction.errors(fake_transaction)
+    [{transaction, reason, _, _}] =
+      with_retries(fn ->
+        assert [{_, _, _, _}] = FakeTransaction.errors(fake_transaction)
+      end)
 
     assert transaction.id == inspect(pid)
     assert reason == ":error_http_request"
