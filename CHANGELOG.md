@@ -1,3 +1,6 @@
+# 1.10.3
+- Track memory metrics of the current process. PR #473
+
 # 1.10.2
 - Fix memory leak in custom metrics key names.
   Commit 91c65e51cc949e66b3f504444f3570858a598352
