@@ -1,3 +1,6 @@
+# 1.10.4
+- Handle atom keys in MapFilter.filter_values/2. PR #475
+
 # 1.10.3
 - Track memory metrics of the current process. PR #473
 

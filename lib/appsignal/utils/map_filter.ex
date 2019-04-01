@@ -19,7 +19,7 @@ defmodule Appsignal.Utils.MapFilter do
 
   def filter_values(%{} = map, filter_params) do
     Enum.into(map, %{}, fn {k, v} ->
-      if is_binary(k) and String.contains?(k, filter_params) do
+      if (is_binary(k) or is_atom(k)) and String.contains?(to_string(k), filter_params) do
         {k, "[FILTERED]"}
       else
         {k, filter_values(v, filter_params)}
