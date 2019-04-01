@@ -48,6 +48,12 @@ defmodule Appsignal.Transaction.FilterTest do
              ]) == %{"foo" => "bar", "password" => "[FILTERED]"}
     end
 
+    test "filter_values with an atom key" do
+      assert MapFilter.filter_values(%{"foo" => "bar", password: "should_not_show"}, [
+               "password"
+             ]) == %{"foo" => "bar", password: "[FILTERED]"}
+    end
+
     test "filter_values when a map has secret key" do
       assert MapFilter.filter_values(
                %{"foo" => "bar", "map" => %{"password" => "should_not_show"}},
