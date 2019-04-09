@@ -318,6 +318,25 @@ defmodule Appsignal.PlugTest do
     end
   end
 
+  describe "when AppSignal is disabled" do
+    setup do
+      conn =
+        AppsignalTest.Utils.with_config(%{active: false}, fn ->
+          OverridingAppSignalPlug.call(%Plug.Conn{}, %{})
+        end)
+
+      [conn: conn]
+    end
+
+    test "does not start a transaction", %{fake_transaction: fake_transaction} do
+      refute FakeTransaction.started_transaction?(fake_transaction)
+    end
+
+    test "calls super and returns the conn", %{conn: conn} do
+      assert conn.assigns[:called?]
+    end
+  end
+
   describe "extracting action names" do
     test "from a Plug conn" do
       assert Appsignal.Plug.extract_action(%Plug.Conn{method: "GET", request_path: "/foo"}) ==
