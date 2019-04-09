@@ -269,10 +269,10 @@ defmodule Appsignal.ConfigTest do
     end
 
     test "working_dir_path" do
-      assert %{working_dir_path: "/tmp/appsignal"} =
-               without_logger(fn ->
+      without_logger(fn ->
+        assert %{working_dir_path: "/tmp/appsignal"} =
                  with_config(%{working_dir_path: "/tmp/appsignal"}, &init_config/0)
-               end)
+      end)
     end
 
     test "working_directory_path" do
