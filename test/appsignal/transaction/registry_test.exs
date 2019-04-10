@@ -1,7 +1,7 @@
 defmodule Appsignal.Transaction.RegistryTest do
-  use ExUnit.Case, async: false
-
   alias Appsignal.{Transaction, TransactionRegistry}
+  import AppsignalTest.Utils
+  use ExUnit.Case, async: false
 
   test "lookup/1 returns nil after process has ended" do
     transaction = %Transaction{id: Transaction.generate_id()}
@@ -80,11 +80,29 @@ defmodule Appsignal.Transaction.RegistryTest do
     end
   end
 
+  describe "register/1, when disabled" do
+    test "returns nil" do
+      with_config(%{active: false}, fn ->
+        assert nil == TransactionRegistry.register(%Transaction{})
+      end)
+    end
+  end
+
   describe "lookup/1, when the registry is not running" do
     setup [:register_transaction, :terminate_registry]
 
     test "does not find an existing transaction by pid" do
       assert TransactionRegistry.lookup(self()) == nil
+    end
+  end
+
+  describe "lookup/1, when disabled" do
+    setup :register_transaction
+
+    test "returns nil" do
+      with_config(%{active: false}, fn ->
+        assert nil == TransactionRegistry.register(%Transaction{})
+      end)
     end
   end
 

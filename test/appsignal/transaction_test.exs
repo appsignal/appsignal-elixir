@@ -309,6 +309,18 @@ defmodule AppsignalTransactionTest do
     end
   end
 
+  describe "creating a transaction when disabled" do
+    setup do
+      with_config(%{active: false}, fn ->
+        [transaction: Transaction.create("123", :http_request)]
+      end)
+    end
+
+    test "does not create a transaction", %{transaction: transaction} do
+      assert transaction == nil
+    end
+  end
+
   describe "starting a transaction" do
     setup do
       id = Transaction.generate_id()
