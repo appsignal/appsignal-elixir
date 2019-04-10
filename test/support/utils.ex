@@ -121,6 +121,7 @@ defmodule AppsignalTest.Utils do
 
   defp repeatedly(assertion, retries) do
     assertion.()
+    :timer.sleep(10)
     repeatedly(assertion, retries - 1)
   end
 end
