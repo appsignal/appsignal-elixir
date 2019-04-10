@@ -78,8 +78,10 @@ defmodule Appsignal.Transaction do
   """
   @spec create(String.t(), atom) :: Transaction.t()
   def create(transaction_id, namespace) when is_binary(transaction_id) and is_atom(namespace) do
-    {:ok, resource} = Nif.start_transaction(transaction_id, Atom.to_string(namespace))
-    %Transaction{resource: resource, id: transaction_id}
+    if Appsignal.Config.active?() do
+      {:ok, resource} = Nif.start_transaction(transaction_id, Atom.to_string(namespace))
+      %Transaction{resource: resource, id: transaction_id}
+    end
   end
 
   if Mix.env() in [:test, :test_phoenix] do
