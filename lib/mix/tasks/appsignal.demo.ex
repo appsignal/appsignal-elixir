@@ -6,13 +6,21 @@ defmodule Mix.Tasks.Appsignal.Demo do
 
   def run(_args) do
     {:ok, _} = Application.ensure_all_started(:appsignal)
-    Appsignal.Demo.create_transaction_performance_request()
-    Appsignal.Demo.create_transaction_error_request()
-    Appsignal.stop(nil)
-    Logger.info("Demonstration sample data sent!")
 
-    Logger.info(
-      "It may take about a minute for the data to appear on https://appsignal.com/accounts"
-    )
+    if Appsignal.Config.active?() do
+      Appsignal.Demo.create_transaction_performance_request()
+      Appsignal.Demo.create_transaction_error_request()
+      Appsignal.stop(nil)
+      Logger.info("Demonstration sample data sent!")
+
+      Logger.info(
+        "It may take about a minute for the data to appear on https://appsignal.com/accounts"
+      )
+    else
+      Logger.error("""
+      Unable to start the AppSignal agent and send data to AppSignal.com
+      Please use the diagnose command (https://docs.appsignal.com/elixir/command-line/diagnose.html) to debug your configuration.
+      """)
+    end
   end
 end
