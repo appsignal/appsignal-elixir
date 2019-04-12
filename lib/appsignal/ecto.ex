@@ -42,30 +42,48 @@ defmodule Appsignal.Ecto do
 
   @transaction Application.get_env(:appsignal, :appsignal_transaction, Appsignal.Transaction)
 
-  def handle_event(_event, %{total_time: duration}, metadata, _config) do
-    @transaction.record_event(
-      "query.ecto",
-      "",
-      metadata.query,
-      convert_time_unit(duration),
-      1
-    )
-  end
-
-  def handle_event(_event, duration, metadata, _config) when is_integer(duration) do
-    @transaction.record_event(
-      "query.ecto",
-      "",
-      metadata.query,
-      convert_time_unit(duration),
-      1
-    )
+  def handle_event(_event, event_data, metadata, _config) do
+    do_handle_event(transaction(), event_data, metadata)
   end
 
   def log(entry) do
+    do_log(transaction(), entry)
+  end
+
+  defp transaction do
+    Appsignal.TransactionRegistry.lookup(self())
+  end
+
+  defp do_handle_event(%Appsignal.Transaction{} = transaction, %{total_time: duration}, metadata) do
+    @transaction.record_event(
+      transaction,
+      "query.ecto",
+      "",
+      metadata.query,
+      convert_time_unit(duration),
+      1
+    )
+  end
+
+  defp do_handle_event(%Appsignal.Transaction{} = transaction, duration, metadata)
+       when is_integer(duration) do
+    @transaction.record_event(
+      transaction,
+      "query.ecto",
+      "",
+      metadata.query,
+      convert_time_unit(duration),
+      1
+    )
+  end
+
+  defp do_handle_event(_transaction, _duration, _metadata), do: nil
+
+  defp do_log(%Appsignal.Transaction{} = transaction, entry) do
     duration = (entry.queue_time || 0) + (entry.query_time || 0) + (entry.decode_time || 0)
 
     @transaction.record_event(
+      transaction,
       "query.ecto",
       "",
       entry.query,
@@ -75,6 +93,8 @@ defmodule Appsignal.Ecto do
 
     entry
   end
+
+  defp do_log(_transaction, _entry), do: nil
 
   defp convert_time_unit(time) do
     # Converts the native time to a value in nanoseconds.
