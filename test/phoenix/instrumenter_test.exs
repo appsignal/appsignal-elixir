@@ -5,17 +5,16 @@ defmodule Appsignal.Phoenix.InstrumenterTest do
   setup do
     {:ok, fake_transaction} = FakeTransaction.start_link()
 
-    transaction = Transaction.start("test", :http_request)
-
     conn =
       %Plug.Conn{}
       |> Plug.Conn.put_private(:phoenix_controller, "foo")
       |> Plug.Conn.put_private(:phoenix_action, "bar")
 
-    [transaction: transaction, conn: conn, fake_transaction: fake_transaction]
+    [conn: conn, fake_transaction: fake_transaction]
   end
 
-  test "starts an event in phoenix_controller_call", %{transaction: transaction, conn: conn} do
+  test "starts an event in phoenix_controller_call", %{conn: conn} do
+    transaction = Transaction.start("test", :http_request)
     arguments = %{conn: conn}
 
     assert {transaction, arguments} ==
@@ -23,27 +22,46 @@ defmodule Appsignal.Phoenix.InstrumenterTest do
   end
 
   test "sets the action name in phoenix_controller_call", %{
-    transaction: transaction,
     conn: conn,
     fake_transaction: fake_transaction
   } do
+    transaction = Transaction.start("test", :http_request)
     arguments = %{conn: conn, transaction: transaction}
 
     Instrumenter.phoenix_controller_call(:start, nil, arguments)
     assert "foo#bar" == FakeTransaction.action(fake_transaction)
   end
 
-  test "starts an event in phoenix_controller_render", context do
+  test "does not start an event in phoenix_controller_call without a transaction", %{
+    conn: conn,
+    fake_transaction: fake_transaction
+  } do
+    arguments = %{conn: conn}
+
+    assert nil == Instrumenter.phoenix_controller_call(:start, nil, arguments)
+    assert [] == FakeTransaction.started_events(fake_transaction)
+  end
+
+  test "starts an event in phoenix_controller_render" do
+    transaction = Transaction.start("test", :http_request)
     arguments = %{foo: "bar"}
 
-    assert {context[:transaction], arguments} ==
+    assert {transaction, arguments} ==
              Instrumenter.phoenix_controller_render(:start, nil, arguments)
   end
 
-  test "finishes an event in phoenix_controller_call", %{
-    transaction: transaction,
+  test "does not start an event in phoenix_controller_render without a transaction", %{
+    conn: conn,
     fake_transaction: fake_transaction
   } do
+    arguments = %{conn: conn}
+
+    assert nil == Instrumenter.phoenix_controller_render(:start, nil, arguments)
+    assert [] == FakeTransaction.started_events(fake_transaction)
+  end
+
+  test "finishes an event in phoenix_controller_call", %{fake_transaction: fake_transaction} do
+    transaction = Transaction.start("test", :http_request)
     Instrumenter.phoenix_controller_call(:stop, nil, {transaction, %{conn: %Plug.Conn{}}})
 
     assert [
@@ -64,10 +82,8 @@ defmodule Appsignal.Phoenix.InstrumenterTest do
     assert [] == FakeTransaction.finished_events(fake_transaction)
   end
 
-  test "finishes an event in phoenix_controller_render", %{
-    transaction: transaction,
-    fake_transaction: fake_transaction
-  } do
+  test "finishes an event in phoenix_controller_render", %{fake_transaction: fake_transaction} do
+    transaction = Transaction.start("test", :http_request)
     Instrumenter.phoenix_controller_render(:stop, nil, {transaction, %{conn: %Plug.Conn{}}})
 
     assert [
