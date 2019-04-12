@@ -25,9 +25,8 @@ if Appsignal.phoenix?() do
     @transaction Application.get_env(:appsignal, :appsignal_transaction, Appsignal.Transaction)
 
     @doc false
-    def phoenix_controller_call(:start, _, %{conn: conn} = args) do
-      @transaction.set_action(Appsignal.Plug.extract_action(conn))
-      {@transaction.start_event, args}
+    def phoenix_controller_call(:start, _, args) do
+      start_event(transaction(), args)
     end
 
     @doc false
@@ -39,7 +38,7 @@ if Appsignal.phoenix?() do
 
     @doc false
     def phoenix_controller_render(:start, _, args) do
-      {@transaction.start_event, args}
+      start_event(transaction(), args)
     end
 
     @doc false
@@ -48,6 +47,21 @@ if Appsignal.phoenix?() do
     end
 
     def phoenix_controller_render(:stop, _, _), do: nil
+
+    defp transaction do
+      Appsignal.TransactionRegistry.lookup(self())
+    end
+
+    defp start_event(%Appsignal.Transaction{} = transaction, %{conn: conn} = args) do
+      @transaction.set_action(Appsignal.Plug.extract_action(conn))
+      {@transaction.start_event(transaction), args}
+    end
+
+    defp start_event(%Appsignal.Transaction{} = transaction, args) do
+      {@transaction.start_event(transaction), args}
+    end
+
+    defp start_event(_transaction, _args), do: nil
 
     defp finish_event(transaction, name, args) do
       @transaction.finish_event(
