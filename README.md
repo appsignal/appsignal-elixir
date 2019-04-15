@@ -116,6 +116,8 @@ we send a package to so far on our [Stroopwafles page][waffles-page].
 AppSignal. They will help you get set up, tweak your code and make sure you get
 the most out of using AppSignal.
 
+Also see our [SUPPORT.md file](SUPPORT.md).
+
 ## License
 
 The AppSignal for Elixir package source code is released under the MIT License.
