@@ -18,8 +18,10 @@ defmodule Mix.Tasks.Appsignal.Demo do
       )
     else
       Logger.error("""
-      Unable to start the AppSignal agent and send data to AppSignal.com
-      Please use the diagnose command (https://docs.appsignal.com/elixir/command-line/diagnose.html) to debug your configuration.
+      Error: Unable to start the AppSignal agent and send data to AppSignal.com.
+      Please use the diagnose command (https://docs.appsignal.com/elixir/command-line/diagnose.html) to debug your configuration:
+
+            MIX_ENV=prod mix appsignal.diagnose
       """)
     end
   end
