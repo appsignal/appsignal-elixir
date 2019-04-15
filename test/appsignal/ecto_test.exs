@@ -64,6 +64,7 @@ defmodule Appsignal.EctoTest do
   test "does not record an event without a Transaction", %{fake_transaction: fake_transaction} do
     perform_event()
     perform_telemetry_0_3_event()
+    log_event()
 
     assert [] == FakeTransaction.recorded_events(fake_transaction)
   end
