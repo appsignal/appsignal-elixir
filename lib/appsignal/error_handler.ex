@@ -10,9 +10,8 @@ defmodule Appsignal.ErrorHandler do
 
   """
 
+  alias Appsignal.{Backtrace, Error}
   require Logger
-
-  alias Appsignal.{Backtrace, Error, TransactionRegistry}
 
   @transaction Application.get_env(
                  :appsignal,
@@ -30,10 +29,7 @@ defmodule Appsignal.ErrorHandler do
   end
 
   def handle_error(pid, error, stack, conn) do
-    transaction =
-      unless TransactionRegistry.ignored?(pid) do
-        @transaction.lookup_or_create_transaction(pid)
-      end
+    transaction = @transaction.lookup_or_create_transaction(pid)
 
     if transaction != nil do
       handle_error(transaction, error, stack, conn)

@@ -169,7 +169,7 @@ defmodule Appsignal.FakeTransaction do
   end
 
   def lookup_or_create_transaction(pid) do
-    start(inspect(pid), :background_job)
+    Appsignal.Transaction.lookup_or_create_transaction(pid)
   end
 
   def create(id, namespace) do
