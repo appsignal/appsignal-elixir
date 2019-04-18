@@ -116,6 +116,7 @@ defmodule Appsignal.TransactionRegistry do
   @doc """
   Check if a progress is ignored.
   """
+  @deprecated "Use Appsignal.TransactionRegistry.lookup/1 instead."
   @spec ignored?(pid()) :: boolean()
   def ignored?(pid) do
     case registry_alive?() && :ets.lookup(@table, pid) do
