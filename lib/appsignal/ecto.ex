@@ -43,18 +43,41 @@ defmodule Appsignal.Ecto do
   @transaction Application.get_env(:appsignal, :appsignal_transaction, Appsignal.Transaction)
 
   def handle_event(_event, %{total_time: duration}, metadata, _config) do
-    @transaction.record_event("query.ecto", "", metadata.query, duration, 1)
+    @transaction.record_event(
+      "query.ecto",
+      "",
+      metadata.query,
+      convert_time_unit(duration),
+      1
+    )
   end
 
   def handle_event(_event, duration, metadata, _config) when is_integer(duration) do
-    @transaction.record_event("query.ecto", "", metadata.query, duration, 1)
+    @transaction.record_event(
+      "query.ecto",
+      "",
+      metadata.query,
+      convert_time_unit(duration),
+      1
+    )
   end
 
   def log(entry) do
-    total_time = (entry.queue_time || 0) + (entry.query_time || 0) + (entry.decode_time || 0)
-    duration = System.convert_time_unit(total_time, :native, :nanosecond)
-    @transaction.record_event("query.ecto", "", entry.query, duration, 1)
+    duration = (entry.queue_time || 0) + (entry.query_time || 0) + (entry.decode_time || 0)
+
+    @transaction.record_event(
+      "query.ecto",
+      "",
+      entry.query,
+      convert_time_unit(duration),
+      1
+    )
 
     entry
+  end
+
+  defp convert_time_unit(time) do
+    # Converts the native time to a value in nanoseconds.
+    System.convert_time_unit(time, :native, 1_000_000_000)
   end
 end
