@@ -533,6 +533,10 @@ defmodule Appsignal.Transaction do
   case, we should not continue submitting the transaction.
   """
   def lookup_or_create_transaction(origin \\ self(), namespace \\ :background_job) do
-    TransactionRegistry.lookup(origin) || Transaction.start("_" <> generate_id(), namespace)
+    case TransactionRegistry.lookup(origin) do
+      %Transaction{} = transaction -> transaction
+      :ignored -> nil
+      _ -> Transaction.start("_" <> generate_id(), namespace)
+    end
   end
 end

@@ -35,7 +35,7 @@ defmodule Appsignal.TransactionRegistry do
   def register(transaction) do
     pid = self()
 
-    if registry_alive?() do
+    if Appsignal.Config.active?() && registry_alive?() do
       monitor_reference = GenServer.call(__MODULE__, {:monitor, pid})
       true = :ets.insert(@table, {pid, transaction, monitor_reference})
       :ok
@@ -50,19 +50,11 @@ defmodule Appsignal.TransactionRegistry do
   """
   @spec lookup(pid) :: Transaction.t() | nil
   def lookup(pid) do
-    case registry_alive?() && :ets.lookup(@table, pid) do
-      [{^pid, %Transaction{} = transaction, _}] ->
-        transaction
-
-      [{^pid, %Transaction{} = transaction}] ->
-        transaction
-
-      false ->
-        Logger.debug("AppSignal was not started, skipping transaction lookup.")
-        nil
-
-      _ ->
-        nil
+    case Appsignal.Config.active?() && registry_alive?() && :ets.lookup(@table, pid) do
+      [{^pid, %Transaction{} = transaction, _}] -> transaction
+      [{^pid, %Transaction{} = transaction}] -> transaction
+      [{^pid, :ignore}] -> :ignored
+      _ -> nil
     end
   end
 
@@ -124,6 +116,7 @@ defmodule Appsignal.TransactionRegistry do
   @doc """
   Check if a progress is ignored.
   """
+  @deprecated "Use Appsignal.TransactionRegistry.lookup/1 instead."
   @spec ignored?(pid()) :: boolean()
   def ignored?(pid) do
     case registry_alive?() && :ets.lookup(@table, pid) do
