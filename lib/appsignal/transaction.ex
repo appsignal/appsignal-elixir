@@ -42,7 +42,7 @@ defmodule Appsignal.Transaction do
 
   defstruct [:resource, :id]
 
-  alias Appsignal.{Nif, Transaction, TransactionRegistry}
+  alias Appsignal.{Nif, Transaction, TransactionDictionary, TransactionRegistry}
 
   @typedoc """
   Datatype which is used as a handle to the current AppSignal transaction.
@@ -535,15 +535,14 @@ defmodule Appsignal.Transaction do
   @doc """
   Lookup the current AppSignal transaction in the TransactionRegistry.
   """
-  @spec lookup() :: Transaction.t() | :ignored | nil
-  def lookup do
-    lookup(self())
+  @spec lookup(pid()) :: Transaction.t() | :ignored | nil
+
+  def lookup(pid \\ self())
+
+  def lookup(pid) when pid == self() do
+    TransactionDictionary.lookup()
   end
 
-  @doc """
-  Lookup the current AppSignal transaction in the TransactionRegistry for a specific pid.
-  """
-  @spec lookup(pid()) :: Transaction.t() | :ignored | nil
   def lookup(pid) do
     TransactionRegistry.lookup(pid)
   end
