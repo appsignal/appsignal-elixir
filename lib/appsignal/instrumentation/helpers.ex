@@ -3,7 +3,7 @@ defmodule Appsignal.Instrumentation.Helpers do
   Helper functions and macros to instrument function calls.
   """
 
-  alias Appsignal.{Transaction, TransactionRegistry}
+  alias Appsignal.Transaction
   @type instrument_arg :: Transaction.t() | Plug.Conn.t() | pid() | nil
   @transaction Application.get_env(:appsignal, :appsignal_transaction, Appsignal.Transaction)
 
@@ -61,7 +61,7 @@ defmodule Appsignal.Instrumentation.Helpers do
         ) :: any
   def instrument(pid, name, title, body, body_format, function) when is_pid(pid) do
     pid
-    |> TransactionRegistry.lookup()
+    |> Transaction.lookup()
     |> instrument(name, title, body, body_format, function)
   end
 

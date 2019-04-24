@@ -469,11 +469,6 @@ defmodule Appsignal.Transaction do
     |> Base.hex_encode32(case: :lower, padding: false)
   end
 
-  # Lookup the current AppSignal transaction in the transaction registry.
-  defp lookup do
-    TransactionRegistry.lookup(self())
-  end
-
   defimpl Inspect do
     def inspect(transaction, _opts) do
       "AppSignal.Transaction{#{transaction.id}}"
@@ -538,13 +533,29 @@ defmodule Appsignal.Transaction do
   defp to_s(value) when is_binary(value), do: value
 
   @doc """
+  Lookup the current AppSignal transaction in the TransactionRegistry.
+  """
+  @spec lookup() :: Transaction.t() | :ignored | nil
+  def lookup do
+    lookup(self())
+  end
+
+  @doc """
+  Lookup the current AppSignal transaction in the TransactionRegistry for a specific pid.
+  """
+  @spec lookup(pid()) :: Transaction.t() | :ignored | nil
+  def lookup(pid) do
+    TransactionRegistry.lookup(pid)
+  end
+
+  @doc """
   Return the transaction for the given process
 
   Creates a new one when not found. Can also return `nil`; in that
   case, we should not continue submitting the transaction.
   """
   def lookup_or_create_transaction(origin \\ self(), namespace \\ :background_job) do
-    case TransactionRegistry.lookup(origin) do
+    case lookup(origin) do
       %Transaction{} = transaction -> transaction
       :ignored -> nil
       _ -> Transaction.start("_" <> generate_id(), namespace)
