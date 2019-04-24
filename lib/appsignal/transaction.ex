@@ -42,7 +42,7 @@ defmodule Appsignal.Transaction do
 
   defstruct [:resource, :id]
 
-  alias Appsignal.{Nif, Transaction, TransactionRegistry, TransactionDictionary}
+  alias Appsignal.{Nif, Transaction, TransactionDictionary}
 
   @typedoc """
   Datatype which is used as a handle to the current AppSignal transaction.
@@ -93,7 +93,7 @@ defmodule Appsignal.Transaction do
 
   @spec register(Transaction.t()) :: Transaction.t()
   defp register(transaction) do
-    TransactionRegistry.register(transaction)
+    TransactionDictionary.register(transaction)
     transaction
   end
 
@@ -451,7 +451,6 @@ defmodule Appsignal.Transaction do
   """
   @spec complete(Transaction.t() | any()) :: :ok | nil
   def complete(%Transaction{} = transaction) do
-    TransactionRegistry.remove_transaction(transaction)
     Nif.complete(transaction.resource)
   end
 

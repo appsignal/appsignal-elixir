@@ -332,8 +332,8 @@ defmodule AppsignalTransactionTest do
       assert %Transaction{id: ^id} = transaction
     end
 
-    test "registers the transaction", %{transaction: transaction} do
-      assert :ok == TransactionRegistry.remove_transaction(transaction)
+    test "registers the transaction in the TransactionDictionary", %{transaction: transaction} do
+      assert TransactionDictionary.lookup() == transaction
     end
   end
 
