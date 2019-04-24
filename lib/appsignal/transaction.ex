@@ -42,7 +42,7 @@ defmodule Appsignal.Transaction do
 
   defstruct [:resource, :id]
 
-  alias Appsignal.{Nif, Transaction, TransactionRegistry}
+  alias Appsignal.{Nif, Transaction, TransactionRegistry, TransactionDictionary}
 
   @typedoc """
   Datatype which is used as a handle to the current AppSignal transaction.
@@ -61,11 +61,9 @@ defmodule Appsignal.Transaction do
   The function returns a `%Transaction{}` struct for use with the
   other transaction functions in this module.
 
-  The returned transaction is also associated with the calling
-  process, so that processes / callbacks which don't get the
-  transaction passed in can still look it up through the
-  `Appsignal.TransactionRegistry`.
-
+  The returned transaction is also associated with the calling process, so that
+  callbacks which don't get the transaction passed in can still look it up
+  through the `Appsignal.TransactionDictionary`.
   """
   @spec start(String.t(), atom) :: Transaction.t()
   def start(transaction_id, namespace) when is_binary(transaction_id) do
@@ -533,19 +531,18 @@ defmodule Appsignal.Transaction do
   defp to_s(value) when is_binary(value), do: value
 
   @doc """
-  Lookup the current AppSignal transaction in the TransactionRegistry.
-  """
-  @spec lookup() :: Transaction.t() | :ignored | nil
-  def lookup do
-    lookup(self())
-  end
-
-  @doc """
-  Lookup the current AppSignal transaction in the TransactionRegistry for a specific pid.
+  Lookup the current AppSignal transaction in the TransactionDictionary.
   """
   @spec lookup(pid()) :: Transaction.t() | :ignored | nil
+
+  def lookup(pid \\ self())
+
+  def lookup(pid) when pid == self() do
+    TransactionDictionary.lookup()
+  end
+
   def lookup(pid) do
-    TransactionRegistry.lookup(pid)
+    nil
   end
 
   @doc """

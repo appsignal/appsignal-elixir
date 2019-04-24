@@ -2,7 +2,7 @@ defmodule AppsignalTransactionTest do
   use ExUnit.Case
   import AppsignalTest.Utils
 
-  alias Appsignal.{Transaction, TransactionRegistry}
+  alias Appsignal.{Transaction, TransactionDictionary, TransactionRegistry}
   alias Appsignal.Transaction.Receiver
 
   test "transaction lifecycle" do
@@ -626,6 +626,20 @@ defmodule AppsignalTransactionTest do
 
     test "returns nil for a missing process" do
       assert Transaction.set_request_metadata(nil, %Plug.Conn{}) == nil
+    end
+  end
+
+  describe "lookup/0-1" do
+    setup do
+      TransactionDictionary.register(%Transaction{id: "dictionary"})
+    end
+
+    test "finds the Transaction in the TransactionDictionary" do
+      assert %Transaction{id: "dictionary"} == Transaction.lookup()
+    end
+
+    test "finds the Transaction in the TransactionDictionary when explicitly passing self() as the pid" do
+      assert %Transaction{id: "dictionary"} == Transaction.lookup(self())
     end
   end
 
