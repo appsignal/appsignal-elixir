@@ -41,7 +41,7 @@ if System.otp_release() >= "21" do
       fake_transaction: fake_transaction
     } do
       :proc_lib.spawn(fn ->
-        Appsignal.TransactionRegistry.ignore(self())
+        Appsignal.TransactionDictionary.ignore()
         :timer.sleep(50)
 
         :erlang.error(:error_ignored)

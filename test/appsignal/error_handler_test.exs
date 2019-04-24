@@ -37,6 +37,7 @@ defmodule Appsignal.ErrorHandlerTest do
   test "does not send error reports for ignored processes", %{fake_transaction: fake_transaction} do
     :proc_lib.spawn(fn ->
       Appsignal.TransactionRegistry.ignore(self())
+      Appsignal.TransactionDictionary.ignore()
       :timer.sleep(50)
 
       :erlang.error(:error_ignored)
@@ -84,6 +85,7 @@ defmodule Appsignal.ErrorHandlerTest do
 
     test "does not add errors for ignored processes", %{fake_transaction: fake_transaction} do
       Appsignal.TransactionRegistry.ignore(self())
+      Appsignal.TransactionDictionary.ignore()
       assert ErrorHandler.handle_error(self(), %RuntimeError{}, [], %{}) == :ok
 
       assert FakeTransaction.errors(fake_transaction) == []
