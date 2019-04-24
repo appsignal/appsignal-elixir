@@ -95,6 +95,7 @@ defmodule Appsignal.Transaction do
 
   @spec register(Transaction.t()) :: Transaction.t()
   defp register(transaction) do
+    TransactionDictionary.register(transaction)
     TransactionRegistry.register(transaction)
     transaction
   end
