@@ -636,22 +636,20 @@ defmodule AppsignalTransactionTest do
   describe "lookup/0-1" do
     setup do
       TransactionDictionary.register(%Transaction{id: "dictionary"})
-
-      pid =
-        :proc_lib.spawn(fn ->
-          TransactionRegistry.register(%Transaction{id: "registry"})
-        end)
-
-      [spawned_pid: pid]
     end
 
     test "finds the Transaction in the TransactionDictionary" do
       assert %Transaction{id: "dictionary"} == Transaction.lookup()
     end
 
-    test "finds the Transaction in the TransactionRegistry when explicitly passing a pid", %{
-      spawned_pid: pid
-    } do
+    test "finds the Transaction in the TransactionRegistry when explicitly passing a pid" do
+      pid =
+        :proc_lib.spawn(fn ->
+          TransactionRegistry.register(%Transaction{id: "registry"})
+        end)
+
+      :timer.sleep(10)
+
       assert %Transaction{id: "registry"} == Transaction.lookup(pid)
     end
 
