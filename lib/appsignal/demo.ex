@@ -60,7 +60,7 @@ defmodule Appsignal.Demo do
 
   defp finish_demo_transaction(transaction) do
     @transaction.finish(transaction)
-    :ok = @transaction.complete(transaction)
+    @transaction.complete(transaction)
 
     transaction
   end
