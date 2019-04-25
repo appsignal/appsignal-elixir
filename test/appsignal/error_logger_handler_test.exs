@@ -1,7 +1,7 @@
 defmodule Appsignal.ErrorLoggerHandlerTest do
   alias Appsignal.{FakeTransaction, Transaction}
   import AppsignalTest.Utils
-  use ExUnit.Case, async: false
+  use ExUnit.Case
 
   setup do
     Appsignal.remove_report_handler()

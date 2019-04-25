@@ -1,8 +1,8 @@
 if System.otp_release() >= "21" do
   defmodule Appsignal.LoggerHandlerTest do
     alias Appsignal.{FakeTransaction, Transaction}
-    use ExUnit.Case, async: false
     import AppsignalTest.Utils
+    use ExUnit.Case
 
     setup do
       Appsignal.remove_report_handler()

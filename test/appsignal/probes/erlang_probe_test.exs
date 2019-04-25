@@ -1,7 +1,7 @@
 defmodule Appsignal.Probes.ErlangProbeTest do
-  use ExUnit.Case, async: false
-  import AppsignalTest.Utils
   alias Appsignal.{FakeAppsignal, Probes.ErlangProbe}
+  import AppsignalTest.Utils
+  use ExUnit.Case
 
   setup do
     # Ensure the default probe is unregistered, that way we only record metrics

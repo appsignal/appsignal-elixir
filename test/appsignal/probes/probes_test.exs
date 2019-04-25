@@ -1,9 +1,8 @@
 defmodule Appsignal.Probes.ProbesTest do
-  use ExUnit.Case, async: false
-
   alias Appsignal.Probes
   alias FakeProbe
   import AppsignalTest.Utils
+  use ExUnit.Case
 
   describe "register/2" do
     test "registers a probe when given a function as probe" do

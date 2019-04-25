@@ -1,7 +1,7 @@
 defmodule Appsignal.Transaction.RegistryTest do
   alias Appsignal.{Transaction, TransactionRegistry}
   import AppsignalTest.Utils
-  use ExUnit.Case, async: false
+  use ExUnit.Case
 
   test "lookup/1 returns nil after process has ended" do
     transaction = %Transaction{id: Transaction.generate_id()}
