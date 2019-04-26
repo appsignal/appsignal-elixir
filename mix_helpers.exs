@@ -557,14 +557,19 @@ defmodule Mix.Appsignal.Helper do
   end
 
   def uid do
-    case System.cmd("id", ["-u"]) do
-      {id, 0} ->
-        case Integer.parse(List.first(String.split(id, "\n"))) do
-          {int, _} -> int
-          :error -> nil
-        end
+    try do
+      case @system.cmd("id", ["-u"]) do
+        {id, 0} ->
+          case Integer.parse(List.first(String.split(id, "\n"))) do
+            {int, _} -> int
+            :error -> nil
+          end
 
-      {_, _} ->
+        {_, _} ->
+          nil
+      end
+    catch
+      :error, _ ->
         nil
     end
   end
