@@ -26,7 +26,7 @@ defmodule Mix.Appsignal.HelperTest do
 
     test "returns the musl build when on a musl system", %{fake_system: fake_system} do
       FakeSystem.update(fake_system, :cmd, fn _, _, _ ->
-        {"musl libc (x86_64)\nVersion 1.1.16", 1}
+        {"musl libc (x86_64)\nVersion 1.1.16", 0}
       end)
 
       assert Mix.Appsignal.Helper.agent_platform() == "linux-musl"
@@ -34,7 +34,7 @@ defmodule Mix.Appsignal.HelperTest do
 
     test "returns the libc build when on a libc linux system", %{fake_system: fake_system} do
       FakeSystem.update(fake_system, :cmd, fn _, _, _ ->
-        {"ldd (Debian GLIBC 2.15-18+deb8u7) 2.15", 1}
+        {"ldd (Debian GLIBC 2.15-18+deb8u7) 2.15", 0}
       end)
 
       assert Mix.Appsignal.Helper.agent_platform() == "linux"
@@ -42,7 +42,7 @@ defmodule Mix.Appsignal.HelperTest do
 
     test "returns the musl build when on an old libc linux system", %{fake_system: fake_system} do
       FakeSystem.update(fake_system, :cmd, fn _, _, _ ->
-        {"ldd (Debian GLIBC 2.14-18+deb8u7) 2.14", 1}
+        {"ldd (Debian GLIBC 2.14-18+deb8u7) 2.14", 0}
       end)
 
       assert Mix.Appsignal.Helper.agent_platform() == "linux-musl"
@@ -52,10 +52,18 @@ defmodule Mix.Appsignal.HelperTest do
       fake_system: fake_system
     } do
       FakeSystem.update(fake_system, :cmd, fn _, _, _ ->
-        {"ldd (Debian GLIBC 2.5-18+deb8u7) 2.5", 1}
+        {"ldd (Debian GLIBC 2.5-18+deb8u7) 2.5", 0}
       end)
 
       assert Mix.Appsignal.Helper.agent_platform() == "linux-musl"
+    end
+
+    test "defaults to the libc build when ldd fails", %{fake_system: fake_system} do
+      FakeSystem.update(fake_system, :cmd, fn _, _, _ ->
+        {"ldd: command not found", 1}
+      end)
+
+      assert Mix.Appsignal.Helper.agent_platform() == "linux"
     end
 
     test "returns the darwin build when on a darwin system", %{

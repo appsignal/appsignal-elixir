@@ -346,13 +346,18 @@ defmodule Mix.Appsignal.Helper do
   end
 
   defp library_dependencies do
-    ldd_version_output = ldd_version_output()
-    case extract_ldd_version(ldd_version_output) do
-      nil ->
-        %{}
+    case ldd_version_output() do
+      {:ok, output} ->
+        case extract_ldd_version(output) do
+          nil ->
+            %{}
 
-      ldd_version ->
-        %{libc: ldd_version}
+          ldd_version ->
+            %{libc: ldd_version}
+        end
+
+      _ ->
+        %{}
     end
   end
 
@@ -374,10 +379,7 @@ defmodule Mix.Appsignal.Helper do
 
   defp agent_platform_by_ldd_version do
     case ldd_version_output() do
-      nil ->
-        "linux"
-
-      output ->
+      {:ok, output} ->
         case String.contains?(output, "musl") do
           true ->
             "linux-musl"
@@ -390,6 +392,9 @@ defmodule Mix.Appsignal.Helper do
               _ -> "linux"
             end
         end
+
+      _ ->
+        "linux"
     end
   rescue
     _ -> "linux"
@@ -398,10 +403,10 @@ defmodule Mix.Appsignal.Helper do
   # Fetches the libc version number from the `ldd` command
   # If `ldd` is not found it returns `nil`
   defp ldd_version_output do
-    {output, _} = @system.cmd("ldd", ["--version"], stderr_to_stdout: true)
-    output
+    {output, 0} = @system.cmd("ldd", ["--version"], stderr_to_stdout: true)
+    {:ok, output}
   rescue
-    _ -> nil
+    exception -> {:error, exception}
   end
 
   defp extract_ldd_version(nil), do: nil
