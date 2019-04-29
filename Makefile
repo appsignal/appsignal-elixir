@@ -18,7 +18,7 @@ ifeq ($(shell uname),Darwin)
 	LDFLAGS += -dynamiclib -undefined dynamic_lookup
 endif
 
-LDFLAGS += -Wl,-fatal_warnings
+LDFLAGS += -Wl,--fatal-warnings
 
 all:
 	@$(CC) $(CFLAGS) $(CFLAGS_ADD) -shared $(LDFLAGS) -o $(OUTPUT) c_src/$(LIB).c
