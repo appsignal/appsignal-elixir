@@ -407,7 +407,7 @@ defmodule Mix.Appsignal.Helper do
   defp extract_ldd_version(nil), do: nil
 
   defp extract_ldd_version(ldd_output) do
-    List.first(Regex.run(~r/\d+\.\d+/, ldd_output))
+    List.first(Regex.run(~r/\d+\.\d+/, ldd_output) || [])
   end
 
   defp initial_report do
