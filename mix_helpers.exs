@@ -385,34 +385,46 @@ defmodule Mix.Appsignal.Helper do
             "linux-musl"
 
           false ->
-            ldd_version = extract_ldd_version(output)
+            case extract_ldd_version(output) do
+              nil ->
+                "linux"
 
-            case Version.compare("#{ldd_version}.0", "2.15.0") do
-              :lt -> "linux-musl"
-              _ -> "linux"
+              ldd_version ->
+                case Version.compare("#{ldd_version}.0", "2.15.0") do
+                  :lt -> "linux-musl"
+                  _ -> "linux"
+                end
             end
         end
 
       _ ->
         "linux"
     end
-  rescue
-    _ -> "linux"
   end
 
   # Fetches the libc version number from the `ldd` command
   # If `ldd` is not found it returns `nil`
   defp ldd_version_output do
-    {output, 0} = @system.cmd("ldd", ["--version"], stderr_to_stdout: true)
-    {:ok, output}
+    case @system.cmd("ldd", ["--version"], stderr_to_stdout: true) do
+      {output, 0} ->
+        {:ok, output}
+
+        # {output, _} ->
+        #   {:error, output}
+    end
   rescue
-    exception -> {:error, exception}
+    exception ->
+      IO.inspect(exception)
+      {:error, exception}
   end
 
   defp extract_ldd_version(nil), do: nil
 
   defp extract_ldd_version(ldd_output) do
-    List.first(Regex.run(~r/\d+\.\d+/, ldd_output) || [])
+    case Regex.run(~r/\d+\.\d+/, ldd_output) do
+      [version | _tail] -> version
+      _ -> nil
+    end
   end
 
   defp initial_report do

@@ -58,6 +58,16 @@ defmodule Mix.Appsignal.HelperTest do
       assert Mix.Appsignal.Helper.agent_platform() == "linux-musl"
     end
 
+    test "agent_platform returns libc build when ldd doesn't return a version number", %{
+      fake_system: fake_system
+    } do
+      FakeSystem.update(fake_system, :cmd, fn _, _, _ ->
+        {"", 0}
+      end)
+
+      assert Mix.Appsignal.Helper.agent_platform() == "linux"
+    end
+
     test "defaults to the libc build when ldd fails", %{fake_system: fake_system} do
       FakeSystem.update(fake_system, :cmd, fn _, _, _ ->
         {"ldd: command not found", 1}
