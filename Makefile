@@ -15,10 +15,10 @@ ifneq ($(OS),Windows_NT)
 endif
 
 ifeq ($(shell uname),Darwin)
-	LDFLAGS += -dynamiclib -undefined dynamic_lookup
+	LDFLAGS += -dynamiclib -undefined dynamic_lookup -Wl,-fatal_warnings
+else
+	LDFLAGS += -Wl,--fatal-warnings
 endif
-
-LDFLAGS += -Wl,--fatal-warnings
 
 all:
 	@$(CC) $(CFLAGS) $(CFLAGS_ADD) -shared $(LDFLAGS) -o $(OUTPUT) c_src/$(LIB).c
