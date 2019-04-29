@@ -4,7 +4,11 @@ CFLAGS = -g -O3 -pedantic -Wall -Wextra -I"$(ERLANG_PATH)" -I"$(LIB_DIR)"
 ifeq ($(shell uname),Linux)
 	LDFLAGS = -Wl,--whole-archive "$(LIB_DIR)"/$(LIB_NAME) -Wl,--no-whole-archive -static-libgcc
 else
-	LDFLAGS = "$(LIB_DIR)"/$(LIB_NAME)
+	ifeq ($(shell uname),FreeBSD)
+		LDFLAGS = -Wl,--whole-archive "$(LIB_DIR)"/$(LIB_NAME) -Wl,--no-whole-archive
+	else
+		LDFLAGS = "$(LIB_DIR)"/$(LIB_NAME)
+	endif
 endif
 
 LIB = appsignal_extension
