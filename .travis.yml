@@ -2,6 +2,7 @@ branches:
   only:
   - master
   - develop
+  - make-debug
 language: elixir
 elixir:
   - 1.3.4
