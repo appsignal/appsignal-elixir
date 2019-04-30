@@ -409,12 +409,11 @@ defmodule Mix.Appsignal.Helper do
       {output, 0} ->
         {:ok, output}
 
-        # {output, _} ->
-        #   {:error, output}
+      {output, _} ->
+        {:error, output}
     end
   rescue
     exception ->
-      IO.inspect(exception)
       {:error, exception}
   end
 
