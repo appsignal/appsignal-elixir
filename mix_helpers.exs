@@ -418,14 +418,14 @@ defmodule Mix.Appsignal.Helper do
       {:error, exception}
   end
 
-  defp extract_ldd_version(nil), do: nil
-
-  defp extract_ldd_version(ldd_output) do
+  defp extract_ldd_version(ldd_output) when is_binary(ldd_output) do
     case Regex.run(~r/\d+\.\d+/, ldd_output) do
       [version | _tail] -> version
       _ -> nil
     end
   end
+
+  defp extract_ldd_version(_), do: nil
 
   defp initial_report do
     {_, os} = :os.type()
