@@ -26,8 +26,16 @@ defmodule AppsignalHelpersTest do
              FakeTransaction.finished_events(fake_transaction)
   end
 
-  test "instrument with nil" do
+  test "instrument with nil", %{fake_transaction: fake_transaction} do
     call_instrument(nil)
+
+    assert FakeTransaction.finished_events(fake_transaction) == []
+  end
+
+  test "instrument on an ignored process", %{fake_transaction: fake_transaction} do
+    call_instrument(:ignored)
+
+    assert FakeTransaction.finished_events(fake_transaction) == []
   end
 
   defp call_instrument(arg) do
