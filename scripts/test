@@ -15,4 +15,4 @@ fi
 
 MIX_ENV=test mix test
 MIX_ENV=test_phoenix mix test
-(cd priv && rm -r *appsignal* *.report) && MIX_ENV=test_no_nif mix test
+make clean && MIX_ENV=test_no_nif mix test
