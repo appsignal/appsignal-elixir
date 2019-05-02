@@ -19,22 +19,26 @@ defmodule Appsignal.ErrorHandler do
                  Appsignal.Transaction
                )
 
-  @spec handle_error(Appsignal.Transaction.t() | pid(), any(), Exception.stacktrace(), map()) ::
-          :ok
+  @spec handle_error(
+          Appsignal.Transaction.t() | pid() | any(),
+          any(),
+          Exception.stacktrace(),
+          map()
+        ) :: :ok
   def handle_error(pid_or_transaction, error, stack, conn \\ %{})
+
+  def handle_error(pid, error, stack, conn) when is_pid(pid) do
+    pid
+    |> @transaction.lookup_or_create_transaction
+    |> handle_error(error, stack, conn)
+  end
 
   def handle_error(%Appsignal.Transaction{} = transaction, error, stack, conn) do
     {exception, stacktrace} = Error.normalize(error, stack)
     do_handle_error(transaction, exception, stacktrace, conn)
   end
 
-  def handle_error(pid, error, stack, conn) do
-    transaction = @transaction.lookup_or_create_transaction(pid)
-
-    if transaction != nil do
-      handle_error(transaction, error, stack, conn)
-    end
-  end
+  def handle_error(_transaction, _error, _stack, _conn), do: :ok
 
   @spec do_handle_error(Appsignal.Transaction.t(), Exception.t(), list(String.t()), map()) :: :ok
   defp do_handle_error(_, %{plug_status: status}, _, _) when status < 500, do: :ok
