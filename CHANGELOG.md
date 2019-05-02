@@ -1,3 +1,7 @@
+# 1.10.5
+- Remove explicit ignore check in TransactionRegistry. PR #480
+- Handle errors in Mix.Appsignal.Helper.uid/0. PR #479
+
 # 1.10.4
 - Handle atom keys in MapFilter.filter_values/2. PR #475
 

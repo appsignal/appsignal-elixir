@@ -82,6 +82,14 @@ defmodule Appsignal.ErrorHandlerTest do
       [^transaction] = FakeTransaction.completed_transactions(fake_transaction)
     end
 
+    test "does not add errors for ignored processes", %{fake_transaction: fake_transaction} do
+      Appsignal.TransactionRegistry.ignore(self())
+      assert ErrorHandler.handle_error(self(), %RuntimeError{}, [], %{}) == :ok
+
+      assert FakeTransaction.errors(fake_transaction) == []
+      refute FakeTransaction.completed_transactions(fake_transaction)
+    end
+
     test "normalizes errors before adding them to the transaction", %{
       fake_transaction: fake_transaction
     } do

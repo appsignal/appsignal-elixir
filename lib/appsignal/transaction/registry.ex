@@ -51,14 +51,10 @@ defmodule Appsignal.TransactionRegistry do
   @spec lookup(pid) :: Transaction.t() | nil
   def lookup(pid) do
     case Appsignal.Config.active?() && registry_alive?() && :ets.lookup(@table, pid) do
-      [{^pid, %Transaction{} = transaction, _}] ->
-        transaction
-
-      [{^pid, %Transaction{} = transaction}] ->
-        transaction
-
-      _ ->
-        nil
+      [{^pid, %Transaction{} = transaction, _}] -> transaction
+      [{^pid, %Transaction{} = transaction}] -> transaction
+      [{^pid, :ignore}] -> :ignored
+      _ -> nil
     end
   end
 
@@ -120,6 +116,7 @@ defmodule Appsignal.TransactionRegistry do
   @doc """
   Check if a progress is ignored.
   """
+  @deprecated "Use Appsignal.TransactionRegistry.lookup/1 instead."
   @spec ignored?(pid()) :: boolean()
   def ignored?(pid) do
     case registry_alive?() && :ets.lookup(@table, pid) do

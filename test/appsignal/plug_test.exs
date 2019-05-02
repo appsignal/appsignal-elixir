@@ -205,7 +205,7 @@ defmodule Appsignal.PlugTest do
 
     test "ignores the process' pid" do
       until(fn ->
-        assert Appsignal.TransactionRegistry.ignored?(self()) == true
+        assert Appsignal.TransactionRegistry.lookup(self()) == :ignored
       end)
     end
   end

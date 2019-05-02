@@ -50,25 +50,25 @@ defmodule Appsignal.Transaction.RegistryTest do
     end
   end
 
-  describe "ignore/1 and ignored?/1" do
+  describe "ignore/1" do
     test "is not ignored by default" do
-      assert TransactionRegistry.ignored?(:c.pid(0, 990, 0)) == false
+      refute TransactionRegistry.lookup(:c.pid(0, 990, 0)) == :ignored
     end
 
     test "ignores a pid" do
       pid = :c.pid(0, 991, 0)
       :ok = TransactionRegistry.ignore(pid)
-      assert TransactionRegistry.ignored?(pid) == true
+      assert TransactionRegistry.lookup(pid) == :ignored
     end
   end
 
-  describe "ignore/1 and ignored?/1, when the registry is not running" do
+  describe "ignore/1, when the registry is not running" do
     setup :terminate_registry
 
     test "can't ignore a pid" do
       pid = :c.pid(0, 992, 0)
       {:error, :no_registry} = TransactionRegistry.ignore(pid)
-      assert TransactionRegistry.ignored?(pid) == false
+      refute TransactionRegistry.lookup(pid) == :ignored
     end
   end
 

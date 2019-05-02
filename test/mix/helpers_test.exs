@@ -119,4 +119,22 @@ defmodule Mix.Appsignal.HelperTest do
       assert Mix.Appsignal.Helper.check_proxy(env) == nil
     end
   end
+
+  describe "uid/0" do
+    test "returns the uid", %{fake_system: fake_system} do
+      FakeSystem.update(fake_system, :cmd, fn _, _, _ ->
+        {"999\n", 0}
+      end)
+
+      assert Mix.Appsignal.Helper.uid() == 999
+    end
+
+    test "nil", %{fake_system: fake_system} do
+      FakeSystem.update(fake_system, :cmd, fn _, _, _ ->
+        :erlang.raise(:error, :enoent, [])
+      end)
+
+      assert Mix.Appsignal.Helper.uid() == nil
+    end
+  end
 end
