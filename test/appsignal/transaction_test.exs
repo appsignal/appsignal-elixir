@@ -385,6 +385,237 @@ defmodule AppsignalTransactionTest do
     end
   end
 
+  describe "start_event/1" do
+    test "returns the current transaction" do
+      transaction = Transaction.start("start_event/1", :http_request)
+      assert Transaction.start_event(transaction) == transaction
+    end
+
+    test "returns nil for an ignored process" do
+      assert Transaction.start_event(:ignored) == nil
+    end
+
+    test "returns nil for a missing process" do
+      assert Transaction.start_event(nil) == nil
+    end
+  end
+
+  describe "finish_event/5" do
+    test "returns the current transaction" do
+      transaction = Transaction.start("start_event/1", :http_request)
+
+      assert Transaction.finish_event(
+               transaction,
+               "sql.query",
+               "Model load",
+               "SELECT * FROM table;",
+               1
+             ) == transaction
+    end
+
+    test "returns nil for an ignored process" do
+      assert Transaction.finish_event(
+               :ignored,
+               "sql.query",
+               "Model load",
+               "SELECT * FROM table;",
+               1
+             ) == nil
+    end
+
+    test "returns nil for a missing process" do
+      assert Transaction.finish_event(
+               nil,
+               "sql.query",
+               "Model load",
+               "SELECT * FROM table;",
+               1
+             ) == nil
+    end
+  end
+
+  describe "record_event/6" do
+    test "returns the current transaction" do
+      transaction = Transaction.start("start_event/1", :http_request)
+
+      assert Transaction.record_event(
+               transaction,
+               "sql.query",
+               "Model load",
+               "SELECT * FROM table;",
+               1000 * 1000 * 3,
+               1
+             ) == transaction
+    end
+
+    test "returns nil for an ignored process" do
+      assert Transaction.record_event(
+               :ignored,
+               "sql.query",
+               "Model load",
+               "SELECT * FROM table;",
+               1000 * 1000 * 3,
+               1
+             ) == nil
+    end
+
+    test "returns nil for a missing process" do
+      assert Transaction.record_event(
+               nil,
+               "sql.query",
+               "Model load",
+               "SELECT * FROM table;",
+               1000 * 1000 * 3,
+               1
+             ) == nil
+    end
+  end
+
+  describe "set_error/4" do
+    test "returns the current transaction" do
+      transaction = Transaction.start("start_event/1", :http_request)
+
+      assert Transaction.set_error(transaction, "error", "error message", stacktrace()) ==
+               transaction
+    end
+
+    test "returns nil for an ignored process" do
+      assert Transaction.set_error(:ignored, "error", "error message", stacktrace()) == nil
+    end
+
+    test "returns nil for a missing process" do
+      assert Transaction.set_error(nil, "error", "error message", stacktrace()) == nil
+    end
+  end
+
+  describe "set_sample_data/3" do
+    test "returns the current transaction" do
+      transaction = Transaction.start("set_sample_data/3", :http_request)
+
+      assert Transaction.set_sample_data(transaction, "key", %{user_id: 1}) == transaction
+    end
+
+    test "returns nil for an ignored process" do
+      assert Transaction.set_sample_data(:ignored, "key", %{user_id: 1}) == nil
+    end
+
+    test "returns nil for a missing process" do
+      assert Transaction.set_sample_data(nil, "key", %{user_id: 1}) == nil
+    end
+  end
+
+  describe "set_action/2" do
+    test "returns the current transaction" do
+      transaction = Transaction.start("set_action/2", :http_request)
+
+      assert Transaction.set_action(transaction, "GET:/") == transaction
+    end
+
+    test "returns nil for an ignored process" do
+      assert Transaction.set_action(:ignored, "GET:/") == nil
+    end
+
+    test "returns nil for a missing process" do
+      assert Transaction.set_action(nil, "GET:/") == nil
+    end
+  end
+
+  describe "set_namespace/2" do
+    test "returns the current transaction" do
+      transaction = Transaction.start("set_namespace/2", :http_request)
+
+      assert Transaction.set_namespace(transaction, :background) == transaction
+    end
+
+    test "returns nil for an ignored process" do
+      assert Transaction.set_namespace(:ignored, :background) == nil
+    end
+
+    test "returns nil for a missing process" do
+      assert Transaction.set_namespace(nil, :background) == nil
+    end
+  end
+
+  describe "set_queue_start/2" do
+    test "returns the current transaction" do
+      transaction = Transaction.start("set_queue_start/2", :http_request)
+
+      assert Transaction.set_queue_start(transaction, 1000) == transaction
+    end
+
+    test "returns nil for an ignored process" do
+      assert Transaction.set_queue_start(:ignored, 1000) == nil
+    end
+
+    test "returns nil for a missing process" do
+      assert Transaction.set_queue_start(nil, 1000) == nil
+    end
+  end
+
+  describe "set_meta_data/3" do
+    test "returns the current transaction" do
+      transaction = Transaction.start("set_meta_data/3", :http_request)
+
+      assert Transaction.set_meta_data(transaction, "email", "info@info.com") == transaction
+    end
+
+    test "returns nil for an ignored process" do
+      assert Transaction.set_meta_data(:ignored, "email", "info@info.com") == nil
+    end
+
+    test "returns nil for a missing process" do
+      assert Transaction.set_meta_data(nil, "email", "info@info.com") == nil
+    end
+  end
+
+  describe "finish/1" do
+    test "returns either :sample or :no_sample" do
+      transaction = Transaction.start("finish/1", :http_request)
+
+      assert Transaction.finish(transaction) in ~w(sample no_sample)a
+    end
+
+    test "returns nil for an ignored process" do
+      assert Transaction.finish(:ignored) == nil
+    end
+
+    test "returns nil for a missing process" do
+      assert Transaction.finish(nil) == nil
+    end
+  end
+
+  describe "complete/1" do
+    test "returns :ok" do
+      transaction = Transaction.start("complete/1", :http_request)
+
+      assert Transaction.complete(transaction) == :ok
+    end
+
+    test "returns nil for an ignored process" do
+      assert Transaction.complete(:ignored) == nil
+    end
+
+    test "returns nil for a missing process" do
+      assert Transaction.complete(nil) == nil
+    end
+  end
+
+  describe "set_request_metadata/2" do
+    test "returns :ok" do
+      transaction = Transaction.start("set_request_metadata/2", :http_request)
+
+      assert Transaction.set_request_metadata(transaction, %Plug.Conn{}) == transaction
+    end
+
+    test "returns nil for an ignored process" do
+      assert Transaction.set_request_metadata(:ignored, %Plug.Conn{}) == nil
+    end
+
+    test "returns nil for a missing process" do
+      assert Transaction.set_request_metadata(nil, %Plug.Conn{}) == nil
+    end
+  end
+
   def stacktrace do
     try do
       raise "error message"

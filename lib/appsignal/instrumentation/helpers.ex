@@ -51,10 +51,18 @@ defmodule Appsignal.Instrumentation.Helpers do
   ```
 
   """
-  @spec instrument(instrument_arg, String.t(), String.t(), String.t(), integer, function) :: any
+  @spec instrument(
+          pid() | Transaction.t() | any(),
+          String.t(),
+          String.t(),
+          String.t(),
+          integer,
+          function
+        ) :: any
   def instrument(pid, name, title, body, body_format, function) when is_pid(pid) do
-    t = TransactionRegistry.lookup(pid)
-    instrument(t, name, title, body, body_format, function)
+    pid
+    |> TransactionRegistry.lookup()
+    |> instrument(name, title, body, body_format, function)
   end
 
   def instrument(%Transaction{} = transaction, name, title, body, body_format, function) do
@@ -64,7 +72,7 @@ defmodule Appsignal.Instrumentation.Helpers do
     result
   end
 
-  def instrument(nil, _name, _title, _body, _body_format, function) do
+  def instrument(_transaction, _name, _title, _body, _body_format, function) do
     function.()
   end
 end
