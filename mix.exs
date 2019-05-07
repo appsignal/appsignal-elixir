@@ -87,6 +87,7 @@ defmodule Appsignal.Mixfile do
 
     [
       {:hackney, "~> 1.6"},
+      {:mojito, "~> 0.2.2"},
       {:poison, poison_version},
       {:decorator, "~> 1.2.3"},
       {:plug, ">= 1.1.0", optional: true},
