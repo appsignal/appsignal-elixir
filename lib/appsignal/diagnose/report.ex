@@ -22,16 +22,13 @@ defmodule Appsignal.Diagnose.Report do
     headers = [{"Content-Type", "application/json; charset=UTF-8"}]
 
     case Transmitter.request(:post, url, headers, body) do
-      {:ok, 200, _, reference} ->
-        {:ok, body} = :hackney.body(reference)
-
+      {:ok, %{body: body, status_code: 200}} ->
         case Poison.decode(body) do
           {:ok, response} -> {:ok, response["token"]}
           {:error, _} -> {:error, %{status_code: 200, body: body}}
         end
 
-      {:ok, status_code, _, reference} ->
-        {:ok, body} = :hackney.body(reference)
+      {:ok, %{body: body, status_code: status_code}} ->
         {:error, %{status_code: status_code, body: body}}
 
       {:error, reason} ->
