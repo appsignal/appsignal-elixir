@@ -5,7 +5,7 @@ defmodule Appsignal.TransmitterTest do
   import ExUnit.CaptureLog
 
   setup do
-    Application.put_env(:appsignal, :http_client, FakeHackney)
+    Application.put_env(:appsignal, :http_client, FakeMojito)
 
     on_exit(fn ->
       Application.delete_env(:appsignal, :http_client)
@@ -15,7 +15,7 @@ defmodule Appsignal.TransmitterTest do
   test "uses the default CA certificate" do
     path = Config.ca_file_path()
 
-    assert [_method, _url, _headers, _body, [ssl_options: [cacertfile: ^path]]] =
+    assert [_method, _url, _headers, _body, [transport_opts: [cacertfile: ^path]]] =
              Transmitter.request(:get, "https://example.com")
   end
 
@@ -23,7 +23,7 @@ defmodule Appsignal.TransmitterTest do
     path = "priv/cacert.pem"
 
     with_config(%{ca_file_path: path}, fn ->
-      assert [_method, _url, _headers, _body, [ssl_options: [cacertfile: ^path]]] =
+      assert [_method, _url, _headers, _body, [transport_opts: [cacertfile: ^path]]] =
                Transmitter.request(:get, "https://example.com")
     end)
   end
