@@ -64,7 +64,8 @@ defmodule Appsignal.Utils.PushApiKeyValidatorTest do
     end
 
     test "returns an error", %{config: config} do
-      assert PushApiKeyValidator.validate(config) == {:error, :econnrefused}
+      assert PushApiKeyValidator.validate(config) ==
+               {:error, %Mint.TransportError{reason: :econnrefused}}
     end
   end
 end

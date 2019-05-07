@@ -2,7 +2,7 @@ defmodule Appsignal.Transmitter do
   require Logger
 
   def request(method, url, headers \\ [], body \\ "") do
-    http_client = Application.get_env(:appsignal, :http_client, :hackney)
+    http_client = Application.get_env(:appsignal, :http_client, Mojito)
     :application.ensure_all_started(http_client)
 
     http_client.request(method, url, headers, body, options())
