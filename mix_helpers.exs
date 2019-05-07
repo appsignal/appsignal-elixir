@@ -133,7 +133,6 @@ defmodule Mix.Appsignal.Helper do
 
       false ->
         Mix.shell().info("Downloading agent release from #{url}")
-        :application.ensure_all_started(:hackney)
 
         case do_download_file!(url, filename, @max_retries) do
           :ok ->
@@ -171,20 +170,15 @@ defmodule Mix.Appsignal.Helper do
       case check_proxy() do
         nil ->
           []
+
         {var, url} ->
           Mix.shell().info("- using proxy from #{var} (#{url})")
           [{:proxy, url}]
       end
 
-    case :hackney.request(:get, url, [], "", opts) do
-      {:ok, 200, _, reference} ->
-        case :hackney.body(reference) do
-          {:ok, body} -> File.write(filename, body)
-          {:error, reason} -> {:error, reason}
-        end
-
-      response ->
-        {:error, response}
+    case Mojito.request(:get, url, [], "", opts) do
+      {:ok, %{body: body, status_code: 200}} -> File.write(filename, body)
+      response -> {:error, response}
     end
   end
 
