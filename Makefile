@@ -2,12 +2,12 @@ LIB_NAME = libappsignal.a
 ERLANG_PATH = $(shell erl -eval 'io:format("~s", [lists:concat([code:root_dir(), "/erts-", erlang:system_info(version), "/include"])])' -s init stop -noshell)
 CFLAGS = -g -O3 -pedantic -Wall -Wextra -I"$(ERLANG_PATH)" -I"$(LIB_DIR)"
 ifeq ($(shell uname),Linux)
-	LDFLAGS = -Wl,--whole-archive "$(LIB_DIR)"/$(LIB_NAME) -Wl,--no-whole-archive -static-libgcc
+	LDFLAGS = -Wl,--whole-archive "$(LIB_DIR)"/$(LIB_NAME) -Wl,--no-whole-archive -static-libgcc -Wl,-fatal_warnings
 else
 	ifeq ($(shell uname),FreeBSD)
-		LDFLAGS = -Wl,--whole-archive "$(LIB_DIR)"/$(LIB_NAME) -Wl,--no-whole-archive
+		LDFLAGS = -Wl,--whole-archive "$(LIB_DIR)"/$(LIB_NAME) -Wl,--no-whole-archive -Wl,--fatal-warnings
 	else
-		LDFLAGS = "$(LIB_DIR)"/$(LIB_NAME)
+		LDFLAGS = "$(LIB_DIR)"/$(LIB_NAME) -Wl,-fatal_warnings
 	endif
 endif
 
@@ -21,8 +21,6 @@ endif
 ifeq ($(shell uname),Darwin)
 	LDFLAGS += -dynamiclib -undefined dynamic_lookup
 endif
-
-LDFLAGS += -Wl,-fatal_warnings
 
 all:
 	@$(CC) $(CFLAGS) $(CFLAGS_ADD) -shared $(LDFLAGS) -o $(OUTPUT) c_src/$(LIB).c
