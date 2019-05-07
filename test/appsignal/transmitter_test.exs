@@ -12,6 +12,10 @@ defmodule Appsignal.TransmitterTest do
     end)
   end
 
+  test "does not use a CA certificate for HTTP requests" do
+    assert [_method, _url, _headers, _body, []] = Transmitter.request(:get, "http://example.com")
+  end
+
   test "uses the default CA certificate" do
     path = Config.ca_file_path()
 
