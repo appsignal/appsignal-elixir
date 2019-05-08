@@ -40,7 +40,6 @@ defmodule Appsignal.TransactionRegistry do
       true = :ets.insert(@table, {pid, transaction, monitor_reference})
       :ok
     else
-      Logger.debug("AppSignal was not started, skipping transaction registration.")
       nil
     end
   end
@@ -79,7 +78,6 @@ defmodule Appsignal.TransactionRegistry do
         transaction
 
       false ->
-        Logger.debug("AppSignal was not started, skipping transaction lookup.")
         nil
 
       [] ->
