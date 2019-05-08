@@ -14,13 +14,7 @@ defmodule Appsignal.Transmitter do
     options =
       case File.stat(ca_file_path) do
         {:ok, %{access: access}} when access in [:read, :read_write] ->
-          {:ok,
-           [
-             ssl_options: [
-               cacertfile: ca_file_path,
-               ciphers: :ssl.cipher_suites(:default, :"tlsv1.2")
-             ]
-           ]}
+          {:ok, [ssl_options: [cacertfile: ca_file_path, ciphers: ciphers()]]}
 
         {:ok, %{access: access}} ->
           {:error, "File access is #{inspect(access)}"}
@@ -48,5 +42,11 @@ defmodule Appsignal.Transmitter do
 
   defp packaged_ca_file_path do
     Path.join(:code.priv_dir(:appsignal), "cacert.pem")
+  end
+
+  if System.otp_release() >= "20.3" do
+    defp ciphers, do: :ssl.cipher_suites(:default, :"tlsv1.2")
+  else
+    defp ciphers, do: :ssl.cipher_suites()
   end
 end
