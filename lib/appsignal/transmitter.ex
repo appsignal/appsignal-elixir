@@ -14,7 +14,13 @@ defmodule Appsignal.Transmitter do
     options =
       case File.stat(ca_file_path) do
         {:ok, %{access: access}} when access in [:read, :read_write] ->
-          {:ok, [ssl_options: [cacertfile: ca_file_path]]}
+          {:ok,
+           [
+             ssl_options: [
+               cacertfile: ca_file_path,
+               ciphers: :ssl.cipher_suites(:default, :"tlsv1.2")
+             ]
+           ]}
 
         {:ok, %{access: access}} ->
           {:error, "File access is #{inspect(access)}"}
