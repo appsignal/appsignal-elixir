@@ -346,13 +346,18 @@ defmodule Mix.Appsignal.Helper do
   end
 
   defp library_dependencies do
-    ldd_version_output = ldd_version_output()
-    case extract_ldd_version(ldd_version_output) do
-      nil ->
-        %{}
+    case ldd_version_output() do
+      {:ok, output} ->
+        case extract_ldd_version(output) do
+          nil ->
+            %{}
 
-      ldd_version ->
-        %{libc: ldd_version}
+          ldd_version ->
+            %{libc: ldd_version}
+        end
+
+      _ ->
+        %{}
     end
   end
 
@@ -374,41 +379,52 @@ defmodule Mix.Appsignal.Helper do
 
   defp agent_platform_by_ldd_version do
     case ldd_version_output() do
-      nil ->
-        "linux"
-
-      output ->
+      {:ok, output} ->
         case String.contains?(output, "musl") do
           true ->
             "linux-musl"
 
           false ->
-            ldd_version = extract_ldd_version(output)
+            case extract_ldd_version(output) do
+              nil ->
+                "linux"
 
-            case Version.compare("#{ldd_version}.0", "2.15.0") do
-              :lt -> "linux-musl"
-              _ -> "linux"
+              ldd_version ->
+                case Version.compare("#{ldd_version}.0", "2.15.0") do
+                  :lt -> "linux-musl"
+                  _ -> "linux"
+                end
             end
         end
+
+      _ ->
+        "linux"
     end
-  rescue
-    _ -> "linux"
   end
 
   # Fetches the libc version number from the `ldd` command
   # If `ldd` is not found it returns `nil`
   defp ldd_version_output do
-    {output, _} = @system.cmd("ldd", ["--version"], stderr_to_stdout: true)
-    output
+    case @system.cmd("ldd", ["--version"], stderr_to_stdout: true) do
+      {output, 0} ->
+        {:ok, output}
+
+      {output, _} ->
+        {:error, output}
+    end
   rescue
-    _ -> nil
+    exception ->
+      {:error, exception}
   end
 
-  defp extract_ldd_version(nil), do: nil
-
-  defp extract_ldd_version(ldd_output) do
-    List.first(Regex.run(~r/\d+\.\d+/, ldd_output))
+  defp extract_ldd_version(ldd_output) when is_binary(ldd_output) do
+    case Regex.run(~r/\d+\.\d+/, ldd_output) do
+      [version | _tail] -> version
+      _ -> nil
+    end
   end
+
+  defp extract_ldd_version(_), do: nil
 
   defp initial_report do
     {_, os} = :os.type()
