@@ -187,8 +187,7 @@ defmodule Mix.Appsignal.Helper do
   end
 
   defp download_options do
-    ca_file_path = Path.join(:code.priv_dir(:appsignal), "cacert.pem")
-    options = [ssl_options: [cacertfile: ca_file_path, ciphers: ciphers()]]
+    options = [ssl_options: [cacertfile: priv_path("cacert.pem"), ciphers: ciphers()]]
 
     case check_proxy() do
       nil ->
