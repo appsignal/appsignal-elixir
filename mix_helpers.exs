@@ -167,16 +167,7 @@ defmodule Mix.Appsignal.Helper do
   defp do_download_file!(url, filename, retries \\ 0)
 
   defp do_download_file!(url, filename, 0) do
-    opts =
-      case check_proxy() do
-        nil ->
-          []
-        {var, url} ->
-          Mix.shell().info("- using proxy from #{var} (#{url})")
-          [{:proxy, url}]
-      end
-
-    case :hackney.request(:get, url, [], "", opts) do
+    case :hackney.request(:get, url, [], "", download_options()) do
       {:ok, 200, _, reference} ->
         case :hackney.body(reference) do
           {:ok, body} -> File.write(filename, body)
@@ -192,6 +183,19 @@ defmodule Mix.Appsignal.Helper do
     case do_download_file!(url, filename) do
       :ok -> :ok
       _ -> do_download_file!(url, filename, retries - 1)
+    end
+  end
+
+  defp download_options do
+    options = [ssl_options: [cacertfile: priv_path("cacert.pem"), ciphers: ciphers()]]
+
+    case check_proxy() do
+      nil ->
+        options
+
+      {var, url} ->
+        Mix.shell().info("- using proxy from #{var} (#{url})")
+        options ++ [proxy: url]
     end
   end
 
@@ -566,6 +570,12 @@ defmodule Mix.Appsignal.Helper do
 
   defp make do
     if System.find_executable("gmake"), do: "gmake", else: "make"
+  end
+
+  if System.otp_release() >= "20.3" do
+    defp ciphers, do: :ssl.cipher_suites(:default, :"tlsv1.2")
+  else
+    defp ciphers, do: :ssl.cipher_suites()
   end
 
   def root? do
