@@ -1,3 +1,9 @@
+# 1.10.6
+- Use the bundled certificate and ciphers when downloading agent (#491)
+- Explicitly set ciphers in hackney https requests (#489)
+- Remove log statements from TransactionRegisty (#490)
+- Improve ldd version error handling (#487)
+
 # 1.10.5
 - Remove explicit ignore check in TransactionRegistry. PR #480
 - Handle errors in Mix.Appsignal.Helper.uid/0. PR #479

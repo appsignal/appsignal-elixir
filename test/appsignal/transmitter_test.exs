@@ -15,7 +15,7 @@ defmodule Appsignal.TransmitterTest do
   test "uses the default CA certificate" do
     path = Config.ca_file_path()
 
-    assert [_method, _url, _headers, _body, [ssl_options: [cacertfile: ^path]]] =
+    assert [_method, _url, _headers, _body, [ssl_options: [cacertfile: ^path, ciphers: _]]] =
              Transmitter.request(:get, "https://example.com")
   end
 
@@ -23,7 +23,7 @@ defmodule Appsignal.TransmitterTest do
     path = "priv/cacert.pem"
 
     with_config(%{ca_file_path: path}, fn ->
-      assert [_method, _url, _headers, _body, [ssl_options: [cacertfile: ^path]]] =
+      assert [_method, _url, _headers, _body, [ssl_options: [cacertfile: ^path, ciphers: _]]] =
                Transmitter.request(:get, "https://example.com")
     end)
   end
