@@ -410,11 +410,8 @@ defmodule Mix.Appsignal.Helper do
   # If `ldd` is not found it returns `nil`
   defp ldd_version_output do
     case @system.cmd("ldd", ["--version"], stderr_to_stdout: true) do
-      {output, 0} ->
-        {:ok, output}
-
       {output, _} ->
-        {:error, output}
+        {:ok, output}
     end
   rescue
     exception ->
