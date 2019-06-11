@@ -1,3 +1,6 @@
+# 1.10.7
+- Fix musl detection on installation. PR #493
+
 # 1.10.6
 - Use the bundled certificate and ciphers when downloading agent (#491)
 - Explicitly set ciphers in hackney https requests (#489)
