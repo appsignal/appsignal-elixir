@@ -106,6 +106,13 @@ defmodule Appsignal.ConfigTest do
                &Config.active?/0
              )
     end
+
+    test "when the configuration is not a map" do
+      refute with_frozen_environment(fn ->
+               Application.put_env(:appsignal, :config, [])
+               Config.active?()
+             end)
+    end
   end
 
   describe "request_headers" do
