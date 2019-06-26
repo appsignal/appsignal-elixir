@@ -79,14 +79,16 @@ defmodule Appsignal.Mixfile do
   defp test?(_), do: false
 
   defp deps do
+    system_version = System.version()
+
     poison_version =
-      case Version.compare(System.version(), "1.6.0") do
+      case Version.compare(system_version, "1.6.0") do
         :lt -> ">= 1.3.0 and < 4.0.0"
         _ -> ">= 1.3.0"
       end
 
     phoenix_version =
-      case Version.compare(System.version(), "1.4.0") do
+      case Version.compare(system_version, "1.4.0") do
         :lt -> ">= 1.2.0 and < 1.4.0"
         _ -> ">= 1.2.0"
       end
