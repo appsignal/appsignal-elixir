@@ -85,12 +85,18 @@ defmodule Appsignal.Mixfile do
         _ -> ">= 1.3.0"
       end
 
+    phoenix_version =
+      case Version.compare(System.version(), "1.4.0") do
+        :lt -> ">= 1.2.0 and < 1.4.0"
+        _ -> ">= 1.2.0"
+      end
+
     [
       {:hackney, "~> 1.6"},
       {:poison, poison_version},
       {:decorator, "~> 1.2.3"},
       {:plug, ">= 1.1.0", optional: true},
-      {:phoenix, ">= 1.2.0", optional: true, only: [:prod, :test_phoenix, :dev]},
+      {:phoenix, phoenix_version, optional: true, only: [:prod, :test_phoenix, :dev]},
       {:bypass, "~> 0.6.0", only: [:test, :test_phoenix, :test_no_nif]},
       {:plug_cowboy, "~> 1.0", only: [:test, :test_phoenix, :test_no_nif]},
       {:ex_doc, "~> 0.12", only: :dev, runtime: false},
