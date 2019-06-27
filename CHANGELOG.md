@@ -1,3 +1,10 @@
+# 1.10.8
+- Handle non-maps in Config.active?/0. PR #495
+- Use Phoenix >= 1.2.0 and < 1.4.0 on Elixir 1.3. PR #496
+
+# 1.10.7
+- Fix musl detection on installation. PR #493
+
 # 1.10.6
 - Use the bundled certificate and ciphers when downloading agent (#491)
 - Explicitly set ciphers in hackney https requests (#489)
