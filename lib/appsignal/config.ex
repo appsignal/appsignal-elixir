@@ -90,9 +90,13 @@ defmodule Appsignal.Config do
   """
   @spec active?() :: boolean
   def active? do
-    config = Application.fetch_env!(:appsignal, :config)
-    config.valid && config.active
+    :appsignal
+    |> Application.fetch_env!(:config)
+    |> do_active?
   end
+
+  defp do_active?(%{valid: true, active: true}), do: true
+  defp do_active?(_), do: false
 
   def request_headers do
     Application.fetch_env!(:appsignal, :config)[:request_headers]
