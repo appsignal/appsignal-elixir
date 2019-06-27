@@ -1,3 +1,7 @@
+# 1.10.8
+- Handle non-maps in Config.active?/0. PR #495
+- Use Phoenix >= 1.2.0 and < 1.4.0 on Elixir 1.3. PR #496
+
 # 1.10.7
 - Fix musl detection on installation. PR #493
 
