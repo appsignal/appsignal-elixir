@@ -35,7 +35,7 @@ if Appsignal.phoenix?() do
           @decorate channel_action
           def handle_in("ping", payload, socket) do
             Appsignal.Transaction.set_sample_data(
-              "params", Appsignal.Utils.MapFilter.filter_values(payload, Appsignal.Utils.MapFilter.get_filter_parameters())
+              "params", Appsignal.Utils.MapFilter.filter_parameters(payload)
             )
 
             # your code here..
@@ -102,10 +102,7 @@ if Appsignal.phoenix?() do
         transaction
         |> @transaction.set_sample_data(
           "params",
-          Appsignal.Utils.MapFilter.filter_values(
-            params,
-            Appsignal.Utils.MapFilter.get_filter_parameters()
-          )
+          Appsignal.Utils.MapFilter.filter_parameters(params)
         )
         |> @transaction.set_sample_data(
           "environment",
@@ -131,10 +128,7 @@ if Appsignal.phoenix?() do
       transaction
       |> @transaction.set_sample_data(
         "params",
-        socket.assigns
-        |> Appsignal.Utils.MapFilter.filter_values(
-          Appsignal.Utils.MapFilter.get_filter_parameters()
-        )
+        Appsignal.Utils.MapFilter.filter_parameters(socket.assigns)
       )
       |> @transaction.set_sample_data("environment", request_environment(socket))
     end

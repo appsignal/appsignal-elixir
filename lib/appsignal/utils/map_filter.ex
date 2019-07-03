@@ -4,32 +4,81 @@ defmodule Appsignal.Utils.MapFilter do
   to be submitted to AppSignal.
   """
 
-  def get_filter_parameters do
-    Application.get_env(:phoenix, :filter_parameters, []) ++
-      Application.get_env(:appsignal, :config)[:filter_parameters]
+  @doc """
+  Filter parameters based on Appsignal and Phoenix configuration.
+  """
+  def filter_parameters(values) do
+    filter_values(
+      values,
+      merge_filters(
+        Application.get_env(:appsignal, :config)[:filter_parameters],
+        Application.get_env(:phoenix, :filter_parameters, [])
+      )
+    )
   end
 
-  def get_filter_session_data do
-    Application.get_env(:appsignal, :config)[:filter_session_data] || []
+  @doc """
+  Filter session data based Appsignal configuration.
+  """
+  def filter_session_data(values) do
+    filter_values(values, Application.get_env(:appsignal, :config)[:filter_session_data] || [])
   end
 
-  def filter_values(%{__struct__: mod} = struct, _filter_params) when is_atom(mod) do
+  @doc false
+  def filter_values(values, {:discard, params}), do: discard_values(values, params)
+  def filter_values(values, {:keep, params}), do: keep_values(values, params)
+  def filter_values(values, params), do: discard_values(values, params)
+
+  defp discard_values(%{__struct__: mod} = struct, _params) when is_atom(mod) do
     struct
   end
 
-  def filter_values(%{} = map, filter_params) do
+  defp discard_values(%{} = map, params) do
     Enum.into(map, %{}, fn {k, v} ->
-      if (is_binary(k) or is_atom(k)) and String.contains?(to_string(k), filter_params) do
+      if (is_binary(k) or is_atom(k)) and String.contains?(to_string(k), params) do
         {k, "[FILTERED]"}
       else
-        {k, filter_values(v, filter_params)}
+        {k, discard_values(v, params)}
       end
     end)
   end
 
-  def filter_values([_ | _] = list, filter_params) do
-    Enum.map(list, &filter_values(&1, filter_params))
+  defp discard_values([_ | _] = list, params) do
+    Enum.map(list, &discard_values(&1, params))
   end
 
-  def filter_values(other, _filter_params), do: other
+  defp discard_values(other, _params), do: other
+
+  defp keep_values(%{__struct__: mod}, _params) when is_atom(mod), do: "[FILTERED]"
+
+  defp keep_values(%{} = map, params) do
+    Enum.into(map, %{}, fn {k, v} ->
+      if (is_binary(k) or is_atom(k)) and to_string(k) in params do
+        {k, discard_values(v, [])}
+      else
+        {k, keep_values(v, params)}
+      end
+    end)
+  end
+
+  defp keep_values([_ | _] = list, params) do
+    Enum.map(list, &keep_values(&1, params))
+  end
+
+  defp keep_values(_other, _params), do: "[FILTERED]"
+
+  defp merge_filters(appsignal, phoenix) when is_list(appsignal) and is_list(phoenix) do
+    appsignal ++ phoenix
+  end
+
+  defp merge_filters({:keep, appsignal}, {:keep, phoenix}), do: {:keep, appsignal ++ phoenix}
+
+  defp merge_filters(appsignal, {:keep, phoenix}) when is_list(appsignal) do
+    {:keep, phoenix -- appsignal}
+  end
+
+  defp merge_filters({:keep, appsignal}, phoenix) when is_list(phoenix),
+    do: {:keep, appsignal -- phoenix}
+
+  defp merge_filters(_, _), do: []
 end

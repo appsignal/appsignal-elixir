@@ -499,10 +499,7 @@ defmodule Appsignal.Transaction do
         Transaction.set_sample_data(
           transaction,
           "session_data",
-          Appsignal.Utils.MapFilter.filter_values(
-            conn.private[:plug_session],
-            Appsignal.Utils.MapFilter.get_filter_session_data()
-          )
+          Appsignal.Utils.MapFilter.filter_session_data(conn.private[:plug_session])
         )
       else
         transaction
