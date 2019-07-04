@@ -1,4 +1,6 @@
 defmodule Appsignal.Utils.MapFilter do
+  require Logger
+
   @moduledoc """
   Helper functions for filtering parameters to prevent sensitive data
   to be submitted to AppSignal.
@@ -80,5 +82,25 @@ defmodule Appsignal.Utils.MapFilter do
   defp merge_filters({:keep, appsignal}, phoenix) when is_list(phoenix),
     do: {:keep, appsignal -- phoenix}
 
-  defp merge_filters(_, _), do: []
+  defp merge_filters(appsignal, phoenix) do
+    Logger.error("""
+    An error occured while merging parameter filters.
+
+    AppSignal expects all parameter_filter values to be either a list of strings
+    (`["email"]`), or a :keep-tuple (`{:keep, ["email"]}`).
+
+    From the AppSignal configuration:
+
+      #{inspect(appsignal)}
+
+    From the Phoenix configuration:
+
+      #{inspect(phoenix)}
+
+    To ensure no sensitive parameters are sent, all parameters are filtered out
+    for this transaction.
+    """)
+
+    {:keep, []}
+  end
 end

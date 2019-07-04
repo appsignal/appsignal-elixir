@@ -98,6 +98,23 @@ defmodule Appsignal.Transaction.FilterTest do
                  %{"foo" => "bar", "secret3" => "[FILTERED]", "secret4" => "[FILTERED]"}
       end)
     end
+
+    test "filters out all parameters in case of a configuration error" do
+      with_config(%{filter_parameters: "foo"}, fn ->
+        Config.initialize()
+
+        values = %{"foo" => "bar", "secret3" => "super_secret", "secret4" => "more_secret"}
+
+        assert ExUnit.CaptureLog.capture_log(fn ->
+                 assert MapFilter.filter_parameters(values) ==
+                          %{
+                            "foo" => "[FILTERED]",
+                            "secret3" => "[FILTERED]",
+                            "secret4" => "[FILTERED]"
+                          }
+               end) =~ "An error occured while merging parameter filters."
+      end)
+    end
   end
 
   describe "filter_session_data/1" do
