@@ -99,8 +99,25 @@ defmodule Appsignal.Transaction.FilterTest do
       end)
     end
 
-    test "filters out all parameters in case of a configuration error" do
+    test "filters out all parameters when filter_parameters is not a list" do
       with_config(%{filter_parameters: "foo"}, fn ->
+        Config.initialize()
+
+        values = %{"foo" => "bar", "secret3" => "super_secret", "secret4" => "more_secret"}
+
+        assert ExUnit.CaptureLog.capture_log(fn ->
+                 assert MapFilter.filter_parameters(values) ==
+                          %{
+                            "foo" => "[FILTERED]",
+                            "secret3" => "[FILTERED]",
+                            "secret4" => "[FILTERED]"
+                          }
+               end) =~ "An error occured while merging parameter filters."
+      end)
+    end
+
+    test "filters out all parameters when filter_parameters is a :keep-tuple with aa calue that's not a list" do
+      with_config(%{filter_parameters: {:keep, "foo"}}, fn ->
         Config.initialize()
 
         values = %{"foo" => "bar", "secret3" => "super_secret", "secret4" => "more_secret"}

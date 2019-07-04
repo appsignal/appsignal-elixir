@@ -75,19 +75,21 @@ defmodule Appsignal.Utils.MapFilter do
 
   defp merge_filters({:keep, appsignal}, {:keep, phoenix}), do: {:keep, appsignal ++ phoenix}
 
-  defp merge_filters(appsignal, {:keep, phoenix}) when is_list(appsignal) do
+  defp merge_filters(appsignal, {:keep, phoenix}) when is_list(appsignal) and is_list(phoenix) do
     {:keep, phoenix -- appsignal}
   end
 
-  defp merge_filters({:keep, appsignal}, phoenix) when is_list(phoenix),
-    do: {:keep, appsignal -- phoenix}
+  defp merge_filters({:keep, appsignal}, phoenix) when is_list(appsignal) and is_list(phoenix) do
+    {:keep, appsignal -- phoenix}
+  end
 
   defp merge_filters(appsignal, phoenix) do
     Logger.error("""
     An error occured while merging parameter filters.
 
-    AppSignal expects all parameter_filter values to be either a list of strings
-    (`["email"]`), or a :keep-tuple (`{:keep, ["email"]}`).
+    AppSignal expects all parameter_filter values to be either a list of
+    strings (`["email"]`), or a :keep-tuple with a list of strings as its
+    second element (`{:keep, ["email"]}`).
 
     From the AppSignal configuration:
 
