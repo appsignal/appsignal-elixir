@@ -116,7 +116,7 @@ defmodule Appsignal.Transaction.FilterTest do
       end)
     end
 
-    test "filters out all parameters when filter_parameters is a :keep-tuple with aa calue that's not a list" do
+    test "filters out all parameters when filter_parameters is a :keep-tuple with a value that's not a list" do
       with_config(%{filter_parameters: {:keep, "foo"}}, fn ->
         Config.initialize()
 
