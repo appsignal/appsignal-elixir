@@ -152,10 +152,6 @@ defmodule Mix.Tasks.Appsignal.Install do
     end
   end
 
-  defp config_file_path, do: Path.join("config", "config.exs")
-  defp appsignal_config_filename, do: "appsignal.exs"
-  defp appsignal_config_file_path, do: Path.join("config", appsignal_config_filename())
-
   # Checks if AppSignal was already linked in the main config/config.exs file.
   defp appsignal_config_linked? do
     case File.read(config_file_path()) do
@@ -278,7 +274,8 @@ defmodule Mix.Tasks.Appsignal.Install do
       "prod" |> config_path_for_env |> File.exists?()
   end
 
-  defp config_path_for_env(env) do
-    Path.join("config", "#{env}.exs")
-  end
+  defp appsignal_config_filename, do: "appsignal.exs"
+  defp config_file_path, do: Path.join("config", "config.exs")
+  defp appsignal_config_file_path, do: Path.join("config", appsignal_config_filename())
+  defp config_path_for_env(env), do: Path.join("config", "#{env}.exs")
 end
