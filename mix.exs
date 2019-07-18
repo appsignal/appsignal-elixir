@@ -82,6 +82,12 @@ defmodule Appsignal.Mixfile do
   defp deps do
     system_version = System.version()
 
+    poison_version =
+      case Version.compare(system_version, "1.6.0") do
+        :lt -> ">= 1.3.0 and < 4.0.0"
+        _ -> ">= 1.3.0"
+      end
+
     phoenix_version =
       case Version.compare(system_version, "1.4.0") do
         :lt -> ">= 1.2.0 and < 1.4.0"
@@ -92,6 +98,7 @@ defmodule Appsignal.Mixfile do
       {:benchee, "~> 1.0", only: :bench},
       {:hackney, "~> 1.6"},
       {:jason, "~> 1.0", optional: true},
+      {:poison, poison_version, optional: true},
       {:decorator, "~> 1.2.3"},
       {:plug, ">= 1.1.0", optional: true},
       {:phoenix, phoenix_version, optional: true, only: [:prod, :test_phoenix, :dev]},
