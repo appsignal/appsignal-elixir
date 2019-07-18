@@ -9,27 +9,28 @@ defmodule Appsignal.Utils.MapFilter do
   @doc """
   Filter parameters based on Appsignal and Phoenix configuration.
   """
-  def filter_parameters(values) do
-    filter_values(
-      values,
-      merge_filters(
-        Application.get_env(:appsignal, :config)[:filter_parameters],
-        Application.get_env(:phoenix, :filter_parameters, [])
-      )
-    )
-  end
+  def filter_parameters(values), do: filter_values(values, get_filter_parameters())
 
   @doc """
   Filter session data based Appsignal configuration.
   """
-  def filter_session_data(values) do
-    filter_values(values, Application.get_env(:appsignal, :config)[:filter_session_data] || [])
-  end
+  def filter_session_data(values), do: filter_values(values, get_filter_session_data())
 
   @doc false
   def filter_values(values, {:discard, params}), do: discard_values(values, params)
   def filter_values(values, {:keep, params}), do: keep_values(values, params)
   def filter_values(values, params), do: discard_values(values, params)
+
+  def get_filter_parameters do
+    merge_filters(
+      Application.get_env(:appsignal, :config)[:filter_parameters],
+      Application.get_env(:phoenix, :filter_parameters, [])
+    )
+  end
+
+  def get_filter_session_data do
+    Application.get_env(:appsignal, :config)[:filter_session_data] || []
+  end
 
   defp discard_values(%{__struct__: mod} = struct, _params) when is_atom(mod) do
     struct
