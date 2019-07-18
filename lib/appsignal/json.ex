@@ -1,6 +1,12 @@
 defmodule Json do
-  defdelegate encode(input), to: Jason
-  defdelegate encode!(input), to: Jason
-  defdelegate decode(input), to: Jason
-  defdelegate decode!(input), to: Jason
+  if(!Code.ensure_loaded?(Jason) && Code.ensure_loaded?(Poison)) do
+    @json Poison
+  else
+    @json Jason
+  end
+
+  defdelegate encode(input), to: @json
+  defdelegate encode!(input), to: @json
+  defdelegate decode(input), to: @json
+  defdelegate decode!(input), to: @json
 end

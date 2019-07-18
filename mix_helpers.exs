@@ -497,8 +497,10 @@ defmodule Mix.Appsignal.Helper do
     # Write nothing if no download details are recorded in the report
   end
 
-  defp json_encoder do
-    Jason
+  if(!Code.ensure_loaded?(Jason) && Code.ensure_loaded?(Poison)) do
+    defp json_encoder, do: Poison
+  else
+    defp json_encoder, do: Jason
   end
 
   defp write_report_file(file, report) do
