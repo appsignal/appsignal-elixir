@@ -91,7 +91,7 @@ defmodule Appsignal.Mixfile do
     [
       {:benchee, "~> 1.0", only: :bench},
       {:hackney, "~> 1.6"},
-      {:jason, "~> 1.0"},
+      {:jason, "~> 1.0", optional: true},
       {:decorator, "~> 1.2.3"},
       {:plug, ">= 1.1.0", optional: true},
       {:phoenix, phoenix_version, optional: true, only: [:prod, :test_phoenix, :dev]},

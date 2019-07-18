@@ -497,8 +497,12 @@ defmodule Mix.Appsignal.Helper do
     # Write nothing if no download details are recorded in the report
   end
 
+  defp json_encoder do
+    Jason
+  end
+
   defp write_report_file(file, report) do
-    case Jason.encode(report) do
+    case json_encoder().encode(report) do
       {:ok, body} ->
         File.mkdir_p!(priv_dir())
 
