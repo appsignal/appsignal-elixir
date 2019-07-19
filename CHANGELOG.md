@@ -1,3 +1,6 @@
+# 1.10.10
+- Restore get_filter_(parameters|session_data) to patch backwards compatibility. PR #500
+
 # 1.10.9
 - Support parameter filtering with {:keep, params}. PR #499
 
