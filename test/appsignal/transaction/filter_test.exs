@@ -9,6 +9,50 @@ defmodule Appsignal.Transaction.FilterTest do
     defstruct foo: 1
   end
 
+  describe "get_filter_parameters/0" do
+    test "returns parameter filters from the appsignal config" do
+      with_config(%{filter_parameters: ["password"]}, fn ->
+        Config.initialize()
+
+        assert MapFilter.get_filter_parameters() == ["password"]
+      end)
+    end
+
+    test "returns parameter filters from the phoenix config" do
+      Application.put_env(:phoenix, :filter_parameters, ~w(password))
+      Config.initialize()
+      assert MapFilter.get_filter_parameters() == ["password"]
+
+      Application.delete_env(:phoenix, :filter_parameters)
+    end
+
+    test "merges AppSignal's parameter filters with Phoenix' parameter filters" do
+      Application.put_env(:phoenix, :filter_parameters, ~w(password))
+
+      with_config(%{filter_parameters: ["token"]}, fn ->
+        Config.initialize()
+
+        assert MapFilter.get_filter_parameters() == ["token", "password"]
+      end)
+
+      Application.delete_env(:phoenix, :filter_parameters)
+    end
+  end
+
+  describe "get_filter_session_data/0" do
+    test "returns an empty list when no filters are set" do
+      assert MapFilter.get_filter_session_data() == []
+    end
+
+    test "returns session data filters from the appsignal config" do
+      with_config(%{filter_session_data: ["token"]}, fn ->
+        Config.initialize()
+
+        assert MapFilter.get_filter_session_data() == ["token"]
+      end)
+    end
+  end
+
   describe "filter_parameters/1" do
     test "uses parameter filters from the appsignal config" do
       with_config(%{filter_parameters: ["password"]}, fn ->
