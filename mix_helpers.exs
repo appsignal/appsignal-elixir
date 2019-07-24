@@ -497,35 +497,53 @@ defmodule Mix.Appsignal.Helper do
     # Write nothing if no download details are recorded in the report
   end
 
-  if(!Code.ensure_loaded?(Jason) && Code.ensure_loaded?(Poison)) do
-    defp json_encoder, do: Poison
+  if(Code.ensure_loaded?(Jason)) do
+    defp json_encoder do
+      {:ok, Jason}
+    end
   else
-    defp json_encoder, do: Jason
+    if(Code.ensure_loaded?(Poison)) do
+      defp json_encoder do
+        {:ok, Poison}
+      end
+    else
+      defp json_encoder do
+        :error
+      end
+    end
   end
 
   defp write_report_file(file, report) do
-    case json_encoder().encode(report) do
-      {:ok, body} ->
-        File.mkdir_p!(priv_dir())
+    case json_encoder() do
+      {:ok, encoder} ->
+        case encoder.encoder(report) do
+          {:ok, body} ->
+            File.mkdir_p!(priv_dir())
 
-        filename = "#{file}.report"
+            filename = "#{file}.report"
 
-        case File.open(priv_path(filename), [:write]) do
-          {:ok, file} ->
-            result = IO.binwrite(file, body)
-            File.close(file)
-            result
+            case File.open(priv_path(filename), [:write]) do
+              {:ok, file} ->
+                result = IO.binwrite(file, body)
+                File.close(file)
+                result
 
-          {:error, reason} ->
+              {:error, reason} ->
+                Mix.Shell.IO.error(
+                  "Error: Could not write AppSignal report file '#{file}'.\n#{reason}"
+                )
+
+                {:error, reason}
+            end
+
+          {:error, error} ->
             Mix.Shell.IO.error(
-              "Error: Could not write AppSignal report file '#{file}'.\n#{reason}"
+              "Error: Could not encode AppSignal report file '#{file}'.\n#{error}"
             )
-
-            {:error, reason}
         end
 
-      {:error, error} ->
-        Mix.Shell.IO.error("Error: Could not encode AppSignal report file '#{file}'.\n#{error}")
+      :error ->
+        Mix.Shell.IO.error("Cannot find any Json encoders.")
     end
   end
 
