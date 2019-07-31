@@ -221,9 +221,33 @@ defmodule Appsignal.Nif do
     _loaded()
   end
 
+  def trace_id(reference) do
+    _trace_id(reference)
+  end
+
+  def span_id(reference) do
+    _span_id(reference)
+  end
+
+  def create_root_span(name) do
+    _create_root_span(name)
+  end
+
+  def create_child_span(trace_id, span_id, name) do
+    _create_child_span(trace_id, span_id, name)
+  end
+
+  def set_span_attribute_string(reference, key, value) do
+    _set_span_attribute_string(reference, key, value)
+  end
+
+  def close_span(reference) do
+    _close_span(reference)
+  end
+
   if Mix.env() in [:test, :test_phoenix] do
-    def data_to_json(resource) do
-      _data_to_json(resource)
+    def data_to_json(reference) do
+      _data_to_json(reference)
     end
 
     def transaction_to_json(resource) do
@@ -391,6 +415,30 @@ defmodule Appsignal.Nif do
 
   def _loaded do
     false
+  end
+
+  def _trace_id(reference) do
+    {:ok, 'trace123'}
+  end
+
+  def _span_id(reference) do
+    {:ok, 'span123'}
+  end
+
+  def _create_root_span(name) do
+    {:ok, make_ref()}
+  end
+
+  def _create_child_span(trace_id, span_id, name) do
+    {:ok, make_ref()}
+  end
+
+  def _set_span_attribute_string(reference, key, value) do
+    :ok
+  end
+
+  def _close_span(reference) do
+    :ok
   end
 
   if Mix.env() in [:test, :test_phoenix, :test_no_nif] do
