@@ -848,6 +848,16 @@ static ERL_NIF_TERM _loaded(ErlNifEnv *env, int UNUSED(argc), const ERL_NIF_TERM
   return enif_make_atom(env, "true");
 }
 
+static ERL_NIF_TERM _trace_id(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+  return make_ok_tuple(env, enif_make_string(env, "trace321", ERL_NIF_LATIN1));
+}
+
+static ERL_NIF_TERM _span_id(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+  return make_ok_tuple(env, enif_make_string(env, "span321", ERL_NIF_LATIN1));
+}
+
 static int on_load(ErlNifEnv* env, void** UNUSED(priv), ERL_NIF_TERM UNUSED(info))
 {
     ErlNifResourceType *transaction_resource_type;
@@ -934,7 +944,9 @@ static ErlNifFunc nif_funcs[] =
     {"_transaction_to_json", 1, _transaction_to_json, 0},
     {"_data_to_json", 1, _data_to_json, 0},
 #endif
-    {"_loaded", 0, _loaded, 0}
+    {"_loaded", 0, _loaded, 0},
+    {"_trace_id", 1, _trace_id, 0}
+    {"_span_id", 1, _span_id, 0}
 };
 
 ERL_NIF_INIT(Elixir.Appsignal.Nif, nif_funcs, on_load, on_reload, on_upgrade, NULL)
