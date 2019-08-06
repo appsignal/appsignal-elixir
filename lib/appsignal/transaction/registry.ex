@@ -39,8 +39,6 @@ defmodule Appsignal.TransactionRegistry do
       monitor_reference = GenServer.call(__MODULE__, {:monitor, pid})
       true = :ets.insert(@table, {pid, transaction, monitor_reference})
       :ok
-    else
-      nil
     end
   end
 
@@ -92,7 +90,7 @@ defmodule Appsignal.TransactionRegistry do
   def remove_transaction(%Transaction{} = transaction) do
     if registry_alive?() do
       GenServer.cast(__MODULE__, {:demonitor, transaction})
-      GenServer.call(__MODULE__, {:remove, transaction})
+      remove(transaction)
     else
       {:error, :no_registry}
     end
@@ -123,6 +121,19 @@ defmodule Appsignal.TransactionRegistry do
     end
   end
 
+  def remove(transaction) do
+    case pids_and_monitor_references(transaction) do
+      [[_pid, _reference] | _] = pids_and_refs ->
+        delete(pids_and_refs)
+
+      [[_pid] | _] = pids ->
+        delete(pids)
+
+      [] ->
+        {:error, :not_found}
+    end
+  end
+
   defmodule State do
     @moduledoc false
     defstruct table: nil
@@ -133,22 +144,6 @@ defmodule Appsignal.TransactionRegistry do
       :ets.new(@table, [:set, :named_table, {:keypos, 1}, :public, {:write_concurrency, true}])
 
     {:ok, %State{table: table}}
-  end
-
-  def handle_call({:remove, transaction}, _from, state) do
-    reply =
-      case pids_and_monitor_references(transaction) do
-        [[_pid, _reference] | _] = pids_and_refs ->
-          delete(pids_and_refs)
-
-        [[_pid] | _] = pids ->
-          delete(pids)
-
-        [] ->
-          {:error, :not_found}
-      end
-
-    {:reply, reply, state}
   end
 
   def handle_call({:monitor, pid}, _from, state) do
@@ -175,9 +170,7 @@ defmodule Appsignal.TransactionRegistry do
     {:noreply, state}
   end
 
-  def handle_info(_msg, state) do
-    {:noreply, state}
-  end
+  def handle_info(_msg, state), do: {:noreply, state}
 
   defp delete([[pid, _] | tail]) do
     :ets.delete(@table, pid)
