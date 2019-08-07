@@ -284,12 +284,14 @@ defmodule Mix.Appsignal.Helper do
 
   defp map_arch(arch, platform), do: {:error, {:unknown, {arch, platform}}}
 
-  defp build_for(bit, platform) do
-    arch = {bit, platform}
+  if Mix.env() != :test_no_nif do
+    defp build_for(bit, platform) do
+      arch = {bit, platform}
 
-    case Map.has_key?(Appsignal.Agent.triples(), arch_key(arch)) do
-      true -> {:ok, arch}
-      false -> {:error, {:unsupported, arch}}
+      case Map.has_key?(Appsignal.Agent.triples(), arch_key(arch)) do
+        true -> {:ok, arch}
+        false -> {:error, {:unsupported, arch}}
+      end
     end
   end
 
