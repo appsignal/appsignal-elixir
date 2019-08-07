@@ -29,9 +29,7 @@ defmodule Appsignal do
     @report_handler Appsignal.ErrorLoggerHandler
   end
 
-  @doc """
-  Application callback function
-  """
+  @doc "Application callback function."
   def start(_type, _args) do
     import Supervisor.Spec, warn: false
 
@@ -39,7 +37,8 @@ defmodule Appsignal do
     add_report_handler()
 
     children = [
-      worker(Appsignal.TransactionRegistry, []),
+      worker(Appsignal.Transaction.Receiver, []),
+      worker(Appsignal.Transaction.ETS, []),
       worker(Appsignal.Probes, [])
     ]
 

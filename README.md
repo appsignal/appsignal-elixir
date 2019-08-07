@@ -52,7 +52,7 @@ you have [Elixir installed](http://elixir-lang.org/install.html).
 Then make sure you have all the project's dependencies installed by running the
 following command:
 
-```
+```shell
 mix deps.get
 ```
 
@@ -62,7 +62,7 @@ Testing is done with ExUnit and can be run with the `mix test` command. You can
 also supply a path to a specific file path you want to test and even a specific
 line on which the test you want to run is defined.
 
-```
+```shell
 mix test
 mix test test/appsignal/some_test.ex:123
 ```
@@ -71,7 +71,7 @@ This project has several different test suites defined with different mix
 environments. You can run them by specifying the specific type of test suite in
 the `MIX_ENV` environment variable.
 
-```
+```shell
 # Default
 MIX_ENV=test mix test
 
@@ -82,6 +82,14 @@ MIX_ENV=test_phoenix mix test
 # This will generate errors that the NIF is not active, but should run
 # without failures.
 MIX_ENV=test_no_nif mix test
+```
+
+### Benchmarking
+
+This package uses benchee to benchmark code. To run the benchmarker:
+
+```shell
+mix run bench/<file>.exs
 ```
 
 ### Branches and versions

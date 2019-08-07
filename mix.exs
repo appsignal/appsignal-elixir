@@ -94,6 +94,7 @@ defmodule Appsignal.Mixfile do
       end
 
     [
+      {:benchee, "~> 1.0", only: :bench},
       {:hackney, "~> 1.6"},
       {:poison, poison_version},
       {:decorator, "~> 1.2.3"},
