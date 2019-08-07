@@ -241,7 +241,7 @@ defmodule Appsignal.ConfigTest do
     test "log_path" do
       log_path = File.cwd!()
 
-      assert %{log_path: log_path} = with_config(%{log_path: log_path}, &init_config/0)
+      assert %{log_path: ^log_path} = with_config(%{log_path: log_path}, &init_config/0)
     end
 
     test "name" do
