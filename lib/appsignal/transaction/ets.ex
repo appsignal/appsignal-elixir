@@ -1,5 +1,9 @@
 defmodule Appsignal.Transaction.ETS do
-  use Agent
+  # When support for Elixir 1.4 is dropped, please uncomment the below code. The
+  # `Agent.__using__/1` implements a simple `child_spec` as a permanent process
+  # and states to use the `__MODULE__.start_link/1` function.
+  #
+  # use Agent, restart: :permanent
 
   @name __MODULE__
   @table :"$appsignal_transaction_registry"
