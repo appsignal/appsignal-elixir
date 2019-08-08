@@ -7,16 +7,19 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
   import AppsignalTest.Utils
   use ExUnit.Case
 
+  # Monitoring processes can be delayed by a little bit since
+  # `Process.monitor/1` which is called internally is asynchronous and can take
+  # a tiny bit to actually start monitoring. Instead, we sleep for a little bit
+  # to allow the Receiver to establish a monitor before testing for errors. This
+  # is not as big of an issue in OTP 19 & 20, but more prevalent in OTP 21 & 22.
+  @process_monitor_delay 10
+
   defmodule CrashingGenServer do
     use GenServer
 
-    def start(crash_type) do
-      GenServer.start(__MODULE__, [crash_type])
-    end
+    def start(crash_type), do: GenServer.start(__MODULE__, [crash_type])
 
-    def init([crash_type]) do
-      {:ok, crash_type, 0}
-    end
+    def init([crash_type]), do: {:ok, crash_type, 0}
 
     def handle_info(:timeout, :exit) do
       :erlang.exit(:crashed_gen_server_exit)
@@ -40,9 +43,9 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
   end
 
   test "proc_lib.spawn + exit", %{fake_transaction: fake_transaction} do
-    :proc_lib.spawn(fn ->
-      exit(:crash_proc_lib_spawn)
-    end)
+    :proc_lib.spawn(fn -> exit(:crash_proc_lib_spawn) end)
+
+    Process.sleep(@process_monitor_delay)
 
     [{_, reason, message, stacktrace}] =
       until(fn ->
@@ -59,9 +62,9 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
   end
 
   test "proc_lib.spawn + erlang.error", %{fake_transaction: fake_transaction} do
-    :proc_lib.spawn(fn ->
-      :erlang.error(:crash_proc_lib_error)
-    end)
+    :proc_lib.spawn(fn -> :erlang.error(:crash_proc_lib_error) end)
+
+    Process.sleep(@process_monitor_delay)
 
     [{_, reason, message, stacktrace}] =
       until(fn ->
@@ -78,9 +81,9 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
   end
 
   test "proc_lib.spawn + function error", %{fake_transaction: fake_transaction} do
-    :proc_lib.spawn(fn ->
-      Float.ceil(1)
-    end)
+    :proc_lib.spawn(fn -> Float.ceil(1) end)
+
+    Process.sleep(@process_monitor_delay)
 
     [{_, reason, message, stacktrace}] =
       until(fn ->
@@ -99,6 +102,8 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
   test "proc_lib.spawn + badmatch error", %{fake_transaction: fake_transaction} do
     :proc_lib.spawn(fn -> throw({:badmatch, [1, 2, 3]}) end)
 
+    Process.sleep(@process_monitor_delay)
+
     [{_, reason, message, stacktrace}] =
       until(fn ->
         assert [{_, _, _, _}] = FakeTransaction.errors(fake_transaction)
@@ -115,6 +120,8 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
 
   test "Crashing GenServer with throw", %{fake_transaction: fake_transaction} do
     CrashingGenServer.start(:throw)
+
+    Process.sleep(@process_monitor_delay)
 
     [{_, reason, message, stacktrace}] =
       until(fn ->
@@ -139,6 +146,8 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
 
   test "Crashing GenServer with exit", %{fake_transaction: fake_transaction} do
     CrashingGenServer.start(:exit)
+
+    Process.sleep(@process_monitor_delay)
 
     [{_, reason, message, stacktrace}] =
       until(fn ->
@@ -165,6 +174,8 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
 
   test "Crashing GenServer with function error", %{fake_transaction: fake_transaction} do
     CrashingGenServer.start(:function_error)
+
+    Process.sleep(@process_monitor_delay)
 
     [{_, reason, message, stacktrace}] =
       until(fn ->
@@ -194,9 +205,9 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
   end
 
   test "Task", %{fake_transaction: fake_transaction} do
-    Task.start(fn ->
-      Float.ceil(1)
-    end)
+    Task.start(fn -> Float.ceil(1) end)
+
+    Process.sleep(@process_monitor_delay)
 
     [{_, reason, message, stacktrace}] =
       until(fn ->
@@ -215,11 +226,12 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
 
   test "Task await", %{fake_transaction: fake_transaction} do
     :proc_lib.spawn(fn ->
-      Task.async(fn ->
-        Process.sleep(2)
-      end)
+      fn -> Process.sleep(2) end
+      |> Task.async()
       |> Task.await(1)
     end)
+
+    Process.sleep(@process_monitor_delay)
 
     [{_, reason, message, stacktrace}] =
       until(fn ->
@@ -244,6 +256,8 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
           raise(%Plug.Conn.WrapperError{reason: reason, kind: kind, stack: System.stacktrace()})
       end
     end)
+
+    Process.sleep(@process_monitor_delay)
 
     [{_, reason, message, stacktrace}] =
       until(fn ->
