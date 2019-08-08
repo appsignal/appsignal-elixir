@@ -1,5 +1,9 @@
 defmodule Appsignal.Transaction.Receiver do
-  use Task
+  # When support for Elixir 1.4 is dropped, please uncomment the below code. The
+  # `Task.__using__/1` implements a simple `child_spec` as a temporary process
+  # and states to use the `__MODULE__.start_link/1` function.
+  #
+  # use Task, restart: :permanent
 
   alias Appsignal.Transaction.ETS
   alias Appsignal.TransactionRegistry, as: Registry

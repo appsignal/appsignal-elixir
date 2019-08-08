@@ -37,8 +37,8 @@ defmodule Appsignal do
     add_report_handler()
 
     children = [
-      worker(Appsignal.Transaction.Receiver, []),
-      worker(Appsignal.Transaction.ETS, []),
+      worker(Appsignal.Transaction.Receiver, [], restart: :permanent),
+      worker(Appsignal.Transaction.ETS, [], restart: :permanent),
       worker(Appsignal.Probes, [])
     ]
 
