@@ -76,6 +76,7 @@ defmodule Appsignal.Mixfile do
   defp test?(:test), do: true
   defp test?(:test_phoenix), do: true
   defp test?(:test_no_nif), do: true
+  defp test?(:bench), do: true
   defp test?(_), do: false
 
   defp deps do
@@ -94,6 +95,7 @@ defmodule Appsignal.Mixfile do
       end
 
     [
+      {:benchee, "~> 1.0", only: :bench},
       {:hackney, "~> 1.6"},
       {:poison, poison_version},
       {:decorator, "~> 1.2.3"},

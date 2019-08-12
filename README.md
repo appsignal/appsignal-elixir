@@ -77,6 +77,12 @@ the `MIX_ENV` environment variable.
     # because the NIF is not active, but should run without failures.
     $ MIX_ENV=test_no_nif mix test
 
+### Benchmarking
+
+This package uses benchee to benchmark code. To run the benchmarker:
+
+    $ MIX_ENV=bench mix run bench/<file>.exs
+
 ### Branches and versions
 
 The `master` branch corresponds to the current release of the
