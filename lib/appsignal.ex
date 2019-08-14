@@ -39,7 +39,8 @@ defmodule Appsignal do
     add_report_handler()
 
     children = [
-      worker(Appsignal.TransactionRegistry, []),
+      worker(Appsignal.Transaction.Receiver, []),
+      worker(Appsignal.Transaction.ETS, []),
       worker(Appsignal.Probes, [])
     ]
 
