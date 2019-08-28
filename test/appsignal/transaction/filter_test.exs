@@ -6,7 +6,7 @@ defmodule Appsignal.Transaction.FilterTest do
   import AppsignalTest.Utils
 
   defmodule SomeStruct do
-    defstruct foo: 1
+    defstruct foo: 1, password: nil
   end
 
   describe "get_filter_parameters/0" do
@@ -212,16 +212,11 @@ defmodule Appsignal.Transaction.FilterTest do
                %{"foo" => "bar", "list" => [%{"password" => "[FILTERED]"}]}
     end
 
-    test "does not filter structs" do
-      values = %{"foo" => "bar", "file" => %SomeStruct{}}
+    test "when a list has a struct with secret" do
+      values = %{"foo" => "bar", "list" => [%SomeStruct{password: "should_not_show"}]}
 
       assert MapFilter.filter_values(values, ["password"]) ==
-               %{"foo" => "bar", "file" => %SomeStruct{}}
-
-      values = %{"foo" => "bar", "file" => %{__struct__: "s"}}
-
-      assert MapFilter.filter_values(values, ["password"]) ==
-               %{"foo" => "bar", "file" => %{:__struct__ => "s"}}
+               %{"foo" => "bar", "list" => [%SomeStruct{password: "[FILTERED]"}]}
     end
 
     test "does not fail on atomic keys" do
