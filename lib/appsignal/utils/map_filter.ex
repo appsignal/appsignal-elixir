@@ -32,25 +32,32 @@ defmodule Appsignal.Utils.MapFilter do
     Application.get_env(:appsignal, :config)[:filter_session_data] || []
   end
 
-  defp discard_values(%{__struct__: mod} = struct, _params) when is_atom(mod) do
-    struct
+  defp discard_values(list, filter_keys) when is_list(list) do
+    discard_values(list, filter_keys, [])
   end
 
-  defp discard_values(%{} = map, params) do
-    Enum.into(map, %{}, fn {k, v} ->
-      if (is_binary(k) or is_atom(k)) and String.contains?(to_string(k), params) do
-        {k, "[FILTERED]"}
-      else
-        {k, discard_values(v, params)}
-      end
-    end)
+  defp discard_values(map, filter_keys) when is_map(map) do
+    map
+    |> Map.to_list()
+    |> discard_values(filter_keys, [])
+    |> Enum.into(%{})
   end
 
-  defp discard_values([_ | _] = list, params) do
-    Enum.map(list, &discard_values(&1, params))
+  defp discard_values(value, _filter_keys), do: value
+
+  defp discard_values([{key, value} | tail], filter_keys, acc) do
+    if (is_binary(key) or is_atom(key)) and to_string(key) in filter_keys do
+      discard_values(tail, filter_keys, [{key, "[FILTERED]"} | acc])
+    else
+      discard_values(tail, filter_keys, [{key, discard_values(value, filter_keys)} | acc])
+    end
   end
 
-  defp discard_values(other, _params), do: other
+  defp discard_values([value | tail], filter_keys, acc) do
+    discard_values(tail, filter_keys, [discard_values(value, filter_keys) | acc])
+  end
+
+  defp discard_values([], _filter_keys, acc), do: acc
 
   defp keep_values(%{__struct__: mod}, _params) when is_atom(mod), do: "[FILTERED]"
 
