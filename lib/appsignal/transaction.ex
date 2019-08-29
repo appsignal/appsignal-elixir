@@ -89,7 +89,7 @@ defmodule Appsignal.Transaction do
     @spec to_map(Appsignal.Transaction.t()) :: map()
     def to_map(transaction) do
       {:ok, json} = Nif.transaction_to_json(transaction.resource)
-      Json.decode!(json)
+      Appsignal.Json.decode!(json)
     end
   end
 

@@ -1,4 +1,4 @@
-defmodule Json do
+defmodule Appsignal.Json do
   if(!Code.ensure_loaded?(Jason) && Code.ensure_loaded?(Poison)) do
     @json Poison
   else
