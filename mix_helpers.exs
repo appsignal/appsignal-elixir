@@ -497,53 +497,67 @@ defmodule Mix.Appsignal.Helper do
     # Write nothing if no download details are recorded in the report
   end
 
-  if(Code.ensure_loaded?(Jason)) do
-    defp json_encoder do
-      {:ok, Jason}
-    end
-  else
-    if(Code.ensure_loaded?(Poison)) do
+  cond do
+    Code.ensure_loaded?(Jason) ->
+      defp json_encoder, do: {:ok, Jason}
+
+    Code.ensure_loaded?(Poison) ->
+      defp json_encoder, do: {:ok, Poison}
+
+    true ->
       defp json_encoder do
-        {:ok, Poison}
+        {:error,
+         """
+         No JSON encoder found. Please add jason to your list of dependencies in mix.exs:
+
+             def deps do
+               [
+                 {:appsignal, "~> 1.0"},
+                 {:jason, "~> 1.1"}
+               ]
+             end
+         """}
       end
-    else
-      defp json_encoder do
-        :error
-      end
+  end
+
+  defp encode_report_file(report) do
+    case json_encoder() do
+      {:ok, encoder} -> encoder.encode(report)
+      {:error, reason} -> {:error, reason}
     end
   end
 
   defp write_report_file(file, report) do
-    case json_encoder() do
-      {:ok, encoder} ->
-        case encoder.encoder(report) do
-          {:ok, body} ->
-            File.mkdir_p!(priv_dir())
+    case encode_report_file(report) do
+      {:ok, body} ->
+        File.mkdir_p!(priv_dir())
 
-            filename = "#{file}.report"
+        filename = "#{file}.report"
 
-            case File.open(priv_path(filename), [:write]) do
-              {:ok, file} ->
-                result = IO.binwrite(file, body)
-                File.close(file)
-                result
+        case File.open(priv_path(filename), [:write]) do
+          {:ok, file} ->
+            result = IO.binwrite(file, body)
+            File.close(file)
+            result
 
-              {:error, reason} ->
-                Mix.Shell.IO.error(
-                  "Error: Could not write AppSignal report file '#{file}'.\n#{reason}"
-                )
+          {:error, reason} ->
+            Mix.Shell.IO.error("""
+            Error: Could not write AppSignal installation report file (#{filename}).
 
-                {:error, reason}
-            end
+            #{reason}
+            """)
 
-          {:error, error} ->
-            Mix.Shell.IO.error(
-              "Error: Could not encode AppSignal report file '#{file}'.\n#{error}"
-            )
+            {:error, reason}
         end
 
-      :error ->
-        Mix.Shell.IO.error("Cannot find any Json encoders.")
+      {:error, reason} ->
+        Mix.Shell.IO.error("""
+        Error: Could not encode AppSignal installation report.
+
+        #{reason}
+        """)
+
+        {:error, reason}
     end
   end
 
