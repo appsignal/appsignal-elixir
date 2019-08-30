@@ -3,6 +3,7 @@ defmodule AppsignalTransactionTest do
   import AppsignalTest.Utils
 
   alias Appsignal.{Transaction, TransactionRegistry}
+  alias Appsignal.Transaction.Receiver
 
   test "transaction lifecycle" do
     transaction = Transaction.start("test1", :http_request)
@@ -358,10 +359,10 @@ defmodule AppsignalTransactionTest do
   describe "when the registry is not running" do
     setup do
       transaction = Transaction.start(Transaction.generate_id(), :http_request)
-      :ok = Supervisor.terminate_child(Appsignal.Supervisor, TransactionRegistry)
+      :ok = Supervisor.terminate_child(Appsignal.Supervisor, Receiver)
 
       on_exit(fn ->
-        {:ok, _} = Supervisor.restart_child(Appsignal.Supervisor, TransactionRegistry)
+        {:ok, _} = Supervisor.restart_child(Appsignal.Supervisor, Receiver)
       end)
 
       [transaction: transaction]
