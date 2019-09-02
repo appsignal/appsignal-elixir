@@ -36,6 +36,12 @@ defmodule Appsignal.Utils.MapFilter do
     discard_values(list, filter_keys, [])
   end
 
+  defp discard_values(%{__struct__: _} = struct, filter_keys) do
+    struct
+    |> Map.from_struct()
+    |> discard_values(filter_keys)
+  end
+
   defp discard_values(map, filter_keys) when is_map(map) do
     map
     |> Map.to_list()

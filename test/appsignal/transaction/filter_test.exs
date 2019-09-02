@@ -216,7 +216,7 @@ defmodule Appsignal.Transaction.FilterTest do
       values = %{"foo" => "bar", "list" => [%SomeStruct{password: "should_not_show"}]}
 
       assert MapFilter.filter_values(values, ["password"]) ==
-               %{"foo" => "bar", "list" => [%SomeStruct{password: "[FILTERED]"}]}
+               %{"foo" => "bar", "list" => [%{password: "[FILTERED]", foo: 1}]}
     end
 
     test "does not fail on atomic keys" do
@@ -243,7 +243,7 @@ defmodule Appsignal.Transaction.FilterTest do
       values = %{"foo" => "bar", "password" => "abc123", "file" => %SomeStruct{}}
 
       assert MapFilter.filter_values(values, {:keep, ["foo", "file"]}) ==
-               %{"foo" => "bar", "password" => "[FILTERED]", "file" => %SomeStruct{}}
+               %{"foo" => "bar", "password" => "[FILTERED]", "file" => %{foo: 1, password: nil}}
     end
 
     test "keeps all values under keys that are kept" do
