@@ -1,3 +1,10 @@
+# 1.10.12
+- Bump agent to v-e1c9363
+  - Better detect zombie/defunct processes on containers and consider the
+    processes dead. This should improve the appsignal-agent start behavior.
+  - Detect revision from Heroku dynos automatically when Dyno Metadata is
+    turned on.
+
 # 1.10.11
 - Bump agent to v-a718022
   - Fix container CPU runtime metrics.
