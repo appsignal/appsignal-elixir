@@ -1,3 +1,12 @@
+# 1.10.11
+- Bump agent to v-a718022
+  - Fix container CPU runtime metrics.
+    See https://github.com/appsignal/probes-rs/pull/38 for more information.
+  - Improve host metrics calculations accuracy for counter metrics.
+    See https://github.com/appsignal/probes-rs/pull/40 for more information.
+  - Support Kernel 4.18+ format of /proc/diskstats file parsing.
+    See https://github.com/appsignal/probes-rs/pull/39 for more information.
+
 # 1.10.10
 - Restore get_filter_(parameters|session_data) to patch backwards compatibility. PR #500
 
