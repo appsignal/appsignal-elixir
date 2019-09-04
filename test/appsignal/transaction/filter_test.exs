@@ -5,8 +5,8 @@ defmodule Appsignal.Transaction.FilterTest do
 
   import AppsignalTest.Utils
 
-  defmodule SomeStruct do
-    defstruct foo: 1, password: nil
+  defmodule TestStruct do
+    defstruct name: "Alice", password: "secret"
   end
 
   describe "get_filter_parameters/0" do
@@ -57,75 +57,71 @@ defmodule Appsignal.Transaction.FilterTest do
     test "uses parameter filters from the appsignal config" do
       with_config(%{filter_parameters: ["password"]}, fn ->
         Config.initialize()
-        values = %{"foo" => "bar", "password" => "should_not_show"}
+        values = %{"name" => "Alice", "password" => "secret"}
 
         assert MapFilter.filter_parameters(values) ==
-                 %{"foo" => "bar", "password" => "[FILTERED]"}
+                 %{"name" => "Alice", "password" => "[FILTERED]"}
       end)
     end
 
     test "uses parameter filters from the phoenix config" do
-      Application.put_env(:phoenix, :filter_parameters, ~w(secret1))
+      Application.put_env(:phoenix, :filter_parameters, ~w(password))
       Config.initialize()
-      values = %{"foo" => "bar", "secret1" => "super_secret"}
+      values = %{"name" => "Alice", "password" => "secret"}
 
       assert MapFilter.filter_parameters(values) ==
-               %{"foo" => "bar", "secret1" => "[FILTERED]"}
+               %{"name" => "Alice", "password" => "[FILTERED]"}
 
       Application.delete_env(:phoenix, :filter_parameters)
     end
 
     test "appsignal's parameter filters merge with Phoenix' parameter filters" do
-      Application.put_env(:phoenix, :filter_parameters, ~w(secret1))
+      Application.put_env(:phoenix, :filter_parameters, ~w(password))
 
-      with_config(%{filter_parameters: ["secret2"]}, fn ->
+      values = %{
+        "name" => "Alice",
+        "email" => "alice@example.com",
+        "password" => "secret",
+        "token" => "secret"
+      }
+
+      with_config(%{filter_parameters: ["token"]}, fn ->
         Config.initialize()
-
-        values = %{"foo" => "bar", "secret1" => "super_secret", "secret2" => "more_secret"}
-
-        assert MapFilter.filter_parameters(values) ==
-                 %{"foo" => "bar", "secret1" => "[FILTERED]", "secret2" => "[FILTERED]"}
-      end)
-
-      Application.put_env(:phoenix, :filter_parameters, {:keep, ~w(secret1 secret2 foo)})
-
-      with_config(%{filter_parameters: ["secret2"]}, fn ->
-        Config.initialize()
-
-        values = %{
-          "foo" => "bar",
-          "secret1" => "not_so_secret",
-          "secret2" => "more_secret",
-          "secret3" => "new_secret"
-        }
 
         assert MapFilter.filter_parameters(values) ==
                  %{
-                   "foo" => "bar",
-                   "secret1" => "not_so_secret",
-                   "secret2" => "[FILTERED]",
-                   "secret3" => "[FILTERED]"
+                   "name" => "Alice",
+                   "email" => "alice@example.com",
+                   "password" => "[FILTERED]",
+                   "token" => "[FILTERED]"
                  }
       end)
 
-      Application.put_env(:phoenix, :filter_parameters, ~w(secret1))
+      Application.put_env(:phoenix, :filter_parameters, {:keep, ~w(name email)})
 
-      with_config(%{filter_parameters: {:keep, ~w(foo secret1)}}, fn ->
+      with_config(%{filter_parameters: ["email"]}, fn ->
         Config.initialize()
-
-        values = %{
-          "foo" => "bar",
-          "secret1" => "not_so_secret",
-          "secret2" => "more_secret",
-          "secret3" => "new_secret"
-        }
 
         assert MapFilter.filter_parameters(values) ==
                  %{
-                   "foo" => "bar",
-                   "secret1" => "[FILTERED]",
-                   "secret2" => "[FILTERED]",
-                   "secret3" => "[FILTERED]"
+                   "name" => "Alice",
+                   "email" => "[FILTERED]",
+                   "password" => "[FILTERED]",
+                   "token" => "[FILTERED]"
+                 }
+      end)
+
+      Application.put_env(:phoenix, :filter_parameters, ~w(email))
+
+      with_config(%{filter_parameters: {:keep, ~w(name email)}}, fn ->
+        Config.initialize()
+
+        assert MapFilter.filter_parameters(values) ==
+                 %{
+                   "name" => "Alice",
+                   "email" => "[FILTERED]",
+                   "password" => "[FILTERED]",
+                   "token" => "[FILTERED]"
                  }
       end)
 
@@ -133,45 +129,60 @@ defmodule Appsignal.Transaction.FilterTest do
     end
 
     test "uses filter parameters from the OS environment" do
-      with_env(%{"APPSIGNAL_FILTER_PARAMETERS" => "secret3,secret4"}, fn ->
+      with_env(%{"APPSIGNAL_FILTER_PARAMETERS" => "password,email"}, fn ->
         Config.initialize()
 
-        values = %{"foo" => "bar", "secret3" => "super_secret", "secret4" => "more_secret"}
+        values = %{
+          "name" => "Alice",
+          "email" => "alice@example.com",
+          "password" => "secret"
+        }
 
-        assert MapFilter.filter_parameters(values) ==
-                 %{"foo" => "bar", "secret3" => "[FILTERED]", "secret4" => "[FILTERED]"}
+        assert MapFilter.filter_parameters(values) == %{
+                 "name" => "Alice",
+                 "email" => "[FILTERED]",
+                 "password" => "[FILTERED]"
+               }
       end)
     end
 
     test "filters out all parameters when filter_parameters is not a list" do
-      with_config(%{filter_parameters: "foo"}, fn ->
+      with_config(%{filter_parameters: "name"}, fn ->
         Config.initialize()
 
-        values = %{"foo" => "bar", "secret3" => "super_secret", "secret4" => "more_secret"}
+        values = %{
+          "name" => "Alice",
+          "email" => "alice@example.com",
+          "password" => "secret"
+        }
 
         assert ExUnit.CaptureLog.capture_log(fn ->
                  assert MapFilter.filter_parameters(values) ==
                           %{
-                            "foo" => "[FILTERED]",
-                            "secret3" => "[FILTERED]",
-                            "secret4" => "[FILTERED]"
+                            "name" => "[FILTERED]",
+                            "email" => "[FILTERED]",
+                            "password" => "[FILTERED]"
                           }
                end) =~ "An error occured while merging parameter filters."
       end)
     end
 
     test "filters out all parameters when filter_parameters is a :keep-tuple with a value that's not a list" do
-      with_config(%{filter_parameters: {:keep, "foo"}}, fn ->
+      with_config(%{filter_parameters: {:keep, "name"}}, fn ->
         Config.initialize()
 
-        values = %{"foo" => "bar", "secret3" => "super_secret", "secret4" => "more_secret"}
+        values = %{
+          "name" => "Alice",
+          "email" => "alice@example.com",
+          "password" => "secret"
+        }
 
         assert ExUnit.CaptureLog.capture_log(fn ->
                  assert MapFilter.filter_parameters(values) ==
                           %{
-                            "foo" => "[FILTERED]",
-                            "secret3" => "[FILTERED]",
-                            "secret4" => "[FILTERED]"
+                            "name" => "[FILTERED]",
+                            "email" => "[FILTERED]",
+                            "password" => "[FILTERED]"
                           }
                end) =~ "An error occured while merging parameter filters."
       end)
@@ -180,89 +191,108 @@ defmodule Appsignal.Transaction.FilterTest do
 
   describe "filter_session_data/1" do
     test "uses session data filters from the appsignal config" do
-      with_config(%{filter_session_data: ["secret"]}, fn ->
+      with_config(%{filter_session_data: ["password"]}, fn ->
         Config.initialize()
-        values = %{"foo" => "bar", "secret" => "should_not_show"}
 
-        assert MapFilter.filter_session_data(values) ==
-                 %{"foo" => "bar", "secret" => "[FILTERED]"}
+        values = %{
+          "name" => "Alice",
+          "password" => "secret"
+        }
+
+        assert MapFilter.filter_session_data(values) == %{
+                 "name" => "Alice",
+                 "password" => "[FILTERED]"
+               }
       end)
     end
   end
 
   describe "filter_values/2 with discard strategy" do
     test "in top level map" do
-      values = %{"foo" => "bar", "password" => "should_not_show"}
+      values = %{
+        "name" => "Alice",
+        "password" => "secret"
+      }
 
-      assert MapFilter.filter_values(values, ["password"]) ==
-               %{"foo" => "bar", "password" => "[FILTERED]"}
+      assert MapFilter.filter_values(values, ["password"]) == %{
+               "name" => "Alice",
+               "password" => "[FILTERED]"
+             }
     end
 
     test "when a map has secret key" do
-      values = %{"foo" => "bar", "map" => %{"password" => "should_not_show"}}
+      values = %{"map" => %{"password" => "secret"}}
 
       assert MapFilter.filter_values(values, ["password"]) ==
-               %{"foo" => "bar", "map" => %{"password" => "[FILTERED]"}}
+               %{"map" => %{"password" => "[FILTERED]"}}
     end
 
     test "when a list has a map with secret" do
-      values = %{"foo" => "bar", "list" => [%{"password" => "should_not_show"}]}
+      values = %{"list" => [%{"password" => "secret"}]}
 
       assert MapFilter.filter_values(values, ["password"]) ==
-               %{"foo" => "bar", "list" => [%{"password" => "[FILTERED]"}]}
+               %{"list" => [%{"password" => "[FILTERED]"}]}
     end
 
     test "when a list has a struct with secret" do
-      values = %{"foo" => "bar", "list" => [%SomeStruct{password: "should_not_show"}]}
+      values = %{"list" => [%TestStruct{password: "secret"}]}
 
       assert MapFilter.filter_values(values, ["password"]) ==
-               %{"foo" => "bar", "list" => [%{password: "[FILTERED]", foo: 1}]}
+               %{"list" => [%{password: "[FILTERED]", name: "Alice"}]}
     end
 
-    test "does not fail on atomic keys" do
-      values = %{:foo => "bar", "password" => "should_not_show"}
+    test "filters atom keys" do
+      values = %{:name => "Alice", "password" => "secret"}
 
       assert MapFilter.filter_values(values, ["password"]) ==
-               %{:foo => "bar", "password" => "[FILTERED]"}
+               %{:name => "Alice", "password" => "[FILTERED]"}
 
-      assert MapFilter.filter_values(%{"foo" => "bar", password: "should_not_show"}, [
+      assert MapFilter.filter_values(%{"name" => "Alice", password: "secret"}, [
                "password"
-             ]) == %{"foo" => "bar", password: "[FILTERED]"}
+             ]) == %{"name" => "Alice", password: "[FILTERED]"}
     end
   end
 
   describe "filter_values/2 with keep strategy" do
     test "discards values not specified in params" do
-      values = %{"foo" => "bar", "password" => "abc123", "file" => %SomeStruct{}}
+      values = %{"name" => "Alice", "password" => "secret", "user" => %TestStruct{}}
 
       assert MapFilter.filter_values(values, {:keep, []}) ==
                %{
-                 "foo" => "[FILTERED]",
+                 "name" => "[FILTERED]",
                  "password" => "[FILTERED]",
-                 "file" => %{foo: "[FILTERED]", password: "[FILTERED]"}
+                 "user" => %{name: "[FILTERED]", password: "[FILTERED]"}
                }
     end
 
     test "keeps values that are specified in params" do
-      values = %{"foo" => "bar", "password" => "abc123", "file" => %SomeStruct{}}
+      values = %{
+        "name" => "Alice",
+        "password" => "secret",
+        "user" => %TestStruct{name: "Alice", password: "secret"}
+      }
 
-      assert MapFilter.filter_values(values, {:keep, ["foo", "file"]}) ==
-               %{"foo" => "bar", "password" => "[FILTERED]", "file" => %{foo: 1, password: nil}}
+      assert MapFilter.filter_values(values, {:keep, ["name", "user"]}) ==
+               %{
+                 "name" => "Alice",
+                 "password" => "[FILTERED]",
+                 "user" => %{name: "Alice", password: "secret"}
+               }
     end
 
     test "keeps all values under keys that are kept" do
-      values = %{"foo" => %{"bar" => 1, "baz" => 2}}
+      values = %{"user" => %{"name" => "Alice", "email" => "alice@example.com"}}
 
-      assert MapFilter.filter_values(values, {:keep, ["foo"]}) ==
-               %{"foo" => %{"bar" => 1, "baz" => 2}}
+      assert MapFilter.filter_values(values, {:keep, ["name"]}) ==
+               %{"user" => %{"name" => "Alice", "email" => "[FILTERED]"}}
     end
 
     test "only filters leaf values" do
-      values = %{"foo" => %{"bar" => 1, "baz" => 2}, "ids" => [1, 2]}
+      values = %{"user" => %{"name" => "Alice", "email" => "alice@example.com"}, "ids" => [1, 2]}
 
       assert MapFilter.filter_values(values, {:keep, []}) ==
                %{
-                 "foo" => %{"bar" => "[FILTERED]", "baz" => "[FILTERED]"},
+                 "user" => %{"name" => "[FILTERED]", "email" => "[FILTERED]"},
                  "ids" => ["[FILTERED]", "[FILTERED]"]
                }
     end
