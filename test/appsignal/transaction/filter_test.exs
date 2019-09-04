@@ -236,7 +236,11 @@ defmodule Appsignal.Transaction.FilterTest do
       values = %{"foo" => "bar", "password" => "abc123", "file" => %SomeStruct{}}
 
       assert MapFilter.filter_values(values, {:keep, []}) ==
-               %{"foo" => "[FILTERED]", "password" => "[FILTERED]", "file" => "[FILTERED]"}
+               %{
+                 "foo" => "[FILTERED]",
+                 "password" => "[FILTERED]",
+                 "file" => %{foo: "[FILTERED]", password: "[FILTERED]"}
+               }
     end
 
     test "keeps values that are specified in params" do

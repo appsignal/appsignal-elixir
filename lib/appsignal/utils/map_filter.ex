@@ -65,23 +65,38 @@ defmodule Appsignal.Utils.MapFilter do
 
   defp discard_values([], _filter_keys, acc), do: acc
 
-  defp keep_values(%{__struct__: mod}, _params) when is_atom(mod), do: "[FILTERED]"
-
-  defp keep_values(%{} = map, params) do
-    Enum.into(map, %{}, fn {k, v} ->
-      if (is_binary(k) or is_atom(k)) and to_string(k) in params do
-        {k, discard_values(v, [])}
-      else
-        {k, keep_values(v, params)}
-      end
-    end)
+  defp keep_values(list, keep_keys) when is_list(list) do
+    keep_values(list, keep_keys, [])
   end
 
-  defp keep_values([_ | _] = list, params) do
-    Enum.map(list, &keep_values(&1, params))
+  defp keep_values(%{__struct__: _} = struct, keep_keys) do
+    struct
+    |> Map.from_struct()
+    |> keep_values(keep_keys)
   end
 
-  defp keep_values(_other, _params), do: "[FILTERED]"
+  defp keep_values(map, keep_keys) when is_map(map) do
+    map
+    |> Map.to_list()
+    |> keep_values(keep_keys, [])
+    |> Enum.into(%{})
+  end
+
+  defp keep_values(_value, _keep_keys), do: "[FILTERED]"
+
+  defp keep_values([{key, value} | tail], keep_keys, acc) do
+    if (is_binary(key) or is_atom(key)) and to_string(key) in keep_keys do
+      keep_values(tail, keep_keys, [{key, discard_values(value, [])} | acc])
+    else
+      keep_values(tail, keep_keys, [{key, keep_values(value, keep_keys)} | acc])
+    end
+  end
+
+  defp keep_values([value | tail], keep_keys, acc) do
+    keep_values(tail, keep_keys, [keep_values(value, keep_keys) | acc])
+  end
+
+  defp keep_values([], _keep_keys, acc), do: acc
 
   defp merge_filters(appsignal, phoenix) when is_list(appsignal) and is_list(phoenix) do
     appsignal ++ phoenix
