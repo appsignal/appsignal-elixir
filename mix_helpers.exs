@@ -497,8 +497,38 @@ defmodule Mix.Appsignal.Helper do
     # Write nothing if no download details are recorded in the report
   end
 
+  cond do
+    Code.ensure_loaded?(Jason) ->
+      defp json_encoder, do: {:ok, Jason}
+
+    Code.ensure_loaded?(Poison) ->
+      defp json_encoder, do: {:ok, Poison}
+
+    true ->
+      defp json_encoder do
+        {:error,
+         """
+         No JSON encoder found. Please add jason to your list of dependencies in mix.exs:
+
+             def deps do
+               [
+                 {:appsignal, "~> 1.0"},
+                 {:jason, "~> 1.1"}
+               ]
+             end
+         """}
+      end
+  end
+
+  defp encode_report_file(report) do
+    case json_encoder() do
+      {:ok, encoder} -> encoder.encode(report)
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
   defp write_report_file(file, report) do
-    case Poison.encode(report) do
+    case encode_report_file(report) do
       {:ok, body} ->
         File.mkdir_p!(priv_dir())
 
@@ -511,15 +541,23 @@ defmodule Mix.Appsignal.Helper do
             result
 
           {:error, reason} ->
-            Mix.Shell.IO.error(
-              "Error: Could not write AppSignal report file '#{file}'.\n#{reason}"
-            )
+            Mix.Shell.IO.error("""
+            Error: Could not write AppSignal installation report file (#{filename}).
+
+            #{reason}
+            """)
 
             {:error, reason}
         end
 
-      {:error, error} ->
-        Mix.Shell.IO.error("Error: Could not encode AppSignal report file '#{file}'.\n#{error}")
+      {:error, reason} ->
+        Mix.Shell.IO.error("""
+        Error: Could not encode AppSignal installation report.
+
+        #{reason}
+        """)
+
+        {:error, reason}
     end
   end
 
