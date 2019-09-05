@@ -1,3 +1,10 @@
+# 1.11.0-beta.1
+- Convert time units for all Ecto callbacks. PR #481
+- Deactivate AppSignal when not active. PR #478
+- Fix FreeBSD compilation. PR #484
+- Extract ETS and Receiver logic from TransactionRegistry. PR #505
+- Add support for both Jason and Poison. PR #506
+
 # 1.10.12
 - Bump agent to v-e1c9363
   - Better detect zombie/defunct processes on containers and consider the
