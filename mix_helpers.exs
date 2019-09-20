@@ -188,7 +188,7 @@ defmodule Mix.Appsignal.Helper do
   end
 
   defp download_options do
-    options = [ssl_options: [cacertfile: priv_path("cacert.pem"), ciphers: ciphers()]]
+    options = [ssl_options: [cacertfile: priv_path("cacert.pem"), ciphers: ciphers(), honor_cipher_order: :undefined]]
 
     case check_proxy() do
       nil ->
@@ -197,13 +197,6 @@ defmodule Mix.Appsignal.Helper do
       {var, url} ->
         Mix.shell().info("- using proxy from #{var} (#{url})")
         options ++ [proxy: url]
-    end
-
-    case System.otp_release() do
-      "22" ->
-        options ++ [honor_cipher_order: :undefined]
-      _ ->
-        options
     end
   end
 
