@@ -198,6 +198,13 @@ defmodule Mix.Appsignal.Helper do
         Mix.shell().info("- using proxy from #{var} (#{url})")
         options ++ [proxy: url]
     end
+
+    case System.otp_release() do
+      "22" ->
+        options ++ [honor_cipher_order: :undefined]
+      _ ->
+        options
+    end
   end
 
   defp extract_package(filename) do
