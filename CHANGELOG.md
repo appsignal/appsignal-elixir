@@ -1,3 +1,6 @@
+# 1.10.13
+- OTP 22.1 hackney workaround for honor_cipher_order. PR #516
+
 # 1.10.12
 - Bump agent to v-e1c9363
   - Better detect zombie/defunct processes on containers and consider the
