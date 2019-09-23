@@ -20,7 +20,7 @@ defmodule Appsignal.TransmitterTest do
              _url,
              _headers,
              _body,
-             [ssl_options: [cacertfile: ^path, ciphers: _, honor_cipher_order: :undefined]]
+             [ssl_options: [cacertfile: ^path, ciphers: _]]
            ] = Transmitter.request(:get, "https://example.com")
   end
 
@@ -33,7 +33,7 @@ defmodule Appsignal.TransmitterTest do
                _url,
                _headers,
                _body,
-               [ssl_options: [cacertfile: ^path, ciphers: _, honor_cipher_order: :undefined]]
+               [ssl_options: [cacertfile: ^path, ciphers: _]]
              ] = Transmitter.request(:get, "https://example.com")
     end)
   end

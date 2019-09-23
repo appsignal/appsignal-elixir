@@ -18,8 +18,7 @@ defmodule Appsignal.Transmitter do
            [
              ssl_options: [
                cacertfile: ca_file_path,
-               ciphers: ciphers(),
-               honor_cipher_order: :undefined
+               ciphers: ciphers()
              ]
            ]}
 

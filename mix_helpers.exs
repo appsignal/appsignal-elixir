@@ -190,8 +190,7 @@ defmodule Mix.Appsignal.Helper do
     options = [
       ssl_options: [
         cacertfile: priv_path("cacert.pem"),
-        ciphers: ciphers(),
-        honor_cipher_order: :undefined
+        ciphers: ciphers()
       ]
     ]
 
