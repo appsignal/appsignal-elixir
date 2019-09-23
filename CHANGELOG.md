@@ -1,5 +1,7 @@
 # 1.10.13
 - OTP 22.1 hackney workaround for honor_cipher_order. PR #516
+- Bump agent to v-690f4b8 - commit 5245f919d975135d553a89b019c421e1fe27edd3
+  - Validate transmission_interval option.
 
 # 1.10.12
 - Bump agent to v-e1c9363
