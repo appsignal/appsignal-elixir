@@ -243,7 +243,7 @@ defmodule Mix.Appsignal.Helper do
       System.cmd(make(), make_args(to_string(Mix.env())), [stderr_to_stdout: true])
     rescue
       reason ->
-        {inspect(reason), 1}
+        {serialize_report_value(reason), 1}
     end
   end
 
@@ -513,12 +513,12 @@ defmodule Mix.Appsignal.Helper do
             result
 
           {:error, reason} ->
-            Mix.Shell.IO.error("Error: Could not write AppSignal report file '#{file}'.\n#{reason}")
+            Mix.Shell.IO.error("Error: Could not write AppSignal report file '#{file}'.\n#{serialize_report_value(reason)}")
             {:error, reason}
         end
 
       {:error, error} ->
-        Mix.Shell.IO.error("Error: Could not encode AppSignal report file '#{file}'.\n#{error}")
+        Mix.Shell.IO.error("Error: Could not encode AppSignal report file '#{file}'.\n#{serialize_report_value(error)}")
     end
   end
 
@@ -546,9 +546,9 @@ defmodule Mix.Appsignal.Helper do
   defp merge_report(report, %{}), do: report
 
   defp abort_installation(reason, report) do
-    report = merge_report(report, %{result: %{status: :failed, message: reason}})
+    report = merge_report(report, %{result: %{status: :failed, message: serialize_report_value(reason)}})
     write_report(report)
-    Mix.Shell.IO.error("AppSignal installation failed: #{reason}")
+    Mix.Shell.IO.error("AppSignal installation failed: #{serialize_report_value(reason)}")
   end
 
   defp priv_dir do
@@ -602,4 +602,7 @@ defmodule Mix.Appsignal.Helper do
         nil
     end
   end
+
+  defp serialize_report_value(value) when is_binary(value), do: (value)
+  defp serialize_report_value(value), do: inspect(value)
 end
