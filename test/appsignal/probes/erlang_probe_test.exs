@@ -111,6 +111,26 @@ defmodule Appsignal.Probes.ErlangProbeTest do
                }
              ] = FakeAppsignal.get_gauges(fake_appsignal, "erlang_memory")
     end
+
+    test "gathers run queue lengths", %{fake_appsignal: fake_appsignal} do
+      assert [
+               %{
+                 key: "total_run_queue_lengths",
+                 tags: %{type: "io"},
+                 value: _
+               },
+               %{
+                 key: "total_run_queue_lengths",
+                 tags: %{type: "cpu"},
+                 value: _
+               },
+               %{
+                 key: "total_run_queue_lengths",
+                 tags: %{type: "total"},
+                 value: _
+               }
+             ] = FakeAppsignal.get_gauges(fake_appsignal, "total_run_queue_lengths")
+    end
   end
 
   describe "call/0, with a configured hostname" do
