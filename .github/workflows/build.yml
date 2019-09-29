@@ -10,7 +10,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-18.04
-    container: elixir:${{ elixir }}
+    container: "elixir:${{ elixir }}"
     strategy:
       fail-fast: false
       matrix:
