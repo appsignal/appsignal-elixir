@@ -1,0 +1,23 @@
+name: Elixir
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+  pull_request: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+    container: elixir:${{ elixir }}
+    strategy:
+      fail-fast: false
+      matrix:
+        container:
+        - "1.9.1"
+        - "1.9.1-alpine"
+    steps:
+    - uses: actions/checkout@v1
+    - name: "Mix test"
+      run: scripts/test
