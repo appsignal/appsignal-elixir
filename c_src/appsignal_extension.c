@@ -12,6 +12,7 @@
 
 static ErlNifResourceType *appsignal_transaction_type = NULL;
 static ErlNifResourceType *appsignal_data_type = NULL;
+static ErlNifResourceType *appsignal_span_type = NULL;
 
 typedef struct {
   appsignal_transaction_t *transaction;
@@ -20,6 +21,10 @@ typedef struct {
 typedef struct {
   appsignal_data_t *data;
 } data_ptr;
+
+typedef struct {
+  appsignal_span_t *span;
+} span_ptr;
 
 static ERL_NIF_TERM
 make_ok_tuple(ErlNifEnv *env, ERL_NIF_TERM value)
@@ -494,6 +499,11 @@ static void destruct_appsignal_data(ErlNifEnv *UNUSED(env), void *arg) {
   appsignal_free_data(ptr->data);
 }
 
+static void destruct_appsignal_span(ErlNifEnv *UNUSED(env), void *arg) {
+  span_ptr *ptr = (span_ptr *)arg;
+  appsignal_free_span(ptr->span);
+}
+
 static ERL_NIF_TERM _set_gauge(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     ErlNifBinary key;
@@ -848,20 +858,67 @@ static ERL_NIF_TERM _loaded(ErlNifEnv *env, int UNUSED(argc), const ERL_NIF_TERM
   return enif_make_atom(env, "true");
 }
 
+static ERL_NIF_TERM _create_root_span(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
+  ErlNifBinary name;
+  span_ptr *ptr;
+  ERL_NIF_TERM span_ref;
+
+  if (argc != 1) {
+    return enif_make_badarg(env);
+  }
+  if(!enif_inspect_iolist_as_binary(env, argv[0], &name)) {
+    return enif_make_badarg(env);
+  }
+
+  ptr = enif_alloc_resource(appsignal_span_type, sizeof(span_ptr));
+  if(!ptr)
+    return make_error_tuple(env, "no_memory");
+
+  ptr->span = appsignal_create_root_span(make_appsignal_string(name));
+
+  span_ref = enif_make_resource(env, ptr);
+  enif_release_resource(ptr);
+
+  return make_ok_tuple(env, span_ref);
+}
+
 static ERL_NIF_TERM _trace_id(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
-  return make_ok_tuple(env, enif_make_string(env, "trace321", ERL_NIF_LATIN1));
+  span_ptr *ptr;
+  appsignal_string_t id;
+
+  if (argc != 1) {
+    return enif_make_badarg(env);
+  }
+  if (!enif_get_resource(env, argv[0], appsignal_span_type, (void**) &ptr)) {
+    return enif_make_badarg(env);
+  }
+
+  id = appsignal_trace_id(ptr->span);
+  return make_ok_tuple(env, make_elixir_string(env,id));
 }
 
 static ERL_NIF_TERM _span_id(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
-  return make_ok_tuple(env, enif_make_string(env, "span321", ERL_NIF_LATIN1));
+  span_ptr *ptr;
+  appsignal_string_t id;
+
+  if (argc != 1) {
+    return enif_make_badarg(env);
+  }
+  if (!enif_get_resource(env, argv[0], appsignal_span_type, (void**) &ptr)) {
+    return enif_make_badarg(env);
+  }
+
+  id = appsignal_span_id(ptr->span);
+  return make_ok_tuple(env, make_elixir_string(env,id));
 }
 
 static int on_load(ErlNifEnv* env, void** UNUSED(priv), ERL_NIF_TERM UNUSED(info))
 {
     ErlNifResourceType *transaction_resource_type;
     ErlNifResourceType *data_resource_type;
+    ErlNifResourceType *span_resource_type;
 
     transaction_resource_type = enif_open_resource_type(
         env,
@@ -881,11 +938,21 @@ static int on_load(ErlNifEnv* env, void** UNUSED(priv), ERL_NIF_TERM UNUSED(info
         NULL
     );
 
+    span_resource_type = enif_open_resource_type(
+        env,
+        "appsignal_nif",
+        "appsignal_span_type",
+        destruct_appsignal_span,
+        ERL_NIF_RT_CREATE,
+        NULL
+    );
+
     if (!transaction_resource_type || !data_resource_type) {
       return -1;
     }
     appsignal_transaction_type = transaction_resource_type;
     appsignal_data_type = data_resource_type;
+    appsignal_span_type = span_resource_type;
 
     return 0;
 }
@@ -945,7 +1012,8 @@ static ErlNifFunc nif_funcs[] =
     {"_data_to_json", 1, _data_to_json, 0},
 #endif
     {"_loaded", 0, _loaded, 0},
-    {"_trace_id", 1, _trace_id, 0}
+    {"_create_root_span", 1, _create_root_span, 0},
+    {"_trace_id", 1, _trace_id, 0},
     {"_span_id", 1, _span_id, 0}
 };
 
