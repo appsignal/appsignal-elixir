@@ -13,19 +13,23 @@ if Appsignal.plug?() do
                      )
 
         def call(conn, opts) do
-          transaction =
-            @transaction.generate_id()
-            |> @transaction.start(:http_request)
-            |> Appsignal.Plug.try_set_action(conn)
+          if Appsignal.Config.active?() do
+            transaction =
+              @transaction.generate_id()
+              |> @transaction.start(:http_request)
+              |> Appsignal.Plug.try_set_action(conn)
 
-          conn = Plug.Conn.put_private(conn, :appsignal_transaction, transaction)
+            conn = Plug.Conn.put_private(conn, :appsignal_transaction, transaction)
 
-          try do
-            super(conn, opts)
-          catch
-            kind, reason -> Appsignal.Plug.handle_error(conn, kind, reason, System.stacktrace())
+            try do
+              super(conn, opts)
+            catch
+              kind, reason -> Appsignal.Plug.handle_error(conn, kind, reason, System.stacktrace())
+            else
+              conn -> Appsignal.Plug.finish_with_conn(transaction, conn)
+            end
           else
-            conn -> Appsignal.Plug.finish_with_conn(transaction, conn)
+            super(conn, opts)
           end
         end
 

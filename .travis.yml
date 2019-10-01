@@ -1,3 +1,7 @@
+branches:
+  only:
+  - master
+  - develop
 language: elixir
 elixir:
   - 1.3.4
@@ -5,32 +9,43 @@ elixir:
   - 1.5.3
   - 1.6.6
   - 1.7.4
-  - 1.8.1
+  - 1.8.2
+  - 1.9.1
 otp_release:
-  - 21.2
+  - 22.0
+  - 21.3
   - 20.3.8
   - 19.3
 matrix:
   exclude:
-    - otp_release: 21.2
-      elixir: 1.3.4
-    - otp_release: 21.2
-      elixir: 1.4.5
-    - otp_release: 21.2
+    - otp_release: 22.0
+      elixir: 1.6.6
+    - otp_release: 22.0
       elixir: 1.5.3
+    - otp_release: 22.0
+      elixir: 1.4.5
+    - otp_release: 22.0
+      elixir: 1.3.4
+
+    - otp_release: 21.3
+      elixir: 1.5.3
+    - otp_release: 21.3
+      elixir: 1.4.5
+    - otp_release: 21.3
+      elixir: 1.3.4
+
     - otp_release: 20.3.8
       elixir: 1.3.4
+
     - otp_release: 19.3
-      elixir: 1.8.1
+      elixir: 1.8.2
+
+    - otp_release: 19.3
+      elixir: 1.9.1
   include:
     - otp_release: 18.3
       elixir: 1.5.3
   allow_failures:
     - otp_release: 18.3
 script:
-  - MIX_ENV=test scripts/run_formatter
-  - MIX_ENV=test scripts/check_warnings
-  - MIX_ENV=test scripts/credo
-  - MIX_ENV=test mix test
-  - MIX_ENV=test_phoenix mix test
-  - (cd priv && rm -r *appsignal* *.report) && MIX_ENV=test_no_nif mix test
+  - scripts/test

@@ -13,7 +13,7 @@ defmodule Appsignal.Mixfile do
   def project do
     [
       app: :appsignal,
-      version: "1.10.13",
+      version: "1.11.0",
       name: "AppSignal",
       description: description(),
       package: package(),
@@ -57,7 +57,7 @@ defmodule Appsignal.Mixfile do
   end
 
   def application do
-    [mod: {Appsignal, []}, applications: [:logger, :decorator, :hackney, :poison]]
+    [mod: {Appsignal, []}, applications: [:logger, :decorator, :hackney]]
   end
 
   defp compilers(:test_phoenix), do: [:phoenix] ++ compilers(:prod)
@@ -76,6 +76,7 @@ defmodule Appsignal.Mixfile do
   defp test?(:test), do: true
   defp test?(:test_phoenix), do: true
   defp test?(:test_no_nif), do: true
+  defp test?(:bench), do: true
   defp test?(_), do: false
 
   defp deps do
@@ -94,8 +95,10 @@ defmodule Appsignal.Mixfile do
       end
 
     [
+      {:benchee, "~> 1.0", only: :bench},
       {:hackney, "~> 1.6"},
-      {:poison, poison_version},
+      {:jason, "~> 1.0", optional: true},
+      {:poison, poison_version, optional: true},
       {:decorator, "~> 1.2.3"},
       {:plug, ">= 1.1.0", optional: true},
       {:phoenix, phoenix_version, optional: true, only: [:prod, :test_phoenix, :dev]},

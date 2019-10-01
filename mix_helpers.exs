@@ -97,6 +97,7 @@ defmodule Mix.Appsignal.Helper do
 
   defp download_and_compile(arch_config, report) do
     report = merge_report(report, %{download: %{checksum: "unverified"}})
+
     case download_package(arch_config, report) do
       {:ok, {filename, report}} ->
         case verify_download_package(filename, arch_config[:checksum], report) do
@@ -240,7 +241,7 @@ defmodule Mix.Appsignal.Helper do
 
   defp run_make do
     try do
-      System.cmd(make(), make_args(to_string(Mix.env())), [stderr_to_stdout: true])
+      System.cmd(make(), make_args(to_string(Mix.env())), stderr_to_stdout: true)
     rescue
       reason ->
         {serialize_report_value(reason), 1}
@@ -475,6 +476,7 @@ defmodule Mix.Appsignal.Helper do
         library_type: library_type
       }
     } = report
+
     %{
       download: %{
         download_url: download_url,
@@ -493,6 +495,7 @@ defmodule Mix.Appsignal.Helper do
         checksum: checksum || "unverified"
       }
     }
+
     write_report_file("download", download_report)
   end
 
@@ -500,12 +503,43 @@ defmodule Mix.Appsignal.Helper do
     # Write nothing if no download details are recorded in the report
   end
 
+  cond do
+    Code.ensure_loaded?(Jason) ->
+      defp json_encoder, do: {:ok, Jason}
+
+    Code.ensure_loaded?(Poison) ->
+      defp json_encoder, do: {:ok, Poison}
+
+    true ->
+      defp json_encoder do
+        {:error,
+         """
+         No JSON encoder found. Please add jason to your list of dependencies in mix.exs:
+
+             def deps do
+               [
+                 {:appsignal, "~> 1.0"},
+                 {:jason, "~> 1.1"}
+               ]
+             end
+         """}
+      end
+  end
+
+  defp encode_report_file(report) do
+    case json_encoder() do
+      {:ok, encoder} -> encoder.encode(report)
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
   defp write_report_file(file, report) do
-    case Poison.encode(report) do
+    case encode_report_file(report) do
       {:ok, body} ->
         File.mkdir_p!(priv_dir())
 
         filename = "#{file}.report"
+
         case File.open(priv_path(filename), [:write]) do
           {:ok, file} ->
             result = IO.binwrite(file, body)
@@ -513,12 +547,23 @@ defmodule Mix.Appsignal.Helper do
             result
 
           {:error, reason} ->
-            Mix.Shell.IO.error("Error: Could not write AppSignal report file '#{file}'.\n#{serialize_report_value(reason)}")
+            Mix.Shell.IO.error("""
+            Error: Could not write AppSignal installation report file (#{filename}).
+
+            #{serialize_report_value(reason)}
+            """)
+
             {:error, reason}
         end
 
-      {:error, error} ->
-        Mix.Shell.IO.error("Error: Could not encode AppSignal report file '#{file}'.\n#{serialize_report_value(error)}")
+      {:error, reason} ->
+        Mix.Shell.IO.error("""
+        Error: Could not encode AppSignal installation report.
+
+        #{serialize_report_value(reason)}
+        """)
+
+        {:error, reason}
     end
   end
 
@@ -546,7 +591,9 @@ defmodule Mix.Appsignal.Helper do
   defp merge_report(report, %{}), do: report
 
   defp abort_installation(reason, report) do
-    report = merge_report(report, %{result: %{status: :failed, message: serialize_report_value(reason)}})
+    report =
+      merge_report(report, %{result: %{status: :failed, message: serialize_report_value(reason)}})
+
     write_report(report)
     Mix.Shell.IO.error("AppSignal installation failed: #{serialize_report_value(reason)}")
   end
@@ -603,6 +650,6 @@ defmodule Mix.Appsignal.Helper do
     end
   end
 
-  defp serialize_report_value(value) when is_binary(value), do: (value)
+  defp serialize_report_value(value) when is_binary(value), do: value
   defp serialize_report_value(value), do: inspect(value)
 end

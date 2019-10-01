@@ -56,8 +56,9 @@ defmodule OverridingAppSignalPlug do
 end
 
 defmodule Appsignal.PlugTest do
-  use ExUnit.Case
   alias Appsignal.FakeTransaction
+  import AppsignalTest.Utils
+  use ExUnit.Case
 
   setup do
     {:ok, fake_transaction} = FakeTransaction.start_link()
@@ -203,8 +204,9 @@ defmodule Appsignal.PlugTest do
     end
 
     test "ignores the process' pid" do
-      :timer.sleep(1)
-      assert Appsignal.TransactionRegistry.lookup(self()) == :ignored
+      until(fn ->
+        assert Appsignal.TransactionRegistry.lookup(self()) == :ignored
+      end)
     end
   end
 
@@ -313,6 +315,25 @@ defmodule Appsignal.PlugTest do
 
       assert name == ":timeout"
       assert message =~ ~r({:timeout, {Task, :await, \[%Task{owner: ...)
+    end
+  end
+
+  describe "when AppSignal is disabled" do
+    setup do
+      conn =
+        AppsignalTest.Utils.with_config(%{active: false}, fn ->
+          OverridingAppSignalPlug.call(%Plug.Conn{}, %{})
+        end)
+
+      [conn: conn]
+    end
+
+    test "does not start a transaction", %{fake_transaction: fake_transaction} do
+      refute FakeTransaction.started_transaction?(fake_transaction)
+    end
+
+    test "calls super and returns the conn", %{conn: conn} do
+      assert conn.assigns[:called?]
     end
   end
 

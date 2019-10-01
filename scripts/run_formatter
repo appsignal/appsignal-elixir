@@ -1,9 +1,0 @@
-#!/usr/bin/env sh
-
-version() {
-  echo "$@" | awk -F. '{ printf("%d%03d%03d%03d\n", $1,$2,$3,$4); }';
-}
-
-if [ $(version $TRAVIS_ELIXIR_VERSION) -ge $(version "1.8.0") ]; then
-  mix format --dry-run --check-formatted
-fi

@@ -7,6 +7,7 @@ defmodule Appsignal.Probes.ErlangProbe do
     scheduler_metrics()
     process_metrics()
     memory_metrics()
+    run_queue_lengths()
   end
 
   defp io_metrics do
@@ -37,6 +38,29 @@ defmodule Appsignal.Probes.ErlangProbe do
     Enum.each(memory, fn {key, value} ->
       set_gauge("erlang_memory", Kernel.div(value, 1024), %{type: to_string(key)})
     end)
+  end
+
+  defp run_queue_lengths do
+    {otp_release, _} = Integer.parse(System.otp_release())
+
+    total =
+      if otp_release < 20 do
+        Enum.sum(:erlang.statistics(:run_queue_lengths))
+      else
+        :erlang.statistics(:total_run_queue_lengths_all)
+      end
+
+    cpu =
+      if otp_release < 20 do
+        # Before OTP 20.0 there were only normal run queues.
+        total
+      else
+        :erlang.statistics(:total_run_queue_lengths)
+      end
+
+    set_gauge("total_run_queue_lengths", total, %{type: "total"})
+    set_gauge("total_run_queue_lengths", cpu, %{type: "cpu"})
+    set_gauge("total_run_queue_lengths", total - cpu, %{type: "io"})
   end
 
   defp set_gauge(name, value, tags) do

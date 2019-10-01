@@ -3,8 +3,16 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
   Covers most cases of Appsignal.ErrorHandler.match_event/1
   """
 
-  use ExUnit.Case
   alias Appsignal.FakeTransaction
+  import AppsignalTest.Utils
+  use ExUnit.Case
+
+  # Monitoring processes can be delayed by a little bit since
+  # `Process.monitor/1` which is called internally is asynchronous and can take
+  # a tiny bit to actually start monitoring. Instead, we sleep for a little bit
+  # to allow the Receiver to establish a monitor before testing for errors. This
+  # is not as big of an issue in OTP 19 & 20, but more prevalent in OTP 21 & 22.
+  @process_monitor_delay 10
 
   defmodule CrashingGenServer do
     use GenServer
@@ -43,9 +51,13 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
       exit(:crash_proc_lib_spawn)
     end)
 
-    :timer.sleep(20)
+    Process.sleep(@process_monitor_delay)
 
-    [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
+    [{_, reason, message, stacktrace}] =
+      until(fn ->
+        assert [{_, _, _, _}] = FakeTransaction.errors(fake_transaction)
+      end)
+
     assert reason == ":crash_proc_lib_spawn"
     assert message =~ ~r{^(E|e)rlang error: :crash_proc_lib_spawn$}
 
@@ -60,9 +72,13 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
       :erlang.error(:crash_proc_lib_error)
     end)
 
-    :timer.sleep(20)
+    Process.sleep(@process_monitor_delay)
 
-    [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
+    [{_, reason, message, stacktrace}] =
+      until(fn ->
+        assert [{_, _, _, _}] = FakeTransaction.errors(fake_transaction)
+      end)
+
     assert reason == ":crash_proc_lib_error"
     assert message =~ ~r{^(E|e)rlang error: :crash_proc_lib_error$}
 
@@ -77,9 +93,13 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
       Float.ceil(1)
     end)
 
-    :timer.sleep(20)
+    Process.sleep(@process_monitor_delay)
 
-    [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
+    [{_, reason, message, stacktrace}] =
+      until(fn ->
+        assert [{_, _, _, _}] = FakeTransaction.errors(fake_transaction)
+      end)
+
     assert reason == "FunctionClauseError"
     assert message == "no function clause matching in Float.ceil/2"
 
@@ -92,9 +112,13 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
   test "proc_lib.spawn + badmatch error", %{fake_transaction: fake_transaction} do
     :proc_lib.spawn(fn -> throw({:badmatch, [1, 2, 3]}) end)
 
-    :timer.sleep(20)
+    Process.sleep(@process_monitor_delay)
 
-    [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
+    [{_, reason, message, stacktrace}] =
+      until(fn ->
+        assert [{_, _, _, _}] = FakeTransaction.errors(fake_transaction)
+      end)
+
     assert reason == "MatchError"
     assert message == "no match of right hand side value: [1, 2, 3]"
 
@@ -107,9 +131,13 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
   test "Crashing GenServer with throw", %{fake_transaction: fake_transaction} do
     CrashingGenServer.start(:throw)
 
-    :timer.sleep(20)
+    Process.sleep(@process_monitor_delay)
 
-    [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
+    [{_, reason, message, stacktrace}] =
+      until(fn ->
+        assert [{_, _, _, _}] = FakeTransaction.errors(fake_transaction)
+      end)
+
     assert reason == ":bad_return_value"
     assert message =~ ~r{^(E|e)rlang error: {:bad_return_valu...}
 
@@ -129,9 +157,13 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
   test "Crashing GenServer with exit", %{fake_transaction: fake_transaction} do
     CrashingGenServer.start(:exit)
 
-    :timer.sleep(20)
+    Process.sleep(@process_monitor_delay)
 
-    [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
+    [{_, reason, message, stacktrace}] =
+      until(fn ->
+        assert [{_, _, _, _}] = FakeTransaction.errors(fake_transaction)
+      end)
+
     assert reason == ":crashed_gen_server_exit"
     assert message =~ ~r{^(E|e)rlang error: :crashed_gen_server_exit$}
 
@@ -153,9 +185,13 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
   test "Crashing GenServer with function error", %{fake_transaction: fake_transaction} do
     CrashingGenServer.start(:function_error)
 
-    :timer.sleep(100)
+    Process.sleep(@process_monitor_delay)
 
-    [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
+    [{_, reason, message, stacktrace}] =
+      until(fn ->
+        assert [{_, _, _, _}] = FakeTransaction.errors(fake_transaction)
+      end)
+
     assert reason == "FunctionClauseError"
     assert message == "no function clause matching in Float.ceil/2"
 
@@ -183,9 +219,13 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
       Float.ceil(1)
     end)
 
-    :timer.sleep(20)
+    Process.sleep(@process_monitor_delay)
 
-    [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
+    [{_, reason, message, stacktrace}] =
+      until(fn ->
+        assert [{_, _, _, _}] = FakeTransaction.errors(fake_transaction)
+      end)
+
     assert reason == "FunctionClauseError"
     assert message == "no function clause matching in Float.ceil/2"
 
@@ -204,9 +244,13 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
       |> Task.await(1)
     end)
 
-    :timer.sleep(100)
+    Process.sleep(@process_monitor_delay)
 
-    [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
+    [{_, reason, message, stacktrace}] =
+      until(fn ->
+        assert [{_, _, _, _}] = FakeTransaction.errors(fake_transaction)
+      end)
+
     assert reason == ":timeout"
     assert message =~ ~r{^(E|e)rlang error: {:timeout, {Task, :await, \[%Tas...}
 
@@ -226,9 +270,13 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
       end
     end)
 
-    :timer.sleep(20)
+    Process.sleep(@process_monitor_delay)
 
-    [{_, reason, message, stacktrace}] = FakeTransaction.errors(fake_transaction)
+    [{_, reason, message, stacktrace}] =
+      until(fn ->
+        assert [{_, _, _, _}] = FakeTransaction.errors(fake_transaction)
+      end)
+
     assert reason == "UndefinedFunctionError"
     assert message == "undefined function"
 

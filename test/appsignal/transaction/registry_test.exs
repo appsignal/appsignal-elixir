@@ -1,7 +1,10 @@
 defmodule Appsignal.Transaction.RegistryTest do
-  use ExUnit.Case, async: false
+  use ExUnit.Case
+
+  import AppsignalTest.Utils
 
   alias Appsignal.{Transaction, TransactionRegistry}
+  alias Appsignal.Transaction.Receiver
 
   test "lookup/1 returns nil after process has ended" do
     transaction = %Transaction{id: Transaction.generate_id()}
@@ -67,7 +70,7 @@ defmodule Appsignal.Transaction.RegistryTest do
 
     test "can't ignore a pid" do
       pid = :c.pid(0, 992, 0)
-      {:error, :no_registry} = TransactionRegistry.ignore(pid)
+      {:error, :no_receiver} = TransactionRegistry.ignore(pid)
       refute TransactionRegistry.lookup(pid) == :ignored
     end
   end
@@ -80,11 +83,29 @@ defmodule Appsignal.Transaction.RegistryTest do
     end
   end
 
+  describe "register/1, when disabled" do
+    test "returns nil" do
+      with_config(%{active: false}, fn ->
+        assert nil == TransactionRegistry.register(%Transaction{})
+      end)
+    end
+  end
+
   describe "lookup/1, when the registry is not running" do
     setup [:register_transaction, :terminate_registry]
 
     test "does not find an existing transaction by pid" do
       assert TransactionRegistry.lookup(self()) == nil
+    end
+  end
+
+  describe "lookup/1, when disabled" do
+    setup :register_transaction
+
+    test "returns nil" do
+      with_config(%{active: false}, fn ->
+        assert nil == TransactionRegistry.register(%Transaction{})
+      end)
     end
   end
 
@@ -110,7 +131,7 @@ defmodule Appsignal.Transaction.RegistryTest do
     setup [:register_transaction, :terminate_registry]
 
     test "returns no registry error", %{transaction: transaction} do
-      assert TransactionRegistry.remove_transaction(transaction) == {:error, :no_registry}
+      assert TransactionRegistry.remove_transaction(transaction) == {:error, :no_receiver}
     end
   end
 
@@ -129,10 +150,10 @@ defmodule Appsignal.Transaction.RegistryTest do
   end
 
   defp terminate_registry(_) do
-    :ok = Supervisor.terminate_child(Appsignal.Supervisor, TransactionRegistry)
+    :ok = Supervisor.terminate_child(Appsignal.Supervisor, Receiver)
 
     on_exit(fn ->
-      {:ok, _} = Supervisor.restart_child(Appsignal.Supervisor, TransactionRegistry)
+      {:ok, _} = Supervisor.restart_child(Appsignal.Supervisor, Receiver)
     end)
   end
 

@@ -1,7 +1,7 @@
 defmodule Appsignal.Probes.ErlangProbeTest do
-  use ExUnit.Case, async: false
-  import AppsignalTest.Utils
   alias Appsignal.{FakeAppsignal, Probes.ErlangProbe}
+  import AppsignalTest.Utils
+  use ExUnit.Case
 
   setup do
     # Ensure the default probe is unregistered, that way we only record metrics
@@ -110,6 +110,26 @@ defmodule Appsignal.Probes.ErlangProbeTest do
                  value: _
                }
              ] = FakeAppsignal.get_gauges(fake_appsignal, "erlang_memory")
+    end
+
+    test "gathers run queue lengths", %{fake_appsignal: fake_appsignal} do
+      assert [
+               %{
+                 key: "total_run_queue_lengths",
+                 tags: %{type: "io"},
+                 value: _
+               },
+               %{
+                 key: "total_run_queue_lengths",
+                 tags: %{type: "cpu"},
+                 value: _
+               },
+               %{
+                 key: "total_run_queue_lengths",
+                 tags: %{type: "total"},
+                 value: _
+               }
+             ] = FakeAppsignal.get_gauges(fake_appsignal, "total_run_queue_lengths")
     end
   end
 

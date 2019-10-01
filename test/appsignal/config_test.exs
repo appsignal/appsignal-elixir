@@ -148,72 +148,68 @@ defmodule Appsignal.ConfigTest do
 
   describe "using the application environment" do
     test "active" do
-      assert with_config(%{active: true}, &init_config/0) ==
-               default_configuration() |> Map.put(:active, true)
+      assert %{active: true} = with_config(%{active: true}, &init_config/0)
     end
 
     test "ca_file_path" do
-      assert with_config(%{ca_file_path: "/foo/bar/baz.ca"}, &init_config/0) ==
-               default_configuration() |> Map.put(:ca_file_path, "/foo/bar/baz.ca")
+      assert %{ca_file_path: "/foo/bar/baz.ca"} =
+               with_config(%{ca_file_path: "/foo/bar/baz.ca"}, &init_config/0)
     end
 
     test "debug" do
-      assert with_config(%{debug: true}, &init_config/0) ==
-               default_configuration() |> Map.put(:debug, true)
+      assert %{debug: true} = with_config(%{debug: true}, &init_config/0)
     end
 
     test "dns_servers" do
-      assert with_config(%{dns_servers: ["8.8.8.8", "8.8.4.4"]}, &init_config/0) ==
-               default_configuration() |> Map.put(:dns_servers, ["8.8.8.8", "8.8.4.4"])
+      assert %{dns_servers: ["8.8.8.8", "8.8.4.4"]} =
+               with_config(%{dns_servers: ["8.8.8.8", "8.8.4.4"]}, &init_config/0)
     end
 
     test "enable_host_metrics" do
-      assert with_config(%{enable_host_metrics: false}, &init_config/0) ==
-               default_configuration() |> Map.put(:enable_host_metrics, false)
+      assert %{enable_host_metrics: false} =
+               with_config(%{enable_host_metrics: false}, &init_config/0)
     end
 
     test "enable_minutely_probes" do
-      assert with_config(%{enable_minutely_probes: false}, &init_config/0) ==
-               default_configuration() |> Map.put(:enable_minutely_probes, false)
+      assert %{enable_minutely_probes: false} =
+               with_config(%{enable_minutely_probes: false}, &init_config/0)
     end
 
     test "endpoint" do
-      assert with_config(%{endpoint: "https://push.staging.lol"}, &init_config/0) ==
-               default_configuration() |> Map.put(:endpoint, "https://push.staging.lol")
+      assert %{endpoint: "https://push.staging.lol"} =
+               with_config(%{endpoint: "https://push.staging.lol"}, &init_config/0)
     end
 
     test "env" do
-      assert with_config(%{env: :prod}, &init_config/0) ==
-               default_configuration() |> Map.put(:env, :prod)
+      assert %{env: :prod} = with_config(%{env: :prod}, &init_config/0)
     end
 
     test "filter_parameters" do
-      assert with_config(%{filter_parameters: ~w(password secret)}, &init_config/0) ==
-               default_configuration() |> Map.put(:filter_parameters, ~w(password secret))
+      assert %{filter_parameters: ~w(password secret)} =
+               with_config(%{filter_parameters: ~w(password secret)}, &init_config/0)
     end
 
     test "filter_session_data" do
-      assert with_config(%{filter_session_data: ~w(accept connection)}, &init_config/0) ==
-               default_configuration() |> Map.put(:filter_session_data, ~w(accept connection))
+      assert %{filter_session_data: ~w(accept connection)} =
+               with_config(%{filter_session_data: ~w(accept connection)}, &init_config/0)
     end
 
     test "frontend_error_catching_path" do
-      assert with_config(
-               %{frontend_error_catching_path: "/appsignal_error_catcher"},
-               &init_config/0
-             ) ==
-               default_configuration()
-               |> Map.put(:frontend_error_catching_path, "/appsignal_error_catcher")
+      assert %{frontend_error_catching_path: "/appsignal_error_catcher"} =
+               with_config(
+                 %{frontend_error_catching_path: "/appsignal_error_catcher"},
+                 &init_config/0
+               )
     end
 
     test "hostname" do
-      assert with_config(%{hostname: "Bobs-MBP.example.com"}, &init_config/0) ==
-               default_configuration() |> Map.put(:hostname, "Bobs-MBP.example.com")
+      assert %{hostname: "Bobs-MBP.example.com"} =
+               with_config(%{hostname: "Bobs-MBP.example.com"}, &init_config/0)
     end
 
     test "http_proxy" do
-      assert with_config(%{http_proxy: "http://10.10.10.10:8888"}, &init_config/0) ==
-               default_configuration() |> Map.put(:http_proxy, "http://10.10.10.10:8888")
+      assert %{http_proxy: "http://10.10.10.10:8888"} =
+               with_config(%{http_proxy: "http://10.10.10.10:8888"}, &init_config/0)
     end
 
     test "ignore_actions" do
@@ -222,86 +218,82 @@ defmodule Appsignal.ConfigTest do
           ExampleApplication.PageController#also_ignored
       )
 
-      assert with_config(%{ignore_actions: actions}, &init_config/0) ==
-               default_configuration() |> Map.put(:ignore_actions, actions)
+      assert %{ignore_actions: ^actions} = with_config(%{ignore_actions: actions}, &init_config/0)
     end
 
     test "ignore_errors" do
       errors = ~w(VerySpecificError AnotherError)
 
-      assert with_config(%{ignore_errors: errors}, &init_config/0) ==
-               default_configuration() |> Map.put(:ignore_errors, errors)
+      assert %{ignore_errors: ^errors} = with_config(%{ignore_errors: errors}, &init_config/0)
     end
 
     test "ignore_namespaces" do
       namespaces = ~w(admin private_namespace)
 
-      assert with_config(%{ignore_namespaces: namespaces}, &init_config/0) ==
-               default_configuration() |> Map.put(:ignore_namespaces, namespaces)
+      assert %{ignore_namespaces: ^namespaces} =
+               with_config(%{ignore_namespaces: namespaces}, &init_config/0)
     end
 
     test "log" do
-      assert with_config(%{log: "stdout"}, &init_config/0) ==
-               default_configuration() |> Map.put(:log, "stdout")
+      assert %{log: "stdout"} = with_config(%{log: "stdout"}, &init_config/0)
     end
 
     test "log_path" do
       log_path = File.cwd!()
 
-      assert with_config(%{log_path: log_path}, &init_config/0) ==
-               default_configuration() |> Map.put(:log_path, log_path)
+      assert %{log_path: ^log_path} = with_config(%{log_path: log_path}, &init_config/0)
     end
 
     test "name" do
-      assert with_config(%{name: "AppSignal test suite app"}, &init_config/0) ==
-               default_configuration() |> Map.put(:name, "AppSignal test suite app")
+      assert %{name: "AppSignal test suite app"} =
+               with_config(%{name: "AppSignal test suite app"}, &init_config/0)
     end
 
     test "push_api_key" do
-      assert with_config(%{push_api_key: "00000000-0000-0000-0000-000000000000"}, &init_config/0) ==
-               valid_configuration() |> Map.put(:active, false)
+      assert %{active: false} =
+               with_config(
+                 %{push_api_key: "00000000-0000-0000-0000-000000000000"},
+                 &init_config/0
+               )
     end
 
     test "running_in_container" do
-      assert with_config(%{running_in_container: true}, &init_config/0) ==
-               default_configuration() |> Map.put(:running_in_container, true)
+      assert %{running_in_container: true} =
+               with_config(%{running_in_container: true}, &init_config/0)
     end
 
     test "send_params" do
-      assert with_config(%{send_params: true}, &init_config/0) ==
-               default_configuration() |> Map.put(:send_params, true)
+      assert %{send_params: true} = with_config(%{send_params: true}, &init_config/0)
     end
 
     test "skip_session_data" do
-      assert with_config(%{skip_session_data: true}, &init_config/0) ==
-               default_configuration() |> Map.put(:skip_session_data, true)
+      assert %{skip_session_data: true} = with_config(%{skip_session_data: true}, &init_config/0)
     end
 
     test "files_world_accessible" do
-      assert with_config(%{files_world_accessible: true}, &init_config/0) ==
-               default_configuration() |> Map.put(:files_world_accessible, true)
+      assert %{files_world_accessible: true} =
+               with_config(%{files_world_accessible: true}, &init_config/0)
     end
 
     test "working_dir_path" do
       without_logger(fn ->
-        assert with_config(%{working_dir_path: "/tmp/appsignal"}, &init_config/0) ==
-                 default_configuration() |> Map.put(:working_dir_path, "/tmp/appsignal")
+        assert %{working_dir_path: "/tmp/appsignal"} =
+                 with_config(%{working_dir_path: "/tmp/appsignal"}, &init_config/0)
       end)
     end
 
     test "working_directory_path" do
-      assert with_config(%{working_directory_path: "/tmp/appsignal"}, &init_config/0) ==
-               default_configuration() |> Map.put(:working_directory_path, "/tmp/appsignal")
+      assert %{working_directory_path: "/tmp/appsignal"} =
+               with_config(%{working_directory_path: "/tmp/appsignal"}, &init_config/0)
     end
 
     test "request_headers" do
-      assert with_config(%{request_headers: ~w(accept accept-charset)}, &init_config/0) ==
-               default_configuration() |> Map.put(:request_headers, ~w(accept accept-charset))
+      assert %{request_headers: ~w(accept accept-charset)} =
+               with_config(%{request_headers: ~w(accept accept-charset)}, &init_config/0)
     end
 
     test "revision" do
-      assert with_config(%{revision: "03bd9e"}, &init_config/0) ==
-               default_configuration() |> Map.put(:revision, "03bd9e")
+      assert %{revision: "03bd9e"} = with_config(%{revision: "03bd9e"}, &init_config/0)
     end
   end
 

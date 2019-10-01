@@ -121,7 +121,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
   defp do_fetch_installation_report(file) do
     case File.read(Path.join([:code.priv_dir(:appsignal), "#{file}.report"])) do
       {:ok, raw_report} ->
-        case Poison.decode(raw_report) do
+        case Appsignal.Json.decode(raw_report) do
           {:ok, report} ->
             {:ok, report}
 

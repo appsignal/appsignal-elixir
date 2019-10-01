@@ -1,6 +1,6 @@
 defmodule AppsignalHelpersTest do
-  use ExUnit.Case, async: false
   alias Appsignal.{FakeTransaction, Instrumentation.Helpers}
+  use ExUnit.Case
 
   setup do
     {:ok, fake_transaction} = FakeTransaction.start_link()
@@ -39,11 +39,7 @@ defmodule AppsignalHelpersTest do
   end
 
   defp call_instrument(arg) do
-    r =
-      Helpers.instrument(arg, "name", "title", fn ->
-        :timer.sleep(100)
-        :result
-      end)
+    r = Helpers.instrument(arg, "name", "title", fn -> :result end)
 
     assert :result == r
   end

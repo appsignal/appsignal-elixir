@@ -3,6 +3,7 @@ defmodule AppsignalTransactionTest do
   import AppsignalTest.Utils
 
   alias Appsignal.{Transaction, TransactionRegistry}
+  alias Appsignal.Transaction.Receiver
 
   test "transaction lifecycle" do
     transaction = Transaction.start("test1", :http_request)
@@ -58,7 +59,7 @@ defmodule AppsignalTransactionTest do
                1
              )
 
-    assert ^transaction = Transaction.set_error("Error", "error message", stacktrace)
+    assert ^transaction = Transaction.set_error("Error", "error message", stacktrace())
     assert ^transaction = Transaction.set_sample_data("key", %{user_id: 1})
     assert ^transaction = Transaction.set_action("GET:/")
     assert ^transaction = Transaction.set_queue_start(1000)
@@ -309,6 +310,18 @@ defmodule AppsignalTransactionTest do
     end
   end
 
+  describe "creating a transaction when disabled" do
+    setup do
+      with_config(%{active: false}, fn ->
+        [transaction: Transaction.create("123", :http_request)]
+      end)
+    end
+
+    test "does not create a transaction", %{transaction: transaction} do
+      assert transaction == nil
+    end
+  end
+
   describe "starting a transaction" do
     setup do
       id = Transaction.generate_id()
@@ -346,10 +359,10 @@ defmodule AppsignalTransactionTest do
   describe "when the registry is not running" do
     setup do
       transaction = Transaction.start(Transaction.generate_id(), :http_request)
-      :ok = Supervisor.terminate_child(Appsignal.Supervisor, TransactionRegistry)
+      :ok = Supervisor.terminate_child(Appsignal.Supervisor, Receiver)
 
       on_exit(fn ->
-        {:ok, _} = Supervisor.restart_child(Appsignal.Supervisor, TransactionRegistry)
+        {:ok, _} = Supervisor.restart_child(Appsignal.Supervisor, Receiver)
       end)
 
       [transaction: transaction]

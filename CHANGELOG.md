@@ -1,3 +1,12 @@
+# 1.11.0
+- Convert time units for all Ecto callbacks. PR #481
+- Deactivate AppSignal when not active. PR #478
+- Fix FreeBSD compilation. PR #484
+- Extract ETS and Receiver logic from TransactionRegistry. PR #505
+- Add support for both Jason and Poison. PR #506
+- Add Erlang Run Queue length metric. PR #492
+- Filter structs in MapFilter. PR #507
+
 # 1.10.13
 - OTP 22.1 hackney workaround for honor_cipher_order. PR #516
 - Bump agent to v-690f4b8 - commit 5245f919d975135d553a89b019c421e1fe27edd3
