@@ -1,3 +1,6 @@
+# 1.11.1
+- Don't match on return from `Transaction.complete/1`. PR #521
+
 # 1.11.0
 - Convert time units for all Ecto callbacks. PR #481
 - Deactivate AppSignal when not active. PR #478
