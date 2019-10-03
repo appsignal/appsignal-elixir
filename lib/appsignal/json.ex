@@ -12,9 +12,9 @@ defmodule Appsignal.Json.MissingEncoderError do
 end
 
 defmodule Appsignal.Json.MissingEncoder do
-  def encode(input), do: {:error, :no_json_encoder}
+  def encode(_input), do: {:error, :no_json_encoder}
   def encode!(_input), do: raise(%Appsignal.Json.MissingEncoderError{})
-  def decode(input), do: {:error, :no_json_encoder}
+  def decode(_input), do: {:error, :no_json_encoder}
   def decode!(_input), do: raise(%Appsignal.Json.MissingEncoderError{})
 end
 
