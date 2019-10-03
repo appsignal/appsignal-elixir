@@ -485,13 +485,17 @@ static ERL_NIF_TERM _complete(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[
 }
 
 static void destruct_appsignal_transaction(ErlNifEnv *UNUSED(env), void *arg) {
-  transaction_ptr *ptr = (transaction_ptr *)arg;
-  appsignal_free_transaction(ptr->transaction);
+  if (arg) {
+    transaction_ptr *ptr = (transaction_ptr *)arg;
+    appsignal_free_transaction(ptr->transaction);
+  }
 }
 
 static void destruct_appsignal_data(ErlNifEnv *UNUSED(env), void *arg) {
-  data_ptr *ptr = (data_ptr *)arg;
-  appsignal_free_data(ptr->data);
+  if (arg) {
+    data_ptr *ptr = (data_ptr *)arg;
+    appsignal_free_data(ptr->data);
+  }
 }
 
 static ERL_NIF_TERM _set_gauge(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
