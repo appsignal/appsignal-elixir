@@ -110,7 +110,7 @@ if Appsignal.phoenix?() do
         )
       end
 
-      :ok = @transaction.complete(transaction)
+      @transaction.complete(transaction)
 
       result
     end

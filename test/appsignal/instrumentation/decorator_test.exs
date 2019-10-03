@@ -140,4 +140,14 @@ defmodule Appsignal.Instrumentation.DecoratorsTest do
              }
            ] = FakeTransaction.finished_events(fake_transaction)
   end
+
+  describe "when AppSignal is disabled" do
+    test "does not start a transaction", %{fake_transaction: fake_transaction} do
+      AppsignalTest.Utils.with_config(%{active: false}, fn ->
+        UsingAppsignalDecorators.transaction()
+      end)
+
+      refute FakeTransaction.started_transaction?(fake_transaction)
+    end
+  end
 end

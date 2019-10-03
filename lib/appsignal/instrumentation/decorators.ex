@@ -97,7 +97,7 @@ defmodule Appsignal.Instrumentation.Decorators do
     result = body.()
 
     @transaction.finish(transaction)
-    :ok = @transaction.complete(transaction)
+    @transaction.complete(transaction)
 
     result
   end
