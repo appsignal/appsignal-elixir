@@ -104,4 +104,17 @@ defmodule Appsignal.Phoenix.ChannelTest do
       assert "[FILTERED]" == FakeTransaction.sample_data(fake_transaction)["params"]["password"]
     end)
   end
+
+  describe "when AppSignal is disabled" do
+    test "does not start a transaction", %{
+      socket: socket,
+      fake_transaction: fake_transaction
+    } do
+      AppsignalTest.Utils.with_config(%{active: false}, fn ->
+        InstrumentedPhoenixChannel.handle_in("instrumented", %{"body" => "Hello, world!"}, socket)
+      end)
+
+      refute FakeTransaction.started_transaction?(fake_transaction)
+    end
+  end
 end

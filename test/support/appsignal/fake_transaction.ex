@@ -152,6 +152,8 @@ defmodule Appsignal.FakeTransaction do
 
   def complete, do: self() |> Appsignal.TransactionRegistry.lookup() |> complete
 
+  def complete(nil), do: nil
+
   def complete(transaction) do
     Agent.update(__MODULE__, fn state ->
       {_, new_state} =
@@ -189,19 +191,23 @@ defmodule Appsignal.FakeTransaction do
   end
 
   def start(id, namespace) do
-    Agent.update(__MODULE__, fn state ->
-      {_, new_state} =
-        Map.get_and_update(state, :started_transactions, fn current ->
-          case current do
-            nil -> {nil, [{id, namespace}]}
-            _ -> {current, [{id, namespace} | current]}
-          end
-        end)
+    if(Appsignal.Config.active?()) do
+      Agent.update(__MODULE__, fn state ->
+        {_, new_state} =
+          Map.get_and_update(state, :started_transactions, fn current ->
+            case current do
+              nil -> {nil, [{id, namespace}]}
+              _ -> {current, [{id, namespace} | current]}
+            end
+          end)
 
-      new_state
-    end)
+        new_state
+      end)
 
-    Appsignal.Transaction.start(id, namespace)
+      Appsignal.Transaction.start(id, namespace)
+    else
+      nil
+    end
   end
 
   def generate_id, do: "123"
