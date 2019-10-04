@@ -151,6 +151,7 @@ static ERL_NIF_TERM _start_transaction(ErlNifEnv* env, int argc, const ERL_NIF_T
         make_appsignal_string(namespace),
         0
     );
+    printf("start_transaction: %d\n", ptr);
 
     transaction_ref = enif_make_resource(env, ptr);
     enif_release_resource(ptr);
@@ -485,6 +486,8 @@ static ERL_NIF_TERM _complete(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[
 }
 
 static void destruct_appsignal_transaction(ErlNifEnv *UNUSED(env), void *arg) {
+  printf("destruct_appsignal_transaction: %d\n", arg);
+
   if (arg) {
     transaction_ptr *ptr = (transaction_ptr *)arg;
     appsignal_free_transaction(ptr->transaction);
