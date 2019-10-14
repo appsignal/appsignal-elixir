@@ -77,10 +77,8 @@ if Appsignal.plug?() do
     end
 
     def try_set_action(transaction, conn) do
-      case Appsignal.Plug.extract_action(conn) do
-        nil -> transaction
-        action -> @transaction.set_action(transaction, action)
-      end
+      action = Appsignal.Plug.extract_action(conn)
+      @transaction.set_action(transaction, action)
     end
 
     @doc false

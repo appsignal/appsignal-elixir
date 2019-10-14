@@ -300,7 +300,7 @@ defmodule Appsignal.Transaction do
   - `action`: This transactions action (`"HomepageController.show"`)
   """
   @spec set_action(Transaction.t() | any(), String.t()) :: Transaction.t() | nil
-  def set_action(%Transaction{} = transaction, action) do
+  def set_action(%Transaction{} = transaction, action) when is_binary(action) do
     :ok = Nif.set_action(transaction.resource, action)
     transaction
   end
