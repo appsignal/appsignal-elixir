@@ -16,6 +16,7 @@ defmodule Appsignal.ErrorLoggerHandlerTest do
     [fake_transaction: fake_transaction]
   end
 
+  @tag :pending
   test "handles an error report", %{fake_transaction: fake_transaction} do
     pid =
       :proc_lib.spawn(fn ->
@@ -36,6 +37,7 @@ defmodule Appsignal.ErrorLoggerHandlerTest do
     assert reason == ":error_http_request"
   end
 
+  @tag :pending
   test "does not send error reports for ignored processes", %{fake_transaction: fake_transaction} do
     :proc_lib.spawn(fn ->
       Appsignal.TransactionRegistry.ignore(self())
