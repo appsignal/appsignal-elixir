@@ -11,7 +11,7 @@ defmodule Appsignal.FakeTransaction do
 
   def start_event do
     self()
-    |> Appsignal.TransactionRegistry.lookup()
+    |> Appsignal.Transaction.lookup()
     |> start_event
   end
 
@@ -55,7 +55,7 @@ defmodule Appsignal.FakeTransaction do
 
   def record_event(name, title, body, duration, body_format) do
     self()
-    |> Appsignal.TransactionRegistry.lookup()
+    |> Appsignal.Transaction.lookup()
     |> record_event(name, title, body, duration, body_format)
   end
 
@@ -100,7 +100,7 @@ defmodule Appsignal.FakeTransaction do
     Agent.update(__MODULE__, &Map.put(&1, :action, action))
   end
 
-  def finish, do: self() |> Appsignal.TransactionRegistry.lookup() |> finish
+  def finish, do: self() |> Appsignal.Transaction.lookup() |> finish
 
   def finish(transaction) do
     Agent.update(__MODULE__, fn state ->
@@ -150,7 +150,7 @@ defmodule Appsignal.FakeTransaction do
     transaction
   end
 
-  def complete, do: self() |> Appsignal.TransactionRegistry.lookup() |> complete
+  def complete, do: self() |> Appsignal.Transaction.lookup() |> complete
 
   def complete(nil), do: nil
 

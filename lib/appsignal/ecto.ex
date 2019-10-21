@@ -51,7 +51,7 @@ defmodule Appsignal.Ecto do
   end
 
   defp transaction do
-    Appsignal.TransactionRegistry.lookup(self())
+    Appsignal.Transaction.lookup(self())
   end
 
   defp do_handle_event(%Appsignal.Transaction{} = transaction, %{total_time: duration}, metadata) do

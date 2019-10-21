@@ -49,7 +49,7 @@ if Appsignal.phoenix?() do
     def phoenix_controller_render(:stop, _, _), do: nil
 
     defp transaction do
-      Appsignal.TransactionRegistry.lookup(self())
+      Appsignal.Transaction.lookup(self())
     end
 
     defp start_event(%Appsignal.Transaction{} = transaction, %{conn: conn} = args) do
