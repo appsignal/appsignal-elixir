@@ -4,6 +4,7 @@ defmodule Mix.Tasks.Compile.Appsignal do
   def run(_args) do
     {_, _} = Code.eval_file("mix_helpers.exs")
     Mix.Appsignal.Helper.install()
+    {:ok, []}
   end
 end
 
