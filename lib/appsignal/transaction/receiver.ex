@@ -8,6 +8,12 @@ defmodule Appsignal.Transaction.Receiver do
   alias Appsignal.Transaction.ETS
   alias Appsignal.TransactionRegistry, as: Registry
 
+  if Mix.env() in [:test, :test_phoenix, :test_no_nif] do
+    @deletion_delay 50
+  else
+    @deletion_delay 5_000
+  end
+
   def start_link do
     with {:ok, pid} <- Task.start_link(&receiver/0) do
       Process.register(pid, __MODULE__)
@@ -18,11 +24,22 @@ defmodule Appsignal.Transaction.Receiver do
   def receiver do
     receive do
       {:DOWN, _ref, :process, pid, _reason} ->
-        Process.send_after(self(), {:delete, pid}, 5000)
+        Process.send_after(self(), {:delete, pid}, @deletion_delay)
         receiver()
 
       {:delete, pid} ->
         ETS.delete(pid)
+        receiver()
+
+      {:monitor, pid} ->
+        reference = Process.monitor(pid)
+        send(pid, {:reference, reference})
+        receiver()
+
+      {:demonitor, transaction} ->
+        transaction
+        |> Registry.pids_and_monitor_references()
+        |> process_demonitor()
         receiver()
 
       _ ->
@@ -30,13 +47,15 @@ defmodule Appsignal.Transaction.Receiver do
     end
   end
 
-  def monitor(pid), do: Process.monitor(pid)
+  def monitor(pid) do
+    send(__MODULE__, {:monitor, pid})
 
-  def demonitor(transaction) do
-    transaction
-    |> Registry.pids_and_monitor_references()
-    |> process_demonitor()
+    receive do
+      {:reference, reference} -> reference
+    end
   end
+
+  def demonitor(pid), do: send(__MODULE__, {:demonitor, pid})
 
   defp process_demonitor([[_, reference] | tail]) do
     Process.demonitor(reference)
