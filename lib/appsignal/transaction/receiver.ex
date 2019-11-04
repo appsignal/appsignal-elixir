@@ -7,6 +7,7 @@ defmodule Appsignal.Transaction.Receiver do
 
   alias Appsignal.Transaction.ETS
   alias Appsignal.TransactionRegistry, as: Registry
+  require Logger
 
   if Mix.env() in [:test, :test_phoenix, :test_no_nif] do
     @deletion_delay 50
@@ -32,8 +33,19 @@ defmodule Appsignal.Transaction.Receiver do
         receiver()
 
       {:monitor, pid} ->
-        reference = Process.monitor(pid)
-        send(pid, {:reference, reference})
+        case ETS.lookup(pid) do
+          [{^pid, transaction}] ->
+            reference = Process.monitor(pid)
+            ETS.insert({pid, transaction, reference})
+
+          result ->
+            Logger.error("""
+            Tried to add monitor for unregistered PID (#{inspect(pid)}):
+
+            #{inspect(result)}.
+            """)
+        end
+
         receiver()
 
       {:demonitor, transaction} ->
@@ -47,13 +59,7 @@ defmodule Appsignal.Transaction.Receiver do
     end
   end
 
-  def monitor(pid) do
-    send(__MODULE__, {:monitor, pid})
-
-    receive do
-      {:reference, reference} -> reference
-    end
-  end
+  def monitor(pid), do: send(__MODULE__, {:monitor, pid})
 
   def demonitor(pid), do: send(__MODULE__, {:demonitor, pid})
 

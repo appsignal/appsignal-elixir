@@ -26,7 +26,8 @@ defmodule Appsignal.TransactionRegistry do
   def register(transaction) do
     if Config.active?() && receiver_alive?() do
       pid = self()
-      true = ETS.insert({pid, transaction, Receiver.monitor(pid)})
+      true = ETS.insert({pid, transaction})
+      Receiver.monitor(pid)
       :ok
     end
   end
