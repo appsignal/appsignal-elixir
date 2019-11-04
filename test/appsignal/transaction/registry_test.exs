@@ -15,13 +15,13 @@ defmodule Appsignal.Transaction.RegistryTest do
         assert transaction == TransactionRegistry.lookup(self())
       end)
 
-    :ok = wait_for_process_to_exit(pid)
+    until(fn ->
+      assert transaction == TransactionRegistry.lookup(pid)
+    end)
 
-    assert transaction == TransactionRegistry.lookup(pid)
-
-    :ok = TransactionRegistry.remove_transaction(transaction)
-
-    assert nil == TransactionRegistry.lookup(pid)
+    until(fn ->
+      assert nil == TransactionRegistry.lookup(pid)
+    end)
   end
 
   test "delete entry by transaction" do
@@ -155,15 +155,5 @@ defmodule Appsignal.Transaction.RegistryTest do
     on_exit(fn ->
       {:ok, _} = Supervisor.restart_child(Appsignal.Supervisor, Receiver)
     end)
-  end
-
-  defp wait_for_process_to_exit(pid) do
-    ref = Process.monitor(pid)
-
-    receive do
-      {:DOWN, ^ref, _, _, _} -> :ok
-    after
-      500 -> :timeout
-    end
   end
 end
