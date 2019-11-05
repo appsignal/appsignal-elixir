@@ -305,6 +305,7 @@ defmodule Appsignal.Transaction do
     transaction
   end
 
+  def set_action(%Transaction{} = transaction, _action), do: transaction
   def set_action(_transaction, _action), do: nil
 
   @doc """

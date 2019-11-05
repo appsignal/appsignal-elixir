@@ -535,7 +535,7 @@ defmodule AppsignalTransactionTest do
     end
 
     test "does not fail on a non-string action name", %{transaction: transaction} do
-      assert Transaction.set_action(transaction, nil) == nil
+      assert Transaction.set_action(transaction, nil) == transaction
     end
   end
 
