@@ -1,3 +1,7 @@
+# 1.11.2
+- Run receiver monitors in receiver process. PR #525.
+- Move action nil-check to `Appsignal.Transaction.set_action/2`. PR #523.
+
 # 1.11.1
 - Don't match on return from `Transaction.complete/1`. PR #521
 

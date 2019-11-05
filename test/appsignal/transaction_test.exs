@@ -518,9 +518,11 @@ defmodule AppsignalTransactionTest do
   end
 
   describe "set_action/2" do
-    test "returns the current transaction" do
-      transaction = Transaction.start("set_action/2", :http_request)
+    setup do
+      [transaction: Transaction.start("set_action/2", :http_request)]
+    end
 
+    test "returns the current transaction", %{transaction: transaction} do
       assert Transaction.set_action(transaction, "GET:/") == transaction
     end
 
@@ -530,6 +532,10 @@ defmodule AppsignalTransactionTest do
 
     test "returns nil for a missing process" do
       assert Transaction.set_action(nil, "GET:/") == nil
+    end
+
+    test "does not fail on a non-string action name", %{transaction: transaction} do
+      assert Transaction.set_action(transaction, nil) == nil
     end
   end
 
