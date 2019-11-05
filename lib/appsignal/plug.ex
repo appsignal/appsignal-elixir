@@ -72,7 +72,7 @@ if Appsignal.plug?() do
         @transaction.set_request_metadata(transaction, conn)
       end
 
-      :ok = @transaction.complete(transaction)
+      @transaction.complete(transaction)
       conn
     end
 
