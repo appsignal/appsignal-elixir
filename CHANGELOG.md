@@ -1,3 +1,7 @@
+# 1.11.3
+- Transaction.set_action/2 returns the Transaction on failure. commit 16e5ecbc90aece993177da7e1b2486fa477e25e8
+- Don't match on :ok on Appsignal.Plug.finish_with_conn/2. commit ebc7dd968a9bbeff3447e8f84dab181205f976ed
+
 # 1.11.2
 - Run receiver monitors in receiver process. PR #525.
 - Move action nil-check to `Appsignal.Transaction.set_action/2`. PR #523.
