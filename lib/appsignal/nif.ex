@@ -429,7 +429,7 @@ defmodule Appsignal.Nif do
     {:ok, make_ref()}
   end
 
-  def _create_child_span(trace_id, span_id, name) do
+  def _create_child_span(name, trace_id, span_id) do
     {:ok, make_ref()}
   end
 
