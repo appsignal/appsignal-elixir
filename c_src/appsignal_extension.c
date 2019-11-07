@@ -946,6 +946,22 @@ static ERL_NIF_TERM _set_span_attribute_string(ErlNifEnv* env, int argc, const E
     return enif_make_atom(env, "ok");
 }
 
+static ERL_NIF_TERM _close_span(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    span_ptr *ptr;
+
+    if (argc != 1) {
+      return enif_make_badarg(env);
+    }
+    if(!enif_get_resource(env, argv[0], appsignal_span_type, (void**) &ptr)) {
+      return enif_make_badarg(env);
+    }
+
+    appsignal_close_span(ptr->span);
+
+    return enif_make_atom(env, "ok");
+}
+
 static ERL_NIF_TERM _trace_id(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
   span_ptr *ptr;
@@ -1079,6 +1095,7 @@ static ErlNifFunc nif_funcs[] =
     {"_create_root_span", 1, _create_root_span, 0},
     {"_create_child_span", 3, _create_child_span, 0},
     {"_set_span_attribute_string", 3, _set_span_attribute_string, 0},
+    {"_close_span", 1, _close_span, 0},
     {"_trace_id", 1, _trace_id, 0},
     {"_span_id", 1, _span_id, 0}
 };
