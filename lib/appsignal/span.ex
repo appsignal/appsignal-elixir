@@ -15,7 +15,7 @@ defmodule Appsignal.Span do
     reference
   end
 
-  def create(trace_id, parent_id, name) do
+  def create(name, trace_id, parent_id) do
     {:ok, reference} = Nif.create_child_span(trace_id, parent_id, name)
     # TODO: Store the span reference in the process dictionary.
     reference

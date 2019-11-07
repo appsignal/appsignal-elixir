@@ -892,13 +892,13 @@ static ERL_NIF_TERM _create_child_span(ErlNifEnv* env, int argc, const ERL_NIF_T
   if (argc != 3) {
     return enif_make_badarg(env);
   }
-  if(!enif_inspect_iolist_as_binary(env, argv[0], &trace_id)) {
+  if(!enif_inspect_iolist_as_binary(env, argv[0], &name)) {
     return enif_make_badarg(env);
   }
-  if(!enif_inspect_iolist_as_binary(env, argv[1], &span_id)) {
+  if(!enif_inspect_iolist_as_binary(env, argv[1], &trace_id)) {
     return enif_make_badarg(env);
   }
-  if(!enif_inspect_iolist_as_binary(env, argv[2], &name)) {
+  if(!enif_inspect_iolist_as_binary(env, argv[2], &span_id)) {
     return enif_make_badarg(env);
   }
 
@@ -907,9 +907,9 @@ static ERL_NIF_TERM _create_child_span(ErlNifEnv* env, int argc, const ERL_NIF_T
     return make_error_tuple(env, "no_memory");
 
   ptr->span = appsignal_create_child_span(
+    make_appsignal_string(name),
     make_appsignal_string(trace_id),
-    make_appsignal_string(span_id),
-    make_appsignal_string(name)
+    make_appsignal_string(span_id)
   );
 
   span_ref = enif_make_resource(env, ptr);
