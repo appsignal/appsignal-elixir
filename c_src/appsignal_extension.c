@@ -882,6 +882,42 @@ static ERL_NIF_TERM _create_root_span(ErlNifEnv* env, int argc, const ERL_NIF_TE
   return make_ok_tuple(env, span_ref);
 }
 
+static ERL_NIF_TERM _create_child_span(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
+  ErlNifBinary trace_id;
+  ErlNifBinary span_id;
+  ErlNifBinary name;
+  span_ptr *ptr;
+  ERL_NIF_TERM span_ref;
+
+  if (argc != 3) {
+    return enif_make_badarg(env);
+  }
+  if(!enif_inspect_iolist_as_binary(env, argv[0], &trace_id)) {
+    return enif_make_badarg(env);
+  }
+  if(!enif_inspect_iolist_as_binary(env, argv[1], &span_id)) {
+    return enif_make_badarg(env);
+  }
+  if(!enif_inspect_iolist_as_binary(env, argv[2], &name)) {
+    return enif_make_badarg(env);
+  }
+
+  ptr = enif_alloc_resource(appsignal_span_type, sizeof(span_ptr));
+  if(!ptr)
+    return make_error_tuple(env, "no_memory");
+
+  ptr->span = appsignal_create_child_span(
+    make_appsignal_string(trace_id),
+    make_appsignal_string(span_id),
+    make_appsignal_string(name)
+  );
+
+  span_ref = enif_make_resource(env, ptr);
+  enif_release_resource(ptr);
+
+  return make_ok_tuple(env, span_ref);
+}
+
 static ERL_NIF_TERM _trace_id(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
   span_ptr *ptr;
@@ -1013,6 +1049,7 @@ static ErlNifFunc nif_funcs[] =
 #endif
     {"_loaded", 0, _loaded, 0},
     {"_create_root_span", 1, _create_root_span, 0},
+    {"_create_child_span", 3, _create_child_span, 0},
     {"_trace_id", 1, _trace_id, 0},
     {"_span_id", 1, _span_id, 0}
 };
