@@ -859,8 +859,8 @@ static ERL_NIF_TERM _loaded(ErlNifEnv *env, int UNUSED(argc), const ERL_NIF_TERM
 }
 
 static ERL_NIF_TERM _create_root_span(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
-  ErlNifBinary name;
   span_ptr *ptr;
+  ErlNifBinary name;
   ERL_NIF_TERM span_ref;
 
   if (argc != 1) {
@@ -883,10 +883,10 @@ static ERL_NIF_TERM _create_root_span(ErlNifEnv* env, int argc, const ERL_NIF_TE
 }
 
 static ERL_NIF_TERM _create_child_span(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
+  span_ptr *ptr;
   ErlNifBinary trace_id;
   ErlNifBinary span_id;
   ErlNifBinary name;
-  span_ptr *ptr;
   ERL_NIF_TERM span_ref;
 
   if (argc != 3) {
