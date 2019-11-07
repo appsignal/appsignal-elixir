@@ -21,7 +21,7 @@ defmodule Appsignal.Span do
     reference
   end
 
-  def set_attribute(reference, key, value) when is_binary(value) do
+  def set_attribute(reference, key, value) when is_binary(key) and is_binary(value) do
     :ok = Nif.set_span_attribute_string(reference, key, value)
     reference
   end
