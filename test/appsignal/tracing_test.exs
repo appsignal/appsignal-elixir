@@ -7,6 +7,9 @@ defmodule AppsignalTracingTest do
       |> Appsignal.Span.create()
       |> Appsignal.Span.set_attribute("string", "AppsignalTracingTest#action")
       |> Appsignal.Span.set_attribute("integer", 42)
+      |> Appsignal.Span.set_attribute("true", true)
+      |> Appsignal.Span.set_attribute("false", false)
+      |> Appsignal.Span.set_attribute("float", 3.2)
 
     {:ok, trace_id} = Appsignal.Span.trace_id(reference)
     {:ok, span_id} = Appsignal.Span.span_id(reference)
