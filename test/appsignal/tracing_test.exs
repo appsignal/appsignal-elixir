@@ -1,7 +1,7 @@
 defmodule AppsignalTracingTest do
   use ExUnit.Case
 
-  test "creates and closes a span with attributes and a child span" do
+  test "creates and closes a span with attributes" do
     reference =
       "name"
       |> Appsignal.Span.create()
@@ -11,17 +11,35 @@ defmodule AppsignalTracingTest do
       |> Appsignal.Span.set_attribute("false", false)
       |> Appsignal.Span.set_attribute("float", 3.2)
 
-    {:ok, trace_id} = Appsignal.Span.trace_id(reference)
-    {:ok, span_id} = Appsignal.Span.span_id(reference)
+    [{pid, trace_id, span_id}] = Appsignal.Span.Registry.lookup()
+    assert self() == pid
+    assert is_list(trace_id)
+    assert is_list(span_id)
 
-    child =
-      Appsignal.Span.create(
-        List.to_string(trace_id),
-        List.to_string(span_id),
-        "name"
-      )
+    Appsignal.Span.close(reference)
+  end
 
-    Appsignal.Span.close(child)
+  test "creates and closes a span with a child span" do
+    reference = Appsignal.Span.create("name")
+
+    [{_pid, parent_trace_id, parent_span_id}] = Appsignal.Span.Registry.lookup()
+
+    Task.async(fn ->
+      {:dictionary, values} = Process.info(self(), :dictionary)
+      [parent_pid | _] = values[:"$callers"]
+
+      [{_pid, ^parent_trace_id, ^parent_span_id}] = Appsignal.Span.Registry.lookup(parent_pid)
+
+      child = Appsignal.Span.create("child", parent_trace_id, parent_span_id)
+
+      [{pid, trace_id, span_id}] = Appsignal.Span.Registry.lookup(self())
+      assert self() == pid
+      assert trace_id == parent_trace_id
+      assert is_list(span_id)
+
+      Appsignal.Span.close(child)
+    end)
+    |> Task.await()
 
     Appsignal.Span.close(reference)
   end
