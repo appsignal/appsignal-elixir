@@ -15,20 +15,14 @@ defmodule Appsignal.Span do
         create(name, trace_id, span_id)
 
       _ ->
-        case Registry.lookup() do
-          {_pid, trace_id, span_id} ->
-            create(name, trace_id, span_id)
+        {:ok, reference} = Nif.create_root_span(name)
+        {:ok, trace_id} = trace_id(reference)
+        {:ok, span_id} = span_id(reference)
 
-          _ ->
-            {:ok, reference} = Nif.create_root_span(name)
-            {:ok, trace_id} = trace_id(reference)
-            {:ok, span_id} = span_id(reference)
-
-            Process.put(:appsignal_trace_id, trace_id)
-            Process.put(:appsignal_span_id, span_id)
-            Registry.insert(trace_id, span_id)
-            reference
-        end
+        Process.put(:appsignal_trace_id, trace_id)
+        Process.put(:appsignal_span_id, span_id)
+        Registry.insert(trace_id, span_id)
+        reference
     end
   end
 
