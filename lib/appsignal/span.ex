@@ -10,17 +10,38 @@ defmodule Appsignal.Span do
   end
 
   def create(name) do
-    case Registry.lookup() do
+    case parent() do
       {_pid, trace_id, span_id} ->
         create(name, trace_id, span_id)
 
       _ ->
-        {:ok, reference} = Nif.create_root_span(name)
-        {:ok, trace_id} = trace_id(reference)
-        {:ok, span_id} = span_id(reference)
+        case Registry.lookup() do
+          {_pid, trace_id, span_id} ->
+            create(name, trace_id, span_id)
 
-        Registry.insert(trace_id, span_id)
-        reference
+          _ ->
+            {:ok, reference} = Nif.create_root_span(name)
+            {:ok, trace_id} = trace_id(reference)
+            {:ok, span_id} = span_id(reference)
+
+            Process.put(:appsignal_trace_id, trace_id)
+            Process.put(:appsignal_span_id, span_id)
+            Registry.insert(trace_id, span_id)
+            reference
+        end
+    end
+  end
+
+  defp parent do
+    {:dictionary, values} = Process.info(self(), :dictionary)
+
+    case values[:"$callers"] do
+      [parent | _] ->
+        [{^parent, trace_id, span_id}] = Appsignal.Span.Registry.lookup(parent)
+        {parent, trace_id, span_id}
+
+      _ ->
+        nil
     end
   end
 
@@ -28,6 +49,8 @@ defmodule Appsignal.Span do
     {:ok, reference} = Nif.create_child_span(trace_id, parent_id, name)
     {:ok, span_id} = span_id(reference)
 
+    Process.put(:appsignal_trace_id, trace_id)
+    Process.put(:appsignal_span_id, span_id)
     Registry.insert(trace_id, span_id)
     reference
   end
