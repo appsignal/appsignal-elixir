@@ -26,4 +26,8 @@ defmodule Appsignal.Span.Registry do
   def insert(pid, trace_id, span_id) do
     :ets.insert(@table, {pid, trace_id, span_id})
   end
+
+  def delete() do
+    :ets.delete(@table, self())
+  end
 end
