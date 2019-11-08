@@ -245,6 +245,14 @@ defmodule Appsignal.Nif do
     _set_span_attribute_int(reference, key, value)
   end
 
+  def set_span_attribute_bool(reference, key, value) do
+    _set_span_attribute_bool(reference, key, value)
+  end
+
+  def set_span_attribute_double(reference, key, value) do
+    _set_span_attribute_double(reference, key, value)
+  end
+
   def close_span(reference) do
     _close_span(reference)
   end
@@ -442,6 +450,14 @@ defmodule Appsignal.Nif do
   end
 
   def _set_span_attribute_int(reference, key, value) do
+    :ok
+  end
+
+  def _set_span_attribute_bool(reference, key, value) do
+    :ok
+  end
+
+  def _set_span_attribute_double(reference, key, value) do
     :ok
   end
 
