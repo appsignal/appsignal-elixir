@@ -21,6 +21,16 @@ defmodule Appsignal.Span do
     reference
   end
 
+  def set_attribute(reference, key, true) when is_binary(key) do
+    :ok = Nif.set_span_attribute_bool(reference, key, 1)
+    reference
+  end
+
+  def set_attribute(reference, key, false) when is_binary(key) do
+    :ok = Nif.set_span_attribute_bool(reference, key, 0)
+    reference
+  end
+
   def set_attribute(reference, key, value) when is_binary(key) and is_binary(value) do
     :ok = Nif.set_span_attribute_string(reference, key, value)
     reference
@@ -28,6 +38,11 @@ defmodule Appsignal.Span do
 
   def set_attribute(reference, key, value) when is_binary(key) and is_integer(value) do
     :ok = Nif.set_span_attribute_int(reference, key, value)
+    reference
+  end
+
+  def set_attribute(reference, key, value) when is_binary(key) and is_float(value) do
+    :ok = Nif.set_span_attribute_double(reference, key, value)
     reference
   end
 
