@@ -20,7 +20,7 @@ defmodule Appsignal.Span.Registry do
   end
 
   def insert(trace_id, span_id) do
-    :ets.insert(@table, {self(), trace_id, span_id})
+    insert(self(), trace_id, span_id)
   end
 
   def insert(pid, trace_id, span_id) do
