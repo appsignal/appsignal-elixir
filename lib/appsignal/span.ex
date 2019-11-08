@@ -1,5 +1,5 @@
 defmodule Appsignal.Span do
-  alias Appsignal.Nif
+  alias Appsignal.{Nif, Span.Registry}
 
   def trace_id(reference) do
     Nif.trace_id(reference)
@@ -10,14 +10,25 @@ defmodule Appsignal.Span do
   end
 
   def create(name) do
-    {:ok, reference} = Nif.create_root_span(name)
-    # TODO: Store the span reference in the process dictionary.
-    reference
+    case Registry.lookup() do
+      {_pid, trace_id, span_id} ->
+        create(name, trace_id, span_id)
+
+      _ ->
+        {:ok, reference} = Nif.create_root_span(name)
+        {:ok, trace_id} = trace_id(reference)
+        {:ok, span_id} = span_id(reference)
+
+        Registry.insert(trace_id, span_id)
+        reference
+    end
   end
 
   def create(name, trace_id, parent_id) do
     {:ok, reference} = Nif.create_child_span(trace_id, parent_id, name)
-    # TODO: Store the span reference in the process dictionary.
+    {:ok, span_id} = span_id(reference)
+
+    Registry.insert(trace_id, span_id)
     reference
   end
 
