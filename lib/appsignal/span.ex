@@ -82,6 +82,9 @@ defmodule Appsignal.Span do
 
   def close(reference) do
     :ok = Nif.close_span(reference)
+    Process.delete(:appsignal_trace_id)
+    Process.delete(:appsignal_span_id)
+    Registry.delete()
     reference
   end
 end
