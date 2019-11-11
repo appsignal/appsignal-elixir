@@ -18,7 +18,10 @@ defmodule Appsignal.Span.Registry do
   end
 
   def lookup(pid) do
-    :ets.lookup(@table, pid)
+    case :ets.lookup(@table, pid) do
+      [{pid, %Span{} = span}] -> span
+      _ -> nil
+    end
   end
 
   def insert(span) do
