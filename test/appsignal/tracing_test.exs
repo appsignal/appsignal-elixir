@@ -2,7 +2,7 @@ defmodule AppsignalTracingTest do
   use ExUnit.Case
 
   test "creates and closes a span with attributes" do
-    reference =
+    %Appsignal.Span{reference: reference} =
       "name"
       |> Appsignal.Span.create()
       |> Appsignal.Span.set_attribute("string", "AppsignalTracingTest#action")
