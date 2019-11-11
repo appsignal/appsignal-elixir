@@ -44,12 +44,8 @@ defmodule Appsignal.Span do
     {:dictionary, values} = Process.info(self(), :dictionary)
 
     case values[:"$callers"] do
-      [parent | _] ->
-        [{^parent, %Span{} = span}] = Appsignal.Span.Registry.lookup(parent)
-        span
-
-      _ ->
-        nil
+      [parent | _] -> Appsignal.Span.Registry.lookup(parent)
+      _ -> nil
     end
   end
 
