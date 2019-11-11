@@ -11,18 +11,22 @@ defmodule AppsignalTracingTest do
       |> Appsignal.Span.set_attribute("false", false)
       |> Appsignal.Span.set_attribute("float", 3.2)
 
+    assert is_reference(reference)
+
     [{pid, trace_id, span_id}] = Appsignal.Span.Registry.lookup()
+
     assert self() == pid
     assert is_list(trace_id)
     assert is_list(span_id)
+    assert Process.get(:appsignal_reference) == reference
     assert Process.get(:appsignal_trace_id) == trace_id
     assert Process.get(:appsignal_span_id) == span_id
 
-    Appsignal.Span.close(reference)
+    Appsignal.Span.close()
   end
 
   test "creates and closes a span with a child span" do
-    reference = Appsignal.Span.create("name")
+    Appsignal.Span.create("name")
 
     [{_pid, parent_trace_id, _parent_span_id}] = Appsignal.Span.Registry.lookup()
 
@@ -38,6 +42,6 @@ defmodule AppsignalTracingTest do
     end)
     |> Task.await()
 
-    Appsignal.Span.close(reference)
+    Appsignal.Span.close()
   end
 end
