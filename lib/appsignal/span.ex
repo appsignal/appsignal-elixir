@@ -31,7 +31,7 @@ defmodule Appsignal.Span do
     {:ok, reference} = Nif.create_child_span(trace_id, parent_id, name)
     {:ok, span_id} = span_id(reference)
 
-    Process.put(:reference, reference)
+    Process.put(:appsignal_reference, reference)
     Process.put(:appsignal_trace_id, trace_id)
     Process.put(:appsignal_span_id, span_id)
     Registry.insert(trace_id, span_id)
