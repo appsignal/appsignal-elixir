@@ -2,7 +2,8 @@ defmodule AppsignalTracingTest do
   use ExUnit.Case
 
   test "creates and closes a span with attributes" do
-    %Appsignal.Span{reference: reference} =
+    span =
+      %Appsignal.Span{reference: reference} =
       "name"
       |> Appsignal.Span.create()
       |> Appsignal.Span.set_attribute("string", "AppsignalTracingTest#action")
@@ -13,45 +14,36 @@ defmodule AppsignalTracingTest do
 
     assert is_reference(reference)
 
-    [{pid, trace_id, span_id}] = Appsignal.Span.Registry.lookup()
+    [{pid, ^span}] = Appsignal.Span.Registry.lookup()
 
-    assert self() == pid
-    assert is_list(trace_id)
-    assert is_list(span_id)
-    assert Process.get(:appsignal_reference) == reference
-    assert Process.get(:appsignal_trace_id) == trace_id
-    assert Process.get(:appsignal_span_id) == span_id
+    assert pid == self()
+    assert Process.get(:appsignal_span) == span
 
     Appsignal.Span.close()
 
-    refute Process.get(:appsignal_reference)
-    refute Process.get(:appsignal_trace_id)
-    refute Process.get(:appsignal_span_id)
+    refute Process.get(:appsignal_span)
     assert Appsignal.Span.Registry.lookup() == []
   end
 
   test "creates and closes a span with a child span" do
     Appsignal.Span.create("name")
 
-    [{_pid, parent_trace_id, _parent_span_id}] = Appsignal.Span.Registry.lookup()
+    [{_pid, %Appsignal.Span{trace_id: parent_trace_id}}] = Appsignal.Span.Registry.lookup()
 
     Task.async(fn ->
-      child = Appsignal.Span.create("child")
+      Appsignal.Span.create("child")
 
-      [{pid, trace_id, span_id}] = Appsignal.Span.Registry.lookup(self())
+      [{pid, %Appsignal.Span{trace_id: trace_id, span_id: span_id} = span}] =
+        Appsignal.Span.Registry.lookup(self())
+
       assert self() == pid
       assert trace_id == parent_trace_id
       assert is_list(span_id)
+      assert Process.get(:appsignal_span) == span
 
-      assert Process.get(:appsignal_reference) == child
-      assert Process.get(:appsignal_trace_id) == trace_id
-      assert Process.get(:appsignal_span_id) == span_id
+      Appsignal.Span.close()
 
-      Appsignal.Span.close(child)
-
-      refute Process.get(:appsignal_reference)
-      refute Process.get(:appsignal_trace_id)
-      refute Process.get(:appsignal_span_id)
+      refute Process.get(:appsignal_span)
       assert Appsignal.Span.Registry.lookup() == []
     end)
     |> Task.await()
