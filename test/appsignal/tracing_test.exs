@@ -43,7 +43,16 @@ defmodule AppsignalTracingTest do
       assert trace_id == parent_trace_id
       assert is_list(span_id)
 
+      assert Process.get(:appsignal_reference) == child
+      assert Process.get(:appsignal_trace_id) == trace_id
+      assert Process.get(:appsignal_span_id) == span_id
+
       Appsignal.Span.close(child)
+
+      refute Process.get(:appsignal_reference)
+      refute Process.get(:appsignal_trace_id)
+      refute Process.get(:appsignal_span_id)
+      assert Appsignal.Span.Registry.lookup() == []
     end)
     |> Task.await()
 
