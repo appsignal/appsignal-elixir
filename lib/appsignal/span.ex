@@ -12,7 +12,7 @@ defmodule Appsignal.Span do
 
   def create(name) do
     case parent() do
-      {_pid, trace_id, span_id} ->
+      %Span{trace_id: trace_id, span_id: span_id} ->
         create(name, trace_id, span_id)
 
       _ ->
@@ -20,12 +20,12 @@ defmodule Appsignal.Span do
         {:ok, trace_id} = trace_id(reference)
         {:ok, span_id} = span_id(reference)
 
-        Process.put(:appsignal_reference, reference)
-        Process.put(:appsignal_trace_id, trace_id)
-        Process.put(:appsignal_span_id, span_id)
-        Registry.insert(trace_id, span_id)
+        span = %Span{reference: reference, trace_id: trace_id, span_id: span_id}
 
-        %Span{reference: reference, trace_id: trace_id, span_id: span_id}
+        Process.put(:appsignal_span, span)
+        Registry.insert(span)
+
+        span
     end
   end
 
@@ -33,10 +33,10 @@ defmodule Appsignal.Span do
     {:ok, reference} = Nif.create_child_span(trace_id, parent_id, name)
     {:ok, span_id} = span_id(reference)
 
-    Process.put(:appsignal_reference, reference)
-    Process.put(:appsignal_trace_id, trace_id)
-    Process.put(:appsignal_span_id, span_id)
-    Registry.insert(trace_id, span_id)
+    span = %Span{reference: reference, trace_id: trace_id, span_id: span_id}
+
+    Process.put(:appsignal_span, span)
+    Registry.insert(span)
     reference
   end
 
@@ -45,8 +45,8 @@ defmodule Appsignal.Span do
 
     case values[:"$callers"] do
       [parent | _] ->
-        [{^parent, trace_id, span_id}] = Appsignal.Span.Registry.lookup(parent)
-        {parent, trace_id, span_id}
+        [{^parent, %Span{} = span}] = Appsignal.Span.Registry.lookup(parent)
+        span
 
       _ ->
         nil
@@ -82,17 +82,15 @@ defmodule Appsignal.Span do
   end
 
   def close() do
-    :appsignal_reference
+    :appsignal_span
     |> Process.get()
     |> close()
   end
 
-  def close(reference) do
+  def close(%Span{reference: reference} = span) do
     :ok = Nif.close_span(reference)
-    Process.delete(:appsignal_reference)
-    Process.delete(:appsignal_trace_id)
-    Process.delete(:appsignal_span_id)
+    Process.delete(:appsignal_span)
     Registry.delete()
-    reference
+    span
   end
 end

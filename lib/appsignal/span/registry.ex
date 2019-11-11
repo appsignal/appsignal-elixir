@@ -1,4 +1,6 @@
 defmodule Appsignal.Span.Registry do
+  alias Appsignal.Span
+
   @name __MODULE__
   @table :"$appsignal_span_registry"
 
@@ -19,12 +21,12 @@ defmodule Appsignal.Span.Registry do
     :ets.lookup(@table, pid)
   end
 
-  def insert(trace_id, span_id) do
-    insert(self(), trace_id, span_id)
+  def insert(span) do
+    insert(self(), span)
   end
 
-  def insert(pid, trace_id, span_id) do
-    :ets.insert(@table, {pid, trace_id, span_id})
+  def insert(pid, %Span{} = span) do
+    :ets.insert(@table, {pid, span})
   end
 
   def delete() do
