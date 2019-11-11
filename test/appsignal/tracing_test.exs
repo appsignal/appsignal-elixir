@@ -23,6 +23,11 @@ defmodule AppsignalTracingTest do
     assert Process.get(:appsignal_span_id) == span_id
 
     Appsignal.Span.close()
+
+    refute Process.get(:appsignal_reference)
+    refute Process.get(:appsignal_trace_id)
+    refute Process.get(:appsignal_span_id)
+    assert Appsignal.Span.Registry.lookup() == []
   end
 
   test "creates and closes a span with a child span" do
