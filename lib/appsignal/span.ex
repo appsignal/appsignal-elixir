@@ -19,11 +19,23 @@ defmodule Appsignal.Span do
         {:ok, trace_id} = trace_id(reference)
         {:ok, span_id} = span_id(reference)
 
+        Process.put(:appsignal_reference, reference)
         Process.put(:appsignal_trace_id, trace_id)
         Process.put(:appsignal_span_id, span_id)
         Registry.insert(trace_id, span_id)
         reference
     end
+  end
+
+  def create(name, trace_id, parent_id) do
+    {:ok, reference} = Nif.create_child_span(trace_id, parent_id, name)
+    {:ok, span_id} = span_id(reference)
+
+    Process.put(:reference, reference)
+    Process.put(:appsignal_trace_id, trace_id)
+    Process.put(:appsignal_span_id, span_id)
+    Registry.insert(trace_id, span_id)
+    reference
   end
 
   defp parent do
@@ -37,16 +49,6 @@ defmodule Appsignal.Span do
       _ ->
         nil
     end
-  end
-
-  def create(name, trace_id, parent_id) do
-    {:ok, reference} = Nif.create_child_span(trace_id, parent_id, name)
-    {:ok, span_id} = span_id(reference)
-
-    Process.put(:appsignal_trace_id, trace_id)
-    Process.put(:appsignal_span_id, span_id)
-    Registry.insert(trace_id, span_id)
-    reference
   end
 
   def set_attribute(reference, key, true) when is_binary(key) do
@@ -74,8 +76,15 @@ defmodule Appsignal.Span do
     reference
   end
 
+  def close() do
+    :appsignal_reference
+    |> Process.get()
+    |> close()
+  end
+
   def close(reference) do
     :ok = Nif.close_span(reference)
+    Process.delete(:appsignal_reference)
     Process.delete(:appsignal_trace_id)
     Process.delete(:appsignal_span_id)
     Registry.delete()
