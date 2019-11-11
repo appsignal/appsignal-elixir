@@ -14,29 +14,26 @@ defmodule AppsignalTracingTest do
 
     assert is_reference(reference)
 
-    [{pid, ^span}] = Appsignal.Span.Registry.lookup()
-
-    assert pid == self()
+    assert Appsignal.Span.Registry.lookup() == span
     assert Process.get(:appsignal_span) == span
 
     Appsignal.Span.close()
 
     refute Process.get(:appsignal_span)
-    assert Appsignal.Span.Registry.lookup() == []
+    assert Appsignal.Span.Registry.lookup() == nil
   end
 
   test "creates and closes a span with a child span" do
     Appsignal.Span.create("name")
 
-    [{_pid, %Appsignal.Span{trace_id: parent_trace_id}}] = Appsignal.Span.Registry.lookup()
+    %Appsignal.Span{trace_id: parent_trace_id} = Appsignal.Span.Registry.lookup()
 
     Task.async(fn ->
       Appsignal.Span.create("child")
 
-      [{pid, %Appsignal.Span{trace_id: trace_id, span_id: span_id} = span}] =
-        Appsignal.Span.Registry.lookup(self())
+      %Appsignal.Span{trace_id: trace_id, span_id: span_id} =
+        span = Appsignal.Span.Registry.lookup(self())
 
-      assert self() == pid
       assert trace_id == parent_trace_id
       assert is_list(span_id)
       assert Process.get(:appsignal_span) == span
@@ -44,7 +41,7 @@ defmodule AppsignalTracingTest do
       Appsignal.Span.close()
 
       refute Process.get(:appsignal_span)
-      assert Appsignal.Span.Registry.lookup() == []
+      assert Appsignal.Span.Registry.lookup() == nil
     end)
     |> Task.await()
 
