@@ -1,5 +1,6 @@
 defmodule Appsignal.Span do
-  alias Appsignal.{Nif, Span.Registry}
+  alias Appsignal.{Nif, Span, Span.Registry}
+  defstruct [:reference, :trace_id, :span_id]
 
   def trace_id(reference) do
     Nif.trace_id(reference)
@@ -23,7 +24,8 @@ defmodule Appsignal.Span do
         Process.put(:appsignal_trace_id, trace_id)
         Process.put(:appsignal_span_id, span_id)
         Registry.insert(trace_id, span_id)
-        reference
+
+        %Span{reference: reference, trace_id: trace_id, span_id: span_id}
     end
   end
 
@@ -51,29 +53,32 @@ defmodule Appsignal.Span do
     end
   end
 
-  def set_attribute(reference, key, true) when is_binary(key) do
+  def set_attribute(%Span{reference: reference} = span, key, true) when is_binary(key) do
     :ok = Nif.set_span_attribute_bool(reference, key, 1)
-    reference
+    span
   end
 
-  def set_attribute(reference, key, false) when is_binary(key) do
+  def set_attribute(%Span{reference: reference} = span, key, false) when is_binary(key) do
     :ok = Nif.set_span_attribute_bool(reference, key, 0)
-    reference
+    span
   end
 
-  def set_attribute(reference, key, value) when is_binary(key) and is_binary(value) do
+  def set_attribute(%Span{reference: reference} = span, key, value)
+      when is_binary(key) and is_binary(value) do
     :ok = Nif.set_span_attribute_string(reference, key, value)
-    reference
+    span
   end
 
-  def set_attribute(reference, key, value) when is_binary(key) and is_integer(value) do
+  def set_attribute(%Span{reference: reference} = span, key, value)
+      when is_binary(key) and is_integer(value) do
     :ok = Nif.set_span_attribute_int(reference, key, value)
-    reference
+    span
   end
 
-  def set_attribute(reference, key, value) when is_binary(key) and is_float(value) do
+  def set_attribute(%Span{reference: reference} = span, key, value)
+      when is_binary(key) and is_float(value) do
     :ok = Nif.set_span_attribute_double(reference, key, value)
-    reference
+    span
   end
 
   def close() do
