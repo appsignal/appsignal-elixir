@@ -25,11 +25,11 @@ defmodule AppsignalTracingTest do
   end
 
   test "creates and closes a span with a child span in the same process" do
-    span = Span.create("name")
+    span = %Span{trace_id: trace_id} = Span.create("name")
     assert Registry.lookup() == span
     assert Dictionary.lookup() == span
 
-    child_span = Span.create("child")
+    child_span = %Span{trace_id: ^trace_id} = Span.create("child")
     assert Registry.lookup() == child_span
     assert Dictionary.lookup() == child_span
 
