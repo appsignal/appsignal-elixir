@@ -20,12 +20,7 @@ defmodule Appsignal.Span do
         {:ok, trace_id} = trace_id(reference)
         {:ok, span_id} = span_id(reference)
 
-        span = %Span{reference: reference, trace_id: trace_id, span_id: span_id}
-
-        Dictionary.insert(span)
-        Registry.insert(span)
-
-        span
+        register(%Span{reference: reference, trace_id: trace_id, span_id: span_id})
     end
   end
 
@@ -33,8 +28,10 @@ defmodule Appsignal.Span do
     {:ok, reference} = Nif.create_child_span(trace_id, parent_id, name)
     {:ok, span_id} = span_id(reference)
 
-    span = %Span{reference: reference, trace_id: trace_id, span_id: span_id}
+    register(%Span{reference: reference, trace_id: trace_id, span_id: span_id})
+  end
 
+  defp register(span) do
     Dictionary.insert(span)
     Registry.insert(span)
 
