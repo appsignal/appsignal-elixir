@@ -1,5 +1,5 @@
 defmodule Appsignal.Span do
-  alias Appsignal.{Nif, Span, Span.Registry}
+  alias Appsignal.{Nif, Span, Span.Dictionary, Span.Registry}
   defstruct [:reference, :trace_id, :span_id]
 
   def trace_id(reference) do
@@ -22,7 +22,7 @@ defmodule Appsignal.Span do
 
         span = %Span{reference: reference, trace_id: trace_id, span_id: span_id}
 
-        Process.put(:appsignal_span, span)
+        Dictionary.insert(span)
         Registry.insert(span)
 
         span
@@ -35,7 +35,7 @@ defmodule Appsignal.Span do
 
     span = %Span{reference: reference, trace_id: trace_id, span_id: span_id}
 
-    Process.put(:appsignal_span, span)
+    Dictionary.insert(span)
     Registry.insert(span)
     reference
   end
@@ -78,14 +78,12 @@ defmodule Appsignal.Span do
   end
 
   def close() do
-    :appsignal_span
-    |> Process.get()
-    |> close()
+    Dictionary.lookup() |> close()
   end
 
   def close(%Span{reference: reference} = span) do
     :ok = Nif.close_span(reference)
-    Process.delete(:appsignal_span)
+    Dictionary.delete()
     Registry.delete()
     span
   end
