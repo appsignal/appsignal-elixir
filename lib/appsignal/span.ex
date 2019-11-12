@@ -37,15 +37,22 @@ defmodule Appsignal.Span do
 
     Dictionary.insert(span)
     Registry.insert(span)
-    reference
+
+    span
   end
 
   defp parent do
-    {:dictionary, values} = Process.info(self(), :dictionary)
+    case Dictionary.lookup() do
+      %Span{} = span ->
+        span
 
-    case values[:"$callers"] do
-      [parent | _] -> Appsignal.Span.Registry.lookup(parent)
-      _ -> nil
+      _ ->
+        {:dictionary, values} = Process.info(self(), :dictionary)
+
+        case values[:"$callers"] do
+          [parent | _] -> Appsignal.Span.Registry.lookup(parent)
+          _ -> nil
+        end
     end
   end
 
