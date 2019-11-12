@@ -24,8 +24,15 @@ defmodule Appsignal.Span.Registry do
 
   def lookup(pid) do
     case :ets.lookup(@table, pid) do
-      [{pid, %Span{} = span}] -> span
-      _ -> nil
+      [{_pid, %Span{} = span}] ->
+        span
+
+      [_ | _] = spans ->
+        {_pid, span} = List.last(spans)
+        span
+
+      _ ->
+        nil
     end
   end
 
@@ -38,6 +45,9 @@ defmodule Appsignal.Span.Registry do
   end
 
   def delete() do
-    :ets.delete(@table, self())
+    pid = self()
+    span = lookup(pid)
+
+    :ets.delete_object(@table, {pid, span})
   end
 end
