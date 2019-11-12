@@ -1,6 +1,6 @@
 defmodule AppsignalTracingTest do
   use ExUnit.Case
-  alias Appsignal.{Span, Span.Registry}
+  alias Appsignal.{Span, Span.Registry, Span.Dictionary}
 
   test "creates and closes a span with attributes" do
     span =
@@ -16,7 +16,7 @@ defmodule AppsignalTracingTest do
     assert is_reference(reference)
 
     assert Registry.lookup() == span
-    assert Process.get(:appsignal_span) == span
+    assert Dictionary.lookup() == span
 
     Span.close()
 
@@ -24,7 +24,27 @@ defmodule AppsignalTracingTest do
     assert Registry.lookup() == nil
   end
 
-  test "creates and closes a span with a child span" do
+  test "creates and closes a span with a child span in the same process" do
+    span = Span.create("name")
+    assert Registry.lookup() == span
+    assert Dictionary.lookup() == span
+
+    child_span = Span.create("child")
+    assert Registry.lookup() == child_span
+    assert Dictionary.lookup() == child_span
+
+    Span.close()
+
+    assert Registry.lookup() == span
+    assert Dictionary.lookup() == span
+
+    Span.close()
+
+    refute Registry.lookup()
+    refute Dictionary.lookup()
+  end
+
+  test "creates and closes a span with a child span in a separate process" do
     Span.create("name")
 
     %Span{trace_id: parent_trace_id} = Registry.lookup()
@@ -36,12 +56,12 @@ defmodule AppsignalTracingTest do
 
       assert trace_id == parent_trace_id
       assert is_list(span_id)
-      assert Process.get(:appsignal_span) == span
+      assert Dictionary.lookup() == span
 
       Span.close()
 
-      refute Process.get(:appsignal_span)
-      assert Registry.lookup() == nil
+      refute Dictionary.lookup()
+      refute Registry.lookup()
     end)
     |> Task.await()
 
