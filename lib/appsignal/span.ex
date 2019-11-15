@@ -39,7 +39,7 @@ defmodule Appsignal.Span do
   end
 
   defp parent do
-    {:dictionary, values} = Process.info(self(), :dictionary)
+    {:dictionary, values} = :erlang.process_info(self(), :dictionary)
 
     case values[:"$callers"] do
       [parent | _] -> Registry.lookup(parent)
