@@ -11,7 +11,7 @@ defmodule Appsignal.Span do
   end
 
   def create(name) do
-    case parent() do
+    case Dictionary.lookup() || parent() do
       %Span{trace_id: trace_id, span_id: span_id} ->
         create(name, trace_id, span_id)
 
@@ -39,17 +39,11 @@ defmodule Appsignal.Span do
   end
 
   defp parent do
-    case Dictionary.lookup() do
-      %Span{} = span ->
-        span
+    {:dictionary, values} = Process.info(self(), :dictionary)
 
-      _ ->
-        {:dictionary, values} = Process.info(self(), :dictionary)
-
-        case values[:"$callers"] do
-          [parent | _] -> Registry.lookup(parent)
-          _ -> nil
-        end
+    case values[:"$callers"] do
+      [parent | _] -> Registry.lookup(parent)
+      _ -> nil
     end
   end
 
