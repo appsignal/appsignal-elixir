@@ -95,19 +95,37 @@ if Appsignal.phoenix?() do
       <<"Elixir.", action::binary>> = action_str
       @transaction.set_action(transaction, action)
 
-      result = function.()
+      try do
+        function.()
+      catch
+        kind, reason ->
+          stack = System.stacktrace()
 
-      resp = @transaction.finish(transaction)
+          {exception, stacktrace} = Appsignal.Error.normalize(reason, stack)
+          {reason_string, message} = Appsignal.Error.metadata(exception)
+          backtrace = Appsignal.Backtrace.from_stacktrace(stacktrace)
 
-      if resp == :sample do
+          @transaction.set_error(transaction, reason_string, message, backtrace)
+
+          finish_with_socket(transaction, socket, params)
+          :erlang.raise(kind, reason, stack)
+      else
+        result ->
+          finish_with_socket(transaction, socket, params)
+          result
+      end
+    end
+
+    @spec finish_with_socket(Appsignal.Transaction.t() | nil, Phoenix.Socket.t(), map()) ::
+            :ok | nil
+    defp finish_with_socket(transaction, socket, params) do
+      if @transaction.finish(transaction) == :sample do
         transaction
         |> @transaction.set_sample_data("params", MapFilter.filter_parameters(params))
         |> @transaction.set_sample_data("environment", request_environment(socket))
       end
 
       @transaction.complete(transaction)
-
-      result
     end
 
     @doc """

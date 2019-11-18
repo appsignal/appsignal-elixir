@@ -17,6 +17,12 @@ defmodule InstrumentedPhoenixChannel do
       {:reply, {:ok, payload}, socket}
     end)
   end
+
+  def handle_in("instrumented_with_exception" = action, payload, socket) do
+    channel_action(__MODULE__, action, socket, payload, fn ->
+      raise("Exception!")
+    end)
+  end
 end
 
 defmodule Appsignal.Phoenix.ChannelTest do
@@ -96,6 +102,56 @@ defmodule Appsignal.Phoenix.ChannelTest do
 
     assert [%Appsignal.Transaction{id: "123"}] =
              FakeTransaction.completed_transactions(fake_transaction)
+  end
+
+  test "instruments a channel action with an exception", %{
+    socket: socket,
+    fake_transaction: fake_transaction
+  } do
+    :ok =
+      try do
+        InstrumentedPhoenixChannel.handle_in(
+          "instrumented_with_exception",
+          %{"body" => "Hello, world!"},
+          socket
+        )
+      catch
+        :error, %RuntimeError{message: "Exception!"} -> :ok
+        type, reason -> {type, reason}
+      end
+
+    assert [{"123", :channel}] == FakeTransaction.started_transactions(fake_transaction)
+
+    assert "InstrumentedPhoenixChannel#instrumented_with_exception" ==
+             FakeTransaction.action(fake_transaction)
+
+    assert %{
+             "environment" => %{
+               channel: PhoenixChatExampleWeb.RoomChannel,
+               endpoint: PhoenixChatExampleWeb.Endpoint,
+               handler: PhoenixChatExampleWeb.UserSocket,
+               id: 1,
+               ref: 2,
+               topic: "room:lobby",
+               transport: Phoenix.Transports.WebSocket
+             },
+             "params" => %{"body" => "Hello, world!"}
+           } == FakeTransaction.sample_data(fake_transaction)
+
+    assert [%Appsignal.Transaction{id: "123"}] =
+             FakeTransaction.finished_transactions(fake_transaction)
+
+    assert [%Appsignal.Transaction{id: "123"}] =
+             FakeTransaction.completed_transactions(fake_transaction)
+
+    assert [
+             {
+               %Appsignal.Transaction{},
+               "RuntimeError",
+               "Exception!",
+               _stack
+             }
+           ] = FakeTransaction.errors(fake_transaction)
   end
 
   test "filters parameters", %{socket: socket, fake_transaction: fake_transaction} do
