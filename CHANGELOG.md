@@ -1,3 +1,12 @@
+# 1.11.4
+- Add transaction_debug configuration option. PR #526
+- Bump agent to v-c348132
+  - Improve transmitter logging on timeout
+  - Improve queued payloads transmitter. Should prevent payloads being
+    sent multiple times.
+  - Add transaction debug mode
+  - Wrap Option in Mutex in TransactionInProgess
+
 # 1.11.3
 - Transaction.set_action/2 returns the Transaction on failure. commit 16e5ecbc90aece993177da7e1b2486fa477e25e8
 - Don't match on :ok on Appsignal.Plug.finish_with_conn/2. commit ebc7dd968a9bbeff3447e8f84dab181205f976ed
