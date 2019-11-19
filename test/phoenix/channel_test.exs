@@ -161,6 +161,12 @@ defmodule Appsignal.Phoenix.ChannelTest do
                }
              ] = FakeTransaction.errors(fake_transaction)
     end
+
+    test "ignores the process' pid" do
+      AppsignalTest.Utils.until(fn ->
+        assert Appsignal.TransactionRegistry.lookup(self()) == :ignored
+      end)
+    end
   end
 
   test "filters parameters", %{socket: socket, fake_transaction: fake_transaction} do

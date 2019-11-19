@@ -108,6 +108,7 @@ if Appsignal.phoenix?() do
           @transaction.set_error(transaction, reason_string, message, backtrace)
 
           finish_with_socket(transaction, socket, params)
+          Appsignal.TransactionRegistry.ignore(self())
           :erlang.raise(kind, reason, stack)
       else
         result ->
