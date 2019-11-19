@@ -28,6 +28,7 @@ end
 defmodule Appsignal.Phoenix.ChannelTest do
   use ExUnit.Case
   alias Appsignal.FakeTransaction
+  import AppsignalTest.Utils
 
   setup do
     {:ok, fake_transaction} = Appsignal.FakeTransaction.start_link()
@@ -163,14 +164,14 @@ defmodule Appsignal.Phoenix.ChannelTest do
     end
 
     test "ignores the process' pid" do
-      AppsignalTest.Utils.until(fn ->
+      until(fn ->
         assert Appsignal.TransactionRegistry.lookup(self()) == :ignored
       end)
     end
   end
 
   test "filters parameters", %{socket: socket, fake_transaction: fake_transaction} do
-    AppsignalTest.Utils.with_config(%{filter_parameters: ["password"]}, fn ->
+    with_config(%{filter_parameters: ["password"]}, fn ->
       InstrumentedPhoenixChannel.handle_in("instrumented", %{"password" => "secret"}, socket)
       assert "[FILTERED]" == FakeTransaction.sample_data(fake_transaction)["params"]["password"]
     end)
@@ -181,7 +182,7 @@ defmodule Appsignal.Phoenix.ChannelTest do
       socket: socket,
       fake_transaction: fake_transaction
     } do
-      AppsignalTest.Utils.with_config(%{active: false}, fn ->
+      with_config(%{active: false}, fn ->
         InstrumentedPhoenixChannel.handle_in("instrumented", %{"body" => "Hello, world!"}, socket)
       end)
 
