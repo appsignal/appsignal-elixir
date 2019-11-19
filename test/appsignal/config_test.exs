@@ -270,6 +270,11 @@ defmodule Appsignal.ConfigTest do
       assert %{skip_session_data: true} = with_config(%{skip_session_data: true}, &init_config/0)
     end
 
+    test "transaction_debug_mode" do
+      assert %{transaction_debug_mode: true} =
+               with_config(%{transaction_debug_mode: true}, &init_config/0)
+    end
+
     test "files_world_accessible" do
       assert %{files_world_accessible: true} =
                with_config(%{files_world_accessible: true}, &init_config/0)
@@ -480,6 +485,13 @@ defmodule Appsignal.ConfigTest do
                %{"APPSIGNAL_SKIP_SESSION_DATA" => "true"},
                &init_config/0
              ) == default_configuration() |> Map.put(:skip_session_data, true)
+    end
+
+    test "transaction_debug_mode" do
+      assert with_env(
+               %{"APPSIGNAL_TRANSACTION_DEBUG_MODE" => "true"},
+               &init_config/0
+             ) == default_configuration() |> Map.put(:transaction_debug_mode, true)
     end
 
     test "files_world_accessible" do
@@ -697,9 +709,9 @@ defmodule Appsignal.ConfigTest do
           hostname: "My hostname",
           http_proxy: "http://10.10.10.10:8888",
           ignore_actions: ~w(
-          ExampleApplication.PageController#ignored
-          ExampleApplication.PageController#also_ignored
-        ),
+            ExampleApplication.PageController#ignored
+            ExampleApplication.PageController#also_ignored
+          ),
           ignore_errors: ~w(VerySpecificError AnotherError),
           ignore_namespaces: ~w(admin private_namespace),
           log: "stdout",
@@ -709,7 +721,8 @@ defmodule Appsignal.ConfigTest do
           working_dir_path: "/tmp/appsignal-deprecated",
           working_directory_path: "/tmp/appsignal",
           files_world_accessible: false,
-          revision: "03bd9e"
+          revision: "03bd9e",
+          transaction_debug_mode: true
         },
         fn ->
           without_logger(&write_to_environment/0)
@@ -742,6 +755,7 @@ defmodule Appsignal.ConfigTest do
           assert Nif.env_get("_APPSIGNAL_WORKING_DIR_PATH") == '/tmp/appsignal-deprecated'
           assert Nif.env_get("_APPSIGNAL_WORKING_DIRECTORY_PATH") == '/tmp/appsignal'
           assert Nif.env_get("_APPSIGNAL_FILES_WORLD_ACCESSIBLE") == 'false'
+          assert Nif.env_get("_APPSIGNAL_TRANSACTION_DEBUG_MODE") == 'true'
           assert Nif.env_get("_APP_REVISION") == '03bd9e'
         end
       )
@@ -779,7 +793,8 @@ defmodule Appsignal.ConfigTest do
           enable_host_metrics: "true",
           env: "prod",
           running_in_container: "false",
-          files_world_accessible: "false"
+          files_world_accessible: "false",
+          transaction_debug_mode: "false"
         },
         fn ->
           write_to_environment()
@@ -790,6 +805,7 @@ defmodule Appsignal.ConfigTest do
           assert Nif.env_get("_APPSIGNAL_ENVIRONMENT") == 'prod'
           assert Nif.env_get("_APPSIGNAL_RUNNING_IN_CONTAINER") == 'false'
           assert Nif.env_get("_APPSIGNAL_FILES_WORLD_ACCESSIBLE") == 'false'
+          assert Nif.env_get("_APPSIGNAL_TRANSACTION_DEBUG_MODE") == 'false'
         end
       )
     end
@@ -839,7 +855,8 @@ defmodule Appsignal.ConfigTest do
         connection content-length path-info range request-method request-uri
         server-name server-port server-protocol
       ),
-      ca_file_path: Path.join(:code.priv_dir(:appsignal), "cacert.pem")
+      ca_file_path: Path.join(:code.priv_dir(:appsignal), "cacert.pem"),
+      transaction_debug_mode: false
     }
   end
 
