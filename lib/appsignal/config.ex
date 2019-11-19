@@ -20,6 +20,7 @@ defmodule Appsignal.Config do
     ignore_namespaces: [],
     send_params: true,
     skip_session_data: false,
+    transaction_debug_mode: false,
     files_world_accessible: true,
     log: "file",
     request_headers: ~w(
@@ -171,6 +172,7 @@ defmodule Appsignal.Config do
     "APPSIGNAL_ENABLE_HOST_METRICS" => :enable_host_metrics,
     "APPSIGNAL_ENABLE_MINUTELY_PROBES" => :enable_minutely_probes,
     "APPSIGNAL_SKIP_SESSION_DATA" => :skip_session_data,
+    "APPSIGNAL_TRANSACTION_DEBUG_MODE" => :transaction_debug_mode,
     "APPSIGNAL_FILES_WORLD_ACCESSIBLE" => :files_world_accessible,
     "APPSIGNAL_REQUEST_HEADERS" => :request_headers,
     "APP_REVISION" => :revision
@@ -184,8 +186,8 @@ defmodule Appsignal.Config do
   @bool_keys ~w(
     APPSIGNAL_ACTIVE APPSIGNAL_DEBUG APPSIGNAL_INSTRUMENT_NET_HTTP APPSIGNAL_ENABLE_FRONTEND_ERROR_CATCHING
     APPSIGNAL_ENABLE_ALLOCATION_TRACKING APPSIGNAL_ENABLE_GC_INSTRUMENTATION APPSIGNAL_RUNNING_IN_CONTAINER
-    APPSIGNAL_ENABLE_HOST_METRICS APPSIGNAL_SKIP_SESSION_DATA APPSIGNAL_FILES_WORLD_ACCESSIBLE
-    APPSIGNAL_SEND_PARAMS APPSIGNAL_ENABLE_MINUTELY_PROBES
+    APPSIGNAL_ENABLE_HOST_METRICS APPSIGNAL_SKIP_SESSION_DATA APPSIGNAL_TRANSACTION_DEBUG_MODE
+    APPSIGNAL_FILES_WORLD_ACCESSIBLE APPSIGNAL_SEND_PARAMS APPSIGNAL_ENABLE_MINUTELY_PROBES
   )
   @atom_keys ~w(APPSIGNAL_APP_ENV)
   @string_list_keys ~w(
@@ -287,6 +289,7 @@ defmodule Appsignal.Config do
     Nif.env_put("_APPSIGNAL_PUSH_API_ENDPOINT", config[:endpoint] || "")
     Nif.env_put("_APPSIGNAL_PUSH_API_KEY", config[:push_api_key] || "")
     Nif.env_put("_APPSIGNAL_RUNNING_IN_CONTAINER", to_string(config[:running_in_container]))
+    Nif.env_put("_APPSIGNAL_TRANSACTION_DEBUG_MODE", to_string(config[:transaction_debug_mode]))
     Nif.env_put("_APPSIGNAL_WORKING_DIR_PATH", to_string(config[:working_dir_path]))
     Nif.env_put("_APPSIGNAL_WORKING_DIRECTORY_PATH", to_string(config[:working_directory_path]))
 
