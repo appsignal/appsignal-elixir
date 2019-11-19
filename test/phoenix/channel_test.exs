@@ -104,54 +104,63 @@ defmodule Appsignal.Phoenix.ChannelTest do
              FakeTransaction.completed_transactions(fake_transaction)
   end
 
-  test "instruments a channel action with an exception", %{
-    socket: socket,
-    fake_transaction: fake_transaction
-  } do
-    :ok =
-      try do
-        InstrumentedPhoenixChannel.handle_in(
-          "instrumented_with_exception",
-          %{"body" => "Hello, world!"},
-          socket
-        )
-      catch
-        :error, %RuntimeError{message: "Exception!"} -> :ok
-        type, reason -> {type, reason}
-      end
+  describe "for a channel action with an exception" do
+    setup %{socket: socket} do
+      :ok =
+        try do
+          InstrumentedPhoenixChannel.handle_in(
+            "instrumented_with_exception",
+            %{"body" => "Hello, world!"},
+            socket
+          )
+        catch
+          :error, %RuntimeError{message: "Exception!"} -> :ok
+          type, reason -> {type, reason}
+        end
+    end
 
-    assert [{"123", :channel}] == FakeTransaction.started_transactions(fake_transaction)
+    test "starts a transaction", %{fake_transaction: fake_transaction} do
+      assert FakeTransaction.started_transaction?(fake_transaction)
+    end
 
-    assert "InstrumentedPhoenixChannel#instrumented_with_exception" ==
-             FakeTransaction.action(fake_transaction)
+    test "sets the channel's action name", %{fake_transaction: fake_transaction} do
+      assert "InstrumentedPhoenixChannel#instrumented_with_exception" ==
+               FakeTransaction.action(fake_transaction)
+    end
 
-    assert %{
-             "environment" => %{
-               channel: PhoenixChatExampleWeb.RoomChannel,
-               endpoint: PhoenixChatExampleWeb.Endpoint,
-               handler: PhoenixChatExampleWeb.UserSocket,
-               id: 1,
-               ref: 2,
-               topic: "room:lobby",
-               transport: Phoenix.Transports.WebSocket
-             },
-             "params" => %{"body" => "Hello, world!"}
-           } == FakeTransaction.sample_data(fake_transaction)
+    test "sets sample data", %{fake_transaction: fake_transaction} do
+      assert %{
+               "environment" => %{
+                 channel: PhoenixChatExampleWeb.RoomChannel,
+                 endpoint: PhoenixChatExampleWeb.Endpoint,
+                 handler: PhoenixChatExampleWeb.UserSocket,
+                 id: 1,
+                 ref: 2,
+                 topic: "room:lobby",
+                 transport: Phoenix.Transports.WebSocket
+               },
+               "params" => %{"body" => "Hello, world!"}
+             } == FakeTransaction.sample_data(fake_transaction)
+    end
 
-    assert [%Appsignal.Transaction{id: "123"}] =
-             FakeTransaction.finished_transactions(fake_transaction)
+    test "finishes the transaction", %{fake_transaction: fake_transaction} do
+      assert [%Appsignal.Transaction{}] = FakeTransaction.finished_transactions(fake_transaction)
+    end
 
-    assert [%Appsignal.Transaction{id: "123"}] =
-             FakeTransaction.completed_transactions(fake_transaction)
+    test "completes the transaction", %{fake_transaction: fake_transaction} do
+      assert [%Appsignal.Transaction{}] = FakeTransaction.completed_transactions(fake_transaction)
+    end
 
-    assert [
-             {
-               %Appsignal.Transaction{},
-               "RuntimeError",
-               "Exception!",
-               _stack
-             }
-           ] = FakeTransaction.errors(fake_transaction)
+    test "sets the transaction error", %{fake_transaction: fake_transaction} do
+      assert [
+               {
+                 %Appsignal.Transaction{},
+                 "RuntimeError",
+                 "Exception!",
+                 _stack
+               }
+             ] = FakeTransaction.errors(fake_transaction)
+    end
   end
 
   test "filters parameters", %{socket: socket, fake_transaction: fake_transaction} do
