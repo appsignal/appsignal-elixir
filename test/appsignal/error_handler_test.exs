@@ -123,15 +123,5 @@ defmodule Appsignal.ErrorHandlerTest do
 
       refute FakeTransaction.request_metadata(fake_transaction)
     end
-
-    test "ignores errors with a plug_status lower than 500", %{fake_transaction: fake_transaction} do
-      transaction = FakeTransaction.create("123", :http_request)
-      exception = %Plug.BadRequestError{}
-
-      :ok = ErrorHandler.handle_error(transaction, exception, [], %{})
-
-      assert [] = FakeTransaction.errors(fake_transaction)
-      refute FakeTransaction.completed_transactions(fake_transaction)
-    end
   end
 end
