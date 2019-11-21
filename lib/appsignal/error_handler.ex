@@ -10,21 +10,12 @@ defmodule Appsignal.ErrorHandler do
 
   """
 
-  alias Appsignal.{Backtrace, Error}
+  alias Appsignal.{Backtrace, Error, Transaction}
   require Logger
 
-  @transaction Application.get_env(
-                 :appsignal,
-                 :appsignal_transaction,
-                 Appsignal.Transaction
-               )
+  @transaction Application.get_env(:appsignal, :appsignal_transaction, Transaction)
 
-  @spec handle_error(
-          Appsignal.Transaction.t() | pid() | any(),
-          any(),
-          Exception.stacktrace(),
-          map()
-        ) :: :ok
+  @spec handle_error(Transaction.t() | pid() | any(), any(), Exception.stacktrace(), map()) :: :ok
   def handle_error(pid_or_transaction, error, stack, conn \\ %{})
 
   def handle_error(pid, error, stack, conn) when is_pid(pid) do
@@ -33,18 +24,18 @@ defmodule Appsignal.ErrorHandler do
     |> handle_error(error, stack, conn)
   end
 
-  def handle_error(%Appsignal.Transaction{} = transaction, error, stack, conn) do
+  def handle_error(%Transaction{} = transaction, error, stack, conn) do
     {exception, stacktrace} = Error.normalize(error, stack)
     do_handle_error(transaction, exception, stacktrace, conn)
   end
 
   def handle_error(_transaction, _error, _stack, _conn), do: :ok
 
-  @spec do_handle_error(Appsignal.Transaction.t(), Exception.t(), list(String.t()), map()) :: :ok
+  @spec do_handle_error(Transaction.t(), Exception.t(), list(String.t()), map()) :: :ok
   defp do_handle_error(_, %{plug_status: status}, _, _) when status < 500, do: :ok
 
   defp do_handle_error(transaction, exception, stack, conn) do
-    {reason, message} = Appsignal.Error.metadata(exception)
+    {reason, message} = Error.metadata(exception)
     backtrace = Backtrace.from_stacktrace(stack)
 
     @transaction.set_error(transaction, reason, message, backtrace)
