@@ -1,6 +1,6 @@
 if Appsignal.phoenix?() do
   defmodule Appsignal.Phoenix.Channel do
-    alias Appsignal.{Transaction, Utils.MapFilter}
+    alias Appsignal.{ErrorHandler, Transaction, TransactionRegistry, Utils.MapFilter}
     @transaction Application.get_env(:appsignal, :appsignal_transaction, Transaction)
 
     @moduledoc """
@@ -99,16 +99,9 @@ if Appsignal.phoenix?() do
         function.()
       catch
         kind, reason ->
-          stack = System.stacktrace()
-
-          {exception, stacktrace} = Appsignal.Error.normalize(reason, stack)
-          {reason_string, message} = Appsignal.Error.metadata(exception)
-          backtrace = Appsignal.Backtrace.from_stacktrace(stacktrace)
-
-          @transaction.set_error(transaction, reason_string, message, backtrace)
-
+          ErrorHandler.set_error(transaction, reason, System.stacktrace())
           finish_with_socket(transaction, socket, params)
-          Appsignal.TransactionRegistry.ignore(self())
+          TransactionRegistry.ignore(self())
           :erlang.raise(kind, reason, stack)
       else
         result ->
