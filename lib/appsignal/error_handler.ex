@@ -25,11 +25,7 @@ defmodule Appsignal.ErrorHandler do
   end
 
   def handle_error(%Transaction{} = transaction, error, stack, conn) do
-    {exception, stacktrace} = Error.normalize(error, stack)
-    {reason, message} = Error.metadata(exception)
-    backtrace = Backtrace.from_stacktrace(stacktrace)
-
-    @transaction.set_error(transaction, reason, message, backtrace)
+    set_error(transaction, error, stack)
 
     if @transaction.finish(transaction) == :sample do
       @transaction.set_request_metadata(transaction, conn)
@@ -39,6 +35,15 @@ defmodule Appsignal.ErrorHandler do
   end
 
   def handle_error(_transaction, _error, _stack, _conn), do: :ok
+
+  @spec set_error(Transaction.t(), any(), Exception.stacktrace()) :: Transaction.t()
+  def set_error(transaction, error, stack) do
+    {exception, stacktrace} = Error.normalize(error, stack)
+    {reason, message} = Error.metadata(exception)
+    backtrace = Backtrace.from_stacktrace(stacktrace)
+
+    @transaction.set_error(transaction, reason, message, backtrace)
+  end
 
   def submit_transaction(transaction, reason, message, stack, metadata, conn \\ nil)
 
