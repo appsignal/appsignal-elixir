@@ -1,6 +1,6 @@
 if Appsignal.phoenix?() do
   defmodule Appsignal.Phoenix.Channel do
-    alias Appsignal.{Transaction, Utils.MapFilter}
+    alias Appsignal.{ErrorHandler, Transaction, TransactionRegistry, Utils.MapFilter}
     @transaction Application.get_env(:appsignal, :appsignal_transaction, Transaction)
 
     @moduledoc """
@@ -95,19 +95,31 @@ if Appsignal.phoenix?() do
       <<"Elixir.", action::binary>> = action_str
       @transaction.set_action(transaction, action)
 
-      result = function.()
+      try do
+        function.()
+      catch
+        kind, reason ->
+          stacktrace = System.stacktrace()
+          ErrorHandler.set_error(transaction, reason, stacktrace)
+          finish_with_socket(transaction, socket, params)
+          TransactionRegistry.ignore(self())
+          :erlang.raise(kind, reason, stacktrace)
+      else
+        result ->
+          finish_with_socket(transaction, socket, params)
+          result
+      end
+    end
 
-      resp = @transaction.finish(transaction)
-
-      if resp == :sample do
+    @spec finish_with_socket(Transaction.t() | nil, Phoenix.Socket.t(), map()) :: :ok | nil
+    defp finish_with_socket(transaction, socket, params) do
+      if @transaction.finish(transaction) == :sample do
         transaction
         |> @transaction.set_sample_data("params", MapFilter.filter_parameters(params))
         |> @transaction.set_sample_data("environment", request_environment(socket))
       end
 
       @transaction.complete(transaction)
-
-      result
     end
 
     @doc """
