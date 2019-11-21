@@ -1,6 +1,7 @@
 if Appsignal.phoenix?() do
   defmodule Appsignal.Phoenix.Channel do
-    @transaction Application.get_env(:appsignal, :appsignal_transaction, Appsignal.Transaction)
+    alias Appsignal.{Transaction, Utils.MapFilter}
+    @transaction Application.get_env(:appsignal, :appsignal_transaction, Transaction)
 
     @moduledoc """
     Instrumentation for channel events
@@ -100,14 +101,8 @@ if Appsignal.phoenix?() do
 
       if resp == :sample do
         transaction
-        |> @transaction.set_sample_data(
-          "params",
-          Appsignal.Utils.MapFilter.filter_parameters(params)
-        )
-        |> @transaction.set_sample_data(
-          "environment",
-          request_environment(socket)
-        )
+        |> @transaction.set_sample_data("params", MapFilter.filter_parameters(params))
+        |> @transaction.set_sample_data("environment", request_environment(socket))
       end
 
       @transaction.complete(transaction)
@@ -119,17 +114,14 @@ if Appsignal.phoenix?() do
     Given the `Appsignal.Transaction` and a `Phoenix.Socket`, add the
     socket metadata to the transaction.
     """
-    @spec set_metadata(Appsignal.Transaction.t(), Phoenix.Socket.t()) :: Appsignal.Transaction.t()
+    @spec set_metadata(Transaction.t(), Phoenix.Socket.t()) :: Transaction.t()
     def set_metadata(transaction, socket) do
       IO.warn(
         "Appsignal.Channel.set_metadata/1 is deprecated. Set params and environment data directly with Appsignal.Transaction.set_sample_data/2 instead."
       )
 
       transaction
-      |> @transaction.set_sample_data(
-        "params",
-        Appsignal.Utils.MapFilter.filter_parameters(socket.assigns)
-      )
+      |> @transaction.set_sample_data("params", MapFilter.filter_parameters(socket.assigns))
       |> @transaction.set_sample_data("environment", request_environment(socket))
     end
 
