@@ -5,16 +5,6 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
   setup do
     {:ok, fake_transaction} = FakeTransaction.start_link()
 
-    :telemetry.attach_many(
-      "event_handler_test",
-      [
-        [:phoenix, :endpoint, :start],
-        [:phoenix, :endpoint, :stop]
-      ],
-      &Appsignal.Phoenix.EventHandler.handle_event/4,
-      nil
-    )
-
     [
       fake_transaction: fake_transaction,
       transaction: Appsignal.Transaction.start("test", :http_request)
