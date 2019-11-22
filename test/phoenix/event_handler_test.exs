@@ -29,10 +29,37 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
     end
   end
 
+  describe "after receiving an endpoint-start and an endpoint-stop event" do
+    setup [:start_event, :finish_event]
+
+    test "finishes an event", %{fake_transaction: fake_transaction, transaction: transaction} do
+      assert FakeTransaction.finished_events(fake_transaction) == [
+               %{
+                 body: nil,
+                 body_format: 0,
+                 name: "call.phoenix_endpoint",
+                 title: "call.phoenix_endpoint",
+                 transaction: transaction
+               }
+             ]
+    end
+  end
+
   defp start_event(_) do
     :telemetry.execute(
       [:phoenix, :endpoint, :start],
       %{time: -576_460_736_044_040_000},
+      %{
+        conn: %Plug.Conn{},
+        options: []
+      }
+    )
+  end
+
+  defp finish_event(_) do
+    :telemetry.execute(
+      [:phoenix, :endpoint, :stop],
+      %{duration: 49_474_000},
       %{
         conn: %Plug.Conn{},
         options: []
