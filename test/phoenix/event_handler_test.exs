@@ -5,14 +5,11 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
   setup do
     {:ok, fake_transaction} = FakeTransaction.start_link()
 
-    [
-      fake_transaction: fake_transaction,
-      transaction: Appsignal.Transaction.start("test", :http_request)
-    ]
+    [fake_transaction: fake_transaction]
   end
 
   describe "after receiving an endpoint-start event" do
-    setup :start_event
+    setup [:start_transaction, :start_event]
 
     test "starts an event", %{fake_transaction: fake_transaction, transaction: transaction} do
       assert FakeTransaction.started_events(fake_transaction) == [transaction]
@@ -20,7 +17,7 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
   end
 
   describe "after receiving an endpoint-start and an endpoint-stop event" do
-    setup [:start_event, :finish_event]
+    setup [:start_transaction, :start_event, :finish_event]
 
     test "finishes an event", %{fake_transaction: fake_transaction, transaction: transaction} do
       assert FakeTransaction.finished_events(fake_transaction) == [
@@ -33,6 +30,10 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
                }
              ]
     end
+  end
+
+  defp start_transaction(_) do
+    [transaction: Appsignal.Transaction.start("test", :http_request)]
   end
 
   defp start_event(_) do
