@@ -1,6 +1,7 @@
 defmodule Appsignal.Phoenix.EventHandler do
   @transaction Application.get_env(:appsignal, :appsignal_transaction, Appsignal.Transaction)
 
+  @spec attach() :: :ok | {:error, :already_exists}
   def attach do
     :telemetry.attach_many(
       "appsignal_phoenix_event_handler",
@@ -13,6 +14,7 @@ defmodule Appsignal.Phoenix.EventHandler do
     )
   end
 
+  @spec handle_event(list(atom()), map(), map(), any()) :: Appsignal.Transaction.t() | nil
   def handle_event(
         [:phoenix, :endpoint, :start],
         _measurements,
