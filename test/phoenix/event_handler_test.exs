@@ -30,7 +30,7 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
     test "finishes an event", %{fake_transaction: fake_transaction, transaction: transaction} do
       assert FakeTransaction.finished_events(fake_transaction) == [
                %{
-                 body: nil,
+                 body: %{},
                  body_format: 0,
                  name: "call.phoenix_endpoint",
                  title: "call.phoenix_endpoint",
@@ -46,7 +46,7 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
     test "finishes an event", %{fake_transaction: fake_transaction, transaction: transaction} do
       assert FakeTransaction.finished_events(fake_transaction) == [
                %{
-                 body: nil,
+                 body: %{},
                  body_format: 0,
                  name: "call.phoenix_endpoint",
                  title: "call.phoenix_endpoint",

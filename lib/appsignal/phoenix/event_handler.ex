@@ -38,12 +38,12 @@ defmodule Appsignal.Phoenix.EventHandler do
       transaction,
       "call.phoenix_endpoint",
       "call.phoenix_endpoint",
-      nil,
+      %{},
       0
     )
   end
 
   def handle_event([:phoenix, :endpoint, :stop], _measurements, _metadata, _config) do
-    @transaction.finish_event("call.phoenix_endpoint", "call.phoenix_endpoint", nil, 0)
+    @transaction.finish_event("call.phoenix_endpoint", "call.phoenix_endpoint", %{}, 0)
   end
 end
