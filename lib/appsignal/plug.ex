@@ -14,10 +14,7 @@ if Appsignal.plug?() do
 
         def call(conn, opts) do
           if Appsignal.Config.active?() do
-            transaction =
-              @transaction.generate_id()
-              |> @transaction.start(:http_request)
-              |> Appsignal.Plug.try_set_action(conn)
+            transaction = @transaction.start(@transaction.generate_id(), :http_request)
 
             conn =
               conn
@@ -69,6 +66,8 @@ if Appsignal.plug?() do
     defp do_handle_error(_exception, _stack, _conn), do: :ok
 
     def finish_with_conn(transaction, conn) do
+      try_set_action(transaction, conn)
+
       if @transaction.finish(transaction) == :sample do
         @transaction.set_request_metadata(transaction, conn)
       end
