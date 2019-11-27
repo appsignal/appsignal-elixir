@@ -64,8 +64,9 @@ if Appsignal.plug?() do
            stack,
            %Plug.Conn{private: %{appsignal_transaction: transaction}} = conn
          ) do
-      Appsignal.ErrorHandler.handle_error(transaction, error, stack, conn)
       Appsignal.TransactionRegistry.ignore(self())
+      Appsignal.ErrorHandler.set_error(transaction, error, stack)
+      finish_with_conn(transaction, conn)
     end
 
     defp do_handle_error(_exception, _stack, _conn), do: :ok
