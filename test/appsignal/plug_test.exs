@@ -125,7 +125,7 @@ defmodule Appsignal.PlugTest do
       conn: conn,
       fake_transaction: fake_transaction
     } do
-      assert conn == FakeTransaction.request_metadata(fake_transaction)
+      assert %{conn | state: :set} == FakeTransaction.request_metadata(fake_transaction)
     end
 
     test "completes the transaction", %{fake_transaction: fake_transaction} do
@@ -505,13 +505,6 @@ defmodule Appsignal.PlugTest do
                  []
                }
              ] == FakeTransaction.errors(fake_transaction)
-    end
-
-    test "sets the transaction's request metdata", %{
-      fake_transaction: fake_transaction,
-      conn: conn
-    } do
-      assert conn == FakeTransaction.request_metadata(fake_transaction)
     end
   end
 
