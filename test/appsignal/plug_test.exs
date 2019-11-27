@@ -238,23 +238,23 @@ defmodule Appsignal.PlugTest do
     end
   end
 
-  # describe "for a transaction with a bad request error" do
-  #   setup do
-  #     [conn: conn(:get, "/bad_request", "")]
-  #   end
+  describe "for a transaction with a bad request error" do
+    setup do
+      [conn: conn(:get, "/bad_request", "")]
+    end
 
-  #   test "does not set the transaction error", %{conn: conn, fake_transaction: fake_transaction} do
-  #     :ok =
-  #       try do
-  #         PlugWithAppSignal.call(conn, %{})
-  #       catch
-  #         :error, %Plug.Conn.WrapperError{reason: %Plug.BadRequestError{}} -> :ok
-  #         type, reason -> {type, reason}
-  #       end
+    test "does not set the transaction error", %{conn: conn, fake_transaction: fake_transaction} do
+      :ok =
+        try do
+          PlugWithAppSignal.call(conn, %{})
+        catch
+          :error, %Plug.Conn.WrapperError{reason: %Plug.BadRequestError{}} -> :ok
+          type, reason -> {type, reason}
+        end
 
-  #     assert [] = FakeTransaction.errors(fake_transaction)
-  #   end
-  # end
+      assert [] = FakeTransaction.errors(fake_transaction)
+    end
+  end
 
   describe "for a wrapped undefined error" do
     setup do
