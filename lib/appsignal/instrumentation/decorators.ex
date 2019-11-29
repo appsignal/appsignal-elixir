@@ -36,6 +36,8 @@ defmodule Appsignal.Instrumentation.Decorators do
     transaction_event: 1,
     channel_action: 0
 
+  import Appsignal.Utils
+
   @transaction Application.get_env(:appsignal, :appsignal_transaction, Appsignal.Transaction)
 
   @doc false
@@ -48,7 +50,7 @@ defmodule Appsignal.Instrumentation.Decorators do
     quote do
       Appsignal.Instrumentation.Decorators.in_transaction(
         unquote(namespace),
-        unquote("#{context.module}##{context.name}"),
+        unquote("#{module_name(context.module)}##{context.name}"),
         fn -> unquote(body) end
       )
     end
@@ -69,7 +71,7 @@ defmodule Appsignal.Instrumentation.Decorators do
       Appsignal.Instrumentation.Helpers.instrument(
         self(),
         unquote("#{context.name}#{postfix}"),
-        unquote("#{context.module}.#{context.name}"),
+        unquote("#{module_name(context.module)}.#{context.name}"),
         fn -> unquote(body) end
       )
     end
@@ -79,7 +81,7 @@ defmodule Appsignal.Instrumentation.Decorators do
   def channel_action(body, %{args: [action, _payload, socket]} = context) do
     quote do
       Appsignal.Phoenix.Channel.channel_action(
-        unquote(context.module),
+        unquote(module_name(context.module)),
         unquote(action),
         unquote(socket),
         fn -> unquote(body) end
