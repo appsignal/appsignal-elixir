@@ -41,4 +41,10 @@ defmodule AppsignalSpanTest do
       assert {:ok, ^span_id} = Span.span_id(reference)
     end
   end
+
+  describe ".set_namespace/2" do
+    test "returns the span", %{span: span} do
+      assert Span.set_namespace(span, "test") == span
+    end
+  end
 end
