@@ -3,6 +3,7 @@ if Appsignal.plug?() do
     @moduledoc """
     Plug handler for Phoenix requests
     """
+    import Appsignal.Utils
 
     defmacro __using__(_) do
       quote do
@@ -103,7 +104,7 @@ if Appsignal.plug?() do
     def extract_action(%Plug.Conn{
           private: %{phoenix_action: action, phoenix_controller: controller}
         }) do
-      merge_action_and_controller(action, controller)
+      "#{module_name(controller)}##{action}"
     end
 
     def extract_action(%Plug.Conn{private: %{phoenix_endpoint: _}}), do: nil
@@ -155,17 +156,6 @@ if Appsignal.plug?() do
         "request_id" => request_id,
         "http_status_code" => status
       }
-    end
-
-    defp merge_action_and_controller(action, controller) when is_atom(controller) do
-      merge_action_and_controller(
-        action,
-        controller |> Atom.to_string() |> String.trim_leading("Elixir.")
-      )
-    end
-
-    defp merge_action_and_controller(action, controller) do
-      "#{controller}##{action}"
     end
 
     defp url(%Plug.Conn{scheme: scheme, host: host, port: port, request_path: request_path}) do
