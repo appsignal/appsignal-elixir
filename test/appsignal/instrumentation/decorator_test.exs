@@ -56,8 +56,8 @@ defmodule Appsignal.Instrumentation.DecoratorsTest do
     assert [{"123", :http_request}] = FakeTransaction.started_transactions(fake_transaction)
 
     assert [
-             %{title: "Elixir.UsingAppsignalDecorators.bar"},
-             %{title: "Elixir.UsingAppsignalDecorators.nested"}
+             %{title: "UsingAppsignalDecorators.bar"},
+             %{title: "UsingAppsignalDecorators.nested"}
            ] = FakeTransaction.finished_events(fake_transaction)
   end
 
@@ -71,14 +71,14 @@ defmodule Appsignal.Instrumentation.DecoratorsTest do
                body: "",
                body_format: 0,
                name: "bar",
-               title: "Elixir.UsingAppsignalDecorators.bar",
+               title: "UsingAppsignalDecorators.bar",
                transaction: ^transaction
              },
              %{
                body: "",
                body_format: 0,
                name: "nested",
-               title: "Elixir.UsingAppsignalDecorators.nested",
+               title: "UsingAppsignalDecorators.nested",
                transaction: ^transaction
              }
            ] = FakeTransaction.finished_events(fake_transaction)
@@ -88,8 +88,7 @@ defmodule Appsignal.Instrumentation.DecoratorsTest do
     UsingAppsignalDecorators.transaction()
     assert [{"123", :http_request}] = FakeTransaction.started_transactions(fake_transaction)
 
-    assert "Elixir.UsingAppsignalDecorators#transaction" =
-             FakeTransaction.action(fake_transaction)
+    assert "UsingAppsignalDecorators#transaction" = FakeTransaction.action(fake_transaction)
 
     assert [transaction] = FakeTransaction.finished_transactions(fake_transaction)
     assert [^transaction] = FakeTransaction.completed_transactions(fake_transaction)
@@ -99,7 +98,7 @@ defmodule Appsignal.Instrumentation.DecoratorsTest do
     UsingAppsignalDecorators.background_transaction()
     assert [{"123", :background_job}] = FakeTransaction.started_transactions(fake_transaction)
 
-    assert "Elixir.UsingAppsignalDecorators#background_transaction" =
+    assert "UsingAppsignalDecorators#background_transaction" =
              FakeTransaction.action(fake_transaction)
 
     assert [transaction] = FakeTransaction.finished_transactions(fake_transaction)
@@ -111,7 +110,7 @@ defmodule Appsignal.Instrumentation.DecoratorsTest do
     assert 246 == result
     assert [{"123", :http_request}] = FakeTransaction.started_transactions(fake_transaction)
 
-    assert "Elixir.UsingAppsignalDecorators#transaction_with_return_value" =
+    assert "UsingAppsignalDecorators#transaction_with_return_value" =
              FakeTransaction.action(fake_transaction)
 
     assert [transaction] = FakeTransaction.finished_transactions(fake_transaction)
@@ -128,14 +127,14 @@ defmodule Appsignal.Instrumentation.DecoratorsTest do
                body: "",
                body_format: 0,
                name: "bar.http",
-               title: "Elixir.UsingAppsignalDecoratorsWithCustomNamespaces.bar",
+               title: "UsingAppsignalDecoratorsWithCustomNamespaces.bar",
                transaction: ^transaction
              },
              %{
                body: "",
                body_format: 0,
                name: "nested.db",
-               title: "Elixir.UsingAppsignalDecoratorsWithCustomNamespaces.nested",
+               title: "UsingAppsignalDecoratorsWithCustomNamespaces.nested",
                transaction: ^transaction
              }
            ] = FakeTransaction.finished_events(fake_transaction)
