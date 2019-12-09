@@ -2,6 +2,7 @@ defmodule Appsignal.Error do
   @moduledoc """
   Functions for extracting information from Elixir exceptions and Erlang errors.
   """
+  import Appsignal.Utils
 
   @spec metadata(Exception.t()) :: {String.t(), String.t()}
   def metadata(exception) do
@@ -54,15 +55,6 @@ defmodule Appsignal.Error do
   defp name(%module{}) do
     module_name(module)
   end
-
-  @spec module_name(atom | String.t()) :: String.t()
-  defp module_name(module) when is_atom(module) do
-    module
-    |> Atom.to_string()
-    |> module_name
-  end
-
-  defp module_name("Elixir." <> module), do: module
 
   defp stacktrace?(stacktrace) when is_list(stacktrace) do
     Enum.all?(stacktrace, &stacktrace_line?/1)
