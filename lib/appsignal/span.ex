@@ -10,7 +10,7 @@ defmodule Appsignal.Span do
     Nif.span_id(reference)
   end
 
-  def create(name) do
+  def create(name \\ "") do
     case Dictionary.lookup() || parent() do
       %Span{trace_id: trace_id, span_id: span_id} ->
         create(name, trace_id, span_id)
