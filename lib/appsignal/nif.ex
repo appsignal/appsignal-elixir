@@ -237,6 +237,10 @@ defmodule Appsignal.Nif do
     _create_child_span(trace_id, span_id, name)
   end
 
+  def set_span_namespace(reference, namespace) do
+    _set_span_namespace(reference, namespace)
+  end
+
   def set_span_attribute_string(reference, key, value) do
     _set_span_attribute_string(reference, key, value)
   end
@@ -443,6 +447,10 @@ defmodule Appsignal.Nif do
 
   def _create_child_span(name, trace_id, span_id) do
     {:ok, make_ref()}
+  end
+
+  def _set_span_namespace(reference, namespace) do
+    :ok
   end
 
   def _set_span_attribute_string(reference, key, value) do
