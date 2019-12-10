@@ -80,6 +80,18 @@ defmodule Appsignal.Span do
     span
   end
 
+  def add_error(%Span{reference: reference} = span, error, stacktrace) do
+    {name, message} = Appsignal.Error.metadata(error)
+
+    backtrace =
+      stacktrace
+      |> Appsignal.Backtrace.from_stacktrace()
+      |> Appsignal.Utils.DataEncoder.encode()
+
+    :ok = Nif.add_span_error(reference, name, message, backtrace)
+    span
+  end
+
   def close() do
     Dictionary.lookup() |> close()
   end
