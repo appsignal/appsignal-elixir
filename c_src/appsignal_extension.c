@@ -1050,6 +1050,37 @@ static ERL_NIF_TERM _set_span_attribute_double(ErlNifEnv* env, int argc, const E
     return enif_make_atom(env, "ok");
 }
 
+static ERL_NIF_TERM _add_span_error(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
+    span_ptr *ptr;
+    ErlNifBinary error, message;
+    data_ptr *data_ptr;
+
+    if (argc != 4) {
+      return enif_make_badarg(env);
+    }
+    if(!enif_get_resource(env, argv[0], appsignal_span_type, (void**) &ptr)) {
+      return enif_make_badarg(env);
+    }
+    if(!enif_inspect_iolist_as_binary(env, argv[1], &error)) {
+      return enif_make_badarg(env);
+    }
+    if(!enif_inspect_iolist_as_binary(env, argv[2], &message)) {
+      return enif_make_badarg(env);
+    }
+    if(!enif_get_resource(env, argv[3], appsignal_data_type, (void**) &data_ptr)) {
+      return enif_make_badarg(env);
+    }
+
+    appsignal_add_span_error(
+        ptr->span,
+        make_appsignal_string(error),
+        make_appsignal_string(message),
+        data_ptr->data
+    );
+
+    return enif_make_atom(env, "ok");
+}
+
 static ERL_NIF_TERM _close_span(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     span_ptr *ptr;
@@ -1203,6 +1234,7 @@ static ErlNifFunc nif_funcs[] =
     {"_set_span_attribute_int", 3, _set_span_attribute_int, 0},
     {"_set_span_attribute_bool", 3, _set_span_attribute_bool, 0},
     {"_set_span_attribute_double", 3, _set_span_attribute_double, 0},
+    {"_add_span_error", 4, _add_span_error, 0},
     {"_close_span", 1, _close_span, 0},
     {"_trace_id", 1, _trace_id, 0},
     {"_span_id", 1, _span_id, 0}
