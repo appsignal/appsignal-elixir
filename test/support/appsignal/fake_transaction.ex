@@ -191,7 +191,7 @@ defmodule Appsignal.FakeTransaction do
   end
 
   def start(id, namespace) do
-    if(Appsignal.Config.active?()) do
+    if Appsignal.Config.active?() do
       Agent.update(__MODULE__, fn state ->
         {_, new_state} =
           Map.get_and_update(state, :started_transactions, fn current ->
