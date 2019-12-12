@@ -1,7 +1,7 @@
 defmodule Appsignal.Transaction.ReceiverTest do
   use ExUnit.Case
   import AppsignalTest.Utils
-  alias Appsignal.{Transaction, Transaction.Receiver, Transaction.ETS}
+  alias Appsignal.{Transaction, Transaction.ETS, Transaction.Receiver}
 
   test "monitors a process" do
     task =
