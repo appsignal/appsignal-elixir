@@ -1,6 +1,7 @@
 if Appsignal.phoenix?() do
   defmodule Appsignal.Phoenix.Channel do
     alias Appsignal.{ErrorHandler, Transaction, TransactionRegistry, Utils.MapFilter}
+    import Appsignal.Utils
     @transaction Application.get_env(:appsignal, :appsignal_transaction, Transaction)
 
     @moduledoc """
@@ -89,11 +90,10 @@ if Appsignal.phoenix?() do
 
     @spec channel_action(atom, String.t(), Phoenix.Socket.t(), map, fun) :: any
     def channel_action(module, name, %Phoenix.Socket{} = socket, params, function) do
-      transaction = @transaction.start(@transaction.generate_id(), :channel)
-
-      action_str = "#{module}##{name}"
-      <<"Elixir.", action::binary>> = action_str
-      @transaction.set_action(transaction, action)
+      transaction =
+        @transaction.generate_id()
+        |> @transaction.start(:channel)
+        |> @transaction.set_action("#{module_name(module)}##{name}")
 
       try do
         function.()
