@@ -38,6 +38,8 @@ defmodule Appsignal do
     initialize()
     add_report_handler()
 
+    if phoenix?(), do: Appsignal.Phoenix.EventHandler.attach()
+
     children = [
       worker(Appsignal.Transaction.Receiver, [], restart: :permanent),
       worker(Appsignal.Transaction.ETS, [], restart: :permanent),

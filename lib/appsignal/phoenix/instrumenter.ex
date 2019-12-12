@@ -52,8 +52,7 @@ if Appsignal.phoenix?() do
       Appsignal.TransactionRegistry.lookup(self())
     end
 
-    defp start_event(%Appsignal.Transaction{} = transaction, %{conn: conn} = args) do
-      @transaction.set_action(Appsignal.Plug.extract_action(conn))
+    defp start_event(%Appsignal.Transaction{} = transaction, args) do
       {@transaction.start_event(transaction), args}
     end
 

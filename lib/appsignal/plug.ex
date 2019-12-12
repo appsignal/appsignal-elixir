@@ -15,19 +15,19 @@ if Appsignal.plug?() do
 
         def call(conn, opts) do
           if Appsignal.Config.active?() do
-            transaction =
-              @transaction.generate_id()
-              |> @transaction.start(:http_request)
-              |> Appsignal.Plug.try_set_action(conn)
+            transaction = @transaction.start(@transaction.generate_id(), :http_request)
 
-            conn = Plug.Conn.put_private(conn, :appsignal_transaction, transaction)
+            conn =
+              conn
+              |> Plug.Conn.put_private(:appsignal_transaction, transaction)
+              |> Plug.Conn.register_before_send(fn conn ->
+                Appsignal.Plug.finish_with_conn(transaction, conn)
+              end)
 
             try do
               super(conn, opts)
             catch
               kind, reason -> Appsignal.Plug.handle_error(conn, kind, reason, System.stacktrace())
-            else
-              conn -> Appsignal.Plug.finish_with_conn(transaction, conn)
             end
           else
             super(conn, opts)
@@ -44,10 +44,6 @@ if Appsignal.plug?() do
                    Appsignal.Transaction
                  )
 
-    def handle_error(_conn, kind, %{plug_status: status} = reason, stack) when status < 500 do
-      :erlang.raise(kind, reason, stack)
-    end
-
     def handle_error(_conn, :error, %Plug.Conn.WrapperError{} = original_reason, _stack) do
       %{conn: conn, kind: kind, reason: reason, stack: stack} = original_reason
       do_handle_error(reason, stack, conn)
@@ -61,18 +57,18 @@ if Appsignal.plug?() do
       :erlang.raise(kind, reason, stack)
     end
 
-    defp do_handle_error(
-           error,
-           stack,
-           %Plug.Conn{private: %{appsignal_transaction: transaction}} = conn
-         ) do
-      Appsignal.ErrorHandler.handle_error(transaction, error, stack, conn)
+    defp do_handle_error(%{plug_status: status}, _stack, _conn) when status < 500, do: :ok
+
+    defp do_handle_error(error, stack, %Plug.Conn{private: %{appsignal_transaction: transaction}}) do
       Appsignal.TransactionRegistry.ignore(self())
+      Appsignal.ErrorHandler.set_error(transaction, error, stack)
     end
 
     defp do_handle_error(_exception, _stack, _conn), do: :ok
 
     def finish_with_conn(transaction, conn) do
+      try_set_action(transaction, conn)
+
       if @transaction.finish(transaction) == :sample do
         @transaction.set_request_metadata(transaction, conn)
       end
