@@ -31,6 +31,12 @@ defmodule Appsignal.FakeTransaction do
     transaction
   end
 
+  def finish_event(name, title, body, body_format) do
+    self()
+    |> Appsignal.TransactionRegistry.lookup()
+    |> finish_event(name, title, body, body_format)
+  end
+
   def finish_event(transaction, name, title, body, body_format) do
     Agent.update(__MODULE__, fn state ->
       {_, new_state} =
