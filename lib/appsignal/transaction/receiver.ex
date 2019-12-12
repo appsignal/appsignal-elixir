@@ -40,6 +40,7 @@ defmodule Appsignal.Transaction.Receiver do
         transaction
         |> Registry.pids_and_monitor_references()
         |> process_demonitor()
+
         receiver()
 
       _ ->
