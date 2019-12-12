@@ -44,10 +44,6 @@ if Appsignal.plug?() do
                    Appsignal.Transaction
                  )
 
-    def handle_error(_conn, kind, %{plug_status: status} = reason, stack) when status < 500 do
-      :erlang.raise(kind, reason, stack)
-    end
-
     def handle_error(_conn, :error, %Plug.Conn.WrapperError{} = original_reason, _stack) do
       %{conn: conn, kind: kind, reason: reason, stack: stack} = original_reason
       do_handle_error(reason, stack, conn)
@@ -55,10 +51,24 @@ if Appsignal.plug?() do
       :erlang.raise(kind, original_reason, stack)
     end
 
-    def handle_error(conn, kind, reason, stack) do
+    def handle_error(
+          %Plug.Conn{private: %{appsignal_transaction: transaction}} = conn,
+          kind,
+          reason,
+          stack
+        ) do
       do_handle_error(reason, stack, conn)
+      Appsignal.Plug.finish_with_conn(transaction, conn)
 
       :erlang.raise(kind, reason, stack)
+    end
+
+    def handle_error(_conn, kind, reason, stack) do
+      :erlang.raise(kind, reason, stack)
+    end
+
+    defp do_handle_error(%{plug_status: status}, _stack, _conn) when status < 500 do
+      Appsignal.TransactionRegistry.ignore(self())
     end
 
     defp do_handle_error(
@@ -66,8 +76,9 @@ if Appsignal.plug?() do
            stack,
            %Plug.Conn{private: %{appsignal_transaction: transaction}} = conn
          ) do
-      Appsignal.ErrorHandler.handle_error(transaction, error, stack, conn)
       Appsignal.TransactionRegistry.ignore(self())
+      Appsignal.ErrorHandler.set_error(transaction, error, stack)
+      finish_with_conn(transaction, conn)
     end
 
     defp do_handle_error(_exception, _stack, _conn), do: :ok
