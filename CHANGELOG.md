@@ -1,3 +1,9 @@
+# 1.12.0-beta.1
+- Return an :ok-tuple from Mix.Tasks.Compile.Appsignal.run/1. commit cc1b860892066aac29113da0a213b55785f0b8db
+- Add explicit error handling for Phoenix channels. PR #527
+- Uove module name cleanup to Appsignal.Utils, clean up module names from decorators. PR #530
+- Add Phoenix Telemetry event handler to add Phoenix 1.5 instrumentation. PR #528
+
 # 1.11.4
 - Add transaction_debug configuration option. PR #526
 - Bump agent to v-c348132
