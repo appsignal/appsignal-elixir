@@ -125,7 +125,7 @@ defmodule Appsignal.PlugTest do
       conn: conn,
       fake_transaction: fake_transaction
     } do
-      assert %{conn | state: :set} == FakeTransaction.request_metadata(fake_transaction)
+      assert conn == FakeTransaction.request_metadata(fake_transaction)
     end
 
     test "completes the transaction", %{fake_transaction: fake_transaction} do
@@ -308,10 +308,6 @@ defmodule Appsignal.PlugTest do
     setup do
       conn = conn(:get, "/timeout")
 
-      [conn: conn]
-    end
-
-    test "sets the transaction error", %{conn: conn, fake_transaction: fake_transaction} do
       :ok =
         try do
           PlugWithAppSignal.call(conn, [])
@@ -320,11 +316,29 @@ defmodule Appsignal.PlugTest do
           type, reason -> {type, reason}
         end
 
+      [conn: conn]
+    end
+
+    test "sets the transaction error", %{fake_transaction: fake_transaction} do
       [{%Appsignal.Transaction{}, name, message, _stack}] =
         FakeTransaction.errors(fake_transaction)
 
       assert name == ":timeout"
       assert message =~ ~r({:timeout, {Task, :await, \[%Task{owner: ...)
+    end
+
+    test "finishes the transaction", %{fake_transaction: fake_transaction} do
+      assert [%Appsignal.Transaction{}] = FakeTransaction.finished_transactions(fake_transaction)
+    end
+
+    test "completes the transaction", %{fake_transaction: fake_transaction} do
+      assert [%Appsignal.Transaction{}] = FakeTransaction.completed_transactions(fake_transaction)
+    end
+
+    test "ignores the process' pid" do
+      until(fn ->
+        assert Appsignal.TransactionRegistry.lookup(self()) == :ignored
+      end)
     end
   end
 

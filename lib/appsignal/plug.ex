@@ -21,13 +21,16 @@ if Appsignal.plug?() do
               conn
               |> Plug.Conn.put_private(:appsignal_transaction, transaction)
               |> Plug.Conn.register_before_send(fn conn ->
-                Appsignal.Plug.finish_with_conn(transaction, conn)
+                Appsignal.Plug.try_set_action(transaction, conn)
+                conn
               end)
 
             try do
               super(conn, opts)
             catch
               kind, reason -> Appsignal.Plug.handle_error(conn, kind, reason, System.stacktrace())
+            else
+              conn -> Appsignal.Plug.finish_with_conn(transaction, conn)
             end
           else
             super(conn, opts)
@@ -59,16 +62,19 @@ if Appsignal.plug?() do
 
     defp do_handle_error(%{plug_status: status}, _stack, _conn) when status < 500, do: :ok
 
-    defp do_handle_error(error, stack, %Plug.Conn{private: %{appsignal_transaction: transaction}}) do
+    defp do_handle_error(
+           error,
+           stack,
+           %Plug.Conn{private: %{appsignal_transaction: transaction}} = conn
+         ) do
       Appsignal.TransactionRegistry.ignore(self())
       Appsignal.ErrorHandler.set_error(transaction, error, stack)
+      finish_with_conn(transaction, conn)
     end
 
     defp do_handle_error(_exception, _stack, _conn), do: :ok
 
     def finish_with_conn(transaction, conn) do
-      try_set_action(transaction, conn)
-
       if @transaction.finish(transaction) == :sample do
         @transaction.set_request_metadata(transaction, conn)
       end
