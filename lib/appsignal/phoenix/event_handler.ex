@@ -3,6 +3,8 @@ defmodule Appsignal.Phoenix.EventHandler do
 
   @spec attach() :: :ok | {:error, :already_exists}
   def attach do
+    :application.ensure_all_started(:telemetry)
+
     :telemetry.attach_many(
       "appsignal_phoenix_event_handler",
       [
