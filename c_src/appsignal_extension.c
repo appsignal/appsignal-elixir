@@ -998,7 +998,7 @@ static ERL_NIF_TERM _set_span_attribute_bool(ErlNifEnv* env, int argc, const ERL
 {
     span_ptr *ptr;
     ErlNifBinary key;
-    long value;
+    int value;
 
     if (argc != 3) {
       return enif_make_badarg(env);
@@ -1026,7 +1026,7 @@ static ERL_NIF_TERM _set_span_attribute_double(ErlNifEnv* env, int argc, const E
 {
     span_ptr *ptr;
     ErlNifBinary key;
-    long value;
+    double value;
 
     if (argc != 3) {
       return enif_make_badarg(env);
