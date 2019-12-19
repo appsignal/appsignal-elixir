@@ -25,7 +25,8 @@ if Appsignal.phoenix?() do
     @transaction Application.get_env(:appsignal, :appsignal_transaction, Appsignal.Transaction)
 
     @doc false
-    def phoenix_controller_call(:start, _, args) do
+    def phoenix_controller_call(:start, _, %{conn: conn} = args) do
+      @transaction.set_action(Appsignal.Plug.extract_action(conn))
       start_event(transaction(), args)
     end
 
