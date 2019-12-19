@@ -14,6 +14,10 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
     test "starts an event", %{fake_transaction: fake_transaction, transaction: transaction} do
       assert FakeTransaction.started_events(fake_transaction) == [transaction]
     end
+
+    test "sets the action name", %{fake_transaction: fake_transaction} do
+      assert "foo#bar" == FakeTransaction.action(fake_transaction)
+    end
   end
 
   describe "after receiving an endpoint-start event with a transaction in the conn" do
@@ -21,6 +25,10 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
 
     test "starts an event", %{fake_transaction: fake_transaction, transaction: transaction} do
       assert FakeTransaction.started_events(fake_transaction) == [transaction]
+    end
+
+    test "sets the action name", %{fake_transaction: fake_transaction} do
+      assert "foo#bar" == FakeTransaction.action(fake_transaction)
     end
   end
 
@@ -63,7 +71,7 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
   defp start_event_with_transaction_in_conn(_) do
     transaction = %Appsignal.Transaction{}
 
-    %Plug.Conn{}
+    conn()
     |> Plug.Conn.put_private(:appsignal_transaction, transaction)
     |> do_start_event()
 
@@ -72,7 +80,7 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
 
   defp start_event(_), do: do_start_event()
 
-  defp do_start_event(conn \\ %Plug.Conn{}) do
+  defp do_start_event(conn \\ conn()) do
     :telemetry.execute(
       [:phoenix, :endpoint, :start],
       %{time: -576_460_736_044_040_000},
@@ -104,5 +112,11 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
         options: []
       }
     )
+  end
+
+  defp conn() do
+    %Plug.Conn{}
+    |> Plug.Conn.put_private(:phoenix_controller, "foo")
+    |> Plug.Conn.put_private(:phoenix_action, "bar")
   end
 end

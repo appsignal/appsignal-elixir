@@ -20,13 +20,15 @@ defmodule Appsignal.Phoenix.EventHandler do
   def handle_event(
         [:phoenix, :endpoint, :start],
         _measurements,
-        %{conn: %Plug.Conn{private: %{appsignal_transaction: transaction}}},
+        %{conn: %Plug.Conn{private: %{appsignal_transaction: transaction}} = conn},
         _config
       ) do
+    @transaction.set_action(transaction, Appsignal.Plug.extract_action(conn))
     @transaction.start_event(transaction)
   end
 
-  def handle_event([:phoenix, :endpoint, :start], _measurements, _metadata, _config) do
+  def handle_event([:phoenix, :endpoint, :start], _measurements, %{conn: conn}, _config) do
+    @transaction.set_action(Appsignal.Plug.extract_action(conn))
     @transaction.start_event()
   end
 
