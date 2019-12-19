@@ -42,6 +42,12 @@ defmodule AppsignalSpanTest do
     end
   end
 
+  describe ".set_name/2" do
+    test "returns the span", %{span: span} do
+      assert Span.set_name(span, "test") == span
+    end
+  end
+
   describe ".set_namespace/2" do
     test "returns the span", %{span: span} do
       assert Span.set_namespace(span, "test") == span
