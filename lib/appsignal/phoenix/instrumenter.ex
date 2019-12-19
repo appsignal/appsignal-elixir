@@ -57,10 +57,6 @@ if Appsignal.phoenix?() do
       {@transaction.start_event(transaction), args}
     end
 
-    defp start_event(%Appsignal.Transaction{} = transaction, args) do
-      {@transaction.start_event(transaction), args}
-    end
-
     defp start_event(_transaction, _args), do: nil
 
     defp finish_event(transaction, name, args) do
