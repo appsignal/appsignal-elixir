@@ -58,4 +58,10 @@ defmodule AppsignalSpanTest do
       end
     end
   end
+
+  describe ".set_sample_data/3" do
+    test "returns the span", %{span: span} do
+      assert Span.set_sample_data(span, "key", %{param: "value"}) == span
+    end
+  end
 end

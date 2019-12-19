@@ -80,6 +80,13 @@ defmodule Appsignal.Span do
     span
   end
 
+  def set_sample_data(%Span{reference: reference} = span, key, value)
+      when is_binary(key) and is_map(value) do
+    data = Appsignal.Utils.DataEncoder.encode(value)
+    :ok = Nif.set_span_sample_data(reference, key, data)
+    span
+  end
+
   def add_error(%Span{reference: reference} = span, error, stacktrace) do
     {name, message} = Appsignal.Error.metadata(error)
 
