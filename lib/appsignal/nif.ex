@@ -257,6 +257,10 @@ defmodule Appsignal.Nif do
     _set_span_attribute_double(reference, key, value)
   end
 
+  def set_span_sample_data(reference, key, value) do
+    _set_span_sample_data(reference, key, value)
+  end
+
   def add_span_error(reference, name, message, backtrace) do
     _add_span_error(reference, name, message, backtrace)
   end
@@ -470,6 +474,10 @@ defmodule Appsignal.Nif do
   end
 
   def _set_span_attribute_double(reference, key, value) do
+    :ok
+  end
+
+  def _set_span_sample_data(reference, key, value) do
     :ok
   end
 
