@@ -114,7 +114,7 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
     )
   end
 
-  defp conn() do
+  defp conn do
     %Plug.Conn{}
     |> Plug.Conn.put_private(:phoenix_controller, "foo")
     |> Plug.Conn.put_private(:phoenix_action, "bar")
