@@ -16,11 +16,14 @@ defmodule Appsignal.Transmitter do
         {:ok, %{access: access}} when access in [:read, :read_write] ->
           {:ok,
            [
-             ssl_options: [
-               cacertfile: ca_file_path,
-               ciphers: ciphers(),
-               honor_cipher_order: :undefined
-             ]
+             ssl_options:
+               [
+                 verify: :verify_peer,
+                 cacertfile: ca_file_path,
+                 depth: 4,
+                 ciphers: ciphers(),
+                 honor_cipher_order: :undefined
+               ] ++ customize_hostname_check_or_verify_fun()
            ]}
 
         {:ok, %{access: access}} ->
@@ -55,5 +58,27 @@ defmodule Appsignal.Transmitter do
     defp ciphers, do: :ssl.cipher_suites(:default, :"tlsv1.2")
   else
     defp ciphers, do: :ssl.cipher_suites()
+  end
+
+  if System.otp_release() >= "21" do
+    defp customize_hostname_check_or_verify_fun do
+      [
+        customize_hostname_check: [
+          match_fun: :public_key.pkix_verify_hostname_match_fun(:https)
+        ]
+      ]
+    end
+  else
+    defp customize_hostname_check_or_verify_fun do
+      [
+        verify_fun:
+          {fn
+             _, :valid, state -> {:valid, state}
+             _, :valid_peer, state -> {:valid, state}
+             _, {:extension, _}, state -> {:unknown, state}
+             _, reason, _ -> {:fail, reason}
+           end, self()}
+      ]
+    end
   end
 end

@@ -189,11 +189,14 @@ defmodule Mix.Appsignal.Helper do
 
   defp download_options do
     options = [
-      ssl_options: [
-        cacertfile: priv_path("cacert.pem"),
-        ciphers: ciphers(),
-        honor_cipher_order: :undefined
-      ]
+      ssl_options:
+        [
+          verify: :verify_peer,
+          cacertfile: priv_path("cacert.pem"),
+          depth: 4,
+          ciphers: ciphers(),
+          honor_cipher_order: :undefined
+        ] ++ customize_hostname_check_or_verify_fun()
     ]
 
     case check_proxy() do
@@ -626,6 +629,28 @@ defmodule Mix.Appsignal.Helper do
     defp ciphers, do: :ssl.cipher_suites(:default, :"tlsv1.2")
   else
     defp ciphers, do: :ssl.cipher_suites()
+  end
+
+  if System.otp_release() >= "21" do
+    defp customize_hostname_check_or_verify_fun do
+      [
+        customize_hostname_check: [
+          match_fun: :public_key.pkix_verify_hostname_match_fun(:https)
+        ]
+      ]
+    end
+  else
+    defp customize_hostname_check_or_verify_fun do
+      [
+        verify_fun:
+          {fn
+             _, :valid, state -> {:valid, state}
+             _, :valid_peer, state -> {:valid, state}
+             _, {:extension, _}, state -> {:unknown, state}
+             _, reason, _ -> {:fail, reason}
+           end, self()}
+      ]
+    end
   end
 
   def root? do
