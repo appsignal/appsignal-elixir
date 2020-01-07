@@ -2,6 +2,7 @@ branches:
   only:
   - master
   - develop
+  - ci-fixes
 language: elixir
 elixir:
   - 1.3.4
