@@ -13,28 +13,44 @@ defmodule Appsignal.TransmitterTest do
   end
 
   test "uses the default CA certificate" do
-    path = Config.ca_file_path()
+    [_method, _url, _headers, _body, [ssl_options: ssl_options]] =
+      Transmitter.request(:get, "https://example.com")
 
-    assert [
-             _method,
-             _url,
-             _headers,
-             _body,
-             [ssl_options: [cacertfile: ^path, ciphers: _, honor_cipher_order: :undefined]]
-           ] = Transmitter.request(:get, "https://example.com")
+    assert ssl_options[:verify] == :verify_peer
+    assert ssl_options[:cacertfile] == Config.ca_file_path()
+    assert ssl_options[:depth] == 4
+
+    if System.otp_release() >= "21" do
+      assert ssl_options[:customize_hostname_check] == [
+               match_fun: :public_key.pkix_verify_hostname_match_fun(:https)
+             ]
+
+      refute Keyword.has_key?(ssl_options, :verify_fun)
+    else
+      {fun, pid} = ssl_options[:verify_fun]
+      assert is_function(fun)
+      assert is_pid(pid)
+
+      refute Keyword.has_key?(ssl_options, :customize_hostname_check)
+    end
+
+    if System.otp_release() >= "20.3" do
+      assert ssl_options[:ciphers] == :ssl.cipher_suites(:default, :"tlsv1.2")
+    else
+      assert ssl_options[:ciphers] == :ssl.cipher_suites()
+    end
+
+    assert ssl_options[:honor_cipher_order] == :undefined
   end
 
   test "uses the configured CA certificate" do
     path = "priv/cacert.pem"
 
     with_config(%{ca_file_path: path}, fn ->
-      assert [
-               _method,
-               _url,
-               _headers,
-               _body,
-               [ssl_options: [cacertfile: ^path, ciphers: _, honor_cipher_order: :undefined]]
-             ] = Transmitter.request(:get, "https://example.com")
+      [_method, _url, _headers, _body, [ssl_options: ssl_options]] =
+        Transmitter.request(:get, "https://example.com")
+
+      assert ssl_options[:cacertfile] == path
     end)
   end
 
