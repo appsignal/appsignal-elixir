@@ -1,3 +1,6 @@
+# 1.11.5
+- Use a complete set of ssl_options for Hackney. PR #534
+
 # 1.11.4
 - Add transaction_debug configuration option. PR #526
 - Bump agent to v-c348132
