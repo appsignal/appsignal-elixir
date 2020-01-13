@@ -15,9 +15,8 @@ defmodule Appsignal.BacktraceTest do
       {:erl_internal, :op_type, [:get_stacktrace, 0], [file: 'erl_internal.erl', line: 212]}
     ]
 
-    assert Appsignal.Backtrace.from_stacktrace(stacktrace) == [
-             "(stdlib) erl_internal.erl:212: :erl_internal.op_type/2"
-           ]
+    [line] = Appsignal.Backtrace.from_stacktrace(stacktrace)
+    assert line =~ ~r{\(stdlib( [\w.-]+)?\) erl_internal.erl:212: :erl_internal.op_type/2}
   end
 
   test "handles lists of binaries" do
