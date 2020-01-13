@@ -84,7 +84,7 @@ defmodule Appsignal.Diagnose.Agent do
           "config" => %{
             "valid" => %{
               :label => "Configuration",
-              :values => %{true => "valid", false => "invalid"}
+              :values => %{true: "valid", false: "invalid"}
             }
           }
         }
@@ -95,7 +95,7 @@ defmodule Appsignal.Diagnose.Agent do
           "boot" => %{
             "started" => %{
               :label => "Started",
-              :values => %{true => "started", false => "not started"}
+              :values => %{true: "started", false: "not started"}
             }
           },
           "host" => %{
@@ -105,13 +105,13 @@ defmodule Appsignal.Diagnose.Agent do
           "config" => %{
             "valid" => %{
               :label => "Configuration",
-              :values => %{true => "valid", false => "invalid"}
+              :values => %{true: "valid", false: "invalid"}
             }
           },
           "logger" => %{
             "started" => %{
               :label => "Logger",
-              :values => %{true => "started", false => "not started"}
+              :values => %{true: "started", false: "not started"}
             }
           },
           "working_directory_stat" => %{
@@ -122,7 +122,7 @@ defmodule Appsignal.Diagnose.Agent do
           "lock_path" => %{
             "created" => %{
               :label => "Lock path",
-              :values => %{true => "writable", false => "not writable"}
+              :values => %{true: "writable", false: "not writable"}
             }
           }
         }
