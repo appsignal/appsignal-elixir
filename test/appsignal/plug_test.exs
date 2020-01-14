@@ -120,7 +120,7 @@ defmodule Appsignal.PlugTest do
       conn: conn,
       fake_transaction: fake_transaction
     } do
-      assert conn == FakeTransaction.request_metadata(fake_transaction)
+      assert %{conn | state: :set} == FakeTransaction.request_metadata(fake_transaction)
     end
 
     test "completes the transaction", %{fake_transaction: fake_transaction} do
@@ -427,50 +427,6 @@ defmodule Appsignal.PlugTest do
                "req_headers.connection" => "keep-alive",
                "req_headers.range" => "bytes=0-1023"
              }
-    end
-  end
-
-  describe "handling errors for a wrapped error" do
-    setup do
-      transaction = %Appsignal.Transaction{}
-      conn = %Plug.Conn{private: %{appsignal_transaction: transaction}}
-      kind = :error
-      wrapped_reason = :undef
-      stack = []
-
-      reason = %Plug.Conn.WrapperError{
-        kind: kind,
-        reason: wrapped_reason,
-        stack: stack,
-        conn: conn
-      }
-
-      :ok =
-        try do
-          Appsignal.Plug.handle_error(conn, kind, reason, stack)
-        rescue
-          Plug.Conn.WrapperError -> :ok
-        end
-
-      [conn: conn]
-    end
-
-    test "sets the transaction error", %{fake_transaction: fake_transaction} do
-      assert [
-               {
-                 %Appsignal.Transaction{},
-                 "UndefinedFunctionError",
-                 "undefined function",
-                 []
-               }
-             ] == FakeTransaction.errors(fake_transaction)
-    end
-
-    test "sets the transaction's request metdata", %{
-      fake_transaction: fake_transaction,
-      conn: conn
-    } do
-      assert conn == FakeTransaction.request_metadata(fake_transaction)
     end
   end
 
