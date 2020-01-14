@@ -112,11 +112,6 @@ defmodule Appsignal.PlugTest do
       assert %Appsignal.Transaction{id: "123"} = conn.private[:appsignal_transaction]
     end
 
-    test "sets the transaction's action name", %{fake_transaction: fake_transaction} do
-      assert "AppsignalPhoenixExample.PageController#index" ==
-               FakeTransaction.action(fake_transaction)
-    end
-
     test "finishes the transaction", %{fake_transaction: fake_transaction} do
       assert [%Appsignal.Transaction{}] = FakeTransaction.finished_transactions(fake_transaction)
     end
@@ -152,37 +147,6 @@ defmodule Appsignal.PlugTest do
     end
   end
 
-  describe "for a transaction without a Phoenix endpoint" do
-    setup do
-      conn =
-        :get
-        |> conn("/", "")
-        |> PlugWithAppSignal.call([])
-
-      [conn: conn]
-    end
-
-    test "does not set the transaction's action name", %{fake_transaction: fake_transaction} do
-      assert FakeTransaction.action(fake_transaction) == "unknown"
-    end
-  end
-
-  describe "for a transaction with a Phoenix endpoint, but no action" do
-    setup do
-      conn =
-        :get
-        |> conn("/", "")
-        |> Plug.Conn.put_private(:phoenix_endpoint, MyEndpoint)
-        |> PlugWithAppSignal.call([])
-
-      [conn: conn]
-    end
-
-    test "does not set the transaction's action name", %{fake_transaction: fake_transaction} do
-      assert FakeTransaction.action(fake_transaction) == nil
-    end
-  end
-
   describe "for a transaction with an error" do
     setup do
       try do
@@ -209,11 +173,6 @@ defmodule Appsignal.PlugTest do
                  _stack
                }
              ] = FakeTransaction.errors(fake_transaction)
-    end
-
-    test "sets the transaction's action name", %{fake_transaction: fake_transaction} do
-      assert "AppsignalPhoenixExample.PageController#exception" ==
-               FakeTransaction.action(fake_transaction)
     end
 
     test "finishes the transaction", %{fake_transaction: fake_transaction} do
