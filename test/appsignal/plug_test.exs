@@ -10,6 +10,12 @@ defmodule PlugWithAppSignal do
     send_resp(conn, 200, "Welcome")
   end
 
+  get "/overwritten" do
+    conn
+    |> Appsignal.Plug.set_action("AppsignalPhoenixExample.PageController#overwritten")
+    |> send_resp(200, "Welcome")
+  end
+
   get "/exception" do
     raise("Exception!")
     send_resp(conn, 200, "Welcome")
@@ -180,6 +186,22 @@ defmodule Appsignal.PlugTest do
 
     test "does not set the transaction's action name", %{fake_transaction: fake_transaction} do
       assert FakeTransaction.action(fake_transaction) == nil
+    end
+  end
+
+  describe "for a transaction with an overwritten action name" do
+    setup do
+      conn =
+        :get
+        |> conn("/overwritten", "")
+        |> PlugWithAppSignal.call([])
+
+      [conn: conn]
+    end
+
+    test "sets the transaction's action name", %{fake_transaction: fake_transaction} do
+      assert "AppsignalPhoenixExample.PageController#overwritten" ==
+               FakeTransaction.action(fake_transaction)
     end
   end
 
