@@ -63,7 +63,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
 
     assert_stacktrace(stacktrace, [
       ~r{test\/appsignal\/error_handler\/error_matcher_test.exs:\d+: anonymous fn\/0 in Appsignal.ErrorHandler.ErrorMatcherTest."?test proc_lib.spawn \+ exit"?/1},
-      ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p/3}
+      ~r{\(stdlib( [\w.-]+)?\) proc_lib.erl:\d+: :proc_lib.init_p/3}
     ])
   end
 
@@ -84,7 +84,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
 
     assert_stacktrace(stacktrace, [
       ~r{test/appsignal/error_handler/error_matcher_test.exs:\d+: anonymous fn/0 in Appsignal.ErrorHandler.ErrorMatcherTest."?test proc_lib.spawn \+ erlang.error"?/1},
-      ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p/3}
+      ~r{\(stdlib( [\w.-]+)?\) proc_lib.erl:\d+: :proc_lib.init_p/3}
     ])
   end
 
@@ -104,8 +104,8 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     assert message == "no function clause matching in Float.ceil/2"
 
     assert_stacktrace(stacktrace, [
-      ~r{\(elixir\) lib/float.ex:\d+: Float.ceil/2},
-      ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p/3}
+      ~r{\(elixir( [\w.-]+)?\) lib/float.ex:\d+: Float.ceil/2},
+      ~r{\(stdlib( [\w.-]+)?\) proc_lib.erl:\d+: :proc_lib.init_p/3}
     ])
   end
 
@@ -124,7 +124,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
 
     assert_stacktrace(stacktrace, [
       ~r{test/appsignal/error_handler/error_matcher_test.exs:\d+: anonymous fn/0 in Appsignal.ErrorHandler.ErrorMatcherTest."?test proc_lib.spawn \+ badmatch error"?/1},
-      ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p/3}
+      ~r{\(stdlib( [\w.-]+)?\) proc_lib.erl:\d+: :proc_lib.init_p/3}
     ])
   end
 
@@ -143,8 +143,8 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
 
     if System.otp_release() >= "20" do
       assert_stacktrace(stacktrace, [
-        ~r{\(stdlib\) gen_server.erl:\d+: :gen_server.handle_common_reply/8},
-        ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p_do_apply/3}
+        ~r{\(stdlib( [\w.-]+)?\) gen_server.erl:\d+: :gen_server.handle_common_reply/8},
+        ~r{\(stdlib( [\w.-]+)?\) proc_lib.erl:\d+: :proc_lib.init_p_do_apply/3}
       ])
     else
       assert_stacktrace(stacktrace, [
@@ -170,9 +170,9 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     if System.otp_release() >= "20" do
       assert_stacktrace(stacktrace, [
         ~r{test/appsignal/error_handler/error_matcher_test.exs:\d+: Appsignal.ErrorHandler.ErrorMatcherTest.CrashingGenServer.handle_info/2},
-        ~r{\(stdlib\) gen_server.erl:\d+: :gen_server.try_dispatch/4},
-        ~r{\(stdlib\) gen_server.erl:\d+: :gen_server.handle_msg/6},
-        ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p_do_apply/3}
+        ~r{\(stdlib( [\w.-]+)?\) gen_server.erl:\d+: :gen_server.try_dispatch/4},
+        ~r{\(stdlib( [\w.-]+)?\) gen_server.erl:\d+: :gen_server.handle_msg/6},
+        ~r{\(stdlib( [\w.-]+)?\) proc_lib.erl:\d+: :proc_lib.init_p_do_apply/3}
       ])
     else
       assert_stacktrace(stacktrace, [
@@ -197,11 +197,11 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
 
     if System.otp_release() >= "20" do
       assert_stacktrace(stacktrace, [
-        ~r{\(elixir\) lib/float.ex:\d+: Float.ceil/2},
+        ~r{\(elixir( [\w.-]+)?\) lib/float.ex:\d+: Float.ceil/2},
         ~r{test/appsignal/error_handler/error_matcher_test.exs:\d+: Appsignal.ErrorHandler.ErrorMatcherTest.CrashingGenServer.handle_info/2},
-        ~r{\(stdlib\) gen_server.erl:\d+: :gen_server.try_dispatch/4},
-        ~r{\(stdlib\) gen_server.erl:\d+: :gen_server.handle_msg/6},
-        ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p_do_apply/3}
+        ~r{\(stdlib( [\w.-]+)?\) gen_server.erl:\d+: :gen_server.try_dispatch/4},
+        ~r{\(stdlib( [\w.-]+)?\) gen_server.erl:\d+: :gen_server.handle_msg/6},
+        ~r{\(stdlib( [\w.-]+)?\) proc_lib.erl:\d+: :proc_lib.init_p_do_apply/3}
       ])
     else
       assert_stacktrace(stacktrace, [
@@ -230,9 +230,9 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     assert message == "no function clause matching in Float.ceil/2"
 
     assert_stacktrace(stacktrace, [
-      ~r{\(elixir\) lib/float.ex:\d+: Float.ceil/2},
-      ~r{\(elixir\) lib/(task/)?supervised.ex:\d+: Task.Supervised\.\w+/2},
-      ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p_do_apply/3}
+      ~r{\(elixir( [\w.-]+)?\) lib/float.ex:\d+: Float.ceil/2},
+      ~r{\(elixir( [\w.-]+)?\) lib/(task/)?supervised.ex:\d+: Task.Supervised\.\w+/2},
+      ~r{\(stdlib( [\w.-]+)?\) proc_lib.erl:\d+: :proc_lib.init_p_do_apply/3}
     ])
   end
 
@@ -255,8 +255,8 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
     assert message =~ ~r{^(E|e)rlang error: {:timeout, {Task, :await, \[%Tas...}
 
     assert_stacktrace(stacktrace, [
-      ~r{\(elixir\) lib/task.ex:\d+: Task.await/2},
-      ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p/3}
+      ~r{\(elixir( [\w.-]+)?\) lib/task.ex:\d+: Task.await/2},
+      ~r{\(stdlib( [\w.-]+)?\) proc_lib.erl:\d+: :proc_lib.init_p/3}
     ])
   end
 
@@ -282,7 +282,7 @@ defmodule Appsignal.ErrorHandler.ErrorMatcherTest do
 
     assert_stacktrace(stacktrace, [
       ~r{test/appsignal/error_handler/error_matcher_test.exs:\d+: anonymous fn/0 in Appsignal.ErrorHandler.ErrorMatcherTest."?test Plug.Conn.WrapperError"?/1},
-      ~r{\(stdlib\) proc_lib.erl:\d+: :proc_lib.init_p/3}
+      ~r{\(stdlib( [\w.-]+)?\) proc_lib.erl:\d+: :proc_lib.init_p/3}
     ])
   end
 
