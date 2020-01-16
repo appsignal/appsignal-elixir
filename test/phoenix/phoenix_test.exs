@@ -1,36 +1,25 @@
-defmodule UsingAppsignalPhoenix do
-  def call(conn, _opts) do
-    conn |> Plug.Conn.assign(:called?, true)
+defmodule PhoenixWithAppSignal do
+  use Plug.Router
+  use Appsignal.Phoenix
+  use Plug.ErrorHandler
+
+  plug(:match)
+  plug(:dispatch)
+
+  get "/" do
+    send_resp(conn, 200, "Welcome")
   end
 
-  defoverridable call: 2
-
-  use Appsignal.Phoenix
-end
-
-defmodule UsingAppsignalPhoenixWithException do
-  def call(_conn, _opts) do
-    raise "exception!"
+  get "/exception" do
+    raise("Exception!")
+    send_resp(conn, 200, "Welcome")
   end
-
-  defoverridable call: 2
-
-  use Appsignal.Phoenix
-end
-
-defmodule UsingAppsignalPhoenixWithTimeout do
-  def call(_conn, _opts) do
-    Task.async(fn -> :timer.sleep(10) end) |> Task.await(1)
-  end
-
-  defoverridable call: 2
-
-  use Appsignal.Phoenix
 end
 
 defmodule Appsignal.PhoenixTest do
   use ExUnit.Case
   alias Appsignal.FakeTransaction
+  use Plug.Test
 
   setup do
     {:ok, fake_transaction} = FakeTransaction.start_link()
@@ -39,17 +28,20 @@ defmodule Appsignal.PhoenixTest do
 
   describe "concerning starting and finishing transactions" do
     setup do
-      conn = UsingAppsignalPhoenix.call(%Plug.Conn{}, %{})
+      conn =
+        :get
+        |> conn("/", "")
+        |> PhoenixWithAppSignal.call([])
 
-      {:ok, conn: conn}
+      [conn: conn]
     end
 
     test "starts a transaction", %{fake_transaction: fake_transaction} do
       assert FakeTransaction.started_transaction?(fake_transaction)
     end
 
-    test "calls super and returns the conn", context do
-      assert context[:conn].assigns[:called?]
+    test "returns the updated conn", %{conn: conn} do
+      assert conn.state == :sent
     end
 
     test "finishes the transaction", %{fake_transaction: fake_transaction} do
@@ -59,54 +51,30 @@ defmodule Appsignal.PhoenixTest do
 
   describe "concerning catching errors" do
     setup do
-      conn =
-        %Plug.Conn{}
-        |> Plug.Conn.put_private(:phoenix_controller, "foo")
-        |> Plug.Conn.put_private(:phoenix_action, "bar")
+      try do
+        :get
+        |> conn("/exception", %{})
+        |> PhoenixWithAppSignal.call([])
+      catch
+        :error, %Plug.Conn.WrapperError{reason: %RuntimeError{message: "Exception!"}} ->
+          :ok
 
-      [conn: conn]
+        type, reason ->
+          {type, reason}
+      end
     end
 
-    test "reports an error for an exception", %{conn: conn, fake_transaction: fake_transaction} do
-      :ok =
-        try do
-          UsingAppsignalPhoenixWithException.call(conn, %{})
-        catch
-          :error, %RuntimeError{message: "exception!"} -> :ok
-          type, reason -> {type, reason}
-        end
-
+    test "reports an error for an exception", %{fake_transaction: fake_transaction} do
       assert FakeTransaction.started_transaction?(fake_transaction)
 
       assert [
                {
                  %Appsignal.Transaction{} = transaction,
                  "RuntimeError",
-                 "exception!",
+                 "Exception!",
                  _stack
                }
              ] = FakeTransaction.errors(fake_transaction)
-
-      assert [transaction] == FakeTransaction.finished_transactions(fake_transaction)
-      assert [transaction] == FakeTransaction.completed_transactions(fake_transaction)
-    end
-
-    test "reports an error for a timeout", %{conn: conn, fake_transaction: fake_transaction} do
-      :ok =
-        try do
-          UsingAppsignalPhoenixWithTimeout.call(conn, %{})
-        catch
-          :exit, {:timeout, {Task, :await, _}} -> :ok
-          type, reason -> {type, reason}
-        end
-
-      assert FakeTransaction.started_transaction?(fake_transaction)
-
-      [{%Appsignal.Transaction{} = transaction, name, message, _stack}] =
-        FakeTransaction.errors(fake_transaction)
-
-      assert name == ":timeout"
-      assert message =~ ~r({:timeout, {Task, :await, \[%Task{owner: ...)
 
       assert [transaction] == FakeTransaction.finished_transactions(fake_transaction)
       assert [transaction] == FakeTransaction.completed_transactions(fake_transaction)
