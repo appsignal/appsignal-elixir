@@ -86,17 +86,9 @@ if Appsignal.plug?() do
       conn
     end
 
-    def try_set_action(transaction, %Plug.Conn{private: %{appsignal_action: action}}) do
-      @transaction.set_action(transaction, action)
-    end
-
     def try_set_action(transaction, conn) do
       action = Appsignal.Plug.extract_action(conn)
       @transaction.set_action(transaction, action)
-    end
-
-    def set_action(conn, name) do
-      Plug.Conn.put_private(conn, :appsignal_action, name)
     end
 
     @doc false

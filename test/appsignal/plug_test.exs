@@ -11,9 +11,9 @@ defmodule PlugWithAppSignal do
   end
 
   get "/overwritten" do
-    conn
-    |> Appsignal.Plug.set_action("AppsignalPhoenixExample.PageController#overwritten")
-    |> send_resp(200, "Welcome")
+    Appsignal.FakeTransaction.set_action("AppsignalPhoenixExample.PageController#overwritten")
+
+    send_resp(conn, 200, "Welcome")
   end
 
   get "/exception" do
