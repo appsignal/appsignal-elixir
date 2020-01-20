@@ -51,14 +51,8 @@ if Appsignal.plug?() do
       :erlang.raise(kind, original_reason, stack)
     end
 
-    def handle_error(
-          %Plug.Conn{private: %{appsignal_transaction: transaction}} = conn,
-          kind,
-          reason,
-          stack
-        ) do
+    def handle_error(%Plug.Conn{private: %{appsignal_transaction: _}} = conn, kind, reason, stack) do
       do_handle_error(reason, stack, conn)
-      Appsignal.Plug.finish_with_conn(transaction, conn)
 
       :erlang.raise(kind, reason, stack)
     end
