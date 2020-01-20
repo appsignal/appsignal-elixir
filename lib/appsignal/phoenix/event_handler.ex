@@ -1,4 +1,6 @@
 defmodule Appsignal.Phoenix.EventHandler do
+  import Appsignal.Utils
+
   @transaction Application.get_env(:appsignal, :appsignal_transaction, Appsignal.Transaction)
 
   @spec attach() :: :ok | {:error, :already_exists}
@@ -8,6 +10,7 @@ defmodule Appsignal.Phoenix.EventHandler do
     :telemetry.attach_many(
       "appsignal_phoenix_event_handler",
       [
+        [:phoenix, :router_dispatch, :start],
         [:phoenix, :endpoint, :start],
         [:phoenix, :endpoint, :stop]
       ],
@@ -17,6 +20,15 @@ defmodule Appsignal.Phoenix.EventHandler do
   end
 
   @spec handle_event(list(atom()), map(), map(), any()) :: Appsignal.Transaction.t() | nil
+  def handle_event(
+        [:phoenix, :router_dispatch, :start],
+        _measurements,
+        %{plug: controller, plug_opts: action},
+        _config
+      ) do
+    @transaction.set_action("#{module_name(controller)}##{action}")
+  end
+
   def handle_event(
         [:phoenix, :endpoint, :start],
         _measurements,
