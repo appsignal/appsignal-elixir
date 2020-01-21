@@ -2,6 +2,7 @@ branches:
   only:
   - master
   - develop
+  - elixir-ci-versions
 language: elixir
 elixir:
   - 1.10.0
