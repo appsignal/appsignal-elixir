@@ -10,6 +10,10 @@ defmodule Appsignal.Transaction.FilterTest do
   end
 
   describe "get_filter_parameters/0" do
+    setup do
+      Application.delete_env(:phoenix, :filter_parameters)
+    end
+
     test "returns parameter filters from the appsignal config" do
       with_config(%{filter_parameters: ["password"]}, fn ->
         Config.initialize()
@@ -22,8 +26,6 @@ defmodule Appsignal.Transaction.FilterTest do
       Application.put_env(:phoenix, :filter_parameters, ~w(password))
       Config.initialize()
       assert MapFilter.get_filter_parameters() == ["password"]
-
-      Application.delete_env(:phoenix, :filter_parameters)
     end
 
     test "merges AppSignal's parameter filters with Phoenix' parameter filters" do
@@ -34,8 +36,6 @@ defmodule Appsignal.Transaction.FilterTest do
 
         assert MapFilter.get_filter_parameters() == ["token", "password"]
       end)
-
-      Application.delete_env(:phoenix, :filter_parameters)
     end
   end
 
@@ -71,8 +71,6 @@ defmodule Appsignal.Transaction.FilterTest do
 
       assert MapFilter.filter_parameters(values) ==
                %{"name" => "Alice", "password" => "[FILTERED]"}
-
-      Application.delete_env(:phoenix, :filter_parameters)
     end
 
     test "appsignal's parameter filters merge with Phoenix' parameter filters" do
@@ -124,8 +122,6 @@ defmodule Appsignal.Transaction.FilterTest do
                    "token" => "[FILTERED]"
                  }
       end)
-
-      Application.delete_env(:phoenix, :filter_parameters)
     end
 
     test "uses filter parameters from the OS environment" do
