@@ -25,4 +25,10 @@ defmodule Appsignal.TracerTest do
       assert Tracer.current_span() == nil
     end
   end
+
+  describe "current_span/1, when a span exists" do
+    test "returns the created span" do
+      assert Tracer.create_span("current") == Tracer.current_span()
+    end
+  end
 end
