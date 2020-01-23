@@ -9,4 +9,12 @@ defmodule Appsignal.Tracer do
     {:ok, reference} = Nif.create_root_span(name)
     %Span{reference: reference}
   end
+
+  @doc """
+  Returns the current span.
+  """
+  @spec current_span() :: Span.t() | nil
+  def current_span do
+    nil
+  end
 end
