@@ -3,8 +3,16 @@ defmodule Appsignal.TracerTest do
   alias Appsignal.{Span, Tracer}
 
   describe "create_span/1" do
-    test "returns a span" do
-      assert %Span{} = Tracer.create_span("root")
+    setup do
+      [span: Tracer.create_span("root")]
+    end
+
+    test "returns a span", %{span: span} do
+      assert %Span{} = span
+    end
+
+    test "sets the span's reference", %{span: span} do
+      assert is_reference(span.reference)
     end
   end
 end
