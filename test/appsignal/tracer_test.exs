@@ -2,11 +2,6 @@ defmodule Appsignal.TracerTest do
   use ExUnit.Case
   alias Appsignal.{Span, Tracer}
 
-  setup do
-    Tracer.start_link()
-    :ok
-  end
-
   describe "create_span/1" do
     setup do
       [span: Tracer.create_span("root")]
