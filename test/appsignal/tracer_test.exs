@@ -15,4 +15,10 @@ defmodule Appsignal.TracerTest do
       assert is_reference(span.reference)
     end
   end
+
+  describe "current_span/1, when no span exists" do
+    test "returns nil" do
+      assert Tracer.current_span() == nil
+    end
+  end
 end
