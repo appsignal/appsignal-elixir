@@ -21,7 +21,10 @@ defmodule Appsignal.Tracer do
   """
   @spec current_span() :: Span.t() | nil
   def current_span do
-    nil
+    case :ets.lookup(@table, self()) do
+      [{_pid, span} | _] -> span
+      [] -> nil
+    end
   end
 
   defp register(span) do
