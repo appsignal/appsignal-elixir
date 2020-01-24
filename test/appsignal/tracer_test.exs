@@ -31,4 +31,10 @@ defmodule Appsignal.TracerTest do
       assert Tracer.create_span("current") == Tracer.current_span()
     end
   end
+
+  describe "close_span/1, when passing a nil" do
+    test "returns nil" do
+      assert Tracer.close_span(nil) == nil
+    end
+  end
 end
