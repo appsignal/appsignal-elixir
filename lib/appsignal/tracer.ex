@@ -31,10 +31,19 @@ defmodule Appsignal.Tracer do
   Closes a span.
   """
   @spec close_span(Span.t() | nil) :: Span.t() | nil
+  def close_span(%Span{}) do
+    deregister()
+    :ok
+  end
+
   def close_span(nil), do: nil
 
   defp register(span) do
     :ets.insert(@table, {self(), span})
     span
+  end
+
+  defp deregister() do
+    :ets.delete(@table, self())
   end
 end
