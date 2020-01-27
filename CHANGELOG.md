@@ -1,3 +1,29 @@
+# 1.12.0-beta.1
+- Add explicit error handling for Phoenix channels. PR #527
+- Add Phoenix Telemetry event handler to add Phoenix 1.5 instrumentation. PR #528 & #538
+
+  Before version Phoenix version 1.5. AppSignal’s Phoenix instrumentation
+  depended on data from the Phoenix instrumenter, and the installation
+  instructions included a step to attach AppSignal’s instrumenter to your
+  application in your app’s configuration:
+
+      config :appsignal_phoenix_example, AppsignalPhoenixExampleWeb.Endpoint,
+        #...
+        instrumenters: [Appsignal.Phoenix.Instrumenter] From Phoenix 1.5 on, the old
+
+  Phoenix instrumentation is deprecated and removed in favor of the new
+  Telemetry-based instrumentation. When upgrading to Phoenix 1.5, you’ll see a
+  warning during compilation when using the old instrumenters:
+
+      [warn] :instrumenters configuration for
+      AppsignalPhoenixExampleWeb.Endpoint is deprecated and has no effect
+
+  To switch to the new instrumentation, make sure you're running version 1.12.0
+  of the AppSignal integration or higher.  Then, remove the instrumenters
+  configuration option from your endpoint configuration.  The new
+  instrumentation should appear automatically in your samples as an event named
+  call.phoenix_endpoint.
+
 # 1.11.8
 - Reduce calls to pids_and_monitor_references/1 and :ets.match/1 #543. PR #543
 
