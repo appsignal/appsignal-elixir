@@ -8,8 +8,26 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
     [fake_transaction: fake_transaction]
   end
 
+  describe "after receiving a router_dispatch-start event" do
+    setup [:start_transaction, :router_dispatch_start_event]
+
+    test "sets the transaction's action name", %{fake_transaction: fake_transaction} do
+      assert "AppsignalPhoenixExampleWeb.PageController#index" ==
+               FakeTransaction.action(fake_transaction)
+    end
+  end
+
+  describe "after receiving a router_dispatch-start event with a transaction in the conn" do
+    setup [:start_transaction, :router_dispatch_start_event_with_transaction_in_conn]
+
+    test "sets the transaction's action name", %{fake_transaction: fake_transaction} do
+      assert "AppsignalPhoenixExampleWeb.PageController#index" ==
+               FakeTransaction.action(fake_transaction)
+    end
+  end
+
   describe "after receiving an endpoint-start event" do
-    setup [:start_transaction, :start_event]
+    setup [:start_transaction, :endpoint_start_event]
 
     test "starts an event", %{fake_transaction: fake_transaction, transaction: transaction} do
       assert FakeTransaction.started_events(fake_transaction) == [transaction]
@@ -17,7 +35,7 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
   end
 
   describe "after receiving an endpoint-start event with a transaction in the conn" do
-    setup [:start_event_with_transaction_in_conn]
+    setup [:endpoint_start_event_with_transaction_in_conn]
 
     test "starts an event", %{fake_transaction: fake_transaction, transaction: transaction} do
       assert FakeTransaction.started_events(fake_transaction) == [transaction]
@@ -25,7 +43,7 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
   end
 
   describe "after receiving an endpoint-start and an endpoint-stop event" do
-    setup [:start_transaction, :start_event, :finish_event]
+    setup [:start_transaction, :endpoint_start_event, :endpoint_finish_event]
 
     test "finishes an event", %{fake_transaction: fake_transaction, transaction: transaction} do
       assert FakeTransaction.finished_events(fake_transaction) == [
@@ -41,7 +59,7 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
   end
 
   describe "after receiving an endpoint-stop event with a transaction in the conn" do
-    setup [:finish_event_with_transaction_in_conn]
+    setup [:endpoint_finish_event_with_transaction_in_conn]
 
     test "finishes an event", %{fake_transaction: fake_transaction, transaction: transaction} do
       assert FakeTransaction.finished_events(fake_transaction) == [
@@ -60,19 +78,47 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
     [transaction: Appsignal.Transaction.start("test", :http_request)]
   end
 
-  defp start_event_with_transaction_in_conn(_) do
+  defp router_dispatch_start_event(_), do: do_router_dispatch_start_event()
+
+  defp router_dispatch_start_event_with_transaction_in_conn(_) do
     transaction = %Appsignal.Transaction{}
 
     %Plug.Conn{}
     |> Plug.Conn.put_private(:appsignal_transaction, transaction)
-    |> do_start_event()
+    |> do_router_dispatch_start_event()
 
     [transaction: transaction]
   end
 
-  defp start_event(_), do: do_start_event()
+  defp do_router_dispatch_start_event(conn \\ %Plug.Conn{}) do
+    :telemetry.execute(
+      [:phoenix, :router_dispatch, :start],
+      %{time: -576_460_736_044_040_000},
+      %{
+        conn: conn,
+        log: :debug,
+        path_params: %{},
+        pipe_through: [:browser],
+        plug: AppsignalPhoenixExampleWeb.PageController,
+        plug_opts: :index,
+        route: "/"
+      }
+    )
+  end
 
-  defp do_start_event(conn \\ %Plug.Conn{}) do
+  defp endpoint_start_event_with_transaction_in_conn(_) do
+    transaction = %Appsignal.Transaction{}
+
+    %Plug.Conn{}
+    |> Plug.Conn.put_private(:appsignal_transaction, transaction)
+    |> do_endpoint_start_event()
+
+    [transaction: transaction]
+  end
+
+  defp endpoint_start_event(_), do: do_endpoint_start_event()
+
+  defp do_endpoint_start_event(conn \\ %Plug.Conn{}) do
     :telemetry.execute(
       [:phoenix, :endpoint, :start],
       %{time: -576_460_736_044_040_000},
@@ -83,19 +129,19 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
     )
   end
 
-  defp finish_event_with_transaction_in_conn(_) do
+  defp endpoint_finish_event_with_transaction_in_conn(_) do
     transaction = %Appsignal.Transaction{}
 
     %Plug.Conn{}
     |> Plug.Conn.put_private(:appsignal_transaction, transaction)
-    |> do_finish_event()
+    |> do_endpoint_finish_event()
 
     [transaction: transaction]
   end
 
-  defp finish_event(_), do: do_finish_event()
+  defp endpoint_finish_event(_), do: do_endpoint_finish_event()
 
-  defp do_finish_event(conn \\ %Plug.Conn{}) do
+  defp do_endpoint_finish_event(conn \\ %Plug.Conn{}) do
     :telemetry.execute(
       [:phoenix, :endpoint, :stop],
       %{duration: 49_474_000},
