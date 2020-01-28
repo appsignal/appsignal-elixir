@@ -48,6 +48,10 @@ defmodule Appsignal.TracerTest do
     test "sets the span's reference", %{span: span} do
       assert is_reference(span.reference)
     end
+
+    test "registers the span", %{span: span} do
+      assert :ets.lookup(:"$appsignal_registry", self()) == [{self(), span}]
+    end
   end
 
   describe "current_span/1, when no span exists" do
