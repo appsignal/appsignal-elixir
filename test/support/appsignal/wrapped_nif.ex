@@ -14,12 +14,12 @@ defmodule Appsignal.WrappedNif do
   end
 
   def create_root_span(name) do
-    add(:create_root_span, name)
+    add(:create_root_span, {name})
     Nif.create_root_span(name)
   end
 
   def close_span(reference) do
-    add(:close_span, reference)
+    add(:close_span, {reference})
     Nif.close_span(reference)
   end
 
