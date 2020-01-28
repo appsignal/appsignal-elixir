@@ -28,11 +28,7 @@ defmodule Appsignal.TracerTest do
   end
 
   describe "create_span/2" do
-    setup :create_root_span
-
-    setup %{span: span} do
-      [span: Tracer.create_span("child", span), parent: span]
-    end
+    setup [:create_root_span, :create_child_span]
 
     test "returns a span", %{span: span} do
       assert %Span{} = span
@@ -92,5 +88,9 @@ defmodule Appsignal.TracerTest do
 
   defp create_root_span(_context) do
     [span: Tracer.create_span("root")]
+  end
+
+  defp create_child_span(%{span: span}) do
+    [span: Tracer.create_span("child", span), parent: span]
   end
 end
