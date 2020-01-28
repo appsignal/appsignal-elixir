@@ -3,8 +3,7 @@ defmodule Appsignal.WrappedNif do
   alias Appsignal.Nif
 
   def start_link do
-    {:ok, pid} =
-      Agent.start_link(fn -> %{create_root_span: [], close_span: []} end, name: __MODULE__)
+    {:ok, pid} = Agent.start_link(fn -> %{} end, name: __MODULE__)
 
     ExUnit.Callbacks.on_exit(fn ->
       ref = Process.monitor(pid)
