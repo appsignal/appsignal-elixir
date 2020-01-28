@@ -44,6 +44,9 @@ defmodule Appsignal.TracerTest do
       assert {:ok, ^parent_trace_id} = Span.trace_id(parent_reference)
       assert {:ok, ^parent_span_id} = Span.span_id(parent_reference)
     end
+
+    test "sets the span's reference", %{span: span} do
+      assert is_reference(span.reference)
     end
   end
 
