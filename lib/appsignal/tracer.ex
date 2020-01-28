@@ -35,8 +35,12 @@ defmodule Appsignal.Tracer do
   @spec current_span() :: Span.t() | nil
   def current_span do
     case :ets.lookup(@table, self()) do
-      [{_pid, span} | _] -> span
-      [] -> nil
+      [] ->
+        nil
+
+      spans ->
+        {_pid, span} = List.last(spans)
+        span
     end
   end
 
