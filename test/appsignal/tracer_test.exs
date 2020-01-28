@@ -27,6 +27,18 @@ defmodule Appsignal.TracerTest do
     end
   end
 
+  describe "create_span/2" do
+    setup :create_root_span
+
+    setup %{span: span} do
+      [span: Tracer.create_span("child", span)]
+    end
+
+    test "returns a span", %{span: span} do
+      assert %Span{} = span
+    end
+  end
+
   describe "current_span/1, when no span exists" do
     test "returns nil" do
       assert Tracer.current_span() == nil
