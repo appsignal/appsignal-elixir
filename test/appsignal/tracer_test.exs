@@ -68,7 +68,7 @@ defmodule Appsignal.TracerTest do
     end
   end
 
-  describe "close_span/1, when passing a span" do
+  describe "close_span/1, when passing a root span" do
     setup :create_root_span
 
     test "returns :ok", %{span: span} do
@@ -83,6 +83,15 @@ defmodule Appsignal.TracerTest do
     test "closes the span through the Nif", %{span: %Span{reference: reference} = span} do
       Tracer.close_span(span)
       assert [{^reference}] = WrappedNif.get(:close_span)
+    end
+  end
+
+  describe "close_span/1, when passing a child span" do
+    setup [:create_root_span, :create_child_span]
+
+    test "deregisters the span, but leaves its parent span", %{span: span, parent: parent} do
+      Tracer.close_span(span)
+      assert :ets.lookup(:"$appsignal_registry", self()) == [{self(), parent}]
     end
   end
 

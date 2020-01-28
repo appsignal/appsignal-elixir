@@ -44,9 +44,9 @@ defmodule Appsignal.Tracer do
   Closes a span.
   """
   @spec close_span(Span.t() | nil) :: Span.t() | nil
-  def close_span(%Span{reference: reference}) do
+  def close_span(%Span{reference: reference} = span) do
     :ok = @nif.close_span(reference)
-    deregister()
+    deregister(span)
     :ok
   end
 
@@ -57,7 +57,7 @@ defmodule Appsignal.Tracer do
     span
   end
 
-  defp deregister() do
-    :ets.delete(@table, self())
+  defp deregister(span) do
+    :ets.delete_object(@table, {self(), span})
   end
 end
