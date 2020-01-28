@@ -5,7 +5,7 @@ defmodule Appsignal.Tracer do
   @table :"$appsignal_registry"
 
   def start_link do
-    Agent.start_link(fn -> :ets.new(@table, [:named_table, :public]) end)
+    Agent.start_link(fn -> :ets.new(@table, [:named_table, :public, :duplicate_bag]) end)
   end
 
   @doc """
