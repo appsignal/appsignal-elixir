@@ -14,6 +14,8 @@ if Mix.env() in [:bench, :test, :test_phoenix, :test_no_nif] do
   config :appsignal, appsignal: Appsignal.FakeAppsignal
   config :appsignal, inet: FakeInet
 
+  config :appsignal, appsignal_tracer_nif: Appsignal.WrappedNif
+
   config :appsignal, :config,
     push_api_key: "00000000-0000-0000-0000-000000000000",
     name: "AppSignal test suite app v0",
