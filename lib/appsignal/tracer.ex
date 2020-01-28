@@ -1,6 +1,7 @@
 defmodule Appsignal.Tracer do
-  alias Appsignal.{Span, Nif}
+  alias Appsignal.{Span}
 
+  @nif Application.get_env(:appsignal, :appsignal_tracer_nif, Appsignal.Nif)
   @table :"$appsignal_registry"
 
   def start_link do
@@ -12,7 +13,7 @@ defmodule Appsignal.Tracer do
   """
   @spec create_span(String.t()) :: Span.t()
   def create_span(name) do
-    {:ok, reference} = Nif.create_root_span(name)
+    {:ok, reference} = @nif.create_root_span(name)
     register(%Span{reference: reference})
   end
 

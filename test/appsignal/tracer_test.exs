@@ -1,6 +1,11 @@
 defmodule Appsignal.TracerTest do
   use ExUnit.Case
-  alias Appsignal.{Span, Tracer}
+  alias Appsignal.{Span, Tracer, WrappedNif}
+
+  setup do
+    WrappedNif.start_link()
+    :ok
+  end
 
   describe "create_span/1" do
     setup do
@@ -9,6 +14,10 @@ defmodule Appsignal.TracerTest do
 
     test "returns a span", %{span: span} do
       assert %Span{} = span
+    end
+
+    test "creates a span through the Nif" do
+      assert ["root"] = WrappedNif.get(:create_root_span)
     end
 
     test "sets the span's reference", %{span: span} do
