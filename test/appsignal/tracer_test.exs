@@ -8,9 +8,7 @@ defmodule Appsignal.TracerTest do
   end
 
   describe "create_span/1" do
-    setup do
-      [span: Tracer.create_span("root")]
-    end
+    setup :create_root_span
 
     test "returns a span", %{span: span} do
       assert %Span{} = span
@@ -48,9 +46,7 @@ defmodule Appsignal.TracerTest do
   end
 
   describe "close_span/1, when passing a span" do
-    setup do
-      [span: Tracer.create_span("root")]
-    end
+    setup :create_root_span
 
     test "returns :ok", %{span: span} do
       assert Tracer.close_span(span) == :ok
@@ -65,5 +61,9 @@ defmodule Appsignal.TracerTest do
       Tracer.close_span(span)
       assert [^reference] = WrappedNif.get(:close_span)
     end
+  end
+
+  defp create_root_span(_context) do
+    [span: Tracer.create_span("root")]
   end
 end
