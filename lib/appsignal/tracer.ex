@@ -26,7 +26,7 @@ defmodule Appsignal.Tracer do
     {:ok, span_id} = Span.span_id(reference)
     {:ok, reference} = @nif.create_child_span(trace_id, span_id, name)
 
-    %Span{reference: reference}
+    register(%Span{reference: reference})
   end
 
   @doc """
