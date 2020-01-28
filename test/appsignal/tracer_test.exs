@@ -60,5 +60,10 @@ defmodule Appsignal.TracerTest do
       Tracer.close_span(span)
       assert :ets.lookup(:"$appsignal_registry", self()) == []
     end
+
+    test "closes the span through the Nif", %{span: %Span{reference: reference} = span} do
+      Tracer.close_span(span)
+      assert [^reference] = WrappedNif.get(:close_span)
+    end
   end
 end
