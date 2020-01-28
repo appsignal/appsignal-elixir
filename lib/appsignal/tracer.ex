@@ -32,7 +32,8 @@ defmodule Appsignal.Tracer do
   Closes a span.
   """
   @spec close_span(Span.t() | nil) :: Span.t() | nil
-  def close_span(%Span{}) do
+  def close_span(%Span{reference: reference}) do
+    :ok = @nif.close_span(reference)
     deregister()
     :ok
   end
