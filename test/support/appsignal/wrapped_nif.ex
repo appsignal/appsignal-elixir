@@ -19,6 +19,11 @@ defmodule Appsignal.WrappedNif do
     Nif.create_root_span(name)
   end
 
+  def close_span(reference) do
+    add(:close_span, reference)
+    Nif.close_span(reference)
+  end
+
   def get(key) do
     Agent.get(__MODULE__, &Map.fetch!(&1, key))
   end
