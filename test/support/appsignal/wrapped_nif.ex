@@ -1,8 +1,17 @@
 defmodule Appsignal.WrappedNif do
+  import ExUnit.Assertions
   alias Appsignal.Nif
 
   def start_link do
-    {:ok, pid} = Agent.start_link(fn -> %{create_root_span: []} end, name: __MODULE__)
+    {:ok, pid} =
+      Agent.start_link(fn -> %{create_root_span: [], close_span: []} end, name: __MODULE__)
+
+    ExUnit.Callbacks.on_exit(fn ->
+      ref = Process.monitor(pid)
+      assert_receive {:DOWN, ^ref, _, _, _}, 500
+    end)
+
+    {:ok, pid}
   end
 
   def create_root_span(name) do
