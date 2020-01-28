@@ -45,8 +45,8 @@ defmodule Appsignal.TracerTest do
       assert is_reference(span.reference)
     end
 
-    test "registers the span", %{span: span} do
-      assert :ets.lookup(:"$appsignal_registry", self()) == [{self(), span}]
+    test "registers the span without overwriting its parent", %{span: span, parent: parent} do
+      assert :ets.lookup(:"$appsignal_registry", self()) == [{self(), parent}, {self(), span}]
     end
   end
 
