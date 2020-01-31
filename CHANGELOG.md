@@ -1,4 +1,4 @@
-# 1.12.0-beta.1
+# 1.12.0-beta.2
 - Add explicit error handling for Phoenix channels. PR #527
 - Add Phoenix Telemetry event handler to add Phoenix 1.5 instrumentation. PR #528 & #538
 
