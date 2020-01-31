@@ -32,7 +32,7 @@ defmodule Appsignal.Phoenix.EventHandler do
   def handle_event(
         [:phoenix, :endpoint, :start],
         _measurements,
-        %{conn: %Plug.Conn{private: %{appsignal_transaction: transaction}}},
+        %{conn: %{private: %{appsignal_transaction: transaction}}},
         _config
       ) do
     @transaction.start_event(transaction)
@@ -45,7 +45,7 @@ defmodule Appsignal.Phoenix.EventHandler do
   def handle_event(
         [:phoenix, :endpoint, :stop],
         _measurements,
-        %{conn: %Plug.Conn{private: %{appsignal_transaction: transaction}}},
+        %{conn: %{private: %{appsignal_transaction: transaction}}},
         _config
       ) do
     @transaction.finish_event(
