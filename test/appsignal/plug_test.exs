@@ -559,7 +559,7 @@ defmodule Appsignal.PlugTest do
     test "reraises the error" do
       :ok =
         try do
-          Appsignal.Plug.handle_error(%Plug.Conn{}, :error, :undef, :undef, [])
+          Appsignal.Plug.handle_error(%Plug.Conn{}, :error, :undef, [])
         rescue
           UndefinedFunctionError -> :ok
         end
