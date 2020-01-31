@@ -233,8 +233,8 @@ defmodule Appsignal.Nif do
     _create_root_span(name)
   end
 
-  def create_child_span(trace_id, span_id, name) do
-    _create_child_span(trace_id, span_id, name)
+  def create_child_span(name, trace_id, span_id) do
+    _create_child_span(name, trace_id, span_id)
   end
 
   def set_span_namespace(reference, namespace) do
