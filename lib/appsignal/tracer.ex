@@ -21,9 +21,9 @@ defmodule Appsignal.Tracer do
   Creates a new child span.
   """
   @spec create_span(String.t(), Span.t()) :: Span.t()
-  def create_span(name, %Span{reference: reference}) do
-    {:ok, trace_id} = Span.trace_id(reference)
-    {:ok, span_id} = Span.span_id(reference)
+  def create_span(name, parent) do
+    {:ok, trace_id} = Span.trace_id(parent)
+    {:ok, span_id} = Span.span_id(parent)
     {:ok, reference} = @nif.create_child_span(name, trace_id, span_id)
 
     register(%Span{reference: reference})

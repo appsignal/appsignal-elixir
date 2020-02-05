@@ -34,11 +34,11 @@ defmodule Appsignal.TracerTest do
       assert %Span{} = span
     end
 
-    test "creates a child span through the Nif", %{parent: %Span{reference: parent_reference}} do
+    test "creates a child span through the Nif", %{parent: parent} do
       assert [{"child", parent_trace_id, parent_span_id}] = WrappedNif.get(:create_child_span)
 
-      assert {:ok, ^parent_trace_id} = Span.trace_id(parent_reference)
-      assert {:ok, ^parent_span_id} = Span.span_id(parent_reference)
+      assert {:ok, ^parent_trace_id} = Span.trace_id(parent)
+      assert {:ok, ^parent_span_id} = Span.span_id(parent)
     end
 
     test "sets the span's reference", %{span: span} do
