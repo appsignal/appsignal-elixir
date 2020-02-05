@@ -23,12 +23,6 @@ defmodule Appsignal do
                  Appsignal.Transaction
                )
 
-  if System.otp_release() >= "21" do
-    @report_handler Appsignal.LoggerHandler
-  else
-    @report_handler Appsignal.ErrorLoggerHandler
-  end
-
   @doc """
   Application callback function
   """
@@ -36,7 +30,6 @@ defmodule Appsignal do
     import Supervisor.Spec, warn: false
 
     initialize()
-    add_report_handler()
 
     if phoenix?(), do: Appsignal.Phoenix.EventHandler.attach()
 
@@ -111,12 +104,6 @@ defmodule Appsignal do
         )
     end
   end
-
-  @doc false
-  def add_report_handler, do: @report_handler.add()
-
-  @doc false
-  def remove_report_handler, do: @report_handler.remove()
 
   @doc false
   def add_default_probes do
