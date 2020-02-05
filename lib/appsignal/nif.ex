@@ -445,55 +445,55 @@ defmodule Appsignal.Nif do
     false
   end
 
-  def _trace_id(reference) do
+  def _trace_id(_reference) do
     {:ok, 'trace123'}
   end
 
-  def _span_id(reference) do
+  def _span_id(_reference) do
     {:ok, 'span123'}
   end
 
-  def _create_root_span(name) do
+  def _create_root_span(_name) do
     {:ok, make_ref()}
   end
 
-  def _create_child_span(name, trace_id, span_id) do
+  def _create_child_span(_name, _trace_id, _span_id) do
     {:ok, make_ref()}
   end
 
-  def _set_span_name(reference, name) do
+  def _set_span_name(_reference, _name) do
     :ok
   end
 
-  def _set_span_namespace(reference, namespace) do
+  def _set_span_namespace(_reference, _namespace) do
     :ok
   end
 
-  def _set_span_attribute_string(reference, key, value) do
+  def _set_span_attribute_string(_reference, _key, _value) do
     :ok
   end
 
-  def _set_span_attribute_int(reference, key, value) do
+  def _set_span_attribute_int(_reference, _key, _value) do
     :ok
   end
 
-  def _set_span_attribute_bool(reference, key, value) do
+  def _set_span_attribute_bool(_reference, _key, _value) do
     :ok
   end
 
-  def _set_span_attribute_double(reference, key, value) do
+  def _set_span_attribute_double(_reference, _key, _value) do
     :ok
   end
 
-  def _set_span_sample_data(reference, key, value) do
+  def _set_span_sample_data(_reference, _key, _value) do
     :ok
   end
 
-  def _add_span_error(reference, name, message, backtrace) do
+  def _add_span_error(_reference, _name, _message, _backtrace) do
     :ok
   end
 
-  def _close_span(reference) do
+  def _close_span(_reference) do
     :ok
   end
 
