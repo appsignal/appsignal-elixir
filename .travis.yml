@@ -2,6 +2,7 @@ branches:
   only:
   - master
   - develop
+  - tracing
 language: elixir
 elixir:
   - 1.10.2
