@@ -27,7 +27,7 @@ defmodule Appsignal.Tracer do
   def create_span(name, nil, pid) do
     {:ok, reference} = @nif.create_root_span(name)
 
-    register(%Span{reference: reference}, pid)
+    register(%Span{reference: reference, pid: pid})
   end
 
   def create_span(name, parent, pid) do
@@ -35,7 +35,7 @@ defmodule Appsignal.Tracer do
     {:ok, span_id} = Span.span_id(parent)
     {:ok, reference} = @nif.create_child_span(name, trace_id, span_id)
 
-    register(%Span{reference: reference}, pid)
+    register(%Span{reference: reference, pid: pid})
   end
 
   @doc """
@@ -63,26 +63,20 @@ defmodule Appsignal.Tracer do
   Closes a span and deregisters it.
   """
   @spec close_span(Span.t() | nil) :: :ok | nil
-  def close_span(span), do: close_span(span, self())
-
-  @doc """
-  Closes a span and deregisters it from the passed pid.
-  """
-  @spec close_span(Span.t() | nil, pid()) :: :ok | nil
-  def close_span(%Span{reference: reference} = span, pid) do
+  def close_span(%Span{reference: reference} = span) do
     :ok = @nif.close_span(reference)
-    deregister(span, pid)
+    deregister(span)
     :ok
   end
 
-  def close_span(nil, _pid), do: nil
+  def close_span(nil), do: nil
 
-  defp register(span, pid) do
+  defp register(%Span{pid: pid} = span) do
     :ets.insert(@table, {pid, span})
     span
   end
 
-  defp deregister(span, pid) do
+  defp deregister(%Span{pid: pid} = span) do
     :ets.delete_object(@table, {pid, span})
   end
 end
