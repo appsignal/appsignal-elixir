@@ -16,7 +16,7 @@ defmodule Appsignal.Error.BackendTest do
     assert {:error, :already_present} = Logger.add_backend(Backend)
   end
 
-  describe "when an exception is raised" do
+  describe "handle_event/3, when no span exists" do
     setup do
       [pid: spawn(fn -> raise "Exception" end)]
     end
