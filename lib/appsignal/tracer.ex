@@ -12,25 +12,30 @@ defmodule Appsignal.Tracer do
   Creates a new root span.
   """
   @spec create_span(String.t()) :: Span.t()
-  def create_span(name), do: create_span(name, nil)
+  def create_span(name), do: create_span(name, nil, self())
 
   @doc """
   Creates a new child span.
   """
   @spec create_span(String.t(), Span.t() | nil) :: Span.t()
+  def create_span(name, parent), do: create_span(name, parent, self())
 
-  def create_span(name, nil) do
+  @doc """
+  Creates a new span, with an optional parent or pid.
+  """
+  @spec create_span(String.t(), Span.t() | nil, pid()) :: Span.t()
+  def create_span(name, nil, pid) do
     {:ok, reference} = @nif.create_root_span(name)
 
-    register(%Span{reference: reference})
+    register(%Span{reference: reference}, pid)
   end
 
-  def create_span(name, parent) do
+  def create_span(name, parent, pid) do
     {:ok, trace_id} = Span.trace_id(parent)
     {:ok, span_id} = Span.span_id(parent)
     {:ok, reference} = @nif.create_child_span(name, trace_id, span_id)
 
-    register(%Span{reference: reference})
+    register(%Span{reference: reference}, pid)
   end
 
   @doc """
@@ -60,8 +65,8 @@ defmodule Appsignal.Tracer do
 
   def close_span(nil), do: nil
 
-  defp register(span) do
-    :ets.insert(@table, {self(), span})
+  defp register(span, pid) do
+    :ets.insert(@table, {pid, span})
     span
   end
 
