@@ -6,7 +6,9 @@ defmodule Appsignal.Error.Backend do
   def init(opts), do: {:ok, opts}
 
   def handle_event({:error, gl, {_, _, _, metadata} = event}, state) when node(gl) == node() do
-    @tracer.create_span("", nil, metadata[:pid])
+    ""
+    |> @tracer.create_span(nil, metadata[:pid])
+    |> @tracer.close_span()
 
     {:ok, state}
   end
