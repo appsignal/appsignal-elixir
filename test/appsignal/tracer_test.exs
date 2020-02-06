@@ -112,6 +112,14 @@ defmodule Appsignal.TracerTest do
     end
   end
 
+  describe "current_span/1, when a span exists in another process" do
+    setup :create_root_span_in_other_process
+
+    test "returns the created span", %{span: span, pid: pid} do
+      assert span == Tracer.current_span(pid)
+    end
+  end
+
   describe "close_span/1, when passing a nil" do
     test "returns nil" do
       assert Tracer.close_span(nil) == nil

@@ -39,11 +39,17 @@ defmodule Appsignal.Tracer do
   end
 
   @doc """
-  Returns the current span.
+  Returns the current span in the current process.
   """
   @spec current_span() :: Span.t() | nil
-  def current_span do
-    case :ets.lookup(@table, self()) do
+  def current_span(), do: current_span(self())
+
+  @doc """
+  Returns the current span in the passed pid's process.
+  """
+  @spec current_span(pid()) :: Span.t() | nil
+  def current_span(pid) do
+    case :ets.lookup(@table, pid) do
       [] ->
         nil
 
