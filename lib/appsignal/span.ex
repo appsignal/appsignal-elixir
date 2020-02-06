@@ -1,6 +1,6 @@
 defmodule Appsignal.Span do
   alias Appsignal.{Nif, Span}
-  defstruct [:reference]
+  defstruct [:reference, :pid]
 
   def trace_id(%Span{reference: reference}) do
     Nif.trace_id(reference)
