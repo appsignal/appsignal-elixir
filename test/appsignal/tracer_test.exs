@@ -73,11 +73,7 @@ defmodule Appsignal.TracerTest do
   end
 
   describe "create_span/3, when passing a pid" do
-    setup do
-      [pid: Process.whereis(WrappedNif)]
-    end
-
-    setup :create_root_span
+    setup :create_root_span_in_other_process
 
     test "returns a span", %{span: span} do
       assert %Span{} = span
@@ -150,11 +146,7 @@ defmodule Appsignal.TracerTest do
   end
 
   describe "close_span/2" do
-    setup do
-      [pid: Process.whereis(WrappedNif)]
-    end
-
-    setup :create_root_span
+    setup :create_root_span_in_other_process
 
     test "returns :ok", %{span: span, pid: pid} do
       assert Tracer.close_span(span, pid) == :ok
@@ -166,15 +158,16 @@ defmodule Appsignal.TracerTest do
     end
   end
 
-  defp create_root_span(%{pid: pid}) do
-    [span: Tracer.create_span("root", nil, pid)]
-  end
-
   defp create_root_span(_context) do
     [span: Tracer.create_span("root")]
   end
 
   defp create_child_span(%{span: span}) do
     [span: Tracer.create_span("child", span), parent: span]
+  end
+
+  defp create_root_span_in_other_process(_context) do
+    pid = Process.whereis(WrappedNif)
+    [span: Tracer.create_span("root", nil, pid), pid: pid]
   end
 end
