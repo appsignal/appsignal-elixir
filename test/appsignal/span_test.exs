@@ -324,6 +324,18 @@ defmodule AppsignalSpanTest do
     end
   end
 
+  describe ".to_map/1" do
+    setup :create_root_span
+
+    test "returns a map with span metadata", %{span: span} do
+      assert %{
+               "name" => "",
+               "namespace" => "web",
+               "closed" => false
+             } = Span.to_map(span)
+    end
+  end
+
   defp create_root_span(_context) do
     [span: Span.create_root("web", self())]
   end
