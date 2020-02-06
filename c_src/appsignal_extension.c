@@ -1152,6 +1152,22 @@ static ERL_NIF_TERM _span_id(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]
   return make_ok_tuple(env, make_elixir_string(env,id));
 }
 
+static ERL_NIF_TERM _span_to_json(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
+  span_ptr *ptr;
+  appsignal_string_t json;
+
+  if (argc != 1) {
+    return enif_make_badarg(env);
+  }
+  if (!enif_get_resource(env, argv[0], appsignal_span_type, (void**) &ptr)) {
+    return enif_make_badarg(env);
+  }
+
+  json = appsignal_span_to_json(ptr->span);
+  return make_ok_tuple(env, make_elixir_string(env, json));
+}
+
+
 static int on_load(ErlNifEnv* env, void** UNUSED(priv), ERL_NIF_TERM UNUSED(info))
 {
     ErlNifResourceType *transaction_resource_type;
@@ -1261,7 +1277,8 @@ static ErlNifFunc nif_funcs[] =
     {"_add_span_error", 4, _add_span_error, 0},
     {"_close_span", 1, _close_span, 0},
     {"_trace_id", 1, _trace_id, 0},
-    {"_span_id", 1, _span_id, 0}
+    {"_span_id", 1, _span_id, 0},
+    {"_span_to_json", 1, _span_to_json, 0}
 };
 
 ERL_NIF_INIT(Elixir.Appsignal.Nif, nif_funcs, on_load, on_reload, on_upgrade, NULL)
