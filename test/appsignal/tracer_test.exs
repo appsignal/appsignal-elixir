@@ -153,15 +153,15 @@ defmodule Appsignal.TracerTest do
     end
   end
 
-  describe "close_span/2" do
+  describe "close_span/1, when passing a span in another process" do
     setup :create_root_span_in_other_process
 
-    test "returns :ok", %{span: span, pid: pid} do
-      assert Tracer.close_span(span, pid) == :ok
+    test "returns :ok", %{span: span} do
+      assert Tracer.close_span(span) == :ok
     end
 
     test "deregisters the span", %{span: span, pid: pid} do
-      Tracer.close_span(span, pid)
+      Tracer.close_span(span)
       assert :ets.lookup(:"$appsignal_registry", pid) == []
     end
   end
