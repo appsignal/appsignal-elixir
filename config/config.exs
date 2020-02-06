@@ -1,11 +1,6 @@
 use Mix.Config
 
 if Mix.env() in [:bench, :test, :test_phoenix, :test_no_nif] do
-  config :logger,
-    level: :warn,
-    handle_otp_reports: false,
-    handle_sasl_reports: false
-
   config :appsignal, appsignal_system: Appsignal.FakeSystem
   config :appsignal, appsignal_nif: Appsignal.FakeNif
   config :appsignal, appsignal_demo: Appsignal.FakeDemo
@@ -15,6 +10,7 @@ if Mix.env() in [:bench, :test, :test_phoenix, :test_no_nif] do
   config :appsignal, inet: FakeInet
 
   config :appsignal, appsignal_tracer_nif: Appsignal.WrappedNif
+  config :appsignal, appsignal_tracer: Appsignal.Test.Tracer
 
   config :appsignal, :config,
     push_api_key: "00000000-0000-0000-0000-000000000000",
