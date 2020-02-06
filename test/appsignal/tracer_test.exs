@@ -50,6 +50,28 @@ defmodule Appsignal.TracerTest do
     end
   end
 
+  describe "create_span/2, with a nil-parent" do
+    setup do
+      [span: Tracer.create_span("orphan", nil)]
+    end
+
+    test "returns a span", %{span: span} do
+      assert %Span{} = span
+    end
+
+    test "creates a root span through the Nif" do
+      assert [{"orphan"}] = WrappedNif.get(:create_root_span)
+    end
+
+    test "sets the span's reference", %{span: span} do
+      assert is_reference(span.reference)
+    end
+
+    test "registers the span", %{span: span} do
+      assert :ets.lookup(:"$appsignal_registry", self()) == [{self(), span}]
+    end
+  end
+
   describe "current_span/1, when no span exists" do
     test "returns nil" do
       assert Tracer.current_span() == nil
