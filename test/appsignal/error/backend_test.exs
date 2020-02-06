@@ -1,5 +1,6 @@
 defmodule Appsignal.Error.BackendTest do
   use ExUnit.Case, async: true
+  import AppsignalTest.Utils
   import ExUnit.CaptureIO
   alias Appsignal.{Error.Backend, Span, WrappedNif, Test}
 
@@ -14,12 +15,14 @@ defmodule Appsignal.Error.BackendTest do
   end
 
   describe "when an exception is raised" do
-    test "creates a span" do
-      pid = spawn(fn -> raise "Exception" end)
+    setup do
+      [pid: spawn(fn -> raise "Exception" end)]
+    end
 
-      :timer.sleep(100)
-
-      assert {:ok, [{"", nil, ^pid}]} = Test.Tracer.get(:create_span)
+    test "creates a span", %{pid: pid} do
+      until(fn ->
+        assert {:ok, [{"", nil, ^pid}]} = Test.Tracer.get(:create_span)
+      end)
     end
   end
 end
