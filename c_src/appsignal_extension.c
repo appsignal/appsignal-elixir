@@ -852,6 +852,21 @@ static ERL_NIF_TERM _transaction_to_json(ErlNifEnv* env, int argc, const ERL_NIF
   json = appsignal_transaction_to_json(ptr->transaction);
   return make_ok_tuple(env, make_elixir_string(env, json));
 }
+
+static ERL_NIF_TERM _span_to_json(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
+  span_ptr *ptr;
+  appsignal_string_t json;
+
+  if (argc != 1) {
+    return enif_make_badarg(env);
+  }
+  if (!enif_get_resource(env, argv[0], appsignal_span_type, (void**) &ptr)) {
+    return enif_make_badarg(env);
+  }
+
+  json = appsignal_span_to_json(ptr->span);
+  return make_ok_tuple(env, make_elixir_string(env, json));
+}
 #endif
 
 static ERL_NIF_TERM _loaded(ErlNifEnv *env, int UNUSED(argc), const ERL_NIF_TERM UNUSED(argv[])) {
@@ -1272,6 +1287,7 @@ static ErlNifFunc nif_funcs[] =
     {"_running_in_container", 0, _running_in_container, 0},
 #ifdef TEST
     {"_transaction_to_json", 1, _transaction_to_json, 0},
+    {"_span_to_json", 1, _span_to_json, 0},
     {"_data_to_json", 1, _data_to_json, 0},
 #endif
     {"_loaded", 0, _loaded, 0},

@@ -281,6 +281,10 @@ defmodule Appsignal.Nif do
     def transaction_to_json(resource) do
       _transaction_to_json(resource)
     end
+
+    def span_to_json(resource) do
+      _span_to_json(resource)
+    end
   end
 
   def _env_put(_key, _value) do
@@ -504,6 +508,10 @@ defmodule Appsignal.Nif do
 
     def _transaction_to_json(resource) do
       {:ok, resource}
+    end
+
+    def _span_to_json(resource) do
+      {:ok, "{}"}
     end
   end
 end
