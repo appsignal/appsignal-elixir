@@ -12,15 +12,19 @@ defmodule Appsignal.Tracer do
   Creates a new root span.
   """
   @spec create_span(String.t()) :: Span.t()
-  def create_span(name) do
-    {:ok, reference} = @nif.create_root_span(name)
-    register(%Span{reference: reference})
-  end
+  def create_span(name), do: create_span(name, nil)
 
   @doc """
   Creates a new child span.
   """
-  @spec create_span(String.t(), Span.t()) :: Span.t()
+  @spec create_span(String.t(), Span.t() | nil) :: Span.t()
+
+  def create_span(name, nil) do
+    {:ok, reference} = @nif.create_root_span(name)
+
+    register(%Span{reference: reference})
+  end
+
   def create_span(name, parent) do
     {:ok, trace_id} = Span.trace_id(parent)
     {:ok, span_id} = Span.span_id(parent)
