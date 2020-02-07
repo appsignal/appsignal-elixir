@@ -42,7 +42,7 @@ defmodule Appsignal.Tracer do
   Returns the current span in the current process.
   """
   @spec current_span() :: Span.t() | nil
-  def current_span(), do: current_span(self())
+  def current_span, do: current_span(self())
 
   @doc """
   Returns the current span in the passed pid's process.
