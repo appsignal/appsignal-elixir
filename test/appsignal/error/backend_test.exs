@@ -107,4 +107,47 @@ defmodule Appsignal.Error.BackendTest do
       end)
     end
   end
+
+  describe "handle_event/3, with a Task" do
+    setup do
+      parent = self()
+
+      spawn(fn ->
+        %Task{pid: pid} =
+          Task.async(fn ->
+            raise "Exception"
+          end)
+
+        send(parent, pid)
+      end)
+
+      pid =
+        receive do
+          pid -> pid
+        end
+
+      [pid: pid]
+    end
+
+    test "creates a span", %{pid: pid} do
+      until(fn ->
+        assert {:ok, [{"", nil, ^pid}]} = Test.Tracer.get(:create_span)
+      end)
+    end
+
+    test "adds an error to the created span", %{pid: pid} do
+      until(fn ->
+        assert {:ok, [{%Span{}, %RuntimeError{message: "Exception"}, stack}]} =
+                 Test.Span.get(:add_error)
+
+        assert is_list(stack)
+      end)
+    end
+
+    test "closes the created span", %{pid: pid} do
+      until(fn ->
+        assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+      end)
+    end
+  end
 end
