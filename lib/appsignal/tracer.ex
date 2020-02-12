@@ -1,7 +1,6 @@
 defmodule Appsignal.Tracer do
-  alias Appsignal.{Span}
+  alias Appsignal.Span
 
-  @nif Application.get_env(:appsignal, :appsignal_tracer_nif, Appsignal.Nif)
   @table :"$appsignal_registry"
 
   def start_link do
@@ -25,17 +24,15 @@ defmodule Appsignal.Tracer do
   """
   @spec create_span(String.t(), Span.t() | nil, pid()) :: Span.t()
   def create_span(name, nil, pid) do
-    {:ok, reference} = @nif.create_root_span(name)
-
-    register(%Span{reference: reference, pid: pid})
+    name
+    |> Span.create_root(pid)
+    |> register()
   end
 
   def create_span(name, parent, pid) do
-    {:ok, trace_id} = Span.trace_id(parent)
-    {:ok, span_id} = Span.span_id(parent)
-    {:ok, reference} = @nif.create_child_span(name, trace_id, span_id)
-
-    register(%Span{reference: reference, pid: pid})
+    name
+    |> Span.create_child(parent, pid)
+    |> register()
   end
 
   @doc """
@@ -63,9 +60,11 @@ defmodule Appsignal.Tracer do
   Closes a span and deregisters it.
   """
   @spec close_span(Span.t() | nil) :: :ok | nil
-  def close_span(%Span{reference: reference} = span) do
-    :ok = @nif.close_span(reference)
-    deregister(span)
+  def close_span(%Span{} = span) do
+    span
+    |> Span.close()
+    |> deregister()
+
     :ok
   end
 
