@@ -2,9 +2,9 @@ defmodule Appsignal.Diagnose.Agent do
   @nif Application.get_env(:appsignal, :appsignal_nif, Appsignal.Nif)
 
   def report do
-    if @nif.loaded? do
+    if @nif.loaded?() do
       Appsignal.Nif.env_put("_APPSIGNAL_DIAGNOSE", "true")
-      report_string = @nif.diagnose
+      report_string = @nif.diagnose()
 
       report =
         case Appsignal.Json.decode(report_string) do

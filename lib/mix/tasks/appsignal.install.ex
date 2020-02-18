@@ -261,8 +261,8 @@ defmodule Mix.Tasks.Appsignal.Install do
   defp run_demo do
     {:ok, _} = Application.ensure_all_started(:appsignal)
 
-    @demo.create_transaction_performance_request
-    @demo.create_transaction_error_request
+    @demo.create_transaction_performance_request()
+    @demo.create_transaction_error_request()
     Appsignal.stop(nil)
     IO.puts("Demonstration sample data sent!")
     IO.puts("It may take about a minute for the data to appear on https://appsignal.com/accounts")
