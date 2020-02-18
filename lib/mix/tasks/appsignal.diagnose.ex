@@ -19,7 +19,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
 
     Application.load(:appsignal)
 
-    report = %{process: %{uid: @system.uid}}
+    report = %{process: %{uid: @system.uid()}}
 
     configure_appsignal()
     config_report = Diagnose.Config.config()
@@ -324,7 +324,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     if path[:exists] do
       IO.puts("    Writable?: #{yes_or_no(path[:writable])}")
       file_uid = path[:ownership][:uid]
-      process_uid = @system.uid
+      process_uid = @system.uid()
       IO.write("    Ownership?: #{yes_or_no(file_uid == process_uid)}")
       IO.puts(" (file: #{file_uid}, process: #{process_uid})")
     else

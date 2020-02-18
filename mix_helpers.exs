@@ -381,7 +381,7 @@ defmodule Mix.Appsignal.Helper do
         "linux-musl"
 
       false ->
-        case @os.type do
+        case @os.type() do
           {:unix, :linux} ->
             agent_platform_by_ldd_version()
 

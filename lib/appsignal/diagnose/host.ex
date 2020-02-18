@@ -10,9 +10,9 @@ defmodule Appsignal.Diagnose.Host do
       language_version: System.version(),
       otp_version: System.otp_release(),
       os: os,
-      heroku: @system.heroku?,
-      root: @system.root?,
-      running_in_container: @nif.running_in_container?
+      heroku: @system.heroku?(),
+      root: @system.root?(),
+      running_in_container: @nif.running_in_container?()
     }
   end
 end

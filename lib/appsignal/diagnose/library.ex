@@ -8,7 +8,7 @@ defmodule Appsignal.Diagnose.Library do
       language: "elixir",
       agent_version: @agent_version,
       package_version: @appsignal_version,
-      extension_loaded: @nif.loaded?
+      extension_loaded: @nif.loaded?()
     }
   end
 end
