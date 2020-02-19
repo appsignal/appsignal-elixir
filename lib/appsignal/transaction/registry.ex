@@ -78,7 +78,10 @@ defmodule Appsignal.TransactionRegistry do
   @spec remove_transaction(Transaction.t()) :: :ok | {:error, :not_found} | {:error, :no_receiver}
   def remove_transaction(%Transaction{} = transaction) do
     if receiver_alive?() do
-      Receiver.demonitor(transaction)
+      transaction
+      |> pids_and_monitor_references()
+      |> Receiver.demonitor()
+
       remove(transaction)
     else
       {:error, :no_receiver}

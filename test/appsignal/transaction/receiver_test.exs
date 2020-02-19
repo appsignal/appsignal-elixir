@@ -3,7 +3,7 @@ defmodule Appsignal.Transaction.ReceiverTest do
   import AppsignalTest.Utils
   alias Appsignal.{Transaction, Transaction.ETS, Transaction.Receiver}
 
-  test "monitors a process" do
+  test "monitors a process, and demonitors it when it goes DOWN" do
     task =
       %Task{pid: pid} =
       Task.async(fn ->
@@ -18,5 +18,25 @@ defmodule Appsignal.Transaction.ReceiverTest do
     until(fn ->
       assert [] = ETS.lookup(pid)
     end)
+  end
+
+  test "monitors a process, and demonitors it when its transaction is completed" do
+    transaction = Transaction.start("monitor", :test)
+
+    assert monitored_processes() == [self()]
+    Transaction.complete(transaction)
+
+    until(fn ->
+      assert monitored_processes() == []
+    end)
+  end
+
+  def monitored_processes() do
+    {:monitors, monitors} =
+      Receiver
+      |> Process.whereis()
+      |> Process.info(:monitors)
+
+    Enum.map(monitors, fn {:process, pid} -> pid end)
   end
 end
