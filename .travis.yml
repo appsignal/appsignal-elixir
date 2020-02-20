@@ -3,7 +3,6 @@ branches:
   - master
   - develop
   - ci-fixes
-  - receiver-references
 language: elixir
 elixir:
   - 1.3.4
