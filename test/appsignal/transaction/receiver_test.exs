@@ -31,7 +31,7 @@ defmodule Appsignal.Transaction.ReceiverTest do
     end)
   end
 
-  def monitored_processes() do
+  defp monitored_processes do
     {:monitors, monitors} =
       Receiver
       |> Process.whereis()
