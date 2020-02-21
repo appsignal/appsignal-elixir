@@ -6,7 +6,6 @@ defmodule Appsignal.Transaction.Receiver do
   # use Task, restart: :permanent
 
   alias Appsignal.Transaction.ETS
-  alias Appsignal.TransactionRegistry, as: Registry
 
   if Mix.env() in [:test, :test_phoenix, :test_no_nif] do
     @deletion_delay 50
@@ -36,10 +35,8 @@ defmodule Appsignal.Transaction.Receiver do
         send(pid, {:reference, reference})
         receiver()
 
-      {:demonitor, transaction} ->
-        transaction
-        |> Registry.pids_and_monitor_references()
-        |> process_demonitor()
+      {:demonitor, pids_and_monitor_references} ->
+        process_demonitor(pids_and_monitor_references)
 
         receiver()
 
