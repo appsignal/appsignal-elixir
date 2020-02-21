@@ -69,6 +69,12 @@ defmodule Appsignal.EctoTest do
     assert [] == FakeTransaction.recorded_events(fake_transaction)
   end
 
+  test "log_event returns the original Ecto.LogEntry without a Transaction", %{fake_transaction: fake_transaction} do
+    assert %{query: _, result: _} = log_event()
+
+    assert [] == FakeTransaction.recorded_events(fake_transaction)
+  end
+
   defp perform_event do
     Appsignal.Ecto.handle_event(
       [:appsignal_phoenix_example, :repo, :query],
