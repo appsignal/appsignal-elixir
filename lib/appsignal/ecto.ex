@@ -94,7 +94,7 @@ defmodule Appsignal.Ecto do
     entry
   end
 
-  defp do_log(_transaction, _entry), do: nil
+  defp do_log(_transaction, entry), do: entry
 
   defp convert_time_unit(time) do
     # Converts the native time to a value in nanoseconds.
