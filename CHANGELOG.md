@@ -1,3 +1,6 @@
+# 1.11.6
+- Call pids_and_monitor_references/1 from TransactionRegistry. PR #541
+
 # 1.11.5
 - Use a complete set of ssl_options for Hackney. PR #534
 
