@@ -7,74 +7,82 @@ defmodule Appsignal.EctoTest do
     {:ok, fake_transaction: fake_transaction}
   end
 
-  test "records an event", %{fake_transaction: fake_transaction} do
-    transaction = Transaction.start("test", :http_request)
+  describe "with a transaction" do
+    setup do
+      transaction = Transaction.start("test", :http_request)
 
-    perform_event()
+      [transaction: transaction]
+    end
 
-    assert [
-             %{
-               transaction: ^transaction,
-               body:
-                 "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0",
-               body_format: 1,
-               duration: 8_829_000,
-               name: "query.ecto",
-               title: ""
-             }
-           ] = FakeTransaction.recorded_events(fake_transaction)
+    test "records an event", %{fake_transaction: fake_transaction, transaction: transaction} do
+      perform_event()
+
+      assert [
+               %{
+                 transaction: ^transaction,
+                 body:
+                   "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0",
+                 body_format: 1,
+                 duration: 8_829_000,
+                 name: "query.ecto",
+                 title: ""
+               }
+             ] = FakeTransaction.recorded_events(fake_transaction)
+    end
+
+    test "records an event from Telemetry 0.3.x", %{
+      fake_transaction: fake_transaction,
+      transaction: transaction
+    } do
+      perform_telemetry_0_3_event()
+
+      assert [
+               %{
+                 transaction: ^transaction,
+                 body:
+                   "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0",
+                 body_format: 1,
+                 duration: 58_336_000,
+                 name: "query.ecto",
+                 title: ""
+               }
+             ] = FakeTransaction.recorded_events(fake_transaction)
+    end
+
+    test "records an event from the Ecto logger", %{
+      fake_transaction: fake_transaction,
+      transaction: transaction
+    } do
+      log_event()
+
+      assert [
+               %{
+                 transaction: ^transaction,
+                 body:
+                   "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0",
+                 body_format: 1,
+                 duration: 58_336_000,
+                 name: "query.ecto",
+                 title: ""
+               }
+             ] = FakeTransaction.recorded_events(fake_transaction)
+    end
   end
 
-  test "records an event from Telemetry 0.3.x", %{fake_transaction: fake_transaction} do
-    transaction = Transaction.start("test", :http_request)
+  describe "without a transaction" do
+    setup do
+      perform_event()
+      perform_telemetry_0_3_event()
+      [return: log_event()]
+    end
 
-    perform_telemetry_0_3_event()
+    test "log_event returns the original Ecto.LogEntry", %{return: return} do
+      assert %{query: _, result: _} = return
+    end
 
-    assert [
-             %{
-               transaction: ^transaction,
-               body:
-                 "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0",
-               body_format: 1,
-               duration: 58_336_000,
-               name: "query.ecto",
-               title: ""
-             }
-           ] = FakeTransaction.recorded_events(fake_transaction)
-  end
-
-  test "records an event from the Ecto logger", %{fake_transaction: fake_transaction} do
-    transaction = Transaction.start("test", :http_request)
-
-    log_event()
-
-    assert [
-             %{
-               transaction: ^transaction,
-               body:
-                 "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0",
-               body_format: 1,
-               duration: 58_336_000,
-               name: "query.ecto",
-               title: ""
-             }
-           ] = FakeTransaction.recorded_events(fake_transaction)
-  end
-
-  test "does not record an event without a Transaction", %{fake_transaction: fake_transaction} do
-    perform_event()
-    perform_telemetry_0_3_event()
-    log_event()
-
-    assert [] == FakeTransaction.recorded_events(fake_transaction)
-  end
-
-  test "log_event returns the original Ecto.LogEntry without a Transaction", %{
-    fake_transaction: fake_transaction
-  } do
-    assert %{query: _, result: _} = log_event()
-
-    assert [] == FakeTransaction.recorded_events(fake_transaction)
+    test "does not record an event", %{fake_transaction: fake_transaction} do
+      assert [] == FakeTransaction.recorded_events(fake_transaction)
+    end
   end
 
   defp perform_event do
