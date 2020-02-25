@@ -1,3 +1,6 @@
+# 1.11.7
+- Return the Ecto.LogEntry even if the transaction is nil. PR #542
+
 # 1.11.6
 - Call pids_and_monitor_references/1 from TransactionRegistry. PR #541
 
