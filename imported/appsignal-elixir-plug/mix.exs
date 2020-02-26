@@ -1,4 +1,4 @@
-defmodule AppsignalPlug.MixProject do
+defmodule Appsignal.Plug.MixProject do
   use Mix.Project
 
   def project do

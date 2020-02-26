@@ -1,6 +1,6 @@
-defmodule AppsignalPlug do
+defmodule Appsignal.Plug do
   @moduledoc """
-  Documentation for AppsignalPlug.
+  Documentation for Appsignal.Plug.
   """
 
   @doc """
@@ -8,7 +8,7 @@ defmodule AppsignalPlug do
 
   ## Examples
 
-      iex> AppsignalPlug.hello()
+      iex> Appsignal.Plug.hello()
       :world
 
   """

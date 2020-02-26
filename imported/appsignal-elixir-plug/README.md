@@ -1,4 +1,4 @@
-# AppsignalPlug
+# Appsignal.Plug
 
 **TODO: Add description**
 

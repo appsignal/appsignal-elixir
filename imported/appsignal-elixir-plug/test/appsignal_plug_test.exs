@@ -1,8 +1,8 @@
-defmodule AppsignalPlugTest do
+defmodule Appsignal.PlugTest do
   use ExUnit.Case
-  doctest AppsignalPlug
+  doctest Appsignal.Plug
 
   test "greets the world" do
-    assert AppsignalPlug.hello() == :world
+    assert Appsignal.Plug.hello() == :world
   end
 end
