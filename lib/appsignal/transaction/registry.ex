@@ -144,6 +144,6 @@ defmodule Appsignal.TransactionRegistry do
   end
 
   def pids_and_monitor_references(transaction) do
-    ETS.match({:"$1", transaction, :"$2"}) ++ ETS.match({:"$1", transaction})
+    ETS.match({:"$1", transaction, :"$2"})
   end
 end
