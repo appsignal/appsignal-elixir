@@ -95,12 +95,18 @@ defmodule Appsignal.Mixfile do
         _ -> ">= 1.2.0"
       end
 
+    decorator_version =
+      case Version.compare(system_version, "1.5.0") do
+        :lt -> "~> 1.2.3"
+        _ -> "~> 1.2.3 or ~> 1.3"
+      end
+
     [
       {:benchee, "~> 1.0", only: :bench},
       {:hackney, "~> 1.6"},
       {:jason, "~> 1.0", optional: true},
       {:poison, poison_version, optional: true},
-      {:decorator, "~> 1.2.3 or ~> 1.3"},
+      {:decorator, decorator_version},
       {:phoenix, phoenix_version, optional: true, only: [:prod, :test_phoenix, :dev]},
       {:bypass, "~> 0.6.0", only: [:test, :test_phoenix, :test_no_nif]},
       {:plug_cowboy, "~> 1.0", only: [:test, :test_phoenix, :test_no_nif]},
