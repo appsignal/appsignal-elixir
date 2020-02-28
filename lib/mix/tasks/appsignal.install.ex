@@ -1,5 +1,6 @@
 defmodule Mix.Tasks.Appsignal.Install do
   use Mix.Task
+  @shortdoc "Installs AppSignal into the current application"
 
   @demo Application.get_env(:appsignal, :appsignal_demo, Appsignal.Demo)
 
