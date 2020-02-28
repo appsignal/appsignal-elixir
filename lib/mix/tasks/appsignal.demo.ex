@@ -2,7 +2,7 @@ defmodule Mix.Tasks.Appsignal.Demo do
   require Logger
   use Mix.Task
 
-  @shortdoc "Perform and send a demonstration error and performance issue to AppSignal."
+  @shortdoc "Perform and send a demonstration error and performance issue to AppSignal"
 
   def run(_args) do
     {:ok, _} = Application.ensure_all_started(:appsignal)

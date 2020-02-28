@@ -6,7 +6,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
   @system Application.get_env(:appsignal, :appsignal_system, Appsignal.System)
   @report Application.get_env(:appsignal, :appsignal_diagnose_report, Appsignal.Diagnose.Report)
 
-  @shortdoc "Starts and tests AppSignal while validating the configuration."
+  @shortdoc "Starts and tests AppSignal while validating the configuration"
 
   def run(args) do
     send_report =
