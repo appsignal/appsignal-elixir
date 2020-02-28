@@ -100,7 +100,7 @@ defmodule Appsignal.Mixfile do
       {:hackney, "~> 1.6"},
       {:jason, "~> 1.0", optional: true},
       {:poison, poison_version, optional: true},
-      {:decorator, "~> 1.2.3"},
+      {:decorator, "~> 1.2.3 or ~> 1.3"},
       {:phoenix, phoenix_version, optional: true, only: [:prod, :test_phoenix, :dev]},
       {:bypass, "~> 0.6.0", only: [:test, :test_phoenix, :test_no_nif]},
       {:plug_cowboy, "~> 1.0", only: [:test, :test_phoenix, :test_no_nif]},
