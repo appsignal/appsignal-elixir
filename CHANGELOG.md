@@ -1,3 +1,6 @@
+# 1.11.8
+- Reduce calls to pids_and_monitor_references/1 and :ets.match/1 #543. PR #543
+
 # 1.11.7
 - Return the Ecto.LogEntry even if the transaction is nil. PR #542
 
