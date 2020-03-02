@@ -45,14 +45,6 @@ defmodule Appsignal.Transaction.RegistryTest do
     end
   end
 
-  describe "lookup/1, with an existing transaction without a monitor" do
-    setup :register_transaction_without_monitor
-
-    test "finds an existing transaction by pid", %{transaction: transaction} do
-      assert TransactionRegistry.lookup(self()) == transaction
-    end
-  end
-
   describe "ignore/1" do
     test "is not ignored by default" do
       refute TransactionRegistry.lookup(:c.pid(0, 990, 0)) == :ignored
@@ -118,15 +110,6 @@ defmodule Appsignal.Transaction.RegistryTest do
     end
   end
 
-  describe "remove_transaction/1, with an existing transaction without a monitor" do
-    setup :register_transaction_without_monitor
-
-    test "removes the transaction from the registry", %{transaction: transaction} do
-      assert TransactionRegistry.remove_transaction(transaction) == :ok
-      assert TransactionRegistry.lookup(self()) == nil
-    end
-  end
-
   describe "remove_transaction/1, when the registry is not running" do
     setup [:register_transaction, :terminate_registry]
 
@@ -138,13 +121,6 @@ defmodule Appsignal.Transaction.RegistryTest do
   defp register_transaction(_) do
     transaction = %Transaction{id: Transaction.generate_id()}
     TransactionRegistry.register(transaction)
-
-    [transaction: transaction]
-  end
-
-  def register_transaction_without_monitor(_) do
-    transaction = %Transaction{id: Transaction.generate_id()}
-    true = :ets.insert(:"$appsignal_transaction_registry", {self(), transaction})
 
     [transaction: transaction]
   end
