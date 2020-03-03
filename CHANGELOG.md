@@ -9,11 +9,12 @@
 
       config :appsignal_phoenix_example, AppsignalPhoenixExampleWeb.Endpoint,
         #...
-        instrumenters: [Appsignal.Phoenix.Instrumenter] From Phoenix 1.5 on, the old
+        instrumenters: [Appsignal.Phoenix.Instrumenter]
 
-  Phoenix instrumentation is deprecated and removed in favor of the new
-  Telemetry-based instrumentation. When upgrading to Phoenix 1.5, you’ll see a
-  warning during compilation when using the old instrumenters:
+  From Phoenix 1.5 on, the old Phoenix instrumentation is deprecated and
+  removed in favor of the new Telemetry-based instrumentation. When upgrading
+  to Phoenix 1.5, you’ll see a warning during compilation when using the old
+  instrumenters:
 
       [warn] :instrumenters configuration for
       AppsignalPhoenixExampleWeb.Endpoint is deprecated and has no effect
