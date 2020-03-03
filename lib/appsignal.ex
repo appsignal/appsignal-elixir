@@ -154,59 +154,6 @@ defmodule Appsignal do
     :ok = Appsignal.Nif.add_distribution_value(key, value, encoded_tags)
   end
 
-  @doc """
-  Send an error to AppSignal
-
-  When there is no current transaction, this call starts one.
-
-  ## Examples
-      Appsignal.send_error(%RuntimeError{})
-      Appsignal.send_error(%RuntimeError{}, "", System.stacktrace())
-      Appsignal.send_error(%RuntimeError{}, "", [], %{foo: "bar"})
-      Appsignal.send_error(%RuntimeError{}, "", [], %{}, %Plug.Conn{})
-      Appsignal.send_error(%RuntimeError{}, "", [], %{}, nil, fn(transaction) ->
-        Appsignal.Transaction.set_sample_data(transaction, "key", %{foo: "bar"})
-      end)
-  """
-  def send_error(
-        error,
-        prefix \\ "",
-        stack \\ nil,
-        metadata \\ %{},
-        conn \\ nil,
-        fun \\ fn t -> t end,
-        namespace \\ :http_request
-      ) do
-    stack =
-      case stack do
-        nil ->
-          IO.warn(
-            "Appsignal.send_error/1-7 without passing a stack trace is deprecated, and defaults to passing an empty stacktrace. Please explicitly pass a stack trace or an empty list."
-          )
-
-          []
-
-        _ ->
-          stack
-      end
-
-    transaction = @transaction.create("_" <> @transaction.generate_id(), namespace)
-
-    fun.(transaction)
-    {exception, stacktrace} = Error.normalize(error, stack)
-    {name, message} = Error.metadata(exception)
-    backtrace = Backtrace.from_stacktrace(stacktrace)
-
-    Appsignal.ErrorHandler.submit_transaction(
-      transaction,
-      name,
-      prefixed(prefix, message),
-      backtrace,
-      metadata,
-      conn
-    )
-  end
-
   defp prefixed("", message), do: message
   defp prefixed(prefix, message) when is_binary(prefix), do: prefix <> ": " <> message
   defp prefixed(_, message), do: message
