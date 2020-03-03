@@ -222,17 +222,6 @@ defmodule Appsignal.PlugTest do
       end
     end
 
-    test "sets the transaction error", %{fake_transaction: fake_transaction} do
-      assert [
-               {
-                 %Appsignal.Transaction{},
-                 "RuntimeError",
-                 "Exception!",
-                 _stack
-               }
-             ] = FakeTransaction.errors(fake_transaction)
-    end
-
     test "sets the transaction's action name", %{fake_transaction: fake_transaction} do
       assert "AppsignalPhoenixExample.PageController#exception" ==
                FakeTransaction.action(fake_transaction)
@@ -290,17 +279,6 @@ defmodule Appsignal.PlugTest do
         end
     end
 
-    test "sets the transaction error", %{fake_transaction: fake_transaction} do
-      assert [
-               {
-                 %Appsignal.Transaction{},
-                 "UndefinedFunctionError",
-                 "undefined function",
-                 _stack
-               }
-             ] = FakeTransaction.errors(fake_transaction)
-    end
-
     test "sets the transaction's request metadata", %{
       fake_transaction: fake_transaction
     } do
@@ -323,30 +301,6 @@ defmodule Appsignal.PlugTest do
 
     test "does not set a transaction error", %{fake_transaction: fake_transaction} do
       assert [] = FakeTransaction.errors(fake_transaction)
-    end
-  end
-
-  describe "for a transaction with an timeout" do
-    setup do
-      conn = conn(:get, "/timeout")
-
-      [conn: conn]
-    end
-
-    test "sets the transaction error", %{conn: conn, fake_transaction: fake_transaction} do
-      :ok =
-        try do
-          PlugWithAppSignal.call(conn, [])
-        catch
-          :exit, {:timeout, {Task, :await, _}} -> :ok
-          type, reason -> {type, reason}
-        end
-
-      [{%Appsignal.Transaction{}, name, message, _stack}] =
-        FakeTransaction.errors(fake_transaction)
-
-      assert name == ":timeout"
-      assert message =~ ~r({:timeout, {Task, :await, \[%Task{owner: ...)
     end
   end
 
@@ -516,17 +470,6 @@ defmodule Appsignal.PlugTest do
         end
 
       [conn: conn]
-    end
-
-    test "sets the transaction error", %{fake_transaction: fake_transaction} do
-      assert [
-               {
-                 %Appsignal.Transaction{},
-                 "UndefinedFunctionError",
-                 "undefined function",
-                 []
-               }
-             ] == FakeTransaction.errors(fake_transaction)
     end
 
     test "sets the transaction's request metdata", %{

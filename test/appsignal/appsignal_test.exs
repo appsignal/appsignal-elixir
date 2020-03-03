@@ -3,7 +3,7 @@ defmodule AppsignalTest do
   import AppsignalTest.Utils
   import ExUnit.CaptureIO
 
-  alias Appsignal.{FakeTransaction, Transaction}
+  alias Appsignal.FakeTransaction
 
   setup do
     {:ok, fake_transaction} = FakeTransaction.start_link()
@@ -61,111 +61,5 @@ defmodule AppsignalTest do
       config = Application.get_env(:appsignal, :config)
       assert :test = config[:env]
     end)
-  end
-
-  test "send_error", %{fake_transaction: fake_transaction} do
-    transaction = Appsignal.send_error(%RuntimeError{message: "Exception!"}, "Error occurred", [])
-
-    assert [{^transaction, "RuntimeError", "Error occurred: Exception!", []}] =
-             FakeTransaction.errors(fake_transaction)
-
-    assert [^transaction] = FakeTransaction.finished_transactions(fake_transaction)
-    assert [^transaction] = FakeTransaction.completed_transactions(fake_transaction)
-  end
-
-  test "send_error without a stack trace", %{fake_transaction: fake_transaction} do
-    output =
-      capture_io(:stderr, fn ->
-        transaction = Appsignal.send_error(%RuntimeError{message: "Exception!"})
-        send(self(), transaction)
-      end)
-
-    assert output =~
-             "Appsignal.send_error/1-7 without passing a stack trace is deprecated, and defaults to passing an empty stacktrace."
-
-    transaction =
-      receive do
-        transaction = %Transaction{} -> transaction
-      end
-
-    assert [{^transaction, "RuntimeError", "Exception!", []}] =
-             FakeTransaction.errors(fake_transaction)
-
-    assert [^transaction] = FakeTransaction.finished_transactions(fake_transaction)
-    assert [^transaction] = FakeTransaction.completed_transactions(fake_transaction)
-  end
-
-  test "send_error with metadata", %{fake_transaction: fake_transaction} do
-    transaction =
-      Appsignal.send_error(%RuntimeError{message: "Exception!"}, "Error occurred", [], %{
-        foo: "bar"
-      })
-
-    assert [{^transaction, "RuntimeError", "Error occurred: Exception!", _stack}] =
-             FakeTransaction.errors(fake_transaction)
-
-    assert %{foo: "bar"} = FakeTransaction.metadata(fake_transaction)
-    assert [^transaction] = FakeTransaction.finished_transactions(fake_transaction)
-    assert [^transaction] = FakeTransaction.completed_transactions(fake_transaction)
-  end
-
-  test "send_error with metadata and conn", %{fake_transaction: fake_transaction} do
-    conn = %Plug.Conn{req_headers: [{"accept", "text/plain"}]}
-
-    transaction =
-      Appsignal.send_error(
-        %RuntimeError{message: "Exception!"},
-        "Error occurred",
-        [],
-        %{foo: "bar"},
-        conn
-      )
-
-    assert [{^transaction, "RuntimeError", "Error occurred: Exception!", _stack}] =
-             FakeTransaction.errors(fake_transaction)
-
-    assert %{foo: "bar"} = FakeTransaction.metadata(fake_transaction)
-    assert ^conn = FakeTransaction.request_metadata(fake_transaction)
-    assert [^transaction] = FakeTransaction.finished_transactions(fake_transaction)
-    assert [^transaction] = FakeTransaction.completed_transactions(fake_transaction)
-  end
-
-  test "send_error with a passed function", %{fake_transaction: fake_transaction} do
-    transaction =
-      Appsignal.send_error(
-        %RuntimeError{message: "Exception!"},
-        "Error occurred",
-        [],
-        %{},
-        nil,
-        fn t -> FakeTransaction.set_sample_data(t, "key", %{foo: "bar"}) end
-      )
-
-    assert [{^transaction, "RuntimeError", "Error occurred: Exception!", _stack}] =
-             FakeTransaction.errors(fake_transaction)
-
-    assert %{"key" => %{foo: "bar"}} = FakeTransaction.sample_data(fake_transaction)
-    assert [^transaction] = FakeTransaction.finished_transactions(fake_transaction)
-    assert [^transaction] = FakeTransaction.completed_transactions(fake_transaction)
-  end
-
-  test "send_error with a custom namespace", %{fake_transaction: fake_transaction} do
-    transaction =
-      Appsignal.send_error(
-        %RuntimeError{message: "Exception!"},
-        "Error occurred",
-        [],
-        %{},
-        nil,
-        fn transaction -> transaction end,
-        :background_job
-      )
-
-    assert [{^transaction, "RuntimeError", "Error occurred: Exception!", _stack}] =
-             FakeTransaction.errors(fake_transaction)
-
-    assert [{"_123", :background_job}] = FakeTransaction.created_transactions(fake_transaction)
-    assert [^transaction] = FakeTransaction.finished_transactions(fake_transaction)
-    assert [^transaction] = FakeTransaction.completed_transactions(fake_transaction)
   end
 end
