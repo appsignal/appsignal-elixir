@@ -17,6 +17,7 @@ defmodule Appsignal.PlugTest do
 
   setup do
     Test.Tracer.start_link()
+    Test.Span.start_link()
     :ok
   end
 
@@ -30,6 +31,10 @@ defmodule Appsignal.PlugTest do
 
   test "creates a root span" do
     assert Test.Tracer.get(:create_span) == [{"unknown"}]
+  end
+
+  test "sets the span's name" do
+    assert [{%Span{}, "GET /"}] = Test.Span.get(:set_name)
   end
 
   test "closes the span" do

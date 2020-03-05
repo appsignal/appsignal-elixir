@@ -1,6 +1,7 @@
 defmodule Appsignal.Plug do
   import Plug.Conn, only: [register_before_send: 2]
   @tracer Application.get_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
+  @span Application.get_env(:appsignal, :appsignal_span, Appsignal.Span)
 
   defmacro __using__(_) do
     quote do
@@ -16,8 +17,15 @@ defmodule Appsignal.Plug do
     span = @tracer.create_span("unknown")
 
     register_before_send(conn, fn conn ->
-      @tracer.close_span(span)
+      span
+      |> set_name(conn)
+      |> @tracer.close_span()
+
       conn
     end)
+  end
+
+  defp set_name(span, %Plug.Conn{method: method, private: %{plug_route: {path, _fun}}} = conn) do
+    @span.set_name(span, "#{method} #{path}")
   end
 end
