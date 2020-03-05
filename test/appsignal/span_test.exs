@@ -152,13 +152,20 @@ defmodule AppsignalSpanTest do
   describe ".set_error/3" do
     setup :create_root_span
 
-    test "returns the span", %{span: span} do
-      try do
-        raise "Exception!"
-      catch
-        :error, error ->
-          assert Span.add_error(span, error, System.stacktrace()) == span
-      end
+    setup %{span: span} do
+      return =
+        try do
+          raise "Exception!"
+        catch
+          :error, error ->
+            Span.add_error(span, error, System.stacktrace())
+        end
+
+      [return: return]
+    end
+
+    test "returns the span", %{span: span, return: return} do
+      assert return == span
     end
   end
 
