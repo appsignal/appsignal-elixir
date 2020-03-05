@@ -150,4 +150,50 @@ defmodule Appsignal.Error.BackendTest do
       end)
     end
   end
+
+  describe "handle_event/3, with a crashing GenServer" do
+    setup do
+      defmodule CrashingGenServer do
+        use GenServer
+
+        def start_link(_opts) do
+          GenServer.start(__MODULE__, [meta: :data], name: Elixir.MyGenServer)
+        end
+
+        def init(opts), do: {:ok, opts}
+
+        def handle_cast(:raise_error, state) do
+          Map.fetch!(%{}, :bad_key)
+
+          {:noreply, state}
+        end
+      end
+
+      {:ok, pid} = start_supervised(CrashingGenServer)
+
+      GenServer.cast(pid, :raise_error)
+
+      [pid: pid]
+    end
+
+    test "creates a span", %{pid: pid} do
+      until(fn ->
+        assert {:ok, [{"", nil, ^pid}]} = Test.Tracer.get(:create_span)
+      end)
+    end
+
+    test "adds an error to the created span", %{pid: pid} do
+      until(fn ->
+        assert {:ok, [{%Span{}, %KeyError{}, stack}]} = Test.Span.get(:add_error)
+
+        assert is_list(stack)
+      end)
+    end
+
+    test "closes the created span", %{pid: pid} do
+      until(fn ->
+        assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+      end)
+    end
+  end
 end
