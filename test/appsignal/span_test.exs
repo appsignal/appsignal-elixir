@@ -167,6 +167,10 @@ defmodule AppsignalSpanTest do
     test "returns the span", %{span: span, return: return} do
       assert return == span
     end
+
+    test "sets the error through the Nif", %{span: %Span{reference: reference}} do
+      assert [{^reference, "RuntimeError", "Exception!", _}] = WrappedNif.get(:add_span_error)
+    end
   end
 
   describe ".set_sample_data/3" do
