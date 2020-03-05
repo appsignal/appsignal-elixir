@@ -75,12 +75,12 @@ defmodule Appsignal.Span do
   def add_error(%Span{reference: reference} = span, error, stacktrace) do
     {name, message} = Appsignal.Error.metadata(error)
 
-    backtrace =
+    encoded_stacktrace =
       stacktrace
       |> Appsignal.Backtrace.from_stacktrace()
       |> Appsignal.Utils.DataEncoder.encode()
 
-    :ok = Nif.add_span_error(reference, name, message, backtrace)
+    :ok = @nif.add_span_error(reference, name, message, encoded_stacktrace)
     span
   end
 
