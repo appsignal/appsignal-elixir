@@ -23,6 +23,11 @@ defmodule Appsignal.WrappedNif do
     Nif.create_child_span(trace_id, span_id, name)
   end
 
+  def add_span_error(reference, name, message, stacktrace) do
+    add(:add_span_error, {reference, name, message, stacktrace})
+    Nif.add_span_error(reference, name, message, stacktrace)
+  end
+
   def close_span(reference) do
     add(:close_span, {reference})
     Nif.close_span(reference)
