@@ -13,10 +13,10 @@ end
 defmodule Appsignal.PlugTest do
   use ExUnit.Case
   use Plug.Test
-  alias Appsignal.{Span, Test.Tracer}
+  alias Appsignal.{Span, Test}
 
   setup do
-    Tracer.start_link()
+    Test.Tracer.start_link()
     :ok
   end
 
@@ -29,10 +29,10 @@ defmodule Appsignal.PlugTest do
   end
 
   test "creates a root span" do
-    assert Tracer.get(:create_span) == [{"unknown"}]
+    assert Test.Tracer.get(:create_span) == [{"unknown"}]
   end
 
   test "closes the span" do
-    assert [{%Span{}}] = Tracer.get(:close_span)
+    assert [{%Span{}}] = Test.Tracer.get(:close_span)
   end
 end
