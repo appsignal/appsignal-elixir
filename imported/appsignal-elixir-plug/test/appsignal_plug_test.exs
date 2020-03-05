@@ -29,7 +29,7 @@ defmodule Appsignal.PlugTest do
   end
 
   test "creates a root span" do
-    assert Tracer.get(:create_span) == [{""}]
+    assert Tracer.get(:create_span) == [{"unknown"}]
   end
 
   test "closes the span" do

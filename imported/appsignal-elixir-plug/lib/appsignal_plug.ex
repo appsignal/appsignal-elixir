@@ -13,7 +13,7 @@ defmodule Appsignal.Plug do
   end
 
   def call(conn, _opts) do
-    span = @tracer.create_span("")
+    span = @tracer.create_span("unknown")
 
     register_before_send(conn, fn conn ->
       @tracer.close_span(span)
