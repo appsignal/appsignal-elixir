@@ -1,4 +1,5 @@
 defmodule Appsignal.Plug do
+  import Plug.Conn, only: [register_before_send: 2]
   @tracer Application.get_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
 
   defmacro __using__(_) do
@@ -12,7 +13,11 @@ defmodule Appsignal.Plug do
   end
 
   def call(conn, _opts) do
-    @tracer.create_span("")
-    conn
+    span = @tracer.create_span("")
+
+    register_before_send(conn, fn conn ->
+      @tracer.close_span(span)
+      conn
+    end)
   end
 end
