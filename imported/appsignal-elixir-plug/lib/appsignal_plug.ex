@@ -6,6 +6,12 @@ defmodule Appsignal.Plug do
   defmacro __using__(_) do
     quote do
       plug(Appsignal.Plug)
+      use Plug.ErrorHandler
+
+      def handle_errors(conn, _error) do
+        Appsignal.Tracer.current_span()
+        |> Appsignal.Plug.set_name(conn)
+      end
     end
   end
 
@@ -25,7 +31,7 @@ defmodule Appsignal.Plug do
     end)
   end
 
-  defp set_name(span, %Plug.Conn{method: method, private: %{plug_route: {path, _fun}}} = conn) do
+  def set_name(span, %Plug.Conn{method: method, private: %{plug_route: {path, _fun}}} = conn) do
     @span.set_name(span, "#{method} #{path}")
   end
 end

@@ -8,6 +8,12 @@ defmodule PlugWithAppsignal do
   get "/" do
     send_resp(conn, 200, "Welcome")
   end
+
+  get "/exception" do
+    raise "Exception!"
+
+    send_resp(conn, 200, "Exception!")
+  end
 end
 
 defmodule Appsignal.PlugTest do
@@ -38,6 +44,24 @@ defmodule Appsignal.PlugTest do
 
     test "closes the span" do
       assert [{%Span{}}] = Test.Tracer.get(:close_span)
+    end
+  end
+
+  describe "GET /exception" do
+    setup do
+      try do
+        PlugWithAppsignal.call(conn(:get, "/exception"), [])
+      rescue
+        exception -> [exception: exception]
+      end
+    end
+
+    test "creates a root span" do
+      assert Test.Tracer.get(:create_span) == [{"unknown"}]
+    end
+
+    test "sets the span's name" do
+      assert [{%Span{}, "GET /exception"}] = Test.Span.get(:set_name)
     end
   end
 end
