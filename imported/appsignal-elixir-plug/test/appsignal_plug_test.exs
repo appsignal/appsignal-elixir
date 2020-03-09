@@ -63,5 +63,9 @@ defmodule Appsignal.PlugTest do
     test "sets the span's name" do
       assert [{%Span{}, "GET /exception"}] = Test.Span.get(:set_name)
     end
+
+    test "closes the span" do
+      assert [{%Span{}}] = Test.Tracer.get(:close_span)
+    end
   end
 end
