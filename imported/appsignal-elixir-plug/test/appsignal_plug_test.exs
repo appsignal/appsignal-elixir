@@ -21,23 +21,23 @@ defmodule Appsignal.PlugTest do
     :ok
   end
 
-  setup do
-    :get
-    |> conn("/")
-    |> PlugWithAppsignal.call([])
+  describe "GET /" do
+    setup do
+      PlugWithAppsignal.call(conn(:get, "/"), [])
 
-    :ok
-  end
+      :ok
+    end
 
-  test "creates a root span" do
-    assert Test.Tracer.get(:create_span) == [{"unknown"}]
-  end
+    test "creates a root span" do
+      assert Test.Tracer.get(:create_span) == [{"unknown"}]
+    end
 
-  test "sets the span's name" do
-    assert [{%Span{}, "GET /"}] = Test.Span.get(:set_name)
-  end
+    test "sets the span's name" do
+      assert [{%Span{}, "GET /"}] = Test.Span.get(:set_name)
+    end
 
-  test "closes the span" do
-    assert [{%Span{}}] = Test.Tracer.get(:close_span)
+    test "closes the span" do
+      assert [{%Span{}}] = Test.Tracer.get(:close_span)
+    end
   end
 end
