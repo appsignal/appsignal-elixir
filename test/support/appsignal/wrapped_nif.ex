@@ -1,5 +1,5 @@
 defmodule Appsignal.WrappedNif do
-  use Wrapper
+  use Appsignal.Test.Wrapper
   alias Appsignal.Nif
 
   def create_root_span(name) do

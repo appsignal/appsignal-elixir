@@ -1,7 +1,7 @@
-defmodule Wrapper do
+defmodule Appsignal.Test.Wrapper do
   defmacro __using__(_) do
     quote do
-      import Wrapper
+      import Appsignal.Test.Wrapper
       import ExUnit.Assertions
 
       def start_link do
