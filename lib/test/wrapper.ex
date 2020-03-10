@@ -15,7 +15,7 @@ defmodule Appsignal.Test.Wrapper do
         {:ok, pid}
       end
 
-      def get(key) do
+      def get!(key) do
         Agent.get(__MODULE__, &Map.fetch!(&1, key))
       end
 
