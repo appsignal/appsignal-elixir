@@ -95,7 +95,7 @@ defmodule Appsignal.TracerTest do
 
     test "closes the span through the Nif", %{span: %Span{reference: reference} = span} do
       Tracer.close_span(span)
-      assert [{^reference}] = WrappedNif.get(:close_span)
+      assert [{^reference}] = WrappedNif.get!(:close_span)
     end
   end
 
