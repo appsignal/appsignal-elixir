@@ -19,6 +19,10 @@ defmodule Appsignal.Test.Wrapper do
         Agent.get(__MODULE__, &Map.fetch!(&1, key))
       end
 
+      def get(key) do
+        Agent.get(__MODULE__, &Map.fetch(&1, key))
+      end
+
       defp add(key, value) do
         Agent.get_and_update(__MODULE__, fn state ->
           Map.get_and_update(state, key, fn current ->
