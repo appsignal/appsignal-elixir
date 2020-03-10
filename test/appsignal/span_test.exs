@@ -15,7 +15,7 @@ defmodule AppsignalSpanTest do
     end
 
     test "creates a root span through the Nif" do
-      assert [{"root"}] = WrappedNif.get(:create_root_span)
+      assert [{"root"}] = WrappedNif.get!(:create_root_span)
     end
 
     test "sets the span's reference", %{span: span} do
@@ -35,7 +35,7 @@ defmodule AppsignalSpanTest do
     end
 
     test "creates a root span through the Nif" do
-      assert [{"root"}] = WrappedNif.get(:create_root_span)
+      assert [{"root"}] = WrappedNif.get!(:create_root_span)
     end
 
     test "sets the span's reference", %{span: span} do
@@ -55,7 +55,7 @@ defmodule AppsignalSpanTest do
     end
 
     test "creates a child span through the Nif", %{parent: parent} do
-      assert [{"child", parent_trace_id, parent_span_id}] = WrappedNif.get(:create_child_span)
+      assert [{"child", parent_trace_id, parent_span_id}] = WrappedNif.get!(:create_child_span)
 
       assert {:ok, ^parent_trace_id} = Span.trace_id(parent)
       assert {:ok, ^parent_span_id} = Span.span_id(parent)
@@ -80,7 +80,7 @@ defmodule AppsignalSpanTest do
     end
 
     test "creates a root span through the Nif" do
-      assert [{"orphan"}] = WrappedNif.get(:create_root_span)
+      assert [{"orphan"}] = WrappedNif.get!(:create_root_span)
     end
 
     test "sets the span's reference", %{span: span} do
@@ -100,7 +100,7 @@ defmodule AppsignalSpanTest do
     end
 
     test "creates a child span through the Nif", %{parent: parent} do
-      assert [{"child", parent_trace_id, parent_span_id}] = WrappedNif.get(:create_child_span)
+      assert [{"child", parent_trace_id, parent_span_id}] = WrappedNif.get!(:create_child_span)
 
       assert {:ok, ^parent_trace_id} = Span.trace_id(parent)
       assert {:ok, ^parent_span_id} = Span.span_id(parent)
@@ -169,7 +169,7 @@ defmodule AppsignalSpanTest do
     end
 
     test "sets the error through the Nif", %{span: %Span{reference: reference}} do
-      assert [{^reference, "RuntimeError", "Exception!", _}] = WrappedNif.get(:add_span_error)
+      assert [{^reference, "RuntimeError", "Exception!", _}] = WrappedNif.get!(:add_span_error)
     end
   end
 
@@ -196,7 +196,7 @@ defmodule AppsignalSpanTest do
 
     test ".closes the span through the Nif", %{span: %Span{reference: reference} = span} do
       Span.close(span)
-      assert [{^reference}] = WrappedNif.get(:close_span)
+      assert [{^reference}] = WrappedNif.get!(:close_span)
     end
   end
 
