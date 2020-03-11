@@ -108,6 +108,7 @@ defmodule Appsignal.Mixfile do
       {:poison, poison_version, optional: true},
       {:decorator, decorator_version},
       {:phoenix, phoenix_version, optional: true, only: [:prod, :test_phoenix, :dev]},
+      {:phoenix_live_view, "~> 0.9.0", optional: true, only: [:prod, :test_phoenix, :dev]},
       {:bypass, "~> 0.6.0", only: [:test, :test_phoenix, :test_no_nif]},
       {:plug_cowboy, "~> 1.0", only: [:test, :test_phoenix, :test_no_nif]},
       {:ex_doc, "~> 0.12", only: :dev, runtime: false},
