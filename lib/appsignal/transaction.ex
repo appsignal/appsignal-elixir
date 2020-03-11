@@ -14,11 +14,6 @@ defmodule Appsignal.TransactionBehaviour do
               Appsignal.Transaction.t() | nil
   @callback set_sample_data(Appsignal.Transaction.t() | any(), String.t(), any) ::
               Appsignal.Transaction.t() | nil
-
-  if Appsignal.plug?() do
-    @callback set_request_metadata(Appsignal.Transaction.t() | any(), Plug.Conn.t()) ::
-                Appsignal.Transaction.t() | nil
-  end
 end
 
 defmodule Appsignal.Transaction do
@@ -478,35 +473,6 @@ defmodule Appsignal.Transaction do
   defimpl Inspect do
     def inspect(transaction, _opts) do
       "AppSignal.Transaction{#{transaction.id}}"
-    end
-  end
-
-  if Appsignal.plug?() do
-    @doc """
-    Set the request metadata, given a Plug.Conn.t.
-    """
-    @spec set_request_metadata(Transaction.t() | any(), Plug.Conn.t()) :: Transaction.t() | nil
-    def set_request_metadata(%Transaction{} = transaction, %Plug.Conn{} = conn) do
-      # preprocess conn
-      conn =
-        conn
-        |> Plug.Conn.fetch_query_params()
-
-      # collect sample data
-      transaction
-      |> Transaction.set_sample_data(Appsignal.Plug.extract_sample_data(conn))
-      |> Transaction.set_meta_data(Appsignal.Plug.extract_meta_data(conn))
-
-      # Add session data
-      if !config()[:skip_session_data] and conn.private[:plug_session_fetch] == :done do
-        Transaction.set_sample_data(
-          transaction,
-          "session_data",
-          Appsignal.Utils.MapFilter.filter_session_data(conn.private[:plug_session])
-        )
-      else
-        transaction
-      end
     end
   end
 
