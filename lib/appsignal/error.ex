@@ -10,12 +10,6 @@ defmodule Appsignal.Error do
   end
 
   @spec normalize(any, Exception.stacktrace()) :: {Exception.t(), list(String.t())}
-  if Appsignal.plug?() do
-    def normalize(%Plug.Conn.WrapperError{reason: error, stack: _stacktrace}, stacktrace) do
-      normalize(error, stacktrace)
-    end
-  end
-
   def normalize({%_{__exception__: true} = exception, stacktrace}, _) do
     normalize(exception, stacktrace)
   end
