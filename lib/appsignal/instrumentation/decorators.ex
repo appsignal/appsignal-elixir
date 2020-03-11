@@ -36,7 +36,8 @@ defmodule Appsignal.Instrumentation.Decorators do
     transaction_event: 1,
     channel_action: 0,
     live_view_mount: 0,
-    live_view_event: 0
+    live_view_event: 0,
+    live_view_handle_params: 0
 
   import Appsignal.Utils
 
@@ -92,7 +93,7 @@ defmodule Appsignal.Instrumentation.Decorators do
   end
 
   @doc false
-  def live_view_mount(body, %{args: [_session, payload, socket]} = context) do
+  def live_view_mount(body, %{args: [_params, payload, socket]} = context) do
     quote do
       Appsignal.Phoenix.LiveView.live_view_action(
         unquote(module_name(context.module)),
@@ -110,6 +111,19 @@ defmodule Appsignal.Instrumentation.Decorators do
       Appsignal.Phoenix.LiveView.live_view_action(
         unquote(module_name(context.module)),
         unquote("#{context.name}(\"#{event}\")"),
+        unquote(socket),
+        unquote(payload),
+        fn -> unquote(body) end
+      )
+    end
+  end
+
+  @doc false
+  def live_view_handle_params(body, %{args: [payload, _uri, socket]} = context) do
+    quote do
+      Appsignal.Phoenix.LiveView.live_view_action(
+        unquote(module_name(context.module)),
+        unquote("#{context.name}"),
         unquote(socket),
         unquote(payload),
         fn -> unquote(body) end
