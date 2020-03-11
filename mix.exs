@@ -108,29 +108,13 @@ defmodule Appsignal.Mixfile do
       {:poison, poison_version, optional: true},
       {:decorator, decorator_version},
       {:phoenix, phoenix_version, optional: true, only: [:prod, :test_phoenix, :dev]},
-      {:bypass, "~> 0.6.0", only: [:test, :test_phoenix, :test_no_nif]},
       {:plug_cowboy, "~> 1.0", only: [:test, :test_phoenix, :test_no_nif]},
+      {:bypass, "~> 0.6.0", only: [:test, :test_phoenix, :test_no_nif]},
       {:ex_doc, "~> 0.12", only: :dev, runtime: false},
       {:credo, "~> 1.0.0", only: [:test, :dev], runtime: false},
       {:dialyxir, "~> 1.0.0-rc4", only: [:dev], runtime: false},
       {:telemetry, "~> 0.4"}
-    ] ++ plug_dep() ++ live_view_dep()
-  end
-
-  defp plug_dep do
-    case Version.compare(System.version(), "1.5.0") do
-      :lt ->
-        [
-          {:plug, ">= 1.1.0 and < 1.9.0", optional: true},
-          {:plug_crypto, "~> 1.0.0", optional: true}
-        ]
-
-      _ ->
-        case Version.compare(System.version(), "1.7.0") do
-          :lt -> [{:plug, ">= 1.1.0 and < 1.10.0", optional: true}]
-          _ -> [{:plug, ">= 1.1.0", optional: true}]
-        end
-    end
+    ] ++ live_view_dep()
   end
 
   defp live_view_dep do
