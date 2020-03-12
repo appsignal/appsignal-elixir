@@ -25,8 +25,13 @@ defmodule Appsignal.Phoenix.EventHandler do
         _measurements,
         %{plug: controller, plug_opts: action},
         _config
-      ) do
+      )
+      when is_atom(controller) and is_atom(action) do
     @transaction.set_action("#{module_name(controller)}##{action}")
+  end
+
+  def handle_event([:phoenix, :router_dispatch, :start], _measurements, _metadata, _config) do
+    :ok
   end
 
   def handle_event(

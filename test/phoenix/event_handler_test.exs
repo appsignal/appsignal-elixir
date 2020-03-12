@@ -11,14 +11,36 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
   describe "after receiving a router_dispatch-start event" do
     setup [:start_transaction, :router_dispatch_start_event]
 
+    test "keeps the handler attached" do
+      assert router_dispatch_event_handler_attached?()
+    end
+
     test "sets the transaction's action name", %{fake_transaction: fake_transaction} do
       assert "AppsignalPhoenixExampleWeb.PageController#index" ==
                FakeTransaction.action(fake_transaction)
     end
   end
 
+  describe "after receiving a router_dispatch-start event with non-atom opts" do
+    setup [:start_transaction]
+
+    setup do: do_router_dispatch_start_event(%Plug.Conn{}, atom?: false)
+
+    test "keeps the handler attached" do
+      assert router_dispatch_event_handler_attached?()
+    end
+
+    test "does not set the transaction's action name", %{fake_transaction: fake_transaction} do
+      assert nil == FakeTransaction.action(fake_transaction)
+    end
+  end
+
   describe "after receiving a router_dispatch-start event with a transaction in the conn" do
     setup [:start_transaction, :router_dispatch_start_event_with_transaction_in_conn]
+
+    test "keeps the handler attached" do
+      assert router_dispatch_event_handler_attached?()
+    end
 
     test "sets the transaction's action name", %{fake_transaction: fake_transaction} do
       assert "AppsignalPhoenixExampleWeb.PageController#index" ==
@@ -90,7 +112,7 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
     [transaction: transaction]
   end
 
-  defp do_router_dispatch_start_event(conn \\ %Plug.Conn{}) do
+  defp do_router_dispatch_start_event(conn \\ %Plug.Conn{}, plug_opts \\ :index) do
     :telemetry.execute(
       [:phoenix, :router_dispatch, :start],
       %{time: -576_460_736_044_040_000},
@@ -100,7 +122,7 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
         path_params: %{},
         pipe_through: [:browser],
         plug: AppsignalPhoenixExampleWeb.PageController,
-        plug_opts: :index,
+        plug_opts: plug_opts,
         route: "/"
       }
     )
@@ -150,5 +172,13 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
         options: []
       }
     )
+  end
+
+  defp router_dispatch_event_handler_attached? do
+    [:phoenix, :router_dispatch, :start]
+    |> :telemetry.list_handlers()
+    |> Enum.any?(fn %{id: id} ->
+      id == "appsignal_phoenix_event_handler"
+    end)
   end
 end
