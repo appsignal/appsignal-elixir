@@ -1,3 +1,6 @@
+# 1.12.1
+- EventHandler handles router_dispatch events with plug_opts #547
+
 # 1.12.0
 - Add explicit error handling for Phoenix channels. PR #527
 - Add Phoenix Telemetry event handler to add Phoenix 1.5 instrumentation. PR #528 & #538
