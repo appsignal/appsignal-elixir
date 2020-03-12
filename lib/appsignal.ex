@@ -64,6 +64,10 @@ defmodule Appsignal do
     Code.ensure_loaded?(Phoenix)
   end
 
+  def live_view? do
+    phoenix?() && Code.ensure_loaded?(Phoenix.LiveView)
+  end
+
   @doc """
   Application callback function
   """

@@ -1,4 +1,4 @@
-if Appsignal.phoenix?() do
+if Appsignal.live_view?() do
   defmodule Appsignal.Phoenix.LiveView do
     alias Appsignal.{ErrorHandler, Transaction, TransactionRegistry, Utils.MapFilter}
     import Appsignal.Utils
