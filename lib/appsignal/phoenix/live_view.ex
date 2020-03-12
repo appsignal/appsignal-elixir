@@ -35,7 +35,8 @@ if Appsignal.phoenix?() do
       end
     end
 
-    @spec finish_with_socket(Transaction.t() | nil, Phoenix.LiveView.Socket.t(), map()) :: :ok | nil
+    @spec finish_with_socket(Transaction.t() | nil, Phoenix.LiveView.Socket.t(), map()) ::
+            :ok | nil
     defp finish_with_socket(transaction, socket, params) do
       if @transaction.finish(transaction) == :sample do
         transaction
