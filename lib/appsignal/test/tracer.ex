@@ -2,6 +2,7 @@ defmodule Appsignal.Test.Tracer do
   use Appsignal.Test.Wrapper
   alias Appsignal.Tracer
 
+  defdelegate current_span(), to: Tracer
   defdelegate current_span(pid), to: Tracer
 
   def create_span(name) do
