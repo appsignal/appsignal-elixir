@@ -35,15 +35,15 @@ defmodule Appsignal.PlugTest do
     end
 
     test "creates a root span" do
-      assert Test.Tracer.get(:create_span) == [{"unknown"}]
+      assert Test.Tracer.get!(:create_span) == [{"unknown"}]
     end
 
     test "sets the span's name" do
-      assert [{%Span{}, "GET /"}] = Test.Span.get(:set_name)
+      assert [{%Span{}, "GET /"}] = Test.Span.get!(:set_name)
     end
 
     test "closes the span" do
-      assert [{%Span{}}] = Test.Tracer.get(:close_span)
+      assert [{%Span{}}] = Test.Tracer.get!(:close_span)
     end
   end
 
@@ -57,15 +57,15 @@ defmodule Appsignal.PlugTest do
     end
 
     test "creates a root span" do
-      assert Test.Tracer.get(:create_span) == [{"unknown"}]
+      assert Test.Tracer.get!(:create_span) == [{"unknown"}]
     end
 
     test "sets the span's name" do
-      assert [{%Span{}, "GET /exception"}] = Test.Span.get(:set_name)
+      assert [{%Span{}, "GET /exception"}] = Test.Span.get!(:set_name)
     end
 
     test "closes the span" do
-      assert [{%Span{}}] = Test.Tracer.get(:close_span)
+      assert [{%Span{}}] = Test.Tracer.get!(:close_span)
     end
   end
 end
