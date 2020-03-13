@@ -14,24 +14,28 @@ if Appsignal.live_view?() do
 
     @spec live_view_action(atom, String.t(), Phoenix.LiveView.Socket.t(), map, fun) :: any
     def live_view_action(module, name, %Phoenix.LiveView.Socket{} = socket, params, function) do
-      transaction =
-        @transaction.generate_id()
-        |> @transaction.start(:live_view)
-        |> @transaction.set_action("#{module_name(module)}##{name}")
+      if Appsignal.Config.active?() do
+        transaction =
+          @transaction.generate_id()
+          |> @transaction.start(:live_view)
+          |> @transaction.set_action("#{module_name(module)}##{name}")
 
-      try do
-        function.()
-      catch
-        kind, reason ->
-          stacktrace = System.stacktrace()
-          ErrorHandler.set_error(transaction, reason, stacktrace)
-          finish_with_socket(transaction, socket, params)
-          TransactionRegistry.ignore(self())
-          :erlang.raise(kind, reason, stacktrace)
+        try do
+          function.()
+        catch
+          kind, reason ->
+            stacktrace = System.stacktrace()
+            ErrorHandler.set_error(transaction, reason, stacktrace)
+            finish_with_socket(transaction, socket, params)
+            TransactionRegistry.ignore(self())
+            :erlang.raise(kind, reason, stacktrace)
+        else
+          result ->
+            finish_with_socket(transaction, socket, params)
+            result
+        end
       else
-        result ->
-          finish_with_socket(transaction, socket, params)
-          result
+        function.()
       end
     end
 

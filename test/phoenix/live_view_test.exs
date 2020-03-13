@@ -162,5 +162,28 @@ if Appsignal.live_view?() do
         end)
       end
     end
+
+    describe "when AppSignal is disabled" do
+      setup %{socket: socket} do
+        new_socket =
+          AppsignalTest.Utils.with_config(%{active: false}, fn ->
+            InstrumentedPhoenixLiveView.action(:tick, socket)
+          end)
+
+        [socket: new_socket]
+      end
+
+      test "does not start a transaction", %{fake_transaction: fake_transaction} do
+        refute FakeTransaction.started_transaction?(fake_transaction)
+      end
+
+      test "returns the updated socket", %{socket: socket} do
+        assert socket.assigns == %{called?: true}
+      end
+
+      test "does not finish the transaction", %{fake_transaction: fake_transaction} do
+        assert [] = FakeTransaction.finished_transactions(fake_transaction)
+      end
+    end
   end
 end
