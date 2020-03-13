@@ -5,7 +5,7 @@ if Appsignal.live_view?() do
     @transaction Application.get_env(:appsignal, :appsignal_transaction, Transaction)
 
     @doc """
-    Record a live_view action. Meant to be called from the 'live_view_action' instrumentation decorator.
+    Record a live_view action.
     """
     @spec live_view_action(atom, String.t(), Phoenix.LiveView.Socket.t(), fun) :: any
     def live_view_action(module, name, %Phoenix.LiveView.Socket{} = socket, function) do
