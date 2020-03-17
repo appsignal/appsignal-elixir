@@ -14,11 +14,13 @@ defmodule Appsignal.Span do
   def create_child(name, nil, pid), do: create_root(name, pid)
 
   def create_child(name, parent, pid) do
-    {:ok, trace_id} = Span.trace_id(parent)
-    {:ok, span_id} = Span.span_id(parent)
-    {:ok, reference} = @nif.create_child_span(name, trace_id, span_id)
+    if Config.active?() do
+      {:ok, trace_id} = Span.trace_id(parent)
+      {:ok, span_id} = Span.span_id(parent)
+      {:ok, reference} = @nif.create_child_span(name, trace_id, span_id)
 
-    %Span{reference: reference, pid: pid}
+      %Span{reference: reference, pid: pid}
+    end
   end
 
   def trace_id(%Span{reference: reference}) do
