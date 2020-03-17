@@ -181,6 +181,22 @@ defmodule AppsignalSpanTest do
     end
   end
 
+  describe ".set_name/2, when disabled" do
+    setup [:create_root_span, :disable_appsignal]
+
+    setup %{span: span} do
+      [return: Span.set_name(span, "test")]
+    end
+
+    test "returns nil", %{return: return} do
+      assert return == nil
+    end
+
+    test "does not set the name through the Nif" do
+      assert WrappedNif.get(:set_span_name) == :error
+    end
+  end
+
   describe ".set_namespace/2" do
     setup :create_root_span
 

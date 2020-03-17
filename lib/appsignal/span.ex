@@ -36,8 +36,10 @@ defmodule Appsignal.Span do
   def span_id(nil), do: {:ok, nil}
 
   def set_name(%Span{reference: reference} = span, name) when is_binary(name) do
-    :ok = @nif.set_span_name(reference, name)
-    span
+    if Config.active?() do
+      :ok = @nif.set_span_name(reference, name)
+      span
+    end
   end
 
   def set_namespace(%Span{reference: reference} = span, namespace) when is_binary(namespace) do
