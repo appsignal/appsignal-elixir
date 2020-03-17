@@ -75,6 +75,8 @@ defmodule Appsignal.Tracer do
     span
   end
 
+  defp register(nil), do: nil
+
   defp deregister(%Span{pid: pid} = span) do
     :ets.delete_object(@table, {pid, span})
   end
