@@ -27,9 +27,13 @@ defmodule Appsignal.Span do
     Nif.trace_id(reference)
   end
 
+  def trace_id(nil), do: {:ok, nil}
+
   def span_id(%Span{reference: reference}) do
     Nif.span_id(reference)
   end
+
+  def span_id(nil), do: {:ok, nil}
 
   def set_name(%Span{reference: reference} = span, name) when is_binary(name) do
     :ok = Nif.set_span_name(reference, name)
