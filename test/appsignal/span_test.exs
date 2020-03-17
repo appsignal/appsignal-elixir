@@ -179,6 +179,10 @@ defmodule AppsignalSpanTest do
     test "sets the name through the Nif", %{span: %Span{reference: reference}} do
       assert [{^reference, "test"}] = WrappedNif.get!(:set_span_name)
     end
+
+    test "returns nil when passing a nil-span" do
+      assert Span.set_name(nil, "test") == nil
+    end
   end
 
   describe ".set_name/2, when disabled" do
