@@ -168,8 +168,16 @@ defmodule AppsignalSpanTest do
   describe ".set_name/2" do
     setup :create_root_span
 
-    test "returns the span", %{span: span} do
-      assert Span.set_name(span, "test") == span
+    setup %{span: span} do
+      [return: Span.set_name(span, "test")]
+    end
+
+    test "returns a span", %{span: span, return: return} do
+      assert return == span
+    end
+
+    test "sets the name through the Nif", %{span: %Span{reference: reference}} do
+      assert [{^reference, "test"}] = WrappedNif.get!(:set_span_name)
     end
   end
 
