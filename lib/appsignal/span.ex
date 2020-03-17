@@ -1,12 +1,14 @@
 defmodule Appsignal.Span do
-  alias Appsignal.{Nif, Span}
+  alias Appsignal.{Config, Nif, Span}
   defstruct [:reference, :pid]
   @nif Application.get_env(:appsignal, :appsignal_tracer_nif, Appsignal.Nif)
 
   def create_root(name, pid) do
-    {:ok, reference} = @nif.create_root_span(name)
+    if Config.active?() do
+      {:ok, reference} = @nif.create_root_span(name)
 
-    %Span{reference: reference, pid: pid}
+      %Span{reference: reference, pid: pid}
+    end
   end
 
   def create_child(name, nil, pid), do: create_root(name, pid)
