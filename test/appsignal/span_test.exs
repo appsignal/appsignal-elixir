@@ -127,6 +127,18 @@ defmodule AppsignalSpanTest do
     end
   end
 
+  describe ".create_child/3 when disabled" do
+    setup [:create_root_span, :disable_appsignal, :create_child_span]
+
+    test "returns nil", %{span: span} do
+      assert span == nil
+    end
+
+    test "does not create a root span through the Nif" do
+      assert :error = WrappedNif.get(:create_child_span)
+    end
+  end
+
   describe ".trace_id/1" do
     setup :create_root_span
 
