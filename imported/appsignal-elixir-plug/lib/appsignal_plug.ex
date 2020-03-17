@@ -6,13 +6,15 @@ defmodule Appsignal.Plug do
   defmacro __using__(_) do
     quote do
       @tracer Application.get_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
+      @span Application.get_env(:appsignal, :appsignal_span, Appsignal.Span)
 
       plug(Appsignal.Plug)
       use Plug.ErrorHandler
 
-      def handle_errors(conn, _error) do
+      def handle_errors(conn, %{kind: _kind, reason: reason, stack: stack}) do
         @tracer.current_span()
         |> Appsignal.Plug.set_name(conn)
+        |> @span.add_error(reason, stack)
         |> @tracer.close_span()
       end
     end
