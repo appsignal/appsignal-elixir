@@ -24,13 +24,13 @@ defmodule Appsignal.Span do
   end
 
   def trace_id(%Span{reference: reference}) do
-    Nif.trace_id(reference)
+    @nif.trace_id(reference)
   end
 
   def trace_id(nil), do: {:ok, nil}
 
   def span_id(%Span{reference: reference}) do
-    Nif.span_id(reference)
+    @nif.span_id(reference)
   end
 
   def span_id(nil), do: {:ok, nil}
