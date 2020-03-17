@@ -47,6 +47,18 @@ defmodule AppsignalSpanTest do
     end
   end
 
+  describe ".create_root/2 when disabled" do
+    setup [:disable_appsignal, :create_root_span]
+
+    test "returns nil", %{span: span} do
+      assert span == nil
+    end
+
+    test "does not create a root span through the Nif" do
+      assert :error = WrappedNif.get(:create_root_span)
+    end
+  end
+
   describe ".create_child/3" do
     setup [:create_root_span, :create_child_span]
 
@@ -216,5 +228,14 @@ defmodule AppsignalSpanTest do
   defp create_child_span_in_other_process(%{span: span}) do
     pid = Process.whereis(WrappedNif)
     [span: Span.create_child("child", span, pid), pid: pid, parent: span]
+  end
+
+  defp disable_appsignal(_context) do
+    config = Application.get_env(:appsignal, :config)
+    Application.put_env(:appsignal, :config, %{config | active: false})
+
+    on_exit(fn ->
+      Application.put_env(:appsignal, :config, config)
+    end)
   end
 end
