@@ -19,6 +19,18 @@ defmodule Appsignal.TracerTest do
     end
   end
 
+  describe "create_span/1, when disabled" do
+    setup [:disable_appsignal, :create_root_span]
+
+    test "returns nil", %{span: span} do
+      assert span == nil
+    end
+
+    test "does not register a span" do
+      assert :ets.lookup(:"$appsignal_registry", self()) == []
+    end
+  end
+
   describe "create_span/2" do
     setup [:create_root_span, :create_child_span]
 
@@ -132,5 +144,14 @@ defmodule Appsignal.TracerTest do
   defp create_root_span_in_other_process(_context) do
     pid = Process.whereis(WrappedNif)
     [span: Tracer.create_span("root", nil, pid), pid: pid]
+  end
+
+  defp disable_appsignal(_context) do
+    config = Application.get_env(:appsignal, :config)
+    Application.put_env(:appsignal, :config, %{config | active: false})
+
+    on_exit(fn ->
+      Application.put_env(:appsignal, :config, config)
+    end)
   end
 end
