@@ -36,7 +36,7 @@ defmodule Appsignal.Span do
   def span_id(nil), do: {:ok, nil}
 
   def set_name(%Span{reference: reference} = span, name) when is_binary(name) do
-    :ok = Nif.set_span_name(reference, name)
+    :ok = @nif.set_span_name(reference, name)
     span
   end
 
