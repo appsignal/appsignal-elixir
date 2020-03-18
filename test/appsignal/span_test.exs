@@ -233,6 +233,30 @@ defmodule AppsignalSpanTest do
     end
   end
 
+  describe ".set_error/3, when disabled" do
+    setup [:create_root_span, :disable_appsignal]
+
+    setup %{span: span} do
+      return =
+        try do
+          raise "Exception!"
+        catch
+          :error, error ->
+            Span.add_error(span, error, System.stacktrace())
+        end
+
+      [return: return]
+    end
+
+    test "returns nil", %{return: return} do
+      assert return == nil
+    end
+
+    test "does not set the error through the Nif" do
+      assert WrappedNif.get(:add_span_error) == :error
+    end
+  end
+
   describe ".set_sample_data/3" do
     setup :create_root_span
 
