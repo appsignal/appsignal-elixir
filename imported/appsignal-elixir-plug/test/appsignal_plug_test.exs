@@ -52,7 +52,8 @@ defmodule Appsignal.PlugTest do
       try do
         PlugWithAppsignal.call(conn(:get, "/exception"), [])
       rescue
-        exception -> [exception: exception, stacktrace: System.stacktrace()]
+        wrapper_error in Plug.Conn.WrapperError ->
+          [exception: wrapper_error.reason, stacktrace: System.stacktrace()]
       end
     end
 
@@ -64,9 +65,8 @@ defmodule Appsignal.PlugTest do
       assert [{%Span{}, "GET /exception"}] = Test.Span.get!(:set_name)
     end
 
-    test "adds the error to the span", %{stacktrace: stack} do
-      assert [{%Span{}, %RuntimeError{message: "Exception!"}, ^stack}] =
-               Test.Span.get!(:add_error)
+    test "adds the error to the span", %{exception: exception, stacktrace: stack} do
+      assert [{%Span{}, ^exception, ^stack}] = Test.Span.get!(:add_error)
     end
 
     test "closes the span" do
