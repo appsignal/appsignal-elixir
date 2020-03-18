@@ -114,7 +114,7 @@ defmodule Appsignal.Mixfile do
       {:credo, "~> 1.0.0", only: [:test, :dev], runtime: false},
       {:dialyxir, "~> 1.0.0-rc4", only: [:dev], runtime: false},
       {:telemetry, "~> 0.4"}
-    ] ++ plug_dep()
+    ] ++ plug_dep() ++ live_view_dep()
   end
 
   defp plug_dep do
@@ -127,6 +127,13 @@ defmodule Appsignal.Mixfile do
 
       _ ->
         [{:plug, ">= 1.1.0", optional: true}]
+    end
+  end
+
+  defp live_view_dep do
+    case Version.compare(System.version(), "1.7.0") do
+      :lt -> []
+      _ -> [{:phoenix_live_view, "~> 0.9.0", optional: true, only: [:prod, :test_phoenix, :dev]}]
     end
   end
 end
