@@ -1,3 +1,6 @@
+# 1.13.0-beta.1
+- Add LiveView instrumentation helpers. PR #549
+
 # 1.12.1
 - EventHandler handles router_dispatch events with plug_opts #547
 
