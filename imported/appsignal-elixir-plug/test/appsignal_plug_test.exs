@@ -29,7 +29,7 @@ defmodule Appsignal.PlugTest do
 
   describe "GET /" do
     setup do
-      PlugWithAppsignal.call(conn(:get, "/"), [])
+      get("/")
 
       :ok
     end
@@ -49,12 +49,7 @@ defmodule Appsignal.PlugTest do
 
   describe "GET /exception" do
     setup do
-      try do
-        PlugWithAppsignal.call(conn(:get, "/exception"), [])
-      rescue
-        wrapper_error in Plug.Conn.WrapperError ->
-          [exception: wrapper_error.reason, stacktrace: System.stacktrace()]
-      end
+      get("/exception")
     end
 
     test "creates a root span" do
@@ -71,6 +66,19 @@ defmodule Appsignal.PlugTest do
 
     test "closes the span" do
       assert [{%Span{}}] = Test.Tracer.get!(:close_span)
+    end
+  end
+
+  defp get(path) do
+    try do
+      [conn: PlugWithAppsignal.call(conn(:get, path), [])]
+    rescue
+      wrapper_error in Plug.Conn.WrapperError ->
+        [
+          conn: wrapper_error.conn,
+          exception: wrapper_error.reason,
+          stacktrace: System.stacktrace()
+        ]
     end
   end
 end
