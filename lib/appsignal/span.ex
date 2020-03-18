@@ -98,6 +98,8 @@ defmodule Appsignal.Span do
     end
   end
 
+  def add_error(nil, _error, _stacktrace), do: nil
+
   def close(%Span{reference: reference} = span) do
     :ok = @nif.close_span(reference)
     span
