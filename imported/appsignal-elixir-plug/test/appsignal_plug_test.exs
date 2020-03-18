@@ -69,6 +69,30 @@ defmodule Appsignal.PlugTest do
     end
   end
 
+  describe "GET /exception, when disabled" do
+    setup :disable_appsignal
+
+    setup do
+      get("/exception")
+    end
+
+    test "creates a root span" do
+      assert Test.Tracer.get!(:create_span) == [{"unknown"}]
+    end
+
+    test "adds the name to a nil-span" do
+      assert [{nil, "GET /exception"}] = Test.Span.get!(:set_name)
+    end
+
+    test "adds the error to a nil-span", %{stacktrace: stack} do
+      assert [{nil, %RuntimeError{message: "Exception!"}, ^stack}] = Test.Span.get!(:add_error)
+    end
+
+    test "closes the nil-span" do
+      assert [{nil}] = Test.Tracer.get!(:close_span)
+    end
+  end
+
   defp get(path) do
     try do
       [conn: PlugWithAppsignal.call(conn(:get, path), [])]
@@ -80,5 +104,14 @@ defmodule Appsignal.PlugTest do
           stacktrace: System.stacktrace()
         ]
     end
+  end
+
+  defp disable_appsignal(_context) do
+    config = Application.get_env(:appsignal, :config)
+    Application.put_env(:appsignal, :config, %{config | active: false})
+
+    on_exit(fn ->
+      Application.put_env(:appsignal, :config, config)
+    end)
   end
 end
