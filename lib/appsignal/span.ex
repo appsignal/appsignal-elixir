@@ -85,15 +85,17 @@ defmodule Appsignal.Span do
   end
 
   def add_error(%Span{reference: reference} = span, error, stacktrace) do
-    {name, message} = Appsignal.Error.metadata(error)
+    if Config.active?() do
+      {name, message} = Appsignal.Error.metadata(error)
 
-    encoded_stacktrace =
-      stacktrace
-      |> Enum.map(&Exception.format_stacktrace_entry/1)
-      |> Appsignal.Utils.DataEncoder.encode()
+      encoded_stacktrace =
+        stacktrace
+        |> Enum.map(&Exception.format_stacktrace_entry/1)
+        |> Appsignal.Utils.DataEncoder.encode()
 
-    :ok = @nif.add_span_error(reference, name, message, encoded_stacktrace)
-    span
+      :ok = @nif.add_span_error(reference, name, message, encoded_stacktrace)
+      span
+    end
   end
 
   def close(%Span{reference: reference} = span) do
