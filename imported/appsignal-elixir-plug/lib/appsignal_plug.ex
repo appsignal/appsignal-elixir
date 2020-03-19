@@ -3,6 +3,28 @@ defmodule Appsignal.Plug do
   @tracer Application.get_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
   @span Application.get_env(:appsignal, :appsignal_span, Appsignal.Span)
 
+  @moduledoc """
+  AppSignal's Plug instrumentation instruments calls to Plug applications to
+  gain performance insights and error reporting.
+
+  ## Installation
+
+  To install Appsignal.Plug into your Plug application, `use Appsignal.Plug` in
+  your application's router module:
+
+      defmodule AppsignalPlugExample do
+        use Plug.Router
+        use Appsignal.Plug
+
+        plug(:match)
+        plug(:dispatch)
+
+        get "/" do
+          send_resp(conn, 200, "Welcome")
+        end
+      end
+  """
+
   defmacro __using__(_) do
     quote do
       @tracer Application.get_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
