@@ -22,7 +22,8 @@ defmodule Appsignal.Plug.MixProject do
   defp deps do
     [
       {:plug, ">= 1.1.0"},
-      {:appsignal, github: "appsignal/appsignal-elixir", branch: "tracing"}
+      {:appsignal, github: "appsignal/appsignal-elixir", branch: "tracing"},
+      {:credo, "~> 1.2", only: [:dev, :test], runtime: false}
     ]
   end
 end
