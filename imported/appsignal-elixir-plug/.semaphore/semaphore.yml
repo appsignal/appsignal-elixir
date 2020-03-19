@@ -7,20 +7,19 @@ agent:
 blocks:
   - name: Run tests
     task:
+      prologue:
+        commands:
+          - sem-version elixir 1.10.2
+          - checkout
+          - mix local.rebar --force
+          - mix deps.get
+
       jobs:
-        - name: mix format
+        - name: mix format --check-formatted
           commands:
-            - sem-version elixir 1.10.2
-            - checkout
-            - mix local.rebar --force
-            - mix deps.get
             - mix format --check-formatted
         - name: mix test
           commands:
-            - sem-version elixir 1.10.2
-            - checkout
-            - mix local.rebar --force
-            - mix deps.get
             - mix test
       env_vars:
         - name: MIX_ENV
