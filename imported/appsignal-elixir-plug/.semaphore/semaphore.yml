@@ -9,6 +9,7 @@ blocks:
     task:
       prologue:
         commands:
+          - sem-version erlang 22
           - sem-version elixir 1.10.2
           - checkout
           - mix local.rebar --force
