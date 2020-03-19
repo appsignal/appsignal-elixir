@@ -22,3 +22,5 @@ erl_crash.dump
 # Ignore package tarball (built via "mix hex.build").
 appsignal_phoenix-*.tar
 
+# Ignore lock file to use latest versions of dependencies.
+mix.lock
