@@ -18,9 +18,9 @@ blocks:
         - name: mix format --check-formatted
           commands:
             - mix format --check-formatted
-        - name: mix credo
+        - name: mix credo --strict
           commands:
-            - mix credo
+            - mix credo --strict
         - name: mix test
           commands:
             - mix test
