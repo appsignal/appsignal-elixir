@@ -21,6 +21,9 @@ blocks:
         - name: mix credo --strict
           commands:
             - mix credo --strict
+        - name: mix dialyzer
+          commands:
+            - mix dialyzer
         - name: mix test
           commands:
             - mix test
