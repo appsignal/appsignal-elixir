@@ -8,6 +8,13 @@ blocks:
   - name: Run tests
     task:
       jobs:
+        - name: mix format
+          commands:
+            - sem-version elixir 1.10.2
+            - checkout
+            - mix local.rebar --force
+            - mix deps.get
+            - mix format --check-formatted
         - name: mix test
           commands:
             - sem-version elixir 1.10.2
