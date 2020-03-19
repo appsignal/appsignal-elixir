@@ -23,6 +23,9 @@ blocks:
             - mix credo --strict
         - name: mix dialyzer
           commands:
+            - cache restore dialyzer-plt
+            - mix dialyzer --plt
+            - cache store dialyzer-plt priv/plts/
             - mix dialyzer
         - name: mix test
           commands:
