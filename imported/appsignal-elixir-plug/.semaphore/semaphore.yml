@@ -21,6 +21,9 @@ blocks:
         - name: mix credo --strict
           commands:
             - mix credo --strict
+        - name: mix dialyzer --halt-exit-status
+          commands:
+            - mix dialyzer --halt-exit-status
         - name: mix test
           commands:
             - mix test
