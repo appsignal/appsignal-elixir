@@ -94,16 +94,14 @@ defmodule Appsignal.PlugTest do
   end
 
   defp get(path) do
-    try do
-      [conn: PlugWithAppsignal.call(conn(:get, path), [])]
-    rescue
-      wrapper_error in Plug.Conn.WrapperError ->
-        [
-          conn: wrapper_error.conn,
-          exception: wrapper_error.reason,
-          stacktrace: System.stacktrace()
-        ]
-    end
+    [conn: PlugWithAppsignal.call(conn(:get, path), [])]
+  rescue
+    wrapper_error in Plug.Conn.WrapperError ->
+      [
+        conn: wrapper_error.conn,
+        exception: wrapper_error.reason,
+        stacktrace: System.stacktrace()
+      ]
   end
 
   defp disable_appsignal(_context) do
