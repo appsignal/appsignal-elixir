@@ -1,4 +1,4 @@
-defmodule AppsignalPhoenix.MixProject do
+defmodule Appsignal.Phoenix.MixProject do
   use Mix.Project
 
   def project do
@@ -15,7 +15,7 @@ defmodule AppsignalPhoenix.MixProject do
   def application do
     [
       extra_applications: [:logger],
-      mod: {AppsignalPhoenix.Application, []}
+      mod: {Appsignal.Phoenix.Application, []}
     ]
   end
 

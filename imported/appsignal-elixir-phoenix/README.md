@@ -1,4 +1,4 @@
-# AppsignalPhoenix
+# Appsignal.Phoenix
 
 **TODO: Add description**
 

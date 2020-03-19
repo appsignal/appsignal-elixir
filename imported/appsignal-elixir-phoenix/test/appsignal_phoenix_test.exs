@@ -1,8 +1,8 @@
-defmodule AppsignalPhoenixTest do
+defmodule Appsignal.PhoenixTest do
   use ExUnit.Case
-  doctest AppsignalPhoenix
+  doctest Appsignal.Phoenix
 
   test "greets the world" do
-    assert AppsignalPhoenix.hello() == :world
+    assert Appsignal.Phoenix.hello() == :world
   end
 end

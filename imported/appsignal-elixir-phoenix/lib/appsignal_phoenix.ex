@@ -1,6 +1,6 @@
-defmodule AppsignalPhoenix do
+defmodule Appsignal.Phoenix do
   @moduledoc """
-  Documentation for AppsignalPhoenix.
+  Documentation for Appsignal.Phoenix.
   """
 
   @doc """
@@ -8,7 +8,7 @@ defmodule AppsignalPhoenix do
 
   ## Examples
 
-      iex> AppsignalPhoenix.hello()
+      iex> Appsignal.Phoenix.hello()
       :world
 
   """
