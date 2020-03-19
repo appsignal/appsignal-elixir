@@ -93,6 +93,30 @@ defmodule Appsignal.PlugTest do
     end
   end
 
+  describe ".set_name/2" do
+    setup do
+      [span: Span.create_root("set_name", self())]
+    end
+
+    test "sets the span's name", %{span: span} do
+      assert Appsignal.Plug.set_name(span, %Plug.Conn{
+               method: "GET",
+               private: %{plug_route: {"/", fn -> :ok end}}
+             }) == span
+
+      assert [{^span, "GET /"}] = Test.Span.get!(:set_name)
+    end
+
+    test "ignores Phoenix conns", %{span: span} do
+      assert Appsignal.Plug.set_name(span, %Plug.Conn{
+               method: "GET",
+               private: %{phoenix_endpoint: AppsignalPhoenixExampleWeb.Endpoint}
+             }) == span
+
+      assert Test.Span.get(:set_name) == :error
+    end
+  end
+
   defp get(path) do
     [conn: PlugWithAppsignal.call(conn(:get, path), [])]
   rescue
