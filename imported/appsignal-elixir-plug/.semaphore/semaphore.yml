@@ -11,6 +11,7 @@ blocks:
         commands:
           - sem-version erlang 22
           - sem-version elixir 1.10.2
+          - elixir -v
           - checkout
           - mix local.rebar --force
           - mix deps.get
