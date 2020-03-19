@@ -21,12 +21,12 @@ blocks:
         - name: mix credo --strict
           commands:
             - mix credo --strict
-        - name: mix dialyzer --halt-exit-status
+        - name: mix dialyzer
           commands:
             - cache restore dialyzer-plt
             - mix dialyzer --plt
             - cache store dialyzer-plt priv/plts/
-            - mix dialyzer --halt-exit-status
+            - mix dialyzer
         - name: mix test
           commands:
             - mix test
