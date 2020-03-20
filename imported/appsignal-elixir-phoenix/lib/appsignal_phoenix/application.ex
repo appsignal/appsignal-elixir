@@ -6,14 +6,9 @@ defmodule Appsignal.Phoenix.Application do
   use Application
 
   def start(_type, _args) do
-    children = [
-      # Starts a worker by calling: Appsignal.Phoenix.Worker.start_link(arg)
-      # {Appsignal.Phoenix.Worker, arg}
-    ]
+    Appsignal.Phoenix.EventHandler.attach()
 
-    # See https://hexdocs.pm/elixir/Supervisor.html
-    # for other strategies and supported options
     opts = [strategy: :one_for_one, name: Appsignal.Phoenix.Supervisor]
-    Supervisor.start_link(children, opts)
+    Supervisor.start_link([], opts)
   end
 end
