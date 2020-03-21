@@ -6,11 +6,17 @@ defmodule Mix.Tasks.Appsignal.Install do
 
   def run([]) do
     header()
-    IO.puts("We're missing an AppSignal Push API key and cannot continue.")
-    IO.puts("Please supply one as an argument to this command.\n")
-    IO.puts("  mix appsignal.install push_api_key\n")
-    IO.puts("You can find your push_api_key on https://appsignal.com/accounts under 'Add app'")
-    IO.puts("Contact us at support@appsignal.com if you're stuck.")
+
+    """
+    We're missing an AppSignal Push API key and cannot continue.
+    Please supply one as an argument to this command.
+
+      mix appsignal.install push_api_key
+
+    You can find your push_api_key on https://appsignal.com/accounts under 'Add app'
+    Contact us at support@appsignal.com if you're stuck.
+    """
+    |> IO.puts()
   end
 
   def run([push_api_key]) do
@@ -48,19 +54,27 @@ defmodule Mix.Tasks.Appsignal.Install do
   end
 
   defp header do
-    IO.puts("AppSignal install")
-    IO.puts(String.duplicate("=", 80))
-    IO.puts("Website:       https://appsignal.com")
-    IO.puts("Documentation: http://docs.appsignal.com")
-    IO.puts("Support:       support@appsignal.com")
-    IO.puts(String.duplicate("=", 80))
-    IO.puts("\nWelcome to AppSignal!\n")
-    IO.puts("This installer will guide you through setting up AppSignal in your application.")
-    IO.puts("We will perform some checks on your system and ask how you like AppSignal to be ")
-    IO.puts("configured.\n")
-    IO.puts(String.duplicate("=", 80))
-    IO.puts("")
+    """
+    AppSignal install
+    #{hr()}
+    Website:       https://appsignal.com
+    Documentation: http://docs.appsignal.com
+    Support:       support@appsignal.com
+    #{hr()}
+
+    Welcome to AppSignal!
+
+    This installer will guide you through setting up AppSignal in your application.
+    We will perform some checks on your system and ask how you like AppSignal to be
+    configured.
+
+    #{hr()}
+
+    """
+    |> IO.puts()
   end
+
+  defp hr, do: String.duplicate("=", 80)
 
   defp validate_push_api_key do
     IO.write("Validating Push API key: ")
@@ -71,23 +85,44 @@ defmodule Mix.Tasks.Appsignal.Install do
         IO.puts("Valid! 🎉")
 
       {:error, :invalid} ->
-        IO.puts("Invalid")
-        IO.puts("  Please make sure you're using the correct push api key from appsignal.com")
-        IO.puts("  Contact us at support@appsignal.com if you're stuck.")
+        print_invalid()
         exit(:shutdown)
 
       {:error, reason} ->
-        IO.puts(reason)
+        print_validating_error(reason)
         exit(:shutdown)
     end
+  end
+
+  defp print_invalid do
+    """
+    Invalid
+    Please make sure you're using the correct push api key from appsignal.com
+    Contact us at support@appsignal.com if you're stuck.
+    """
+    |> IO.puts()
+  end
+
+  defp print_validating_error(reason) do
+    """
+
+    Validating failed, reason:
+
+      #{inspect(reason)}
+    """
+    |> IO.puts()
   end
 
   defp ask_for_app_name, do: ask_for_input("What is your application's name?")
 
   defp ask_kind_of_configuration do
-    IO.puts("\nThere are two methods of configuring AppSignal in your application.")
-    IO.puts("  Option 1: Using a \"config/appsignal.exs\" file. (1)")
-    IO.puts("  Option 2: Using system environment variables.  (2)")
+    """
+
+    There are two methods of configuring AppSignal in your application.
+      Option 1: Using a "config/appsignal.exs" file. (1)
+      Option 2: Using system environment variables.  (2)
+    """
+    |> IO.puts()
 
     case ask_for_input("What is your preferred configuration method? (1/2)") do
       "1" ->
@@ -103,11 +138,15 @@ defmodule Mix.Tasks.Appsignal.Install do
   end
 
   defp output_config_environment_variables(config) do
-    IO.puts("Configuring with environment variables.")
-    IO.puts("Please put the following variables in your environment to configure AppSignal.\n")
-    IO.puts(~s(  export APPSIGNAL_APP_NAME="#{config[:name]}"))
-    IO.puts(~s(  export APPSIGNAL_APP_ENV="prod"))
-    IO.puts(~s(  export APPSIGNAL_PUSH_API_KEY="#{config[:push_api_key]}"))
+    """
+    Configuring with environment variables.
+    Please put the following variables in your environment to configure AppSignal.
+
+      export APPSIGNAL_APP_NAME="#{config[:name]}"
+      export APPSIGNAL_APP_ENV="prod"
+      export APPSIGNAL_PUSH_API_KEY="#{config[:push_api_key]}"
+    """
+    |> IO.puts()
   end
 
   defp write_config_file(config) do
@@ -242,10 +281,14 @@ defmodule Mix.Tasks.Appsignal.Install do
   end
 
   defp output_phoenix_instructions do
-    IO.puts("\nAppSignal detected a Phoenix app")
-    IO.puts("  Please follow the following guide to integrate AppSignal in your")
-    IO.puts("  Phoenix application.")
-    IO.puts("  http://docs.appsignal.com/elixir/integrations/phoenix.html")
+    """
+
+    AppSignal detected a Phoenix app
+      Please follow the following guide to integrate AppSignal in your
+      Phoenix application.
+      http://docs.appsignal.com/elixir/integrations/phoenix.html
+    """
+    |> IO.puts()
   end
 
   defp ask_for_input(prompt) do
