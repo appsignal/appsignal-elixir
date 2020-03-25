@@ -2,7 +2,7 @@ defmodule Appsignal.PhoenixTest do
   use ExUnit.Case
   doctest Appsignal.Phoenix
   import Phoenix.ConnTest
-  alias Appsignal.{Test, Tracer}
+  alias Appsignal.{Span, Test, Tracer}
   @endpoint PhoenixWeb.Endpoint
 
   setup do
@@ -10,7 +10,7 @@ defmodule Appsignal.PhoenixTest do
     Test.Tracer.start_link()
     Test.Span.start_link()
 
-    %{span: Tracer.create_span("root")}
+    :ok
   end
 
   describe "GET /" do
@@ -20,6 +20,18 @@ defmodule Appsignal.PhoenixTest do
 
     test "sends the response", %{conn: conn} do
       assert html_response(conn, 200) =~ "Welcome to Phoenix!"
+    end
+
+    test "creates a root span" do
+      assert Test.Tracer.get!(:create_span) == [{"unknown"}]
+    end
+
+    test "sets the span's name" do
+      assert [{%Span{}, "PhoenixWeb.Controller#index"}] = Test.Span.get!(:set_name)
+    end
+
+    test "closes the span" do
+      assert [{%Span{}}] = Test.Tracer.get!(:close_span)
     end
   end
 
@@ -36,12 +48,20 @@ defmodule Appsignal.PhoenixTest do
       assert %RuntimeError{} = reason
     end
 
-    test "adds an error to the current span", %{span: span, reason: reason} do
-      assert [{^span, ^reason, _}] = Test.Span.get!(:add_error)
+    test "creates a root span" do
+      assert Test.Tracer.get!(:create_span) == [{"unknown"}]
     end
 
-    test "closes the span", %{span: span} do
-      assert [{^span}] = Test.Tracer.get!(:close_span)
+    test "sets the span's name" do
+      assert [{%Span{}, "PhoenixWeb.Controller#exception"}] = Test.Span.get!(:set_name)
+    end
+
+    test "adds an error to the span", %{reason: reason} do
+      assert [{%Span{}, ^reason, _}] = Test.Span.get!(:add_error)
+    end
+
+    test "closes the span" do
+      assert [{%Span{}}] = Test.Tracer.get!(:close_span)
     end
   end
 end

@@ -1,6 +1,8 @@
 defmodule Appsignal.Phoenix do
   defmacro __using__(_) do
     quote do
+      use Appsignal.Plug
+
       @tracer Application.get_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
       @span Application.get_env(:appsignal, :appsignal_span, Appsignal.Span)
 
