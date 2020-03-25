@@ -38,6 +38,8 @@ defmodule Appsignal.Plug do
         |> Appsignal.Plug.set_name(conn)
         |> @span.add_error(reason, stack)
         |> @tracer.close_span()
+
+        @tracer.ignore()
       end
     end
   end

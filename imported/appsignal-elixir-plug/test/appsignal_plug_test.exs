@@ -67,6 +67,10 @@ defmodule Appsignal.PlugTest do
     test "closes the span" do
       assert [{%Span{}}] = Test.Tracer.get!(:close_span)
     end
+
+    test "ignores the process in the registry" do
+      assert :ets.lookup(:"$appsignal_registry", self()) == [{self(), :ignore}]
+    end
   end
 
   describe "GET /exception, when disabled" do
