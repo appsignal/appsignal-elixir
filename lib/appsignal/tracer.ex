@@ -24,15 +24,19 @@ defmodule Appsignal.Tracer do
   """
   @spec create_span(String.t(), Span.t() | nil, pid()) :: Span.t()
   def create_span(name, nil, pid) do
-    name
-    |> Span.create_root(pid)
-    |> register()
+    unless ignored?(pid) do
+      name
+      |> Span.create_root(pid)
+      |> register()
+    end
   end
 
   def create_span(name, parent, pid) do
-    name
-    |> Span.create_child(parent, pid)
-    |> register()
+    unless ignored?(pid) do
+      name
+      |> Span.create_child(parent, pid)
+      |> register()
+    end
   end
 
   @doc """
@@ -89,5 +93,9 @@ defmodule Appsignal.Tracer do
 
   defp deregister(%Span{pid: pid} = span) do
     :ets.delete_object(@table, {pid, span})
+  end
+
+  defp ignored?(pid) do
+    current_span(pid) == :ignore
   end
 end
