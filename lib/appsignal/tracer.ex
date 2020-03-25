@@ -79,10 +79,12 @@ defmodule Appsignal.Tracer do
   def close_span(nil), do: nil
 
   @doc """
-  Ignores a process.
+  Ignores the current process.
   """
-  @spec ignore(pid()) :: :ok | nil
-  def ignore(pid) do
+  @spec ignore() :: :ok | nil
+  def ignore do
+    pid = self()
+
     :ets.delete(@table, pid)
     :ets.insert(@table, {pid, :ignore})
     :ok
