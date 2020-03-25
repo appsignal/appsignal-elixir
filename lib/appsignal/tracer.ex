@@ -50,14 +50,18 @@ defmodule Appsignal.Tracer do
   """
   @spec current_span(pid()) :: Span.t() | nil
   def current_span(pid) do
-    case :ets.lookup(@table, pid) do
-      [] ->
-        nil
+    @table
+    |> :ets.lookup(pid)
+    |> current()
+  end
 
-      spans ->
-        {_pid, span} = List.last(spans)
-        span
-    end
+  defp current([]), do: nil
+
+  defp current([{_pid, :ignore}]), do: nil
+
+  defp current(spans) when is_list(spans) do
+    {_pid, span} = List.last(spans)
+    span
   end
 
   @doc """
@@ -95,7 +99,12 @@ defmodule Appsignal.Tracer do
     :ets.delete_object(@table, {pid, span})
   end
 
-  defp ignored?(pid) do
-    current_span(pid) == :ignore
+  defp ignored?(pid) when is_pid(pid) do
+    @table
+    |> :ets.lookup(pid)
+    |> ignored?()
   end
+
+  defp ignored?([{_pid, :ignore}]), do: true
+  defp ignored?(_), do: false
 end
