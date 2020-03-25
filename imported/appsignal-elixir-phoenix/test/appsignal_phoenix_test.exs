@@ -15,7 +15,7 @@ defmodule Appsignal.PhoenixTest do
 
   describe "GET /" do
     setup do
-      %{conn: get(build_conn(), "/")}
+      get("/")
     end
 
     test "sends the response", %{conn: conn} do
@@ -37,11 +37,7 @@ defmodule Appsignal.PhoenixTest do
 
   describe "GET /exception" do
     setup do
-      try do
-        %{conn: get(build_conn(), "/exception")}
-      catch
-        :error, reason -> %{reason: reason}
-      end
+      get("/exception")
     end
 
     test "reraises the error", %{reason: reason} do
@@ -62,6 +58,14 @@ defmodule Appsignal.PhoenixTest do
 
     test "closes the span" do
       assert [{%Span{}}] = Test.Tracer.get!(:close_span)
+    end
+  end
+
+  defp get(path) do
+    try do
+      %{conn: get(build_conn(), path)}
+    catch
+      :error, reason -> %{reason: reason}
     end
   end
 end
