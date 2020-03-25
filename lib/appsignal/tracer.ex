@@ -70,6 +70,16 @@ defmodule Appsignal.Tracer do
 
   def close_span(nil), do: nil
 
+  @doc """
+  Ignores a process.
+  """
+  @spec ignore(pid()) :: :ok | nil
+  def ignore(pid) do
+    :ets.delete(@table, pid)
+    :ets.insert(@table, {pid, :ignore})
+    :ok
+  end
+
   defp register(%Span{pid: pid} = span) do
     :ets.insert(@table, {pid, span})
     span
