@@ -4,6 +4,7 @@ defmodule Appsignal.Test.Tracer do
 
   defdelegate current_span(), to: Tracer
   defdelegate current_span(pid), to: Tracer
+  defdelegate ignore(), to: Tracer
 
   def create_span(name) do
     add(:create_span, {name})
