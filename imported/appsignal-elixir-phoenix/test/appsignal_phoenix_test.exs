@@ -7,7 +7,9 @@ defmodule Appsignal.PhoenixTest do
 
   setup do
     PhoenixWeb.Endpoint.start_link([])
+    Test.Tracer.start_link()
     Test.Span.start_link()
+
     %{span: Tracer.create_span("root")}
   end
 
@@ -36,6 +38,10 @@ defmodule Appsignal.PhoenixTest do
 
     test "adds an error to the current span", %{span: span, reason: reason} do
       assert [{^span, ^reason, _}] = Test.Span.get!(:add_error)
+    end
+
+    test "closes the span", %{span: span} do
+      assert [{^span}] = Test.Tracer.get!(:close_span)
     end
   end
 end

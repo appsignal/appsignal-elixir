@@ -13,6 +13,7 @@ defmodule Appsignal.Phoenix do
       defp handle_error(%Plug.Conn.WrapperError{reason: reason, stack: stack}) do
         @tracer.current_span()
         |> @span.add_error(reason, stack)
+        |> @tracer.close_span()
 
         reraise(reason, stack)
       end
