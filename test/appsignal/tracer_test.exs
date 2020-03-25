@@ -204,6 +204,6 @@ defmodule Appsignal.TracerTest do
   end
 
   defp ignore_process(_context) do
-    Tracer.ignore(self())
+    Tracer.ignore()
   end
 end
