@@ -111,6 +111,14 @@ defmodule Appsignal.TracerTest do
     end
   end
 
+  describe "current_span/1, when the process is ignored" do
+    setup :ignore_process
+
+    test "returns nil" do
+      assert Tracer.current_span() == nil
+    end
+  end
+
   describe "close_span/1, when passing a nil" do
     test "returns nil" do
       assert Tracer.close_span(nil) == nil
