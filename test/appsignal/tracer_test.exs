@@ -133,6 +133,22 @@ defmodule Appsignal.TracerTest do
     end
   end
 
+  describe "ignore/1" do
+    setup :ignore_process
+
+    test "marks a pid as ignored" do
+      assert :ets.lookup(:"$appsignal_registry", self()) == [{self(), :ignore}]
+    end
+  end
+
+  describe "ignore/1, with an open span" do
+    setup [:create_root_span, :ignore_process]
+
+    test "removes existing spans" do
+      assert :ets.lookup(:"$appsignal_registry", self()) == [{self(), :ignore}]
+    end
+  end
+
   defp create_root_span(_context) do
     [span: Tracer.create_span("root")]
   end
@@ -153,5 +169,9 @@ defmodule Appsignal.TracerTest do
     on_exit(fn ->
       Application.put_env(:appsignal, :config, config)
     end)
+  end
+
+  defp ignore_process(_context) do
+    Tracer.ignore(self())
   end
 end
