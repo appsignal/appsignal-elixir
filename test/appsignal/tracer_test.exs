@@ -31,6 +31,18 @@ defmodule Appsignal.TracerTest do
     end
   end
 
+  describe "create_span/1, when ignored" do
+    setup [:ignore_process, :create_root_span]
+
+    test "returns nil", %{span: span} do
+      assert span == nil
+    end
+
+    test "does not register a span" do
+      assert :ets.lookup(:"$appsignal_registry", self()) == [{self(), :ignore}]
+    end
+  end
+
   describe "create_span/2" do
     setup [:create_root_span, :create_child_span]
 
@@ -40,6 +52,18 @@ defmodule Appsignal.TracerTest do
 
     test "registers the span without overwriting its parent", %{span: span, parent: parent} do
       assert :ets.lookup(:"$appsignal_registry", self()) == [{self(), parent}, {self(), span}]
+    end
+  end
+
+  describe "create_span/2, when ignored" do
+    setup [:create_root_span, :ignore_process, :create_child_span]
+
+    test "returns nil", %{span: span} do
+      assert span == nil
+    end
+
+    test "does not register a span" do
+      assert :ets.lookup(:"$appsignal_registry", self()) == [{self(), :ignore}]
     end
   end
 
