@@ -70,9 +70,6 @@ the `MIX_ENV` environment variable.
     # Default
     $ MIX_ENV=test mix test
 
-    # Test Phoenix framework integration
-    $ MIX_ENV=test_phoenix mix test
-
     # Run the test suite with the NIF inoperational. This will generate errors
     # because the NIF is not active, but should run without failures.
     $ MIX_ENV=test_no_nif mix test
