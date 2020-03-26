@@ -12,6 +12,7 @@ if Mix.env() in [:bench, :test, :test_phoenix, :test_no_nif] do
   config :appsignal, appsignal_tracer_nif: Appsignal.WrappedNif
   config :appsignal, appsignal_tracer: Appsignal.Test.Tracer
   config :appsignal, appsignal_span: Appsignal.Test.Span
+  config :appsignal, appsignal_monitor: Appsignal.Test.Monitor
 
   config :appsignal, :config,
     push_api_key: "00000000-0000-0000-0000-000000000000",

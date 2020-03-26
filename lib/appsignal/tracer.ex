@@ -1,6 +1,7 @@
 defmodule Appsignal.Tracer do
   alias Appsignal.Span
 
+  @monitor Application.get_env(:appsignal, :appsignal_monitor, Appsignal.Monitor)
   @table :"$appsignal_registry"
 
   def start_link do
@@ -87,6 +88,7 @@ defmodule Appsignal.Tracer do
 
     delete(pid)
     :ets.insert(@table, {pid, :ignore})
+    @monitor.add()
     :ok
   end
 
