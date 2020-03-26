@@ -22,11 +22,6 @@ defmodule Appsignal.Instrumentation.Decorators do
   timeline. The name of the event will be the name of the function
   that's decorated. In addition, the event will be grouped into the
   given `:category`.
-
-  `@decorate channel_action` - this decorator is meant to be put
-  before the `handle_in/3` function of a Phoenix.Channel. See
-  `Appsignal.Phoenix.Channel` for more information on how to
-  instrument channel events.
   """
 
   use Decorator.Define,
@@ -72,18 +67,6 @@ defmodule Appsignal.Instrumentation.Decorators do
         self(),
         unquote("#{context.name}#{postfix}"),
         unquote("#{module_name(context.module)}.#{context.name}"),
-        fn -> unquote(body) end
-      )
-    end
-  end
-
-  @doc false
-  def channel_action(body, %{args: [action, _payload, socket]} = context) do
-    quote do
-      Appsignal.Phoenix.Channel.channel_action(
-        unquote(module_name(context.module)),
-        unquote(action),
-        unquote(socket),
         fn -> unquote(body) end
       )
     end
