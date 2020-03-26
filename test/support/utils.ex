@@ -94,7 +94,7 @@ defmodule AppsignalTest.Utils do
   end
 
   def until(assertion) do
-    until(assertion, 50)
+    until(assertion, 500)
   end
 
   defp until(assertion, retries) when retries < 1 do
@@ -106,7 +106,7 @@ defmodule AppsignalTest.Utils do
       assertion.()
     rescue
       ExUnit.AssertionError ->
-        :timer.sleep(10)
+        :timer.sleep(1)
         until(assertion, retries - 1)
     end
   end
