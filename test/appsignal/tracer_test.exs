@@ -1,9 +1,10 @@
 defmodule Appsignal.TracerTest do
   use ExUnit.Case
-  alias Appsignal.{Span, Tracer, WrappedNif}
+  alias Appsignal.{Span, Test, Tracer, WrappedNif}
 
   setup do
     WrappedNif.start_link()
+    Test.Monitor.start_link()
     :ok
   end
 
@@ -212,6 +213,10 @@ defmodule Appsignal.TracerTest do
 
     test "marks a pid as ignored" do
       assert :ets.lookup(:"$appsignal_registry", self()) == [{self(), :ignore}]
+    end
+
+    test "creates a process monitor" do
+      assert Test.Monitor.get!(:add) == [{self()}]
     end
   end
 
