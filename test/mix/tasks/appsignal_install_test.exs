@@ -278,7 +278,6 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
       assert String.contains?(output, "AppSignal installed!")
     end
 
-    @tag :skip_env_test_phoenix
     test "without Phoenix it prints no link to Phoenix integration documentation" do
       output = run_with_environment_config()
       refute String.contains?(output, "AppSignal detected a Phoenix app")

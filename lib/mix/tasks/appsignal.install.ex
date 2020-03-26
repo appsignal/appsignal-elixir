@@ -40,7 +40,7 @@ defmodule Mix.Tasks.Appsignal.Install do
         output_config_environment_variables(config)
     end
 
-    if Appsignal.phoenix?() do
+    if Code.ensure_loaded?(Phoenix) do
       output_phoenix_instructions()
     end
 
