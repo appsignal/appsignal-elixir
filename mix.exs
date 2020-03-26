@@ -61,10 +61,8 @@ defmodule Appsignal.Mixfile do
     [mod: {Appsignal, []}, applications: [:logger, :decorator, :hackney]]
   end
 
-  defp compilers(:test_phoenix), do: [:phoenix] ++ compilers(:prod)
   defp compilers(_), do: [:appsignal] ++ Mix.compilers()
 
-  defp test_paths(:test_phoenix), do: ["test/appsignal", "test/mix", "test/phoenix"]
   defp test_paths(_), do: ["test/appsignal", "test/mix"]
 
   defp elixirc_paths(env) do
@@ -75,7 +73,6 @@ defmodule Appsignal.Mixfile do
   end
 
   defp test?(:test), do: true
-  defp test?(:test_phoenix), do: true
   defp test?(:test_no_nif), do: true
   defp test?(:bench), do: true
   defp test?(_), do: false
@@ -87,12 +84,6 @@ defmodule Appsignal.Mixfile do
       case Version.compare(system_version, "1.6.0") do
         :lt -> ">= 1.3.0 and < 4.0.0"
         _ -> ">= 1.3.0"
-      end
-
-    phoenix_version =
-      case Version.compare(system_version, "1.4.0") do
-        :lt -> ">= 1.2.0 and < 1.4.0"
-        _ -> ">= 1.2.0"
       end
 
     decorator_version =
@@ -107,20 +98,12 @@ defmodule Appsignal.Mixfile do
       {:jason, "~> 1.0", optional: true},
       {:poison, poison_version, optional: true},
       {:decorator, decorator_version},
-      {:phoenix, phoenix_version, optional: true, only: [:prod, :test_phoenix, :dev]},
-      {:plug_cowboy, "~> 1.0", only: [:test, :test_phoenix, :test_no_nif]},
-      {:bypass, "~> 0.6.0", only: [:test, :test_phoenix, :test_no_nif]},
+      {:plug_cowboy, "~> 1.0", only: [:test, :test_no_nif]},
+      {:bypass, "~> 0.6.0", only: [:test, :test_no_nif]},
       {:ex_doc, "~> 0.12", only: :dev, runtime: false},
       {:credo, "~> 1.0.0", only: [:test, :dev], runtime: false},
       {:dialyxir, "~> 1.0.0-rc4", only: [:dev], runtime: false},
       {:telemetry, "~> 0.4"}
-    ] ++ live_view_dep()
-  end
-
-  defp live_view_dep do
-    case Version.compare(System.version(), "1.7.0") do
-      :lt -> []
-      _ -> [{:phoenix_live_view, "~> 0.9", optional: true, only: [:prod, :test_phoenix, :dev]}]
-    end
+    ]
   end
 end

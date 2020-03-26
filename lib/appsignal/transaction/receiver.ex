@@ -7,7 +7,7 @@ defmodule Appsignal.Transaction.Receiver do
 
   alias Appsignal.Transaction.ETS
 
-  if Mix.env() in [:test, :test_phoenix, :test_no_nif] do
+  if Mix.env() in [:test, :test_no_nif] do
     @deletion_delay 50
   else
     @deletion_delay 5_000

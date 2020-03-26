@@ -35,7 +35,6 @@ defmodule Appsignal.NifTest do
     end
 
     @tag :skip_env_test
-    @tag :skip_env_test_phoenix
     test "does not return the agent version if the agent is not installed" do
       assert Appsignal.Nif.agent_version() == nil
     end
