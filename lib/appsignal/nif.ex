@@ -273,7 +273,7 @@ defmodule Appsignal.Nif do
     _close_span(reference)
   end
 
-  if Mix.env() in [:test, :test_phoenix] do
+  if Mix.env() == :test do
     def data_to_json(reference) do
       _data_to_json(reference)
     end
@@ -497,7 +497,7 @@ defmodule Appsignal.Nif do
     :ok
   end
 
-  if Mix.env() in [:test, :test_phoenix, :test_no_nif] do
+  if Mix.env() in [:test, :test_no_nif] do
     def _data_to_json(resource) do
       resource
     end
