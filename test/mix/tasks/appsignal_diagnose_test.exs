@@ -135,7 +135,6 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
   describe "when the extension installation failed" do
     @tag :skip_env_test
-    @tag :skip_env_test_phoenix
     test "adds an error to the installation report", %{fake_report: fake_report} do
       run()
       report = received_report(fake_report)
@@ -146,7 +145,6 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     end
 
     @tag :skip_env_test
-    @tag :skip_env_test_phoenix
     test "prints the report" do
       output = run()
       assert String.contains?(output, "Extension installation report")
@@ -200,7 +198,6 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
   describe "when the download report file does not exist" do
     @tag :skip_env_test
-    @tag :skip_env_test_phoenix
     test "adds an error to the installation report", %{fake_report: fake_report} do
       run()
       report = received_report(fake_report)
@@ -218,7 +215,6 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     end
 
     @tag :skip_env_test
-    @tag :skip_env_test_phoenix
     test "prints a parsing error" do
       output = run()
       assert String.contains?(output, "Extension installation report")

@@ -31,8 +31,6 @@ defmodule Appsignal do
 
     initialize()
 
-    if phoenix?(), do: Appsignal.Phoenix.EventHandler.attach()
-
     Logger.add_backend(Appsignal.Error.Backend)
 
     children = [
@@ -51,14 +49,6 @@ defmodule Appsignal do
     add_default_probes()
 
     result
-  end
-
-  def phoenix? do
-    Code.ensure_loaded?(Phoenix)
-  end
-
-  def live_view? do
-    phoenix?() && Code.ensure_loaded?(Phoenix.LiveView)
   end
 
   @doc """
