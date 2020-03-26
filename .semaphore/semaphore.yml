@@ -1,0 +1,33 @@
+version: v1.0
+name: AppSignal Elixir Build and Tests
+agent:
+  machine:
+    type: e1-standard-2
+    os_image: ubuntu1804
+blocks:
+  - name: Run tests
+    task:
+      prologue:
+        commands:
+          - sem-version erlang 22
+          - sem-version elixir 1.10.2
+          - elixir -v
+          - checkout
+          - mix local.rebar --force
+          - mix deps.get
+      jobs:
+        - name: mix format --check-formatted
+          commands:
+            - mix format --check-formatted
+        - name: mix credo --strict
+          commands:
+            - mix credo --strict
+        - name: mix test
+          commands:
+            - mix test
+        - name: MIX_ENV=test_no_nif mix test
+          commands:
+            - MIX_ENV=test_no_nif mix test
+      env_vars:
+        - name: MIX_ENV
+          value: test
