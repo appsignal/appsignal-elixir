@@ -1,6 +1,6 @@
 use Mix.Config
 
-if Mix.env() in [:bench, :test, :test_phoenix, :test_no_nif] do
+if Mix.env() in [:bench, :test, :test_no_nif] do
   config :appsignal, appsignal_system: Appsignal.FakeSystem
   config :appsignal, appsignal_nif: Appsignal.FakeNif
   config :appsignal, appsignal_demo: Appsignal.FakeDemo

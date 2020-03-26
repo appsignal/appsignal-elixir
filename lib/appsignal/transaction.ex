@@ -94,7 +94,7 @@ defmodule Appsignal.Transaction do
     end
   end
 
-  if Mix.env() in [:test, :test_phoenix] do
+  if Mix.env() == :test do
     @spec to_map(Appsignal.Transaction.t()) :: map()
     def to_map(transaction) do
       {:ok, json} = Nif.transaction_to_json(transaction.resource)
@@ -492,27 +492,6 @@ defmodule Appsignal.Transaction do
 
   def set_request_metadata(%Transaction{} = transaction, %{}), do: transaction
   def set_request_metadata(_transaction, _conn), do: nil
-
-  if Appsignal.phoenix?() do
-    @doc """
-    Given the transaction and a %Plug.Conn{}, try to set the Phoenix controller module / action in the transaction.
-    """
-    def try_set_action(conn) do
-      IO.warn(
-        "Appsignal.Transaction.try_set_action/1 is deprecated. Use Appsignal.Plug.extract_action/1 and Appsignal.Transaction.set_action/1 instead."
-      )
-
-      Transaction.set_action(lookup(), Appsignal.Plug.extract_action(conn))
-    end
-
-    def try_set_action(transaction, conn) do
-      IO.warn(
-        "Appsignal.Transaction.try_set_action/2 is deprecated. Use Appsignal.Plug.extract_action/1 and Appsignal.Transaction.set_action/2 instead."
-      )
-
-      Transaction.set_action(transaction, Appsignal.Plug.extract_action(conn))
-    end
-  end
 
   defp to_s(value) when is_atom(value), do: Atom.to_string(value)
   defp to_s(value) when is_integer(value), do: Integer.to_string(value)
