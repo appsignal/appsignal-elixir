@@ -165,6 +165,48 @@ defmodule Appsignal.TracerTest do
     end
   end
 
+  describe "delete/1, with no registed spans" do
+    setup do
+      [return: Tracer.delete(self())]
+    end
+
+    test "returns :ok", %{return: return} do
+      assert return == :ok
+    end
+  end
+
+  describe "delete/1" do
+    setup :create_root_span
+
+    setup do
+      [return: Tracer.delete(self())]
+    end
+
+    test "returns :ok", %{return: return} do
+      assert return == :ok
+    end
+
+    test "deletes the span" do
+      assert :ets.lookup(:"$appsignal_registry", self()) == []
+    end
+  end
+
+  describe "delete/1, with multiple spans" do
+    setup [:create_root_span, :create_child_span]
+
+    setup do
+      [return: Tracer.delete(self())]
+    end
+
+    test "returns :ok", %{return: return} do
+      assert return == :ok
+    end
+
+    test "deletes the span" do
+      assert :ets.lookup(:"$appsignal_registry", self()) == []
+    end
+  end
+
   describe "ignore/1" do
     setup :ignore_process
 
