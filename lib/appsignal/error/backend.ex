@@ -6,7 +6,7 @@ defmodule Appsignal.Error.Backend do
 
   def init(opts), do: {:ok, opts}
 
-  def handle_event({:error, gl, {_, _, _, metadata} = event}, state) when node(gl) == node() do
+  def handle_event({:error, gl, {_, _, _, metadata}}, state) when node(gl) == node() do
     pid = metadata[:pid]
     {error, stacktrace} = metadata[:crash_reason]
 
