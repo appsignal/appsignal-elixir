@@ -1,5 +1,6 @@
 defmodule Appsignal.Monitor do
   use GenServer
+  alias Appsignal.Tracer
 
   def start_link do
     GenServer.start_link(__MODULE__, [], name: __MODULE__)
@@ -15,6 +16,11 @@ defmodule Appsignal.Monitor do
 
   def handle_cast({:monitor, pid}, state) do
     Process.monitor(pid)
+    {:noreply, state}
+  end
+
+  def handle_info({:DOWN, _ref, :process, pid, _}, state) do
+    Tracer.delete(pid)
     {:noreply, state}
   end
 end
