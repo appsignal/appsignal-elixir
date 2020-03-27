@@ -33,9 +33,14 @@ defmodule Appsignal.Plug do
       plug(Appsignal.Plug)
       use Plug.ErrorHandler
 
-      def handle_errors(conn, %{kind: _kind, reason: reason, stack: stack}) do
+      def handle_errors(%Plug.Conn{params: params} = conn, %{
+            kind: _kind,
+            reason: reason,
+            stack: stack
+          }) do
         @tracer.current_span()
         |> Appsignal.Plug.set_name(conn)
+        |> @span.set_sample_data("params", params)
         |> @span.add_error(reason, stack)
         |> @tracer.close_span()
 

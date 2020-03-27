@@ -61,7 +61,7 @@ defmodule Appsignal.PlugTest do
 
   describe "GET /exception" do
     setup do
-      get("/exception")
+      get("/exception", %{id: 4})
     end
 
     test "creates a root span" do
@@ -70,6 +70,10 @@ defmodule Appsignal.PlugTest do
 
     test "sets the span's name" do
       assert [{%Span{}, "GET /exception"}] = Test.Span.get!(:set_name)
+    end
+
+    test "sets the span's parameters" do
+      assert [{%Span{}, "params", %{"id" => 4}}] = Test.Span.get!(:set_sample_data)
     end
 
     test "adds the error to the span", %{exception: exception, stacktrace: stack} do
