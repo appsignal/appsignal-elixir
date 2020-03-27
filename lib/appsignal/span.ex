@@ -85,6 +85,8 @@ defmodule Appsignal.Span do
     span
   end
 
+  def set_sample_data(_span, _key, _value), do: nil
+
   def add_error(%Span{reference: reference} = span, error, stacktrace) do
     if Config.active?() do
       {name, message} = Appsignal.Error.metadata(error)
