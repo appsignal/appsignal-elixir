@@ -14,6 +14,12 @@ defmodule PlugWithAppsignal do
 
     send_resp(conn, 200, "Exception!")
   end
+
+  get "/bad_request" do
+    raise %Plug.BadRequestError{}
+
+    send_resp(conn, 200, "Bad request!")
+  end
 end
 
 defmodule Appsignal.PlugTest do
@@ -134,6 +140,20 @@ defmodule Appsignal.PlugTest do
 
     test "closes the nil-span" do
       assert [{nil}] = Test.Tracer.get!(:close_span)
+    end
+  end
+
+  describe "GET /bad_request" do
+    setup do
+      get("/bad_request")
+    end
+
+    test "does not add the error to the span" do
+      assert :error = Test.Span.get(:add_error)
+    end
+
+    test "ignores the process in the registry" do
+      assert :ets.lookup(:"$appsignal_registry", self()) == [{self(), :ignore}]
     end
   end
 

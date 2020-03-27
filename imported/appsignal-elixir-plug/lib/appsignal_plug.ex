@@ -33,6 +33,11 @@ defmodule Appsignal.Plug do
       plug(Appsignal.Plug)
       use Plug.ErrorHandler
 
+      def handle_errors(_conn, %{kind: _kind, reason: %{plug_status: status}})
+          when status < 500 do
+        @tracer.ignore()
+      end
+
       def handle_errors(conn, %{kind: _kind, reason: reason, stack: stack}) do
         conn = Plug.Conn.fetch_query_params(conn)
 
