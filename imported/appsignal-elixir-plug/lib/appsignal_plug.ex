@@ -51,9 +51,10 @@ defmodule Appsignal.Plug do
   def call(conn, _opts) do
     span = @tracer.create_span("unknown")
 
-    register_before_send(conn, fn conn ->
+    register_before_send(conn, fn %Plug.Conn{params: params} = conn ->
       span
       |> set_name(conn)
+      |> @span.set_sample_data("params", params)
       |> @tracer.close_span()
 
       conn

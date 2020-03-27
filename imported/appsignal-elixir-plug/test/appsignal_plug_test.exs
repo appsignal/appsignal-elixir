@@ -47,6 +47,18 @@ defmodule Appsignal.PlugTest do
     end
   end
 
+  describe "GET /?id=4" do
+    setup do
+      get("/", %{id: 4})
+
+      :ok
+    end
+
+    test "sets the span's parameters" do
+      assert [{%Span{}, "params", %{"id" => 4}}] = Test.Span.get!(:set_sample_data)
+    end
+  end
+
   describe "GET /exception" do
     setup do
       get("/exception")
@@ -121,8 +133,8 @@ defmodule Appsignal.PlugTest do
     end
   end
 
-  defp get(path) do
-    [conn: PlugWithAppsignal.call(conn(:get, path), [])]
+  defp get(path, params_or_body \\ nil) do
+    [conn: PlugWithAppsignal.call(conn(:get, path, params_or_body), [])]
   rescue
     wrapper_error in Plug.Conn.WrapperError ->
       [
