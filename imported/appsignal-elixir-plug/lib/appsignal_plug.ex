@@ -33,14 +33,12 @@ defmodule Appsignal.Plug do
       plug(Appsignal.Plug)
       use Plug.ErrorHandler
 
-      def handle_errors(%Plug.Conn{params: params} = conn, %{
-            kind: _kind,
-            reason: reason,
-            stack: stack
-          }) do
+      def handle_errors(conn, %{kind: _kind, reason: reason, stack: stack}) do
+        conn = Plug.Conn.fetch_query_params(conn)
+
         @tracer.current_span()
         |> Appsignal.Plug.set_name(conn)
-        |> @span.set_sample_data("params", params)
+        |> Appsignal.Plug.set_params(conn)
         |> @span.add_error(reason, stack)
         |> @tracer.close_span()
 
@@ -56,10 +54,12 @@ defmodule Appsignal.Plug do
   def call(conn, _opts) do
     span = @tracer.create_span("unknown")
 
-    register_before_send(conn, fn %Plug.Conn{params: params} = conn ->
+    register_before_send(conn, fn conn ->
+      conn = Plug.Conn.fetch_query_params(conn)
+
       span
       |> set_name(conn)
-      |> @span.set_sample_data("params", params)
+      |> set_params(conn)
       |> @tracer.close_span()
 
       conn
@@ -71,4 +71,9 @@ defmodule Appsignal.Plug do
   end
 
   def set_name(span, _conn), do: span
+
+  def set_params(span, conn) do
+    %Plug.Conn{params: params} = Plug.Conn.fetch_query_params(conn)
+    @span.set_sample_data(span, "params", params)
+  end
 end

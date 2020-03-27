@@ -49,19 +49,31 @@ defmodule Appsignal.PlugTest do
 
   describe "GET /?id=4" do
     setup do
-      get("/", %{id: 4})
+      get("/", %{id: "4"})
 
       :ok
     end
 
     test "sets the span's parameters" do
-      assert [{%Span{}, "params", %{"id" => 4}}] = Test.Span.get!(:set_sample_data)
+      assert [{%Span{}, "params", %{"id" => "4"}}] = Test.Span.get!(:set_sample_data)
     end
   end
 
-  describe "GET /exception" do
+  describe "GET /?id=4, with unfetched parameters" do
     setup do
-      get("/exception", %{id: 4})
+      get("/?id=4")
+
+      :ok
+    end
+
+    test "sets the span's parameters" do
+      assert [{%Span{}, "params", %{"id" => "4"}}] = Test.Span.get!(:set_sample_data)
+    end
+  end
+
+  describe "GET /exception?id=4" do
+    setup do
+      get("/exception", %{id: "4"})
     end
 
     test "creates a root span" do
@@ -73,7 +85,7 @@ defmodule Appsignal.PlugTest do
     end
 
     test "sets the span's parameters" do
-      assert [{%Span{}, "params", %{"id" => 4}}] = Test.Span.get!(:set_sample_data)
+      assert [{%Span{}, "params", %{"id" => "4"}}] = Test.Span.get!(:set_sample_data)
     end
 
     test "adds the error to the span", %{exception: exception, stacktrace: stack} do
@@ -86,6 +98,18 @@ defmodule Appsignal.PlugTest do
 
     test "ignores the process in the registry" do
       assert :ets.lookup(:"$appsignal_registry", self()) == [{self(), :ignore}]
+    end
+  end
+
+  describe "GET /exception?id=4, with unfetched parameters" do
+    setup do
+      get("/exception?id=4")
+
+      :ok
+    end
+
+    test "sets the span's parameters" do
+      assert [{%Span{}, "params", %{"id" => "4"}}] = Test.Span.get!(:set_sample_data)
     end
   end
 
