@@ -299,6 +299,10 @@ defmodule AppsignalSpanTest do
     test "returns the span", %{span: span} do
       assert Span.set_sample_data(span, "key", %{param: "value"}) == span
     end
+
+    test "returns nil when passing a nil-span" do
+      assert Span.set_sample_data(nil, "key", %{param: "value"}) == nil
+    end
   end
 
   describe ".close/1, when passing a nil" do
