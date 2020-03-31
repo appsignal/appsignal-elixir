@@ -83,12 +83,12 @@ if Appsignal.phoenix?() do
     @doc """
     Record a channel action. Meant to be called from the 'channel_action' instrumentation decorator.
     """
-    @spec channel_action(atom, String.t(), Phoenix.Socket.t(), fun) :: any
+    @spec channel_action(atom | String.t(), String.t(), Phoenix.Socket.t(), fun) :: any
     def channel_action(module, name, %Phoenix.Socket{} = socket, function) do
       channel_action(module, name, %Phoenix.Socket{} = socket, %{}, function)
     end
 
-    @spec channel_action(atom, String.t(), Phoenix.Socket.t(), map, fun) :: any
+    @spec channel_action(atom | String.t(), String.t(), Phoenix.Socket.t(), map, fun) :: any
     def channel_action(module, name, %Phoenix.Socket{} = socket, params, function) do
       transaction =
         @transaction.generate_id()
