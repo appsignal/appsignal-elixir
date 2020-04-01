@@ -126,7 +126,10 @@ defmodule Appsignal.Mixfile do
         ]
 
       _ ->
-        [{:plug, ">= 1.1.0", optional: true}]
+        case Version.compare(System.version(), "1.7.0") do
+          :lt -> [{:plug, ">= 1.1.0 and < 1.10.0", optional: true}]
+          _ -> [{:plug, ">= 1.1.0", optional: true}]
+        end
     end
   end
 
