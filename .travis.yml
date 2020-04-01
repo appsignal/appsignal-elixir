@@ -2,6 +2,7 @@ branches:
   only:
   - master
   - develop
+  - update-install-logging
 language: elixir
 elixir:
   - 1.10.2
