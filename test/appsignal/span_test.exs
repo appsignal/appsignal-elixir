@@ -15,7 +15,7 @@ defmodule AppsignalSpanTest do
     end
 
     test "creates a root span through the Nif" do
-      assert [{"root"}] = WrappedNif.get!(:create_root_span)
+      assert [{"web"}] = WrappedNif.get!(:create_root_span)
     end
 
     test "sets the span's reference", %{span: span} do
@@ -35,7 +35,7 @@ defmodule AppsignalSpanTest do
     end
 
     test "creates a root span through the Nif" do
-      assert [{"root"}] = WrappedNif.get!(:create_root_span)
+      assert [{"web"}] = WrappedNif.get!(:create_root_span)
     end
 
     test "sets the span's reference", %{span: span} do
@@ -67,32 +67,10 @@ defmodule AppsignalSpanTest do
     end
 
     test "creates a child span through the Nif", %{parent: parent} do
-      assert [{"child", parent_trace_id, parent_span_id}] = WrappedNif.get!(:create_child_span)
+      assert [{parent_trace_id, parent_span_id}] = WrappedNif.get!(:create_child_span)
 
       assert {:ok, ^parent_trace_id} = Span.trace_id(parent)
       assert {:ok, ^parent_span_id} = Span.span_id(parent)
-    end
-
-    test "sets the span's reference", %{span: span} do
-      assert is_reference(span.reference)
-    end
-
-    test "sets the span's pid", %{span: span} do
-      assert span.pid == self()
-    end
-  end
-
-  describe ".create_child/3, with a nil-parent" do
-    setup do
-      [span: Span.create_child("orphan", nil, self())]
-    end
-
-    test "returns a span", %{span: span} do
-      assert %Span{} = span
-    end
-
-    test "creates a root span through the Nif" do
-      assert [{"orphan"}] = WrappedNif.get!(:create_root_span)
     end
 
     test "sets the span's reference", %{span: span} do
@@ -112,7 +90,7 @@ defmodule AppsignalSpanTest do
     end
 
     test "creates a child span through the Nif", %{parent: parent} do
-      assert [{"child", parent_trace_id, parent_span_id}] = WrappedNif.get!(:create_child_span)
+      assert [{parent_trace_id, parent_span_id}] = WrappedNif.get!(:create_child_span)
 
       assert {:ok, ^parent_trace_id} = Span.trace_id(parent)
       assert {:ok, ^parent_span_id} = Span.span_id(parent)
@@ -325,21 +303,21 @@ defmodule AppsignalSpanTest do
   end
 
   defp create_root_span(_context) do
-    [span: Span.create_root("root", self())]
+    [span: Span.create_root("web", self())]
   end
 
   defp create_child_span(%{span: span}) do
-    [span: Span.create_child("child", span, self()), parent: span]
+    [span: Span.create_child(span, self()), parent: span]
   end
 
   defp create_root_span_in_other_process(_context) do
     pid = Process.whereis(WrappedNif)
-    [span: Span.create_root("root", pid), pid: pid]
+    [span: Span.create_root("web", pid), pid: pid]
   end
 
   defp create_child_span_in_other_process(%{span: span}) do
     pid = Process.whereis(WrappedNif)
-    [span: Span.create_child("child", span, pid), pid: pid, parent: span]
+    [span: Span.create_child(span, pid), pid: pid, parent: span]
   end
 
   defp disable_appsignal(_context) do
