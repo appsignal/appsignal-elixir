@@ -5,14 +5,14 @@ defmodule Appsignal.WrappedNif do
   defdelegate trace_id(span), to: Nif
   defdelegate span_id(span), to: Nif
 
-  def create_root_span(name) do
-    add(:create_root_span, {name})
-    Nif.create_root_span(name)
+  def create_root_span(namespace) do
+    add(:create_root_span, {namespace})
+    Nif.create_root_span(namespace)
   end
 
-  def create_child_span(trace_id, span_id, name) do
-    add(:create_child_span, {trace_id, span_id, name})
-    Nif.create_child_span(trace_id, span_id, name)
+  def create_child_span(trace_id, span_id) do
+    add(:create_child_span, {trace_id, span_id})
+    Nif.create_child_span(trace_id, span_id)
   end
 
   def set_span_name(reference, name) do
