@@ -6,14 +6,19 @@ defmodule Appsignal.Test.Tracer do
   defdelegate current_span(pid), to: Tracer
   defdelegate ignore(), to: Tracer
 
-  def create_span(name) do
-    add(:create_span, {name})
-    Tracer.create_span(name)
+  def create_span(namespace) do
+    add(:create_span, {namespace})
+    Tracer.create_span(namespace)
   end
 
-  def create_span(name, parent, pid) do
-    add(:create_span, {name, parent, pid})
-    Tracer.create_span(name, parent, pid)
+  def create_span(namespace, parent) do
+    add(:create_span, {namespace, parent})
+    Tracer.create_span(namespace, parent)
+  end
+
+  def create_span(namespace, parent, pid) do
+    add(:create_span, {namespace, parent, pid})
+    Tracer.create_span(namespace, parent, pid)
   end
 
   def close_span(span) do
