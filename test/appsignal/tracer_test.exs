@@ -229,7 +229,7 @@ defmodule Appsignal.TracerTest do
   end
 
   defp create_root_span(_context) do
-    [span: Tracer.create_span("root")]
+    [span: Tracer.create_span("web")]
   end
 
   defp create_child_span(%{span: span}) do
