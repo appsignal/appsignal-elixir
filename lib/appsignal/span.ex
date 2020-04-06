@@ -3,21 +3,19 @@ defmodule Appsignal.Span do
   defstruct [:reference, :pid]
   @nif Application.get_env(:appsignal, :appsignal_tracer_nif, Appsignal.Nif)
 
-  def create_root(name, pid) do
+  def create_root(namespace, pid) do
     if Config.active?() do
-      {:ok, reference} = @nif.create_root_span(name)
+      {:ok, reference} = @nif.create_root_span(namespace)
 
       %Span{reference: reference, pid: pid}
     end
   end
 
-  def create_child(name, nil, pid), do: create_root(name, pid)
-
-  def create_child(name, parent, pid) do
+  def create_child(parent, pid) do
     if Config.active?() do
       {:ok, trace_id} = Span.trace_id(parent)
       {:ok, span_id} = Span.span_id(parent)
-      {:ok, reference} = @nif.create_child_span(name, trace_id, span_id)
+      {:ok, reference} = @nif.create_child_span(trace_id, span_id)
 
       %Span{reference: reference, pid: pid}
     end
