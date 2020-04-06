@@ -229,12 +229,12 @@ defmodule Appsignal.Nif do
     _span_id(reference)
   end
 
-  def create_root_span(name) do
-    _create_root_span(name)
+  def create_root_span(namespace) do
+    _create_root_span(namespace)
   end
 
-  def create_child_span(name, trace_id, span_id) do
-    _create_child_span(name, trace_id, span_id)
+  def create_child_span(trace_id, span_id) do
+    _create_child_span(trace_id, span_id)
   end
 
   def set_span_name(reference, name) do
@@ -453,11 +453,11 @@ defmodule Appsignal.Nif do
     {:ok, 'span123'}
   end
 
-  def _create_root_span(_name) do
+  def _create_root_span(_namespace) do
     {:ok, make_ref()}
   end
 
-  def _create_child_span(_name, _trace_id, _span_id) do
+  def _create_child_span(_trace_id, _span_id) do
     {:ok, make_ref()}
   end
 
