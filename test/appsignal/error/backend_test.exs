@@ -1,5 +1,5 @@
 defmodule Appsignal.Error.BackendTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case
   import AppsignalTest.Utils
   alias Appsignal.{Error.Backend, Span, Test, Tracer, WrappedNif}
 
