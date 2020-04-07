@@ -1,8 +1,8 @@
-defmodule Appsignal.Backtrace do
+defmodule Appsignal.Stacktrace do
   @doc ~S"""
   Parses the given stacktrace into a backtrace list.
   """
-  def from_stacktrace(stacktrace) do
+  def format(stacktrace) do
     Enum.map(stacktrace, &format_stacktrace_entry/1)
   end
 
