@@ -1,12 +1,15 @@
-defmodule Appsignal.BacktraceTest do
-  use ExUnit.Case, async: true
-  doctest Appsignal.Backtrace
-
-  @match_line {:elixir_translator, :guard_op, 2, [file: 'src/elixir_translator.erl', line: 317]}
+defmodule Appsignal.StacktraceTest do
+  use ExUnit.Case
+  alias Appsignal.Stacktrace
 
   test "formats stacktrace lines" do
-    assert Appsignal.Backtrace.from_stacktrace([@match_line]) == [
-             Exception.format_stacktrace_entry(@match_line)
+    stacktrace =
+      [line] = [
+        {:elixir_translator, :guard_op, 2, [file: 'src/elixir_translator.erl', line: 317]}
+      ]
+
+    assert Stacktrace.format(stacktrace) == [
+             Exception.format_stacktrace_entry(line)
            ]
   end
 
@@ -15,13 +18,13 @@ defmodule Appsignal.BacktraceTest do
       {:erl_internal, :op_type, [:get_stacktrace, 0], [file: 'erl_internal.erl', line: 212]}
     ]
 
-    [line] = Appsignal.Backtrace.from_stacktrace(stacktrace)
+    [line] = Stacktrace.format(stacktrace)
     assert line =~ ~r{\(stdlib( [\w.-]+)?\) erl_internal.erl:212: :erl_internal.op_type/2}
   end
 
   test "handles lists of binaries" do
     stacktrace = ["(elixir) src/elixir_translator.erl:317: :elixir_translator.guard_op/2"]
 
-    assert Appsignal.Backtrace.from_stacktrace(stacktrace) == stacktrace
+    assert Stacktrace.format(stacktrace) == stacktrace
   end
 end
