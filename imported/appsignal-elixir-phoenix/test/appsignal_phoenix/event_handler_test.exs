@@ -57,6 +57,10 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
     test "starts a child span", %{span: parent} do
       assert [{"web", ^parent}] = Test.Tracer.get!(:create_span)
     end
+
+    test "sets the span's name" do
+      assert [{%Span{}, "call.phoenix_endpoint"}] = Test.Span.get!(:set_name)
+    end
   end
 
   defp attached?(event) do

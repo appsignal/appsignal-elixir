@@ -28,7 +28,9 @@ defmodule Appsignal.Phoenix.EventHandler do
   end
 
   def phoenix_endpoint_start(_event, _measurements, _metadata, _config) do
-    @tracer.create_span("web", @tracer.current_span())
+    "web"
+    |> @tracer.create_span(@tracer.current_span())
+    |> @span.set_name("call.phoenix_endpoint")
   end
 
   defp module_name("Elixir." <> module), do: module
