@@ -57,7 +57,7 @@ defmodule Appsignal.Plug do
   end
 
   def call(conn, _opts) do
-    span = @tracer.create_span("unknown")
+    span = @tracer.create_span("web")
 
     register_before_send(conn, fn conn ->
       conn = Plug.Conn.fetch_query_params(conn)

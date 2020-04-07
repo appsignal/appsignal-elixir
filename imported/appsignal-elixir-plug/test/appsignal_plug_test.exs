@@ -41,7 +41,7 @@ defmodule Appsignal.PlugTest do
     end
 
     test "creates a root span" do
-      assert Test.Tracer.get!(:create_span) == [{"unknown"}]
+      assert Test.Tracer.get!(:create_span) == [{"web"}]
     end
 
     test "sets the span's name" do
@@ -83,7 +83,7 @@ defmodule Appsignal.PlugTest do
     end
 
     test "creates a root span" do
-      assert Test.Tracer.get!(:create_span) == [{"unknown"}]
+      assert Test.Tracer.get!(:create_span) == [{"web"}]
     end
 
     test "sets the span's name" do
@@ -127,7 +127,7 @@ defmodule Appsignal.PlugTest do
     end
 
     test "creates a root span" do
-      assert Test.Tracer.get!(:create_span) == [{"unknown"}]
+      assert Test.Tracer.get!(:create_span) == [{"web"}]
     end
 
     test "adds the name to a nil-span" do
