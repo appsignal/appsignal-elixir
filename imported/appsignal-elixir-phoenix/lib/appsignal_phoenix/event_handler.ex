@@ -5,7 +5,8 @@ defmodule Appsignal.Phoenix.EventHandler do
   def attach do
     handlers = %{
       [:phoenix, :router_dispatch, :start] => &phoenix_router_dispatch_start/4,
-      [:phoenix, :endpoint, :start] => &phoenix_endpoint_start/4
+      [:phoenix, :endpoint, :start] => &phoenix_endpoint_start/4,
+      [:phoenix, :endpoint, :stop] => &phoenix_endpoint_stop/4
     }
 
     for {event, fun} <- handlers do
@@ -31,6 +32,10 @@ defmodule Appsignal.Phoenix.EventHandler do
     "web"
     |> @tracer.create_span(@tracer.current_span())
     |> @span.set_name("call.phoenix_endpoint")
+  end
+
+  defp phoenix_endpoint_stop(_event, _measurements, _metadata, _config) do
+    @tracer.close_span(@tracer.current_span())
   end
 
   defp module_name("Elixir." <> module), do: module

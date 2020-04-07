@@ -41,18 +41,7 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
   end
 
   describe "after receiving an endpoint-start event" do
-    setup [:create_root_span]
-
-    setup do
-      :telemetry.execute(
-        [:phoenix, :endpoint, :start],
-        %{time: -576_460_736_044_040_000},
-        %{
-          conn: %Plug.Conn{},
-          options: []
-        }
-      )
-    end
+    setup [:create_root_span, :endpoint_start_event]
 
     test "starts a child span", %{span: parent} do
       assert [{"web", ^parent}] = Test.Tracer.get!(:create_span)
@@ -60,6 +49,14 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
 
     test "sets the span's name" do
       assert [{%Span{}, "call.phoenix_endpoint"}] = Test.Span.get!(:set_name)
+    end
+  end
+
+  describe "after receiving an endpoint-start and an endpoint-stop event" do
+    setup [:create_root_span, :endpoint_start_event, :endpoint_finish_event]
+
+    test "finishes an event" do
+      assert [{%Span{}}] = Test.Tracer.get!(:close_span)
     end
   end
 
@@ -91,6 +88,28 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
         plug: AppsignalPhoenixExampleWeb.PageController,
         plug_opts: plug_opts,
         route: "/"
+      }
+    )
+  end
+
+  def endpoint_start_event(_context) do
+    :telemetry.execute(
+      [:phoenix, :endpoint, :start],
+      %{time: -576_460_736_044_040_000},
+      %{
+        conn: %Plug.Conn{},
+        options: []
+      }
+    )
+  end
+
+  def endpoint_finish_event(_context) do
+    :telemetry.execute(
+      [:phoenix, :endpoint, :stop],
+      %{duration: 49_474_000},
+      %{
+        conn: %Plug.Conn{status: 200},
+        options: []
       }
     )
   end
