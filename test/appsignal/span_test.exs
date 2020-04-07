@@ -210,7 +210,7 @@ defmodule AppsignalSpanTest do
           raise "Exception!"
         catch
           :error, error ->
-            Span.add_error(span, error, System.stacktrace())
+            Span.add_error(span, error, __STACKTRACE__)
         end
 
       [return: return]
@@ -232,7 +232,7 @@ defmodule AppsignalSpanTest do
           raise "Exception!"
         catch
           :error, error ->
-            Span.add_error(nil, error, System.stacktrace())
+            Span.add_error(nil, error, __STACKTRACE__)
         end
 
       [return: return]
@@ -256,7 +256,7 @@ defmodule AppsignalSpanTest do
           raise "Exception!"
         catch
           :error, error ->
-            Span.add_error(span, error, System.stacktrace())
+            Span.add_error(span, error, __STACKTRACE__)
         end
 
       [return: return]
