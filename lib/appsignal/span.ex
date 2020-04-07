@@ -91,7 +91,7 @@ defmodule Appsignal.Span do
 
       encoded_stacktrace =
         stacktrace
-        |> Enum.map(&Exception.format_stacktrace_entry/1)
+        |> Appsignal.Stacktrace.format()
         |> Appsignal.Utils.DataEncoder.encode()
 
       :ok = @nif.add_span_error(reference, name, message, encoded_stacktrace)

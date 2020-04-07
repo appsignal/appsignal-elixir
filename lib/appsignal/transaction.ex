@@ -234,7 +234,7 @@ defmodule Appsignal.Transaction do
 
     backtrace_data =
       backtrace
-      |> Appsignal.Backtrace.from_stacktrace()
+      |> Appsignal.Stacktrace.format()
       |> Appsignal.Utils.DataEncoder.encode()
 
     :ok = Nif.set_error(transaction.resource, name, message, backtrace_data)
