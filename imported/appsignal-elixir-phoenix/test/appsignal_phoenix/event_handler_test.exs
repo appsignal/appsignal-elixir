@@ -4,6 +4,8 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
 
   setup do
     Test.Span.start_link()
+    Test.Tracer.start_link()
+
     :ok
   end
 
@@ -35,6 +37,25 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
 
     test "does not set the transaction's action name" do
       assert Test.Span.get(:set_name) == :error
+    end
+  end
+
+  describe "after receiving an endpoint-start event" do
+    setup [:create_root_span]
+
+    setup do
+      :telemetry.execute(
+        [:phoenix, :endpoint, :start],
+        %{time: -576_460_736_044_040_000},
+        %{
+          conn: %Plug.Conn{},
+          options: []
+        }
+      )
+    end
+
+    test "starts a child span", %{span: parent} do
+      assert [{"web", ^parent}] = Test.Tracer.get!(:create_span)
     end
   end
 
