@@ -24,6 +24,20 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
     end
   end
 
+  describe "after receiving a router_dispatch-start event with non-atom opts" do
+    setup [:create_root_span]
+
+    setup do: do_router_dispatch_start_event(atom?: false)
+
+    test "keeps the handler attached" do
+      assert attached?([:phoenix, :router_dispatch, :start])
+    end
+
+    test "does not set the transaction's action name" do
+      assert Test.Span.get(:set_name) == :error
+    end
+  end
+
   defp attached?(event) do
     event
     |> :telemetry.list_handlers()
@@ -37,6 +51,10 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
   end
 
   defp router_dispatch_start_event(_context) do
+    do_router_dispatch_start_event()
+  end
+
+  defp do_router_dispatch_start_event(plug_opts \\ :index) do
     :telemetry.execute(
       [:phoenix, :router_dispatch, :start],
       %{time: -576_460_736_044_040_000},
@@ -46,7 +64,7 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
         path_params: %{},
         pipe_through: [:browser],
         plug: AppsignalPhoenixExampleWeb.PageController,
-        plug_opts: :index,
+        plug_opts: plug_opts,
         route: "/"
       }
     )

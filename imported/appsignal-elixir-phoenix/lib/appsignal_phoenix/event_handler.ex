@@ -12,8 +12,18 @@ defmodule Appsignal.Phoenix.EventHandler do
     end
   end
 
-  defp phoenix_router_dispatch_start(_, _, %{plug: controller, plug_opts: action}, _) do
+  defp phoenix_router_dispatch_start(
+         _,
+         _measurements,
+         %{plug: controller, plug_opts: action},
+         _config
+       )
+       when is_atom(action) do
     @span.set_name(Tracer.current_span(), "#{module_name(controller)}##{action}")
+  end
+
+  defp phoenix_router_dispatch_start(_event, _measurements, _metadata, _config) do
+    :ok
   end
 
   defp module_name("Elixir." <> module), do: module
