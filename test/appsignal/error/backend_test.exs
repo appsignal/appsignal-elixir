@@ -1,7 +1,6 @@
 defmodule Appsignal.Error.BackendTest do
   use ExUnit.Case, async: true
   import AppsignalTest.Utils
-  import ExUnit.CaptureIO
   alias Appsignal.{Error.Backend, Span, Test, Tracer, WrappedNif}
 
   setup do
@@ -27,7 +26,7 @@ defmodule Appsignal.Error.BackendTest do
       end)
     end
 
-    test "adds an error to the created span", %{pid: pid} do
+    test "adds an error to the created span" do
       until(fn ->
         assert {:ok, [{%Span{}, %RuntimeError{message: "Exception"}, stack}]} =
                  Test.Span.get(:add_error)
@@ -36,7 +35,7 @@ defmodule Appsignal.Error.BackendTest do
       end)
     end
 
-    test "closes the created span", %{pid: pid} do
+    test "closes the created span" do
       until(fn ->
         assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
       end)
@@ -69,7 +68,7 @@ defmodule Appsignal.Error.BackendTest do
       end)
     end
 
-    test "closes the existing span", %{span: span, pid: pid} do
+    test "closes the existing span", %{span: span} do
       until(fn ->
         assert {:ok, [{^span}]} = Test.Tracer.get(:close_span)
       end)
@@ -92,7 +91,7 @@ defmodule Appsignal.Error.BackendTest do
       end)
     end
 
-    test "adds an error to the created span", %{pid: pid} do
+    test "adds an error to the created span" do
       until(fn ->
         assert {:ok, [{%Span{}, %ArgumentError{message: "argument error"}, stack}]} =
                  Test.Span.get(:add_error)
@@ -101,7 +100,7 @@ defmodule Appsignal.Error.BackendTest do
       end)
     end
 
-    test "closes the created span", %{pid: pid} do
+    test "closes the created span" do
       until(fn ->
         assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
       end)
@@ -135,7 +134,7 @@ defmodule Appsignal.Error.BackendTest do
       end)
     end
 
-    test "adds an error to the created span", %{pid: pid} do
+    test "adds an error to the created span" do
       until(fn ->
         assert {:ok, [{%Span{}, %RuntimeError{message: "Exception"}, stack}]} =
                  Test.Span.get(:add_error)
@@ -144,7 +143,7 @@ defmodule Appsignal.Error.BackendTest do
       end)
     end
 
-    test "closes the created span", %{pid: pid} do
+    test "closes the created span" do
       until(fn ->
         assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
       end)
@@ -182,7 +181,7 @@ defmodule Appsignal.Error.BackendTest do
       end)
     end
 
-    test "adds an error to the created span", %{pid: pid} do
+    test "adds an error to the created span" do
       until(fn ->
         assert {:ok, [{%Span{}, %KeyError{}, stack}]} = Test.Span.get(:add_error)
 
@@ -190,7 +189,7 @@ defmodule Appsignal.Error.BackendTest do
       end)
     end
 
-    test "closes the created span", %{pid: pid} do
+    test "closes the created span" do
       until(fn ->
         assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
       end)
