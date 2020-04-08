@@ -37,7 +37,9 @@ defmodule Appsignal.Plug do
         try do
           conn = super(conn, opts)
         rescue
-          reason -> Appsignal.Plug.handle_error(span, reason)
+          reason ->
+            Appsignal.Plug.handle_error(span, reason)
+            reraise(reason, __STACKTRACE__)
         else
           conn ->
             span
@@ -62,19 +64,12 @@ defmodule Appsignal.Plug do
     @span.set_sample_data(span, "params", params)
   end
 
-  def handle_error(
-        _span,
-        %Plug.Conn.WrapperError{reason: %{plug_status: status}, stack: stack} = reason
-      )
+  def handle_error(_span, %Plug.Conn.WrapperError{reason: %{plug_status: status}})
       when status < 500 do
     @tracer.ignore()
-    reraise(reason, stack)
   end
 
-  def handle_error(
-        span,
-        %Plug.Conn.WrapperError{conn: conn, reason: wrapped_reason, stack: stack} = reason
-      ) do
+  def handle_error(span, %Plug.Conn.WrapperError{conn: conn, reason: wrapped_reason, stack: stack}) do
     span
     |> @span.add_error(wrapped_reason, stack)
     |> Appsignal.Plug.set_name(conn)
@@ -82,7 +77,5 @@ defmodule Appsignal.Plug do
     |> @tracer.close_span()
 
     @tracer.ignore()
-
-    reraise(reason, stack)
   end
 end
