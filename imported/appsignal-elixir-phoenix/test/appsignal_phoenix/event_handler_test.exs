@@ -21,8 +21,8 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
     end
 
     test "sets the transaction's action name" do
-      assert [{%Span{}, "AppsignalPhoenixExampleWeb.PageController#index"}] =
-               Test.Span.get!(:set_name)
+      assert {:ok, [{%Span{}, "AppsignalPhoenixExampleWeb.PageController#index"}]} =
+               Test.Span.get(:set_name)
     end
   end
 
@@ -44,11 +44,11 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
     setup [:create_root_span, :endpoint_start_event]
 
     test "starts a child span", %{span: parent} do
-      assert [{"web", ^parent}] = Test.Tracer.get!(:create_span)
+      assert {:ok, [{"web", ^parent}]} = Test.Tracer.get(:create_span)
     end
 
     test "sets the span's name" do
-      assert [{%Span{}, "call.phoenix_endpoint"}] = Test.Span.get!(:set_name)
+      assert {:ok, [{%Span{}, "call.phoenix_endpoint"}]} = Test.Span.get(:set_name)
     end
   end
 
@@ -56,7 +56,7 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
     setup [:create_root_span, :endpoint_start_event, :endpoint_finish_event]
 
     test "finishes an event" do
-      assert [{%Span{}}] = Test.Tracer.get!(:close_span)
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
     end
   end
 

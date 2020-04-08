@@ -23,15 +23,15 @@ defmodule Appsignal.PhoenixTest do
     end
 
     test "creates a root span" do
-      assert Test.Tracer.get!(:create_span) == [{"web"}]
+      assert Test.Tracer.get(:create_span) == {:ok, [{"web"}]}
     end
 
     test "sets the span's name" do
-      assert [{%Span{}, "PhoenixWeb.Controller#index"}] = Test.Span.get!(:set_name)
+      assert {:ok, [{%Span{}, "PhoenixWeb.Controller#index"}]} = Test.Span.get(:set_name)
     end
 
     test "closes the span" do
-      assert [{%Span{}}] = Test.Tracer.get!(:close_span)
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
     end
   end
 
@@ -45,19 +45,19 @@ defmodule Appsignal.PhoenixTest do
     end
 
     test "creates a root span" do
-      assert Test.Tracer.get!(:create_span) == [{"web"}]
+      assert Test.Tracer.get(:create_span) == {:ok, [{"web"}]}
     end
 
     test "sets the span's name" do
-      assert [{%Span{}, "PhoenixWeb.Controller#exception"}] = Test.Span.get!(:set_name)
+      assert {:ok, [{%Span{}, "PhoenixWeb.Controller#exception"}]} = Test.Span.get(:set_name)
     end
 
     test "adds an error to the span", %{reason: reason} do
-      assert [{%Span{}, ^reason, _}] = Test.Span.get!(:add_error)
+      assert {:ok, [{%Span{}, ^reason, _}]} = Test.Span.get(:add_error)
     end
 
     test "closes the span" do
-      assert [{%Span{}}] = Test.Tracer.get!(:close_span)
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
     end
   end
 
@@ -69,19 +69,19 @@ defmodule Appsignal.PhoenixTest do
     end
 
     test "creates a root span" do
-      assert Test.Tracer.get!(:create_span) == [{"web"}]
+      assert Test.Tracer.get(:create_span) == {:ok, [{"web"}]}
     end
 
     test "adds the name to a nil-span" do
-      assert [{nil, "PhoenixWeb.Controller#exception"}] = Test.Span.get!(:set_name)
+      assert {:ok, [{nil, "PhoenixWeb.Controller#exception"}]} = Test.Span.get(:set_name)
     end
 
     test "adds the error to a nil-span", %{reason: reason} do
-      assert [{nil, ^reason, _}] = Test.Span.get!(:add_error)
+      assert {:ok, [{nil, ^reason, _}]} = Test.Span.get(:add_error)
     end
 
     test "closes the nil-span" do
-      assert [{nil}] = Test.Tracer.get!(:close_span)
+      assert {:ok, [{nil}]} = Test.Tracer.get(:close_span)
     end
   end
 
