@@ -230,7 +230,7 @@ defmodule AppsignalSpanTest do
     setup %{span: span} do
       return =
         try do
-          String.to_integer(number)
+          String.to_integer("one")
         rescue
           reason -> Span.add_error(span, reason, __STACKTRACE__)
         end
