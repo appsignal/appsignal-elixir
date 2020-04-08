@@ -1,5 +1,4 @@
 defmodule Appsignal.Plug do
-  @tracer Application.get_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
   @span Application.get_env(:appsignal, :appsignal_span, Appsignal.Span)
 
   @moduledoc """
@@ -38,7 +37,12 @@ defmodule Appsignal.Plug do
           conn = super(conn, opts)
         rescue
           reason ->
-            Appsignal.Plug.handle_error(span, reason)
+            span
+            |> Appsignal.Plug.handle_error(reason)
+            |> @tracer.close_span()
+
+            @tracer.ignore()
+
             reraise(reason, __STACKTRACE__)
         else
           conn ->
@@ -64,9 +68,9 @@ defmodule Appsignal.Plug do
     @span.set_sample_data(span, "params", params)
   end
 
-  def handle_error(_span, %Plug.Conn.WrapperError{reason: %{plug_status: status}})
+  def handle_error(span, %Plug.Conn.WrapperError{reason: %{plug_status: status}})
       when status < 500 do
-    @tracer.ignore()
+    span
   end
 
   def handle_error(span, %Plug.Conn.WrapperError{conn: conn, reason: wrapped_reason, stack: stack}) do
@@ -74,8 +78,5 @@ defmodule Appsignal.Plug do
     |> @span.add_error(wrapped_reason, stack)
     |> Appsignal.Plug.set_name(conn)
     |> Appsignal.Plug.set_params(conn)
-    |> @tracer.close_span()
-
-    @tracer.ignore()
   end
 end
