@@ -10,15 +10,21 @@ defmodule Appsignal.Error.Backend do
     pid = metadata[:pid]
     {error, stacktrace} = metadata[:crash_reason]
 
-    span =
-      case @tracer.current_span(pid) do
-        nil -> @tracer.create_span("", nil, pid)
-        current -> current
-      end
+    case Keyword.get(metadata, :crash_reason) do
+      {error, stacktrace} ->
+        span =
+          case @tracer.current_span(pid) do
+            nil -> @tracer.create_span("", nil, pid)
+            current -> current
+          end
 
-    span
-    |> @span.add_error(error, stacktrace)
-    |> @tracer.close_span()
+        span
+        |> @span.add_error(error, stacktrace)
+        |> @tracer.close_span()
+
+      _ ->
+        :ok
+    end
 
     {:ok, state}
   end
