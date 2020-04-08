@@ -1,6 +1,7 @@
 defmodule PlugWithAppsignal do
   use Plug.Router
   use Appsignal.Plug
+  use Plug.ErrorHandler
 
   plug(:match)
   plug(:dispatch)
@@ -19,6 +20,13 @@ defmodule PlugWithAppsignal do
     raise %Plug.BadRequestError{}
 
     send_resp(conn, 200, "Bad request!")
+  end
+
+  # NOTE: This test module includes an error handler to make sure AppSignal's
+  # error handling keeps working even when custom error handlers are defined by
+  # the host application.
+  def handle_errors(conn, %{reason: reason}) do
+    send_resp(conn, 500, inspect(reason))
   end
 end
 
