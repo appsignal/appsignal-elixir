@@ -22,6 +22,12 @@ defmodule PlugWithAppsignal do
     send_resp(conn, 200, "Bad request!")
   end
 
+  get "/custom_name" do
+    conn
+    |> Appsignal.Plug.put_name("PlugWithAppsignal#custom_name")
+    |> send_resp(200, "Custom name!")
+  end
+
   # NOTE: This test module includes an call/2 override and an error handler to
   # make sure AppSignal does not interfere with either of these, if defined by
   # the host application.
@@ -188,6 +194,16 @@ defmodule Appsignal.PlugTest do
 
     test "ignores the process in the registry" do
       assert :ets.lookup(:"$appsignal_registry", self()) == [{self(), :ignore}]
+    end
+  end
+
+  describe "GET /custom_name" do
+    setup do
+      get("/custom_name")
+    end
+
+    test "does not overwrite the custom name" do
+      assert {:ok, [{%Span{}, "PlugWithAppsignal#custom_name"}]} = Test.Span.get(:set_name)
     end
   end
 
