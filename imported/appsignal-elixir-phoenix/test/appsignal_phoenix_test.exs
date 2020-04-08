@@ -88,8 +88,8 @@ defmodule Appsignal.PhoenixTest do
   defp get(path) do
     try do
       %{conn: get(build_conn(), path)}
-    catch
-      :error, reason -> %{reason: reason}
+    rescue
+      reason -> %{reason: reason}
     end
   end
 
