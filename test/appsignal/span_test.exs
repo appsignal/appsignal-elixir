@@ -208,9 +208,8 @@ defmodule AppsignalSpanTest do
       return =
         try do
           raise "Exception!"
-        catch
-          :error, error ->
-            Span.add_error(span, error, __STACKTRACE__)
+        rescue
+          reason -> Span.add_error(span, reason, __STACKTRACE__)
         end
 
       [return: return]
@@ -225,14 +224,37 @@ defmodule AppsignalSpanTest do
     end
   end
 
+  describe ".set_error/3, with a badarg" do
+    setup :create_root_span
+
+    setup %{span: span} do
+      return =
+        try do
+          String.to_integer(number)
+        rescue
+          reason -> Span.add_error(span, reason, __STACKTRACE__)
+        end
+
+      [return: return]
+    end
+
+    test "returns the span", %{span: span, return: return} do
+      assert return == span
+    end
+
+    test "sets the error through the Nif", %{span: %Span{reference: reference}} do
+      assert [{^reference, "ArgumentError", "argument error", _}] =
+               WrappedNif.get!(:add_span_error)
+    end
+  end
+
   describe ".set_error/3, with a nil span" do
     setup do
       return =
         try do
           raise "Exception!"
-        catch
-          :error, error ->
-            Span.add_error(nil, error, __STACKTRACE__)
+        rescue
+          reason -> Span.add_error(nil, reason, __STACKTRACE__)
         end
 
       [return: return]
@@ -254,9 +276,8 @@ defmodule AppsignalSpanTest do
       return =
         try do
           raise "Exception!"
-        catch
-          :error, error ->
-            Span.add_error(span, error, __STACKTRACE__)
+        rescue
+          reason -> Span.add_error(span, reason, __STACKTRACE__)
         end
 
       [return: return]
