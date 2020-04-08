@@ -22,9 +22,16 @@ defmodule PlugWithAppsignal do
     send_resp(conn, 200, "Bad request!")
   end
 
-  # NOTE: This test module includes an error handler to make sure AppSignal's
-  # error handling keeps working even when custom error handlers are defined by
+  # NOTE: This test module includes an call/2 override and an error handler to
+  # make sure AppSignal does not interfere with either of these, if defined by
   # the host application.
+
+  def call(conn, opts) do
+    conn
+    |> Plug.Conn.assign(:overridden?, true)
+    |> super(opts)
+  end
+
   def handle_errors(conn, %{reason: reason}) do
     send_resp(conn, 500, inspect(reason))
   end
@@ -48,6 +55,10 @@ defmodule Appsignal.PlugTest do
 
     test "returns the conn", %{conn: conn} do
       assert %Plug.Conn{state: :sent} = conn
+    end
+
+    test "passes through the overridden call", %{conn: conn} do
+      assert %Plug.Conn{assigns: %{overridden?: true}} = conn
     end
 
     test "creates a root span" do

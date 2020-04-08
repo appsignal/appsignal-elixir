@@ -54,6 +54,8 @@ defmodule Appsignal.Plug do
             conn
         end
       end
+
+      defoverridable call: 2
     end
   end
 
