@@ -22,6 +22,12 @@ defmodule PlugWithAppsignal do
     send_resp(conn, 200, "Bad request!")
   end
 
+  get "/badarg" do
+    _ = String.to_integer("one")
+
+    send_resp(conn, 200, "Bad request!")
+  end
+
   get "/custom_name" do
     conn
     |> Appsignal.Plug.put_name("PlugWithAppsignal#custom_name")
@@ -147,6 +153,20 @@ defmodule Appsignal.PlugTest do
 
     test "sets the span's parameters" do
       assert {:ok, [{%Span{}, "params", %{"id" => "4"}}]} = Test.Span.get(:set_sample_data)
+    end
+  end
+
+  describe "GET /badarg" do
+    setup do
+      get("/badarg")
+    end
+
+    test "reraises the error", %{reason: reason} do
+      assert :badarg = reason
+    end
+
+    test "adds the error to the span", %{stack: stack} do
+      assert {:ok, [{%Span{}, %ArgumentError{}, ^stack}]} = Test.Span.get(:add_error)
     end
   end
 
