@@ -1,4 +1,5 @@
 defmodule Appsignal.Plug do
+  @tracer Application.get_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
   @span Application.get_env(:appsignal, :appsignal_span, Appsignal.Span)
 
   @moduledoc """
@@ -36,24 +37,7 @@ defmodule Appsignal.Plug do
         try do
           conn = super(conn, opts)
         rescue
-          reason ->
-            case reason do
-              %Plug.Conn.WrapperError{reason: %{plug_status: status}, stack: stack}
-              when status < 500 ->
-                @tracer.ignore()
-                reraise(reason, stack)
-
-              %Plug.Conn.WrapperError{conn: conn, reason: wrapped_reason, stack: stack} ->
-                span
-                |> @span.add_error(wrapped_reason, stack)
-                |> Appsignal.Plug.set_name(conn)
-                |> Appsignal.Plug.set_params(conn)
-                |> @tracer.close_span()
-
-                @tracer.ignore()
-
-                reraise(reason, stack)
-            end
+          reason -> Appsignal.Plug.handle_error(span, reason)
         else
           conn ->
             span
@@ -76,5 +60,29 @@ defmodule Appsignal.Plug do
   def set_params(span, conn) do
     %Plug.Conn{params: params} = Plug.Conn.fetch_query_params(conn)
     @span.set_sample_data(span, "params", params)
+  end
+
+  def handle_error(
+        _span,
+        %Plug.Conn.WrapperError{reason: %{plug_status: status}, stack: stack} = reason
+      )
+      when status < 500 do
+    @tracer.ignore()
+    reraise(reason, stack)
+  end
+
+  def handle_error(
+        span,
+        %Plug.Conn.WrapperError{conn: conn, reason: wrapped_reason, stack: stack} = reason
+      ) do
+    span
+    |> @span.add_error(wrapped_reason, stack)
+    |> Appsignal.Plug.set_name(conn)
+    |> Appsignal.Plug.set_params(conn)
+    |> @tracer.close_span()
+
+    @tracer.ignore()
+
+    reraise(reason, stack)
   end
 end
