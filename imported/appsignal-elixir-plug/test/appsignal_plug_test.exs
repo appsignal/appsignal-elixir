@@ -41,15 +41,15 @@ defmodule Appsignal.PlugTest do
     end
 
     test "creates a root span" do
-      assert Test.Tracer.get!(:create_span) == [{"web"}]
+      assert Test.Tracer.get(:create_span) == {:ok, [{"web"}]}
     end
 
     test "sets the span's name" do
-      assert [{%Span{}, "GET /"}] = Test.Span.get!(:set_name)
+      assert {:ok, [{%Span{}, "GET /"}]} = Test.Span.get(:set_name)
     end
 
     test "closes the span" do
-      assert [{%Span{}}] = Test.Tracer.get!(:close_span)
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
     end
   end
 
@@ -61,7 +61,7 @@ defmodule Appsignal.PlugTest do
     end
 
     test "sets the span's parameters" do
-      assert [{%Span{}, "params", %{"id" => "4"}}] = Test.Span.get!(:set_sample_data)
+      assert {:ok, [{%Span{}, "params", %{"id" => "4"}}]} = Test.Span.get(:set_sample_data)
     end
   end
 
@@ -73,7 +73,7 @@ defmodule Appsignal.PlugTest do
     end
 
     test "sets the span's parameters" do
-      assert [{%Span{}, "params", %{"id" => "4"}}] = Test.Span.get!(:set_sample_data)
+      assert {:ok, [{%Span{}, "params", %{"id" => "4"}}]} = Test.Span.get(:set_sample_data)
     end
   end
 
@@ -83,23 +83,23 @@ defmodule Appsignal.PlugTest do
     end
 
     test "creates a root span" do
-      assert Test.Tracer.get!(:create_span) == [{"web"}]
+      assert Test.Tracer.get(:create_span) == {:ok, [{"web"}]}
     end
 
     test "sets the span's name" do
-      assert [{%Span{}, "GET /exception"}] = Test.Span.get!(:set_name)
+      assert {:ok, [{%Span{}, "GET /exception"}]} = Test.Span.get(:set_name)
     end
 
     test "sets the span's parameters" do
-      assert [{%Span{}, "params", %{"id" => "4"}}] = Test.Span.get!(:set_sample_data)
+      assert {:ok, [{%Span{}, "params", %{"id" => "4"}}]} = Test.Span.get(:set_sample_data)
     end
 
     test "adds the error to the span", %{exception: exception, stacktrace: stack} do
-      assert [{%Span{}, ^exception, ^stack}] = Test.Span.get!(:add_error)
+      assert {:ok, [{%Span{}, ^exception, ^stack}]} = Test.Span.get(:add_error)
     end
 
     test "closes the span" do
-      assert [{%Span{}}] = Test.Tracer.get!(:close_span)
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
     end
 
     test "ignores the process in the registry" do
@@ -115,7 +115,7 @@ defmodule Appsignal.PlugTest do
     end
 
     test "sets the span's parameters" do
-      assert [{%Span{}, "params", %{"id" => "4"}}] = Test.Span.get!(:set_sample_data)
+      assert {:ok, [{%Span{}, "params", %{"id" => "4"}}]} = Test.Span.get(:set_sample_data)
     end
   end
 
@@ -127,19 +127,20 @@ defmodule Appsignal.PlugTest do
     end
 
     test "creates a root span" do
-      assert Test.Tracer.get!(:create_span) == [{"web"}]
+      assert Test.Tracer.get(:create_span) == {:ok, [{"web"}]}
     end
 
     test "adds the name to a nil-span" do
-      assert [{nil, "GET /exception"}] = Test.Span.get!(:set_name)
+      assert {:ok, [{nil, "GET /exception"}]} = Test.Span.get(:set_name)
     end
 
     test "adds the error to a nil-span", %{stacktrace: stack} do
-      assert [{nil, %RuntimeError{message: "Exception!"}, ^stack}] = Test.Span.get!(:add_error)
+      assert {:ok, [{nil, %RuntimeError{message: "Exception!"}, ^stack}]} =
+               Test.Span.get(:add_error)
     end
 
     test "closes the nil-span" do
-      assert [{nil}] = Test.Tracer.get!(:close_span)
+      assert {:ok, [{nil}]} = Test.Tracer.get(:close_span)
     end
   end
 
@@ -168,7 +169,7 @@ defmodule Appsignal.PlugTest do
                private: %{plug_route: {"/", fn -> :ok end}}
              }) == span
 
-      assert [{^span, "GET /"}] = Test.Span.get!(:set_name)
+      assert {:ok, [{^span, "GET /"}]} = Test.Span.get(:set_name)
     end
 
     test "ignores Phoenix conns", %{span: span} do
