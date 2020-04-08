@@ -44,8 +44,10 @@ defmodule Appsignal.PlugTest do
   describe "GET /" do
     setup do
       get("/")
+    end
 
-      :ok
+    test "returns the conn", %{conn: conn} do
+      assert %Plug.Conn{state: :sent} = conn
     end
 
     test "creates a root span" do

@@ -34,7 +34,7 @@ defmodule Appsignal.Plug do
         span = @tracer.create_span("web")
 
         try do
-          conn = super(conn, opts)
+          super(conn, opts)
         rescue
           reason ->
             span
@@ -50,6 +50,8 @@ defmodule Appsignal.Plug do
             |> Appsignal.Plug.set_name(conn)
             |> Appsignal.Plug.set_params(conn)
             |> @tracer.close_span()
+
+            conn
         end
       end
     end
