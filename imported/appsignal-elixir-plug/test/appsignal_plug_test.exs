@@ -102,8 +102,12 @@ defmodule Appsignal.PlugTest do
       assert {:ok, [{%Span{}, "params", %{"id" => "4"}}]} = Test.Span.get(:set_sample_data)
     end
 
-    test "adds the error to the span", %{exception: exception, stacktrace: stack} do
-      assert {:ok, [{%Span{}, ^exception, ^stack}]} = Test.Span.get(:add_error)
+    test "reraises the error", %{reason: reason} do
+      assert %RuntimeError{} = reason
+    end
+
+    test "adds the error to the span", %{reason: reason, stack: stack} do
+      assert {:ok, [{%Span{}, ^reason, ^stack}]} = Test.Span.get(:add_error)
     end
 
     test "closes the span" do
@@ -142,7 +146,11 @@ defmodule Appsignal.PlugTest do
       assert {:ok, [{nil, "GET /exception"}]} = Test.Span.get(:set_name)
     end
 
-    test "adds the error to a nil-span", %{stacktrace: stack} do
+    test "reraises the error", %{reason: reason} do
+      assert %RuntimeError{} = reason
+    end
+
+    test "adds the error to a nil-span", %{stack: stack} do
       assert {:ok, [{nil, %RuntimeError{message: "Exception!"}, ^stack}]} =
                Test.Span.get(:add_error)
     end
@@ -155,6 +163,10 @@ defmodule Appsignal.PlugTest do
   describe "GET /bad_request" do
     setup do
       get("/bad_request")
+    end
+
+    test "reraises the error", %{reason: reason} do
+      assert %Plug.BadRequestError{} = reason
     end
 
     test "does not add the error to the span" do
@@ -196,8 +208,8 @@ defmodule Appsignal.PlugTest do
     wrapper_error in Plug.Conn.WrapperError ->
       [
         conn: wrapper_error.conn,
-        exception: wrapper_error.reason,
-        stacktrace: System.stacktrace()
+        reason: wrapper_error.reason,
+        stack: __STACKTRACE__
       ]
   end
 

@@ -38,8 +38,10 @@ defmodule Appsignal.Plug do
         rescue
           reason ->
             case reason do
-              %Plug.Conn.WrapperError{reason: %{plug_status: status}} when status < 500 ->
+              %Plug.Conn.WrapperError{reason: %{plug_status: status}, stack: stack}
+              when status < 500 ->
                 @tracer.ignore()
+                reraise(reason, stack)
 
               %Plug.Conn.WrapperError{conn: conn, reason: wrapped_reason, stack: stack} ->
                 span
