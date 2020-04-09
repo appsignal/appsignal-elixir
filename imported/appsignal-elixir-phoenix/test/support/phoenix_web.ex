@@ -28,8 +28,6 @@ defmodule PhoenixWeb.Controller do
 end
 
 defmodule PhoenixWeb.ErrorView do
-  import Plug.Conn
-
   def render(_layout, %{reason: reason}) do
     inspect(reason)
   end
