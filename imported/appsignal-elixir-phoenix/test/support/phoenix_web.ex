@@ -22,7 +22,7 @@ defmodule PhoenixWeb.Controller do
     |> send_resp(200, "Welcome to Phoenix!")
   end
 
-  def exception(conn, _params) do
+  def exception(_conn, _params) do
     raise "Exception!"
   end
 end
