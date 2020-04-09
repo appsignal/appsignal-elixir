@@ -2,9 +2,9 @@ defmodule Appsignal.Test.Span do
   use Appsignal.Test.Wrapper
   alias Appsignal.Span
 
-  def add_error(span, error, stacktrace) do
-    add(:add_error, {span, error, stacktrace})
-    Span.add_error(span, error, stacktrace)
+  def add_error(span, kind, reason, stacktrace) do
+    add(:add_error, {span, kind, reason, stacktrace})
+    Span.add_error(span, kind, reason, stacktrace)
   end
 
   def set_name(span, name) do
