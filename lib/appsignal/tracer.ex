@@ -56,6 +56,22 @@ defmodule Appsignal.Tracer do
     |> current()
   end
 
+  @doc """
+  Returns the root span in the current process.
+  """
+  @spec root_span() :: Span.t() | nil
+  def root_span, do: root_span(self())
+
+  @doc """
+  Returns the root span in the passed pid's process.
+  """
+  @spec root_span(pid()) :: Span.t() | nil
+  def root_span(pid) do
+    @table
+    |> :ets.lookup(pid)
+    |> root()
+  end
+
   defp current([]), do: nil
 
   defp current([{_pid, :ignore}]), do: nil
@@ -64,6 +80,10 @@ defmodule Appsignal.Tracer do
     {_pid, span} = List.last(spans)
     span
   end
+
+  defp root([{_pid, %Span{} = root} | _]), do: root
+
+  defp root(_), do: nil
 
   @doc """
   Closes a span and deregisters it.
