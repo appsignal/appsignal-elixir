@@ -1,7 +1,6 @@
 defmodule AppsignalTest do
   use ExUnit.Case, async: true
   import AppsignalTest.Utils
-  import ExUnit.CaptureIO
 
   alias Appsignal.{FakeTransaction, Span, Test, Tracer, WrappedNif}
 
