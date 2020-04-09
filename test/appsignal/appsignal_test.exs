@@ -3,7 +3,7 @@ defmodule AppsignalTest do
   import AppsignalTest.Utils
   import ExUnit.CaptureIO
 
-  alias Appsignal.FakeTransaction
+  alias Appsignal.{FakeTransaction, Span, Test, Tracer, WrappedNif}
 
   setup do
     {:ok, fake_transaction} = FakeTransaction.start_link()
@@ -42,5 +42,60 @@ defmodule AppsignalTest do
       config = Application.get_env(:appsignal, :config)
       assert :test = config[:env]
     end)
+  end
+
+  describe "instrument/2" do
+    setup do
+      WrappedNif.start_link()
+      Test.Tracer.start_link()
+      Test.Span.start_link()
+
+      %{return: Appsignal.instrument("test", fn -> :ok end)}
+    end
+
+    test "creates a root span" do
+      assert Test.Tracer.get(:create_span) == {:ok, [{"web", nil}]}
+    end
+
+    test "sets the span's name" do
+      assert {:ok, [{%Span{}, "test"}]} = Test.Span.get(:set_name)
+    end
+
+    test "calls the passed function, and returns its return", %{return: return} do
+      assert return == :ok
+    end
+
+    test "closes the span" do
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    end
+  end
+
+  describe "instrument/2, when a root span exists" do
+    setup do
+      WrappedNif.start_link()
+      Test.Tracer.start_link()
+      Test.Span.start_link()
+
+      %{
+        parent: Tracer.create_span("web"),
+        return: Appsignal.instrument("test", fn -> :ok end)
+      }
+    end
+
+    test "creates a child span", %{parent: parent} do
+      assert {:ok, [{"web", ^parent}]} = Test.Tracer.get(:create_span)
+    end
+
+    test "sets the span's name" do
+      assert {:ok, [{%Span{}, "test"}]} = Test.Span.get(:set_name)
+    end
+
+    test "calls the passed function, and returns its return", %{return: return} do
+      assert return == :ok
+    end
+
+    test "closes the span" do
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    end
   end
 end
