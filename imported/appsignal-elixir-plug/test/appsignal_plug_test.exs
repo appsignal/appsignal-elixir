@@ -132,7 +132,7 @@ defmodule Appsignal.PlugTest do
     end
 
     test "adds the error to the span", %{reason: reason, stack: stack} do
-      assert {:ok, [{%Span{}, ^reason, ^stack}]} = Test.Span.get(:add_error)
+      assert {:ok, [{%Span{}, :error, ^reason, ^stack}]} = Test.Span.get(:add_error)
     end
 
     test "closes the span" do
@@ -166,7 +166,7 @@ defmodule Appsignal.PlugTest do
     end
 
     test "adds the error to the span", %{stack: stack} do
-      assert {:ok, [{%Span{}, %ArgumentError{}, ^stack}]} = Test.Span.get(:add_error)
+      assert {:ok, [{%Span{}, :error, :badarg, ^stack}]} = Test.Span.get(:add_error)
     end
   end
 
@@ -190,7 +190,7 @@ defmodule Appsignal.PlugTest do
     end
 
     test "adds the error to a nil-span", %{stack: stack} do
-      assert {:ok, [{nil, %RuntimeError{message: "Exception!"}, ^stack}]} =
+      assert {:ok, [{nil, :error, %RuntimeError{message: "Exception!"}, ^stack}]} =
                Test.Span.get(:add_error)
     end
 

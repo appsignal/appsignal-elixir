@@ -90,10 +90,8 @@ defmodule Appsignal.Plug do
         reason: wrapped_reason,
         stack: stack
       }) do
-    normalized_reason = Exception.normalize(:error, wrapped_reason, stack)
-
     span
-    |> @span.add_error(normalized_reason, stack)
+    |> @span.add_error(:error, wrapped_reason, stack)
     |> Appsignal.Plug.set_name(conn)
     |> Appsignal.Plug.set_params(conn)
   end
