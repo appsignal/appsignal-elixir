@@ -36,14 +36,16 @@ defmodule Appsignal.Plug do
         try do
           super(conn, opts)
         catch
-          type, reason ->
+          kind, reason ->
+            stack = __STACKTRACE__
+
             span
-            |> Appsignal.Plug.handle_error(type, reason)
+            |> Appsignal.Plug.handle_error(kind, reason, stack, conn)
             |> @tracer.close_span()
 
             @tracer.ignore()
 
-            reraise(reason, __STACKTRACE__)
+            :erlang.raise(kind, reason, stack)
         else
           conn ->
             span
@@ -80,18 +82,30 @@ defmodule Appsignal.Plug do
     @span.set_sample_data(span, "params", params)
   end
 
-  def handle_error(span, :error, %Plug.Conn.WrapperError{reason: %{plug_status: status}})
+  def handle_error(
+        span,
+        :error,
+        %Plug.Conn.WrapperError{reason: %{plug_status: status}},
+        _stack,
+        _conn
+      )
       when status < 500 do
     span
   end
 
-  def handle_error(span, :error, %Plug.Conn.WrapperError{
-        conn: conn,
-        reason: wrapped_reason,
-        stack: stack
-      }) do
+  def handle_error(
+        span,
+        :error,
+        %Plug.Conn.WrapperError{conn: conn, reason: wrapped_reason, stack: stack},
+        _stack,
+        _conn
+      ) do
+    handle_error(span, :error, wrapped_reason, stack, conn)
+  end
+
+  def handle_error(span, kind, reason, stack, conn) do
     span
-    |> @span.add_error(:error, wrapped_reason, stack)
+    |> @span.add_error(kind, reason, stack)
     |> Appsignal.Plug.set_name(conn)
     |> Appsignal.Plug.set_params(conn)
   end

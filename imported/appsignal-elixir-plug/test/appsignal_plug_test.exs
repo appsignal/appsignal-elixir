@@ -28,6 +28,12 @@ defmodule PlugWithAppsignal do
     send_resp(conn, 200, "Bad request!")
   end
 
+  get "/exit" do
+    exit(:exited)
+
+    send_resp(conn, 200, "Exit!")
+  end
+
   get "/custom_name" do
     conn
     |> Appsignal.Plug.put_name("PlugWithAppsignal#custom_name")
@@ -127,7 +133,8 @@ defmodule Appsignal.PlugTest do
       assert {:ok, [{%Span{}, "params", %{"id" => "4"}}]} = Test.Span.get(:set_sample_data)
     end
 
-    test "reraises the error", %{reason: reason} do
+    test "reraises the error", %{kind: kind, reason: reason} do
+      assert kind == :error
       assert %RuntimeError{} = reason
     end
 
@@ -161,12 +168,28 @@ defmodule Appsignal.PlugTest do
       get("/badarg")
     end
 
-    test "reraises the error", %{reason: reason} do
+    test "reraises the error", %{kind: kind, reason: reason} do
+      assert kind == :error
       assert :badarg = reason
     end
 
     test "adds the error to the span", %{stack: stack} do
       assert {:ok, [{%Span{}, :error, :badarg, ^stack}]} = Test.Span.get(:add_error)
+    end
+  end
+
+  describe "GET /exit" do
+    setup do
+      get("/exit")
+    end
+
+    test "reraises the error", %{kind: kind, reason: reason} do
+      assert kind == :exit
+      assert :exited = reason
+    end
+
+    test "adds the error to the span", %{stack: stack} do
+      assert {:ok, [{%Span{}, :exit, :exited, ^stack}]} = Test.Span.get(:add_error)
     end
   end
 
@@ -185,7 +208,8 @@ defmodule Appsignal.PlugTest do
       assert {:ok, [{nil, "GET /exception"}]} = Test.Span.get(:set_name)
     end
 
-    test "reraises the error", %{reason: reason} do
+    test "reraises the error", %{kind: kind, reason: reason} do
+      assert kind == :error
       assert %RuntimeError{} = reason
     end
 
@@ -252,14 +276,20 @@ defmodule Appsignal.PlugTest do
   end
 
   defp get(path, params_or_body \\ nil) do
-    [conn: PlugWithAppsignal.call(conn(:get, path, params_or_body), [])]
-  rescue
-    wrapper_error in Plug.Conn.WrapperError ->
-      [
-        conn: wrapper_error.conn,
-        reason: wrapper_error.reason,
-        stack: __STACKTRACE__
-      ]
+    conn = conn(:get, path, params_or_body)
+
+    try do
+      [conn: PlugWithAppsignal.call(conn, [])]
+    catch
+      kind, reason ->
+        case reason do
+          %Plug.Conn.WrapperError{conn: conn, reason: reason} ->
+            [conn: conn, kind: kind, reason: reason, stack: __STACKTRACE__]
+
+          _ ->
+            [conn: conn, kind: kind, reason: reason, stack: __STACKTRACE__]
+        end
+    end
   end
 
   defp disable_appsignal(_context) do
