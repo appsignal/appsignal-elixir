@@ -1,4 +1,7 @@
 defmodule Appsignal do
+  @tracer Application.get_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
+  @span Application.get_env(:appsignal, :appsignal_span, Appsignal.Span)
+
   @moduledoc """
   AppSignal for Elixir. Follow the [installation guide](https://docs.appsignal.com/elixir/installation.html) to install AppSignal into your Elixir app.
 
@@ -150,4 +153,19 @@ defmodule Appsignal do
   defp prefixed("", message), do: message
   defp prefixed(prefix, message) when is_binary(prefix), do: prefix <> ": " <> message
   defp prefixed(_, message), do: message
+
+  def instrument(name, fun) do
+    parent = @tracer.current_span()
+
+    span =
+      "web"
+      |> @tracer.create_span(parent)
+      |> @span.set_name(name)
+
+    result = fun.()
+
+    @tracer.close_span(span)
+
+    result
+  end
 end
