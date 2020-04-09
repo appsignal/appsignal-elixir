@@ -85,16 +85,18 @@ defmodule Appsignal.Span do
 
   def set_sample_data(_span, _key, _value), do: nil
 
-  def add_error(%Span{reference: reference} = span, error, stacktrace) do
+  def add_error(%Span{reference: reference} = span, kind, reason, stacktrace) do
     if Config.active?() do
-      {name, message} = Appsignal.Error.metadata(error)
+      {name, message, formatted_stacktrace} = Appsignal.Error.metadata(kind, reason, stacktrace)
 
-      encoded_stacktrace =
-        stacktrace
-        |> Appsignal.Stacktrace.format()
-        |> Appsignal.Utils.DataEncoder.encode()
+      :ok =
+        @nif.add_span_error(
+          reference,
+          name,
+          message,
+          Appsignal.Utils.DataEncoder.encode(formatted_stacktrace)
+        )
 
-      :ok = @nif.add_span_error(reference, name, message, encoded_stacktrace)
       span
     end
   end
