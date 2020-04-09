@@ -254,8 +254,8 @@ defmodule AppsignalSpanTest do
       return =
         try do
           raise "Exception!"
-        rescue
-          reason -> Span.add_error(nil, reason, __STACKTRACE__)
+        catch
+          kind, reason -> Span.add_error(nil, kind, reason, __STACKTRACE__)
         end
 
       [return: return]
