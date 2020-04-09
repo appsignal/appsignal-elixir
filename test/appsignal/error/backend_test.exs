@@ -28,7 +28,7 @@ defmodule Appsignal.Error.BackendTest do
 
     test "adds an error to the created span" do
       until(fn ->
-        assert {:ok, [{%Span{}, %RuntimeError{message: "Exception"}, stack}]} =
+        assert {:ok, [{%Span{}, :error, %RuntimeError{message: "Exception"}, stack}]} =
                  Test.Span.get(:add_error)
 
         assert is_list(stack)
@@ -63,7 +63,7 @@ defmodule Appsignal.Error.BackendTest do
 
     test "adds an error to the existing span", %{span: span} do
       until(fn ->
-        assert {:ok, [{^span, %RuntimeError{message: "Exception"}, _stack}]} =
+        assert {:ok, [{^span, :error, %RuntimeError{message: "Exception"}, _stack}]} =
                  Test.Span.get(:add_error)
       end)
     end
@@ -93,7 +93,7 @@ defmodule Appsignal.Error.BackendTest do
 
     test "adds an error to the created span" do
       until(fn ->
-        assert {:ok, [{%Span{}, %ArgumentError{message: "argument error"}, stack}]} =
+        assert {:ok, [{%Span{}, :error, %ArgumentError{message: "argument error"}, stack}]} =
                  Test.Span.get(:add_error)
 
         assert is_list(stack)
@@ -136,7 +136,7 @@ defmodule Appsignal.Error.BackendTest do
 
     test "adds an error to the created span" do
       until(fn ->
-        assert {:ok, [{%Span{}, %RuntimeError{message: "Exception"}, stack}]} =
+        assert {:ok, [{%Span{}, :error, %RuntimeError{message: "Exception"}, stack}]} =
                  Test.Span.get(:add_error)
 
         assert is_list(stack)
@@ -183,7 +183,7 @@ defmodule Appsignal.Error.BackendTest do
 
     test "adds an error to the created span" do
       until(fn ->
-        assert {:ok, [{%Span{}, %KeyError{}, stack}]} = Test.Span.get(:add_error)
+        assert {:ok, [{%Span{}, :error, %KeyError{}, stack}]} = Test.Span.get(:add_error)
 
         assert is_list(stack)
       end)
