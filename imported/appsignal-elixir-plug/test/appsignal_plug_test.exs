@@ -34,6 +34,12 @@ defmodule PlugWithAppsignal do
     send_resp(conn, 200, "Exit!")
   end
 
+  get "/throw" do
+    throw(:thrown)
+
+    send_resp(conn, 200, "Exit!")
+  end
+
   get "/custom_name" do
     conn
     |> Appsignal.Plug.put_name("PlugWithAppsignal#custom_name")
@@ -190,6 +196,21 @@ defmodule Appsignal.PlugTest do
 
     test "adds the error to the span", %{stack: stack} do
       assert {:ok, [{%Span{}, :exit, :exited, ^stack}]} = Test.Span.get(:add_error)
+    end
+  end
+
+  describe "GET /throw" do
+    setup do
+      get("/throw")
+    end
+
+    test "reraises the error", %{kind: kind, reason: reason} do
+      assert kind == :throw
+      assert :thrown = reason
+    end
+
+    test "adds the error to the span", %{stack: stack} do
+      assert {:ok, [{%Span{}, :throw, :thrown, ^stack}]} = Test.Span.get(:add_error)
     end
   end
 
