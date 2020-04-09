@@ -120,6 +120,42 @@ defmodule Appsignal.TracerTest do
     end
   end
 
+  describe "root_span/0, when no span exists" do
+    test "returns nil" do
+      assert Tracer.root_span() == nil
+    end
+  end
+
+  describe "root_span/0, when a root span exists" do
+    test "returns the created span" do
+      assert Tracer.create_span("current") == Tracer.root_span()
+    end
+  end
+
+  describe "root_span/0, when a child span exists" do
+    setup [:create_root_span, :create_child_span]
+
+    test "returns the root span", %{parent: span} do
+      assert span == Tracer.root_span()
+    end
+  end
+
+  describe "root_span/1, when a span exists in another process" do
+    setup :create_root_span_in_other_process
+
+    test "returns the created span", %{span: span, pid: pid} do
+      assert span == Tracer.root_span(pid)
+    end
+  end
+
+  describe "root_span/1, when the process is ignored" do
+    setup :ignore_process
+
+    test "returns nil" do
+      assert Tracer.root_span() == nil
+    end
+  end
+
   describe "close_span/1, when passing a nil" do
     test "returns nil" do
       assert Tracer.close_span(nil) == nil
