@@ -35,10 +35,10 @@ defmodule Appsignal.Plug do
 
         try do
           super(conn, opts)
-        rescue
-          reason ->
+        catch
+          type, reason ->
             span
-            |> Appsignal.Plug.handle_error(reason)
+            |> Appsignal.Plug.handle_error(type, reason)
             |> @tracer.close_span()
 
             @tracer.ignore()
@@ -80,12 +80,16 @@ defmodule Appsignal.Plug do
     @span.set_sample_data(span, "params", params)
   end
 
-  def handle_error(span, %Plug.Conn.WrapperError{reason: %{plug_status: status}})
+  def handle_error(span, :error, %Plug.Conn.WrapperError{reason: %{plug_status: status}})
       when status < 500 do
     span
   end
 
-  def handle_error(span, %Plug.Conn.WrapperError{conn: conn, reason: wrapped_reason, stack: stack}) do
+  def handle_error(span, :error, %Plug.Conn.WrapperError{
+        conn: conn,
+        reason: wrapped_reason,
+        stack: stack
+      }) do
     normalized_reason = Exception.normalize(:error, wrapped_reason, stack)
 
     span
