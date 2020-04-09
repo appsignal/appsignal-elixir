@@ -208,8 +208,8 @@ defmodule AppsignalSpanTest do
       return =
         try do
           raise "Exception!"
-        rescue
-          reason -> Span.add_error(span, reason, __STACKTRACE__)
+        catch
+          kind, reason -> Span.add_error(span, kind, reason, __STACKTRACE__)
         end
 
       [return: return]
@@ -220,7 +220,8 @@ defmodule AppsignalSpanTest do
     end
 
     test "sets the error through the Nif", %{span: %Span{reference: reference}} do
-      assert [{^reference, "RuntimeError", "Exception!", _}] = WrappedNif.get!(:add_span_error)
+      assert [{^reference, "RuntimeError", "** (RuntimeError) Exception!", _}] =
+               WrappedNif.get!(:add_span_error)
     end
   end
 
@@ -230,9 +231,9 @@ defmodule AppsignalSpanTest do
     setup %{span: span} do
       return =
         try do
-          String.to_integer("one")
-        rescue
-          reason -> Span.add_error(span, reason, __STACKTRACE__)
+          _ = String.to_integer("one")
+        catch
+          kind, reason -> Span.add_error(span, kind, reason, __STACKTRACE__)
         end
 
       [return: return]
@@ -243,7 +244,7 @@ defmodule AppsignalSpanTest do
     end
 
     test "sets the error through the Nif", %{span: %Span{reference: reference}} do
-      assert [{^reference, "ArgumentError", "argument error", _}] =
+      assert [{^reference, "ArgumentError", "** (ArgumentError) argument error", _}] =
                WrappedNif.get!(:add_span_error)
     end
   end
@@ -276,8 +277,8 @@ defmodule AppsignalSpanTest do
       return =
         try do
           raise "Exception!"
-        rescue
-          reason -> Span.add_error(span, reason, __STACKTRACE__)
+        catch
+          kind, reason -> Span.add_error(span, kind, reason, __STACKTRACE__)
         end
 
       [return: return]
