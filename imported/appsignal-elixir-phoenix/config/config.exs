@@ -1,6 +1,8 @@
 use Mix.Config
 
 if Mix.env() == :test do
+  config :logger, level: :warn
+
   config :appsignal, appsignal_tracer: Appsignal.Test.Tracer
   config :appsignal, appsignal_span: Appsignal.Test.Span
 
