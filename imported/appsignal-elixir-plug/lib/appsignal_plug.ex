@@ -66,15 +66,19 @@ defmodule Appsignal.Plug do
   end
 
   def set_name(span, %Plug.Conn{private: %{appsignal_name: name}}) do
-    @span.set_name(span, name)
+    do_set_name(span, name)
   end
 
   def set_name(span, %Plug.Conn{method: method, private: %{plug_route: {path, _fun}}}) do
-    @span.set_name(span, "#{method} #{path}")
+    do_set_name(span, "#{method} #{path}")
   end
 
   def set_name(span, _conn) do
     span
+  end
+
+  defp do_set_name(span, name) do
+    @span.set_name(span, name)
   end
 
   def set_params(span, conn) do
