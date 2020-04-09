@@ -8,4 +8,12 @@ defmodule Appsignal.Error do
       Appsignal.Stacktrace.format(stack)
     }
   end
+
+  def metadata(kind, reason, stack) do
+    {
+      inspect(kind),
+      Exception.format_banner(kind, reason, stack),
+      Appsignal.Stacktrace.format(stack)
+    }
+  end
 end
