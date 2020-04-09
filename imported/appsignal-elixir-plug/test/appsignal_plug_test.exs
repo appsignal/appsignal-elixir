@@ -10,6 +10,12 @@ defmodule PlugWithAppsignal do
     send_resp(conn, 200, "Welcome")
   end
 
+  get "/instrumentation" do
+    Appsignal.instrument("query.posts", fn ->
+      send_resp(conn, 200, "Welcome")
+    end)
+  end
+
   get "/exception" do
     raise "Exception!"
 
@@ -128,6 +134,41 @@ defmodule Appsignal.PlugTest do
 
     test "sets the span's parameters" do
       assert_sample_data("params", %{"id" => "4"})
+    end
+  end
+
+  describe "GET /instrumentation" do
+    setup do
+      get("/instrumentation")
+    end
+
+    test "returns the conn", %{conn: conn} do
+      assert %Plug.Conn{state: :sent} = conn
+    end
+
+    test "passes through the overridden call", %{conn: conn} do
+      assert %Plug.Conn{assigns: %{overridden?: true}} = conn
+    end
+
+    test "creates a root span and a child span" do
+      assert {:ok, [{"web", %Span{}}, {"web"}]} = Test.Tracer.get(:create_span)
+    end
+
+    test "sets the root span's name" do
+      assert {:ok, [{%Span{}, "GET /instrumentation"} | _]} = Test.Span.get(:set_name)
+    end
+
+    test "sets the span's sample data" do
+      assert_sample_data("environment", %{
+        "host" => "www.example.com",
+        "method" => "GET",
+        "port" => 80,
+        "request_path" => "/instrumentation"
+      })
+    end
+
+    test "closes both spans" do
+      assert {:ok, [{%Span{}}, {%Span{}}]} = Test.Tracer.get(:close_span)
     end
   end
 
