@@ -22,7 +22,7 @@ defmodule Appsignal.Phoenix.EventHandler do
          _config
        )
        when is_atom(action) do
-    span = @tracer.current_span()
+    span = @tracer.root_span()
     name = "#{module_name(controller)}##{action}"
 
     Logger.debug(

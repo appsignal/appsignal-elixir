@@ -1,6 +1,6 @@
 defmodule Appsignal.Phoenix.EventHandlerTest do
   use ExUnit.Case
-  alias Appsignal.{Phoenix, Span, Test}
+  alias Appsignal.{Phoenix, Span, Test, Tracer}
 
   setup do
     Test.Span.start_link()
@@ -20,8 +20,21 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
       assert attached?([:phoenix, :router_dispatch, :start])
     end
 
-    test "sets the transaction's action name" do
-      assert {:ok, [{%Span{}, "AppsignalPhoenixExampleWeb.PageController#index"}]} =
+    test "sets the transaction's action name", %{span: span} do
+      assert {:ok, [{^span, "AppsignalPhoenixExampleWeb.PageController#index"}]} =
+               Test.Span.get(:set_name)
+    end
+  end
+
+  describe "after receiving a router_dispatch-start event, when in a child span" do
+    setup [:create_root_span, :create_child_span, :router_dispatch_start_event]
+
+    test "keeps the handler attached" do
+      assert attached?([:phoenix, :router_dispatch, :start])
+    end
+
+    test "sets the transaction's action name on the root span", %{parent: span} do
+      assert {:ok, [{^span, "AppsignalPhoenixExampleWeb.PageController#index"}]} =
                Test.Span.get(:set_name)
     end
   end
@@ -69,7 +82,11 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
   end
 
   defp create_root_span(_context) do
-    [span: Appsignal.Tracer.create_span("root")]
+    [span: Tracer.create_span("web")]
+  end
+
+  defp create_child_span(%{span: span}) do
+    [span: Tracer.create_span("web", span), parent: span]
   end
 
   defp router_dispatch_start_event(_context) do
