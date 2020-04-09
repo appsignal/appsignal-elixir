@@ -53,7 +53,7 @@ defmodule Appsignal.PhoenixTest do
     end
 
     test "adds an error to the span", %{reason: reason} do
-      assert {:ok, [{%Span{}, ^reason, _}]} = Test.Span.get(:add_error)
+      assert {:ok, [{%Span{}, :error, ^reason, _}]} = Test.Span.get(:add_error)
     end
 
     test "closes the span" do
@@ -77,7 +77,7 @@ defmodule Appsignal.PhoenixTest do
     end
 
     test "adds the error to a nil-span", %{reason: reason} do
-      assert {:ok, [{nil, ^reason, _}]} = Test.Span.get(:add_error)
+      assert {:ok, [{nil, :error, ^reason, _}]} = Test.Span.get(:add_error)
     end
 
     test "closes the nil-span" do
