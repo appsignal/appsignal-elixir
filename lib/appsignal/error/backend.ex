@@ -8,10 +8,10 @@ defmodule Appsignal.Error.Backend do
 
   def handle_event({:error, gl, {_, _, _, metadata}}, state) when node(gl) == node() do
     pid = metadata[:pid]
-    {error, stacktrace} = metadata[:crash_reason]
+    {reason, stacktrace} = metadata[:crash_reason]
 
     case Keyword.get(metadata, :crash_reason) do
-      {error, stacktrace} ->
+      {reason, stacktrace} ->
         span =
           case @tracer.current_span(pid) do
             nil -> @tracer.create_span("", nil, pid)
@@ -19,7 +19,7 @@ defmodule Appsignal.Error.Backend do
           end
 
         span
-        |> @span.add_error(error, stacktrace)
+        |> @span.add_error(:error, reason, stacktrace)
         |> @tracer.close_span()
 
       _ ->
