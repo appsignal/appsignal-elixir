@@ -201,7 +201,7 @@ defmodule AppsignalSpanTest do
     end
   end
 
-  describe ".set_error/3" do
+  describe ".add_error/4" do
     setup :create_root_span
 
     setup %{span: span} do
@@ -225,7 +225,7 @@ defmodule AppsignalSpanTest do
     end
   end
 
-  describe ".set_error/3, with a badarg" do
+  describe ".add_error/4, with a badarg" do
     setup :create_root_span
 
     setup %{span: span} do
@@ -249,7 +249,7 @@ defmodule AppsignalSpanTest do
     end
   end
 
-  describe ".set_error/3, with a nil span" do
+  describe ".add_error/4, with a nil span" do
     setup do
       return =
         try do
@@ -270,7 +270,7 @@ defmodule AppsignalSpanTest do
     end
   end
 
-  describe ".set_error/3, when disabled" do
+  describe ".add_error/4, when disabled" do
     setup [:create_root_span, :disable_appsignal]
 
     setup %{span: span} do
