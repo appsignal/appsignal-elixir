@@ -2,7 +2,7 @@ defmodule Appsignal.PhoenixTest do
   use ExUnit.Case
   doctest Appsignal.Phoenix
   import Phoenix.ConnTest
-  alias Appsignal.{Span, Test, Tracer}
+  alias Appsignal.{Span, Test}
   @endpoint PhoenixWeb.Endpoint
 
   setup do
