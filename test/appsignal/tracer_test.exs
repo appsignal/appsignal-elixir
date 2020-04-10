@@ -1,9 +1,9 @@
 defmodule Appsignal.TracerTest do
   use ExUnit.Case
-  alias Appsignal.{Span, Test, Tracer, WrappedNif}
+  alias Appsignal.{Span, Test, Tracer}
 
   setup do
-    WrappedNif.start_link()
+    Test.Nif.start_link()
     Test.Monitor.start_link()
     :ok
   end
@@ -176,7 +176,7 @@ defmodule Appsignal.TracerTest do
 
     test "closes the span through the Nif", %{span: %Span{reference: reference} = span} do
       Tracer.close_span(span)
-      assert [{^reference}] = WrappedNif.get!(:close_span)
+      assert [{^reference}] = Test.Nif.get!(:close_span)
     end
   end
 
@@ -273,7 +273,7 @@ defmodule Appsignal.TracerTest do
   end
 
   defp create_root_span_in_other_process(_context) do
-    pid = Process.whereis(WrappedNif)
+    pid = Process.whereis(Test.Nif)
     [span: Tracer.create_span("root", nil, pid), pid: pid]
   end
 

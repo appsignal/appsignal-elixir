@@ -1,10 +1,10 @@
 defmodule Appsignal.Error.BackendTest do
   use ExUnit.Case
   import AppsignalTest.Utils
-  alias Appsignal.{Error.Backend, Span, Test, Tracer, WrappedNif}
+  alias Appsignal.{Error.Backend, Span, Test, Tracer}
 
   setup do
-    WrappedNif.start_link()
+    Test.Nif.start_link()
     Test.Tracer.start_link()
     Test.Span.start_link()
 
