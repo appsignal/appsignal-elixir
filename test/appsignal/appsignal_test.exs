@@ -53,7 +53,7 @@ defmodule AppsignalTest do
     end
 
     test "creates a root span" do
-      assert Test.Tracer.get(:create_span) == {:ok, [{"web", nil}]}
+      assert Test.Tracer.get(:create_span) == {:ok, [{"http_request", nil}]}
     end
 
     test "sets the span's name" do
@@ -76,13 +76,13 @@ defmodule AppsignalTest do
       Test.Span.start_link()
 
       %{
-        parent: Tracer.create_span("web"),
+        parent: Tracer.create_span("http_request"),
         return: Appsignal.instrument("test", fn -> :ok end)
       }
     end
 
     test "creates a child span", %{parent: parent} do
-      assert {:ok, [{"web", ^parent}]} = Test.Tracer.get(:create_span)
+      assert {:ok, [{"http_request", ^parent}]} = Test.Tracer.get(:create_span)
     end
 
     test "sets the span's name" do
