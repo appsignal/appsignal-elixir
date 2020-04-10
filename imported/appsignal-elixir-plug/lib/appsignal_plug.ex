@@ -31,7 +31,7 @@ defmodule Appsignal.Plug do
       use Plug.ErrorHandler
 
       def call(conn, opts) do
-        span = @tracer.create_span("web")
+        span = @tracer.create_span("http_request")
 
         try do
           super(conn, opts)
