@@ -1,4 +1,4 @@
-defmodule Appsignal.WrappedNif do
+defmodule Appsignal.Test.Nif do
   use Appsignal.Test.Wrapper
   alias Appsignal.Nif
 
