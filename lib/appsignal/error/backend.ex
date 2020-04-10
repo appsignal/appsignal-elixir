@@ -14,7 +14,7 @@ defmodule Appsignal.Error.Backend do
       {reason, stacktrace} ->
         span =
           case @tracer.current_span(pid) do
-            nil -> @tracer.create_span("", nil, pid)
+            nil -> @tracer.create_span("background_job", nil, pid)
             current -> current
           end
 
