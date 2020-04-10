@@ -22,6 +22,11 @@ defmodule Appsignal.Phoenix.Template.EExEngineTest do
     assert {:ok, [{%Span{}, "render.phoenix_template"}]} = Test.Span.get(:set_name)
   end
 
+  test "sets the span's title attribute" do
+    assert {:ok, [{%Span{}, "title", "test/support/index.html.eex"}]} =
+             Test.Span.get(:set_attribute)
+  end
+
   test "renders the template", %{return: return} do
     assert {"<h1>Welcome to Phoenix!</h1>\n", _} = return
   end
