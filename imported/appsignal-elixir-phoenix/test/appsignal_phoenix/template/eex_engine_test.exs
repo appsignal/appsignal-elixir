@@ -15,7 +15,7 @@ defmodule Appsignal.Phoenix.Template.EExEngineTest do
   end
 
   test "creates a root span" do
-    assert Test.Tracer.get(:create_span) == {:ok, [{"web", nil}]}
+    assert Test.Tracer.get(:create_span) == {:ok, [{"http_request", nil}]}
   end
 
   test "sets the span's name" do

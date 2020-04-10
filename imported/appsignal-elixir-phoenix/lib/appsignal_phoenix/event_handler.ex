@@ -40,7 +40,7 @@ defmodule Appsignal.Phoenix.EventHandler do
     parent = @tracer.current_span()
 
     span =
-      "web"
+      "http_request"
       |> @tracer.create_span(parent)
       |> @span.set_name("call.phoenix_endpoint")
 

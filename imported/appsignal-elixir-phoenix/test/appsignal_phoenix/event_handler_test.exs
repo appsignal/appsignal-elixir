@@ -57,7 +57,7 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
     setup [:create_root_span, :endpoint_start_event]
 
     test "starts a child span", %{span: parent} do
-      assert {:ok, [{"web", ^parent}]} = Test.Tracer.get(:create_span)
+      assert {:ok, [{"http_request", ^parent}]} = Test.Tracer.get(:create_span)
     end
 
     test "sets the span's name" do
@@ -82,11 +82,11 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
   end
 
   defp create_root_span(_context) do
-    [span: Tracer.create_span("web")]
+    [span: Tracer.create_span("http_request")]
   end
 
   defp create_child_span(%{span: span}) do
-    [span: Tracer.create_span("web", span), parent: span]
+    [span: Tracer.create_span("http_request", span), parent: span]
   end
 
   defp router_dispatch_start_event(_context) do
