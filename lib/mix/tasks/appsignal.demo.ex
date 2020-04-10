@@ -7,6 +7,7 @@ defmodule Mix.Tasks.Appsignal.Demo do
 
     if Appsignal.Config.active?() do
       Appsignal.Demo.send_performance_sample()
+      Appsignal.Demo.send_error_sample()
 
       Logger.info("""
       Demonstration sample data sent!
