@@ -156,7 +156,7 @@ defmodule Appsignal do
 
   def instrument(name, fun) do
     span =
-      "web"
+      "http_request"
       |> @tracer.create_span(@tracer.current_span)
       |> @span.set_name(name)
 
