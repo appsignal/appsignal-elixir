@@ -15,7 +15,7 @@ defmodule AppsignalSpanTest do
     end
 
     test "creates a root span through the Nif" do
-      assert [{"web"}] = WrappedNif.get!(:create_root_span)
+      assert [{"http_request"}] = WrappedNif.get!(:create_root_span)
     end
 
     test "sets the span's reference", %{span: span} do
@@ -35,7 +35,7 @@ defmodule AppsignalSpanTest do
     end
 
     test "creates a root span through the Nif" do
-      assert [{"web"}] = WrappedNif.get!(:create_root_span)
+      assert [{"http_request"}] = WrappedNif.get!(:create_root_span)
     end
 
     test "sets the span's reference", %{span: span} do
@@ -330,14 +330,14 @@ defmodule AppsignalSpanTest do
     test "returns a map with span metadata", %{span: span} do
       assert %{
                "name" => "",
-               "namespace" => "web",
+               "namespace" => "http_request",
                "closed" => false
              } = Span.to_map(span)
     end
   end
 
   defp create_root_span(_context) do
-    [span: Span.create_root("web", self())]
+    [span: Span.create_root("http_request", self())]
   end
 
   defp create_child_span(%{span: span}) do
@@ -346,7 +346,7 @@ defmodule AppsignalSpanTest do
 
   defp create_root_span_in_other_process(_context) do
     pid = Process.whereis(WrappedNif)
-    [span: Span.create_root("web", pid), pid: pid]
+    [span: Span.create_root("http_request", pid), pid: pid]
   end
 
   defp create_child_span_in_other_process(%{span: span}) do
