@@ -46,11 +46,7 @@ defmodule Mix.Tasks.Appsignal.Install do
 
     IO.puts("\nAppSignal installed! 🎉")
 
-    # Start AppSignal so that we can send demo samples
-    Application.put_env(:appsignal, :config, config)
-    {:ok, _} = Application.ensure_all_started(:appsignal)
-
-    run_demo()
+    Mix.Tasks.Appsignal.Demo.run([])
   end
 
   defp header do
@@ -300,16 +296,6 @@ defmodule Mix.Tasks.Appsignal.Install do
     else
       input
     end
-  end
-
-  defp run_demo do
-    {:ok, _} = Application.ensure_all_started(:appsignal)
-
-    @demo.create_transaction_performance_request()
-    @demo.create_transaction_error_request()
-    Appsignal.stop(nil)
-    IO.puts("Demonstration sample data sent!")
-    IO.puts("It may take about a minute for the data to appear on https://appsignal.com/accounts")
   end
 
   defp has_environment_configuration_files? do
