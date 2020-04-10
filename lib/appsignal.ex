@@ -155,14 +155,18 @@ defmodule Appsignal do
   defp prefixed(_, message), do: message
 
   def instrument(name, fun) do
-    parent = @tracer.current_span()
-
     span =
       "web"
-      |> @tracer.create_span(parent)
+      |> @tracer.create_span(@tracer.current_span)
       |> @span.set_name(name)
 
-    result = fun.()
+    result =
+      case fun
+           |> :erlang.fun_info()
+           |> Keyword.get(:arity) do
+        0 -> fun.()
+        _ -> fun.(span)
+      end
 
     @tracer.close_span(span)
 

@@ -97,4 +97,20 @@ defmodule AppsignalTest do
       assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
     end
   end
+
+  describe "instrument/2, when passing a function that takes an argument" do
+    setup do
+      WrappedNif.start_link()
+      Test.Tracer.start_link()
+      Test.Span.start_link()
+
+      %{return: Appsignal.instrument("test", fn span -> span end)}
+    end
+
+    test "calls the passed function with the created span, and returns its return", %{
+      return: return
+    } do
+      assert %Span{} = return
+    end
+  end
 end
