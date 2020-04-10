@@ -2,7 +2,7 @@ defmodule AppsignalTest do
   use ExUnit.Case, async: true
   import AppsignalTest.Utils
 
-  alias Appsignal.{FakeTransaction, Span, Test, Tracer, WrappedNif}
+  alias Appsignal.{FakeTransaction, Span, Test, Tracer}
 
   setup do
     {:ok, fake_transaction} = FakeTransaction.start_link()
@@ -45,7 +45,7 @@ defmodule AppsignalTest do
 
   describe "instrument/2" do
     setup do
-      WrappedNif.start_link()
+      Test.Nif.start_link()
       Test.Tracer.start_link()
       Test.Span.start_link()
 
@@ -71,7 +71,7 @@ defmodule AppsignalTest do
 
   describe "instrument/2, when a root span exists" do
     setup do
-      WrappedNif.start_link()
+      Test.Nif.start_link()
       Test.Tracer.start_link()
       Test.Span.start_link()
 
@@ -100,7 +100,7 @@ defmodule AppsignalTest do
 
   describe "instrument/2, when passing a function that takes an argument" do
     setup do
-      WrappedNif.start_link()
+      Test.Nif.start_link()
       Test.Tracer.start_link()
       Test.Span.start_link()
 

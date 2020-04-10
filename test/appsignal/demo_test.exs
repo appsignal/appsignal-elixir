@@ -1,9 +1,9 @@
 defmodule Appsignal.DemoTest do
   use ExUnit.Case
-  alias Appsignal.{Demo, Span, Test, WrappedNif}
+  alias Appsignal.{Demo, Span, Test}
 
   setup do
-    WrappedNif.start_link()
+    Test.Nif.start_link()
     Test.Tracer.start_link()
     Test.Span.start_link()
     :ok
