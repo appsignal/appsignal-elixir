@@ -20,12 +20,6 @@ defmodule Appsignal do
 
   require Logger
 
-  @transaction Application.get_env(
-                 :appsignal,
-                 :appsignal_transaction,
-                 Appsignal.Transaction
-               )
-
   @doc """
   Application callback function
   """
@@ -37,8 +31,6 @@ defmodule Appsignal do
     Logger.add_backend(Appsignal.Error.Backend)
 
     children = [
-      worker(Appsignal.Transaction.Receiver, [], restart: :permanent),
-      worker(Appsignal.Transaction.ETS, [], restart: :permanent),
       worker(Appsignal.Tracer, []),
       worker(Appsignal.Monitor, []),
       worker(Appsignal.Probes, [])

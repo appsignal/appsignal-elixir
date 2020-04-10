@@ -10,12 +10,6 @@ defmodule Appsignal.NifTest do
     assert :ok = Appsignal.Nif.stop()
   end
 
-  @tag :skip_env_test_no_nif
-  test "starting transaction returns a reference to the transaction resource" do
-    assert {:ok, reference} = Appsignal.Nif.start_transaction("transaction id", "http_request")
-    assert is_reference_or_binary(reference)
-  end
-
   if not (Mix.env() in [:test_no_nif]) do
     test "the nif is loaded" do
       assert true == Appsignal.Nif.loaded?()

@@ -2,12 +2,7 @@ defmodule AppsignalTest do
   use ExUnit.Case, async: true
   import AppsignalTest.Utils
 
-  alias Appsignal.{FakeTransaction, Span, Test, Tracer, WrappedNif}
-
-  setup do
-    {:ok, fake_transaction} = FakeTransaction.start_link()
-    [fake_transaction: fake_transaction]
-  end
+  alias Appsignal.{Span, Test, Tracer, WrappedNif}
 
   test "set gauge" do
     Appsignal.set_gauge("key", 10.0)
