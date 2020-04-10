@@ -16,4 +16,9 @@ defmodule Appsignal.Test.Span do
     add(:set_sample_data, {span, key, value})
     Span.set_sample_data(span, key, value)
   end
+
+  def set_attribute(span, key, value) do
+    add(:set_attribute, {span, key, value})
+    Span.set_attribute(span, key, value)
+  end
 end
