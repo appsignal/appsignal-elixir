@@ -14,6 +14,16 @@ defmodule Appsignal.TransactionBehaviour do
               Appsignal.Transaction.t() | nil
   @callback set_sample_data(Appsignal.Transaction.t() | any(), String.t(), any) ::
               Appsignal.Transaction.t() | nil
+  @callback record_event(String.t(), String.t(), String.t(), integer, integer) ::
+              Transaction.t() | nil
+  @callback record_event(
+              Appsignal.Transaction.t(),
+              String.t(),
+              String.t(),
+              String.t(),
+              integer,
+              integer
+            ) :: Transaction.t() | nil
 
   if Appsignal.plug?() do
     @callback set_request_metadata(Appsignal.Transaction.t() | any(), Plug.Conn.t()) ::
