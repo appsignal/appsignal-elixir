@@ -106,6 +106,9 @@ defmodule Appsignal.FakeTransaction do
     Agent.update(__MODULE__, &Map.put(&1, :action, action))
   end
 
+  def set_namespace(namespace), do: self() |> set_namespace(namespace)
+  def set_namespace(_transaction, _namespace), do: :ok
+
   def finish, do: self() |> Appsignal.TransactionRegistry.lookup() |> finish
 
   def finish(transaction) do
