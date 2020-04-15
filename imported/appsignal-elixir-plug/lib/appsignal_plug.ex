@@ -31,31 +31,29 @@ defmodule Appsignal.Plug do
       use Plug.ErrorHandler
 
       def call(conn, opts) do
-        span = @tracer.create_span("http_request")
+        Appsignal.instrument(fn span ->
+          try do
+            super(conn, opts)
+          catch
+            kind, reason ->
+              stack = __STACKTRACE__
 
-        try do
-          super(conn, opts)
-        catch
-          kind, reason ->
-            stack = __STACKTRACE__
+              span
+              |> Appsignal.Plug.handle_error(kind, reason, stack, conn)
+              |> @tracer.close_span()
 
-            span
-            |> Appsignal.Plug.handle_error(kind, reason, stack, conn)
-            |> @tracer.close_span()
+              @tracer.ignore()
+              :erlang.raise(kind, reason, stack)
+          else
+            conn ->
+              span
+              |> Appsignal.Plug.set_name(conn)
+              |> Appsignal.Plug.set_params(conn)
+              |> Appsignal.Plug.set_sample_data(conn)
 
-            @tracer.ignore()
-
-            :erlang.raise(kind, reason, stack)
-        else
-          conn ->
-            span
-            |> Appsignal.Plug.set_name(conn)
-            |> Appsignal.Plug.set_params(conn)
-            |> Appsignal.Plug.set_sample_data(conn)
-            |> @tracer.close_span()
-
-            conn
-        end
+              conn
+          end
+        end)
       end
 
       defoverridable call: 2
