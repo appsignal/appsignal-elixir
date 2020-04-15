@@ -154,22 +154,28 @@ defmodule Appsignal do
   defp prefixed(prefix, message) when is_binary(prefix), do: prefix <> ": " <> message
   defp prefixed(_, message), do: message
 
-  def instrument(name, fun) do
-    span =
-      "http_request"
-      |> @tracer.create_span(@tracer.current_span)
-      |> @span.set_name(name)
+  def instrument(fun) do
+    span = @tracer.create_span("http_request", @tracer.current_span)
 
-    result =
-      case fun
-           |> :erlang.fun_info()
-           |> Keyword.get(:arity) do
-        0 -> fun.()
-        _ -> fun.(span)
-      end
-
+    result = call_with_optional_argument(fun, span)
     @tracer.close_span(span)
 
     result
+  end
+
+  def instrument(name, fun) do
+    instrument(fn span ->
+      @span.set_name(span, name)
+      call_with_optional_argument(fun, span)
+    end)
+  end
+
+  defp call_with_optional_argument(fun, argument) do
+    case fun
+         |> :erlang.fun_info()
+         |> Keyword.get(:arity) do
+      0 -> fun.()
+      _ -> fun.(argument)
+    end
   end
 end
