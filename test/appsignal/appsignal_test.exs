@@ -43,21 +43,17 @@ defmodule AppsignalTest do
     end)
   end
 
-  describe "instrument/2" do
+  describe "instrument/1" do
     setup do
       Test.Nif.start_link()
       Test.Tracer.start_link()
       Test.Span.start_link()
 
-      %{return: Appsignal.instrument("test", fn -> :ok end)}
+      %{return: Appsignal.instrument(fn -> :ok end)}
     end
 
     test "creates a root span" do
       assert Test.Tracer.get(:create_span) == {:ok, [{"http_request", nil}]}
-    end
-
-    test "sets the span's name" do
-      assert {:ok, [{%Span{}, "test"}]} = Test.Span.get(:set_name)
     end
 
     test "calls the passed function, and returns its return", %{return: return} do
@@ -69,7 +65,7 @@ defmodule AppsignalTest do
     end
   end
 
-  describe "instrument/2, when a root span exists" do
+  describe "instrument/1, when a root span exists" do
     setup do
       Test.Nif.start_link()
       Test.Tracer.start_link()
@@ -77,12 +73,50 @@ defmodule AppsignalTest do
 
       %{
         parent: Tracer.create_span("http_request"),
-        return: Appsignal.instrument("test", fn -> :ok end)
+        return: Appsignal.instrument(fn -> :ok end)
       }
     end
 
     test "creates a child span", %{parent: parent} do
       assert {:ok, [{"http_request", ^parent}]} = Test.Tracer.get(:create_span)
+    end
+
+    test "calls the passed function, and returns its return", %{return: return} do
+      assert return == :ok
+    end
+
+    test "closes the span" do
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    end
+  end
+
+  describe "instrument/1, when passing a function that takes an argument" do
+    setup do
+      Test.Nif.start_link()
+      Test.Tracer.start_link()
+      Test.Span.start_link()
+
+      %{return: Appsignal.instrument(fn span -> span end)}
+    end
+
+    test "calls the passed function with the created span, and returns its return", %{
+      return: return
+    } do
+      assert %Span{} = return
+    end
+  end
+
+  describe "instrument/2" do
+    setup do
+      Test.Nif.start_link()
+      Test.Tracer.start_link()
+      Test.Span.start_link()
+
+      %{return: Appsignal.instrument("test", fn -> :ok end)}
+    end
+
+    test "creates a root span" do
+      assert Test.Tracer.get(:create_span) == {:ok, [{"http_request", nil}]}
     end
 
     test "sets the span's name" do
