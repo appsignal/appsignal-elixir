@@ -1,7 +1,7 @@
 defmodule Appsignal.MonitorTest do
   use ExUnit.Case
   import AppsignalTest.Utils
-  alias Appsignal.{Monitor, Span, Tracer, Test.Nif}
+  alias Appsignal.{Monitor, Span, Test, Tracer}
 
   setup do
     Test.Nif.start_link()
