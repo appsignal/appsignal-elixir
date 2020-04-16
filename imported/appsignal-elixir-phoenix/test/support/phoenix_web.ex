@@ -27,6 +27,17 @@ defmodule PhoenixWeb.Controller do
   end
 end
 
+defmodule PhoenixWeb.Channel do
+  use Phoenix.Channel
+  require Appsignal.Phoenix.Channel
+
+  def handle_in(name, _params, socket) do
+    Appsignal.Phoenix.Channel.instrument(name, fn ->
+      {:noreply, socket}
+    end)
+  end
+end
+
 defmodule PhoenixWeb.ErrorView do
   def render(_layout, %{reason: reason}) do
     inspect(reason)
