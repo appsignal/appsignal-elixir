@@ -23,7 +23,7 @@ defmodule Appsignal.PhoenixTest do
     end
 
     test "creates a root span" do
-      assert Test.Tracer.get(:create_span) == {:ok, [{"http_request"}]}
+      assert Test.Tracer.get(:create_span) == {:ok, [{"http_request", nil}]}
     end
 
     test "sets the span's name" do
@@ -45,7 +45,7 @@ defmodule Appsignal.PhoenixTest do
     end
 
     test "creates a root span" do
-      assert Test.Tracer.get(:create_span) == {:ok, [{"http_request"}]}
+      assert Test.Tracer.get(:create_span) == {:ok, [{"http_request", nil}]}
     end
 
     test "sets the span's name" do
@@ -69,7 +69,7 @@ defmodule Appsignal.PhoenixTest do
     end
 
     test "creates a root span" do
-      assert Test.Tracer.get(:create_span) == {:ok, [{"http_request"}]}
+      assert Test.Tracer.get(:create_span) == {:ok, [{"http_request", nil}]}
     end
 
     test "adds the name to a nil-span" do
