@@ -6,7 +6,7 @@ defmodule Appsignal.Phoenix.ChannelTest do
     Test.Tracer.start_link()
     Test.Span.start_link()
 
-    %{return: PhoenixWeb.Channel.handle_in("new_msg", %{}, %Phoenix.Socket{})}
+    %{return: PhoenixWeb.Channel.handle_in("new_msg", %{body: "Hello world!"}, %Phoenix.Socket{})}
   end
 
   test "calls the passed function, and returns its return", %{return: return} do
@@ -19,6 +19,10 @@ defmodule Appsignal.Phoenix.ChannelTest do
 
   test "sets the span's name" do
     assert {:ok, [{%Span{}, "PhoenixWeb.Channel#new_msg"}]} = Test.Span.get(:set_name)
+  end
+
+  test "sets the span's parameters" do
+    Test.Span.get(:set_sample_data) == {:ok, {"params", %{"body" => "Hello world!"}}}
   end
 
   test "closes the span" do
