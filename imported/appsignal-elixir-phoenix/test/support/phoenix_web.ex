@@ -32,7 +32,7 @@ defmodule PhoenixWeb.Channel do
   require Appsignal.Phoenix.Channel
 
   def handle_in(name, params, socket) do
-    Appsignal.Phoenix.Channel.instrument(name, params, fn ->
+    Appsignal.Phoenix.Channel.instrument(name, params, socket, fn ->
       {:noreply, socket}
     end)
   end
