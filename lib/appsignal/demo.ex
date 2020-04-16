@@ -7,7 +7,7 @@ defmodule Appsignal.Demo do
   @tracer Application.get_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
   @span Application.get_env(:appsignal, :appsignal_span, Appsignal.Span)
 
-  def send_performance_sample() do
+  def send_performance_sample do
     span = create_demo_span()
 
     instrument("call.phoenix_endpoint", fn ->
@@ -29,7 +29,7 @@ defmodule Appsignal.Demo do
     @tracer.close_span(span)
   end
 
-  def send_error_sample() do
+  def send_error_sample do
     raise TestError
   catch
     kind, reason ->
@@ -38,7 +38,7 @@ defmodule Appsignal.Demo do
       |> @tracer.close_span()
   end
 
-  defp create_demo_span() do
+  defp create_demo_span do
     "http_request"
     |> @tracer.create_span()
     |> @span.set_name("DemoController#hello")
