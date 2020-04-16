@@ -2,9 +2,12 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
   use ExUnit.Case
   import ExUnit.CaptureIO
   import AppsignalTest.Utils
-  alias Appsignal.FakeDemo
+  alias Appsignal.{FakeDemo, Test}
 
   setup do
+    Test.Tracer.start_link()
+    Test.Span.start_link()
+    Test.Nif.start_link()
     {:ok, fake_demo} = FakeDemo.start_link()
 
     bypass = Bypass.open()
@@ -300,11 +303,11 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
              )
     end
 
-    test "sends a demo sample to AppSignal", %{fake_demo: fake_demo} do
-      output = run_with_environment_config()
-      assert FakeDemo.get(fake_demo, :create_transaction_error_request)
-      assert FakeDemo.get(fake_demo, :create_transaction_performance_request)
-      assert String.contains?(output, "Demonstration sample data sent!")
+    test "sends a demo sample with six spans to AppSignal", %{fake_demo: fake_demo} do
+      run_with_environment_config()
+
+      {:ok, spans} = Test.Tracer.get(:create_span)
+      assert length(spans) == 6
     end
   end
 
