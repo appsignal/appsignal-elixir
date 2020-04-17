@@ -31,6 +31,10 @@ defmodule PhoenixWeb.Channel do
   use Phoenix.Channel
   require Appsignal.Phoenix.Channel
 
+  def join(_channel, _message, socket) do
+    {:ok, socket}
+  end
+
   def handle_in(name, %{"body" => _} = params, socket) do
     Appsignal.Phoenix.Channel.instrument(__MODULE__, name, params, socket, fn ->
       {:noreply, socket}
