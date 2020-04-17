@@ -4,6 +4,66 @@ if Appsignal.live_view?() do
     import Appsignal.Utils
     @transaction Application.get_env(:appsignal, :appsignal_transaction, Transaction)
 
+    @moduledoc """
+    Instrumentation for LiveView actions
+
+    ## Instrumenting a LiveView action
+
+    A LiveView action is instrumented by wrapping its contents in a
+    `Appsignal.Phoenix.LiveView.live_view_action/4` block.
+
+        defmodule AppsignalPhoenixExampleWeb.ClockLive do
+          use Phoenix.LiveView
+
+          def render(assigns) do
+            AppsignalPhoenixExampleWeb.ClockView.render("index.html", assigns)
+          end
+
+          def mount(_session, socket) do
+            :timer.send_interval(1000, self(), :tick)
+            {:ok, assign(socket, state: Time.utc_now())}
+          end
+
+
+          def handle_info(:tick, socket) do
+            {:ok, assign(socket, state: Time.utc_now())}
+          end
+        end
+
+    Given a live view that updates its own state every second, we can add
+    AppSignal instrumentation by wrapping both the mount/2 and handle_info/2
+    functions with a `Appsignal.Phoenix.LiveView.live_view_action`/4 call:
+
+        defmodule AppsignalPhoenixExampleWeb.ClockLive do
+          use Phoenix.LiveView
+          import Appsignal.Phoenix.LiveView, only: [live_view_action: 4]
+
+          def render(assigns) do
+            AppsignalPhoenixExampleWeb.ClockView.render("index.html", assigns)
+          end
+
+          def mount(_session, socket) do
+            live_view_action(__MODULE__, :mount, socket, fn ->
+              :timer.send_interval(1000, self(), :tick)
+              {:ok, assign(socket, state: Time.utc_now())}
+            end)
+          end
+
+          def handle_info(:tick, socket) do
+            live_view_action(__MODULE__, :mount, socket, fn ->
+              {:ok, assign(socket, state: Time.utc_now())}
+            end)
+          end
+        end
+
+    Calling one of these functions in your app will now automatically create a
+    sample that's sent to AppSignal. These are displayed under the `:live_view`
+    namespace.
+
+    For more fine-grained performance instrumentation, use the instrumentation
+    helper functions in `Appsignal.Instrumentation.Helpers`.
+    """
+
     @doc """
     Record a live_view action.
     """
