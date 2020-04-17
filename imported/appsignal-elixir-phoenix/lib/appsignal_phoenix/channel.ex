@@ -1,21 +1,17 @@
 defmodule Appsignal.Phoenix.Channel do
   @span Application.get_env(:appsignal, :appsignal_span, Appsignal.Span)
 
-  defmacro instrument(name, params, socket, fun) do
-    %{module: module} = __CALLER__
+  def instrument(module, name, params, socket, fun) do
+    Appsignal.instrument(
+      "#{Appsignal.Utils.module_name(module)}##{name}",
+      fn span ->
+        span
+        |> unquote(@span).set_sample_data("params", params)
+        |> Appsignal.Phoenix.Channel.set_sample_data(socket)
 
-    quote do
-      Appsignal.instrument(
-        "#{Appsignal.Utils.module_name(unquote(module))}##{unquote(name)}",
-        fn span ->
-          span
-          |> unquote(@span).set_sample_data("params", unquote(params))
-          |> Appsignal.Phoenix.Channel.set_sample_data(unquote(socket))
-
-          unquote(fun).()
-        end
-      )
-    end
+        fun.()
+      end
+    )
   end
 
   def set_sample_data(span, %Phoenix.Socket{

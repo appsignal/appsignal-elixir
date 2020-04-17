@@ -16,7 +16,9 @@ defmodule Appsignal.Phoenix.ChannelTest do
       id: 1
     }
 
-    %{return: PhoenixWeb.Channel.handle_in("new_msg", %{"body" => "Hello world!"}, socket)}
+    %{
+      return: PhoenixWeb.Channel.handle_in("new_msg", %{"body" => "Hello world!"}, socket)
+    }
   end
 
   test "calls the passed function, and returns its return", %{return: return} do
