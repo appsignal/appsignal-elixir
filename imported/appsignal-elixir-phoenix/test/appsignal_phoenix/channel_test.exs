@@ -6,51 +6,89 @@ defmodule Appsignal.Phoenix.ChannelTest do
     Test.Tracer.start_link()
     Test.Span.start_link()
 
-    socket = %Phoenix.Socket{
-      channel: PhoenixWeb.RoomChannel,
-      endpoint: PhoenixWeb.Endpoint,
-      handler: PhoenixWeb.UserSocket,
-      ref: 2,
-      topic: "room:lobby",
-      transport: Elixir.Phoenix.Transports.WebSocket,
-      id: 1
-    }
-
     %{
-      return: PhoenixWeb.Channel.handle_in("new_msg", %{"body" => "Hello world!"}, socket)
+      socket: %Phoenix.Socket{
+        channel: PhoenixWeb.RoomChannel,
+        endpoint: PhoenixWeb.Endpoint,
+        handler: PhoenixWeb.UserSocket,
+        ref: 2,
+        topic: "room:lobby",
+        transport: Elixir.Phoenix.Transports.WebSocket,
+        id: 1
+      }
     }
   end
 
-  test "calls the passed function, and returns its return", %{return: return} do
-    assert {:noreply, %Phoenix.Socket{}} = return
+  describe "instrument/4" do
+    setup %{socket: socket} do
+      %{return: PhoenixWeb.Channel.handle_in("new_msg", %{}, socket)}
+    end
+
+    test "calls the passed function, and returns its return", %{return: return} do
+      assert {:noreply, %Phoenix.Socket{}} = return
+    end
+
+    test "creates a root span" do
+      assert Test.Tracer.get(:create_span) == {:ok, [{"http_request", nil}]}
+    end
+
+    test "sets the span's name" do
+      assert {:ok, [{%Span{}, "PhoenixWeb.Channel#new_msg"}]} = Test.Span.get(:set_name)
+    end
+
+    test "sets the span's sample data" do
+      assert_sample_data("environment", %{
+        "channel" => PhoenixWeb.RoomChannel,
+        "endpoint" => PhoenixWeb.Endpoint,
+        "handler" => PhoenixWeb.UserSocket,
+        "id" => 1,
+        "ref" => 2,
+        "topic" => "room:lobby",
+        "transport" => Phoenix.Transports.WebSocket
+      })
+    end
+
+    test "closes the span" do
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    end
   end
 
-  test "creates a root span" do
-    assert Test.Tracer.get(:create_span) == {:ok, [{"http_request", nil}]}
-  end
+  describe "instrument/5" do
+    setup %{socket: socket} do
+      %{return: PhoenixWeb.Channel.handle_in("new_msg", %{"body" => "Hello world!"}, socket)}
+    end
 
-  test "sets the span's name" do
-    assert {:ok, [{%Span{}, "PhoenixWeb.Channel#new_msg"}]} = Test.Span.get(:set_name)
-  end
+    test "calls the passed function, and returns its return", %{return: return} do
+      assert {:noreply, %Phoenix.Socket{}} = return
+    end
 
-  test "sets the span's parameters" do
-    assert_sample_data("params", %{"body" => "Hello world!"})
-  end
+    test "creates a root span" do
+      assert Test.Tracer.get(:create_span) == {:ok, [{"http_request", nil}]}
+    end
 
-  test "sets the span's sample data" do
-    assert_sample_data("environment", %{
-      "channel" => PhoenixWeb.RoomChannel,
-      "endpoint" => PhoenixWeb.Endpoint,
-      "handler" => PhoenixWeb.UserSocket,
-      "id" => 1,
-      "ref" => 2,
-      "topic" => "room:lobby",
-      "transport" => Phoenix.Transports.WebSocket
-    })
-  end
+    test "sets the span's name" do
+      assert {:ok, [{%Span{}, "PhoenixWeb.Channel#new_msg"}]} = Test.Span.get(:set_name)
+    end
 
-  test "closes the span" do
-    assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    test "sets the span's parameters" do
+      assert_sample_data("params", %{"body" => "Hello world!"})
+    end
+
+    test "sets the span's sample data" do
+      assert_sample_data("environment", %{
+        "channel" => PhoenixWeb.RoomChannel,
+        "endpoint" => PhoenixWeb.Endpoint,
+        "handler" => PhoenixWeb.UserSocket,
+        "id" => 1,
+        "ref" => 2,
+        "topic" => "room:lobby",
+        "transport" => Phoenix.Transports.WebSocket
+      })
+    end
+
+    test "closes the span" do
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    end
   end
 
   defp assert_sample_data(asserted_key, asserted_data) do

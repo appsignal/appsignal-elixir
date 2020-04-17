@@ -1,6 +1,10 @@
 defmodule Appsignal.Phoenix.Channel do
   @span Application.get_env(:appsignal, :appsignal_span, Appsignal.Span)
 
+  def instrument(module, name, socket, fun) do
+    instrument(module, name, %{}, socket, fun)
+  end
+
   def instrument(module, name, params, socket, fun) do
     Appsignal.instrument(
       "#{Appsignal.Utils.module_name(module)}##{name}",
