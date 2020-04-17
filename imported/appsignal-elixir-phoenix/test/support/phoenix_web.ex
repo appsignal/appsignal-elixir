@@ -35,6 +35,12 @@ defmodule PhoenixWeb.Channel do
     {:ok, socket}
   end
 
+  def handle_in(name, %{"body" => "Exception!"} = params, socket) do
+    Appsignal.Phoenix.Channel.instrument(__MODULE__, name, params, socket, fn ->
+      raise "Exception!"
+    end)
+  end
+
   def handle_in(name, %{"body" => _} = params, socket) do
     Appsignal.Phoenix.Channel.instrument(__MODULE__, name, params, socket, fn ->
       {:noreply, socket}
