@@ -1,4 +1,4 @@
-# 1.13.0-beta.2
+# 1.13.0
 - Add LiveView instrumentation helpers. PR #549
 - Fix typespec for Appsignal.Phoenix.Channel.channel_action/4. PR #553
 - Add record event callback to TransactionBehaviour. PR #555
