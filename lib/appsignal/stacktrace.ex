@@ -1,5 +1,5 @@
 defmodule Appsignal.Stacktrace do
   def get do
-    System.stacktrace()
+    :erlang.get_stacktrace()
   end
 end
