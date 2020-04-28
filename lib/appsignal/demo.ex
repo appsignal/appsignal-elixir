@@ -19,7 +19,7 @@ defmodule Appsignal.Demo do
   rescue
     error ->
       create_demo_transaction()
-      |> @transaction.set_error("TestError", error.message, System.stacktrace())
+      |> @transaction.set_error("TestError", error.message, Appsignal.Stacktrace.get())
       |> finish_demo_transaction()
   end
 

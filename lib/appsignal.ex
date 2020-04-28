@@ -177,7 +177,7 @@ defmodule Appsignal do
 
   ## Examples
       Appsignal.send_error(%RuntimeError{})
-      Appsignal.send_error(%RuntimeError{}, "", System.stacktrace())
+      Appsignal.send_error(%RuntimeError{}, "", __STACKTRACE__)
       Appsignal.send_error(%RuntimeError{}, "", [], %{foo: "bar"})
       Appsignal.send_error(%RuntimeError{}, "", [], %{}, %Plug.Conn{})
       Appsignal.send_error(%RuntimeError{}, "", [], %{}, nil, fn(transaction) ->
