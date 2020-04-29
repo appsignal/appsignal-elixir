@@ -10,17 +10,15 @@ defmodule Appsignal.StacktraceTest do
       :error, _ ->
         %{
           stack: Stacktrace.get(),
-          elixir_stacktrace: __STACKTRACE__,
           system_stacktrace: System.stacktrace()
         }
     end
 
     test "returns the stacktrace", %{
       stack: stack,
-      elixir_stacktrace: elixir_stacktrace,
       system_stacktrace: system_stacktrace
     } do
-      assert stack == elixir_stacktrace || stack == system_stacktrace
+      assert stack == system_stacktrace
     end
 
     test "does not return an empty list", %{stack: stack} do
