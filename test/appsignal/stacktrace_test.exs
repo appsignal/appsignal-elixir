@@ -1,6 +1,7 @@
 defmodule Appsignal.StacktraceTest do
   use ExUnit.Case
   alias Appsignal.Stacktrace
+  require Appsignal.Stacktrace
 
   describe "get/0" do
     setup do
