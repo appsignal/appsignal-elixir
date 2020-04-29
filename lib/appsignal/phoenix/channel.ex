@@ -2,6 +2,7 @@ if Appsignal.phoenix?() do
   defmodule Appsignal.Phoenix.Channel do
     alias Appsignal.{ErrorHandler, Stacktrace, Transaction, TransactionRegistry, Utils.MapFilter}
     import Appsignal.Utils
+    require Appsignal.Stacktrace
     @transaction Application.get_env(:appsignal, :appsignal_transaction, Transaction)
 
     @moduledoc """

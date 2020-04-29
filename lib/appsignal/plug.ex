@@ -7,6 +7,8 @@ if Appsignal.plug?() do
 
     defmacro __using__(_) do
       quote do
+        require Appsignal.Stacktrace
+
         @transaction Application.get_env(
                        :appsignal,
                        :appsignal_transaction,

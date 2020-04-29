@@ -9,6 +9,7 @@ end
 
 defmodule Appsignal.Demo do
   import Appsignal.Instrumentation.Helpers, only: [instrument: 4]
+  require Appsignal.Stacktrace
   @behaviour Appsignal.DemoBehaviour
   @transaction Application.get_env(:appsignal, :appsignal_transaction, Appsignal.Transaction)
 
