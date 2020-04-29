@@ -136,7 +136,7 @@ defmodule Appsignal.Mixfile do
   defp live_view_dep do
     case Version.compare(System.version(), "1.7.0") do
       :lt -> []
-      _ -> [{:phoenix_live_view, "~> 0.9.0", optional: true, only: [:prod, :test_phoenix, :dev]}]
+      _ -> [{:phoenix_live_view, "~> 0.9", optional: true, only: [:prod, :test_phoenix, :dev]}]
     end
   end
 end
