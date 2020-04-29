@@ -7,6 +7,8 @@ if Appsignal.plug?() do
 
     defmacro __using__(_) do
       quote do
+        require Appsignal.Stacktrace
+
         @transaction Application.get_env(
                        :appsignal,
                        :appsignal_transaction,
@@ -25,7 +27,8 @@ if Appsignal.plug?() do
             try do
               super(conn, opts)
             catch
-              kind, reason -> Appsignal.Plug.handle_error(conn, kind, reason, System.stacktrace())
+              kind, reason ->
+                Appsignal.Plug.handle_error(conn, kind, reason, Appsignal.Stacktrace.get())
             else
               conn -> Appsignal.Plug.finish_with_conn(transaction, conn)
             end

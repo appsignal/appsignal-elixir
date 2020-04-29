@@ -1,7 +1,8 @@
 if Appsignal.live_view?() do
   defmodule Appsignal.Phoenix.LiveView do
-    alias Appsignal.{ErrorHandler, Transaction, TransactionRegistry, Utils.MapFilter}
+    alias Appsignal.{ErrorHandler, Stacktrace, Transaction, TransactionRegistry, Utils.MapFilter}
     import Appsignal.Utils
+    require Appsignal.Stacktrace
     @transaction Application.get_env(:appsignal, :appsignal_transaction, Transaction)
 
     @moduledoc """
@@ -84,7 +85,7 @@ if Appsignal.live_view?() do
           function.()
         catch
           kind, reason ->
-            stacktrace = System.stacktrace()
+            stacktrace = Stacktrace.get()
             ErrorHandler.set_error(transaction, reason, stacktrace)
             finish_with_socket(transaction, socket, params)
             TransactionRegistry.ignore(self())
