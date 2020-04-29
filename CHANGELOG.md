@@ -1,3 +1,9 @@
+# 1.13.1
+- Use `__STACKTRACE__ /0` on Elixir >= 1.7. PR 559
+- Relax live_view dependency to allow versions over 0.9. PR #558
+- Bump agent to v-96b684b
+  - Check if queued payloads are for correct app and not expired
+
 # 1.13.0
 - Add LiveView instrumentation helpers. PR #549
 - Fix typespec for Appsignal.Phoenix.Channel.channel_action/4. PR #553
