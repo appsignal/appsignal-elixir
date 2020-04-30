@@ -76,6 +76,8 @@ defmodule Appsignal.Span do
     span
   end
 
+  def set_attribute(_span, _key, _value), do: nil
+
   def set_sample_data(%Span{reference: reference} = span, key, value)
       when is_binary(key) and is_map(value) do
     data = Appsignal.Utils.DataEncoder.encode(value)

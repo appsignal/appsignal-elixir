@@ -305,6 +305,18 @@ defmodule AppsignalSpanTest do
     end
   end
 
+  describe ".set_attribute/2" do
+    setup :create_root_span
+
+    test "returns the span", %{span: span} do
+      assert Span.set_attribute(span, "key", "value") == span
+    end
+
+    test "returns nil when passing a nil-span" do
+      assert Span.set_attribute(nil, "key", "value") == nil
+    end
+  end
+
   describe ".close/1, when passing a nil" do
     test "returns nil" do
       assert Span.close(nil) == nil
