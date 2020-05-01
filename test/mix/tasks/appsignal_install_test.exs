@@ -2,13 +2,12 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
   use ExUnit.Case
   import ExUnit.CaptureIO
   import AppsignalTest.Utils
-  alias Appsignal.{FakeDemo, Test}
+  alias Appsignal.Test
 
   setup do
     Test.Tracer.start_link()
     Test.Span.start_link()
     Test.Nif.start_link()
-    {:ok, fake_demo} = FakeDemo.start_link()
 
     bypass = Bypass.open()
 
@@ -16,7 +15,7 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
       "APPSIGNAL_PUSH_API_ENDPOINT" => "http://localhost:#{bypass.port}"
     })
 
-    {:ok, %{bypass: bypass, fake_demo: fake_demo}}
+    %{bypass: bypass}
   end
 
   describe "without push api key" do
@@ -303,7 +302,7 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
              )
     end
 
-    test "sends a demo sample with six spans to AppSignal", %{fake_demo: fake_demo} do
+    test "sends a demo sample with six spans to AppSignal" do
       run_with_environment_config()
 
       {:ok, spans} = Test.Tracer.get(:create_span)
