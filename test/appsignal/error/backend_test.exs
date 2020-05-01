@@ -2,7 +2,7 @@ defmodule CrashingGenServer do
   use GenServer
 
   def start_link(_opts) do
-    GenServer.start(__MODULE__, [meta: :data], name: Elixir.MyGenServer)
+    GenServer.start(__MODULE__, [])
   end
 
   def init(opts), do: {:ok, opts}
