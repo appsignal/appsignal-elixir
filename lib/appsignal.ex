@@ -16,7 +16,7 @@ defmodule Appsignal do
 
   use Application
 
-  alias Appsignal.{Config, Error}
+  alias Appsignal.Config
 
   require Logger
 
