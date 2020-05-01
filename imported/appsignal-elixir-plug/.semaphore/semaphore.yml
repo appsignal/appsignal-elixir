@@ -5,15 +5,16 @@ agent:
     type: e1-standard-2
     os_image: ubuntu1804
 blocks:
-  - name: Run tests
+  - name: Run linters
     task:
       prologue:
         commands:
           - sem-version erlang 22
-          - sem-version elixir 1.10.2
+          - sem-version elixir master
           - elixir -v
           - checkout
           - mix local.rebar --force
+          - mix local.hex --force
           - mix deps.get
 
       jobs:
@@ -29,8 +30,81 @@ blocks:
             - mix dialyzer --plt
             - cache store dialyzer-plt priv/plts/
             - mix dialyzer
-        - name: mix test
+      env_vars:
+        - name: MIX_ENV
+          value: test
+  - name: Run tests
+    task:
+      jobs:
+        - name: Elixir master, OTP 22
           commands:
+            - sem-version erlang 22
+            - sem-version elixir master
+            - elixir -v
+            - checkout
+            - mix local.rebar --force
+            - mix local.hex --force
+            - mix deps.get
+            - mix test
+        - name: Elixir master, OTP 21
+          commands:
+            - sem-version erlang 21
+            - sem-version elixir master
+            - elixir -v
+            - checkout
+            - mix local.rebar --force
+            - mix local.hex --force
+            - mix deps.get
+            - mix test
+        - name: Elixir 1.10.3, OTP 22
+          commands:
+            - sem-version erlang 22
+            - sem-version elixir 1.10.3
+            - elixir -v
+            - checkout
+            - mix local.rebar --force
+            - mix local.hex --force
+            - mix deps.get
+            - mix test
+        - name: Elixir 1.10.3, OTP 21
+          commands:
+            - sem-version erlang 21
+            - sem-version elixir 1.10.3
+            - elixir -v
+            - checkout
+            - mix local.rebar --force
+            - mix local.hex --force
+            - mix deps.get
+            - mix test
+        - name: Elixir 1.9.4, OTP 22
+          commands:
+            - sem-version erlang 22
+            - sem-version elixir 1.9.4
+            - elixir -v
+            - checkout
+            - mix local.rebar --force
+            - mix local.hex --force
+            - mix deps.get
+            - mix test
+        - name: Elixir 1.9.4, OTP 21
+          commands:
+            - sem-version erlang 21
+            - sem-version elixir 1.9.4
+            - elixir -v
+            - checkout
+            - mix local.rebar --force
+            - mix local.hex --force
+            - mix deps.get
+            - mix test
+        - name: Elixir 1.9.4, OTP 20
+          commands:
+            - sem-version erlang 20
+            - sem-version elixir 1.9.4
+            - elixir -v
+            - checkout
+            - mix local.rebar --force
+            - mix local.hex --force
+            - mix deps.get
             - mix test
       env_vars:
         - name: MIX_ENV
