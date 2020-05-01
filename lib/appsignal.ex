@@ -20,12 +20,6 @@ defmodule Appsignal do
 
   require Logger
 
-  @transaction Application.get_env(
-                 :appsignal,
-                 :appsignal_transaction,
-                 Appsignal.Transaction
-               )
-
   @doc """
   Application callback function
   """
