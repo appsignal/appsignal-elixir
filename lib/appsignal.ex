@@ -150,10 +150,6 @@ defmodule Appsignal do
     :ok = Appsignal.Nif.add_distribution_value(key, value, encoded_tags)
   end
 
-  defp prefixed("", message), do: message
-  defp prefixed(prefix, message) when is_binary(prefix), do: prefix <> ": " <> message
-  defp prefixed(_, message), do: message
-
   def instrument(fun) do
     span = @tracer.create_span("http_request", @tracer.current_span)
 
