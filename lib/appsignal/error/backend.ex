@@ -31,4 +31,8 @@ defmodule Appsignal.Error.Backend do
   def handle_event(_event, state) do
     {:ok, state}
   end
+
+  def handle_call(_event, state) do
+    {:reply, :ok, state}
+  end
 end
