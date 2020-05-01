@@ -501,7 +501,7 @@ defmodule Appsignal.Nif do
     :ok
   end
 
-  def _span_to_json(resource) do
+  def _span_to_json(_reference) do
     {:ok, "{}"}
   end
 
