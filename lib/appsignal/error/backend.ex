@@ -8,7 +8,6 @@ defmodule Appsignal.Error.Backend do
 
   def handle_event({:error, gl, {_, _, _, metadata}}, state) when node(gl) == node() do
     pid = metadata[:pid]
-    {reason, stacktrace} = metadata[:crash_reason]
 
     case Keyword.get(metadata, :crash_reason) do
       {reason, stacktrace} ->
