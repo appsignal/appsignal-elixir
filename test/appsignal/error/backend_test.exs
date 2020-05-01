@@ -1,3 +1,19 @@
+defmodule CrashingGenServer do
+  use GenServer
+
+  def start_link(_opts) do
+    GenServer.start(__MODULE__, [meta: :data], name: Elixir.MyGenServer)
+  end
+
+  def init(opts), do: {:ok, opts}
+
+  def handle_cast(:raise_error, state) do
+    Map.fetch!(%{}, :bad_key)
+
+    {:noreply, state}
+  end
+end
+
 defmodule Appsignal.Error.BackendTest do
   use ExUnit.Case
   import AppsignalTest.Utils
@@ -152,22 +168,6 @@ defmodule Appsignal.Error.BackendTest do
 
   describe "handle_event/3, with a crashing GenServer" do
     setup do
-      defmodule CrashingGenServer do
-        use GenServer
-
-        def start_link(_opts) do
-          GenServer.start(__MODULE__, [meta: :data], name: Elixir.MyGenServer)
-        end
-
-        def init(opts), do: {:ok, opts}
-
-        def handle_cast(:raise_error, state) do
-          Map.fetch!(%{}, :bad_key)
-
-          {:noreply, state}
-        end
-      end
-
       {:ok, pid} = start_supervised(CrashingGenServer)
 
       GenServer.cast(pid, :raise_error)
