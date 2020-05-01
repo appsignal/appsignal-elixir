@@ -154,6 +154,7 @@ defmodule AppsignalSpanTest do
       assert return == span
     end
 
+    @tag :skip_env_test_no_nif
     test "sets the name through the Nif", %{span: span} do
       assert %{"name" => "test"} = Span.to_map(span)
     end
@@ -336,6 +337,7 @@ defmodule AppsignalSpanTest do
     end
   end
 
+  @tag :skip_env_test_no_nif
   describe ".to_map/1" do
     setup :create_root_span
 
