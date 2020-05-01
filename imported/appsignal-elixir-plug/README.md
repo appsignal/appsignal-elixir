@@ -1,21 +1,39 @@
 # Appsignal.Plug
 
-**TODO: Add description**
+> ⚠️  **NOTE**: Appsignal.Plug is part of an upcoming version of Appsignal for
+> Elixir, and hasn't been officially released. Aside from beta testing, we
+> recommend using [the current version of AppSignal for Elixir](https://github.com/appsignal/appsignal-elixir/tree/master)
+> instead.
+
+AppSignal's Plug instrumentation instruments calls to Plug applications to
+gain performance insights and error reporting.
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `appsignal_plug` to your list of dependencies in `mix.exs`:
+To install `Appsignal.Plug` into your Plug application, first add
+`:appsignal_plug` to your project's dependencies:
 
-```elixir
-def deps do
-  [
-    {:appsignal_plug, "~> 0.1.0"}
-  ]
+``` elixir
+defp deps do
+  {:appsignal_plug, github: "appsignal/appsignal-plug"},
 end
 ```
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/appsignal_plug](https://hexdocs.pm/appsignal_plug).
+After that, follow the [installation instructions for Appsignal for
+Elixir](https://github.com/appsignal/appsignal-elixir/tree/tracing).
 
+Finally, `use Appsignal.Plug` in your application's router module:
+
+``` elixir
+defmodule AppsignalPlugExample do
+  use Plug.Router
+  use Appsignal.Plug
+
+  plug(:match)
+  plug(:dispatch)
+
+  get "/" do
+    send_resp(conn, 200, "Welcome")
+  end
+end
+```

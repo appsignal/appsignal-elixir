@@ -7,8 +7,8 @@ defmodule Appsignal.Plug do
 
   ## Installation
 
-  To install Appsignal.Plug into your Plug application, `use Appsignal.Plug` in
-  your application's router module:
+  To install `Appsignal.Plug` into your Plug application, `use Appsignal.Plug`
+  in your application's router module:
 
       defmodule AppsignalPlugExample do
         use Plug.Router
@@ -23,6 +23,7 @@ defmodule Appsignal.Plug do
       end
   """
 
+  @doc false
   defmacro __using__(_) do
     quote do
       @tracer Application.get_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
@@ -60,18 +61,22 @@ defmodule Appsignal.Plug do
     end
   end
 
+  @doc false
   def put_name(%Plug.Conn{} = conn, name) do
     Plug.Conn.put_private(conn, :appsignal_name, name)
   end
 
+  @doc false
   def set_name(span, %Plug.Conn{private: %{appsignal_name: name}}) do
     do_set_name(span, name)
   end
 
+  @doc false
   def set_name(span, %Plug.Conn{method: method, private: %{plug_route: {path, _fun}}}) do
     do_set_name(span, "#{method} #{path}")
   end
 
+  @doc false
   def set_name(span, _conn) do
     span
   end
@@ -80,11 +85,13 @@ defmodule Appsignal.Plug do
     @span.set_name(span, name)
   end
 
+  @doc false
   def set_params(span, conn) do
     %Plug.Conn{params: params} = Plug.Conn.fetch_query_params(conn)
     @span.set_sample_data(span, "params", params)
   end
 
+  @doc false
   def set_sample_data(span, %Plug.Conn{
         host: host,
         method: method,
@@ -99,6 +106,7 @@ defmodule Appsignal.Plug do
     })
   end
 
+  @doc false
   def handle_error(
         span,
         :error,
@@ -110,6 +118,7 @@ defmodule Appsignal.Plug do
     span
   end
 
+  @doc false
   def handle_error(
         span,
         :error,
@@ -120,6 +129,7 @@ defmodule Appsignal.Plug do
     handle_error(span, :error, wrapped_reason, stack, conn)
   end
 
+  @doc false
   def handle_error(span, kind, reason, stack, conn) do
     span
     |> @span.add_error(kind, reason, stack)
