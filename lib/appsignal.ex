@@ -3,26 +3,23 @@ defmodule Appsignal do
   @span Application.get_env(:appsignal, :appsignal_span, Appsignal.Span)
 
   @moduledoc """
-  AppSignal for Elixir. Follow the [installation guide](https://docs.appsignal.com/elixir/installation.html) to install AppSignal into your Elixir app.
+  AppSignal for Elixir. Follow the [installation
+  guide](https://docs.appsignal.com/elixir/installation.html) to install
+  AppSignal into your Elixir app.
 
-  This module contains the main AppSignal OTP application, as well as
-  a few helper functions for sending metrics to AppSignal.
+  This module contains the main AppSignal OTP application, as well as a few
+  helper functions for sending metrics to AppSignal.
 
-  These metrics do not rely on an active transaction being
-  present. For transaction related-functions, see the
+  These metrics do not rely on an active transaction being present. For
+  transaction related-functions, see the
   [Appsignal.Transaction](Appsignal.Transaction.html) module.
-
   """
 
   use Application
-
   alias Appsignal.Config
-
   require Logger
 
-  @doc """
-  Application callback function
-  """
+  @doc false
   def start(_type, _args) do
     import Supervisor.Spec, warn: false
 
@@ -46,13 +43,12 @@ defmodule Appsignal do
     result
   end
 
-  @doc """
-  Application callback function
-  """
+  @doc false
   def stop(_state) do
     Logger.debug("AppSignal stopping.")
   end
 
+  @doc false
   def config_change(_changed, _new, _removed) do
     # Spawn a separate process that reloads the configuration. AppSignal can't
     # reload it in the same process because the GenServer would continue
@@ -99,7 +95,7 @@ defmodule Appsignal do
   end
 
   @doc """
-  Set a gauge for a measurement of some metric.
+  Set a gauge for a measurement of a metric.
   """
   @spec set_gauge(String.t(), float | integer, map) :: :ok
   def set_gauge(key, value, tags \\ %{})
@@ -114,7 +110,7 @@ defmodule Appsignal do
   end
 
   @doc """
-  Increment a counter of some metric.
+  Increment a counter of a metric.
   """
   @spec increment_counter(String.t(), number, map) :: :ok
   def increment_counter(key, count \\ 1, tags \\ %{})
@@ -127,8 +123,7 @@ defmodule Appsignal do
   @doc """
   Add a value to a distribution
 
-  Use this to collect multiple data points that will be merged into a
-  graph.
+  Use this to collect multiple data points that will be merged into a graph.
   """
   @spec add_distribution_value(String.t(), float | integer, map) :: :ok
   def add_distribution_value(key, value, tags \\ %{})
@@ -142,6 +137,7 @@ defmodule Appsignal do
     :ok = Appsignal.Nif.add_distribution_value(key, value, encoded_tags)
   end
 
+  @doc false
   def instrument(fun) do
     span = @tracer.create_span("http_request", @tracer.current_span)
 
@@ -151,6 +147,26 @@ defmodule Appsignal do
     result
   end
 
+  @doc """
+  Instrument a function.
+
+      def call do
+        Appsignal.instrument("foo.bar", fn ->
+          :timer.sleep(1000)
+        end)
+      end
+
+  When passing a function that takes an argument, the function is called with
+  the created span to allow adding extra information.
+
+      def call(params) do
+        Appsignal.instrument("foo.bar", fn span ->
+          Appsignal.Span.set_sample_data(span, "params", params)
+          :timer.sleep(1000)
+        end)
+      end
+
+  """
   def instrument(name, fun) do
     instrument(fn span ->
       @span.set_name(span, name)
