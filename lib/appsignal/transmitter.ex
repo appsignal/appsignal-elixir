@@ -1,4 +1,5 @@
 defmodule Appsignal.Transmitter do
+  @moduledoc false
   require Logger
 
   def request(method, url, headers \\ [], body \\ "") do

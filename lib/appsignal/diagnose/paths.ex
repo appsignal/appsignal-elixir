@@ -1,4 +1,5 @@
 defmodule Appsignal.Diagnose.Paths do
+  @moduledoc false
   def info do
     log_file_path = Appsignal.Config.log_file_path() || "/tmp/appsignal.log"
     log_dir_path = Path.dirname(log_file_path)

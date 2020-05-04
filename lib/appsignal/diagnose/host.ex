@@ -1,4 +1,5 @@
 defmodule Appsignal.Diagnose.Host do
+  @moduledoc false
   @system Application.get_env(:appsignal, :appsignal_system, Appsignal.System)
   @nif Application.get_env(:appsignal, :appsignal_nif, Appsignal.Nif)
 

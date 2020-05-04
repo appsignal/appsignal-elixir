@@ -1,7 +1,7 @@
 defmodule Appsignal.Config do
+  @moduledoc false
   alias Appsignal.Nif
   alias Appsignal.Utils.FileSystem
-
   require Logger
 
   @default_config %{
