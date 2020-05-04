@@ -1,4 +1,5 @@
 defmodule Appsignal.Monitor do
+  @moduledoc false
   use GenServer
   alias Appsignal.Tracer
 

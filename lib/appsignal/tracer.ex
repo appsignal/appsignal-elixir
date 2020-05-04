@@ -1,4 +1,5 @@
 defmodule Appsignal.Tracer do
+  @moduledoc false
   alias Appsignal.Span
 
   @monitor Application.get_env(:appsignal, :appsignal_monitor, Appsignal.Monitor)

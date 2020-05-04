@@ -1,4 +1,5 @@
 defmodule Appsignal.Test.Monitor do
+  @moduledoc false
   use Appsignal.Test.Wrapper
   alias Appsignal.Monitor
 
