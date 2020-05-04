@@ -14,6 +14,7 @@ defmodule Appsignal.TransactionBehaviour do
               Appsignal.Transaction.t() | nil
   @callback set_namespace(atom()) :: Transaction.t() | nil
   @callback set_namespace(Transaction.t() | any(), String.t() | atom()) :: Transaction.t() | nil
+  @callback set_sample_data(String.t(), any) :: Appsignal.Transaction.t() | nil
   @callback set_sample_data(Appsignal.Transaction.t() | any(), String.t(), any) ::
               Appsignal.Transaction.t() | nil
   @callback record_event(String.t(), String.t(), String.t(), integer, integer) ::
