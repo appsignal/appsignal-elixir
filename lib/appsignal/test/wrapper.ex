@@ -1,4 +1,6 @@
 defmodule Appsignal.Test.Wrapper do
+  @moduledoc false
+
   defmacro __using__(_) do
     quote do
       import Appsignal.Test.Wrapper

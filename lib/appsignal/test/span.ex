@@ -1,4 +1,5 @@
 defmodule Appsignal.Test.Span do
+  @moduledoc false
   use Appsignal.Test.Wrapper
   alias Appsignal.Span
 

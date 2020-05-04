@@ -1,4 +1,5 @@
 defmodule Appsignal.Diagnose.Config do
+  @moduledoc false
   def config do
     sources = Application.get_env(:appsignal, :config_sources, %{})
 

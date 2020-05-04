@@ -1,4 +1,5 @@
 defmodule Appsignal.Diagnose.Agent do
+  @moduledoc false
   @nif Application.get_env(:appsignal, :appsignal_nif, Appsignal.Nif)
 
   def report do
