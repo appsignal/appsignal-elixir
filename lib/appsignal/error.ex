@@ -1,4 +1,5 @@
 defmodule Appsignal.Error do
+  @moduledoc false
   def metadata(:error, reason, stack) do
     exception = Exception.normalize(:error, reason, stack)
 

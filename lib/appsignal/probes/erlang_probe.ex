@@ -1,4 +1,5 @@
 defmodule Appsignal.Probes.ErlangProbe do
+  @moduledoc false
   @appsignal Application.get_env(:appsignal, :appsignal, Appsignal)
   @inet Application.get_env(:appsignal, :inet, :inet)
 

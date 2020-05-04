@@ -1,7 +1,5 @@
 defmodule Appsignal.Utils.DataEncoder do
-  @moduledoc """
-  Encodes data
-  """
+  @moduledoc false
 
   alias Appsignal.Nif
 

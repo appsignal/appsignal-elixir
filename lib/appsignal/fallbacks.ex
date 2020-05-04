@@ -1,5 +1,6 @@
 unless Code.ensure_loaded?(Appsignal.Phoenix) do
   defmodule Appsignal.Plug.NotAvailableError do
+    @moduledoc false
     defexception []
 
     def message(_) do
@@ -18,6 +19,8 @@ unless Code.ensure_loaded?(Appsignal.Phoenix) do
   end
 
   defmodule Appsignal.Plug do
+    @moduledoc false
+
     def __using__(_) do
       raise Appsignal.Plug.NotAvailableError
     end
@@ -26,6 +29,7 @@ end
 
 unless Code.ensure_loaded?(Appsignal.Phoenix) do
   defmodule Appsignal.Phoenix.NotAvailableError do
+    @moduledoc false
     defexception []
 
     def message(_) do
@@ -44,6 +48,8 @@ unless Code.ensure_loaded?(Appsignal.Phoenix) do
   end
 
   defmodule Appsignal.Phoenix do
+    @moduledoc false
+
     def __using__(_) do
       raise Appsignal.Phoenix.NotAvailableError
     end

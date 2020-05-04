@@ -1,6 +1,6 @@
 defmodule Appsignal.Probes do
+  @moduledoc false
   use GenServer
-
   require Logger
 
   def start_link do

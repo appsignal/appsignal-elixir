@@ -1,4 +1,6 @@
 defmodule Appsignal.Stacktrace do
+  @moduledoc false
+
   if Version.compare(System.version(), "1.7.0") == :lt do
     defmacro get do
       quote do

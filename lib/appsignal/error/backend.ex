@@ -1,4 +1,5 @@
 defmodule Appsignal.Error.Backend do
+  @moduledoc false
   @tracer Application.get_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
   @span Application.get_env(:appsignal, :appsignal_span, Appsignal.Span)
 

@@ -1,4 +1,6 @@
 defmodule Appsignal.Utils do
+  @moduledoc false
+
   @doc """
   Converts module name atoms to strings.
 
