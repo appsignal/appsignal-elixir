@@ -1,11 +1,12 @@
 defmodule Appsignal.Diagnose.ReportBehaviour do
+  @moduledoc false
   @callback send(map(), map()) :: {:ok, String.t()} | {:error, map()}
 end
 
 defmodule Appsignal.Diagnose.Report do
-  alias Appsignal.Transmitter
-
+  @moduledoc false
   @behaviour Appsignal.Diagnose.ReportBehaviour
+  alias Appsignal.Transmitter
 
   @spec send(map(), map()) :: {:ok, String.t()} | {:error, map()}
   def send(config, report) do

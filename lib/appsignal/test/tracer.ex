@@ -1,4 +1,5 @@
 defmodule Appsignal.Test.Tracer do
+  @moduledoc false
   use Appsignal.Test.Wrapper
   alias Appsignal.Tracer
 

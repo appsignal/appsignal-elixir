@@ -1,10 +1,12 @@
 defmodule Appsignal.SystemBehaviour do
+  @moduledoc false
   @callback root?() :: boolean()
   @callback heroku?() :: boolean()
   @callback uid() :: integer | nil
 end
 
 defmodule Appsignal.System do
+  @moduledoc false
   @behaviour Appsignal.SystemBehaviour
 
   def heroku? do

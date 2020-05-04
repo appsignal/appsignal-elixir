@@ -1,8 +1,10 @@
 defmodule TestError do
+  @moduledoc false
   defexception message: "Hello world! This is an error used for demonstration purposes."
 end
 
 defmodule Appsignal.Demo do
+  @moduledoc false
   import Appsignal, only: [instrument: 2]
   @tracer Application.get_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
   @span Application.get_env(:appsignal, :appsignal_span, Appsignal.Span)

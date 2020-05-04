@@ -1,10 +1,6 @@
 defmodule Appsignal.Utils.MapFilter do
+  @moduledoc false
   require Logger
-
-  @moduledoc """
-  Helper functions for filtering parameters to prevent sensitive data
-  to be submitted to AppSignal.
-  """
 
   @doc """
   Filter parameters based on Appsignal and Phoenix configuration.

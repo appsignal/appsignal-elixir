@@ -1,4 +1,5 @@
 defmodule :appsignal_tasks do
+  @moduledoc false
   def diagnose do
     Mix.Tasks.Appsignal.Diagnose.run(nil)
     :init.stop()
