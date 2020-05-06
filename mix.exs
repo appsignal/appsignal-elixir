@@ -27,7 +27,7 @@ defmodule Appsignal.Mixfile do
       deps: deps(),
       docs: [main: "Appsignal", logo: "logo.png"],
       dialyzer: [
-        ignore_warnings: "dialyzer.ignore_warnings",
+        ignore_warnings: "dialyzer.ignore-warnings",
         plt_file: {:no_warn, "priv/plts/dialyzer.plt"}
       ]
     ]
