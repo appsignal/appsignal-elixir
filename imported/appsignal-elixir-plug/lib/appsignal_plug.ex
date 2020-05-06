@@ -47,11 +47,7 @@ defmodule Appsignal.Plug do
               :erlang.raise(kind, reason, stack)
           else
             conn ->
-              span
-              |> Appsignal.Plug.set_name(conn)
-              |> Appsignal.Plug.set_params(conn)
-              |> Appsignal.Plug.set_sample_data(conn)
-
+              Appsignal.Plug.set_conn_data(span, conn)
               conn
           end
         end)
@@ -67,43 +63,11 @@ defmodule Appsignal.Plug do
   end
 
   @doc false
-  def set_name(span, %Plug.Conn{private: %{appsignal_name: name}}) do
-    do_set_name(span, name)
-  end
-
-  @doc false
-  def set_name(span, %Plug.Conn{method: method, private: %{plug_route: {path, _fun}}}) do
-    do_set_name(span, "#{method} #{path}")
-  end
-
-  @doc false
-  def set_name(span, _conn) do
+  def set_conn_data(span, conn) do
     span
-  end
-
-  defp do_set_name(span, name) do
-    @span.set_name(span, name)
-  end
-
-  @doc false
-  def set_params(span, conn) do
-    %Plug.Conn{params: params} = Plug.Conn.fetch_query_params(conn)
-    @span.set_sample_data(span, "params", params)
-  end
-
-  @doc false
-  def set_sample_data(span, %Plug.Conn{
-        host: host,
-        method: method,
-        request_path: request_path,
-        port: port
-      }) do
-    @span.set_sample_data(span, "environment", %{
-      "host" => host,
-      "method" => method,
-      "request_path" => request_path,
-      "port" => port
-    })
+    |> set_name(conn)
+    |> set_params(conn)
+    |> set_sample_data(conn)
   end
 
   @doc false
@@ -133,8 +97,41 @@ defmodule Appsignal.Plug do
   def handle_error(span, kind, reason, stack, conn) do
     span
     |> @span.add_error(kind, reason, stack)
-    |> Appsignal.Plug.set_name(conn)
-    |> Appsignal.Plug.set_params(conn)
-    |> Appsignal.Plug.set_sample_data(conn)
+    |> set_conn_data(conn)
+  end
+
+  defp set_name(span, %Plug.Conn{private: %{appsignal_name: name}}) do
+    do_set_name(span, name)
+  end
+
+  defp set_name(span, %Plug.Conn{method: method, private: %{plug_route: {path, _fun}}}) do
+    do_set_name(span, "#{method} #{path}")
+  end
+
+  defp set_name(span, _conn) do
+    span
+  end
+
+  defp do_set_name(span, name) do
+    @span.set_name(span, name)
+  end
+
+  defp set_params(span, conn) do
+    %Plug.Conn{params: params} = Plug.Conn.fetch_query_params(conn)
+    @span.set_sample_data(span, "params", params)
+  end
+
+  defp set_sample_data(span, %Plug.Conn{
+         host: host,
+         method: method,
+         request_path: request_path,
+         port: port
+       }) do
+    @span.set_sample_data(span, "environment", %{
+      "host" => host,
+      "method" => method,
+      "request_path" => request_path,
+      "port" => port
+    })
   end
 end
