@@ -100,12 +100,12 @@ defmodule Appsignal.PlugTest do
     end
 
     test "sets the span's sample data" do
-      assert_sample_data("environment", %{
-        "host" => "www.example.com",
-        "method" => "GET",
-        "port" => 80,
-        "request_path" => "/"
-      })
+      assert sample_data("environment", %{
+               "host" => "www.example.com",
+               "method" => "GET",
+               "port" => 80,
+               "request_path" => "/"
+             })
     end
 
     test "closes the span" do
@@ -121,7 +121,7 @@ defmodule Appsignal.PlugTest do
     end
 
     test "sets the span's parameters" do
-      assert_sample_data("params", %{"id" => "4"})
+      assert sample_data("params", %{"id" => "4"})
     end
   end
 
@@ -133,7 +133,7 @@ defmodule Appsignal.PlugTest do
     end
 
     test "sets the span's parameters" do
-      assert_sample_data("params", %{"id" => "4"})
+      assert sample_data("params", %{"id" => "4"})
     end
   end
 
@@ -160,12 +160,12 @@ defmodule Appsignal.PlugTest do
     end
 
     test "sets the span's sample data" do
-      assert_sample_data("environment", %{
-        "host" => "www.example.com",
-        "method" => "GET",
-        "port" => 80,
-        "request_path" => "/instrumentation"
-      })
+      assert sample_data("environment", %{
+               "host" => "www.example.com",
+               "method" => "GET",
+               "port" => 80,
+               "request_path" => "/instrumentation"
+             })
     end
 
     test "closes both spans" do
@@ -187,16 +187,16 @@ defmodule Appsignal.PlugTest do
     end
 
     test "sets the span's parameters" do
-      assert_sample_data("params", %{"id" => "4"})
+      assert sample_data("params", %{"id" => "4"})
     end
 
     test "sets the span's sample data" do
-      assert_sample_data("environment", %{
-        "host" => "www.example.com",
-        "method" => "GET",
-        "port" => 80,
-        "request_path" => "/exception"
-      })
+      assert sample_data("environment", %{
+               "host" => "www.example.com",
+               "method" => "GET",
+               "port" => 80,
+               "request_path" => "/exception"
+             })
     end
 
     test "reraises the error", %{kind: kind, reason: reason} do
@@ -225,7 +225,7 @@ defmodule Appsignal.PlugTest do
     end
 
     test "sets the span's parameters" do
-      assert_sample_data("params", %{"id" => "4"})
+      assert sample_data("params", %{"id" => "4"})
     end
   end
 
@@ -365,7 +365,7 @@ defmodule Appsignal.PlugTest do
                }
              }) == span
 
-      assert_sample_data("session_data", %{key: "value"})
+      assert sample_data("session_data", %{key: "value"})
     end
   end
 
@@ -395,11 +395,11 @@ defmodule Appsignal.PlugTest do
     end)
   end
 
-  defp assert_sample_data(asserted_key, asserted_data) do
+  defp sample_data(asserted_key, asserted_data) do
     {:ok, sample_data} = Test.Span.get(:set_sample_data)
 
-    assert Enum.any?(sample_data, fn {%Span{}, key, data} ->
-             key == asserted_key and data == asserted_data
-           end)
+    Enum.any?(sample_data, fn {%Span{}, key, data} ->
+      key == asserted_key and data == asserted_data
+    end)
   end
 end
