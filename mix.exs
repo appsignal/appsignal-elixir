@@ -27,9 +27,8 @@ defmodule Appsignal.Mixfile do
       deps: deps(),
       docs: [main: "Appsignal", logo: "logo.png"],
       dialyzer: [
-        plt_add_deps: :transitive,
-        plt_add_apps: [:mix],
-        ignore_warnings: "dialyzer.ignore-warnings"
+        ignore_warnings: "dialyzer.ignore_warnings",
+        plt_file: {:no_warn, "priv/plts/dialyzer.plt"}
       ]
     ]
   end
