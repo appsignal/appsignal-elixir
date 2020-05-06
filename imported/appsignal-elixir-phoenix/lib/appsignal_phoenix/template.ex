@@ -1,5 +1,6 @@
 defmodule Appsignal.Phoenix.Template do
   @span Application.get_env(:appsignal, :appsignal_span, Appsignal.Span)
+  @moduledoc false
 
   def compile(fun, path) do
     quote do

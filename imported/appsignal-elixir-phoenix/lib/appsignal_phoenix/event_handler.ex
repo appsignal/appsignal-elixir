@@ -2,6 +2,7 @@ defmodule Appsignal.Phoenix.EventHandler do
   require Logger
   @tracer Application.get_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
   @span Application.get_env(:appsignal, :appsignal_span, Appsignal.Span)
+  @moduledoc false
 
   def attach do
     handlers = %{

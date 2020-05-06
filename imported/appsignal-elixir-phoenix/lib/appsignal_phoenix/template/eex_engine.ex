@@ -1,5 +1,6 @@
 defmodule Appsignal.Phoenix.Template.EExEngine do
   @behaviour Phoenix.Template.Engine
+  @moduledoc false
 
   def compile(path, name) do
     path
