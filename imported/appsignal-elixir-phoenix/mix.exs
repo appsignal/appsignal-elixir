@@ -28,6 +28,7 @@ defmodule Appsignal.Phoenix.MixProject do
     [
       {:appsignal_plug, github: "appsignal/appsignal-elixir-plug"},
       {:phoenix, "~> 1.4"},
+      {:phoenix_html, "~> 2.11", only: :test},
       {:telemetry, "~> 0.4"}
     ]
   end
