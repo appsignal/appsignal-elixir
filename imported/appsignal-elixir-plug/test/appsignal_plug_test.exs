@@ -354,6 +354,19 @@ defmodule Appsignal.PlugTest do
 
       assert Test.Span.get(:set_name) == :error
     end
+
+    test "sets the span's session data", %{span: span} do
+      assert Appsignal.Plug.set_conn_data(span, %Plug.Conn{
+               method: "GET",
+               private: %{
+                 plug_route: {"/", fn -> :ok end},
+                 plug_session: %{key: "value"},
+                 plug_session_fetch: true
+               }
+             }) == span
+
+      assert_sample_data("session_data", %{key: "value"})
+    end
   end
 
   defp get(path, params_or_body \\ nil) do

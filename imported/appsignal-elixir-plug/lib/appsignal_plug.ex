@@ -68,6 +68,7 @@ defmodule Appsignal.Plug do
     |> set_name(conn)
     |> set_params(conn)
     |> set_sample_data(conn)
+    |> set_session_data(conn)
   end
 
   @doc false
@@ -133,5 +134,15 @@ defmodule Appsignal.Plug do
       "request_path" => request_path,
       "port" => port
     })
+  end
+
+  defp set_session_data(span, %Plug.Conn{
+         private: %{plug_session: session, plug_session_fetch: true}
+       }) do
+    @span.set_sample_data(span, "session_data", session)
+  end
+
+  defp set_session_data(span, _conn) do
+    span
   end
 end
