@@ -10,6 +10,10 @@ defmodule PlugWithAppsignal do
     send_resp(conn, 200, "Welcome")
   end
 
+  get "/users/:id" do
+    send_resp(conn, 200, "User!")
+  end
+
   get "/instrumentation" do
     Appsignal.instrument("query.posts", fn ->
       send_resp(conn, 200, "Welcome")
@@ -110,6 +114,16 @@ defmodule Appsignal.PlugTest do
 
     test "closes the span" do
       assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    end
+  end
+
+  describe "GET /users/:id" do
+    setup do
+      get("/users/4")
+    end
+
+    test "sets the span's name" do
+      assert {:ok, [{%Span{}, "GET /users/:id"}]} = Test.Span.get(:set_name)
     end
   end
 
