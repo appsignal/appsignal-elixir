@@ -39,6 +39,8 @@ defmodule Appsignal.Phoenix.Channel do
     Appsignal.instrument(
       "#{Appsignal.Utils.module_name(module)}##{name}",
       fn span ->
+        @span.set_namespace(span, "channel")
+
         try do
           fun.()
         catch

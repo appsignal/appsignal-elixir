@@ -36,6 +36,10 @@ defmodule Appsignal.Phoenix.ChannelTest do
       assert {:ok, [{%Span{}, "PhoenixWeb.Channel#new_msg"}]} = Test.Span.get(:set_name)
     end
 
+    test "sets the span's namespace" do
+      assert {:ok, [{%Span{}, "channel"}]} = Test.Span.get(:set_namespace)
+    end
+
     test "sets the span's sample data" do
       assert_sample_data("environment", %{
         "channel" => PhoenixWeb.RoomChannel,
@@ -68,6 +72,10 @@ defmodule Appsignal.Phoenix.ChannelTest do
 
     test "sets the span's name" do
       assert {:ok, [{%Span{}, "PhoenixWeb.Channel#new_msg"}]} = Test.Span.get(:set_name)
+    end
+
+    test "sets the span's namespace" do
+      assert {:ok, [{%Span{}, "channel"}]} = Test.Span.get(:set_namespace)
     end
 
     test "sets the span's parameters" do
@@ -106,6 +114,10 @@ defmodule Appsignal.Phoenix.ChannelTest do
 
     test "sets the span's name" do
       assert {:ok, [{%Span{}, "PhoenixWeb.Channel#new_msg"}]} = Test.Span.get(:set_name)
+    end
+
+    test "sets the span's namespace" do
+      assert {:ok, [{%Span{}, "channel"}]} = Test.Span.get(:set_namespace)
     end
 
     test "sets the span's parameters" do
