@@ -28,6 +28,62 @@ defmodule Appsignal.NifTest do
     end
   end
 
+  describe "create_root_span/1" do
+    test "returns an ok-tuple with a reference to the span" do
+      assert {:ok, ref} = Nif.create_root_span("http_request")
+      assert is_reference(ref)
+    end
+  end
+
+  describe "create_root_span_with_timestamp/2" do
+    setup do
+      {:ok, ref} = Nif.create_root_span_with_timestamp("http_request", 1_588_930_137, 508_176_000)
+
+      %{ref: ref}
+    end
+
+    test "returns a reference to the span", %{ref: ref} do
+      assert is_reference(ref)
+    end
+
+    test "sets the span's start time to the passed value", %{ref: ref} do
+      {:ok, json} = Nif.span_to_json(ref)
+
+      assert {:ok, %{"start_time" => 1_588_930_137}} = Jason.decode(json)
+    end
+  end
+
+  describe "create_child_span/3" do
+    test "returns an ok-tuple with a reference to the span" do
+      assert {:ok, ref} = Nif.create_child_span("trace_id", "span_id")
+      assert is_reference(ref)
+    end
+  end
+
+  describe "create_child_span_with_timestamp/2" do
+    setup do
+      {:ok, ref} =
+        Nif.create_child_span_with_timestamp(
+          "trace_id",
+          "span_id",
+          1_588_930_137,
+          508_176_000
+        )
+
+      %{ref: ref}
+    end
+
+    test "returns a reference to the span", %{ref: ref} do
+      assert is_reference(ref)
+    end
+
+    test "sets the span's start time to the passed value", %{ref: ref} do
+      {:ok, json} = Nif.span_to_json(ref)
+
+      assert {:ok, %{"start_time" => 1_588_930_137}} = Jason.decode(json)
+    end
+  end
+
   describe "agent_version" do
     @tag :skip_env_test_no_nif
     test "returns the installed agent version" do

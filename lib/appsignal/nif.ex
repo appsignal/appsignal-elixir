@@ -208,8 +208,16 @@ defmodule Appsignal.Nif do
     _create_root_span(namespace)
   end
 
+  def create_root_span_with_timestamp(namespace, sec, nsec) do
+    _create_root_span_with_timestamp(namespace, sec, nsec)
+  end
+
   def create_child_span(trace_id, span_id) do
     _create_child_span(trace_id, span_id)
+  end
+
+  def create_child_span_with_timestamp(trace_id, span_id, sec, nsec) do
+    _create_child_span_with_timestamp(trace_id, span_id, sec, nsec)
   end
 
   def set_span_name(reference, name) do
@@ -250,6 +258,10 @@ defmodule Appsignal.Nif do
 
   def close_span(reference) do
     _close_span(reference)
+  end
+
+  def close_span_with_timestamp(reference, sec, nsec) do
+    _close_span_with_timestamp(reference, sec, nsec)
   end
 
   def span_to_json(resource) do
@@ -440,7 +452,15 @@ defmodule Appsignal.Nif do
     {:ok, make_ref()}
   end
 
+  def _create_root_span_with_timestamp(_namespace, _sec, _nsec) do
+    {:ok, make_ref()}
+  end
+
   def _create_child_span(_trace_id, _span_id) do
+    {:ok, make_ref()}
+  end
+
+  def _create_child_span_with_timestamp(_trace_id, _span_id, _sec, _nsec) do
     {:ok, make_ref()}
   end
 
@@ -481,6 +501,10 @@ defmodule Appsignal.Nif do
   end
 
   def _close_span(_reference) do
+    :ok
+  end
+
+  def _close_span_with_timestamp(_reference, _sec, _nsec) do
     :ok
   end
 
