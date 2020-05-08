@@ -46,9 +46,13 @@ defmodule Appsignal.Tracer do
     pid = Keyword.get(options, :pid, self())
 
     unless ignored?(pid) do
-      parent
-      |> Span.create_child(pid)
-      |> register()
+      span =
+        case Keyword.get(options, :start_time) do
+          nil -> Span.create_child(parent, pid)
+          timestamp -> Span.create_child(parent, pid, timestamp)
+        end
+
+      register(span)
     end
   end
 
