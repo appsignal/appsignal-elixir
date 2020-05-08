@@ -59,6 +59,30 @@ defmodule AppsignalSpanTest do
     end
   end
 
+  describe ".create_root/3, when passing a start_time" do
+    setup do
+      [span: Span.create_root("http_request", self(), 1_588_937_136_283_541_000)]
+    end
+
+    test "returns a span", %{span: span} do
+      assert %Span{} = span
+    end
+
+    test "creates a root span through the Nif" do
+      assert [{"http_request", 1_588_937_136, 283_541_000}] =
+               Test.Nif.get!(:create_root_span_with_timestamp)
+    end
+
+    test "sets the span's reference", %{span: span} do
+      assert is_reference(span.reference)
+    end
+
+    @tag :skip_env_test_no_nif
+    test "sets the start time through the Nif", %{span: span} do
+      assert %{"start_time" => 1_588_937_136} = Span.to_map(span)
+    end
+  end
+
   describe ".create_child/3" do
     setup [:create_root_span, :create_child_span]
 
