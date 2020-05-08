@@ -38,7 +38,7 @@ defmodule Appsignal.Error.BackendTest do
 
     test "creates a span", %{pid: pid} do
       until(fn ->
-        assert {:ok, [{"background_job", nil, ^pid}]} = Test.Tracer.get(:create_span)
+        assert {:ok, [{"background_job", nil, [pid: ^pid]}]} = Test.Tracer.get(:create_span)
       end)
     end
 
@@ -103,7 +103,7 @@ defmodule Appsignal.Error.BackendTest do
 
     test "creates a span", %{pid: pid} do
       until(fn ->
-        assert {:ok, [{"background_job", nil, ^pid}]} = Test.Tracer.get(:create_span)
+        assert {:ok, [{"background_job", nil, [pid: ^pid]}]} = Test.Tracer.get(:create_span)
       end)
     end
 
@@ -146,7 +146,7 @@ defmodule Appsignal.Error.BackendTest do
 
     test "creates a span", %{pid: pid} do
       until(fn ->
-        assert {:ok, [{"background_job", nil, ^pid}]} = Test.Tracer.get(:create_span)
+        assert {:ok, [{"background_job", nil, [pid: ^pid]}]} = Test.Tracer.get(:create_span)
       end)
     end
 
@@ -177,7 +177,7 @@ defmodule Appsignal.Error.BackendTest do
 
     test "creates a span", %{pid: pid} do
       until(fn ->
-        assert {:ok, [{"background_job", nil, ^pid}]} = Test.Tracer.get(:create_span)
+        assert {:ok, [{"background_job", nil, [pid: ^pid]}]} = Test.Tracer.get(:create_span)
       end)
     end
 
