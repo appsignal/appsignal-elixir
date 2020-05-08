@@ -10,6 +10,11 @@ defmodule Appsignal.Test.Nif do
     Nif.create_root_span(namespace)
   end
 
+  def create_root_span_with_timestamp(namespace, sec, nsec) do
+    add(:create_root_span_with_timestamp, {namespace, sec, nsec})
+    Nif.create_root_span_with_timestamp(namespace, sec, nsec)
+  end
+
   def create_child_span(trace_id, span_id) do
     add(:create_child_span, {trace_id, span_id})
     Nif.create_child_span(trace_id, span_id)
