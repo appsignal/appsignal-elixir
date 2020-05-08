@@ -1,30 +1,31 @@
 defmodule Appsignal.NifTest do
+  alias Appsignal.Nif
   use ExUnit.Case, async: true
   import AppsignalTest.Utils, only: [is_reference_or_binary: 1]
 
   test "whether the agent starts" do
-    assert :ok = Appsignal.Nif.start()
+    assert :ok = Nif.start()
   end
 
   test "whether the agent stops" do
-    assert :ok = Appsignal.Nif.stop()
+    assert :ok = Nif.stop()
   end
 
   @tag :skip_env_test_no_nif
   test "starting transaction returns a reference to the transaction resource" do
-    assert {:ok, reference} = Appsignal.Nif.start_transaction("transaction id", "http_request")
+    assert {:ok, reference} = Nif.start_transaction("transaction id", "http_request")
     assert is_reference_or_binary(reference)
   end
 
   if not (Mix.env() in [:test_no_nif]) do
     test "the nif is loaded" do
-      assert true == Appsignal.Nif.loaded?()
+      assert true == Nif.loaded?()
     end
   end
 
   if Mix.env() in [:test_no_nif] do
     test "the nif is not loaded" do
-      assert false == Appsignal.Nif.loaded?()
+      assert false == Nif.loaded?()
     end
   end
 
@@ -84,15 +85,22 @@ defmodule Appsignal.NifTest do
     end
   end
 
+  describe "close_span/1" do
+    test "returns :ok" do
+      {:ok, ref} = Nif.create_root_span("http_request")
+      assert Nif.close_span(ref) == :ok
+    end
+  end
+
   describe "agent_version" do
     @tag :skip_env_test_no_nif
     test "returns the installed agent version" do
-      assert Appsignal.Nif.agent_version() == Appsignal.Agent.version()
+      assert Nif.agent_version() == Appsignal.Agent.version()
     end
 
     @tag :skip_env_test
     test "does not return the agent version if the agent is not installed" do
-      assert Appsignal.Nif.agent_version() == nil
+      assert Nif.agent_version() == nil
     end
   end
 end
