@@ -97,8 +97,33 @@ defmodule Appsignal.TracerTest do
       assert is_reference(span.reference)
     end
 
-    test "registers the span", %{span: span} do
-      assert :ets.lookup(:"$appsignal_registry", self()) == [{self(), span}]
+    test "creates a root span through the Nif" do
+      assert [{"root", 1_588_936_027, 128_939_000}] =
+               Test.Nif.get!(:create_root_span_with_timestamp)
+    end
+  end
+
+  describe "create_span/3, when passing a start time and a parent" do
+    setup :create_root_span
+
+    setup %{span: span} do
+      [
+        parent: span,
+        span: Tracer.create_span("child", span, start_time: 1_588_936_027_128_939_000)
+      ]
+    end
+
+    test "returns a span", %{span: span} do
+      assert %Span{} = span
+    end
+
+    test "sets the span's reference", %{span: span} do
+      assert is_reference(span.reference)
+    end
+
+    test "creates a child span through the Nif" do
+      assert [{_, _, 1_588_936_027, 128_939_000}] =
+               Test.Nif.get!(:create_child_span_with_timestamp)
     end
   end
 
