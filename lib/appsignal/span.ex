@@ -31,6 +31,19 @@ defmodule Appsignal.Span do
     end
   end
 
+  def create_child(parent, pid, start_time) do
+    if Config.active?() do
+      sec = :erlang.convert_time_unit(start_time, :native, :second)
+      nsec = :erlang.convert_time_unit(start_time, :native, :nanosecond) - sec * 1_000_000_000
+
+      {:ok, trace_id} = Span.trace_id(parent)
+      {:ok, span_id} = Span.span_id(parent)
+      {:ok, reference} = @nif.create_child_span_with_timestamp(trace_id, span_id, sec, nsec)
+
+      %Span{reference: reference, pid: pid}
+    end
+  end
+
   def trace_id(%Span{reference: reference}) do
     @nif.trace_id(reference)
   end

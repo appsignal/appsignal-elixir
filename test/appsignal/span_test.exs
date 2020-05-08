@@ -141,6 +141,27 @@ defmodule AppsignalSpanTest do
     end
   end
 
+  describe ".create_child/4, when passing a start_time" do
+    setup [:create_root_span]
+
+    setup %{span: span} do
+      [span: Span.create_child(span, self(), 1_588_937_136_283_541_000)]
+    end
+
+    test "returns a span", %{span: span} do
+      assert %Span{} = span
+    end
+
+    test "sets the span's reference", %{span: span} do
+      assert is_reference(span.reference)
+    end
+
+    @tag :skip_env_test_no_nif
+    test "sets the start time through the Nif", %{span: span} do
+      assert %{"start_time" => 1_588_937_136} = Span.to_map(span)
+    end
+  end
+
   describe ".trace_id/1" do
     setup :create_root_span
 

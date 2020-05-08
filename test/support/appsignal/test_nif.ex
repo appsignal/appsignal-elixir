@@ -20,6 +20,11 @@ defmodule Appsignal.Test.Nif do
     Nif.create_child_span(trace_id, span_id)
   end
 
+  def create_child_span_with_timestamp(trace_id, span_id, sec, nsec) do
+    add(:create_child_span_with_timestamp, {trace_id, span_id, sec, nsec})
+    Nif.create_child_span_with_timestamp(trace_id, span_id, sec, nsec)
+  end
+
   def set_span_name(reference, name) do
     add(:set_span_name, {reference, name})
     Nif.set_span_name(reference, name)
