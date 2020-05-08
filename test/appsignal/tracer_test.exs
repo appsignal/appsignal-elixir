@@ -84,6 +84,24 @@ defmodule Appsignal.TracerTest do
     end
   end
 
+  describe "create_span/3, when passing a start time" do
+    setup do
+      [span: Tracer.create_span("root", nil, start_time: 1_588_936_027_128_939_000)]
+    end
+
+    test "returns a span", %{span: span} do
+      assert %Span{} = span
+    end
+
+    test "sets the span's reference", %{span: span} do
+      assert is_reference(span.reference)
+    end
+
+    test "registers the span", %{span: span} do
+      assert :ets.lookup(:"$appsignal_registry", self()) == [{self(), span}]
+    end
+  end
+
   describe "current_span/0, when no span exists" do
     test "returns nil" do
       assert Tracer.current_span() == nil
