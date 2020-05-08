@@ -13,19 +13,21 @@ defmodule Appsignal.Tracer do
   Creates a new root span.
   """
   @spec create_span(String.t()) :: Span.t()
-  def create_span(namespace), do: create_span(namespace, nil, self())
+  def create_span(namespace), do: create_span(namespace, nil, [])
 
   @doc """
   Creates a new child span.
   """
   @spec create_span(String.t(), Span.t() | nil) :: Span.t()
-  def create_span(namespace, parent), do: create_span(namespace, parent, self())
+  def create_span(namespace, parent), do: create_span(namespace, parent, [])
 
   @doc """
   Creates a new span, with an optional parent or pid.
   """
-  @spec create_span(String.t(), Span.t() | nil, pid()) :: Span.t()
-  def create_span(namespace, nil, pid) do
+  @spec create_span(String.t(), Span.t() | nil, pid: pid()) :: Span.t()
+  def create_span(namespace, nil, options) do
+    pid = Keyword.get(options, :pid, self())
+
     unless ignored?(pid) do
       namespace
       |> Span.create_root(pid)
@@ -33,7 +35,9 @@ defmodule Appsignal.Tracer do
     end
   end
 
-  def create_span(_namespace, parent, pid) do
+  def create_span(_namespace, parent, options) do
+    pid = Keyword.get(options, :pid, self())
+
     unless ignored?(pid) do
       parent
       |> Span.create_child(pid)

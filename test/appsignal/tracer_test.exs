@@ -274,7 +274,7 @@ defmodule Appsignal.TracerTest do
 
   defp create_root_span_in_other_process(_context) do
     pid = Process.whereis(Test.Nif)
-    [span: Tracer.create_span("root", nil, pid), pid: pid]
+    [span: Tracer.create_span("root", nil, pid: pid), pid: pid]
   end
 
   defp disable_appsignal(_context) do
