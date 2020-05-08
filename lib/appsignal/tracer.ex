@@ -5,6 +5,9 @@ defmodule Appsignal.Tracer do
   @monitor Application.get_env(:appsignal, :appsignal_monitor, Appsignal.Monitor)
   @table :"$appsignal_registry"
 
+  @type option :: {:pid, pid} | {:start_time, integer}
+  @type options :: [option]
+
   def start_link do
     Agent.start_link(fn -> :ets.new(@table, [:named_table, :public, :duplicate_bag]) end)
   end
@@ -24,14 +27,18 @@ defmodule Appsignal.Tracer do
   @doc """
   Creates a new span, with an optional parent or pid.
   """
-  @spec create_span(String.t(), Span.t() | nil, pid: pid()) :: Span.t()
+  @spec create_span(String.t(), Span.t() | nil, options) :: Span.t()
   def create_span(namespace, nil, options) do
     pid = Keyword.get(options, :pid, self())
 
     unless ignored?(pid) do
-      namespace
-      |> Span.create_root(pid)
-      |> register()
+      span =
+        case Keyword.get(options, :start_time) do
+          nil -> Span.create_root(namespace, pid)
+          timestamp -> Span.create_root(namespace, pid, timestamp)
+        end
+
+      register(span)
     end
   end
 
