@@ -133,6 +133,13 @@ defmodule Appsignal.Span do
     span
   end
 
+  def close(%Span{reference: reference} = span, end_time) do
+    sec = :erlang.convert_time_unit(end_time, :native, :second)
+    nsec = :erlang.convert_time_unit(end_time, :native, :nanosecond) - sec * 1_000_000_000
+    :ok = @nif.close_span_with_timestamp(reference, sec, nsec)
+    span
+  end
+
   def close(nil), do: nil
 
   def to_map(%Span{reference: reference}) do
