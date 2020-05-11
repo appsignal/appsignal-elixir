@@ -113,6 +113,15 @@ defmodule Appsignal.Tracer do
     :ok
   end
 
+  @spec close_span(Span.t() | nil, end_time: integer) :: :ok | nil
+  def close_span(%Span{} = span, end_time: end_time) do
+    span
+    |> Span.close(end_time)
+    |> deregister()
+
+    :ok
+  end
+
   def close_span(nil), do: nil
 
   @doc """
