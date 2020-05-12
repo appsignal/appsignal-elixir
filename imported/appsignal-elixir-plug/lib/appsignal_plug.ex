@@ -66,6 +66,7 @@ defmodule Appsignal.Plug do
   def set_conn_data(span, conn) do
     span
     |> set_name(conn)
+    |> set_category(conn)
     |> set_params(conn)
     |> set_sample_data(conn)
     |> set_session_data(conn)
@@ -111,6 +112,14 @@ defmodule Appsignal.Plug do
 
   defp set_name(span, _conn) do
     span
+  end
+
+  defp set_category(span, %Plug.Conn{private: %{phoenix_endpoint: _endpoint}}) do
+    @span.set_attribute(span, "appsignal:category", "call.phoenix")
+  end
+
+  defp set_category(span, _conn) do
+    @span.set_attribute(span, "appsignal:category", "call.plug")
   end
 
   defp set_params(span, conn) do
