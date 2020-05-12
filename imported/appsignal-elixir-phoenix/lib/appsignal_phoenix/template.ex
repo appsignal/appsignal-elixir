@@ -4,8 +4,9 @@ defmodule Appsignal.Phoenix.Template do
 
   def compile(fun, path) do
     quote do
-      Appsignal.instrument("render.phoenix_template", fn span ->
+      Appsignal.instrument("Render #{unquote(path)}", fn span ->
         unquote(@span).set_attribute(span, "title", unquote(path))
+        unquote(@span).set_attribute(span, "appsignal:category", "render.phoenix_template")
         unquote(fun)
       end)
     end

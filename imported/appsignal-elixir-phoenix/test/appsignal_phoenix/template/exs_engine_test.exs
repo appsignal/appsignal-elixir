@@ -19,12 +19,15 @@ defmodule Appsignal.Phoenix.Template.ExsEngineTest do
   end
 
   test "sets the span's name" do
-    assert {:ok, [{%Span{}, "render.phoenix_template"}]} = Test.Span.get(:set_name)
+    assert {:ok, [{%Span{}, "Render test/support/index.html.exs"}]} = Test.Span.get(:set_name)
+  end
+
+  test "sets the span's category" do
+    assert attribute("appsignal:category", "render.phoenix_template")
   end
 
   test "sets the span's title attribute" do
-    assert {:ok, [{%Span{}, "title", "test/support/index.html.exs"}]} =
-             Test.Span.get(:set_attribute)
+    assert attribute("title", "test/support/index.html.exs")
   end
 
   test "renders the template", %{return: return} do
@@ -33,5 +36,13 @@ defmodule Appsignal.Phoenix.Template.ExsEngineTest do
 
   test "closes the span" do
     assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+  end
+
+  defp attribute(asserted_key, asserted_data) do
+    {:ok, attributes} = Test.Span.get(:set_attribute)
+
+    Enum.any?(attributes, fn {%Span{}, key, data} ->
+      key == asserted_key and data == asserted_data
+    end)
   end
 end

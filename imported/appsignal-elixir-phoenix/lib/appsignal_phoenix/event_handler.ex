@@ -37,13 +37,19 @@ defmodule Appsignal.Phoenix.EventHandler do
     :ok
   end
 
-  def phoenix_endpoint_start(_event, _measurements, _metadata, _config) do
+  def phoenix_endpoint_start(
+        _event,
+        _measurements,
+        %{conn: %Plug.Conn{private: %{phoenix_endpoint: endpoint}}},
+        _config
+      ) do
     parent = @tracer.current_span()
 
     span =
       "http_request"
       |> @tracer.create_span(parent)
-      |> @span.set_name("call.phoenix_endpoint")
+      |> @span.set_name("#{module_name(endpoint)}.call/2")
+      |> @span.set_attribute("appsignal:category", "endpoint.call")
 
     Logger.debug(
       "Appsignal.Phoenix.EventHandler: Start call.phoenix_endpoint event" <>
