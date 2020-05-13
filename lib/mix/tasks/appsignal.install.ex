@@ -18,7 +18,7 @@ defmodule Mix.Tasks.Appsignal.Install do
   end
 
   def run([push_api_key]) do
-    config = %{active: true, push_api_key: push_api_key, request_headers: []}
+    config = %{otp_app: otp_app(), active: true, push_api_key: push_api_key, request_headers: []}
     Application.put_env(:appsignal, :config, config)
     Appsignal.Config.initialize()
 
@@ -45,6 +45,11 @@ defmodule Mix.Tasks.Appsignal.Install do
     IO.puts("\nAppSignal installed! 🎉")
 
     Mix.Tasks.Appsignal.Demo.run([])
+  end
+
+  defp otp_app do
+    config = Mix.Project.config()
+    Keyword.get(config, :app)
   end
 
   defp header do
@@ -202,6 +207,7 @@ defmodule Mix.Tasks.Appsignal.Install do
   # Contents for the config/appsignal.exs file.
   defp appsignal_config_file_contents(config) do
     options = [
+      ~s(  otp_app: #{inspect(config[:otp_app])},),
       ~s(  name: "#{config[:name]}",),
       ~s(  push_api_key: "#{config[:push_api_key]}",),
       ~s(  env: Mix.env)
