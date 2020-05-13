@@ -219,21 +219,25 @@ defmodule Mix.Tasks.Appsignal.Install do
 
   # Contents for the config/appsignal.exs file.
   defp appsignal_config_file_contents(config) do
-    options = [
-      ~s(  otp_app: #{inspect(config[:otp_app])},),
-      ~s(  name: "#{config[:name]}",),
-      ~s(  push_api_key: "#{config[:push_api_key]}",),
-      ~s(  env: Mix.env)
-    ]
+    options = """
+      otp_app: #{inspect(config[:otp_app])},
+      name: "#{config[:name]}",
+      push_api_key: "#{config[:push_api_key]}",
+      env: Mix.env
+    """
 
     options_with_active =
       case has_environment_configuration_files?() do
-        false -> [~s(  active: true,)] ++ options
+        false -> "  active: true,\n" <> options
         true -> options
       end
 
-    "use Mix.Config\n\n" <>
-      "config :appsignal, :config,\n" <> Enum.join(options_with_active, "\n") <> "\n"
+    """
+    use Mix.Config
+
+    config :appsignal, :config,
+    #{options_with_active}
+    """
   end
 
   # Append a line to Mix configuration environment files which activate
