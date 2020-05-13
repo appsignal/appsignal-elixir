@@ -141,6 +141,7 @@ defmodule Mix.Tasks.Appsignal.Install do
     Configuring with environment variables.
     Please put the following variables in your environment to configure AppSignal.
 
+      export APPSIGNAL_OTP_APP="#{config[:otp_app]}"
       export APPSIGNAL_APP_NAME="#{config[:name]}"
       export APPSIGNAL_APP_ENV="prod"
       export APPSIGNAL_PUSH_API_KEY="#{config[:push_api_key]}"
