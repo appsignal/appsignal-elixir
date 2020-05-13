@@ -24,7 +24,7 @@ defmodule Mix.Tasks.Appsignal.Install do
 
     header()
     validate_push_api_key()
-    config = Map.put(config, :name, ask_for_app_name())
+    config = Map.put(config, :name, ask_for_app_name(config))
 
     case ask_kind_of_configuration() do
       :file ->
@@ -112,12 +112,11 @@ defmodule Mix.Tasks.Appsignal.Install do
     |> IO.puts()
   end
 
-  defp ask_for_app_name do
-    name = ask_for_input("What is your application's name?")
+  defp ask_for_app_name(%{otp_app: default}) do
+    name = ask_for_input("What is your application's name? [#{default}]")
 
     if String.length(name) < 1 do
-      IO.puts("I'm sorry, I didn't quite get that.")
-      ask_for_app_name()
+      default
     else
       name
     end

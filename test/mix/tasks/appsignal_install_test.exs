@@ -134,20 +134,6 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
       assert String.contains?(output, "Validating Push API key: Valid")
     end
 
-    test "requires an application name" do
-      # First entry is empty and thus invalid, so it asks for the name again.
-      output =
-        capture_io([input: "\nAppSignal test suite app\n2"], fn ->
-          Mix.Tasks.Appsignal.Install.run(["my_push_api_key"])
-        end)
-
-      assert String.contains?(
-               output,
-               "What is your application's name?: " <>
-                 "I'm sorry, I didn't quite get that.\nWhat is your application's name?: "
-             )
-    end
-
     test "requires a configuration method" do
       output =
         capture_io([input: "foo\n3\n2"], fn ->
