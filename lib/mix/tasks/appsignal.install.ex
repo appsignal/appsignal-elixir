@@ -112,7 +112,16 @@ defmodule Mix.Tasks.Appsignal.Install do
     |> IO.puts()
   end
 
-  defp ask_for_app_name, do: ask_for_input("What is your application's name?")
+  defp ask_for_app_name do
+    name = ask_for_input("What is your application's name?")
+
+    if String.length(name) < 1 do
+      IO.puts("I'm sorry, I didn't quite get that.")
+      ask_for_app_name()
+    else
+      name
+    end
+  end
 
   defp ask_kind_of_configuration do
     """
@@ -123,16 +132,20 @@ defmodule Mix.Tasks.Appsignal.Install do
     """
     |> IO.puts()
 
-    case ask_for_input("What is your preferred configuration method? (1/2)") do
+    case ask_for_input("What is your preferred configuration method? [1]") do
       "1" ->
         :file
 
       "2" ->
         :env
 
-      _ ->
-        IO.puts("I'm sorry, I didn't quite get that.")
-        ask_kind_of_configuration()
+      input ->
+        if String.length(input) < 1 do
+          :file
+        else
+          IO.puts("I'm sorry, I didn't quite get that. Please choose option 1 or 2.")
+          ask_kind_of_configuration()
+        end
     end
   end
 
@@ -293,14 +306,7 @@ defmodule Mix.Tasks.Appsignal.Install do
   end
 
   defp ask_for_input(prompt) do
-    input = String.trim(IO.gets("#{prompt}: "))
-
-    if String.length(input) <= 0 do
-      IO.puts("I'm sorry, I didn't quite get that.")
-      ask_for_input(prompt)
-    else
-      input
-    end
+    String.trim(IO.gets("#{prompt}: "))
   end
 
   defp has_environment_configuration_files? do
