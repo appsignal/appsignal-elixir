@@ -39,4 +39,9 @@ defmodule Appsignal.Test.Nif do
     add(:close_span, {reference})
     Nif.close_span(reference)
   end
+
+  def close_span_with_timestamp(reference, sec, nsec) do
+    add(:close_span_with_timestamp, {reference, sec, nsec})
+    Nif.close_span_with_timestamp(reference, sec, nsec)
+  end
 end

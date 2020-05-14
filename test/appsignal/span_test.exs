@@ -382,6 +382,20 @@ defmodule AppsignalSpanTest do
     end
   end
 
+  describe ".close/2, when passing an end time" do
+    setup :create_root_span
+
+    test "returns the span", %{span: span} do
+      assert Span.close(span, :os.system_time()) == span
+    end
+
+    test ".closes the span through the Nif", %{span: %Span{reference: reference} = span} do
+      time = :os.system_time()
+      Span.close(span, time)
+      assert [{^reference, _sec, _nsec}] = Test.Nif.get!(:close_span_with_timestamp)
+    end
+  end
+
   @tag :skip_env_test_no_nif
   describe ".to_map/1" do
     setup :create_root_span
