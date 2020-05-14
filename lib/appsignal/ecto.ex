@@ -33,12 +33,14 @@ defmodule Appsignal.Ecto do
     end
   end
 
-  defp query(_event, _measurements, %{repo: repo, query: query}, _config) do
+  defp query(_event, %{total_time: total_time}, %{repo: repo, query: query}, _config) do
+    time = :os.system_time()
+
     "http_request"
-    |> @tracer.create_span(@tracer.current_span())
+    |> @tracer.create_span(@tracer.current_span(), start_time: time - total_time)
     |> @span.set_name("Query #{module_name(repo)}")
     |> @span.set_attribute("appsignal:category", "ecto.query")
     |> @span.set_attribute("appsignal:body", query)
-    |> @tracer.close_span()
+    |> @tracer.close_span(end_time: time)
   end
 end

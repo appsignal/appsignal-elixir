@@ -41,8 +41,9 @@ defmodule Appsignal.EctoTest do
       )
     end
 
-    test "creates a span" do
-      assert Test.Tracer.get(:create_span) == {:ok, [{"http_request", nil}]}
+    test "creates a span with a start time" do
+      {:ok, [{"http_request", nil, start_time: time}]} = Test.Tracer.get(:create_span)
+      assert is_integer(time)
     end
 
     test "sets the span's name" do
@@ -60,8 +61,10 @@ defmodule Appsignal.EctoTest do
              )
     end
 
-    test "closes the span" do
-      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    test "closes the span with an end time" do
+      {:ok, [{_, _, start_time: start_time}]} = Test.Tracer.get(:create_span)
+      {:ok, [{%Span{}, end_time: end_time}]} = Test.Tracer.get(:close_span)
+      assert end_time - start_time == 8_829_000
     end
   end
 
