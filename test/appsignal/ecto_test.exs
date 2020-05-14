@@ -59,6 +59,10 @@ defmodule Appsignal.EctoTest do
                "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0"
              )
     end
+
+    test "closes the span" do
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    end
   end
 
   defp attribute(asserted_key, asserted_data) do
