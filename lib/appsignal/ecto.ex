@@ -37,5 +37,6 @@ defmodule Appsignal.Ecto do
     "http_request"
     |> @tracer.create_span(@tracer.current_span())
     |> @span.set_name("Query #{module_name(repo)}")
+    |> @span.set_attribute("appsignal:category", "ecto.query")
   end
 end

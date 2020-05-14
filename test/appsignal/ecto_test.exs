@@ -48,6 +48,11 @@ defmodule Appsignal.EctoTest do
     test "sets the span's name" do
       assert {:ok, [{%Span{}, "Query Appsignal.Test.Repo"}]} = Test.Span.get(:set_name)
     end
+
+    test "sets the span's category" do
+      assert {:ok, [{%Span{}, "appsignal:category", "ecto.query"}]} =
+               Test.Span.get(:set_attribute)
+    end
   end
 
   defp attached?(event) do
