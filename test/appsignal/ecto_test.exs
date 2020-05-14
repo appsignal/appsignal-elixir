@@ -68,6 +68,20 @@ defmodule Appsignal.EctoTest do
     end
   end
 
+  describe "query/4, for a query without a source" do
+    setup do
+      Test.Nif.start_link()
+      Test.Tracer.start_link()
+      Test.Span.start_link()
+
+      :telemetry.execute([:appsignal, :test, :repo, :query], %{}, %{source: nil})
+    end
+
+    test "does not create a span" do
+      assert Test.Tracer.get(:create_span) == :error
+    end
+  end
+
   defp attribute(asserted_key, asserted_data) do
     {:ok, attributes} = Test.Span.get(:set_attribute)
 
