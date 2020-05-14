@@ -1,6 +1,6 @@
 defmodule Appsignal.EctoTest do
   use ExUnit.Case
-  alias Appsignal.Ecto
+  alias Appsignal.{Ecto, Test}
 
   test "is attached to the repo query event automatically" do
     assert attached?([:appsignal, :test, :repo, :query])
@@ -13,6 +13,36 @@ defmodule Appsignal.EctoTest do
     assert attached?([:my_repo, :query])
 
     Application.delete_env(:appsignal, Appsignal.Test.Repo, telemetry_prefix: :my_repo)
+  end
+
+  describe "query/4" do
+    setup do
+      Test.Nif.start_link()
+      Test.Tracer.start_link()
+
+      :telemetry.execute(
+        [:appsignal, :test, :repo, :query],
+        %{
+          decode_time: 2_204_000,
+          query_time: 5_386_000,
+          queue_time: 1_239_000,
+          total_time: 8_829_000
+        },
+        %{
+          params: [],
+          query:
+            "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0",
+          repo: Appsignal.Test.Repo,
+          result: :ok,
+          source: "users",
+          type: :ecto_sql_query
+        }
+      )
+    end
+
+    test "creates a span" do
+      assert Test.Tracer.get(:create_span) == {:ok, [{"http_request", nil}]}
+    end
   end
 
   defp attached?(event) do
