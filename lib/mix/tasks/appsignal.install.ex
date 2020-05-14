@@ -18,13 +18,13 @@ defmodule Mix.Tasks.Appsignal.Install do
   end
 
   def run([push_api_key]) do
-    config = %{active: true, push_api_key: push_api_key, request_headers: []}
+    config = %{otp_app: otp_app(), active: true, push_api_key: push_api_key, request_headers: []}
     Application.put_env(:appsignal, :config, config)
     Appsignal.Config.initialize()
 
     header()
     validate_push_api_key()
-    config = Map.put(config, :name, ask_for_app_name())
+    config = Map.put(config, :name, ask_for_app_name(config))
 
     case ask_kind_of_configuration() do
       :file ->
@@ -45,6 +45,11 @@ defmodule Mix.Tasks.Appsignal.Install do
     IO.puts("\nAppSignal installed! 🎉")
 
     Mix.Tasks.Appsignal.Demo.run([])
+  end
+
+  defp otp_app do
+    config = Mix.Project.config()
+    Keyword.get(config, :app)
   end
 
   defp header do
@@ -107,7 +112,15 @@ defmodule Mix.Tasks.Appsignal.Install do
     |> IO.puts()
   end
 
-  defp ask_for_app_name, do: ask_for_input("What is your application's name?")
+  defp ask_for_app_name(%{otp_app: default}) do
+    name = ask_for_input("What is your application's name? [#{default}]")
+
+    if String.length(name) < 1 do
+      default
+    else
+      name
+    end
+  end
 
   defp ask_kind_of_configuration do
     """
@@ -118,16 +131,20 @@ defmodule Mix.Tasks.Appsignal.Install do
     """
     |> IO.puts()
 
-    case ask_for_input("What is your preferred configuration method? (1/2)") do
+    case ask_for_input("What is your preferred configuration method? [1]") do
       "1" ->
         :file
 
       "2" ->
         :env
 
-      _ ->
-        IO.puts("I'm sorry, I didn't quite get that.")
-        ask_kind_of_configuration()
+      input ->
+        if String.length(input) < 1 do
+          :file
+        else
+          IO.puts("I'm sorry, I didn't quite get that. Please choose option 1 or 2.")
+          ask_kind_of_configuration()
+        end
     end
   end
 
@@ -136,6 +153,7 @@ defmodule Mix.Tasks.Appsignal.Install do
     Configuring with environment variables.
     Please put the following variables in your environment to configure AppSignal.
 
+      export APPSIGNAL_OTP_APP="#{config[:otp_app]}"
       export APPSIGNAL_APP_NAME="#{config[:name]}"
       export APPSIGNAL_APP_ENV="prod"
       export APPSIGNAL_PUSH_API_KEY="#{config[:push_api_key]}"
@@ -201,20 +219,25 @@ defmodule Mix.Tasks.Appsignal.Install do
 
   # Contents for the config/appsignal.exs file.
   defp appsignal_config_file_contents(config) do
-    options = [
-      ~s(  name: "#{config[:name]}",),
-      ~s(  push_api_key: "#{config[:push_api_key]}",),
-      ~s(  env: Mix.env)
-    ]
+    options = """
+      otp_app: #{inspect(config[:otp_app])},
+      name: "#{config[:name]}",
+      push_api_key: "#{config[:push_api_key]}",
+      env: Mix.env
+    """
 
     options_with_active =
       case has_environment_configuration_files?() do
-        false -> [~s(  active: true,)] ++ options
+        false -> "  active: true,\n" <> options
         true -> options
       end
 
-    "use Mix.Config\n\n" <>
-      "config :appsignal, :config,\n" <> Enum.join(options_with_active, "\n") <> "\n"
+    """
+    use Mix.Config
+
+    config :appsignal, :config,
+    #{options_with_active}
+    """
   end
 
   # Append a line to Mix configuration environment files which activate
@@ -286,14 +309,7 @@ defmodule Mix.Tasks.Appsignal.Install do
   end
 
   defp ask_for_input(prompt) do
-    input = String.trim(IO.gets("#{prompt}: "))
-
-    if String.length(input) <= 0 do
-      IO.puts("I'm sorry, I didn't quite get that.")
-      ask_for_input(prompt)
-    else
-      input
-    end
+    String.trim(IO.gets("#{prompt}: "))
   end
 
   defp has_environment_configuration_files? do
