@@ -452,6 +452,13 @@ defmodule Appsignal.ConfigTest do
              ) == default_configuration() |> Map.put(:log_path, log_path)
     end
 
+    test "otp_app" do
+      assert with_env(
+               %{"APPSIGNAL_OTP_APP" => "appsignal_phoenix_example"},
+               &init_config/0
+             ) == default_configuration() |> Map.put(:otp_app, :appsignal_phoenix_example)
+    end
+
     test "name" do
       assert with_env(
                %{"APPSIGNAL_APP_NAME" => "AppSignal test suite app"},
