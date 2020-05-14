@@ -50,9 +50,23 @@ defmodule Appsignal.EctoTest do
     end
 
     test "sets the span's category" do
-      assert {:ok, [{%Span{}, "appsignal:category", "ecto.query"}]} =
-               Test.Span.get(:set_attribute)
+      assert attribute("appsignal:category", "ecto.query")
     end
+
+    test "sets the span's body" do
+      assert attribute(
+               "appsignal:body",
+               "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0"
+             )
+    end
+  end
+
+  defp attribute(asserted_key, asserted_data) do
+    {:ok, attributes} = Test.Span.get(:set_attribute)
+
+    Enum.any?(attributes, fn {%Span{}, key, data} ->
+      key == asserted_key and data == asserted_data
+    end)
   end
 
   defp attached?(event) do
