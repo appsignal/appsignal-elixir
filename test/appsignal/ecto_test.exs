@@ -1,6 +1,6 @@
 defmodule Appsignal.EctoTest do
   use ExUnit.Case
-  alias Appsignal.{Ecto, Test}
+  alias Appsignal.{Ecto, Test, Span}
 
   test "is attached to the repo query event automatically" do
     assert attached?([:appsignal, :test, :repo, :query])
@@ -19,6 +19,7 @@ defmodule Appsignal.EctoTest do
     setup do
       Test.Nif.start_link()
       Test.Tracer.start_link()
+      Test.Span.start_link()
 
       :telemetry.execute(
         [:appsignal, :test, :repo, :query],
@@ -42,6 +43,10 @@ defmodule Appsignal.EctoTest do
 
     test "creates a span" do
       assert Test.Tracer.get(:create_span) == {:ok, [{"http_request", nil}]}
+    end
+
+    test "sets the span's name" do
+      assert {:ok, [{%Span{}, "Query Appsignal.Test.Repo"}]} = Test.Span.get(:set_name)
     end
   end
 

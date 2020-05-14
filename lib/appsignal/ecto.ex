@@ -1,5 +1,7 @@
 defmodule Appsignal.Ecto do
   @tracer Application.get_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
+  @span Application.get_env(:appsignal, :appsignal_span, Appsignal.Span)
+  import Appsignal.Utils, only: [module_name: 1]
 
   def attach do
     otp_app =
@@ -31,7 +33,9 @@ defmodule Appsignal.Ecto do
     end
   end
 
-  defp query(_event, _measurements, __metadata, _config) do
-    @tracer.create_span("http_request", @tracer.current_span())
+  defp query(_event, _measurements, %{repo: repo}, _config) do
+    "http_request"
+    |> @tracer.create_span(@tracer.current_span())
+    |> @span.set_name("Query #{module_name(repo)}")
   end
 end
