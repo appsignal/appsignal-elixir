@@ -47,18 +47,18 @@ defmodule Appsignal.Config do
 
     Application.put_env(:appsignal, :config_sources, sources)
 
-    {_, config} =
+    config =
       sources[:default]
       |> Map.merge(sources[:system])
       |> Map.merge(sources[:file])
       |> Map.merge(sources[:env])
-      |> Map.get_and_update(:filter_data_keys, fn current ->
-        {current, current ++ Application.get_env(:phoenix, :filter_parameters, [])}
-      end)
 
     # Config is valid when we have a push api key
     config =
       config
+      |> merge_filter_data_keys(Application.get_env(:phoenix, :filter_parameters, []))
+      |> merge_filter_data_keys(config[:filter_parameters])
+      |> merge_filter_data_keys(config[:filter_session_data])
       |> Map.put(:valid, !empty?(config[:push_api_key]))
 
     if !empty?(config[:working_dir_path]) do
@@ -78,6 +78,12 @@ defmodule Appsignal.Config do
       false ->
         {:error, :invalid_config}
     end
+  end
+
+  defp merge_filter_data_keys(map, keys) do
+    {_, new_map} = Map.get_and_update(map, :filter_data_keys, &{&1, &1 ++ keys})
+
+    new_map
   end
 
   @doc """

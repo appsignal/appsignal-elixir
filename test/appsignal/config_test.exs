@@ -199,6 +199,16 @@ defmodule Appsignal.ConfigTest do
                with_config(%{filter_data_keys: ~w(password secret)}, &init_config/0)
     end
 
+    test "filter_data_keys loaded from the filter_parameters configuration option" do
+      assert %{filter_data_keys: ~w(password secret)} =
+               with_config(%{filter_parameters: ~w(password secret)}, &init_config/0)
+    end
+
+    test "filter_data_keys loaded from the filter_session_data configuration option" do
+      assert %{filter_data_keys: ~w(password secret)} =
+               with_config(%{filter_session_data: ~w(password secret)}, &init_config/0)
+    end
+
     test "filter_data_keys loaded from Phoenix' filter_parameters configuration option" do
       Application.put_env(:phoenix, :filter_parameters, ~w(token))
 
@@ -395,14 +405,24 @@ defmodule Appsignal.ConfigTest do
       assert with_env(
                %{"APPSIGNAL_FILTER_PARAMETERS" => "password,secret"},
                &init_config/0
-             ) == default_configuration() |> Map.put(:filter_parameters, ~w(password secret))
+             ) ==
+               default_configuration()
+               |> Map.merge(%{
+                 filter_data_keys: ~w(password secret),
+                 filter_parameters: ~w(password secret)
+               })
     end
 
     test "filter_session_data" do
       assert with_env(
                %{"APPSIGNAL_FILTER_SESSION_DATA" => "accept,connection"},
                &init_config/0
-             ) == default_configuration() |> Map.put(:filter_session_data, ~w(accept connection))
+             ) ==
+               default_configuration()
+               |> Map.merge(%{
+                 filter_data_keys: ~w(accept connection),
+                 filter_session_data: ~w(accept connection)
+               })
     end
 
     test "filter_data_keys" do
