@@ -199,6 +199,23 @@ defmodule Appsignal.ConfigTest do
                with_config(%{filter_data_keys: ~w(password secret)}, &init_config/0)
     end
 
+    test "filter_data_keys loaded from Phoenix' filter_parameters configuration option" do
+      Application.put_env(:phoenix, :filter_parameters, ~w(token))
+
+      assert %{filter_data_keys: ~w(token)} = init_config()
+
+      Application.delete_env(:phoenix, :filter_parameters)
+    end
+
+    test "filter_data_keys merges appsignal and phoenix ignored keys" do
+      Application.put_env(:phoenix, :filter_parameters, ~w(token))
+
+      assert %{filter_data_keys: ~w(password secret token)} =
+               with_config(%{filter_data_keys: ~w(password secret)}, &init_config/0)
+
+      Application.delete_env(:phoenix, :filter_parameters)
+    end
+
     test "frontend_error_catching_path" do
       assert %{frontend_error_catching_path: "/appsignal_error_catcher"} =
                with_config(
