@@ -8,7 +8,8 @@ defmodule Appsignal.Phoenix.MixProject do
       elixir: "~> 1.9",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      elixirc_paths: elixirc_paths(Mix.env())
+      elixirc_paths: elixirc_paths(Mix.env()),
+      compilers: compilers(Mix.env())
     ]
   end
 
@@ -22,6 +23,9 @@ defmodule Appsignal.Phoenix.MixProject do
 
   defp elixirc_paths(:test), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib"]
+
+  defp compilers(:test), do: [:phoenix] ++ Mix.compilers()
+  defp compilers(_), do: Mix.compilers()
 
   # Run "mix help deps" to learn about dependencies.
   defp deps do
