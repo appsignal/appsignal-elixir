@@ -741,7 +741,8 @@ defmodule Appsignal.ConfigTest do
           working_directory_path: "/tmp/appsignal",
           files_world_accessible: false,
           revision: "03bd9e",
-          transaction_debug_mode: true
+          transaction_debug_mode: true,
+          filter_data_keys: ["password"]
         },
         fn ->
           without_logger(&write_to_environment/0)
@@ -775,6 +776,7 @@ defmodule Appsignal.ConfigTest do
           assert Nif.env_get("_APPSIGNAL_WORKING_DIRECTORY_PATH") == '/tmp/appsignal'
           assert Nif.env_get("_APPSIGNAL_FILES_WORLD_ACCESSIBLE") == 'false'
           assert Nif.env_get("_APPSIGNAL_TRANSACTION_DEBUG_MODE") == 'true'
+          assert Nif.env_get("_APPSIGNAL_FILTER_DATA_KEYS") == 'password'
           assert Nif.env_get("_APP_REVISION") == '03bd9e'
         end
       )

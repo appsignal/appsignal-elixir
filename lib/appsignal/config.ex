@@ -297,6 +297,7 @@ defmodule Appsignal.Config do
     Nif.env_put("_APPSIGNAL_TRANSACTION_DEBUG_MODE", to_string(config[:transaction_debug_mode]))
     Nif.env_put("_APPSIGNAL_WORKING_DIR_PATH", to_string(config[:working_dir_path]))
     Nif.env_put("_APPSIGNAL_WORKING_DIRECTORY_PATH", to_string(config[:working_directory_path]))
+    Nif.env_put("_APPSIGNAL_FILTER_DATA_KEYS", config[:filter_data_keys] |> Enum.join(","))
 
     Nif.env_put(
       "_APPSIGNAL_FILES_WORLD_ACCESSIBLE",
