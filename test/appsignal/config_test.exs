@@ -194,6 +194,11 @@ defmodule Appsignal.ConfigTest do
                with_config(%{filter_session_data: ~w(accept connection)}, &init_config/0)
     end
 
+    test "filter_data_keys" do
+      assert %{filter_data_keys: ~w(password secret)} =
+               with_config(%{filter_data_keys: ~w(password secret)}, &init_config/0)
+    end
+
     test "frontend_error_catching_path" do
       assert %{frontend_error_catching_path: "/appsignal_error_catcher"} =
                with_config(
@@ -381,6 +386,13 @@ defmodule Appsignal.ConfigTest do
                %{"APPSIGNAL_FILTER_SESSION_DATA" => "accept,connection"},
                &init_config/0
              ) == default_configuration() |> Map.put(:filter_session_data, ~w(accept connection))
+    end
+
+    test "filter_data_keys" do
+      assert with_env(
+               %{"APPSIGNAL_FILTER_DATA_KEYS" => "password,secret"},
+               &init_config/0
+             ) == default_configuration() |> Map.put(:filter_data_keys, ~w(password secret))
     end
 
     test "frontend_error_catching_path" do
@@ -849,6 +861,7 @@ defmodule Appsignal.ConfigTest do
       env: :dev,
       filter_parameters: [],
       filter_session_data: [],
+      filter_data_keys: [],
       ignore_actions: [],
       ignore_errors: [],
       ignore_namespaces: [],

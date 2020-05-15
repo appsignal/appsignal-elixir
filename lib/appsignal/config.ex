@@ -15,6 +15,7 @@ defmodule Appsignal.Config do
     env: :dev,
     filter_parameters: [],
     filter_session_data: [],
+    filter_data_keys: [],
     ignore_actions: [],
     ignore_errors: [],
     ignore_namespaces: [],
@@ -159,6 +160,7 @@ defmodule Appsignal.Config do
     "APPSIGNAL_SEND_PARAMS" => :send_params,
     "APPSIGNAL_FILTER_PARAMETERS" => :filter_parameters,
     "APPSIGNAL_FILTER_SESSION_DATA" => :filter_session_data,
+    "APPSIGNAL_FILTER_DATA_KEYS" => :filter_data_keys,
     "APPSIGNAL_DEBUG" => :debug,
     "APPSIGNAL_DNS_SERVERS" => :dns_servers,
     "APPSIGNAL_LOG" => :log,
@@ -192,8 +194,10 @@ defmodule Appsignal.Config do
   )
   @atom_keys ~w(APPSIGNAL_APP_ENV APPSIGNAL_OTP_APP)
   @string_list_keys ~w(
-    APPSIGNAL_FILTER_PARAMETERS APPSIGNAL_IGNORE_ACTIONS APPSIGNAL_IGNORE_ERRORS APPSIGNAL_IGNORE_NAMESPACES
-    APPSIGNAL_DNS_SERVERS APPSIGNAL_FILTER_SESSION_DATA APPSIGNAL_REQUEST_HEADERS
+    APPSIGNAL_FILTER_PARAMETERS APPSIGNAL_FILTER_DATA_KEYS
+    APPSIGNAL_IGNORE_ACTIONS APPSIGNAL_IGNORE_ERRORS
+    APPSIGNAL_IGNORE_NAMESPACES APPSIGNAL_DNS_SERVERS
+    APPSIGNAL_FILTER_SESSION_DATA APPSIGNAL_REQUEST_HEADERS
   )
 
   defp load_from_environment do
