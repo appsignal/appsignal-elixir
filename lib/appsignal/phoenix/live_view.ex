@@ -44,14 +44,14 @@ if Appsignal.live_view?() do
           end
 
           def mount(_session, socket) do
-            live_view_action(__MODULE__, :mount, socket, fn ->
+            live_view_action(__MODULE__, "mount", socket, fn ->
               :timer.send_interval(1000, self(), :tick)
               {:ok, assign(socket, state: Time.utc_now())}
             end)
           end
 
           def handle_info(:tick, socket) do
-            live_view_action(__MODULE__, :mount, socket, fn ->
+            live_view_action(__MODULE__, "mount", socket, fn ->
               {:ok, assign(socket, state: Time.utc_now())}
             end)
           end
