@@ -80,10 +80,14 @@ defmodule Appsignal.Config do
     end
   end
 
-  defp merge_filter_data_keys(map, keys) do
+  defp merge_filter_data_keys(map, keys) when is_list(keys) do
     {_, new_map} = Map.get_and_update(map, :filter_data_keys, &{&1, &1 ++ keys})
 
     new_map
+  end
+
+  defp merge_filter_data_keys(map, _keys) do
+    map
   end
 
   @doc """

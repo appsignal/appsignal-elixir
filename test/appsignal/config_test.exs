@@ -217,6 +217,14 @@ defmodule Appsignal.ConfigTest do
       Application.delete_env(:phoenix, :filter_parameters)
     end
 
+    test "ignores Phoenix' filter_parameters :keep-lists" do
+      Application.put_env(:phoenix, :filter_parameters, {:keep, [:token]})
+
+      assert %{filter_data_keys: []} = init_config()
+
+      Application.delete_env(:phoenix, :filter_parameters)
+    end
+
     test "filter_data_keys merges appsignal and phoenix ignored keys" do
       Application.put_env(:phoenix, :filter_parameters, ~w(token))
 
