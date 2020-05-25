@@ -342,11 +342,17 @@ defmodule AppsignalSpanTest do
   describe ".set_sample_data/3" do
     setup :create_root_span
 
-    test "returns the span", %{span: span} do
-      assert Span.set_sample_data(span, "key", %{param: "value"}) == span
+    setup %{span: span} do
+      [return: Span.set_sample_data(span, "key", %{param: "value"})]
     end
 
-    test "returns nil when passing a nil-span" do
+    test "returns the span", %{span: span, return: return} do
+      assert return == span
+    end
+  end
+
+  describe ".set_sample_data/3, when passing a nil-span" do
+    test "returns nil" do
       assert Span.set_sample_data(nil, "key", %{param: "value"}) == nil
     end
   end
