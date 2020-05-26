@@ -7,8 +7,10 @@ defmodule Appsignal.Utils.MapFilter do
   end
 
   defp filter(data, {:keep, keys}) do
-    {filtered, _} = Map.split(data, keys)
-    filtered
+    Enum.into(data, %{}, fn {key, value} ->
+      new_value = if key in keys, do: value, else: "[FILTERED]"
+      {key, new_value}
+    end)
   end
 
   defp filter(data, _), do: data
