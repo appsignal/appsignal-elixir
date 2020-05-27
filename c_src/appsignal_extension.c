@@ -1045,6 +1045,34 @@ static ERL_NIF_TERM _set_span_attribute_double(ErlNifEnv* env, int argc, const E
     return enif_make_atom(env, "ok");
 }
 
+static ERL_NIF_TERM _set_span_attribute_sql_string(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    span_ptr *ptr;
+    ErlNifBinary key;
+    ErlNifBinary value;
+
+    if (argc != 3) {
+      return enif_make_badarg(env);
+    }
+    if(!enif_get_resource(env, argv[0], appsignal_span_type, (void**) &ptr)) {
+      return enif_make_badarg(env);
+    }
+    if(!enif_inspect_iolist_as_binary(env, argv[1], &key)) {
+        return enif_make_badarg(env);
+    }
+    if(!enif_inspect_iolist_as_binary(env, argv[2], &value)) {
+        return enif_make_badarg(env);
+    }
+
+    appsignal_set_span_attribute_sql_string(
+        ptr->span,
+        make_appsignal_string(key),
+        make_appsignal_string(value)
+    );
+
+    return enif_make_atom(env, "ok");
+}
+
 static ERL_NIF_TERM _set_span_sample_data(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     span_ptr *ptr;

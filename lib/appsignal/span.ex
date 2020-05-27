@@ -78,6 +78,13 @@ defmodule Appsignal.Span do
 
   def set_attribute(_span, _key, _value), do: nil
 
+  def set_sql(%Span{reference: reference} = span, body) when is_binary(body) do
+    :ok = Nif.set_span_attribute_sql_string(reference, "appsignal:body", body)
+    span
+  end
+
+  def set_sql(_span, _body), do: nil
+
   def set_sample_data(%Span{reference: reference} = span, key, value)
       when is_binary(key) and is_map(value) do
     data = Appsignal.Utils.DataEncoder.encode(value)

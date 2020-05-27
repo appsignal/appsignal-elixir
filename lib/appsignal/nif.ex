@@ -236,6 +236,10 @@ defmodule Appsignal.Nif do
     _set_span_attribute_double(reference, key, value)
   end
 
+  def set_span_attribute_sql_string(reference, key, value) do
+    _set_span_attribute_sql_string(reference, key, value)
+  end
+
   def set_span_sample_data(reference, key, value) do
     _set_span_sample_data(reference, key, value)
   end
@@ -461,6 +465,10 @@ defmodule Appsignal.Nif do
   end
 
   def _set_span_attribute_double(_reference, _key, _value) do
+    :ok
+  end
+
+  def _set_span_attribute_sql_string(_reference, _key, _value) do
     :ok
   end
 
