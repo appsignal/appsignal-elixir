@@ -59,6 +59,30 @@ defmodule AppsignalSpanTest do
     end
   end
 
+  describe ".create_root/3, when passing a start_time" do
+    setup do
+      [span: Span.create_root("http_request", self(), 1_588_937_136_283_541_000)]
+    end
+
+    test "returns a span", %{span: span} do
+      assert %Span{} = span
+    end
+
+    test "creates a root span through the Nif" do
+      assert [{"http_request", 1_588_937_136, 283_541_000}] =
+               Test.Nif.get!(:create_root_span_with_timestamp)
+    end
+
+    test "sets the span's reference", %{span: span} do
+      assert is_reference(span.reference)
+    end
+
+    @tag :skip_env_test_no_nif
+    test "sets the start time through the Nif", %{span: span} do
+      assert %{"start_time" => 1_588_937_136} = Span.to_map(span)
+    end
+  end
+
   describe ".create_child/3" do
     setup [:create_root_span, :create_child_span]
 
@@ -114,6 +138,27 @@ defmodule AppsignalSpanTest do
 
     test "does not create a root span through the Nif" do
       assert :error = Test.Nif.get(:create_child_span)
+    end
+  end
+
+  describe ".create_child/4, when passing a start_time" do
+    setup [:create_root_span]
+
+    setup %{span: span} do
+      [span: Span.create_child(span, self(), 1_588_937_136_283_541_000)]
+    end
+
+    test "returns a span", %{span: span} do
+      assert %Span{} = span
+    end
+
+    test "sets the span's reference", %{span: span} do
+      assert is_reference(span.reference)
+    end
+
+    @tag :skip_env_test_no_nif
+    test "sets the start time through the Nif", %{span: span} do
+      assert %{"start_time" => 1_588_937_136} = Span.to_map(span)
     end
   end
 
@@ -334,6 +379,20 @@ defmodule AppsignalSpanTest do
     test ".closes the span through the Nif", %{span: %Span{reference: reference} = span} do
       Span.close(span)
       assert [{^reference}] = Test.Nif.get!(:close_span)
+    end
+  end
+
+  describe ".close/2, when passing an end time" do
+    setup :create_root_span
+
+    test "returns the span", %{span: span} do
+      assert Span.close(span, :os.system_time()) == span
+    end
+
+    test ".closes the span through the Nif", %{span: %Span{reference: reference} = span} do
+      time = :os.system_time()
+      Span.close(span, time)
+      assert [{^reference, _sec, _nsec}] = Test.Nif.get!(:close_span_with_timestamp)
     end
   end
 

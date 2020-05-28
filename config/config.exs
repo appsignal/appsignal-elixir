@@ -13,8 +13,12 @@ if Mix.env() in [:bench, :test, :test_no_nif] do
   config :appsignal, appsignal_monitor: Appsignal.Test.Monitor
 
   config :appsignal, :config,
+    otp_app: :appsignal,
     push_api_key: "00000000-0000-0000-0000-000000000000",
     name: "AppSignal test suite app v0",
     env: "test",
     active: true
+
+  config :appsignal,
+    ecto_repos: [Appsignal.Test.Repo]
 end
