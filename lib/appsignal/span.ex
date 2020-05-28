@@ -11,11 +11,34 @@ defmodule Appsignal.Span do
     end
   end
 
+  def create_root(namespace, pid, start_time) do
+    if Config.active?() do
+      sec = :erlang.convert_time_unit(start_time, :native, :second)
+      nsec = :erlang.convert_time_unit(start_time, :native, :nanosecond) - sec * 1_000_000_000
+      {:ok, reference} = @nif.create_root_span_with_timestamp(namespace, sec, nsec)
+
+      %Span{reference: reference, pid: pid}
+    end
+  end
+
   def create_child(parent, pid) do
     if Config.active?() do
       {:ok, trace_id} = Span.trace_id(parent)
       {:ok, span_id} = Span.span_id(parent)
       {:ok, reference} = @nif.create_child_span(trace_id, span_id)
+
+      %Span{reference: reference, pid: pid}
+    end
+  end
+
+  def create_child(parent, pid, start_time) do
+    if Config.active?() do
+      sec = :erlang.convert_time_unit(start_time, :native, :second)
+      nsec = :erlang.convert_time_unit(start_time, :native, :nanosecond) - sec * 1_000_000_000
+
+      {:ok, trace_id} = Span.trace_id(parent)
+      {:ok, span_id} = Span.span_id(parent)
+      {:ok, reference} = @nif.create_child_span_with_timestamp(trace_id, span_id, sec, nsec)
 
       %Span{reference: reference, pid: pid}
     end
@@ -78,6 +101,13 @@ defmodule Appsignal.Span do
 
   def set_attribute(_span, _key, _value), do: nil
 
+  def set_sql(%Span{reference: reference} = span, body) when is_binary(body) do
+    :ok = Nif.set_span_attribute_sql_string(reference, "appsignal:body", body)
+    span
+  end
+
+  def set_sql(_span, _body), do: nil
+
   def set_sample_data(%Span{reference: reference} = span, key, value)
       when is_binary(key) and is_map(value) do
     data = Appsignal.Utils.DataEncoder.encode(value)
@@ -107,6 +137,13 @@ defmodule Appsignal.Span do
 
   def close(%Span{reference: reference} = span) do
     :ok = @nif.close_span(reference)
+    span
+  end
+
+  def close(%Span{reference: reference} = span, end_time) do
+    sec = :erlang.convert_time_unit(end_time, :native, :second)
+    nsec = :erlang.convert_time_unit(end_time, :native, :nanosecond) - sec * 1_000_000_000
+    :ok = @nif.close_span_with_timestamp(reference, sec, nsec)
     span
   end
 

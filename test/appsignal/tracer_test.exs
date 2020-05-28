@@ -84,6 +84,49 @@ defmodule Appsignal.TracerTest do
     end
   end
 
+  describe "create_span/3, when passing a start time" do
+    setup do
+      [span: Tracer.create_span("root", nil, start_time: 1_588_936_027_128_939_000)]
+    end
+
+    test "returns a span", %{span: span} do
+      assert %Span{} = span
+    end
+
+    test "sets the span's reference", %{span: span} do
+      assert is_reference(span.reference)
+    end
+
+    test "creates a root span through the Nif" do
+      assert [{"root", 1_588_936_027, 128_939_000}] =
+               Test.Nif.get!(:create_root_span_with_timestamp)
+    end
+  end
+
+  describe "create_span/3, when passing a start time and a parent" do
+    setup :create_root_span
+
+    setup %{span: span} do
+      [
+        parent: span,
+        span: Tracer.create_span("child", span, start_time: 1_588_936_027_128_939_000)
+      ]
+    end
+
+    test "returns a span", %{span: span} do
+      assert %Span{} = span
+    end
+
+    test "sets the span's reference", %{span: span} do
+      assert is_reference(span.reference)
+    end
+
+    test "creates a child span through the Nif" do
+      assert [{_, _, 1_588_936_027, 128_939_000}] =
+               Test.Nif.get!(:create_child_span_with_timestamp)
+    end
+  end
+
   describe "current_span/0, when no span exists" do
     test "returns nil" do
       assert Tracer.current_span() == nil
@@ -274,7 +317,7 @@ defmodule Appsignal.TracerTest do
 
   defp create_root_span_in_other_process(_context) do
     pid = Process.whereis(Test.Nif)
-    [span: Tracer.create_span("root", nil, pid), pid: pid]
+    [span: Tracer.create_span("root", nil, pid: pid), pid: pid]
   end
 
   defp disable_appsignal(_context) do
