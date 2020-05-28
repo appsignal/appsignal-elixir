@@ -46,7 +46,7 @@ defmodule Appsignal.Ecto do
     |> @tracer.create_span(@tracer.current_span(), start_time: time - total_time)
     |> @span.set_name("Query #{module_name(repo)}")
     |> @span.set_attribute("appsignal:category", "ecto.query")
-    |> @span.set_attribute("appsignal:body", query)
+    |> @span.set_sql(query)
     |> @tracer.close_span(end_time: time)
   end
 

@@ -55,10 +55,11 @@ defmodule Appsignal.EctoTest do
     end
 
     test "sets the span's body" do
-      assert attribute(
-               "appsignal:body",
-               "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0"
-             )
+      assert {:ok,
+              [
+                {%Span{},
+                 "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0"}
+              ]} = Test.Span.get(:set_sql)
     end
 
     test "closes the span with an end time" do
