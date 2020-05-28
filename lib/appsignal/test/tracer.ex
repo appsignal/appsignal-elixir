@@ -19,13 +19,18 @@ defmodule Appsignal.Test.Tracer do
     Tracer.create_span(namespace, parent)
   end
 
-  def create_span(namespace, parent, pid) do
-    add(:create_span, {namespace, parent, pid})
-    Tracer.create_span(namespace, parent, pid)
+  def create_span(namespace, parent, options) do
+    add(:create_span, {namespace, parent, options})
+    Tracer.create_span(namespace, parent, options)
   end
 
   def close_span(span) do
     add(:close_span, {span})
     Tracer.close_span(span)
+  end
+
+  def close_span(span, timestamp) do
+    add(:close_span, {span, timestamp})
+    Tracer.close_span(span, timestamp)
   end
 end

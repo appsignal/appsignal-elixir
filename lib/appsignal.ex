@@ -27,6 +27,8 @@ defmodule Appsignal do
 
     Logger.add_backend(Appsignal.Error.Backend)
 
+    Appsignal.Ecto.attach()
+
     children = [
       worker(Appsignal.Tracer, []),
       worker(Appsignal.Monitor, []),

@@ -5,6 +5,9 @@ defmodule Appsignal.Tracer do
   @monitor Application.get_env(:appsignal, :appsignal_monitor, Appsignal.Monitor)
   @table :"$appsignal_registry"
 
+  @type option :: {:pid, pid} | {:start_time, integer}
+  @type options :: [option]
+
   def start_link do
     Agent.start_link(fn -> :ets.new(@table, [:named_table, :public, :duplicate_bag]) end)
   end
@@ -13,31 +16,43 @@ defmodule Appsignal.Tracer do
   Creates a new root span.
   """
   @spec create_span(String.t()) :: Span.t()
-  def create_span(namespace), do: create_span(namespace, nil, self())
+  def create_span(namespace), do: create_span(namespace, nil, [])
 
   @doc """
   Creates a new child span.
   """
   @spec create_span(String.t(), Span.t() | nil) :: Span.t()
-  def create_span(namespace, parent), do: create_span(namespace, parent, self())
+  def create_span(namespace, parent), do: create_span(namespace, parent, [])
 
   @doc """
   Creates a new span, with an optional parent or pid.
   """
-  @spec create_span(String.t(), Span.t() | nil, pid()) :: Span.t()
-  def create_span(namespace, nil, pid) do
+  @spec create_span(String.t(), Span.t() | nil, options) :: Span.t()
+  def create_span(namespace, nil, options) do
+    pid = Keyword.get(options, :pid, self())
+
     unless ignored?(pid) do
-      namespace
-      |> Span.create_root(pid)
-      |> register()
+      span =
+        case Keyword.get(options, :start_time) do
+          nil -> Span.create_root(namespace, pid)
+          timestamp -> Span.create_root(namespace, pid, timestamp)
+        end
+
+      register(span)
     end
   end
 
-  def create_span(_namespace, parent, pid) do
+  def create_span(_namespace, parent, options) do
+    pid = Keyword.get(options, :pid, self())
+
     unless ignored?(pid) do
-      parent
-      |> Span.create_child(pid)
-      |> register()
+      span =
+        case Keyword.get(options, :start_time) do
+          nil -> Span.create_child(parent, pid)
+          timestamp -> Span.create_child(parent, pid, timestamp)
+        end
+
+      register(span)
     end
   end
 
@@ -93,6 +108,15 @@ defmodule Appsignal.Tracer do
   def close_span(%Span{} = span) do
     span
     |> Span.close()
+    |> deregister()
+
+    :ok
+  end
+
+  @spec close_span(Span.t() | nil, end_time: integer) :: :ok | nil
+  def close_span(%Span{} = span, end_time: end_time) do
+    span
+    |> Span.close(end_time)
     |> deregister()
 
     :ok
