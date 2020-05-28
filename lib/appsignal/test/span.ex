@@ -27,4 +27,9 @@ defmodule Appsignal.Test.Span do
     add(:set_attribute, {span, key, value})
     Span.set_attribute(span, key, value)
   end
+
+  def set_sql(span, value) do
+    add(:set_sql, {span, value})
+    Span.set_sql(span, value)
+  end
 end

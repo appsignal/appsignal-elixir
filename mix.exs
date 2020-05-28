@@ -57,7 +57,10 @@ defmodule Appsignal.Mixfile do
   end
 
   def application do
-    [mod: {Appsignal, []}, applications: [:logger, :hackney]]
+    [
+      extra_applications: [:logger],
+      mod: {Appsignal, []}
+    ]
   end
 
   defp compilers(_), do: [:appsignal] ++ Mix.compilers()
