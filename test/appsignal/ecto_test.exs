@@ -1,6 +1,6 @@
 defmodule Appsignal.EctoTest do
   use ExUnit.Case
-  alias Appsignal.{Ecto, Test, Span}
+  alias Appsignal.{Ecto, Span, Test}
 
   test "is attached to the repo query event automatically" do
     assert attached?([:appsignal, :test, :repo, :query])
