@@ -47,6 +47,7 @@ defmodule Appsignal.NifTest do
       assert is_reference(ref)
     end
 
+    @tag :skip_env_test_no_nif
     test "sets the span's start time to the passed value", %{ref: ref} do
       {:ok, json} = Nif.span_to_json(ref)
 
@@ -78,6 +79,7 @@ defmodule Appsignal.NifTest do
       assert is_reference(ref)
     end
 
+    @tag :skip_env_test_no_nif
     test "sets the span's start time to the passed value", %{ref: ref} do
       {:ok, json} = Nif.span_to_json(ref)
 
