@@ -237,6 +237,42 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
     end
 
     @tag :file_config
+    test "file based config option in an app without config files" do
+      directory = "tmp/install_project_no_config_files"
+      config_directory = Path.join(directory, "config")
+      File.mkdir_p!(directory)
+
+      on_exit(fn -> File.rm_rf!(directory) end)
+
+      refute File.exists?(Path.join(config_directory, "config.exs"))
+      refute File.exists?(Path.join(config_directory, "appsignal.exs"))
+
+      output = run_with_file_config_in(directory)
+      assert String.contains?(output, "What is your preferred configuration method? [1]: ")
+      assert String.contains?(output, "Writing config file config/appsignal.exs: Success!\n")
+      assert String.contains?(output, "Linking config to config/config.exs: Success!\n")
+
+      # Create AppSignal config file
+      assert File.exists?(Path.join(config_directory, "appsignal.exs"))
+      # Test the contents of AppSignal config file
+      appsignal_config = File.read!(Path.join(config_directory, "appsignal.exs"))
+
+      assert String.contains?(
+               appsignal_config,
+               ~s(use Mix.Config\n\n) <>
+                 ~s(config :appsignal, :config,\n) <>
+                 ~s(  active: true,\n) <>
+                 ~s(  otp_app: :appsignal,\n) <>
+                 ~s(  name: "AppSignal test suite app",\n) <>
+                 ~s(  push_api_key: "my_push_api_key",\n) <> ~s(  env: Mix.env)
+             )
+
+      # Imports AppSignal config in config.exs file
+      app_config = File.read!(Path.join(config_directory, "config.exs"))
+      assert app_config == ~s(use Mix.Config\n\nimport_config "appsignal.exs"\n)
+    end
+
+    @tag :file_config
     test "file based config option doesn't crash if a config file doesn't exist" do
       File.rm(Path.join(@test_config_directory, "stag.exs"))
       output = run_with_file_config()

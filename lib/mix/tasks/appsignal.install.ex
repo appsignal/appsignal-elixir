@@ -195,13 +195,24 @@ defmodule Mix.Tasks.Appsignal.Install do
     if appsignal_config_linked?() do
       IO.puts("Success! (Already linked?)")
     else
-      case append_to_file(config_file_path(), active_content) do
-        :ok ->
-          IO.puts("Success!")
+      if File.exists?(config_file_path()) do
+        case append_to_file(config_file_path(), active_content) do
+          :ok ->
+            IO.puts("Success!")
 
-        {:error, reason} ->
-          IO.puts("Failure! #{reason}")
-          exit(:shutdown)
+          {:error, reason} ->
+            IO.puts("Failure! #{reason}")
+            exit(:shutdown)
+        end
+      else
+        case append_to_file(config_file_path(), "use Mix.Config\n" <> active_content) do
+          :ok ->
+            IO.puts("Success!")
+
+          {:error, reason} ->
+            IO.puts("Failure! #{reason}")
+            exit(:shutdown)
+        end
       end
     end
   end
@@ -212,6 +223,9 @@ defmodule Mix.Tasks.Appsignal.Install do
       {:ok, contents} ->
         String.contains?(contents, ~s(import_config "#{appsignal_config_filename()})) ||
           String.contains?(contents, "import_config '#{appsignal_config_filename()}")
+
+      {:error, :enoent} ->
+        false
 
       {:error, reason} ->
         IO.puts("Failure! #{reason}")
