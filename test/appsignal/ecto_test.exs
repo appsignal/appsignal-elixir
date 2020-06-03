@@ -69,13 +69,59 @@ defmodule Appsignal.EctoTest do
     end
   end
 
-  describe "query/4, for a query without a source" do
+  describe "query/4, for a 'begin'" do
     setup do
       Test.Nif.start_link()
       Test.Tracer.start_link()
       Test.Span.start_link()
 
-      :telemetry.execute([:appsignal, :test, :repo, :query], %{}, %{source: nil})
+      :telemetry.execute(
+        [:appsignal, :test, :repo, :query],
+        %{
+          decode_time: 2_204_000,
+          query_time: 5_386_000,
+          queue_time: 1_239_000,
+          total_time: 8_829_000
+        },
+        %{
+          params: [],
+          query: "begin",
+          repo: Appsignal.Test.Repo,
+          result: :ok,
+          source: "users",
+          type: :ecto_sql_query
+        }
+      )
+    end
+
+    test "does not create a span" do
+      assert Test.Tracer.get(:create_span) == :error
+    end
+  end
+
+  describe "query/4, for a 'commit'" do
+    setup do
+      Test.Nif.start_link()
+      Test.Tracer.start_link()
+      Test.Span.start_link()
+
+      :telemetry.execute(
+        [:appsignal, :test, :repo, :query],
+        %{
+          decode_time: 2_204_000,
+          query_time: 5_386_000,
+          queue_time: 1_239_000,
+          total_time: 8_829_000
+        },
+        %{
+          params: [],
+          query: "commit",
+          repo: Appsignal.Test.Repo,
+          result: :ok,
+          source: "users",
+          type: :ecto_sql_query
+        }
+      )
     end
 
     test "does not create a span" do
