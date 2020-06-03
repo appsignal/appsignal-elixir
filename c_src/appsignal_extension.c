@@ -1400,6 +1400,7 @@ static ErlNifFunc nif_funcs[] =
     {"_set_span_attribute_int", 3, _set_span_attribute_int, 0},
     {"_set_span_attribute_bool", 3, _set_span_attribute_bool, 0},
     {"_set_span_attribute_double", 3, _set_span_attribute_double, 0},
+    {"_set_span_attribute_sql_string", 3, _set_span_attribute_string, 0},
     {"_set_span_sample_data", 3, _set_span_sample_data, 0},
     {"_add_span_error", 4, _add_span_error, 0},
     {"_close_span", 1, _close_span, 0},
