@@ -57,6 +57,14 @@ defmodule Appsignal.Tracer do
   end
 
   @doc """
+  Finds the span in the registry table.
+  """
+  @spec lookup(pid()) :: list()
+  def lookup(pid) do
+    :ets.lookup(@table, pid)
+  end
+
+  @doc """
   Returns the current span in the current process.
   """
   @spec current_span() :: Span.t() | nil
@@ -67,8 +75,8 @@ defmodule Appsignal.Tracer do
   """
   @spec current_span(pid()) :: Span.t() | nil
   def current_span(pid) do
-    @table
-    |> :ets.lookup(pid)
+    pid
+    |> lookup()
     |> current()
   end
 

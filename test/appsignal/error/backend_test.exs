@@ -23,6 +23,7 @@ defmodule Appsignal.Error.BackendTest do
     Test.Nif.start_link()
     Test.Tracer.start_link()
     Test.Span.start_link()
+    Test.Monitor.start_link()
 
     :ok
   end
@@ -87,6 +88,24 @@ defmodule Appsignal.Error.BackendTest do
     test "closes the existing span", %{span: span} do
       until(fn ->
         assert {:ok, [{^span}]} = Test.Tracer.get(:close_span)
+      end)
+    end
+  end
+
+  describe "handle_event/3, with an ignored process" do
+    setup do
+      [
+        pid:
+          spawn(fn ->
+            Tracer.ignore()
+            raise "Exception"
+          end)
+      ]
+    end
+
+    test "does not create a span", %{pid: pid} do
+      repeatedly(fn ->
+        assert Test.Tracer.get(:create_span) == :error
       end)
     end
   end
