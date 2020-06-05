@@ -1,5 +1,11 @@
-# 1.13.2
+# 2.0.0-alpha.0
+- Switch to span-based API
+- Reimplement error handling
+- Reimplement Ecto integration
+- Split out Plug integration into separate library
+- Split out Phoenix integration into separate library
 
+# 1.13.2
 - Handle non-string-non-atom-non-iteger values in Transaction.to_s/1
   Commit 772cb943b6d545942a50042a268d441973adab23
 
