@@ -164,6 +164,8 @@ defmodule Mix.Tasks.Appsignal.Install do
   defp write_config_file(config) do
     IO.write("Writing config file config/appsignal.exs: ")
 
+    File.mkdir_p("config")
+
     case File.open(appsignal_config_file_path(), [:write]) do
       {:ok, file} ->
         case IO.binwrite(file, appsignal_config_file_contents(config)) do
