@@ -1,3 +1,10 @@
+# 2.0.0-alpha.0
+- Switch to span-based API
+- Reimplement error handling
+- Reimplement Ecto integration
+- Split out Plug integration into separate library
+- Split out Phoenix integration into separate library
+
 # 1.13.1
 - Use `__STACKTRACE__ /0` on Elixir >= 1.7. PR 559
 - Relax live_view dependency to allow versions over 0.9. PR #558
