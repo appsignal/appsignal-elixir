@@ -12,20 +12,19 @@ defmodule Appsignal.Error.Backend do
 
     case Keyword.get(metadata, :crash_reason) do
       {reason, stacktrace} ->
-        span =
-          case @tracer.lookup(pid) do
-            [{_pid, :ignore}] ->
-              :ok
+        case @tracer.lookup(pid) do
+          [{_pid, :ignore}] ->
+            :ok
 
-            [] ->
-              "background_job"
-              |> @tracer.create_span(nil, pid: pid)
-              |> set_error_data(reason, stacktrace)
+          [] ->
+            "background_job"
+            |> @tracer.create_span(nil, pid: pid)
+            |> set_error_data(reason, stacktrace)
 
-            spans when is_list(spans) ->
-              {_pid, span} = List.last(spans)
-              set_error_data(span, reason, stacktrace)
-          end
+          spans when is_list(spans) ->
+            {_pid, span} = List.last(spans)
+            set_error_data(span, reason, stacktrace)
+        end
 
       _ ->
         :ok
