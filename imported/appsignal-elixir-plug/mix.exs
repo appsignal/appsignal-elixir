@@ -5,6 +5,8 @@ defmodule Appsignal.Plug.MixProject do
     [
       app: :appsignal_plug,
       version: "0.1.0",
+      description:
+        "AppSignal's Plug instrumentation instruments calls to Plug applications to gain performance insights and error reporting",
       elixir: "~> 1.9",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
