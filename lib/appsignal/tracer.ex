@@ -91,8 +91,8 @@ defmodule Appsignal.Tracer do
   """
   @spec root_span(pid()) :: Span.t() | nil
   def root_span(pid) do
-    @table
-    |> :ets.lookup(pid)
+    pid
+    |> lookup()
     |> root()
   end
 
@@ -166,8 +166,8 @@ defmodule Appsignal.Tracer do
   end
 
   defp ignored?(pid) when is_pid(pid) do
-    @table
-    |> :ets.lookup(pid)
+    pid
+    |> lookup()
     |> ignored?()
   end
 
