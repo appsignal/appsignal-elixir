@@ -45,6 +45,7 @@ blocks:
             - mix local.rebar --force
             - mix local.hex --force
             - mix deps.get
+            - mix compile --warnings-as-errors
             - mix test
         - name: Elixir master, OTP 22, without the NIF loaded
           commands:
@@ -55,6 +56,7 @@ blocks:
             - mix local.rebar --force
             - mix local.hex --force
             - MIX_ENV=test_no_nif mix deps.get
+            - MIX_ENV=test_no_nif mix compile --warnings-as-errors
             - MIX_ENV=test_no_nif mix test
         - name: Elixir master, OTP 21
           commands:
