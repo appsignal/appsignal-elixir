@@ -5,6 +5,13 @@ defmodule Appsignal.Phoenix.MixProject do
     [
       app: :appsignal_phoenix,
       version: "0.1.0",
+      description:
+        "AppSignal's Phoenix instrumentation instruments calls to Phoenix applications to gain performance insights and error reporting",
+      package: %{
+        maintainers: ["Jeff Kreeftmeijer"],
+        licenses: ["MIT"],
+        links: %{"GitHub" => "https://github.com/appsignal/appsignal-elixir-phoenix"}
+      },
       elixir: "~> 1.9",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
