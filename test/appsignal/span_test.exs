@@ -388,6 +388,12 @@ defmodule AppsignalSpanTest do
     end
   end
 
+  describe ".close/2, when passing a nil" do
+    test "returns nil" do
+      assert Span.close(nil, :os.system_time()) == nil
+    end
+  end
+
   describe ".close/2, when passing an end time" do
     setup :create_root_span
 
