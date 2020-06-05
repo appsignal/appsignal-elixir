@@ -13,14 +13,19 @@ defmodule Appsignal.Error.Backend do
     case Keyword.get(metadata, :crash_reason) do
       {reason, stacktrace} ->
         span =
-          case @tracer.current_span(pid) do
-            nil -> @tracer.create_span("background_job", nil, pid: pid)
-            current -> current
-          end
+          case @tracer.lookup(pid) do
+            [{_pid, :ignore}] ->
+              :ok
 
-        span
-        |> @span.add_error(:error, reason, stacktrace)
-        |> @tracer.close_span()
+            [] ->
+              "background_job"
+              |> @tracer.create_span(nil, pid: pid)
+              |> set_error_data(reason, stacktrace)
+
+            spans when is_list(spans) ->
+              {_pid, span} = List.last(spans)
+              set_error_data(span, reason, stacktrace)
+          end
 
       _ ->
         :ok
@@ -34,6 +39,12 @@ defmodule Appsignal.Error.Backend do
   end
 
   def handle_call(_event, state) do
-    {:reply, :ok, state}
+    {:ok, :ok, state}
+  end
+
+  defp set_error_data(span, reason, stacktrace) do
+    span
+    |> @span.add_error(:error, reason, stacktrace)
+    |> @tracer.close_span()
   end
 end
