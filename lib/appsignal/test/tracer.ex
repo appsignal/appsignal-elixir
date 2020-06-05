@@ -5,6 +5,7 @@ defmodule Appsignal.Test.Tracer do
 
   defdelegate current_span(), to: Tracer
   defdelegate current_span(pid), to: Tracer
+  defdelegate lookup(pid), to: Tracer
   defdelegate root_span(), to: Tracer
   defdelegate root_span(pid), to: Tracer
   defdelegate ignore(), to: Tracer
