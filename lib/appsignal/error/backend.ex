@@ -39,7 +39,7 @@ defmodule Appsignal.Error.Backend do
   end
 
   def handle_call(_event, state) do
-    {:reply, :ok, state}
+    {:ok, :ok, state}
   end
 
   defp set_error_data(span, reason, stacktrace) do

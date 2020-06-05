@@ -217,7 +217,7 @@ defmodule Appsignal.Error.BackendTest do
 
   describe "handle_call/2" do
     test "replies with :ok" do
-      assert Backend.handle_call(:call, %{}) == {:reply, :ok, %{}}
+      assert Backend.handle_call(:call, %{}) == {:ok, :ok, %{}}
     end
   end
 end
