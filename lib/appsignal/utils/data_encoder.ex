@@ -12,7 +12,7 @@ defmodule Appsignal.Utils.DataEncoder do
   end
 
   def encode(data) when is_map(data) do
-    {:ok, resource} = Nif.data_map_new()
+    {:ok, resource} = Nif.data_filtered_map_new()
     Enum.each(data, fn item -> encode(resource, item) end)
     resource
   end
