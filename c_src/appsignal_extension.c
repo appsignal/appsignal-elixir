@@ -592,6 +592,22 @@ static ERL_NIF_TERM _data_map_new(ErlNifEnv* env, int UNUSED(argc), const ERL_NI
   return make_ok_tuple(env, data_ref);
 }
 
+static ERL_NIF_TERM _data_filtered_map_new(ErlNifEnv* env, int UNUSED(argc), const ERL_NIF_TERM UNUSED(argv[])) {
+  data_ptr *ptr;
+  ERL_NIF_TERM data_ref;
+
+  ptr = enif_alloc_resource(appsignal_data_type, sizeof(data_ptr));
+  if(!ptr)
+    return make_error_tuple(env, "no_memory");
+
+  ptr->data = appsignal_data_filtered_map_new();
+
+  data_ref = enif_make_resource(env, ptr);
+  enif_release_resource(ptr);
+
+  return make_ok_tuple(env, data_ref);
+}
+
 static ERL_NIF_TERM _data_set_string(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
   data_ptr *ptr;
   ErlNifBinary key, value;
@@ -1372,6 +1388,7 @@ static ErlNifFunc nif_funcs[] =
     {"_increment_counter", 3, _increment_counter, 0},
     {"_add_distribution_value", 3, _add_distribution_value, 0},
     {"_data_map_new", 0, _data_map_new, 0},
+    {"_data_filtered_map_new", 0, _data_filtered_map_new, 0},
     {"_data_set_string", 3, _data_set_string, 0},
     {"_data_set_string", 2, _data_set_string, 0},
     {"_data_set_integer", 3, _data_set_integer, 0},

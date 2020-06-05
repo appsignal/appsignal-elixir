@@ -110,7 +110,11 @@ defmodule Appsignal.Span do
 
   def set_sample_data(%Span{reference: reference} = span, key, value)
       when is_binary(key) and is_map(value) do
-    data = Appsignal.Utils.DataEncoder.encode(value)
+    data =
+      value
+      |> Appsignal.Utils.MapFilter.filter()
+      |> Appsignal.Utils.DataEncoder.encode()
+
     :ok = Nif.set_span_sample_data(reference, key, data)
     span
   end
