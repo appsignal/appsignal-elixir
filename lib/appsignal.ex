@@ -21,8 +21,6 @@ defmodule Appsignal do
 
   @doc false
   def start(_type, _args) do
-    import Supervisor.Spec, warn: false
-
     initialize()
 
     Logger.add_backend(Appsignal.Error.Backend)
@@ -30,9 +28,9 @@ defmodule Appsignal do
     Appsignal.Ecto.attach()
 
     children = [
-      worker(Appsignal.Tracer, []),
-      worker(Appsignal.Monitor, []),
-      worker(Appsignal.Probes, [])
+      %{id: Appsignal.Tracer, start: {Appsignal.Tracer, :start_link, []}},
+      %{id: Appsignal.Monitor, start: {Appsignal.Monitor, :start_link, []}},
+      %{id: Appsignal.Probes, start: {Appsignal.Probes, :start_link, []}}
     ]
 
     result = Supervisor.start_link(children, strategy: :one_for_one, name: Appsignal.Supervisor)
