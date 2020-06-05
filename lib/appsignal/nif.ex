@@ -136,6 +136,10 @@ defmodule Appsignal.Nif do
     _data_map_new()
   end
 
+  def data_filtered_map_new do
+    _data_filtered_map_new()
+  end
+
   def data_set_string(resource, key, value) do
     _data_set_string(resource, key, value)
   end
@@ -377,6 +381,10 @@ defmodule Appsignal.Nif do
   end
 
   def _data_map_new do
+    {:ok, nil}
+  end
+
+  def _data_filtered_map_new do
     {:ok, nil}
   end
 
