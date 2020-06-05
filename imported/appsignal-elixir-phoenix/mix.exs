@@ -30,7 +30,7 @@ defmodule Appsignal.Phoenix.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:appsignal_plug, github: "appsignal/appsignal-elixir-plug"},
+      {:appsignal_plug, "~> 2.0.0-alpha.1"},
       {:phoenix, "~> 1.4"},
       {:phoenix_html, "~> 2.11", only: :test},
       {:telemetry, "~> 0.4"},
