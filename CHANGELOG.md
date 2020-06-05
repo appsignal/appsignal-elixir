@@ -1,3 +1,10 @@
+# 2.0.0-alpha.0
+- Switch to span-based API
+- Reimplement error handling
+- Reimplement Ecto integration
+- Split out Plug integration into separate library
+- Split out Phoenix integration into separate library
+
 # 1.13.5
 - Bump agent to v-20f7d0d
   - Spawn agent without waiting for it. PR #618
