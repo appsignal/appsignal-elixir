@@ -1,5 +1,7 @@
 defmodule Appsignal.Monitor do
   @moduledoc false
+  @deletion_delay Application.get_env(:appsignal, :deletion_delay, 5_000)
+
   use GenServer
   alias Appsignal.Tracer
 
@@ -21,6 +23,11 @@ defmodule Appsignal.Monitor do
   end
 
   def handle_info({:DOWN, _ref, :process, pid, _}, state) do
+    Process.send_after(self(), {:delete, pid}, @deletion_delay)
+    {:noreply, state}
+  end
+
+  def handle_info({:delete, pid}, state) do
     Tracer.delete(pid)
     {:noreply, state}
   end
