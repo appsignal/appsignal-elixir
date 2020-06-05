@@ -7,6 +7,11 @@ defmodule Appsignal.Plug.MixProject do
       version: "0.1.0",
       description:
         "AppSignal's Plug instrumentation instruments calls to Plug applications to gain performance insights and error reporting",
+      package: %{
+        maintainers: ["Jeff Kreeftmeijer"],
+        licenses: ["MIT"],
+        links: %{"GitHub" => "https://github.com/appsignal/appsignal-elixir-plug"}
+      },
       elixir: "~> 1.9",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
