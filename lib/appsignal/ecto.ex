@@ -36,12 +36,7 @@ defmodule Appsignal.Ecto do
   defp query(_event, _measurements, %{query: "begin"}, _config), do: :ok
   defp query(_event, _measurements, %{query: "commit"}, _config), do: :ok
 
-  defp query(
-         _event,
-         %{total_time: total_time},
-         %{repo: repo, query: query} = metadata,
-         _config
-       ) do
+  defp query(_event, %{total_time: total_time}, %{repo: repo, query: query}, _config) do
     time = :os.system_time()
 
     "http_request"
