@@ -16,7 +16,10 @@ defmodule Appsignal.Phoenix.MixProject do
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       elixirc_paths: elixirc_paths(Mix.env()),
-      compilers: compilers(Mix.env())
+      compilers: compilers(Mix.env()),
+      dialyzer: [
+        plt_file: {:no_warn, "priv/plts/dialyzer.plt"}
+      ]
     ]
   end
 
