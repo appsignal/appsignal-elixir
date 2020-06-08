@@ -41,7 +41,8 @@ defmodule Appsignal.Phoenix.MixProject do
       {:phoenix, "~> 1.4"},
       {:phoenix_html, "~> 2.11", only: :test},
       {:telemetry, "~> 0.4"},
-      {:ex_doc, "~> 0.21", only: :dev, runtime: false}
+      {:ex_doc, "~> 0.21", only: :dev, runtime: false},
+      {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false}
     ]
   end
 end
