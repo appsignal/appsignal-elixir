@@ -1,5 +1,4 @@
 defmodule Appsignal.Phoenix.EventHandler do
-  require Logger
   @tracer Application.get_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
   @span Application.get_env(:appsignal, :appsignal_span, Appsignal.Span)
   @moduledoc false
@@ -26,10 +25,6 @@ defmodule Appsignal.Phoenix.EventHandler do
     span = @tracer.root_span()
     name = "#{module_name(controller)}##{action}"
 
-    Logger.debug(
-      "Appsignal.Phoenix.EventHandler: Set name from event (#{inspect(span)}, #{inspect(name)}"
-    )
-
     @span.set_name(span, name)
   end
 
@@ -50,22 +45,12 @@ defmodule Appsignal.Phoenix.EventHandler do
       |> @tracer.create_span(parent)
       |> @span.set_name("#{module_name(endpoint)}.call/2")
       |> @span.set_attribute("appsignal:category", "endpoint.call")
-
-    Logger.debug(
-      "Appsignal.Phoenix.EventHandler: Start call.phoenix_endpoint event" <>
-        " with parent #{inspect(parent)} (#{inspect(span)})"
-    )
   end
 
   defp phoenix_endpoint_stop(_event, _measurements, _metadata, _config) do
     span = @tracer.current_span()
 
     @tracer.close_span(@tracer.current_span())
-
-    Logger.debug(
-      "Appsignal.Phoenix.EventHandler: Stop call.phoenix_endpoint event" <>
-        " (#{inspect(span)})"
-    )
   end
 
   defp module_name("Elixir." <> module), do: module
