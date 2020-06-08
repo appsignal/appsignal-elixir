@@ -21,6 +21,12 @@ blocks:
         - name: mix format --check-formatted
           commands:
             - mix format --check-formatted
+        - name: mix dialyzer
+          commands:
+            - cache restore dialyzer-plt
+            - mix dialyzer --plt
+            - cache store dialyzer-plt priv/plts/
+            - mix dialyzer
       env_vars:
         - name: MIX_ENV
           value: test
