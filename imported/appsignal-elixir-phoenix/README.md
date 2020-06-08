@@ -15,19 +15,46 @@ To install `Appsignal.Phoenix` into your Phoenix application, first add
 
 ``` elixir
 defp deps do
-  {:appsignal_phoenix, github: "appsignal/appsignal-elixir-phoenix"},
+  {:appsignal_phoenix, "~> 2.0.0-alpha.1"},
 end
 ```
 
 After that, follow the [installation instructions for Appsignal for
 Elixir](https://github.com/appsignal/appsignal-elixir/tree/tracing).
 
-Finally, `use Appsignal.Phoenix` in your application's endpoint module:
+Then, `use Appsignal.Phoenix` in your application's endpoint module:
 
 ``` elixir
 defmodule AppsignalPhoenixExampleWeb.Endpoint do
   use Phoenix.Endpoint, otp_app: :appsignal_phoenix_example
   use Appsignal.Phoenix
+
+  # ...
+end
+```
+
+Finally, `use Appsignal.View` in the `view/0` function in your app's web
+module.
+
+```
+defmodule AppsignalPhoenixExampleWeb do
+  # ...
+
+  def view do
+    quote do
+      use Phoenix.View,
+        root: "lib/appsignal_phoenix_example_web/templates",
+        namespace: AppsignalPhoenixExampleWeb
+
+      use Appsignal.View
+
+      # Import convenience functions from controllers
+      import Phoenix.Controller, only: [get_flash: 1, get_flash: 2, view_module: 1]
+
+      # Include shared imports and aliases for views
+      unquote(view_helpers())
+    end
+  end
 
   # ...
 end
