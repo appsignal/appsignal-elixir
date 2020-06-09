@@ -101,9 +101,15 @@ defmodule Appsignal.Mixfile do
         _ -> "~> 1.2.3 or ~> 1.3"
       end
 
+    hackney_version =
+      case System.otp_release() >= "23" do
+        true -> "~> 1.16"
+        false -> "~> 1.6"
+      end
+
     [
       {:benchee, "~> 1.0", only: :bench},
-      {:hackney, "~> 1.6"},
+      {:hackney, hackney_version},
       {:jason, "~> 1.0", optional: true},
       {:poison, poison_version, optional: true},
       {:decorator, decorator_version},
