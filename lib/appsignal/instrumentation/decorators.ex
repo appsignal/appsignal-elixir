@@ -1,7 +1,7 @@
 defmodule Appsignal.Instrumentation.Decorators do
   @span Application.get_env(:appsignal, :appsignal_span, Appsignal.Span)
 
-  use Decorator.Define, instrument: 0, instrument: 1
+  use Decorator.Define, instrument: 0, instrument: 1, transaction: 0, transaction: 1
   import Appsignal.Utils, only: [module_name: 1]
 
   def instrument(namespace, body, %{module: module, name: name, arity: arity}) do
@@ -23,5 +23,13 @@ defmodule Appsignal.Instrumentation.Decorators do
         fn -> unquote(body) end
       )
     end
+  end
+
+  def transaction(body, context) do
+    instrument(body, context)
+  end
+
+  def transaction(namespace, body, context) do
+    instrument(namespace, body, context)
   end
 end
