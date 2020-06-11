@@ -6,7 +6,8 @@ defmodule Appsignal.Instrumentation.Decorators do
     instrument: 1,
     transaction: 0,
     transaction: 1,
-    transaction_event: 0
+    transaction_event: 0,
+    transaction_event: 1
 
   import Appsignal.Utils, only: [module_name: 1]
 
@@ -47,6 +48,10 @@ defmodule Appsignal.Instrumentation.Decorators do
   end
 
   def transaction_event(body, context) do
+    instrument(body, context)
+  end
+
+  def transaction_event(_category, body, context) do
     instrument(body, context)
   end
 end
