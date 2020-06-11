@@ -36,7 +36,7 @@ end
 Finally, `use Appsignal.Phoenix.View` in the `view/0` function in your app's web
 module.
 
-```
+``` elixir
 defmodule AppsignalPhoenixExampleWeb do
   # ...
 
