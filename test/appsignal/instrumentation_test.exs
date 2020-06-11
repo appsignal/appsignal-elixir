@@ -11,6 +11,11 @@ defmodule InstrumentedModule do
     :ok
   end
 
+  @decorate instrument(:background_job)
+  def background_job_atom do
+    :ok
+  end
+
   @decorate transaction()
   def transaction do
     :ok
@@ -78,6 +83,16 @@ defmodule Appsignal.InstrumentationTest do
 
     test "closes the span" do
       assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    end
+  end
+
+  describe "instrument/3, with an atom as its custom namespace" do
+    setup do
+      %{return: InstrumentedModule.background_job_atom()}
+    end
+
+    test "sets the span's namespace" do
+      assert {:ok, [{%Span{}, "background_job"}]} = Test.Span.get(:set_namespace)
     end
   end
 

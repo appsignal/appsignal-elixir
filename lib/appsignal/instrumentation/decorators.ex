@@ -4,7 +4,14 @@ defmodule Appsignal.Instrumentation.Decorators do
   use Decorator.Define, instrument: 0, instrument: 1, transaction: 0, transaction: 1
   import Appsignal.Utils, only: [module_name: 1]
 
-  def instrument(namespace, body, %{module: module, name: name, arity: arity}) do
+  def instrument(namespace, body, context) when is_atom(namespace) do
+    namespace
+    |> Atom.to_string()
+    |> instrument(body, context)
+  end
+
+  def instrument(namespace, body, %{module: module, name: name, arity: arity})
+      when is_binary(namespace) do
     quote do
       Appsignal.instrument(
         "#{module_name(unquote(module))}.#{unquote(name)}/#{unquote(arity)}",
