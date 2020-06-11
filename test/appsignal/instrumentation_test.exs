@@ -2,7 +2,7 @@ defmodule InstrumentedModule do
   use Appsignal.Instrumentation.Decorators
 
   @decorate instrument()
-  def call do
+  def instrument do
     :ok
   end
 
@@ -25,7 +25,7 @@ defmodule Appsignal.InstrumentationTest do
 
   describe "instrument/2" do
     setup do
-      %{return: InstrumentedModule.call()}
+      %{return: InstrumentedModule.instrument()}
     end
 
     test "calls the passed function, and returns its return", %{return: return} do
@@ -37,7 +37,7 @@ defmodule Appsignal.InstrumentationTest do
     end
 
     test "sets the span's name" do
-      assert {:ok, [{%Span{}, "InstrumentedModule.call/0"}]} = Test.Span.get(:set_name)
+      assert {:ok, [{%Span{}, "InstrumentedModule.instrument/0"}]} = Test.Span.get(:set_name)
     end
 
     test "closes the span" do
