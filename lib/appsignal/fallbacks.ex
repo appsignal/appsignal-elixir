@@ -11,7 +11,7 @@ unless Code.ensure_loaded?(Appsignal.Phoenix) do
 
         defp deps do
           [
-            {:appsignal_plug, github: "appsignal/appsignal-elixir-plug"}
+            {:appsignal_plug, "~> 2.0.0-alpha.1"}
           ]
         end
       """
@@ -40,7 +40,7 @@ unless Code.ensure_loaded?(Appsignal.Phoenix) do
 
         defp deps do
           [
-            {:appsignal_phoenix, github: "appsignal/appsignal-elixir-phoenix"}
+            {:appsignal_phoenix, "~> 2.0.0-alpha.1"}
           ]
         end
       """
