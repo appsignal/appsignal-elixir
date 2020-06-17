@@ -1,4 +1,4 @@
-unless Code.ensure_loaded?(Appsignal.Phoenix) do
+unless Code.ensure_loaded?(Appsignal.Plug) do
   defmodule Appsignal.Plug.NotAvailableError do
     @moduledoc false
     defexception message: "Appsignal.Plug is not present in the project's dependencies."
