@@ -7,7 +7,8 @@ defmodule Appsignal.Instrumentation.Decorators do
     transaction: 0,
     transaction: 1,
     transaction_event: 0,
-    transaction_event: 1
+    transaction_event: 1,
+    channel_action: 0
 
   import Appsignal.Utils, only: [module_name: 1]
 
@@ -39,6 +40,15 @@ defmodule Appsignal.Instrumentation.Decorators do
     end
   end
 
+  def instrument(body, %{module: module, name: name}) do
+    quote do
+      Appsignal.instrument(
+        "#{module_name(unquote(module))}.#{unquote(name)}",
+        fn -> unquote(body) end
+      )
+    end
+  end
+
   def transaction(body, context) do
     instrument(body, context)
   end
@@ -53,5 +63,9 @@ defmodule Appsignal.Instrumentation.Decorators do
 
   def transaction_event(_category, body, context) do
     instrument(body, context)
+  end
+
+  def channel_action(body, %{module: module, args: [action, _payload, _socket]}) do
+    instrument(body, %{module: module, name: action})
   end
 end
