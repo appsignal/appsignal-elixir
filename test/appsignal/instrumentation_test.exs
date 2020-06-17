@@ -35,6 +35,11 @@ defmodule InstrumentedModule do
   def transaction_event_category do
     :ok
   end
+
+  @decorate channel_action()
+  def channel_action(action, _payload, _socket) do
+    action && :ok
+  end
 end
 
 defmodule Appsignal.InstrumentationTest do
@@ -194,6 +199,28 @@ defmodule Appsignal.InstrumentationTest do
     test "sets the span's name" do
       assert {:ok, [{%Span{}, "InstrumentedModule.transaction_event_category/0"}]} =
                Test.Span.get(:set_name)
+    end
+
+    test "closes the span" do
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    end
+  end
+
+  describe "channel_action/2" do
+    setup do
+      %{return: InstrumentedModule.channel_action(:action, [], %{})}
+    end
+
+    test "calls the passed function, and returns its return", %{return: return} do
+      assert return == :ok
+    end
+
+    test "creates a root span" do
+      assert Test.Tracer.get(:create_span) == {:ok, [{"http_request", nil}]}
+    end
+
+    test "sets the span's name" do
+      assert {:ok, [{%Span{}, "InstrumentedModule.action"}]} = Test.Span.get(:set_name)
     end
 
     test "closes the span" do
