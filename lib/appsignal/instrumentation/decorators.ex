@@ -1,4 +1,5 @@
 defmodule Appsignal.Instrumentation.Decorators do
+  @moduledoc false
   @span Application.get_env(:appsignal, :appsignal_span, Appsignal.Span)
 
   use Decorator.Define,
