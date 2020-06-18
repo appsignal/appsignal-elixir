@@ -16,7 +16,7 @@ defmodule Appsignal.Ecto do
 
   def attach(otp_app, repo) do
     event = telemetry_prefix(otp_app, repo) ++ [:query]
-    :telemetry.attach({__MODULE__, event}, event, &query/4, :ok)
+    :telemetry.attach({__MODULE__, event}, event, &handle_event/4, :ok)
   end
 
   defp telemetry_prefix(otp_app, repo) do
@@ -33,10 +33,10 @@ defmodule Appsignal.Ecto do
     end
   end
 
-  defp query(_event, _measurements, %{query: "begin"}, _config), do: :ok
-  defp query(_event, _measurements, %{query: "commit"}, _config), do: :ok
+  defp handle_event(_event, _measurements, %{query: "begin"}, _config), do: :ok
+  defp handle_event(_event, _measurements, %{query: "commit"}, _config), do: :ok
 
-  defp query(_event, %{total_time: total_time}, %{repo: repo, query: query}, _config) do
+  defp handle_event(_event, %{total_time: total_time}, %{repo: repo, query: query}, _config) do
     time = :os.system_time()
 
     "http_request"
@@ -47,5 +47,5 @@ defmodule Appsignal.Ecto do
     |> @tracer.close_span(end_time: time)
   end
 
-  defp query(_event, _measurements, _metadata, _config), do: :ok
+  defp handle_event(_event, _measurements, _metadata, _config), do: :ok
 end
