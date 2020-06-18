@@ -15,7 +15,7 @@ defmodule Appsignal.EctoTest do
     Application.delete_env(:appsignal, Appsignal.Test.Repo, telemetry_prefix: :my_repo)
   end
 
-  describe "query/4" do
+  describe "handle_event/4" do
     setup do
       Test.Nif.start_link()
       Test.Tracer.start_link()
@@ -69,7 +69,7 @@ defmodule Appsignal.EctoTest do
     end
   end
 
-  describe "query/4, for a 'begin'" do
+  describe "handle_event/4, for a 'begin'" do
     setup do
       Test.Nif.start_link()
       Test.Tracer.start_link()
@@ -99,7 +99,7 @@ defmodule Appsignal.EctoTest do
     end
   end
 
-  describe "query/4, for a 'commit'" do
+  describe "handle_event/4, for a 'commit'" do
     setup do
       Test.Nif.start_link()
       Test.Tracer.start_link()
