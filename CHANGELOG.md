@@ -1,3 +1,8 @@
+# 1.13.2
+
+- Handle non-string-non-atom-non-iteger values in Transaction.to_s/1
+  Commit 772cb943b6d545942a50042a268d441973adab23
+
 # 1.13.1
 - Use `__STACKTRACE__ /0` on Elixir >= 1.7. PR 559
 - Relax live_view dependency to allow versions over 0.9. PR #558
