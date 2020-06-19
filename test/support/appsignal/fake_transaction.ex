@@ -143,6 +143,12 @@ defmodule Appsignal.FakeTransaction do
     Agent.update(__MODULE__, &Map.put(&1, :request_metadata, conn))
   end
 
+  def set_sample_data(key, payload) do
+    self()
+    |> Appsignal.TransactionRegistry.lookup()
+    |> set_sample_data(key, payload)
+  end
+
   def set_sample_data(transaction, key, payload) do
     Agent.update(__MODULE__, fn state ->
       {_, new_state} =
