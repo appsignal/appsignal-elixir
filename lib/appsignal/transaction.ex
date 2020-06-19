@@ -549,6 +549,7 @@ defmodule Appsignal.Transaction do
   defp to_s(value) when is_atom(value), do: Atom.to_string(value)
   defp to_s(value) when is_integer(value), do: Integer.to_string(value)
   defp to_s(value) when is_binary(value), do: value
+  defp to_s(value), do: inspect(value)
 
   @doc """
   Return the transaction for the given process

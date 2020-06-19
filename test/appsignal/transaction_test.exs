@@ -99,10 +99,16 @@ defmodule AppsignalTransactionTest do
     transaction = Transaction.start("test3", :http_request)
     assert %Transaction{} = transaction
     Transaction.set_meta_data(email: "alice@example.com")
-    Transaction.set_meta_data(%{"foo" => "bar", "value" => 123})
+    Transaction.set_meta_data(%{"foo" => "bar", "value" => 123, "map" => %{}})
 
-    assert %{"metadata" => %{"email" => "alice@example.com", "foo" => "bar", "value" => "123"}} =
-             Transaction.to_map(transaction)
+    assert %{
+             "metadata" => %{
+               "email" => "alice@example.com",
+               "foo" => "bar",
+               "value" => "123",
+               "map" => "%{}"
+             }
+           } = Transaction.to_map(transaction)
   end
 
   test "data encoding" do
