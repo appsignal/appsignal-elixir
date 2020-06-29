@@ -54,10 +54,15 @@ defmodule Appsignal.Transmitter do
     Path.join(:code.priv_dir(:appsignal), "cacert.pem")
   end
 
-  if System.otp_release() >= "20.3" do
-    defp ciphers, do: :ssl.cipher_suites(:default, :"tlsv1.2")
-  else
-    defp ciphers, do: :ssl.cipher_suites()
+  cond do
+    System.otp_release() >= "23" ->
+      defp ciphers, do: :ssl.cipher_suites(:default, :"tlsv1.3")
+
+    System.otp_release() >= "20.3" ->
+      defp ciphers, do: :ssl.cipher_suites(:default, :"tlsv1.2")
+
+    true ->
+      defp ciphers, do: :ssl.cipher_suites()
   end
 
   if System.otp_release() >= "21" do
