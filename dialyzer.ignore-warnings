@@ -6,7 +6,6 @@
 :0: Unknown function 'Elixir.Jason':'decode!'/1
 :0: Unknown function 'Elixir.Jason':encode/1
 :0: Unknown function 'Elixir.Jason':'encode!'/1
-:0: Unknown type 'Elixir.Appsignal.Span':t/0
 lib/appsignal.ex:48: The call 'Elixir.Logger':'__do_log__'(_@1::any(),<<65,112,112,83,105,103,110,97,108,32,115,116,111,112,112,105,110,103,46>>,#{'application':='appsignal', 'file':=[46 | 47 | 97 | 98 | 101 | 103 | 105 | 108 | 110 | 112 | 115 | 120,...], 'line':=48, 'mfa':={'Elixir.Appsignal','stop',1}}) will never return since it differs in the 2nd argument from the success typing arguments: (any(),fun(() -> any()),map())
 lib/appsignal.ex:54: The inferred return type of config_change/3 (pid()) has nothing in common with 'ok', which is the expected return type for the callback of the 'Elixir.Application' behaviour
 lib/appsignal.ex:67: The call 'Elixir.Logger':'__do_log__'(_@1::any(),<<65,112,112,83,105,103,110,97,108,32,100,105,115,97,98,108,101,100,46>>,#{'application':='appsignal', 'file':=[46 | 47 | 97 | 98 | 101 | 103 | 105 | 108 | 110 | 112 | 115 | 120,...], 'line':=67, 'mfa':={'Elixir.Appsignal','initialize',0}}) will never return since it differs in the 2nd argument from the success typing arguments: (any(),fun(() -> any()),map())

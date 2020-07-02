@@ -3,6 +3,8 @@ defmodule Appsignal.Span do
   defstruct [:reference, :pid]
   @nif Application.get_env(:appsignal, :appsignal_tracer_nif, Appsignal.Nif)
 
+  @type t :: %Appsignal.Span{reference: reference(), pid: pid()}
+
   def create_root(namespace, pid) do
     if Config.active?() do
       {:ok, reference} = @nif.create_root_span(namespace)
