@@ -33,10 +33,10 @@ defmodule Appsignal.Ecto do
     end
   end
 
-  defp handle_event(_event, _measurements, %{query: "begin"}, _config), do: :ok
-  defp handle_event(_event, _measurements, %{query: "commit"}, _config), do: :ok
+  def handle_event(_event, _measurements, %{query: "begin"}, _config), do: :ok
+  def handle_event(_event, _measurements, %{query: "commit"}, _config), do: :ok
 
-  defp handle_event(_event, %{total_time: total_time}, %{repo: repo, query: query}, _config) do
+  def handle_event(_event, %{total_time: total_time}, %{repo: repo, query: query}, _config) do
     time = :os.system_time()
 
     "http_request"
@@ -47,5 +47,5 @@ defmodule Appsignal.Ecto do
     |> @tracer.close_span(end_time: time)
   end
 
-  defp handle_event(_event, _measurements, _metadata, _config), do: :ok
+  def handle_event(_event, _measurements, _metadata, _config), do: :ok
 end

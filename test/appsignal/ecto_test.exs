@@ -69,6 +69,63 @@ defmodule Appsignal.EctoTest do
     end
   end
 
+  describe "handle_event/4, when attaching the handler from outside the Ecto module" do
+    setup do
+      Test.Nif.start_link()
+      Test.Tracer.start_link()
+      Test.Span.start_link()
+
+      event = [:appsignal, :test, :repo, :outside]
+      :telemetry.attach({__MODULE__, event}, event, &Appsignal.Ecto.handle_event/4, :ok)
+
+      :telemetry.execute(
+        event,
+        %{
+          decode_time: 2_204_000,
+          query_time: 5_386_000,
+          queue_time: 1_239_000,
+          total_time: 8_829_000
+        },
+        %{
+          params: [],
+          query:
+            "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0",
+          repo: Appsignal.Test.Repo,
+          result: :ok,
+          source: "users",
+          type: :ecto_sql_query
+        }
+      )
+    end
+
+    test "creates a span with a start time" do
+      {:ok, [{"http_request", nil, start_time: time}]} = Test.Tracer.get(:create_span)
+      assert is_integer(time)
+    end
+
+    test "sets the span's name" do
+      assert {:ok, [{%Span{}, "Query Appsignal.Test.Repo"}]} = Test.Span.get(:set_name)
+    end
+
+    test "sets the span's category" do
+      assert attribute("appsignal:category", "ecto.query")
+    end
+
+    test "sets the span's body" do
+      assert {:ok,
+              [
+                {%Span{},
+                 "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0"}
+              ]} = Test.Span.get(:set_sql)
+    end
+
+    test "closes the span with an end time" do
+      {:ok, [{_, _, start_time: start_time}]} = Test.Tracer.get(:create_span)
+      {:ok, [{%Span{}, end_time: end_time}]} = Test.Tracer.get(:close_span)
+      assert end_time - start_time == 8_829_000
+    end
+  end
+
   describe "handle_event/4, for a 'begin'" do
     setup do
       Test.Nif.start_link()
