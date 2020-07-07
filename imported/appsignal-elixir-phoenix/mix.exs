@@ -19,7 +19,8 @@ defmodule Appsignal.Phoenix.MixProject do
       compilers: compilers(Mix.env()),
       dialyzer: [
         ignore_warnings: "dialyzer.ignore-warnings",
-        plt_file: {:no_warn, "priv/plts/dialyzer.plt"}
+        plt_file: {:no_warn, "priv/plts/dialyzer.plt"},
+        plt_add_apps: [:phoenix_live_view]
       ]
     ]
   end
