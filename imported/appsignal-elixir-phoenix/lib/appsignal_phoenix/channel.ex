@@ -49,7 +49,7 @@ defmodule Appsignal.Phoenix.Channel do
 
             span
             |> @span.set_sample_data("params", params)
-            |> Appsignal.Phoenix.Channel.set_sample_data(socket)
+            |> @span.set_sample_data("environment", Appsignal.Metadata.metadata(socket))
             |> @span.add_error(kind, reason, stack)
             |> @tracer.close_span()
 
@@ -59,32 +59,11 @@ defmodule Appsignal.Phoenix.Channel do
           result ->
             span
             |> @span.set_sample_data("params", params)
-            |> Appsignal.Phoenix.Channel.set_sample_data(socket)
+            |> @span.set_sample_data("environment", Appsignal.Metadata.metadata(socket))
 
             result
         end
       end
     )
-  end
-
-  @doc false
-  def set_sample_data(span, %Phoenix.Socket{
-        id: id,
-        channel: channel,
-        endpoint: endpoint,
-        handler: handler,
-        ref: ref,
-        topic: topic,
-        transport: transport
-      }) do
-    @span.set_sample_data(span, "environment", %{
-      "channel" => channel,
-      "endpoint" => endpoint,
-      "handler" => handler,
-      "id" => id,
-      "ref" => ref,
-      "topic" => topic,
-      "transport" => transport
-    })
   end
 end

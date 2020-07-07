@@ -62,6 +62,28 @@ defmodule PhoenixWeb.Channel do
   end
 end
 
+defmodule PhoenixWeb.LiveView do
+  use Phoenix.LiveView
+
+  def mount(params, socket) when params == %{} do
+    Appsignal.Phoenix.LiveView.instrument(__MODULE__, "mount", socket, fn ->
+      {:ok, socket}
+    end)
+  end
+
+  def mount(%{"body" => "Exception!"} = params, socket) do
+    Appsignal.Phoenix.LiveView.instrument(__MODULE__, "mount", params, socket, fn ->
+      raise "Exception!"
+    end)
+  end
+
+  def mount(params, socket) do
+    Appsignal.Phoenix.LiveView.instrument(__MODULE__, "mount", params, socket, fn ->
+      {:ok, socket}
+    end)
+  end
+end
+
 defmodule PhoenixWeb.ErrorView do
   def render(_layout, %{reason: reason}) do
     inspect(reason)

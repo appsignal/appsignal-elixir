@@ -41,9 +41,10 @@ defmodule Appsignal.Phoenix.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:appsignal_plug, "~> 2.0.0-alpha.1"},
+      {:appsignal_plug, "~> 2.0.0-alpha.2"},
       {:phoenix, "~> 1.4"},
       {:phoenix_html, "~> 2.11", only: :test},
+      {:phoenix_live_view, "~> 0.9", only: :test},
       {:telemetry, "~> 0.4"},
       {:ex_doc, "~> 0.21", only: :dev, runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false}
