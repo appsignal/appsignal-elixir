@@ -127,18 +127,8 @@ defmodule Appsignal.Plug do
     @span.set_sample_data(span, "params", params)
   end
 
-  defp set_sample_data(span, %Plug.Conn{
-         host: host,
-         method: method,
-         request_path: request_path,
-         port: port
-       }) do
-    @span.set_sample_data(span, "environment", %{
-      "host" => host,
-      "method" => method,
-      "request_path" => request_path,
-      "port" => port
-    })
+  defp set_sample_data(span, conn) do
+    @span.set_sample_data(span, "environment", Appsignal.Metadata.metadata(conn))
   end
 
   defp set_session_data(span, conn) do
