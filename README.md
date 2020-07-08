@@ -1,6 +1,6 @@
 # AppSignal for Elixir
 
-[![Build Status](https://travis-ci.org/appsignal/appsignal-elixir.png?branch=master)](https://travis-ci.org/appsignal/appsignal-elixir)
+[![Build Status](https://travis-ci.org/appsignal/appsignal-elixir.png?branch=main)](https://travis-ci.org/appsignal/appsignal-elixir)
 [![Hex pm](http://img.shields.io/hexpm/v/appsignal.svg?style=flat)](https://hex.pm/packages/appsignal)
 
 AppSignal solves all your Elixir monitoring needs in a single tool. You and your
@@ -85,18 +85,18 @@ This package uses benchee to benchmark code. To run the benchmarker:
 
 ### Branches and versions
 
-The `master` branch corresponds to the current release of the
+The `main` branch corresponds to the current release of the
 library. The `develop` branch is used for development of features that
 will end up in the next minor release. If you fix a bug open a pull
-request on `master`, if it's a new feature on `develop`.
+request on `main`, if it's a new feature on `develop`.
 
 ### Publishing new versions
 
-1. Merge the `develop` branch to `master` if necessary.
+1. Merge the `develop` branch to `main` if necessary.
 -  Update the version number in `mix.exs`, e.g. `1.2.3`
 -  Commit the change.
 -  Tag the commit with the version number: `git tag 1.2.3`
--  Push the changes: `git push origin master 1.2.3`
+-  Push the changes: `git push origin main 1.2.3`
 -  Publish the package: `mix hex.publish`
 
 ## Contributing
