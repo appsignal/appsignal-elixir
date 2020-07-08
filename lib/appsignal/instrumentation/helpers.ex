@@ -39,6 +39,14 @@ defmodule Appsignal.Instrumentation.Helpers do
     end)
   end
 
+  def instrument(name, title, fun) do
+    instrument(fn span ->
+      @span.set_name(span, name)
+      @span.set_attribute(span, "title", title)
+      call_with_optional_argument(fun, span)
+    end)
+  end
+
   defp call_with_optional_argument(fun, argument) do
     case fun
          |> :erlang.fun_info()

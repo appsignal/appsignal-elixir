@@ -312,4 +312,30 @@ defmodule Appsignal.InstrumentationTest do
       assert %Span{} = return
     end
   end
+
+  describe "instrument/3, when passing a name and a title" do
+    setup do
+      %{return: Appsignal.Instrumentation.Helpers.instrument("test", "title", fn -> :ok end)}
+    end
+
+    test "creates a root span" do
+      assert Test.Tracer.get(:create_span) == {:ok, [{"http_request", nil}]}
+    end
+
+    test "sets the span's name" do
+      assert {:ok, [{%Span{}, "test"}]} = Test.Span.get(:set_name)
+    end
+
+    test "sets the span's title attribute" do
+      assert {:ok, [{%Span{}, "title", "title"}]} = Test.Span.get(:set_attribute)
+    end
+
+    test "calls the passed function, and returns its return", %{return: return} do
+      assert return == :ok
+    end
+
+    test "closes the span" do
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    end
+  end
 end
