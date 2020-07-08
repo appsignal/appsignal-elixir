@@ -3,7 +3,7 @@
 > ⚠️  **NOTE**: Appsignal.Phoenix is part of an upcoming version of Appsignal
 > for Elixir, and hasn't been officially released. Aside from beta testing, we
 > recommend using [the current version of AppSignal for
-> Elixir](https://github.com/appsignal/appsignal-elixir/tree/master) instead.
+> Elixir](https://github.com/appsignal/appsignal-elixir/tree/main) instead.
 
 AppSignal's Phoenix instrumentation instruments calls to Phoenix applications
 to gain performance insights and error reporting.
