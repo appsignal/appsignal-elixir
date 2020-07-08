@@ -5,6 +5,10 @@
 - Split out Plug integration into separate library
 - Split out Phoenix integration into separate library
 
+# 1.13.4
+- Bump agent to v-4548c88
+  - Fix issue with host metrics values being reported as "Infinity". PR #572
+
 # 1.13.3
 - Add callback for `TransactionBehaviour.set_sample_data/2`. PR #560
 - Use tls 1.3 cipher suites on OTP 23. PR #571
