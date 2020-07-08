@@ -2,7 +2,7 @@
 
 > ⚠️  **NOTE**: Appsignal.Plug is part of an upcoming version of Appsignal for
 > Elixir, and hasn't been officially released. Aside from beta testing, we
-> recommend using [the current version of AppSignal for Elixir](https://github.com/appsignal/appsignal-elixir/tree/master)
+> recommend using [the current version of AppSignal for Elixir](https://github.com/appsignal/appsignal-elixir/tree/main)
 > instead.
 
 AppSignal's Plug instrumentation instruments calls to Plug applications to
