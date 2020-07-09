@@ -180,7 +180,7 @@ defmodule Appsignal.Error.BackendTest do
 
     test "closes the created span" do
       until(fn ->
-        assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+        assert {:ok, [{%Span{pid: pid}} | _]} = Test.Tracer.get(:close_span)
       end)
     end
   end
