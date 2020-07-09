@@ -3,8 +3,8 @@ defmodule Appsignal.TracerTest do
   alias Appsignal.{Span, Test, Tracer}
 
   setup do
-    Test.Nif.start_link()
-    Test.Monitor.start_link()
+    start_supervised(Test.Nif)
+    start_supervised(Test.Monitor)
     :ok
   end
 
