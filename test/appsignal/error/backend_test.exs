@@ -43,9 +43,9 @@ defmodule Appsignal.Error.BackendTest do
       end)
     end
 
-    test "adds an error to the created span" do
+    test "adds an error to the created span", %{pid: pid} do
       until(fn ->
-        assert {:ok, [{%Span{}, :error, %RuntimeError{message: "Exception"}, stack}]} =
+        assert {:ok, [{%Span{pid: ^pid}, :error, %RuntimeError{message: "Exception"}, stack} | _]} =
                  Test.Span.get(:add_error)
 
         assert is_list(stack)
@@ -80,7 +80,7 @@ defmodule Appsignal.Error.BackendTest do
 
     test "adds an error to the existing span", %{span: span} do
       until(fn ->
-        assert {:ok, [{^span, :error, %RuntimeError{message: "Exception"}, _stack}]} =
+        assert {:ok, [{^span, :error, %RuntimeError{message: "Exception"}, _stack} | _]} =
                  Test.Span.get(:add_error)
       end)
     end
@@ -126,9 +126,10 @@ defmodule Appsignal.Error.BackendTest do
       end)
     end
 
-    test "adds an error to the created span" do
+    test "adds an error to the created span", %{pid: pid} do
       until(fn ->
-        assert {:ok, [{%Span{}, :error, %ArgumentError{message: "argument error"}, stack}]} =
+        assert {:ok,
+                [{%Span{pid: ^pid}, :error, %ArgumentError{message: "argument error"}, stack} | _]} =
                  Test.Span.get(:add_error)
 
         assert is_list(stack)
@@ -169,9 +170,9 @@ defmodule Appsignal.Error.BackendTest do
       end)
     end
 
-    test "adds an error to the created span" do
+    test "adds an error to the created span", %{pid: pid} do
       until(fn ->
-        assert {:ok, [{%Span{}, :error, %RuntimeError{message: "Exception"}, stack}]} =
+        assert {:ok, [{%Span{pid: ^pid}, :error, %RuntimeError{message: "Exception"}, stack} | _]} =
                  Test.Span.get(:add_error)
 
         assert is_list(stack)
@@ -200,9 +201,10 @@ defmodule Appsignal.Error.BackendTest do
       end)
     end
 
-    test "adds an error to the created span" do
+    test "adds an error to the created span", %{pid: pid} do
       until(fn ->
-        assert {:ok, [{%Span{}, :error, %KeyError{}, stack}]} = Test.Span.get(:add_error)
+        assert {:ok, [{%Span{pid: ^pid}, :error, %KeyError{}, stack} | _]} =
+                 Test.Span.get(:add_error)
 
         assert is_list(stack)
       end)
