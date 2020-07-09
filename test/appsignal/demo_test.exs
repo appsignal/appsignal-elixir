@@ -3,9 +3,9 @@ defmodule Appsignal.DemoTest do
   alias Appsignal.{Demo, Span, Test}
 
   setup do
-    Test.Nif.start_link()
-    Test.Tracer.start_link()
-    Test.Span.start_link()
+    start_supervised(Test.Nif)
+    start_supervised(Test.Tracer)
+    start_supervised(Test.Span)
     :ok
   end
 
