@@ -40,9 +40,9 @@ defmodule AppsignalTest do
 
   describe "instrument/1" do
     setup do
-      Test.Nif.start_link()
-      Test.Tracer.start_link()
-      Test.Span.start_link()
+      start_supervised(Test.Nif)
+      start_supervised(Test.Tracer)
+      start_supervised(Test.Span)
 
       %{return: Appsignal.instrument(fn -> :ok end)}
     end
@@ -62,9 +62,9 @@ defmodule AppsignalTest do
 
   describe "instrument/1, when a root span exists" do
     setup do
-      Test.Nif.start_link()
-      Test.Tracer.start_link()
-      Test.Span.start_link()
+      start_supervised(Test.Nif)
+      start_supervised(Test.Tracer)
+      start_supervised(Test.Span)
 
       %{
         parent: Tracer.create_span("http_request"),
@@ -87,9 +87,9 @@ defmodule AppsignalTest do
 
   describe "instrument/1, when passing a function that takes an argument" do
     setup do
-      Test.Nif.start_link()
-      Test.Tracer.start_link()
-      Test.Span.start_link()
+      start_supervised(Test.Nif)
+      start_supervised(Test.Tracer)
+      start_supervised(Test.Span)
 
       %{return: Appsignal.instrument(fn span -> span end)}
     end
@@ -103,9 +103,9 @@ defmodule AppsignalTest do
 
   describe "instrument/2" do
     setup do
-      Test.Nif.start_link()
-      Test.Tracer.start_link()
-      Test.Span.start_link()
+      start_supervised(Test.Nif)
+      start_supervised(Test.Tracer)
+      start_supervised(Test.Span)
 
       %{return: Appsignal.instrument("test", fn -> :ok end)}
     end
@@ -129,9 +129,9 @@ defmodule AppsignalTest do
 
   describe "instrument/2, when passing a function that takes an argument" do
     setup do
-      Test.Nif.start_link()
-      Test.Tracer.start_link()
-      Test.Span.start_link()
+      start_supervised(Test.Nif)
+      start_supervised(Test.Tracer)
+      start_supervised(Test.Span)
 
       %{return: Appsignal.instrument("test", fn span -> span end)}
     end
