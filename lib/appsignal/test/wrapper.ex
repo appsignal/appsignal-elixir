@@ -7,14 +7,7 @@ defmodule Appsignal.Test.Wrapper do
       import ExUnit.Assertions
 
       def start_link do
-        {:ok, pid} = Agent.start_link(fn -> %{} end, name: __MODULE__)
-
-        ExUnit.Callbacks.on_exit(fn ->
-          ref = Process.monitor(pid)
-          assert_receive {:DOWN, ^ref, _, _, _}, 500
-        end)
-
-        {:ok, pid}
+        Agent.start_link(fn -> %{} end, name: __MODULE__)
       end
 
       def get!(key) do
@@ -34,6 +27,16 @@ defmodule Appsignal.Test.Wrapper do
             end
           end)
         end)
+      end
+
+      def child_spec(_opts) do
+        %{
+          id: __MODULE__,
+          start: {__MODULE__, :start_link, []},
+          type: :worker,
+          restart: :permanent,
+          shutdown: 500
+        }
       end
     end
   end
