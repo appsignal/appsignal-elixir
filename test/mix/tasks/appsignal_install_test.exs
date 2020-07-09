@@ -5,9 +5,9 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
   alias Appsignal.Test
 
   setup do
-    Test.Tracer.start_link()
-    Test.Span.start_link()
-    Test.Nif.start_link()
+    start_supervised(Test.Tracer)
+    start_supervised(Test.Span)
+    start_supervised(Test.Nif)
 
     bypass = Bypass.open()
 
