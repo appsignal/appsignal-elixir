@@ -20,10 +20,10 @@ defmodule Appsignal.Error.BackendTest do
   alias Appsignal.{Error.Backend, Span, Test, Tracer}
 
   setup do
-    Test.Nif.start_link()
-    Test.Tracer.start_link()
-    Test.Span.start_link()
-    Test.Monitor.start_link()
+    start_supervised(Test.Nif)
+    start_supervised(Test.Tracer)
+    start_supervised(Test.Span)
+    start_supervised(Test.Monitor)
 
     :ok
   end
