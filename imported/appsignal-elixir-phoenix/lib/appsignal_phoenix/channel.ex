@@ -66,4 +66,8 @@ defmodule Appsignal.Phoenix.Channel do
       end
     )
   end
+
+  def channel_action(module, name, socket, function) do
+    instrument(module, name, socket, function)
+  end
 end
