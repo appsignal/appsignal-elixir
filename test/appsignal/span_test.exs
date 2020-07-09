@@ -3,7 +3,7 @@ defmodule AppsignalSpanTest do
   alias Appsignal.{Span, Test}
 
   setup do
-    Test.Nif.start_link()
+    start_supervised(Test.Nif)
     :ok
   end
 
