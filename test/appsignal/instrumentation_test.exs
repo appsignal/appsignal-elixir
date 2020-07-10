@@ -53,7 +53,7 @@ defmodule Appsignal.InstrumentationTest do
     :ok
   end
 
-  describe "instrument/2" do
+  describe "instrument/2, with a decorator" do
     setup do
       %{return: InstrumentedModule.instrument()}
     end
@@ -75,7 +75,7 @@ defmodule Appsignal.InstrumentationTest do
     end
   end
 
-  describe "instrument/3, with a custom namespace" do
+  describe "instrument/3, with a decorator with a custom namespace" do
     setup do
       %{return: InstrumentedModule.background_job()}
     end
@@ -101,7 +101,7 @@ defmodule Appsignal.InstrumentationTest do
     end
   end
 
-  describe "instrument/3, with an atom as its custom namespace" do
+  describe "instrument/3, with a decorator with an atom as its custom namespace" do
     setup do
       %{return: InstrumentedModule.background_job_atom()}
     end
@@ -221,6 +221,117 @@ defmodule Appsignal.InstrumentationTest do
 
     test "sets the span's name" do
       assert {:ok, [{%Span{}, "InstrumentedModule.action"}]} = Test.Span.get(:set_name)
+    end
+
+    test "closes the span" do
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    end
+  end
+
+  describe "instrument/1" do
+    setup do
+      %{return: Appsignal.Instrumentation.Helpers.instrument(fn -> :ok end)}
+    end
+
+    test "creates a root span" do
+      assert Test.Tracer.get(:create_span) == {:ok, [{"http_request", nil}]}
+    end
+
+    test "calls the passed function, and returns its return", %{return: return} do
+      assert return == :ok
+    end
+
+    test "closes the span" do
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    end
+  end
+
+  describe "instrument/1, when a root span exists" do
+    setup do
+      %{
+        parent: Appsignal.Tracer.create_span("http_request"),
+        return: Appsignal.Instrumentation.Helpers.instrument(fn -> :ok end)
+      }
+    end
+
+    test "creates a child span", %{parent: parent} do
+      assert {:ok, [{"http_request", ^parent}]} = Test.Tracer.get(:create_span)
+    end
+
+    test "calls the passed function, and returns its return", %{return: return} do
+      assert return == :ok
+    end
+
+    test "closes the span" do
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    end
+  end
+
+  describe "instrument/1, when passing a function that takes an argument" do
+    setup do
+      %{return: Appsignal.Instrumentation.Helpers.instrument(fn span -> span end)}
+    end
+
+    test "calls the passed function with the created span, and returns its return", %{
+      return: return
+    } do
+      assert %Span{} = return
+    end
+  end
+
+  describe "instrument/2" do
+    setup do
+      %{return: Appsignal.Instrumentation.Helpers.instrument("test", fn -> :ok end)}
+    end
+
+    test "creates a root span" do
+      assert Test.Tracer.get(:create_span) == {:ok, [{"http_request", nil}]}
+    end
+
+    test "sets the span's name" do
+      assert {:ok, [{%Span{}, "test"}]} = Test.Span.get(:set_name)
+    end
+
+    test "calls the passed function, and returns its return", %{return: return} do
+      assert return == :ok
+    end
+
+    test "closes the span" do
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    end
+  end
+
+  describe "instrument/2, when passing a function that takes an argument" do
+    setup do
+      %{return: Appsignal.Instrumentation.Helpers.instrument("test", fn span -> span end)}
+    end
+
+    test "calls the passed function with the created span, and returns its return", %{
+      return: return
+    } do
+      assert %Span{} = return
+    end
+  end
+
+  describe "instrument/3, when passing a name and a title" do
+    setup do
+      %{return: Appsignal.Instrumentation.Helpers.instrument("test", "title", fn -> :ok end)}
+    end
+
+    test "creates a root span" do
+      assert Test.Tracer.get(:create_span) == {:ok, [{"http_request", nil}]}
+    end
+
+    test "sets the span's name" do
+      assert {:ok, [{%Span{}, "test"}]} = Test.Span.get(:set_name)
+    end
+
+    test "sets the span's title attribute" do
+      assert {:ok, [{%Span{}, "title", "title"}]} = Test.Span.get(:set_attribute)
+    end
+
+    test "calls the passed function, and returns its return", %{return: return} do
+      assert return == :ok
     end
 
     test "closes the span" do

@@ -5,7 +5,7 @@ end
 
 defmodule Appsignal.Demo do
   @moduledoc false
-  import Appsignal, only: [instrument: 2]
+  import Appsignal.Instrumentation.Helpers, only: [instrument: 2]
   @tracer Application.get_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
   @span Application.get_env(:appsignal, :appsignal_span, Appsignal.Span)
 
