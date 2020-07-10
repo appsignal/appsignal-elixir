@@ -1,4 +1,4 @@
-# 2.0.0-alpha.6
+# 2.0.0-alpha.7
 - Switch to span-based API
 - Reimplement error handling
 - Reimplement Ecto integration
