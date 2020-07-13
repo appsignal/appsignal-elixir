@@ -4,7 +4,7 @@ defmodule Appsignal.Plug.MixProject do
   def project do
     [
       app: :appsignal_plug,
-      version: "2.0.0-alpha.1",
+      version: "2.0.0-beta.1",
       description:
         "AppSignal's Plug instrumentation instruments calls to Plug applications to gain performance insights and error reporting",
       package: %{
@@ -32,7 +32,7 @@ defmodule Appsignal.Plug.MixProject do
   defp deps do
     [
       {:plug, ">= 1.1.0"},
-      {:appsignal, "~> 2.0.0-alpha.6"},
+      {:appsignal, "~> 2.0.0-beta.1"},
       {:credo, "~> 1.2", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.21", only: :dev, runtime: false}

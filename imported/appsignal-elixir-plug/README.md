@@ -15,7 +15,7 @@ To install `Appsignal.Plug` into your Plug application, first add
 
 ``` elixir
 defp deps do
-  {:appsignal_plug, github: "appsignal/appsignal-elixir-plug"}
+  {:appsignal_plug, "~> 2.0.0-beta.1"}
 end
 ```
 
