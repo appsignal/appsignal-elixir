@@ -1,4 +1,6 @@
 defmodule Appsignal.Utils.FileSystem do
+  @moduledoc false
+
   def system_tmp_dir do
     {_, os_type} = :os.type()
     system_tmp_dir_for_os(os_type)

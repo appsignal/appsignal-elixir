@@ -1,37 +1,12 @@
 defmodule Appsignal.NifBehaviour do
+  @moduledoc false
   @callback loaded?() :: boolean()
   @callback running_in_container?() :: boolean()
 end
 
 defmodule Appsignal.Nif do
   @behaviour Appsignal.NifBehaviour
-  @moduledoc """
-
-  It's a NIF! Oh no!
-
-  While people generally think NIFs are a bad idea, the overhead of
-  this particular NIF is low. The C code that the NIF calls has been
-  designed to be as fast as possible and to do as little as possible
-  on the calling thread.
-
-  Internally, the AppSignal NIF works as follows: it fork/execs a
-  separate agent process, to which the NIF sends its data (protobuf)
-  over a unix socket. This agent process (which is a separate unix
-  process!) then takes care of sending the data the server
-  periodically.
-
-  The C library that the NIF interfaces with, is specifically written
-  with performance in mind and is very robust and battle tested;
-  written in Rust and it is the same code that the Ruby AppSignal Gem
-  uses, which is used in production in thousands of sites.
-
-  While doing native Elixir protobufs to communicate directly with
-  this agent makes more sense from a BEAM standpoint, from a
-  maintainability point the NIF choice is more logical because
-  AppSignal is planning more language integrations in the future (PHP,
-  Java) which all will use this same C library and agent process.
-
-  """
+  @moduledoc false
 
   @on_load :init
 
@@ -161,6 +136,10 @@ defmodule Appsignal.Nif do
     _data_map_new()
   end
 
+  def data_filtered_map_new do
+    _data_filtered_map_new()
+  end
+
   def data_set_string(resource, key, value) do
     _data_set_string(resource, key, value)
   end
@@ -221,9 +200,81 @@ defmodule Appsignal.Nif do
     _loaded()
   end
 
-  if Mix.env() in [:test, :test_phoenix] do
-    def data_to_json(resource) do
-      _data_to_json(resource)
+  def trace_id(reference) do
+    _trace_id(reference)
+  end
+
+  def span_id(reference) do
+    _span_id(reference)
+  end
+
+  def create_root_span(namespace) do
+    _create_root_span(namespace)
+  end
+
+  def create_root_span_with_timestamp(namespace, sec, nsec) do
+    _create_root_span_with_timestamp(namespace, sec, nsec)
+  end
+
+  def create_child_span(trace_id, span_id) do
+    _create_child_span(trace_id, span_id)
+  end
+
+  def create_child_span_with_timestamp(trace_id, span_id, sec, nsec) do
+    _create_child_span_with_timestamp(trace_id, span_id, sec, nsec)
+  end
+
+  def set_span_name(reference, name) do
+    _set_span_name(reference, name)
+  end
+
+  def set_span_namespace(reference, namespace) do
+    _set_span_namespace(reference, namespace)
+  end
+
+  def set_span_attribute_string(reference, key, value) do
+    _set_span_attribute_string(reference, key, value)
+  end
+
+  def set_span_attribute_int(reference, key, value) do
+    _set_span_attribute_int(reference, key, value)
+  end
+
+  def set_span_attribute_bool(reference, key, value) do
+    _set_span_attribute_bool(reference, key, value)
+  end
+
+  def set_span_attribute_double(reference, key, value) do
+    _set_span_attribute_double(reference, key, value)
+  end
+
+  def set_span_attribute_sql_string(reference, key, value) do
+    _set_span_attribute_sql_string(reference, key, value)
+  end
+
+  def set_span_sample_data(reference, key, value) do
+    _set_span_sample_data(reference, key, value)
+  end
+
+  def add_span_error(reference, name, message, backtrace) do
+    _add_span_error(reference, name, message, backtrace)
+  end
+
+  def close_span(reference) do
+    _close_span(reference)
+  end
+
+  def close_span_with_timestamp(reference, sec, nsec) do
+    _close_span_with_timestamp(reference, sec, nsec)
+  end
+
+  def span_to_json(resource) do
+    _span_to_json(resource)
+  end
+
+  if Mix.env() == :test do
+    def data_to_json(reference) do
+      _data_to_json(reference)
     end
 
     def transaction_to_json(resource) do
@@ -333,6 +384,10 @@ defmodule Appsignal.Nif do
     {:ok, nil}
   end
 
+  def _data_filtered_map_new do
+    {:ok, nil}
+  end
+
   def _data_set_string(resource, _key, _value) do
     resource
   end
@@ -393,7 +448,79 @@ defmodule Appsignal.Nif do
     false
   end
 
-  if Mix.env() in [:test, :test_phoenix, :test_no_nif] do
+  def _trace_id(_reference) do
+    {:ok, 'trace123'}
+  end
+
+  def _span_id(_reference) do
+    {:ok, 'span123'}
+  end
+
+  def _create_root_span(_namespace) do
+    {:ok, make_ref()}
+  end
+
+  def _create_root_span_with_timestamp(_namespace, _sec, _nsec) do
+    {:ok, make_ref()}
+  end
+
+  def _create_child_span(_trace_id, _span_id) do
+    {:ok, make_ref()}
+  end
+
+  def _create_child_span_with_timestamp(_trace_id, _span_id, _sec, _nsec) do
+    {:ok, make_ref()}
+  end
+
+  def _set_span_name(_reference, _name) do
+    :ok
+  end
+
+  def _set_span_namespace(_reference, _namespace) do
+    :ok
+  end
+
+  def _set_span_attribute_string(_reference, _key, _value) do
+    :ok
+  end
+
+  def _set_span_attribute_int(_reference, _key, _value) do
+    :ok
+  end
+
+  def _set_span_attribute_bool(_reference, _key, _value) do
+    :ok
+  end
+
+  def _set_span_attribute_double(_reference, _key, _value) do
+    :ok
+  end
+
+  def _set_span_attribute_sql_string(_reference, _key, _value) do
+    :ok
+  end
+
+  def _set_span_sample_data(_reference, _key, _value) do
+    :ok
+  end
+
+  def _add_span_error(_reference, _name, _message, _backtrace) do
+    :ok
+  end
+
+  def _close_span(_reference) do
+    :ok
+  end
+
+  def _close_span_with_timestamp(_reference, _sec, _nsec) do
+    :ok
+  end
+
+  def _span_to_json(_reference) do
+    {:ok, "{}"}
+  end
+
+  if Mix.env() in [:test, :test_no_nif] do
     def _data_to_json(resource) do
       resource
     end

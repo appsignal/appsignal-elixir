@@ -1,106 +1,72 @@
 defmodule Appsignal.Instrumentation.Decorators do
-  @moduledoc """
-  Instrumentation decorators
-
-  This module contains various [function
-  decorators](https://github.com/arjan/decorator) for instrumenting
-  function calls.
-
-  `@decorate transaction` - when a function decorated like this is
-  called, a transaction is started in the `:http_request` namespace.
-
-  `@decorate transaction(:background_job)` - when a function decorated
-  like this is called, a transaction is started in the
-  `:background_job` namespace.
-
-  `@decorate transaction_event` - when a function decorated like this
-  is called, it will add an event onto the transaction's timeline. The
-  name of the event will be the name of the function that's decorated.
-
-  `@decorate transaction_event(:category)` - when a function decorated
-  like this is called, it will add an event onto the transaction's
-  timeline. The name of the event will be the name of the function
-  that's decorated. In addition, the event will be grouped into the
-  given `:category`.
-
-  `@decorate channel_action` - this decorator is meant to be put
-  before the `handle_in/3` function of a Phoenix.Channel. See
-  `Appsignal.Phoenix.Channel` for more information on how to
-  instrument channel events.
-  """
+  @moduledoc false
+  @span Application.get_env(:appsignal, :appsignal_span, Appsignal.Span)
 
   use Decorator.Define,
+    instrument: 0,
+    instrument: 1,
     transaction: 0,
     transaction: 1,
     transaction_event: 0,
     transaction_event: 1,
     channel_action: 0
 
-  import Appsignal.Utils
+  import Appsignal.Utils, only: [module_name: 1]
 
-  @transaction Application.get_env(:appsignal, :appsignal_transaction, Appsignal.Transaction)
-
-  @doc false
-  def transaction(body, context) do
-    transaction(:http_request, body, context)
+  def instrument(namespace, body, context) when is_atom(namespace) do
+    namespace
+    |> Atom.to_string()
+    |> instrument(body, context)
   end
 
-  @doc false
-  def transaction(namespace, body, context) do
-    quote do
-      Appsignal.Instrumentation.Decorators.in_transaction(
-        unquote(namespace),
-        unquote("#{module_name(context.module)}##{context.name}"),
-        fn -> unquote(body) end
-      )
-    end
-  end
-
-  @doc false
-  def transaction_event(category, body, context) do
-    decorate_event(".#{category}", body, context)
-  end
-
-  @doc false
-  def transaction_event(body, context) do
-    decorate_event("", body, context)
-  end
-
-  defp decorate_event(postfix, body, context) do
+  def instrument(namespace, body, %{module: module, name: name, arity: arity})
+      when is_binary(namespace) do
     quote do
       Appsignal.Instrumentation.Helpers.instrument(
-        self(),
-        unquote("#{context.name}#{postfix}"),
-        unquote("#{module_name(context.module)}.#{context.name}"),
-        fn -> unquote(body) end
+        "#{module_name(unquote(module))}.#{unquote(name)}/#{unquote(arity)}",
+        fn span ->
+          unquote(@span).set_namespace(span, unquote(namespace))
+          unquote(body)
+        end
       )
     end
   end
 
-  @doc false
-  def channel_action(body, %{args: [action, _payload, socket]} = context) do
+  def instrument(body, %{module: module, name: name, arity: arity}) do
     quote do
-      Appsignal.Phoenix.Channel.channel_action(
-        unquote(module_name(context.module)),
-        unquote(action),
-        unquote(socket),
+      Appsignal.Instrumentation.Helpers.instrument(
+        "#{module_name(unquote(module))}.#{unquote(name)}/#{unquote(arity)}",
         fn -> unquote(body) end
       )
     end
   end
 
-  @doc false
-  def in_transaction(namespace, action, body) do
-    transaction =
-      @transaction.generate_id()
-      |> @transaction.start(namespace)
-      |> @transaction.set_action(action)
+  def instrument(body, %{module: module, name: name}) do
+    quote do
+      Appsignal.Instrumentation.Helpers.instrument(
+        "#{module_name(unquote(module))}.#{unquote(name)}",
+        fn -> unquote(body) end
+      )
+    end
+  end
 
-    result = body.()
+  def transaction(body, context) do
+    instrument(body, context)
+  end
 
-    @transaction.finish(transaction)
-    @transaction.complete(transaction)
+  def transaction(namespace, body, context) do
+    instrument(namespace, body, context)
+  end
 
-    result
+  def transaction_event(body, context) do
+    instrument(body, context)
+  end
+
+  def transaction_event(_category, body, context) do
+    instrument(body, context)
+  end
+
+  def channel_action(body, %{module: module, args: [action, _payload, _socket]}) do
+    instrument(body, %{module: module, name: action})
   end
 end

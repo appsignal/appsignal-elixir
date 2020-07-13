@@ -1,4 +1,5 @@
 defmodule Appsignal.Utils.PushApiKeyValidator do
+  @moduledoc false
   alias Appsignal.Transmitter
 
   def validate(config) do

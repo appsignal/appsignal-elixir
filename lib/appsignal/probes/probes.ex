@@ -1,6 +1,6 @@
 defmodule Appsignal.Probes do
+  @moduledoc false
   use GenServer
-
   require Logger
 
   def start_link do
@@ -69,7 +69,7 @@ defmodule Appsignal.Probes do
     !is_nil(pid) && Process.alive?(pid)
   end
 
-  if Mix.env() in [:test, :test_phoenix, :test_no_nif] do
+  if Mix.env() in [:test, :test_no_nif] do
     defp schedule_probes do
       Process.send_after(self(), :run_probes, 10)
     end

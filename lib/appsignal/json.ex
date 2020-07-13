@@ -1,4 +1,5 @@
 defmodule Appsignal.Json.MissingEncoderError do
+  @moduledoc false
   defexception message: """
                No JSON encoder found. Please add jason to your list of dependencies in mix.exs:
 
@@ -12,6 +13,7 @@ defmodule Appsignal.Json.MissingEncoderError do
 end
 
 defmodule Appsignal.Json.MissingEncoder do
+  @moduledoc false
   def encode(_input), do: {:error, :no_json_encoder}
   def encode!(_input), do: raise(%Appsignal.Json.MissingEncoderError{})
   def decode(_input), do: {:error, :no_json_encoder}
@@ -19,6 +21,7 @@ defmodule Appsignal.Json.MissingEncoder do
 end
 
 defmodule Appsignal.Json do
+  @moduledoc false
   cond do
     Code.ensure_loaded?(Jason) -> @json Jason
     Code.ensure_loaded?(Poison) -> @json Poison

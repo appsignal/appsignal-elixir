@@ -2,10 +2,12 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
   use ExUnit.Case
   import ExUnit.CaptureIO
   import AppsignalTest.Utils
-  alias Appsignal.FakeDemo
+  alias Appsignal.Test
 
   setup do
-    {:ok, fake_demo} = FakeDemo.start_link()
+    start_supervised(Test.Tracer)
+    start_supervised(Test.Span)
+    start_supervised(Test.Nif)
 
     bypass = Bypass.open()
 
@@ -13,7 +15,7 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
       "APPSIGNAL_PUSH_API_ENDPOINT" => "http://localhost:#{bypass.port}"
     })
 
-    {:ok, %{bypass: bypass, fake_demo: fake_demo}}
+    %{bypass: bypass}
   end
 
   describe "without push api key" do
@@ -132,32 +134,27 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
       assert String.contains?(output, "Validating Push API key: Valid")
     end
 
-    test "requires an application name" do
-      # First entry is empty and thus invalid, so it asks for the name again.
-      output =
-        capture_io([input: "\nAppSignal test suite app\n2"], fn ->
-          Mix.Tasks.Appsignal.Install.run(["my_push_api_key"])
-        end)
-
-      assert String.contains?(
-               output,
-               "What is your application's name?: " <>
-                 "I'm sorry, I didn't quite get that.\nWhat is your application's name?: "
-             )
-    end
-
     test "requires a configuration method" do
-      # First entry is empty and thus invalid, so it asks for the option again.
-      # Second time the option doesn't exist, so it asks for the option again.
       output =
-        capture_io([input: "foo\n\n3\n2"], fn ->
+        capture_io([input: "foo\n3\n2"], fn ->
           Mix.Tasks.Appsignal.Install.run(["my_push_api_key"])
         end)
 
       assert String.contains?(
                output,
-               "What is your preferred configuration method? (1/2): I'm sorry, I didn't quite get that.\n" <>
-                 "What is your preferred configuration method? (1/2): I'm sorry, I didn't quite get that."
+               """
+               There are two methods of configuring AppSignal in your application.
+                 Option 1: Using a "config/appsignal.exs" file. (1)
+                 Option 2: Using system environment variables.  (2)
+
+               What is your preferred configuration method? [1]: I'm sorry, I didn't quite get that. Please choose option 1 or 2.
+
+               There are two methods of configuring AppSignal in your application.
+                 Option 1: Using a "config/appsignal.exs" file. (1)
+                 Option 2: Using system environment variables.  (2)
+
+               What is your preferred configuration method? [1]: Configuring with environment variables.
+               """
              )
 
       assert String.contains?(output, "Configuring with environment variables.")
@@ -165,8 +162,9 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
 
     test "with environment variable config outputs environment variables" do
       output = run_with_environment_config()
-      assert String.contains?(output, "What is your preferred configuration method? (1/2): ")
+      assert String.contains?(output, "What is your preferred configuration method? [1]: ")
       assert String.contains?(output, "Configuring with environment variables.")
+      assert String.contains?(output, ~s(APPSIGNAL_OTP_APP="appsignal"))
       assert String.contains?(output, ~s(APPSIGNAL_APP_NAME="AppSignal test suite app"))
       assert String.contains?(output, ~s(APPSIGNAL_APP_ENV="prod"))
       assert String.contains?(output, ~s(APPSIGNAL_PUSH_API_KEY="my_push_api_key"))
@@ -175,7 +173,7 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
     @tag :file_config
     test "file based config option writes to env-based config files" do
       output = run_with_file_config()
-      assert String.contains?(output, "What is your preferred configuration method? (1/2): ")
+      assert String.contains?(output, "What is your preferred configuration method? [1]: ")
       assert String.contains?(output, "Writing config file config/appsignal.exs: Success!\n")
       assert String.contains?(output, "Linking config to config/config.exs: Success!\n")
 
@@ -188,6 +186,7 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
                appsignal_config,
                ~s(use Mix.Config\n\n) <>
                  ~s(config :appsignal, :config,\n) <>
+                 ~s(  otp_app: :appsignal,\n) <>
                  ~s(  name: "AppSignal test suite app",\n) <>
                  ~s(  push_api_key: "my_push_api_key",\n) <> ~s(  env: Mix.env)
              )
@@ -213,7 +212,7 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
       create_config_file_in(config_directory)
 
       output = run_with_file_config_in(directory)
-      assert String.contains?(output, "What is your preferred configuration method? (1/2): ")
+      assert String.contains?(output, "What is your preferred configuration method? [1]: ")
       assert String.contains?(output, "Writing config file config/appsignal.exs: Success!\n")
       assert String.contains?(output, "Linking config to config/config.exs: Success!\n")
 
@@ -227,6 +226,7 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
                ~s(use Mix.Config\n\n) <>
                  ~s(config :appsignal, :config,\n) <>
                  ~s(  active: true,\n) <>
+                 ~s(  otp_app: :appsignal,\n) <>
                  ~s(  name: "AppSignal test suite app",\n) <>
                  ~s(  push_api_key: "my_push_api_key",\n) <> ~s(  env: Mix.env)
              )
@@ -278,7 +278,6 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
       assert String.contains?(output, "AppSignal installed!")
     end
 
-    @tag :skip_env_test_phoenix
     test "without Phoenix it prints no link to Phoenix integration documentation" do
       output = run_with_environment_config()
       refute String.contains?(output, "AppSignal detected a Phoenix app")
@@ -301,11 +300,11 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
              )
     end
 
-    test "sends a demo sample to AppSignal", %{fake_demo: fake_demo} do
-      output = run_with_environment_config()
-      assert FakeDemo.get(fake_demo, :create_transaction_error_request)
-      assert FakeDemo.get(fake_demo, :create_transaction_performance_request)
-      assert String.contains?(output, "Demonstration sample data sent!")
+    test "sends a demo sample with six spans to AppSignal" do
+      run_with_environment_config()
+
+      {:ok, spans} = Test.Tracer.get(:create_span)
+      assert length(spans) == 6
     end
   end
 

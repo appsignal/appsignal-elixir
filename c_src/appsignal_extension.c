@@ -12,6 +12,7 @@
 
 static ErlNifResourceType *appsignal_transaction_type = NULL;
 static ErlNifResourceType *appsignal_data_type = NULL;
+static ErlNifResourceType *appsignal_span_type = NULL;
 
 typedef struct {
   appsignal_transaction_t *transaction;
@@ -20,6 +21,10 @@ typedef struct {
 typedef struct {
   appsignal_data_t *data;
 } data_ptr;
+
+typedef struct {
+  appsignal_span_t *span;
+} span_ptr;
 
 static ERL_NIF_TERM
 make_ok_tuple(ErlNifEnv *env, ERL_NIF_TERM value)
@@ -494,6 +499,11 @@ static void destruct_appsignal_data(ErlNifEnv *UNUSED(env), void *arg) {
   appsignal_free_data(ptr->data);
 }
 
+static void destruct_appsignal_span(ErlNifEnv *UNUSED(env), void *arg) {
+  span_ptr *ptr = (span_ptr *)arg;
+  appsignal_free_span(ptr->span);
+}
+
 static ERL_NIF_TERM _set_gauge(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     ErlNifBinary key;
@@ -575,6 +585,22 @@ static ERL_NIF_TERM _data_map_new(ErlNifEnv* env, int UNUSED(argc), const ERL_NI
     return make_error_tuple(env, "no_memory");
 
   ptr->data = appsignal_data_map_new();
+
+  data_ref = enif_make_resource(env, ptr);
+  enif_release_resource(ptr);
+
+  return make_ok_tuple(env, data_ref);
+}
+
+static ERL_NIF_TERM _data_filtered_map_new(ErlNifEnv* env, int UNUSED(argc), const ERL_NIF_TERM UNUSED(argv[])) {
+  data_ptr *ptr;
+  ERL_NIF_TERM data_ref;
+
+  ptr = enif_alloc_resource(appsignal_data_type, sizeof(data_ptr));
+  if(!ptr)
+    return make_error_tuple(env, "no_memory");
+
+  ptr->data = appsignal_data_filtered_map_new();
 
   data_ref = enif_make_resource(env, ptr);
   enif_release_resource(ptr);
@@ -848,10 +874,446 @@ static ERL_NIF_TERM _loaded(ErlNifEnv *env, int UNUSED(argc), const ERL_NIF_TERM
   return enif_make_atom(env, "true");
 }
 
+static ERL_NIF_TERM _create_root_span(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
+  span_ptr *ptr;
+  ErlNifBinary namespace;
+  ERL_NIF_TERM span_ref;
+
+  if (argc != 1) {
+    return enif_make_badarg(env);
+  }
+  if(!enif_inspect_iolist_as_binary(env, argv[0], &namespace)) {
+    return enif_make_badarg(env);
+  }
+
+  ptr = enif_alloc_resource(appsignal_span_type, sizeof(span_ptr));
+  if(!ptr)
+    return make_error_tuple(env, "no_memory");
+
+  ptr->span = appsignal_create_root_span(make_appsignal_string(namespace));
+
+  span_ref = enif_make_resource(env, ptr);
+  enif_release_resource(ptr);
+
+  return make_ok_tuple(env, span_ref);
+}
+
+static ERL_NIF_TERM _create_root_span_with_timestamp(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
+  span_ptr *ptr;
+  ErlNifBinary namespace;
+  long sec;
+  long nsec;
+  ERL_NIF_TERM span_ref;
+
+  if (argc != 3) {
+    return enif_make_badarg(env);
+  }
+  if(!enif_inspect_iolist_as_binary(env, argv[0], &namespace)) {
+    return enif_make_badarg(env);
+  }
+  if(!enif_get_long(env, argv[1], &sec)) {
+    return enif_make_badarg(env);
+  }
+  if(!enif_get_long(env, argv[2], &nsec)) {
+    return enif_make_badarg(env);
+  }
+
+  ptr = enif_alloc_resource(appsignal_span_type, sizeof(span_ptr));
+  if(!ptr)
+    return make_error_tuple(env, "no_memory");
+
+  ptr->span = appsignal_create_root_span_with_timestamp(make_appsignal_string(namespace), sec, nsec);
+
+  span_ref = enif_make_resource(env, ptr);
+  enif_release_resource(ptr);
+
+  return make_ok_tuple(env, span_ref);
+}
+
+static ERL_NIF_TERM _create_child_span(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
+  span_ptr *ptr;
+  ErlNifBinary trace_id;
+  ErlNifBinary span_id;
+  ERL_NIF_TERM span_ref;
+
+  if (argc != 2) {
+    return enif_make_badarg(env);
+  }
+  if(!enif_inspect_iolist_as_binary(env, argv[0], &trace_id)) {
+    return enif_make_badarg(env);
+  }
+  if(!enif_inspect_iolist_as_binary(env, argv[1], &span_id)) {
+    return enif_make_badarg(env);
+  }
+
+  ptr = enif_alloc_resource(appsignal_span_type, sizeof(span_ptr));
+  if(!ptr)
+    return make_error_tuple(env, "no_memory");
+
+  ptr->span = appsignal_create_child_span(
+    make_appsignal_string(trace_id),
+    make_appsignal_string(span_id)
+  );
+
+  span_ref = enif_make_resource(env, ptr);
+  enif_release_resource(ptr);
+
+  return make_ok_tuple(env, span_ref);
+}
+
+static ERL_NIF_TERM _create_child_span_with_timestamp(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
+  span_ptr *ptr;
+  ErlNifBinary trace_id;
+  ErlNifBinary span_id;
+  long sec;
+  long nsec;
+  ERL_NIF_TERM span_ref;
+
+  if (argc != 4) {
+    return enif_make_badarg(env);
+  }
+  if(!enif_inspect_iolist_as_binary(env, argv[0], &trace_id)) {
+    return enif_make_badarg(env);
+  }
+  if(!enif_inspect_iolist_as_binary(env, argv[1], &span_id)) {
+    return enif_make_badarg(env);
+  }
+  if(!enif_get_long(env, argv[2], &sec)) {
+    return enif_make_badarg(env);
+  }
+  if(!enif_get_long(env, argv[3], &nsec)) {
+    return enif_make_badarg(env);
+  }
+
+  ptr = enif_alloc_resource(appsignal_span_type, sizeof(span_ptr));
+  if(!ptr)
+    return make_error_tuple(env, "no_memory");
+
+  ptr->span = appsignal_create_child_span_with_timestamp(
+    make_appsignal_string(trace_id),
+    make_appsignal_string(span_id),
+    sec,
+    nsec
+  );
+
+  span_ref = enif_make_resource(env, ptr);
+  enif_release_resource(ptr);
+
+  return make_ok_tuple(env, span_ref);
+}
+
+static ERL_NIF_TERM _set_span_name(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    span_ptr *ptr;
+    ErlNifBinary name;
+
+    if (argc != 2) {
+      return enif_make_badarg(env);
+    }
+    if(!enif_get_resource(env, argv[0], appsignal_span_type, (void**) &ptr)) {
+      return enif_make_badarg(env);
+    }
+    if(!enif_inspect_iolist_as_binary(env, argv[1], &name)) {
+        return enif_make_badarg(env);
+    }
+
+    appsignal_set_span_name(ptr->span, make_appsignal_string(name));
+
+    return enif_make_atom(env, "ok");
+}
+
+static ERL_NIF_TERM _set_span_attribute_string(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    span_ptr *ptr;
+    ErlNifBinary key;
+    ErlNifBinary value;
+
+    if (argc != 3) {
+      return enif_make_badarg(env);
+    }
+    if(!enif_get_resource(env, argv[0], appsignal_span_type, (void**) &ptr)) {
+      return enif_make_badarg(env);
+    }
+    if(!enif_inspect_iolist_as_binary(env, argv[1], &key)) {
+        return enif_make_badarg(env);
+    }
+    if(!enif_inspect_iolist_as_binary(env, argv[2], &value)) {
+        return enif_make_badarg(env);
+    }
+
+    appsignal_set_span_attribute_string(
+        ptr->span,
+        make_appsignal_string(key),
+        make_appsignal_string(value)
+    );
+
+    return enif_make_atom(env, "ok");
+}
+
+static ERL_NIF_TERM _set_span_attribute_int(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    span_ptr *ptr;
+    ErlNifBinary key;
+    long value;
+
+    if (argc != 3) {
+      return enif_make_badarg(env);
+    }
+    if(!enif_get_resource(env, argv[0], appsignal_span_type, (void**) &ptr)) {
+      return enif_make_badarg(env);
+    }
+    if(!enif_inspect_iolist_as_binary(env, argv[1], &key)) {
+        return enif_make_badarg(env);
+    }
+    if(!enif_get_long(env, argv[2], &value)) {
+        return enif_make_badarg(env);
+    }
+
+    appsignal_set_span_attribute_int(
+        ptr->span,
+        make_appsignal_string(key),
+        value
+    );
+
+    return enif_make_atom(env, "ok");
+}
+
+static ERL_NIF_TERM _set_span_attribute_bool(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    span_ptr *ptr;
+    ErlNifBinary key;
+    int value;
+
+    if (argc != 3) {
+      return enif_make_badarg(env);
+    }
+    if(!enif_get_resource(env, argv[0], appsignal_span_type, (void**) &ptr)) {
+      return enif_make_badarg(env);
+    }
+    if(!enif_inspect_iolist_as_binary(env, argv[1], &key)) {
+        return enif_make_badarg(env);
+    }
+    if(!enif_get_int(env, argv[2], &value)) {
+        return enif_make_badarg(env);
+    }
+
+    appsignal_set_span_attribute_bool(
+        ptr->span,
+        make_appsignal_string(key),
+        value
+    );
+
+    return enif_make_atom(env, "ok");
+}
+
+static ERL_NIF_TERM _set_span_attribute_double(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    span_ptr *ptr;
+    ErlNifBinary key;
+    double value;
+
+    if (argc != 3) {
+      return enif_make_badarg(env);
+    }
+    if(!enif_get_resource(env, argv[0], appsignal_span_type, (void**) &ptr)) {
+      return enif_make_badarg(env);
+    }
+    if(!enif_inspect_iolist_as_binary(env, argv[1], &key)) {
+        return enif_make_badarg(env);
+    }
+    if(!enif_get_double(env, argv[2], &value)) {
+        return enif_make_badarg(env);
+    }
+
+    appsignal_set_span_attribute_double(
+        ptr->span,
+        make_appsignal_string(key),
+        value
+    );
+
+    return enif_make_atom(env, "ok");
+}
+
+static ERL_NIF_TERM _set_span_attribute_sql_string(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    span_ptr *ptr;
+    ErlNifBinary key;
+    ErlNifBinary value;
+
+    if (argc != 3) {
+      return enif_make_badarg(env);
+    }
+    if(!enif_get_resource(env, argv[0], appsignal_span_type, (void**) &ptr)) {
+      return enif_make_badarg(env);
+    }
+    if(!enif_inspect_iolist_as_binary(env, argv[1], &key)) {
+        return enif_make_badarg(env);
+    }
+    if(!enif_inspect_iolist_as_binary(env, argv[2], &value)) {
+        return enif_make_badarg(env);
+    }
+
+    appsignal_set_span_attribute_sql_string(
+        ptr->span,
+        make_appsignal_string(key),
+        make_appsignal_string(value)
+    );
+
+    return enif_make_atom(env, "ok");
+}
+
+static ERL_NIF_TERM _set_span_sample_data(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    span_ptr *ptr;
+    ErlNifBinary key;
+    data_ptr *data_ptr;
+
+    if (argc != 3) {
+      return enif_make_badarg(env);
+    }
+    if(!enif_get_resource(env, argv[0], appsignal_span_type, (void**) &ptr)) {
+      return enif_make_badarg(env);
+    }
+    if(!enif_inspect_iolist_as_binary(env, argv[1], &key)) {
+      return enif_make_badarg(env);
+    }
+    if(!enif_get_resource(env, argv[2], appsignal_data_type, (void**) &data_ptr)) {
+      return enif_make_badarg(env);
+    }
+
+    appsignal_set_span_sample_data(
+        ptr->span,
+        make_appsignal_string(key),
+        data_ptr->data
+    );
+
+    return enif_make_atom(env, "ok");
+}
+
+static ERL_NIF_TERM _add_span_error(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
+    span_ptr *ptr;
+    ErlNifBinary error, message;
+    data_ptr *data_ptr;
+
+    if (argc != 4) {
+      return enif_make_badarg(env);
+    }
+    if(!enif_get_resource(env, argv[0], appsignal_span_type, (void**) &ptr)) {
+      return enif_make_badarg(env);
+    }
+    if(!enif_inspect_iolist_as_binary(env, argv[1], &error)) {
+      return enif_make_badarg(env);
+    }
+    if(!enif_inspect_iolist_as_binary(env, argv[2], &message)) {
+      return enif_make_badarg(env);
+    }
+    if(!enif_get_resource(env, argv[3], appsignal_data_type, (void**) &data_ptr)) {
+      return enif_make_badarg(env);
+    }
+
+    appsignal_add_span_error(
+        ptr->span,
+        make_appsignal_string(error),
+        make_appsignal_string(message),
+        data_ptr->data
+    );
+
+    return enif_make_atom(env, "ok");
+}
+
+static ERL_NIF_TERM _close_span(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    span_ptr *ptr;
+
+    if (argc != 1) {
+      return enif_make_badarg(env);
+    }
+    if(!enif_get_resource(env, argv[0], appsignal_span_type, (void**) &ptr)) {
+      return enif_make_badarg(env);
+    }
+
+    appsignal_close_span(ptr->span);
+
+    return enif_make_atom(env, "ok");
+}
+
+static ERL_NIF_TERM _close_span_with_timestamp(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    span_ptr *ptr;
+    long sec;
+    long nsec;
+
+    if (argc != 3) {
+      return enif_make_badarg(env);
+    }
+    if(!enif_get_resource(env, argv[0], appsignal_span_type, (void**) &ptr)) {
+      return enif_make_badarg(env);
+    }
+    if(!enif_get_long(env, argv[1], &sec)) {
+      return enif_make_badarg(env);
+    }
+    if(!enif_get_long(env, argv[2], &nsec)) {
+      return enif_make_badarg(env);
+    }
+
+    appsignal_close_span_with_timestamp(ptr->span, sec, nsec);
+
+    return enif_make_atom(env, "ok");
+}
+
+static ERL_NIF_TERM _trace_id(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+  span_ptr *ptr;
+  appsignal_string_t id;
+
+  if (argc != 1) {
+    return enif_make_badarg(env);
+  }
+  if (!enif_get_resource(env, argv[0], appsignal_span_type, (void**) &ptr)) {
+    return enif_make_badarg(env);
+  }
+
+  id = appsignal_trace_id(ptr->span);
+  return make_ok_tuple(env, make_elixir_string(env,id));
+}
+
+static ERL_NIF_TERM _span_id(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+  span_ptr *ptr;
+  appsignal_string_t id;
+
+  if (argc != 1) {
+    return enif_make_badarg(env);
+  }
+  if (!enif_get_resource(env, argv[0], appsignal_span_type, (void**) &ptr)) {
+    return enif_make_badarg(env);
+  }
+
+  id = appsignal_span_id(ptr->span);
+  return make_ok_tuple(env, make_elixir_string(env,id));
+}
+
+static ERL_NIF_TERM _span_to_json(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
+  span_ptr *ptr;
+  appsignal_string_t json;
+
+  if (argc != 1) {
+    return enif_make_badarg(env);
+  }
+  if (!enif_get_resource(env, argv[0], appsignal_span_type, (void**) &ptr)) {
+    return enif_make_badarg(env);
+  }
+
+  json = appsignal_span_to_json(ptr->span);
+  return make_ok_tuple(env, make_elixir_string(env, json));
+}
+
+
 static int on_load(ErlNifEnv* env, void** UNUSED(priv), ERL_NIF_TERM UNUSED(info))
 {
     ErlNifResourceType *transaction_resource_type;
     ErlNifResourceType *data_resource_type;
+    ErlNifResourceType *span_resource_type;
 
     transaction_resource_type = enif_open_resource_type(
         env,
@@ -871,11 +1333,21 @@ static int on_load(ErlNifEnv* env, void** UNUSED(priv), ERL_NIF_TERM UNUSED(info
         NULL
     );
 
+    span_resource_type = enif_open_resource_type(
+        env,
+        "appsignal_nif",
+        "appsignal_span_type",
+        destruct_appsignal_span,
+        ERL_NIF_RT_CREATE,
+        NULL
+    );
+
     if (!transaction_resource_type || !data_resource_type) {
       return -1;
     }
     appsignal_transaction_type = transaction_resource_type;
     appsignal_data_type = data_resource_type;
+    appsignal_span_type = span_resource_type;
 
     return 0;
 }
@@ -916,6 +1388,7 @@ static ErlNifFunc nif_funcs[] =
     {"_increment_counter", 3, _increment_counter, 0},
     {"_add_distribution_value", 3, _add_distribution_value, 0},
     {"_data_map_new", 0, _data_map_new, 0},
+    {"_data_filtered_map_new", 0, _data_filtered_map_new, 0},
     {"_data_set_string", 3, _data_set_string, 0},
     {"_data_set_string", 2, _data_set_string, 0},
     {"_data_set_integer", 3, _data_set_integer, 0},
@@ -934,7 +1407,24 @@ static ErlNifFunc nif_funcs[] =
     {"_transaction_to_json", 1, _transaction_to_json, 0},
     {"_data_to_json", 1, _data_to_json, 0},
 #endif
-    {"_loaded", 0, _loaded, 0}
+    {"_loaded", 0, _loaded, 0},
+    {"_create_root_span", 1, _create_root_span, 0},
+    {"_create_root_span_with_timestamp", 3, _create_root_span_with_timestamp, 0},
+    {"_create_child_span", 2, _create_child_span, 0},
+    {"_create_child_span_with_timestamp", 4, _create_child_span_with_timestamp, 0},
+    {"_set_span_name", 2, _set_span_name, 0},
+    {"_set_span_attribute_string", 3, _set_span_attribute_string, 0},
+    {"_set_span_attribute_int", 3, _set_span_attribute_int, 0},
+    {"_set_span_attribute_bool", 3, _set_span_attribute_bool, 0},
+    {"_set_span_attribute_double", 3, _set_span_attribute_double, 0},
+    {"_set_span_attribute_sql_string", 3, _set_span_attribute_string, 0},
+    {"_set_span_sample_data", 3, _set_span_sample_data, 0},
+    {"_add_span_error", 4, _add_span_error, 0},
+    {"_close_span", 1, _close_span, 0},
+    {"_close_span_with_timestamp", 3, _close_span_with_timestamp, 0},
+    {"_trace_id", 1, _trace_id, 0},
+    {"_span_id", 1, _span_id, 0},
+    {"_span_to_json", 1, _span_to_json, 0}
 };
 
 ERL_NIF_INIT(Elixir.Appsignal.Nif, nif_funcs, on_load, on_reload, on_upgrade, NULL)

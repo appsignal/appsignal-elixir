@@ -1,7 +1,7 @@
 defmodule Appsignal.Config do
+  @moduledoc false
   alias Appsignal.Nif
   alias Appsignal.Utils.FileSystem
-
   require Logger
 
   @default_config %{
@@ -15,6 +15,7 @@ defmodule Appsignal.Config do
     env: :dev,
     filter_parameters: [],
     filter_session_data: [],
+    filter_data_keys: [],
     ignore_actions: [],
     ignore_errors: [],
     ignore_namespaces: [],
@@ -55,6 +56,9 @@ defmodule Appsignal.Config do
     # Config is valid when we have a push api key
     config =
       config
+      |> merge_filter_data_keys(Application.get_env(:phoenix, :filter_parameters, []))
+      |> merge_filter_data_keys(config[:filter_parameters])
+      |> merge_filter_data_keys(config[:filter_session_data])
       |> Map.put(:valid, !empty?(config[:push_api_key]))
 
     if !empty?(config[:working_dir_path]) do
@@ -74,6 +78,16 @@ defmodule Appsignal.Config do
       false ->
         {:error, :invalid_config}
     end
+  end
+
+  defp merge_filter_data_keys(map, keys) when is_list(keys) do
+    {_, new_map} = Map.get_and_update(map, :filter_data_keys, &{&1, &1 ++ keys})
+
+    new_map
+  end
+
+  defp merge_filter_data_keys(map, _keys) do
+    map
   end
 
   @doc """
@@ -149,6 +163,7 @@ defmodule Appsignal.Config do
   @env_to_key_mapping %{
     "APPSIGNAL_ACTIVE" => :active,
     "APPSIGNAL_PUSH_API_KEY" => :push_api_key,
+    "APPSIGNAL_OTP_APP" => :otp_app,
     "APPSIGNAL_APP_NAME" => :name,
     "APPSIGNAL_APP_ENV" => :env,
     "APPSIGNAL_CA_FILE_PATH" => :ca_file_path,
@@ -158,6 +173,7 @@ defmodule Appsignal.Config do
     "APPSIGNAL_SEND_PARAMS" => :send_params,
     "APPSIGNAL_FILTER_PARAMETERS" => :filter_parameters,
     "APPSIGNAL_FILTER_SESSION_DATA" => :filter_session_data,
+    "APPSIGNAL_FILTER_DATA_KEYS" => :filter_data_keys,
     "APPSIGNAL_DEBUG" => :debug,
     "APPSIGNAL_DNS_SERVERS" => :dns_servers,
     "APPSIGNAL_LOG" => :log,
@@ -189,10 +205,12 @@ defmodule Appsignal.Config do
     APPSIGNAL_ENABLE_HOST_METRICS APPSIGNAL_SKIP_SESSION_DATA APPSIGNAL_TRANSACTION_DEBUG_MODE
     APPSIGNAL_FILES_WORLD_ACCESSIBLE APPSIGNAL_SEND_PARAMS APPSIGNAL_ENABLE_MINUTELY_PROBES
   )
-  @atom_keys ~w(APPSIGNAL_APP_ENV)
+  @atom_keys ~w(APPSIGNAL_APP_ENV APPSIGNAL_OTP_APP)
   @string_list_keys ~w(
-    APPSIGNAL_FILTER_PARAMETERS APPSIGNAL_IGNORE_ACTIONS APPSIGNAL_IGNORE_ERRORS APPSIGNAL_IGNORE_NAMESPACES
-    APPSIGNAL_DNS_SERVERS APPSIGNAL_FILTER_SESSION_DATA APPSIGNAL_REQUEST_HEADERS
+    APPSIGNAL_FILTER_PARAMETERS APPSIGNAL_FILTER_DATA_KEYS
+    APPSIGNAL_IGNORE_ACTIONS APPSIGNAL_IGNORE_ERRORS
+    APPSIGNAL_IGNORE_NAMESPACES APPSIGNAL_DNS_SERVERS
+    APPSIGNAL_FILTER_SESSION_DATA APPSIGNAL_REQUEST_HEADERS
   )
 
   defp load_from_environment do
@@ -292,6 +310,7 @@ defmodule Appsignal.Config do
     Nif.env_put("_APPSIGNAL_TRANSACTION_DEBUG_MODE", to_string(config[:transaction_debug_mode]))
     Nif.env_put("_APPSIGNAL_WORKING_DIR_PATH", to_string(config[:working_dir_path]))
     Nif.env_put("_APPSIGNAL_WORKING_DIRECTORY_PATH", to_string(config[:working_directory_path]))
+    Nif.env_put("_APPSIGNAL_FILTER_DATA_KEYS", config[:filter_data_keys] |> Enum.join(","))
 
     Nif.env_put(
       "_APPSIGNAL_FILES_WORLD_ACCESSIBLE",

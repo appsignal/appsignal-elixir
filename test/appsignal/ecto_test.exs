@@ -1,162 +1,204 @@
 defmodule Appsignal.EctoTest do
   use ExUnit.Case
-  alias Appsignal.{FakeTransaction, Transaction}
+  alias Appsignal.{Ecto, Span, Test}
 
-  setup do
-    {:ok, fake_transaction} = FakeTransaction.start_link()
-    {:ok, fake_transaction: fake_transaction}
+  test "is attached to the repo query event automatically" do
+    assert attached?([:appsignal, :test, :repo, :query])
   end
 
-  describe "with a transaction" do
+  test "attach/2 attaches to events with custom prefixes" do
+    Application.put_env(:appsignal, Appsignal.Test.Repo, telemetry_prefix: [:my_repo])
+    Ecto.attach(:appsignal, Appsignal.Test.Repo)
+
+    assert attached?([:my_repo, :query])
+
+    Application.delete_env(:appsignal, Appsignal.Test.Repo, telemetry_prefix: :my_repo)
+  end
+
+  describe "handle_event/4" do
     setup do
-      transaction = Transaction.start("test", :http_request)
+      Test.Nif.start_link()
+      Test.Tracer.start_link()
+      Test.Span.start_link()
 
-      [transaction: transaction]
+      :telemetry.execute(
+        [:appsignal, :test, :repo, :query],
+        %{
+          decode_time: 2_204_000,
+          query_time: 5_386_000,
+          queue_time: 1_239_000,
+          total_time: 8_829_000
+        },
+        %{
+          params: [],
+          query:
+            "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0",
+          repo: Appsignal.Test.Repo,
+          result: :ok,
+          source: "users",
+          type: :ecto_sql_query
+        }
+      )
     end
 
-    test "records an event", %{fake_transaction: fake_transaction, transaction: transaction} do
-      perform_event()
-
-      assert [
-               %{
-                 transaction: ^transaction,
-                 body:
-                   "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0",
-                 body_format: 1,
-                 duration: 8_829_000,
-                 name: "query.ecto",
-                 title: ""
-               }
-             ] = FakeTransaction.recorded_events(fake_transaction)
+    test "creates a span with a start time" do
+      {:ok, [{"http_request", nil, start_time: time}]} = Test.Tracer.get(:create_span)
+      assert is_integer(time)
     end
 
-    test "records an event from Telemetry 0.3.x", %{
-      fake_transaction: fake_transaction,
-      transaction: transaction
-    } do
-      perform_telemetry_0_3_event()
-
-      assert [
-               %{
-                 transaction: ^transaction,
-                 body:
-                   "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0",
-                 body_format: 1,
-                 duration: 58_336_000,
-                 name: "query.ecto",
-                 title: ""
-               }
-             ] = FakeTransaction.recorded_events(fake_transaction)
+    test "sets the span's name" do
+      assert {:ok, [{%Span{}, "Query Appsignal.Test.Repo"}]} = Test.Span.get(:set_name)
     end
 
-    test "records an event from the Ecto logger", %{
-      fake_transaction: fake_transaction,
-      transaction: transaction
-    } do
-      log_event()
+    test "sets the span's category" do
+      assert attribute("appsignal:category", "ecto.query")
+    end
 
-      assert [
-               %{
-                 transaction: ^transaction,
-                 body:
-                   "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0",
-                 body_format: 1,
-                 duration: 58_336_000,
-                 name: "query.ecto",
-                 title: ""
-               }
-             ] = FakeTransaction.recorded_events(fake_transaction)
+    test "sets the span's body" do
+      assert {:ok,
+              [
+                {%Span{},
+                 "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0"}
+              ]} = Test.Span.get(:set_sql)
+    end
+
+    test "closes the span with an end time" do
+      {:ok, [{_, _, start_time: start_time}]} = Test.Tracer.get(:create_span)
+      {:ok, [{%Span{}, end_time: end_time}]} = Test.Tracer.get(:close_span)
+      assert end_time - start_time == 8_829_000
     end
   end
 
-  describe "without a transaction" do
+  describe "handle_event/4, when attaching the handler from outside the Ecto module" do
     setup do
-      perform_event()
-      perform_telemetry_0_3_event()
-      [return: log_event()]
+      Test.Nif.start_link()
+      Test.Tracer.start_link()
+      Test.Span.start_link()
+
+      event = [:appsignal, :test, :repo, :outside]
+      :telemetry.attach({__MODULE__, event}, event, &Appsignal.Ecto.handle_event/4, :ok)
+
+      :telemetry.execute(
+        event,
+        %{
+          decode_time: 2_204_000,
+          query_time: 5_386_000,
+          queue_time: 1_239_000,
+          total_time: 8_829_000
+        },
+        %{
+          params: [],
+          query:
+            "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0",
+          repo: Appsignal.Test.Repo,
+          result: :ok,
+          source: "users",
+          type: :ecto_sql_query
+        }
+      )
     end
 
-    test "log_event returns the original Ecto.LogEntry", %{return: return} do
-      assert %{query: _, result: _} = return
+    test "creates a span with a start time" do
+      {:ok, [{"http_request", nil, start_time: time}]} = Test.Tracer.get(:create_span)
+      assert is_integer(time)
     end
 
-    test "does not record an event", %{fake_transaction: fake_transaction} do
-      assert [] == FakeTransaction.recorded_events(fake_transaction)
+    test "sets the span's name" do
+      assert {:ok, [{%Span{}, "Query Appsignal.Test.Repo"}]} = Test.Span.get(:set_name)
+    end
+
+    test "sets the span's category" do
+      assert attribute("appsignal:category", "ecto.query")
+    end
+
+    test "sets the span's body" do
+      assert {:ok,
+              [
+                {%Span{},
+                 "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0"}
+              ]} = Test.Span.get(:set_sql)
+    end
+
+    test "closes the span with an end time" do
+      {:ok, [{_, _, start_time: start_time}]} = Test.Tracer.get(:create_span)
+      {:ok, [{%Span{}, end_time: end_time}]} = Test.Tracer.get(:close_span)
+      assert end_time - start_time == 8_829_000
     end
   end
 
-  defp perform_event do
-    Appsignal.Ecto.handle_event(
-      [:appsignal_phoenix_example, :repo, :query],
-      %{
-        decode_time: 2_204_000,
-        query_time: 5_386_000,
-        queue_time: 1_239_000,
-        total_time: 8_829_000
-      },
-      %{
-        params: [],
-        query:
-          "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0",
-        repo: AppsignalPhoenixExample.Repo,
-        result: :ok,
-        source: "users",
-        type: :ecto_sql_query
-      },
-      nil
-    )
+  describe "handle_event/4, for a 'begin'" do
+    setup do
+      Test.Nif.start_link()
+      Test.Tracer.start_link()
+      Test.Span.start_link()
+
+      :telemetry.execute(
+        [:appsignal, :test, :repo, :query],
+        %{
+          decode_time: 2_204_000,
+          query_time: 5_386_000,
+          queue_time: 1_239_000,
+          total_time: 8_829_000
+        },
+        %{
+          params: [],
+          query: "begin",
+          repo: Appsignal.Test.Repo,
+          result: :ok,
+          source: "users",
+          type: :ecto_sql_query
+        }
+      )
+    end
+
+    test "does not create a span" do
+      assert Test.Tracer.get(:create_span) == :error
+    end
   end
 
-  defp perform_telemetry_0_3_event do
-    Appsignal.Ecto.handle_event(
-      [:appsignal_phoenix_example, :repo, :query],
-      58_336_000,
-      %{
-        decode_time: 22_943_000,
-        params: [],
-        query:
-          "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0",
-        query_time: 33_874_000,
-        queue_time: 1_519_000,
-        result:
-          {:ok,
-           %{
-             columns: ["id", "name", "inserted_at", "updated_at"],
-             command: :select,
-             connection_id: 66958,
-             messages: [],
-             num_rows: 1,
-             rows: [
-               [1, "Testing!", ~N[2019-01-10 13:38:27.000000], ~N[2019-01-23 11:42:44.000000]]
-             ]
-           }},
-        source: "users"
-      },
-      nil
-    )
+  describe "handle_event/4, for a 'commit'" do
+    setup do
+      Test.Nif.start_link()
+      Test.Tracer.start_link()
+      Test.Span.start_link()
+
+      :telemetry.execute(
+        [:appsignal, :test, :repo, :query],
+        %{
+          decode_time: 2_204_000,
+          query_time: 5_386_000,
+          queue_time: 1_239_000,
+          total_time: 8_829_000
+        },
+        %{
+          params: [],
+          query: "commit",
+          repo: Appsignal.Test.Repo,
+          result: :ok,
+          source: "users",
+          type: :ecto_sql_query
+        }
+      )
+    end
+
+    test "does not create a span" do
+      assert Test.Tracer.get(:create_span) == :error
+    end
   end
 
-  defp log_event do
-    Appsignal.Ecto.log(%{
-      decode_time: 22_943_000,
-      params: [],
-      query:
-        "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0",
-      query_time: 33_874_000,
-      queue_time: 1_519_000,
-      result:
-        {:ok,
-         %{
-           columns: ["id", "name", "inserted_at", "updated_at"],
-           command: :select,
-           connection_id: 66958,
-           messages: [],
-           num_rows: 1,
-           rows: [
-             [1, "Testing!", ~N[2019-01-10 13:38:27.000000], ~N[2019-01-23 11:42:44.000000]]
-           ]
-         }},
-      source: "users"
-    })
+  defp attribute(asserted_key, asserted_data) do
+    {:ok, attributes} = Test.Span.get(:set_attribute)
+
+    Enum.any?(attributes, fn {%Span{}, key, data} ->
+      key == asserted_key and data == asserted_data
+    end)
+  end
+
+  defp attached?(event) do
+    event
+    |> :telemetry.list_handlers()
+    |> Enum.any?(fn %{id: id} ->
+      id == {Appsignal.Ecto, event}
+    end)
   end
 end

@@ -1,78 +1,58 @@
 defmodule Appsignal.Instrumentation.Helpers do
-  @moduledoc """
-  Helper functions and macros to instrument function calls.
-  """
+  @tracer Application.get_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
+  @span Application.get_env(:appsignal, :appsignal_span, Appsignal.Span)
 
-  alias Appsignal.{Transaction, TransactionRegistry}
-  @type instrument_arg :: Transaction.t() | Plug.Conn.t() | pid() | nil
-  @transaction Application.get_env(:appsignal, :appsignal_transaction, Appsignal.Transaction)
+  @doc false
+  def instrument(fun) do
+    span = @tracer.create_span("http_request", @tracer.current_span)
 
-  @doc """
-  Execute the given function in start / finish event calls in the current
-  transaction. See `instrument/6`.
-  """
-  @spec instrument(String.t(), String.t(), function) :: any
-  def instrument(name, title, function) do
-    instrument(self(), name, title, "", function)
-  end
+    result = call_with_optional_argument(fun, span)
+    @tracer.close_span(span)
 
-  @doc """
-  Execute the given function in start / finish event calls. See `instrument/6`.
-  """
-  @spec instrument(instrument_arg, String.t(), String.t(), function) :: any
-  def instrument(arg, name, title, function) do
-    instrument(arg, name, title, "", function)
-  end
-
-  @doc """
-  Execute the given function in start / finish event calls. See `instrument/6`.
-  """
-  @spec instrument(instrument_arg, String.t(), String.t(), String.t(), function) :: any
-  def instrument(arg, name, title, body, function) do
-    instrument(arg, name, title, body, 0, function)
-  end
-
-  @doc """
-  Execute the given function in start / finish event calls.
-
-  The result of the function's execution is returned. For example, to
-  instrument a backend HTTP call in a Phoenix controller, do the
-  following:
-
-  ```
-  import Appsignal.Instrumentation.Helpers, only: [instrument: 4]
-
-  def index(conn, _params) do
-    result = instrument "net.http", "Some slow backend call", fn() ->
-      Backend.get_result()
-    end
-    json conn, result
-  end
-  ```
-
-  """
-  @spec instrument(
-          pid() | Transaction.t() | any(),
-          String.t(),
-          String.t(),
-          String.t(),
-          integer,
-          function
-        ) :: any
-  def instrument(pid, name, title, body, body_format, function) when is_pid(pid) do
-    pid
-    |> TransactionRegistry.lookup()
-    |> instrument(name, title, body, body_format, function)
-  end
-
-  def instrument(%Transaction{} = transaction, name, title, body, body_format, function) do
-    @transaction.start_event(transaction)
-    result = function.()
-    @transaction.finish_event(transaction, name, title, body, body_format)
     result
   end
 
-  def instrument(_transaction, _name, _title, _body, _body_format, function) do
-    function.()
+  @doc """
+  Instrument a function.
+
+      def call do
+        Appsignal.instrument("foo.bar", fn ->
+          :timer.sleep(1000)
+        end)
+      end
+
+  When passing a function that takes an argument, the function is called with
+  the created span to allow adding extra information.
+
+      def call(params) do
+        Appsignal.instrument("foo.bar", fn span ->
+          Appsignal.Span.set_sample_data(span, "params", params)
+          :timer.sleep(1000)
+        end)
+      end
+
+  """
+  def instrument(name, fun) do
+    instrument(fn span ->
+      @span.set_name(span, name)
+      call_with_optional_argument(fun, span)
+    end)
+  end
+
+  def instrument(name, title, fun) do
+    instrument(fn span ->
+      @span.set_name(span, name)
+      @span.set_attribute(span, "title", title)
+      call_with_optional_argument(fun, span)
+    end)
+  end
+
+  defp call_with_optional_argument(fun, argument) do
+    case fun
+         |> :erlang.fun_info()
+         |> Keyword.get(:arity) do
+      0 -> fun.()
+      _ -> fun.(argument)
+    end
   end
 end

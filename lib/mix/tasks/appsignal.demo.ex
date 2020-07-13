@@ -1,21 +1,19 @@
 defmodule Mix.Tasks.Appsignal.Demo do
-  require Logger
   use Mix.Task
+  require Logger
 
-  @shortdoc "Perform and send a demonstration error and performance issue to AppSignal"
-
-  def run(_args) do
-    {:ok, _} = Application.ensure_all_started(:appsignal)
+  def run(_) do
+    Application.ensure_all_started(:appsignal)
 
     if Appsignal.Config.active?() do
-      Appsignal.Demo.create_transaction_performance_request()
-      Appsignal.Demo.create_transaction_error_request()
-      Appsignal.stop(nil)
-      Logger.info("Demonstration sample data sent!")
+      Appsignal.Demo.send_performance_sample()
+      Appsignal.Demo.send_error_sample()
 
-      Logger.info(
-        "It may take about a minute for the data to appear on https://appsignal.com/accounts"
-      )
+      Logger.info("""
+      Demonstration sample data sent!
+
+      It may take about a minute for the data to appear on https://appsignal.com/accounts
+      """)
     else
       Logger.error("""
       Error: Unable to start the AppSignal agent and send data to AppSignal.com.
@@ -24,5 +22,7 @@ defmodule Mix.Tasks.Appsignal.Demo do
             MIX_ENV=prod mix appsignal.diagnose
       """)
     end
+
+    Appsignal.Nif.stop()
   end
 end

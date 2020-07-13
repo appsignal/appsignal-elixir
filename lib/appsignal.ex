@@ -1,48 +1,37 @@
 defmodule Appsignal do
+  @tracer Application.get_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
+  @span Application.get_env(:appsignal, :appsignal_span, Appsignal.Span)
+
   @moduledoc """
-  AppSignal for Elixir. Follow the [installation guide](https://docs.appsignal.com/elixir/installation.html) to install AppSignal into your Elixir app.
+  AppSignal for Elixir. Follow the [installation
+  guide](https://docs.appsignal.com/elixir/installation.html) to install
+  AppSignal into your Elixir app.
 
-  This module contains the main AppSignal OTP application, as well as
-  a few helper functions for sending metrics to AppSignal.
+  This module contains the main AppSignal OTP application, as well as a few
+  helper functions for sending metrics to AppSignal.
 
-  These metrics do not rely on an active transaction being
-  present. For transaction related-functions, see the
+  These metrics do not rely on an active transaction being present. For
+  transaction related-functions, see the
   [Appsignal.Transaction](Appsignal.Transaction.html) module.
-
   """
 
   use Application
-
-  alias Appsignal.{Backtrace, Config, Error}
-
+  alias Appsignal.Config
   require Logger
 
-  @transaction Application.get_env(
-                 :appsignal,
-                 :appsignal_transaction,
-                 Appsignal.Transaction
-               )
-
-  if System.otp_release() >= "21" do
-    @report_handler Appsignal.LoggerHandler
-  else
-    @report_handler Appsignal.ErrorLoggerHandler
-  end
-
-  @doc """
-  Application callback function
-  """
+  @doc false
   def start(_type, _args) do
     import Supervisor.Spec, warn: false
 
     initialize()
-    add_report_handler()
 
-    if phoenix?(), do: Appsignal.Phoenix.EventHandler.attach()
+    Logger.add_backend(Appsignal.Error.Backend)
+
+    Appsignal.Ecto.attach()
 
     children = [
-      worker(Appsignal.Transaction.Receiver, [], restart: :permanent),
-      worker(Appsignal.Transaction.ETS, [], restart: :permanent),
+      worker(Appsignal.Tracer, []),
+      worker(Appsignal.Monitor, []),
       worker(Appsignal.Probes, [])
     ]
 
@@ -56,25 +45,12 @@ defmodule Appsignal do
     result
   end
 
-  def plug? do
-    Code.ensure_loaded?(Plug)
-  end
-
-  def phoenix? do
-    Code.ensure_loaded?(Phoenix)
-  end
-
-  def live_view? do
-    phoenix?() && Code.ensure_loaded?(Phoenix.LiveView)
-  end
-
-  @doc """
-  Application callback function
-  """
+  @doc false
   def stop(_state) do
     Logger.debug("AppSignal stopping.")
   end
 
+  @doc false
   def config_change(_changed, _new, _removed) do
     # Spawn a separate process that reloads the configuration. AppSignal can't
     # reload it in the same process because the GenServer would continue
@@ -116,18 +92,12 @@ defmodule Appsignal do
   end
 
   @doc false
-  def add_report_handler, do: @report_handler.add()
-
-  @doc false
-  def remove_report_handler, do: @report_handler.remove()
-
-  @doc false
   def add_default_probes do
     Appsignal.Probes.register(:erlang, &Appsignal.Probes.ErlangProbe.call/0)
   end
 
   @doc """
-  Set a gauge for a measurement of some metric.
+  Set a gauge for a measurement of a metric.
   """
   @spec set_gauge(String.t(), float | integer, map) :: :ok
   def set_gauge(key, value, tags \\ %{})
@@ -142,7 +112,7 @@ defmodule Appsignal do
   end
 
   @doc """
-  Increment a counter of some metric.
+  Increment a counter of a metric.
   """
   @spec increment_counter(String.t(), number, map) :: :ok
   def increment_counter(key, count \\ 1, tags \\ %{})
@@ -155,8 +125,7 @@ defmodule Appsignal do
   @doc """
   Add a value to a distribution
 
-  Use this to collect multiple data points that will be merged into a
-  graph.
+  Use this to collect multiple data points that will be merged into a graph.
   """
   @spec add_distribution_value(String.t(), float | integer, map) :: :ok
   def add_distribution_value(key, value, tags \\ %{})
@@ -170,60 +139,6 @@ defmodule Appsignal do
     :ok = Appsignal.Nif.add_distribution_value(key, value, encoded_tags)
   end
 
-  @doc """
-  Send an error to AppSignal
-
-  When there is no current transaction, this call starts one.
-
-  ## Examples
-      Appsignal.send_error(%RuntimeError{})
-      Appsignal.send_error(%RuntimeError{}, "", __STACKTRACE__)
-      Appsignal.send_error(%RuntimeError{}, "", [], %{foo: "bar"})
-      Appsignal.send_error(%RuntimeError{}, "", [], %{}, %Plug.Conn{})
-      Appsignal.send_error(%RuntimeError{}, "", [], %{}, nil, fn(transaction) ->
-        Appsignal.Transaction.set_sample_data(transaction, "key", %{foo: "bar"})
-      end)
-  """
-  def send_error(
-        error,
-        prefix \\ "",
-        stack \\ nil,
-        metadata \\ %{},
-        conn \\ nil,
-        fun \\ fn t -> t end,
-        namespace \\ :http_request
-      ) do
-    stack =
-      case stack do
-        nil ->
-          IO.warn(
-            "Appsignal.send_error/1-7 without passing a stack trace is deprecated, and defaults to passing an empty stacktrace. Please explicitly pass a stack trace or an empty list."
-          )
-
-          []
-
-        _ ->
-          stack
-      end
-
-    transaction = @transaction.create("_" <> @transaction.generate_id(), namespace)
-
-    fun.(transaction)
-    {exception, stacktrace} = Error.normalize(error, stack)
-    {name, message} = Error.metadata(exception)
-    backtrace = Backtrace.from_stacktrace(stacktrace)
-
-    Appsignal.ErrorHandler.submit_transaction(
-      transaction,
-      name,
-      prefixed(prefix, message),
-      backtrace,
-      metadata,
-      conn
-    )
-  end
-
-  defp prefixed("", message), do: message
-  defp prefixed(prefix, message) when is_binary(prefix), do: prefix <> ": " <> message
-  defp prefixed(_, message), do: message
+  defdelegate instrument(fun), to: Appsignal.Instrumentation.Helpers
+  defdelegate instrument(name, fun), to: Appsignal.Instrumentation.Helpers
 end

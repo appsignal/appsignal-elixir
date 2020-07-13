@@ -1,22 +1,21 @@
-# AppSignal for Elixir
+# Appsignal for Elixir
 
 [![Build Status](https://travis-ci.org/appsignal/appsignal-elixir.png?branch=master)](https://travis-ci.org/appsignal/appsignal-elixir)
 [![Hex pm](http://img.shields.io/hexpm/v/appsignal.svg?style=flat)](https://hex.pm/packages/appsignal)
+> ⚠️  **NOTE**: The `tracing` branch is part of an upcoming version of Appsignal
+> for Elixir, and hasn't been officially released. Aside from beta testing, we
+> recommend using [the current version of AppSignal for
+> Elixir](https://github.com/appsignal/appsignal-elixir/tree/master)
+> instead.
 
-AppSignal solves all your Elixir monitoring needs in a single tool. You and your
-team can focus on writing code and we'll provide the alerts if your app has any
-issues.
+AppSignal for Elixir monitors errors, performance and servers for Elixir
+applications.
 
 - [AppSignal.com website](https://appsignal.com/)
 - [AppSignal for Elixir documentation](http://docs.appsignal.com/elixir/)
 - [Package documentation](https://hexdocs.pm/appsignal/)
 - [Support][contact]
 
-## Description
-
-The AppSignal for Elixir package collects exceptions and performance data from
-your Elixir applications and sends it to AppSignal for analysis. Get alerted
-when an error occurs or an endpoint is responding very slowly.
 
 ## Installation
 
@@ -24,8 +23,8 @@ Please follow the [installation
 guide](http://docs.appsignal.com/elixir/installation.html) on how to install
 and use this library.
 
-If you're using the Phoenix framework, please also follow the [integration guide
-for Phoenix](http://docs.appsignal.com/elixir/integrations/phoenix.html).
+Then, add custom instrumentation or use one of the framework integrations to
+automatically gain performance insights and error notifications. Currently, AppSignal has framework integrations for [Phoenix]() and [Plug](https://github.com/appsignal/appsignal-elixir-plug) applications.
 
 ## Usage
 
@@ -69,9 +68,6 @@ the `MIX_ENV` environment variable.
 
     # Default
     $ MIX_ENV=test mix test
-
-    # Test Phoenix framework integration
-    $ MIX_ENV=test_phoenix mix test
 
     # Run the test suite with the NIF inoperational. This will generate errors
     # because the NIF is not active, but should run without failures.

@@ -1,103 +1,51 @@
 defmodule Appsignal.Ecto do
-  @moduledoc """
-  Integration for logging Ecto queries
+  @tracer Application.get_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
+  @span Application.get_env(:appsignal, :appsignal_span, Appsignal.Span)
+  import Appsignal.Utils, only: [module_name: 1]
 
-  If you're using Ecto 3, attach `Appsignal.Ecto` to Telemetry query events in
-  your application's `start/2` function:
+  def attach do
+    otp_app =
+      :appsignal
+      |> Application.get_env(:config, %{})
+      |> Map.get(:otp_app, nil)
 
-  ```
-  :telemetry.attach(
-    "appsignal-ecto",
-    [:my_app, :repo, :query],
-    &Appsignal.Ecto.handle_event/4,
-    nil
-  )
-  ```
-
-  For versions of Telemetry < 0.3.0, you'll need to call it slightly
-  differently:
-
-  ```
-  Telemetry.attach(
-    "appsignal-ecto",
-    [:my_app, :repo, :query],
-    Appsignal.Ecto,
-    :handle_event,
-    nil
-  )
-  ```
-
-  On Ecto 2, add the `Appsignal.Ecto` module to your Repo's logger
-  configuration instead. The `Ecto.LogEntry` logger is the default logger for
-  Ecto and needs to be set as well to keep the original Ecto logger behavior
-  intact.
-
-  ```
-  config :my_app, MyApp.Repo,
-    loggers: [Appsignal.Ecto, Ecto.LogEntry]
-  ```
-  """
-
-  require Logger
-
-  @transaction Application.get_env(:appsignal, :appsignal_transaction, Appsignal.Transaction)
-
-  def handle_event(_event, event_data, metadata, _config) do
-    do_handle_event(transaction(), event_data, metadata)
+    otp_app
+    |> Application.get_env(:ecto_repos, [])
+    |> Enum.each(&attach(otp_app, &1))
   end
 
-  def log(entry) do
-    do_log(transaction(), entry)
+  def attach(otp_app, repo) do
+    event = telemetry_prefix(otp_app, repo) ++ [:query]
+    :telemetry.attach({__MODULE__, event}, event, &handle_event/4, :ok)
   end
 
-  defp transaction do
-    Appsignal.TransactionRegistry.lookup(self())
+  defp telemetry_prefix(otp_app, repo) do
+    case otp_app
+         |> Application.get_env(repo, [])
+         |> Keyword.get(:telemetry_prefix) do
+      prefix when is_list(prefix) ->
+        prefix
+
+      _ ->
+        repo
+        |> Module.split()
+        |> Enum.map(&(&1 |> Macro.underscore() |> String.to_atom()))
+    end
   end
 
-  defp do_handle_event(%Appsignal.Transaction{} = transaction, %{total_time: duration}, metadata) do
-    @transaction.record_event(
-      transaction,
-      "query.ecto",
-      "",
-      metadata.query,
-      convert_time_unit(duration),
-      1
-    )
+  def handle_event(_event, _measurements, %{query: "begin"}, _config), do: :ok
+  def handle_event(_event, _measurements, %{query: "commit"}, _config), do: :ok
+
+  def handle_event(_event, %{total_time: total_time}, %{repo: repo, query: query}, _config) do
+    time = :os.system_time()
+
+    "http_request"
+    |> @tracer.create_span(@tracer.current_span(), start_time: time - total_time)
+    |> @span.set_name("Query #{module_name(repo)}")
+    |> @span.set_attribute("appsignal:category", "ecto.query")
+    |> @span.set_sql(query)
+    |> @tracer.close_span(end_time: time)
   end
 
-  defp do_handle_event(%Appsignal.Transaction{} = transaction, duration, metadata)
-       when is_integer(duration) do
-    @transaction.record_event(
-      transaction,
-      "query.ecto",
-      "",
-      metadata.query,
-      convert_time_unit(duration),
-      1
-    )
-  end
-
-  defp do_handle_event(_transaction, _duration, _metadata), do: nil
-
-  defp do_log(%Appsignal.Transaction{} = transaction, entry) do
-    duration = (entry.queue_time || 0) + (entry.query_time || 0) + (entry.decode_time || 0)
-
-    @transaction.record_event(
-      transaction,
-      "query.ecto",
-      "",
-      entry.query,
-      convert_time_unit(duration),
-      1
-    )
-
-    entry
-  end
-
-  defp do_log(_transaction, entry), do: entry
-
-  defp convert_time_unit(time) do
-    # Converts the native time to a value in nanoseconds.
-    System.convert_time_unit(time, :native, 1_000_000_000)
-  end
+  def handle_event(_event, _measurements, _metadata, _config), do: :ok
 end
