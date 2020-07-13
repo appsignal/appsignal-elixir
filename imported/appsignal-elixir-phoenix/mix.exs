@@ -4,7 +4,7 @@ defmodule Appsignal.Phoenix.MixProject do
   def project do
     [
       app: :appsignal_phoenix,
-      version: "2.0.0-alpha.4",
+      version: "2.0.0-beta.1",
       description:
         "AppSignal's Phoenix instrumentation instruments calls to Phoenix applications to gain performance insights and error reporting",
       package: %{
@@ -42,7 +42,7 @@ defmodule Appsignal.Phoenix.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:appsignal_plug, "~> 2.0.0-alpha.2"},
+      {:appsignal_plug, "~> 2.0.0-beta.1"},
       {:phoenix, "~> 1.4"},
       {:phoenix_html, "~> 2.11", optional: true},
       {:phoenix_live_view, "~> 0.9", optional: true},

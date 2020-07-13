@@ -15,7 +15,7 @@ To install `Appsignal.Phoenix` into your Phoenix application, first add
 
 ``` elixir
 defp deps do
-  {:appsignal_phoenix, "~> 2.0.0-alpha.1"},
+  {:appsignal_phoenix, "~> 2.0.0-beta.1"},
 end
 ```
 
