@@ -4,6 +4,7 @@
 - Reimplement Ecto integration
 - Split out Plug integration into separate library
 - Split out Phoenix integration into separate library
+- Bump agent to v-a21a12a
 
 # 1.13.4
 - Bump agent to v-4548c88
