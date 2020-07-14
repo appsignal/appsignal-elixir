@@ -2,8 +2,6 @@ defmodule AppsignalTest do
   use ExUnit.Case, async: true
   import AppsignalTest.Utils
 
-  alias Appsignal.{Span, Test, Tracer}
-
   test "set gauge" do
     Appsignal.set_gauge("key", 10.0)
     Appsignal.set_gauge("key", 10)
