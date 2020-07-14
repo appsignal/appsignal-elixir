@@ -86,11 +86,9 @@ defmodule Appsignal.PhoenixTest do
   end
 
   defp get(path) do
-    try do
-      %{conn: get(build_conn(), path)}
-    rescue
-      reason -> %{reason: reason}
-    end
+    %{conn: get(build_conn(), path)}
+  rescue
+    reason -> %{reason: reason}
   end
 
   defp disable_appsignal(_context) do

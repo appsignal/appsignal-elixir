@@ -48,7 +48,8 @@ defmodule Appsignal.Phoenix.MixProject do
       {:phoenix_live_view, "~> 0.9", optional: true},
       {:telemetry, "~> 0.4"},
       {:ex_doc, "~> 0.21", only: :dev, runtime: false},
-      {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false}
+      {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
+      {:credo, "~> 1.4", only: [:dev, :test], runtime: false}
     ]
   end
 end

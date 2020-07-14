@@ -21,6 +21,9 @@ blocks:
         - name: mix format --check-formatted
           commands:
             - mix format --check-formatted
+        - name: mix credo --strict
+          commands:
+            - mix credo --strict
         - name: mix dialyzer
           commands:
             - cache restore dialyzer-plt
