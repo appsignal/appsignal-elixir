@@ -1,7 +1,4 @@
 defmodule Appsignal do
-  @tracer Application.get_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
-  @span Application.get_env(:appsignal, :appsignal_span, Appsignal.Span)
-
   @moduledoc """
   AppSignal for Elixir. Follow the [installation
   guide](https://docs.appsignal.com/elixir/installation.html) to install
