@@ -8,7 +8,7 @@ defmodule CrashingGenServer do
   def init(opts), do: {:ok, opts}
 
   def handle_cast(:raise_error, state) do
-    Map.fetch!(%{}, :bad_key)
+    _ = Map.fetch!(%{}, :bad_key)
 
     {:noreply, state}
   end
