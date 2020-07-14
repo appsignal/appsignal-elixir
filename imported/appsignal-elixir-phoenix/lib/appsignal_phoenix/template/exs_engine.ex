@@ -1,10 +1,13 @@
 defmodule Appsignal.Phoenix.Template.ExsEngine do
+  alias Appsignal.Phoenix.Template
+  alias Phoenix.Template.ExsEngine
+
   @behaviour Phoenix.Template.Engine
   @moduledoc false
 
   def compile(path, name) do
     path
-    |> Phoenix.Template.ExsEngine.compile(name)
-    |> Appsignal.Phoenix.Template.compile(path)
+    |> ExsEngine.compile(name)
+    |> Template.compile(path)
   end
 end
