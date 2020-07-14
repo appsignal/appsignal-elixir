@@ -40,16 +40,13 @@ defmodule Appsignal.Phoenix.EventHandler do
       ) do
     parent = @tracer.current_span()
 
-    span =
-      "http_request"
-      |> @tracer.create_span(parent)
-      |> @span.set_name("#{module_name(endpoint)}.call/2")
-      |> @span.set_attribute("appsignal:category", "endpoint.call")
+    "http_request"
+    |> @tracer.create_span(parent)
+    |> @span.set_name("#{module_name(endpoint)}.call/2")
+    |> @span.set_attribute("appsignal:category", "endpoint.call")
   end
 
   defp phoenix_endpoint_stop(_event, _measurements, _metadata, _config) do
-    span = @tracer.current_span()
-
     @tracer.close_span(@tracer.current_span())
   end
 
