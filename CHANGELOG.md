@@ -1,3 +1,6 @@
+# 2.0.0-beta.2
+- Remove unused module attributes from Appsignal module
+
 # 2.0.0-beta.1
 - Switch to span-based API
 - Reimplement error handling
