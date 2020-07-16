@@ -44,7 +44,7 @@ end
 
 defmodule Appsignal.InstrumentationTest do
   use ExUnit.Case
-  alias Appsignal.{Span, Test}
+  alias Appsignal.{Span, Test, Tracer}
 
   setup do
     start_supervised(Test.Nif)
@@ -354,6 +354,52 @@ defmodule Appsignal.InstrumentationTest do
 
     test "closes the span" do
       assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    end
+  end
+
+  describe ".set_error/3" do
+    setup do
+      span = Tracer.create_span("http_request")
+
+      {kind, reason, stack} =
+        try do
+          raise "Exception!"
+        catch
+          kind, reason -> {kind, reason, __STACKTRACE__}
+        end
+
+      [
+        span: span,
+        kind: kind,
+        reason: reason,
+        stack: stack,
+        return: Appsignal.Instrumentation.set_error(kind, reason, stack)
+      ]
+    end
+
+    test "returns the span", %{span: span, return: return} do
+      assert return == span
+    end
+
+    test "adds the error to the span", %{reason: reason, stack: stack} do
+      assert {:ok, [{%Span{}, :error, ^reason, ^stack}]} = Test.Span.get(:add_error)
+    end
+  end
+
+  describe ".set_error/3, when no span exists" do
+    setup do
+      {kind, reason, stack} =
+        try do
+          raise "Exception!"
+        catch
+          kind, reason -> {kind, reason, __STACKTRACE__}
+        end
+
+      [return: Appsignal.Instrumentation.set_error(kind, reason, stack)]
+    end
+
+    test "returns nil", %{return: return} do
+      assert return == nil
     end
   end
 end

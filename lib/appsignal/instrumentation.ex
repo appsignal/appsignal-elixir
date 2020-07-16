@@ -47,6 +47,11 @@ defmodule Appsignal.Instrumentation do
     end)
   end
 
+  def set_error(kind, reason, stacktrace) do
+    span = @tracer.current_span()
+    @span.add_error(span, kind, reason, stacktrace)
+  end
+
   defp call_with_optional_argument(fun, argument) do
     case fun
          |> :erlang.fun_info()
