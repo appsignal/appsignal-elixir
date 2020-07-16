@@ -230,6 +230,24 @@ defmodule Appsignal.InstrumentationTest do
 
   describe "instrument/1" do
     setup do
+      %{return: Appsignal.Instrumentation.instrument(fn -> :ok end)}
+    end
+
+    test "creates a root span" do
+      assert Test.Tracer.get(:create_span) == {:ok, [{"http_request", nil}]}
+    end
+
+    test "calls the passed function, and returns its return", %{return: return} do
+      assert return == :ok
+    end
+
+    test "closes the span" do
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    end
+  end
+
+  describe "instrument/1, through the Helpers module" do
+    setup do
       %{return: Appsignal.Instrumentation.Helpers.instrument(fn -> :ok end)}
     end
 
