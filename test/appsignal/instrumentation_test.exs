@@ -268,7 +268,7 @@ defmodule Appsignal.InstrumentationTest do
     setup do
       %{
         parent: Appsignal.Tracer.create_span("http_request"),
-        return: Appsignal.Instrumentation.Helpers.instrument(fn -> :ok end)
+        return: Appsignal.Instrumentation.instrument(fn -> :ok end)
       }
     end
 
@@ -287,7 +287,7 @@ defmodule Appsignal.InstrumentationTest do
 
   describe "instrument/1, when passing a function that takes an argument" do
     setup do
-      %{return: Appsignal.Instrumentation.Helpers.instrument(fn span -> span end)}
+      %{return: Appsignal.Instrumentation.instrument(fn span -> span end)}
     end
 
     test "calls the passed function with the created span, and returns its return", %{
@@ -299,7 +299,7 @@ defmodule Appsignal.InstrumentationTest do
 
   describe "instrument/2" do
     setup do
-      %{return: Appsignal.Instrumentation.Helpers.instrument("test", fn -> :ok end)}
+      %{return: Appsignal.Instrumentation.instrument("test", fn -> :ok end)}
     end
 
     test "creates a root span" do
@@ -321,7 +321,7 @@ defmodule Appsignal.InstrumentationTest do
 
   describe "instrument/2, when passing a function that takes an argument" do
     setup do
-      %{return: Appsignal.Instrumentation.Helpers.instrument("test", fn span -> span end)}
+      %{return: Appsignal.Instrumentation.instrument("test", fn span -> span end)}
     end
 
     test "calls the passed function with the created span, and returns its return", %{
@@ -333,7 +333,7 @@ defmodule Appsignal.InstrumentationTest do
 
   describe "instrument/3, when passing a name and a title" do
     setup do
-      %{return: Appsignal.Instrumentation.Helpers.instrument("test", "title", fn -> :ok end)}
+      %{return: Appsignal.Instrumentation.instrument("test", "title", fn -> :ok end)}
     end
 
     test "creates a root span" do
