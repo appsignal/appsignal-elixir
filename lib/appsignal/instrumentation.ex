@@ -52,6 +52,12 @@ defmodule Appsignal.Instrumentation do
     @span.add_error(span, kind, reason, stacktrace)
   end
 
+  def send_error(kind, reason, stacktrace) do
+    @span.create_root("http_request", self())
+    |> @span.add_error(kind, reason, stacktrace)
+    |> @span.close()
+  end
+
   defp call_with_optional_argument(fun, argument) do
     case fun
          |> :erlang.fun_info()

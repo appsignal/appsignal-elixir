@@ -3,6 +3,11 @@ defmodule Appsignal.Test.Span do
   use Appsignal.Test.Wrapper
   alias Appsignal.Span
 
+  def create_root(namespace, pid) do
+    add(:create_root, {namespace, pid})
+    Span.create_root(namespace, pid)
+  end
+
   def add_error(span, kind, reason, stacktrace) do
     add(:add_error, {span, kind, reason, stacktrace})
     Span.add_error(span, kind, reason, stacktrace)
@@ -31,5 +36,10 @@ defmodule Appsignal.Test.Span do
   def set_sql(span, value) do
     add(:set_sql, {span, value})
     Span.set_sql(span, value)
+  end
+
+  def close(span) do
+    add(:close, {span})
+    Span.close(span)
   end
 end

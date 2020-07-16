@@ -402,4 +402,34 @@ defmodule Appsignal.InstrumentationTest do
       assert return == nil
     end
   end
+
+  describe ".send_error/4" do
+    setup do
+      {kind, reason, stack} =
+        try do
+          raise "Exception!"
+        catch
+          kind, reason -> {kind, reason, __STACKTRACE__}
+        end
+
+      [
+        kind: kind,
+        reason: reason,
+        stack: stack,
+        return: Appsignal.Instrumentation.send_error(kind, reason, stack)
+      ]
+    end
+
+    test "creates a root span" do
+      assert Test.Span.get(:create_root) == {:ok, [{"http_request", self()}]}
+    end
+
+    test "adds the error to the span", %{reason: reason, stack: stack} do
+      assert {:ok, [{%Span{}, :error, ^reason, ^stack}]} = Test.Span.get(:add_error)
+    end
+
+    test "closes the span" do
+      assert {:ok, [{%Span{}}]} = Test.Span.get(:close)
+    end
+  end
 end
