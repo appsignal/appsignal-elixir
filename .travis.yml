@@ -2,6 +2,7 @@ branches:
   only:
   - main
   - develop
+  - ci-1.10.3
 language: elixir
 elixir:
   - 1.10.3
