@@ -1,3 +1,6 @@
+# 2.0.0-beta.3
+- Restore Appsignal.send_error/3 and Appsignal.set_error/3. PR #574
+
 # 2.0.0-beta.2
 - Remove unused module attributes from Appsignal module
 
