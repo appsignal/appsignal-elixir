@@ -136,6 +136,8 @@ defmodule Appsignal do
     :ok = Appsignal.Nif.add_distribution_value(key, value, encoded_tags)
   end
 
-  defdelegate instrument(fun), to: Appsignal.Instrumentation.Helpers
-  defdelegate instrument(name, fun), to: Appsignal.Instrumentation.Helpers
+  defdelegate instrument(fun), to: Appsignal.Instrumentation
+  defdelegate instrument(name, fun), to: Appsignal.Instrumentation
+  defdelegate set_error(kind, reason, stacktrace), to: Appsignal.Instrumentation
+  defdelegate send_error(kind, reason, stacktrace), to: Appsignal.Instrumentation
 end
