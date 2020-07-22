@@ -32,7 +32,15 @@ defmodule Appsignal.Phoenix.View do
   """
   defmacro __using__(_) do
     quote do
+      @before_compile Appsignal.Phoenix.View
+    end
+  end
+
+  defmacro __before_compile__(_env) do
+    quote do
       @span Application.get_env(:appsignal, :appsignal_span, Appsignal.Span)
+
+      defoverridable render: 2
 
       def render(template, assigns) do
         {root, _pattern, _names} = __templates__()
@@ -41,7 +49,7 @@ defmodule Appsignal.Phoenix.View do
         Appsignal.instrument("Render #{path}", fn span ->
           @span.set_attribute(span, "title", path)
           @span.set_attribute(span, "appsignal:category", "render.phoenix_template")
-          render_template(template, assigns)
+          super(template, assigns)
         end)
       end
     end
