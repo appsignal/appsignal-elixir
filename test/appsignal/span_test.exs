@@ -242,8 +242,16 @@ defmodule AppsignalSpanTest do
   describe ".set_namespace/2" do
     setup :create_root_span
 
-    test "returns the span", %{span: span} do
-      assert Span.set_namespace(span, "test") == span
+    setup %{span: span} do
+      %{return: Span.set_namespace(span, "test")}
+    end
+
+    test "returns the span", %{return: return, span: span} do
+      assert return == span
+    end
+
+    test "sets the namespace through the Nif", %{span: %Span{reference: reference}} do
+      assert [{^reference, "test"}] = Test.Nif.get!(:set_span_namespace)
     end
 
     test "returns nil when passing a nil-span" do

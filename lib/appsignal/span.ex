@@ -67,7 +67,7 @@ defmodule Appsignal.Span do
   def set_name(_span, _name), do: nil
 
   def set_namespace(%Span{reference: reference} = span, namespace) when is_binary(namespace) do
-    :ok = Nif.set_span_namespace(reference, namespace)
+    :ok = @nif.set_span_namespace(reference, namespace)
     span
   end
 
