@@ -245,6 +245,10 @@ defmodule AppsignalSpanTest do
     test "returns the span", %{span: span} do
       assert Span.set_namespace(span, "test") == span
     end
+
+    test "returns nil when passing a nil-span" do
+      assert Span.set_namespace(nil, "test") == nil
+    end
   end
 
   describe ".add_error/4" do
