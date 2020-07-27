@@ -9,7 +9,7 @@ defmodule Appsignal.Tracer do
   @type options :: [option]
 
   def start_link do
-    Agent.start_link(fn -> :ets.new(@table, [:named_table, :public, :duplicate_bag]) end)
+    Agent.start_link(fn -> :ets.new(@table, [:named_table, :public, :duplicate_bag]) end, name: __MODULE__)
   end
 
   @doc """
@@ -31,7 +31,7 @@ defmodule Appsignal.Tracer do
   def create_span(namespace, nil, options) do
     pid = Keyword.get(options, :pid, self())
 
-    unless ignored?(pid) do
+    if running?() && !ignored?(pid) do
       span =
         case Keyword.get(options, :start_time) do
           nil -> Span.create_root(namespace, pid)
@@ -45,7 +45,7 @@ defmodule Appsignal.Tracer do
   def create_span(_namespace, parent, options) do
     pid = Keyword.get(options, :pid, self())
 
-    unless ignored?(pid) do
+    if running?() && !ignored?(pid) do
       span =
         case Keyword.get(options, :start_time) do
           nil -> Span.create_child(parent, pid)
@@ -61,7 +61,7 @@ defmodule Appsignal.Tracer do
   """
   @spec lookup(pid()) :: list()
   def lookup(pid) do
-    :ets.lookup(@table, pid)
+    if running?(), do: :ets.lookup(@table, pid)
   end
 
   @doc """
@@ -96,14 +96,17 @@ defmodule Appsignal.Tracer do
     |> root()
   end
 
-  defp current([]), do: nil
+  defp current({_pid, :ignore}), do: nil
 
-  defp current([{_pid, :ignore}]), do: nil
+  defp current({_pid, span}), do: span
 
   defp current(spans) when is_list(spans) do
-    {_pid, span} = List.last(spans)
-    span
+    spans
+    |> List.last()
+    |> current()
   end
+
+  defp current(_), do: nil
 
   defp root([{_pid, %Span{} = root} | _]), do: root
 
@@ -114,9 +117,11 @@ defmodule Appsignal.Tracer do
   """
   @spec close_span(Span.t() | nil) :: :ok | nil
   def close_span(%Span{} = span) do
-    span
-    |> Span.close()
-    |> deregister()
+    if running?() do
+      span
+      |> Span.close()
+      |> deregister()
+    end
 
     :ok
   end
@@ -125,9 +130,11 @@ defmodule Appsignal.Tracer do
 
   @spec close_span(Span.t() | nil, end_time: integer) :: :ok | nil
   def close_span(%Span{} = span, end_time: end_time) do
-    span
-    |> Span.close(end_time)
-    |> deregister()
+    if running?() do
+      span
+      |> Span.close(end_time)
+      |> deregister()
+    end
 
     :ok
   end
@@ -139,11 +146,14 @@ defmodule Appsignal.Tracer do
   """
   @spec ignore() :: :ok | nil
   def ignore do
-    pid = self()
+    if running?() do
+      pid = self()
 
-    delete(pid)
-    :ets.insert(@table, {pid, :ignore})
-    @monitor.add()
+      delete(pid)
+      :ets.insert(@table, {pid, :ignore})
+      @monitor.add()
+    end
+
     :ok
   end
 
@@ -152,7 +162,7 @@ defmodule Appsignal.Tracer do
   """
   @spec delete(pid()) :: :ok
   def delete(pid) do
-    :ets.delete(@table, pid)
+    if running?(), do: :ets.delete(@table, pid)
     :ok
   end
 
@@ -175,4 +185,8 @@ defmodule Appsignal.Tracer do
 
   defp ignored?([{_pid, :ignore}]), do: true
   defp ignored?(_), do: false
+
+  defp running? do
+    is_pid(Process.whereis(__MODULE__))
+  end
 end
