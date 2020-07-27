@@ -1,3 +1,7 @@
+# 2.0.0-beta.4
+- Handle nil-spans in span.set_namespace/2
+  Commit d0f5d9d96890f0caaa80c58c7a34a343b722591e
+
 # 2.0.0-beta.3
 - Restore Appsignal.send_error/3 and Appsignal.set_error/3. PR #574
 
