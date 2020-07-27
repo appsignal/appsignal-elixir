@@ -44,6 +44,14 @@ defmodule Appsignal.TracerTest do
     end
   end
 
+  describe "create_span/1, without the registry" do
+    setup [:terminate_registry, :create_root_span]
+
+    test "returns nil", %{span: span} do
+      assert span == nil
+    end
+  end
+
   describe "create_span/2" do
     setup [:create_root_span, :create_child_span]
 
@@ -65,6 +73,14 @@ defmodule Appsignal.TracerTest do
 
     test "does not register a span" do
       assert :ets.lookup(:"$appsignal_registry", self()) == [{self(), :ignore}]
+    end
+  end
+
+  describe "create_span/2, without the registry" do
+    setup [:create_root_span, :terminate_registry, :create_child_span]
+
+    test "returns nil", %{span: span} do
+      assert span == nil
     end
   end
 
@@ -147,6 +163,14 @@ defmodule Appsignal.TracerTest do
     end
   end
 
+  describe "current_span/0, without the registry" do
+    setup :terminate_registry
+
+    test "returns nil" do
+      assert Tracer.current_span() == nil
+    end
+  end
+
   describe "current_span/1, when a span exists in another process" do
     setup :create_root_span_in_other_process
 
@@ -164,6 +188,14 @@ defmodule Appsignal.TracerTest do
   end
 
   describe "root_span/0, when no span exists" do
+    test "returns nil" do
+      assert Tracer.root_span() == nil
+    end
+  end
+
+  describe "root_span/0, without the registry" do
+    setup :terminate_registry
+
     test "returns nil" do
       assert Tracer.root_span() == nil
     end
@@ -245,7 +277,27 @@ defmodule Appsignal.TracerTest do
     end
   end
 
+  describe "close_span/1, without the registry" do
+    setup [:create_root_span, :terminate_registry]
+
+    test "returns :ok", %{span: span} do
+      assert Tracer.close_span(span) == :ok
+    end
+  end
+
   describe "delete/1, with no registed spans" do
+    setup do
+      [return: Tracer.delete(self())]
+    end
+
+    test "returns :ok", %{return: return} do
+      assert return == :ok
+    end
+  end
+
+  describe "delete/1, without the registry" do
+    setup :terminate_registry
+
     setup do
       [return: Tracer.delete(self())]
     end
@@ -290,6 +342,10 @@ defmodule Appsignal.TracerTest do
   describe "ignore/1" do
     setup :ignore_process
 
+    test "returns nil", %{return: return} do
+      assert return == :ok
+    end
+
     test "marks a pid as ignored" do
       assert :ets.lookup(:"$appsignal_registry", self()) == [{self(), :ignore}]
     end
@@ -302,8 +358,20 @@ defmodule Appsignal.TracerTest do
   describe "ignore/1, with an open span" do
     setup [:create_root_span, :ignore_process]
 
+    test "returns nil", %{return: return} do
+      assert return == :ok
+    end
+
     test "removes existing spans" do
       assert :ets.lookup(:"$appsignal_registry", self()) == [{self(), :ignore}]
+    end
+  end
+
+  describe "ignore/1, without the registry" do
+    setup [:create_root_span, :terminate_registry, :ignore_process]
+
+    test "returns nil", %{return: return} do
+      assert return == :ok
     end
   end
 
@@ -330,6 +398,14 @@ defmodule Appsignal.TracerTest do
   end
 
   defp ignore_process(_context) do
-    Tracer.ignore()
+    [return: Tracer.ignore()]
+  end
+
+  defp terminate_registry(_) do
+    :ok = Supervisor.terminate_child(Appsignal.Supervisor, Tracer)
+
+    on_exit(fn ->
+      {:ok, _} = Supervisor.restart_child(Appsignal.Supervisor, Tracer)
+    end)
   end
 end
