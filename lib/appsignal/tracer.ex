@@ -9,7 +9,9 @@ defmodule Appsignal.Tracer do
   @type options :: [option]
 
   def start_link do
-    Agent.start_link(fn -> :ets.new(@table, [:named_table, :public, :duplicate_bag]) end, name: __MODULE__)
+    Agent.start_link(fn -> :ets.new(@table, [:named_table, :public, :duplicate_bag]) end,
+      name: __MODULE__
+    )
   end
 
   @doc """
