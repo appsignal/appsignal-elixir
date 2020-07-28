@@ -1,3 +1,9 @@
+# 2.0.0-beta.5
+- Bump agent to v-c8f8185. PR #575
+- Implement _set_span_namespace. PR #576
+- Tracer handles registry being down
+  Commit 86e433e42ebfd080d5a1f8450f9a29784ef2d4d9
+
 # 2.0.0-beta.4
 - Handle nil-spans in span.set_namespace/2
   Commit d0f5d9d96890f0caaa80c58c7a34a343b722591e
