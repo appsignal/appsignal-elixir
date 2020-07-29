@@ -3,6 +3,8 @@ defmodule Appsignal.Phoenix.EventHandler do
   @span Application.get_env(:appsignal, :appsignal_span, Appsignal.Span)
   @moduledoc false
 
+  require Logger
+
   def attach do
     handlers = %{
       [:phoenix, :router_dispatch, :start] => &phoenix_router_dispatch_start/4,
@@ -11,7 +13,18 @@ defmodule Appsignal.Phoenix.EventHandler do
     }
 
     for {event, fun} <- handlers do
-      :telemetry.attach({__MODULE__, event}, event, fun, :ok)
+      case :telemetry.attach({__MODULE__, event}, event, fun, :ok) do
+        :ok ->
+          Logger.debug("Appsignal.Phoenix.EventHandler attached to #{inspect(event)}")
+          :ok
+
+        {:error, _} = error ->
+          Logger.warn(
+            "Appsignal.Phoenix.EventHandler not attached to #{inspect(event)}: #{inspect(error)}"
+          )
+
+          error
+      end
     end
   end
 
