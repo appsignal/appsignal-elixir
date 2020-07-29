@@ -3,6 +3,8 @@ defmodule Appsignal.Ecto do
   @span Application.get_env(:appsignal, :appsignal_span, Appsignal.Span)
   import Appsignal.Utils, only: [module_name: 1]
 
+  require Logger
+
   def attach do
     otp_app =
       :appsignal
@@ -16,7 +18,14 @@ defmodule Appsignal.Ecto do
 
   def attach(otp_app, repo) do
     event = telemetry_prefix(otp_app, repo) ++ [:query]
-    :telemetry.attach({__MODULE__, event}, event, &handle_event/4, :ok)
+
+    case :telemetry.attach({__MODULE__, event}, event, &handle_event/4, :ok) do
+      :ok ->
+        Logger.debug("Appsignal.Ecto attached to #{inspect(event)}")
+
+      {:error, _} = error ->
+        Logger.warn("Appsignal.Ecto not attached to #{inspect(event)}: #{inspect(error)}")
+    end
   end
 
   defp telemetry_prefix(otp_app, repo) do
