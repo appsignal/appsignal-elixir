@@ -30,9 +30,6 @@ blocks:
             - mix dialyzer --plt
             - cache store dialyzer-plt priv/plts/
             - mix dialyzer
-      env_vars:
-        - name: MIX_ENV
-          value: test
   - name: Run tests
     task:
       jobs:
