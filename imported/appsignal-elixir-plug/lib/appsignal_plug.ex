@@ -26,6 +26,9 @@ defmodule Appsignal.Plug do
   @doc false
   defmacro __using__(_) do
     quote do
+      require Logger
+      Logger.debug("AppSignal.Plug attached to #{__MODULE__}")
+
       @tracer Application.get_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
       @span Application.get_env(:appsignal, :appsignal_span, Appsignal.Span)
 
