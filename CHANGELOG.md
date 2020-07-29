@@ -1,3 +1,9 @@
+# 2.0.0-beta.6
+- Add debug log lines on handler attachment
+  Commit 44f594dc6c4fa00b0ecb329aea16907cb106a67a
+  Commit 23a9cd0bf063e96c9b87ca2b2cf797ab96d4f96b
+  Commit a0ac8566f1d200152748b98f938ba78813767f9e
+
 # 2.0.0-beta.5
 - Bump agent to v-c8f8185. PR #575
 - Implement _set_span_namespace. PR #576
