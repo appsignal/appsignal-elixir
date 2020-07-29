@@ -22,8 +22,7 @@ defmodule Appsignal do
 
     initialize()
 
-    Logger.add_backend(Appsignal.Error.Backend)
-
+    Appsignal.Error.Backend.attach()
     Appsignal.Ecto.attach()
 
     children = [
