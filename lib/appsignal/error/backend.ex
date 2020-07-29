@@ -7,6 +7,10 @@ defmodule Appsignal.Error.Backend do
 
   def init(opts), do: {:ok, opts}
 
+  def attach do
+    Logger.add_backend(Appsignal.Error.Backend)
+  end
+
   def handle_event({:error, gl, {_, _, _, metadata}}, state) when node(gl) == node() do
     pid = metadata[:pid]
 
