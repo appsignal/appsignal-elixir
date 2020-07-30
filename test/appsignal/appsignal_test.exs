@@ -2,6 +2,15 @@ defmodule AppsignalTest do
   use ExUnit.Case, async: true
   import AppsignalTest.Utils
 
+  setup do
+    {:ok, _} = start_supervised(Appsignal.Test.Tracer)
+    {:ok, _} = start_supervised(Appsignal.Test.Nif)
+    {:ok, _} = start_supervised(Appsignal.Test.Span)
+
+    :ok
+  end
+
+
   test "set gauge" do
     Appsignal.set_gauge("key", 10.0)
     Appsignal.set_gauge("key", 10)
@@ -34,5 +43,23 @@ defmodule AppsignalTest do
       config = Application.get_env(:appsignal, :config)
       assert :test = config[:env]
     end)
+  end
+
+  describe "instrument/1" do
+    test "delegates to Appsignal.Instrumentation" do
+      assert :ok = Appsignal.instrument(fn -> :ok end)
+    end
+  end
+
+  describe "instrument/2" do
+    test "delegates to Appsignal.Instrumentation" do
+      assert :ok = Appsignal.instrument("name", fn -> :ok end)
+    end
+  end
+
+  describe "instrument/3" do
+    test "delegates to Appsignal.Instrumentation" do
+      assert :ok = Appsignal.instrument("name", "category", fn -> :ok end)
+    end
   end
 end
