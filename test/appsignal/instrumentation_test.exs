@@ -331,9 +331,9 @@ defmodule Appsignal.InstrumentationTest do
     end
   end
 
-  describe "instrument/3, when passing a name and a title" do
+  describe "instrument/3, when passing a name and a category" do
     setup do
-      %{return: Appsignal.Instrumentation.instrument("test", "title", fn -> :ok end)}
+      %{return: Appsignal.Instrumentation.instrument("test", "category", fn -> :ok end)}
     end
 
     test "creates a root span" do
@@ -344,8 +344,8 @@ defmodule Appsignal.InstrumentationTest do
       assert {:ok, [{%Span{}, "test"}]} = Test.Span.get(:set_name)
     end
 
-    test "sets the span's title attribute" do
-      assert {:ok, [{%Span{}, "title", "title"}]} = Test.Span.get(:set_attribute)
+    test "sets the span's category attribute" do
+      assert {:ok, [{%Span{}, "appsignal:category", "category"}]} = Test.Span.get(:set_attribute)
     end
 
     test "calls the passed function, and returns its return", %{return: return} do
