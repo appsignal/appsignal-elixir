@@ -250,6 +250,22 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
     end
 
     @tag :file_config
+    test "file based config option creates main config file if it doesn't exist" do
+      File.rm(Path.join(@test_config_directory, "config.exs"))
+      output = run_with_file_config()
+
+      assert String.contains?(
+               output,
+               "Linking config to config/config.exs: Success!"
+             )
+
+      assert String.contains?(
+               File.read!(Path.join(@test_config_directory, "config.exs")),
+               ~s(use Mix.Config\n\nimport_config "appsignal.exs")
+             )
+    end
+
+    @tag :file_config
     test "file based config option doesn't crash if the config file is already linked" do
       @test_config_directory
       |> Path.join("config.exs")
