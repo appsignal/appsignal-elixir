@@ -51,7 +51,7 @@ defmodule Appsignal.EctoTest do
     end
 
     test "sets the span's category" do
-      assert attribute("appsignal:category", "ecto.query")
+      assert attribute("appsignal:category", "query.ecto")
     end
 
     test "sets the span's body" do
@@ -108,7 +108,7 @@ defmodule Appsignal.EctoTest do
     end
 
     test "sets the span's category" do
-      assert attribute("appsignal:category", "ecto.query")
+      assert attribute("appsignal:category", "query.ecto")
     end
 
     test "sets the span's body" do
