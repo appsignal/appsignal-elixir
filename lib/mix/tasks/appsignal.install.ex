@@ -173,14 +173,14 @@ defmodule Mix.Tasks.Appsignal.Install do
             IO.puts("Success!")
 
           {:error, reason} ->
-            IO.puts("Failure! #{reason}")
+            IO.puts("Failure! #{inspect(reason)}")
             exit(:shutdown)
         end
 
         File.close(file)
 
       {:error, reason} ->
-        IO.puts("Failure! #{reason}")
+        IO.puts("Failure! #{inspect(reason)}")
         exit(:shutdown)
     end
   end
@@ -200,7 +200,7 @@ defmodule Mix.Tasks.Appsignal.Install do
           IO.puts("Success!")
 
         {:error, reason} ->
-          IO.puts("Failure! #{reason}")
+          IO.puts("Failure! #{inspect(reason)}")
           exit(:shutdown)
       end
     end
@@ -214,7 +214,7 @@ defmodule Mix.Tasks.Appsignal.Install do
           String.contains?(contents, "import_config '#{appsignal_config_filename()}")
 
       {:error, reason} ->
-        IO.puts("Failure! #{reason}")
+        IO.puts("Failure! #{inspect(reason)}")
         exit(:shutdown)
     end
   end
@@ -263,12 +263,12 @@ defmodule Mix.Tasks.Appsignal.Install do
               IO.puts("Success!")
 
             {:error, reason} ->
-              IO.puts("Failure! #{reason}")
+              IO.puts("Failure! #{inspect(reason)}")
               exit(:shutdown)
           end
 
         {:error, reason} ->
-          IO.puts("Failure! #{reason}")
+          IO.puts("Failure! #{inspect(reason)}")
           exit(:shutdown)
       end
     end
