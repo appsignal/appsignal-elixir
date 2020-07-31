@@ -63,7 +63,7 @@ defmodule Appsignal.InstrumentationTest do
     end
 
     test "creates a root span" do
-      assert Test.Tracer.get(:create_span) == {:ok, [{"http_request", nil}]}
+      assert Test.Tracer.get(:create_span) == {:ok, [{"background_job", nil}]}
     end
 
     test "sets the span's name" do
@@ -85,7 +85,7 @@ defmodule Appsignal.InstrumentationTest do
     end
 
     test "creates a root span" do
-      assert Test.Tracer.get(:create_span) == {:ok, [{"http_request", nil}]}
+      assert Test.Tracer.get(:create_span) == {:ok, [{"background_job", nil}]}
     end
 
     test "sets the span's name" do
@@ -121,7 +121,7 @@ defmodule Appsignal.InstrumentationTest do
     end
 
     test "creates a root span" do
-      assert Test.Tracer.get(:create_span) == {:ok, [{"http_request", nil}]}
+      assert Test.Tracer.get(:create_span) == {:ok, [{"background_job", nil}]}
     end
 
     test "sets the span's name" do
@@ -143,7 +143,7 @@ defmodule Appsignal.InstrumentationTest do
     end
 
     test "creates a root span" do
-      assert Test.Tracer.get(:create_span) == {:ok, [{"http_request", nil}]}
+      assert Test.Tracer.get(:create_span) == {:ok, [{"background_job", nil}]}
     end
 
     test "sets the span's name" do
@@ -170,7 +170,7 @@ defmodule Appsignal.InstrumentationTest do
     end
 
     test "creates a root span" do
-      assert Test.Tracer.get(:create_span) == {:ok, [{"http_request", nil}]}
+      assert Test.Tracer.get(:create_span) == {:ok, [{"background_job", nil}]}
     end
 
     test "sets the span's name" do
@@ -193,7 +193,7 @@ defmodule Appsignal.InstrumentationTest do
     end
 
     test "creates a root span" do
-      assert Test.Tracer.get(:create_span) == {:ok, [{"http_request", nil}]}
+      assert Test.Tracer.get(:create_span) == {:ok, [{"background_job", nil}]}
     end
 
     test "sets the span's name" do
@@ -216,7 +216,7 @@ defmodule Appsignal.InstrumentationTest do
     end
 
     test "creates a root span" do
-      assert Test.Tracer.get(:create_span) == {:ok, [{"http_request", nil}]}
+      assert Test.Tracer.get(:create_span) == {:ok, [{"background_job", nil}]}
     end
 
     test "sets the span's name" do
@@ -234,7 +234,7 @@ defmodule Appsignal.InstrumentationTest do
     end
 
     test "creates a root span" do
-      assert Test.Tracer.get(:create_span) == {:ok, [{"http_request", nil}]}
+      assert Test.Tracer.get(:create_span) == {:ok, [{"background_job", nil}]}
     end
 
     test "calls the passed function, and returns its return", %{return: return} do
@@ -252,7 +252,7 @@ defmodule Appsignal.InstrumentationTest do
     end
 
     test "creates a root span" do
-      assert Test.Tracer.get(:create_span) == {:ok, [{"http_request", nil}]}
+      assert Test.Tracer.get(:create_span) == {:ok, [{"background_job", nil}]}
     end
 
     test "calls the passed function, and returns its return", %{return: return} do
@@ -273,7 +273,7 @@ defmodule Appsignal.InstrumentationTest do
     end
 
     test "creates a child span", %{parent: parent} do
-      assert {:ok, [{"http_request", ^parent}]} = Test.Tracer.get(:create_span)
+      assert {:ok, [{"background_job", ^parent}]} = Test.Tracer.get(:create_span)
     end
 
     test "calls the passed function, and returns its return", %{return: return} do
@@ -303,7 +303,7 @@ defmodule Appsignal.InstrumentationTest do
     end
 
     test "creates a root span" do
-      assert Test.Tracer.get(:create_span) == {:ok, [{"http_request", nil}]}
+      assert Test.Tracer.get(:create_span) == {:ok, [{"background_job", nil}]}
     end
 
     test "sets the span's name" do
@@ -341,7 +341,7 @@ defmodule Appsignal.InstrumentationTest do
     end
 
     test "creates a root span" do
-      assert Test.Tracer.get(:create_span) == {:ok, [{"http_request", nil}]}
+      assert Test.Tracer.get(:create_span) == {:ok, [{"background_job", nil}]}
     end
 
     test "sets the span's name" do
