@@ -1,9 +1,20 @@
 defmodule Appsignal.EctoTest do
   use ExUnit.Case
   alias Appsignal.{Ecto, Span, Test}
+  import AppsignalTest.Utils, only: [with_config: 2]
 
   test "is attached to the repo query event automatically" do
     assert attached?([:appsignal, :test, :repo, :query])
+  end
+
+  test "attach/0 attaches to configured repos" do
+    assert with_config(
+             %{ecto_repos: [Appsignal.Test.RepoOne, Appsignal.Test.RepoTwo]},
+             &Ecto.attach/0
+           )
+
+    assert attached?([:appsignal, :test, :repo_one, :query])
+    assert attached?([:appsignal, :test, :repo_two, :query])
   end
 
   test "attach/2 attaches to events with custom prefixes" do
