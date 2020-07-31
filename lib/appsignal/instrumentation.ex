@@ -33,10 +33,7 @@ defmodule Appsignal.Instrumentation do
 
   """
   def instrument(name, fun) do
-    instrument(fn span ->
-      @span.set_name(span, name)
-      call_with_optional_argument(fun, span)
-    end)
+    instrument(name, name, fun)
   end
 
   def instrument(name, category, fun) do
