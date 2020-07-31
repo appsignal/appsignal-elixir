@@ -4,7 +4,7 @@ defmodule Appsignal.Instrumentation do
 
   @doc false
   def instrument(fun) do
-    span = @tracer.create_span("http_request", @tracer.current_span)
+    span = @tracer.create_span("background_job", @tracer.current_span)
 
     result = call_with_optional_argument(fun, span)
     @tracer.close_span(span)
