@@ -310,6 +310,10 @@ defmodule Appsignal.InstrumentationTest do
       assert {:ok, [{%Span{}, "test"}]} = Test.Span.get(:set_name)
     end
 
+    test "sets the span's category attribute" do
+      assert {:ok, [{%Span{}, "appsignal:category", "test"}]} = Test.Span.get(:set_attribute)
+    end
+
     test "calls the passed function, and returns its return", %{return: return} do
       assert return == :ok
     end
