@@ -10,7 +10,6 @@ defmodule AppsignalTest do
     :ok
   end
 
-
   test "set gauge" do
     Appsignal.set_gauge("key", 10.0)
     Appsignal.set_gauge("key", 10)
