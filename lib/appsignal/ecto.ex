@@ -12,7 +12,7 @@ defmodule Appsignal.Ecto do
       |> Map.get(:otp_app, nil)
 
     otp_app
-    |> Application.get_env(:ecto_repos, [])
+    |> repos()
     |> Enum.each(&attach(otp_app, &1))
   end
 
@@ -26,6 +26,12 @@ defmodule Appsignal.Ecto do
       {:error, _} = error ->
         Logger.warn("Appsignal.Ecto not attached to #{inspect(event)}: #{inspect(error)}")
     end
+  end
+
+  defp repos(otp_app) do
+    Application.get_env(:appsignal, :config, %{})[:ecto_repos] ||
+      Application.get_env(otp_app, :ecto_repos) ||
+      []
   end
 
   defp telemetry_prefix(otp_app, repo) do
@@ -51,7 +57,7 @@ defmodule Appsignal.Ecto do
     "http_request"
     |> @tracer.create_span(@tracer.current_span(), start_time: time - total_time)
     |> @span.set_name("Query #{module_name(repo)}")
-    |> @span.set_attribute("appsignal:category", "ecto.query")
+    |> @span.set_attribute("appsignal:category", "query.ecto")
     |> @span.set_sql(query)
     |> @tracer.close_span(end_time: time)
   end

@@ -165,6 +165,11 @@ defmodule Appsignal.ConfigTest do
                with_config(%{dns_servers: ["8.8.8.8", "8.8.4.4"]}, &init_config/0)
     end
 
+    test "ecto_repos" do
+      assert %{ecto_repos: [AppsignalPhoenixExample.Repo]} =
+               with_config(%{ecto_repos: [AppsignalPhoenixExample.Repo]}, &init_config/0)
+    end
+
     test "enable_host_metrics" do
       assert %{enable_host_metrics: false} =
                with_config(%{enable_host_metrics: false}, &init_config/0)
@@ -379,6 +384,21 @@ defmodule Appsignal.ConfigTest do
                %{"APPSIGNAL_DNS_SERVERS" => "8.8.8.8,8.8.4.4"},
                &init_config/0
              ) == default_configuration() |> Map.put(:dns_servers, ["8.8.8.8", "8.8.4.4"])
+    end
+
+    test "ecto_repos" do
+      assert with_env(
+               %{
+                 "APPSIGNAL_ECTO_REPOS" =>
+                   "AppsignalPhoenixExample.RepoOne,AppsignalPhoenixExample.RepoTwo"
+               },
+               &init_config/0
+             ) ==
+               default_configuration()
+               |> Map.put(:ecto_repos, [
+                 "AppsignalPhoenixExample.RepoOne",
+                 "AppsignalPhoenixExample.RepoTwo"
+               ])
     end
 
     test "enable_host_metrics" do
