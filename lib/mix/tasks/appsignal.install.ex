@@ -173,14 +173,14 @@ defmodule Mix.Tasks.Appsignal.Install do
             IO.puts("Success!")
 
           {:error, reason} ->
-            IO.puts("Failure! #{reason}")
+            IO.puts("Failure! #{inspect(reason)}")
             exit(:shutdown)
         end
 
         File.close(file)
 
       {:error, reason} ->
-        IO.puts("Failure! #{reason}")
+        IO.puts("Failure! #{inspect(reason)}")
         exit(:shutdown)
     end
   end
@@ -192,17 +192,29 @@ defmodule Mix.Tasks.Appsignal.Install do
 
     active_content = "\nimport_config \"#{appsignal_config_filename()}\"\n"
 
-    if appsignal_config_linked?() do
-      IO.puts("Success! (Already linked?)")
-    else
-      case append_to_file(config_file_path(), active_content) do
-        :ok ->
-          IO.puts("Success!")
+    cond do
+      appsignal_config_linked?() ->
+        IO.puts("Success! (Already linked?)")
 
-        {:error, reason} ->
-          IO.puts("Failure! #{reason}")
-          exit(:shutdown)
-      end
+      File.exists?(config_file_path()) ->
+        case append_to_file(config_file_path(), active_content) do
+          :ok ->
+            IO.puts("Success!")
+
+          {:error, reason} ->
+            IO.puts("Failure! #{inspect(reason)}")
+            exit(:shutdown)
+        end
+
+      true ->
+        case File.write(config_file_path(), "use Mix.Config\n#{active_content}") do
+          :ok ->
+            IO.puts("Success!")
+
+          {:error, reason} ->
+            IO.puts("Failure! #{inspect(reason)}")
+            exit(:shutdown)
+        end
     end
   end
 
@@ -213,9 +225,8 @@ defmodule Mix.Tasks.Appsignal.Install do
         String.contains?(contents, ~s(import_config "#{appsignal_config_filename()})) ||
           String.contains?(contents, "import_config '#{appsignal_config_filename()}")
 
-      {:error, reason} ->
-        IO.puts("Failure! #{reason}")
-        exit(:shutdown)
+      {:error, :enoent} ->
+        false
     end
   end
 
@@ -263,12 +274,12 @@ defmodule Mix.Tasks.Appsignal.Install do
               IO.puts("Success!")
 
             {:error, reason} ->
-              IO.puts("Failure! #{reason}")
+              IO.puts("Failure! #{inspect(reason)}")
               exit(:shutdown)
           end
 
         {:error, reason} ->
-          IO.puts("Failure! #{reason}")
+          IO.puts("Failure! #{inspect(reason)}")
           exit(:shutdown)
       end
     end
