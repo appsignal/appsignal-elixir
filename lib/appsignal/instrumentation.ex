@@ -4,7 +4,7 @@ defmodule Appsignal.Instrumentation do
 
   @doc false
   def instrument(fun) do
-    span = @tracer.create_span("http_request", @tracer.current_span)
+    span = @tracer.create_span("background_job", @tracer.current_span)
 
     result = call_with_optional_argument(fun, span)
     @tracer.close_span(span)
@@ -33,16 +33,13 @@ defmodule Appsignal.Instrumentation do
 
   """
   def instrument(name, fun) do
-    instrument(fn span ->
-      @span.set_name(span, name)
-      call_with_optional_argument(fun, span)
-    end)
+    instrument(name, name, fun)
   end
 
-  def instrument(name, title, fun) do
+  def instrument(name, category, fun) do
     instrument(fn span ->
       @span.set_name(span, name)
-      @span.set_attribute(span, "title", title)
+      @span.set_attribute(span, "appsignal:category", category)
       call_with_optional_argument(fun, span)
     end)
   end

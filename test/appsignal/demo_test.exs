@@ -17,10 +17,10 @@ defmodule Appsignal.DemoTest do
     test "creates a root span and four child spans" do
       assert {:ok,
               [
-                {"http_request", %Span{}},
-                {"http_request", %Span{}},
-                {"http_request", %Span{}},
-                {"http_request", %Span{}},
+                {_, %Span{}},
+                {_, %Span{}},
+                {_, %Span{}},
+                {_, %Span{}},
                 {"http_request"}
               ]} = Test.Tracer.get(:create_span)
     end
@@ -37,7 +37,7 @@ defmodule Appsignal.DemoTest do
     end
 
     test "sets the 'demo_sample' attribute" do
-      assert {:ok, [{%Span{}, "demo_sample", true}]} = Test.Span.get(:set_attribute)
+      assert attribute("demo_sample", true)
     end
 
     test "sets the span's sample data" do
@@ -92,5 +92,13 @@ defmodule Appsignal.DemoTest do
     assert Enum.any?(sample_data, fn {%Span{}, key, data} ->
              key == asserted_key and data == asserted_data
            end)
+  end
+
+  defp attribute(asserted_key, asserted_data) do
+    {:ok, attributes} = Test.Span.get(:set_attribute)
+
+    Enum.any?(attributes, fn {%Span{}, key, data} ->
+      key == asserted_key and data == asserted_data
+    end)
   end
 end
