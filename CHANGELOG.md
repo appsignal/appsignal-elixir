@@ -1,3 +1,9 @@
+# 2.0.0-beta.7
+- Add Repo configuration. PR #578
+- Link AppSignal config when config/config.exs does not exist. PR #577
+- Set category from Appsignal.Instrumentation.instrument/3
+  Commit  c8a789e9ff5dfe0d5a522448a923f94a1f54b63d
+
 # 2.0.0-beta.6
 - Add debug log lines on handler attachment
   Commit 44f594dc6c4fa00b0ecb329aea16907cb106a67a
