@@ -36,6 +36,8 @@ defmodule Appsignal.Plug do
 
       def call(conn, opts) do
         Appsignal.instrument(fn span ->
+          @span.set_namespace(span, "http_request")
+
           try do
             super(conn, opts)
           catch

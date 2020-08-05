@@ -99,6 +99,10 @@ defmodule Appsignal.PlugTest do
       assert {:ok, [{_, nil}]} = Test.Tracer.get(:create_span)
     end
 
+    test "set's the span's namespace" do
+      assert {:ok, [{%Span{}, "http_request"}]} = Test.Span.get(:set_namespace)
+    end
+
     test "sets the span's name" do
       assert {:ok, [{%Span{}, "GET /"}]} = Test.Span.get(:set_name)
     end
