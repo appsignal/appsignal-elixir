@@ -1,5 +1,6 @@
 defmodule Appsignal.Plug do
   @span Application.get_env(:appsignal, :appsignal_span, Appsignal.Span)
+  import Appsignal.Utils, only: [module_name: 1]
 
   @moduledoc """
   AppSignal's Plug instrumentation instruments calls to Plug applications to
@@ -109,6 +110,12 @@ defmodule Appsignal.Plug do
 
   defp set_name(span, %Plug.Conn{private: %{appsignal_name: name}}) do
     @span.set_name(span, name)
+  end
+
+  defp set_name(span, %Plug.Conn{
+         private: %{phoenix_action: action, phoenix_controller: controller}
+       }) do
+    @span.set_name(span, "#{module_name(controller)}##{action}")
   end
 
   defp set_name(span, %Plug.Conn{method: method, private: %{plug_route: {path, _fun}}}) do

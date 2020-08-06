@@ -56,6 +56,12 @@ defmodule PlugWithAppsignal do
     |> send_resp(200, "Custom name!")
   end
 
+  get "/phoenix_action" do
+    conn
+    |> Plug.Conn.put_private(:phoenix_controller, __MODULE__)
+    |> Plug.Conn.put_private(:phoenix_action, "phoenix_action")
+  end
+
   # NOTE: This test module includes an call/2 override and an error handler to
   # make sure AppSignal does not interfere with either of these, if defined by
   # the host application.
@@ -350,6 +356,16 @@ defmodule Appsignal.PlugTest do
 
     test "does not overwrite the custom name" do
       assert {:ok, [{%Span{}, "PlugWithAppsignal#custom_name"}]} = Test.Span.get(:set_name)
+    end
+  end
+
+  describe "GET /phoenix_action" do
+    setup do
+      get("/phoenix_action")
+    end
+
+    test "extracts the controller and action name" do
+      assert {:ok, [{%Span{}, "PlugWithAppsignal#phoenix_action"}]} = Test.Span.get(:set_name)
     end
   end
 
