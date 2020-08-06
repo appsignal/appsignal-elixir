@@ -9,50 +9,6 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
     :ok
   end
 
-  test "is attached to the router_dispatch event" do
-    assert attached?([:phoenix, :router_dispatch, :start])
-  end
-
-  describe "after receiving a router_dispatch-start event" do
-    setup [:create_root_span, :router_dispatch_start_event]
-
-    test "keeps the handler attached" do
-      assert attached?([:phoenix, :router_dispatch, :start])
-    end
-
-    test "sets the transaction's action name", %{span: span} do
-      assert {:ok, [{^span, "AppsignalPhoenixExampleWeb.PageController#index"}]} =
-               Test.Span.get(:set_name)
-    end
-  end
-
-  describe "after receiving a router_dispatch-start event, when in a child span" do
-    setup [:create_root_span, :create_child_span, :router_dispatch_start_event]
-
-    test "keeps the handler attached" do
-      assert attached?([:phoenix, :router_dispatch, :start])
-    end
-
-    test "sets the transaction's action name on the root span", %{parent: span} do
-      assert {:ok, [{^span, "AppsignalPhoenixExampleWeb.PageController#index"}]} =
-               Test.Span.get(:set_name)
-    end
-  end
-
-  describe "after receiving a router_dispatch-start event with non-atom opts" do
-    setup [:create_root_span]
-
-    setup do: do_router_dispatch_start_event(atom?: false)
-
-    test "keeps the handler attached" do
-      assert attached?([:phoenix, :router_dispatch, :start])
-    end
-
-    test "does not set the transaction's action name" do
-      assert Test.Span.get(:set_name) == :error
-    end
-  end
-
   describe "after receiving an endpoint-start event" do
     setup [:create_root_span, :endpoint_start_event]
 
