@@ -37,6 +37,16 @@ defmodule Appsignal.DemoTest do
               ]} = Test.Span.get(:set_name)
     end
 
+    test "sets the span's categories" do
+      assert [
+               {%Span{}, "appsignal:category", "render.phoenix_template"},
+               {%Span{}, "appsignal:category", "query.ecto"},
+               {%Span{}, "appsignal:category", "query.ecto"},
+               {%Span{}, "appsignal:category", "call.phoenix_endpoint"},
+               {%Span{}, "appsignal:category", "call.phoenix"}
+             ] = attributes("appsignal:category")
+    end
+
     test "set's the root span's namespace" do
       assert {:ok, [{%Span{}, "http_request"}]} = Test.Span.get(:set_namespace)
     end
@@ -72,6 +82,12 @@ defmodule Appsignal.DemoTest do
       assert {:ok, [{%Span{}, "DemoController#hello"}]} = Test.Span.get(:set_name)
     end
 
+    test "sets the span's category" do
+      assert [
+               {%Span{}, "appsignal:category", "call.phoenix"}
+             ] = attributes("appsignal:category")
+    end
+
     test "sets the 'demo_sample' attribute" do
       assert attribute("demo_sample", true)
     end
@@ -98,6 +114,14 @@ defmodule Appsignal.DemoTest do
     assert Enum.any?(sample_data, fn {%Span{}, key, data} ->
              key == asserted_key and data == asserted_data
            end)
+  end
+
+  defp attributes(asserted_key) do
+    {:ok, attributes} = Test.Span.get(:set_attribute)
+
+    Enum.filter(attributes, fn {%Span{}, key, _data} ->
+      key == asserted_key
+    end)
   end
 
   defp attribute(asserted_key, asserted_data) do
