@@ -1,3 +1,7 @@
+# 2.0.0-beta.8
+- Set category names in demo command
+  Commit dd5a4c019f403a5c55be0f4f07bda8d85385aef4
+
 # 2.0.0-beta.7
 - Add Repo configuration. PR #578
 - Link AppSignal config when config/config.exs does not exist. PR #577
