@@ -21,7 +21,7 @@ defmodule Appsignal.DemoTest do
                 {_, %Span{}},
                 {_, %Span{}},
                 {_, %Span{}},
-                {"http_request"}
+                {_, nil}
               ]} = Test.Tracer.get(:create_span)
     end
 
@@ -34,6 +34,10 @@ defmodule Appsignal.DemoTest do
                 {%Span{}, "call.phoenix_endpoint"},
                 {%Span{}, "DemoController#hello"}
               ]} = Test.Span.get(:set_name)
+    end
+
+    test "set's the root span's namespace" do
+      assert {:ok, [{%Span{}, "http_request"}]} = Test.Span.get(:set_namespace)
     end
 
     test "sets the 'demo_sample' attribute" do
