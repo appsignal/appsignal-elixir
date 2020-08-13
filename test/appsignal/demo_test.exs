@@ -12,6 +12,7 @@ defmodule Appsignal.DemoTest do
   describe "send_performance_sample/0" do
     setup do
       Demo.send_performance_sample()
+      :ok
     end
 
     test "creates a root span and four child spans" do
@@ -60,10 +61,11 @@ defmodule Appsignal.DemoTest do
   describe "send_error_sample/0" do
     setup do
       Demo.send_error_sample()
+      :ok
     end
 
     test "creates a root span" do
-      assert {:ok, [{"http_request"}]} = Test.Tracer.get(:create_span)
+      assert {:ok, [{_, nil}]} = Test.Tracer.get(:create_span)
     end
 
     test "sets the spans' names" do
@@ -71,7 +73,7 @@ defmodule Appsignal.DemoTest do
     end
 
     test "sets the 'demo_sample' attribute" do
-      assert {:ok, [{%Span{}, "demo_sample", true}]} = Test.Span.get(:set_attribute)
+      assert attribute("demo_sample", true)
     end
 
     test "adds the error to the span" do
