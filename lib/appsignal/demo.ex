@@ -38,16 +38,12 @@ defmodule Appsignal.Demo do
     raise TestError
   catch
     kind, reason ->
-      create_demo_span()
-      |> @span.add_error(kind, reason, __STACKTRACE__)
-      |> @tracer.close_span()
-  end
-
-  defp create_demo_span do
-    "http_request"
-    |> @tracer.create_span()
-    |> @span.set_name("DemoController#hello")
-    |> @span.set_attribute("demo_sample", true)
-    |> @span.set_sample_data("environment", %{"method" => "GET", "request_path" => "/"})
+      instrument("DemoController#hello", "call.phoenix", fn span ->
+        span
+        |> @span.set_namespace("http_request")
+        |> @span.set_attribute("demo_sample", true)
+        |> @span.set_sample_data("environment", %{"method" => "GET", "request_path" => "/"})
+        |> @span.add_error(kind, reason, __STACKTRACE__)
+      end)
   end
 end
