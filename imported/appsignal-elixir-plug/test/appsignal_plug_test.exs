@@ -129,6 +129,10 @@ defmodule Appsignal.PlugTest do
     test "closes the span" do
       assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
     end
+
+    test "sets the :appsignal_plug_instrumented flag", %{conn: conn} do
+      assert %Plug.Conn{private: %{appsignal_plug_instrumented: true}} = conn
+    end
   end
 
   describe "GET /users/:id" do
@@ -366,6 +370,29 @@ defmodule Appsignal.PlugTest do
 
     test "extracts the controller and action name" do
       assert {:ok, [{%Span{}, "PlugWithAppsignal#phoenix_action"}]} = Test.Span.get(:set_name)
+    end
+  end
+
+  describe "GET /, when plugging Appsignal.Plug twice" do
+    setup do
+      conn =
+        :get
+        |> conn("/", nil)
+        |> Plug.Conn.put_private(:appsignal_plug_instrumented, true)
+
+      [conn: conn]
+    end
+
+    test "prints a double-plugging error", %{conn: conn} do
+      assert ExUnit.CaptureLog.capture_log(fn ->
+               PlugWithAppsignal.call(conn, [])
+             end) =~
+               "Appsignal.Plug was included twice, disabling Appsignal.Plug. Please only `use Appsignal.Plug` once."
+    end
+
+    test "returns the conn", %{conn: conn} do
+      conn = PlugWithAppsignal.call(conn, [])
+      assert %Plug.Conn{state: :sent} = conn
     end
   end
 
