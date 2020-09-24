@@ -71,7 +71,32 @@ defmodule Appsignal.Plug do
     end
   end
 
-  @doc false
+  @doc """
+  Adds an `:appsignal_name` to the `Plug.Conn`, to overwrite the root
+  `Appsignal.Span`'s name.
+
+  ## Examples
+
+      iex> Appsignal.Plug.put_name(%Plug.Conn{}, "AppsignalPlugExample#index")
+      %Plug.Conn{private: %{appsignal_name: "AppsignalPlugExample#index"}}
+
+  In a Plug app, call `Appsignal.Plug.put_name/2` on the returned `Plug.Conn`
+  struct:
+
+      defmodule AppsignalPlugExample do
+        use Plug.Router
+        use Appsignal.Plug
+
+        plug(:match)
+        plug(:dispatch)
+
+        get "/" do
+          conn
+          |> Appsignal.Plug.put_name("AppsignalPlugExample#index")
+          |> send_resp(200, "Welcome")
+        end
+      end
+  """
   def put_name(%Plug.Conn{} = conn, name) do
     Plug.Conn.put_private(conn, :appsignal_name, name)
   end

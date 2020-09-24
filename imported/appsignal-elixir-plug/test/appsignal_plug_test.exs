@@ -81,6 +81,7 @@ defmodule Appsignal.PlugTest do
   use ExUnit.Case
   use Plug.Test
   alias Appsignal.{Span, Test}
+  doctest Appsignal.Plug
 
   setup do
     Test.Tracer.start_link()
