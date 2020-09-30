@@ -19,8 +19,15 @@ defmodule Appsignal.Instrumentation.Decorators do
     |> instrument(body, context)
   end
 
-  def instrument(namespace, body, %{module: module, name: name, arity: arity})
-      when is_binary(namespace) do
+  def instrument(namespace, body, context) when is_binary(namespace) do
+    do_instrument(body, Map.put(context, :namespace, namespace))
+  end
+
+  def instrument(body, context) do
+    do_instrument(body, context)
+  end
+
+  defp do_instrument(body, %{module: module, name: name, arity: arity, namespace: namespace}) do
     quote do
       Appsignal.Instrumentation.instrument(
         "#{module_name(unquote(module))}.#{unquote(name)}/#{unquote(arity)}",
@@ -32,7 +39,7 @@ defmodule Appsignal.Instrumentation.Decorators do
     end
   end
 
-  def instrument(body, %{module: module, name: name, arity: arity}) do
+  defp do_instrument(body, %{module: module, name: name, arity: arity}) do
     quote do
       Appsignal.Instrumentation.instrument(
         "#{module_name(unquote(module))}.#{unquote(name)}/#{unquote(arity)}",
@@ -41,7 +48,7 @@ defmodule Appsignal.Instrumentation.Decorators do
     end
   end
 
-  def instrument(body, %{module: module, name: name}) do
+  defp do_instrument(body, %{module: module, name: name}) do
     quote do
       Appsignal.Instrumentation.instrument(
         "#{module_name(unquote(module))}.#{unquote(name)}",
