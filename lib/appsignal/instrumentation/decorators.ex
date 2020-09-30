@@ -39,6 +39,16 @@ defmodule Appsignal.Instrumentation.Decorators do
     end
   end
 
+  defp do_instrument(body, %{module: module, name: name, arity: arity, category: category}) do
+    quote do
+      Appsignal.Instrumentation.instrument(
+        "#{module_name(unquote(module))}.#{unquote(name)}/#{unquote(arity)}",
+	unquote(category),
+	fn -> unquote(body) end
+      )
+    end
+  end
+
   defp do_instrument(body, %{module: module, name: name, arity: arity}) do
     quote do
       Appsignal.Instrumentation.instrument(
@@ -69,8 +79,8 @@ defmodule Appsignal.Instrumentation.Decorators do
     instrument(body, context)
   end
 
-  def transaction_event(_category, body, context) do
-    instrument(body, context)
+  def transaction_event(category, body, context) do
+    do_instrument(body, Map.put(context, :category, category))
   end
 
   def channel_action(body, %{module: module, args: [action, _payload, _socket]}) do
