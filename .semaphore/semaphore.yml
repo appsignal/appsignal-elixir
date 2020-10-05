@@ -9,7 +9,6 @@ blocks:
     task:
       prologue:
         commands:
-          - sem-version erlang 23.0.3
           - sem-version elixir 1.10.4
           - elixir -v
           - checkout
@@ -33,9 +32,8 @@ blocks:
   - name: Run tests
     task:
       jobs:
-        - name: Elixir master, OTP 23.0.3
+        - name: Elixir master, OTP 23
           commands:
-            - sem-version erlang 23
             - sem-version elixir master
             - elixir -v
             - checkout
@@ -45,7 +43,6 @@ blocks:
             - mix test
         - name: Elixir master, OTP 23, without the NIF loaded
           commands:
-            - sem-version erlang 23.0.3
             - sem-version elixir master
             - elixir -v
             - checkout
@@ -53,86 +50,6 @@ blocks:
             - mix local.hex --force
             - MIX_ENV=test_no_nif mix deps.get
             - MIX_ENV=test_no_nif mix test
-        - name: Elixir master, OTP 22
-          commands:
-            - sem-version erlang 22
-            - sem-version elixir master
-            - elixir -v
-            - checkout
-            - mix local.rebar --force
-            - mix local.hex --force
-            - mix deps.get
-            - mix test
-        - name: Elixir master, OTP 21
-          commands:
-            - sem-version erlang 21
-            - sem-version elixir master
-            - elixir -v
-            - checkout
-            - mix local.rebar --force
-            - mix local.hex --force
-            - mix deps.get
-            - mix test
-        - name: Elixir 1.10.4, OTP 23
-          commands:
-            - sem-version erlang 23.0.3
-            - sem-version elixir 1.10.4
-            - elixir -v
-            - checkout
-            - mix local.rebar --force
-            - mix local.hex --force
-            - mix deps.get
-            - mix test
-        - name: Elixir 1.10.4, OTP 22
-          commands:
-            - sem-version erlang 22
-            - sem-version elixir 1.10.4
-            - elixir -v
-            - checkout
-            - mix local.rebar --force
-            - mix local.hex --force
-            - mix deps.get
-            - mix test
-        - name: Elixir 1.10.4, OTP 21
-          commands:
-            - sem-version erlang 21
-            - sem-version elixir 1.10.4
-            - elixir -v
-            - checkout
-            - mix local.rebar --force
-            - mix local.hex --force
-            - mix deps.get
-            - mix test
-        - name: Elixir 1.9.4, OTP 22
-          commands:
-            - sem-version erlang 22
-            - sem-version elixir 1.9.4
-            - elixir -v
-            - checkout
-            - mix local.rebar --force
-            - mix local.hex --force
-            - mix deps.get
-            - mix test
-        - name: Elixir 1.9.4, OTP 21
-          commands:
-            - sem-version erlang 21
-            - sem-version elixir 1.9.4
-            - elixir -v
-            - checkout
-            - mix local.rebar --force
-            - mix local.hex --force
-            - mix deps.get
-            - mix test
-        - name: Elixir 1.9.4, OTP 20
-          commands:
-            - sem-version erlang 20
-            - sem-version elixir 1.9.4
-            - elixir -v
-            - checkout
-            - mix local.rebar --force
-            - mix local.hex --force
-            - mix deps.get
-            - mix test
       env_vars:
         - name: MIX_ENV
           value: test
