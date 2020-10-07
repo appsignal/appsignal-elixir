@@ -11,7 +11,7 @@ blocks:
         commands:
           - sem-version erlang 23.1
           - erl -eval '{ok, Version} = file:read_file(filename:join([code:root_dir(), "releases", erlang:system_info(otp_release), "OTP_VERSION"])), io:fwrite(Version), halt().' -noshell
-          - sem-version elixir master
+          - sem-version elixir 1.10.4
           - elixir -v
           - checkout
           - mix local.rebar --force
