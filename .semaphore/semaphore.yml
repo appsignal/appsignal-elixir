@@ -9,6 +9,7 @@ blocks:
     task:
       prologue:
         commands:
+          - sem-version erlang 23.1
           - sem-version elixir master
           - elixir -v
           - checkout
@@ -34,6 +35,7 @@ blocks:
       jobs:
         - name: Elixir master, OTP 23
           commands:
+            - sem-version erlang 23.1
             - sem-version elixir master
             - elixir -v
             - checkout
@@ -43,6 +45,7 @@ blocks:
             - mix test
         - name: Elixir master, OTP 23, without the NIF loaded
           commands:
+            - sem-version erlang 23.1
             - sem-version elixir master
             - elixir -v
             - checkout
@@ -52,6 +55,7 @@ blocks:
             - MIX_ENV=test_no_nif mix test
         - name: Elixir 1.11.0, OTP 23
           commands:
+            - sem-version erlang 23.1
             - sem-version elixir 1.11.0
             - elixir -v
             - checkout
@@ -61,6 +65,7 @@ blocks:
             - mix test
         - name: Elixir 1.10.4, OTP 23
           commands:
+            - sem-version erlang 23.1
             - sem-version elixir 1.10.4
             - elixir -v
             - checkout
