@@ -50,6 +50,15 @@ blocks:
             - mix local.hex --force
             - MIX_ENV=test_no_nif mix deps.get
             - MIX_ENV=test_no_nif mix test
+        - name: Elixir 1.11.0, OTP 23
+          commands:
+            - sem-version elixir 1.11.0
+            - elixir -v
+            - checkout
+            - mix local.rebar --force
+            - mix local.hex --force
+            - mix deps.get
+            - mix test
         - name: Elixir 1.10.4, OTP 23
           commands:
             - sem-version elixir 1.10.4
