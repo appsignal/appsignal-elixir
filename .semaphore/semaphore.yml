@@ -9,7 +9,7 @@ blocks:
     task:
       prologue:
         commands:
-          - sem-version elixir 1.10.4
+          - sem-version elixir master
           - elixir -v
           - checkout
           - mix local.rebar --force
