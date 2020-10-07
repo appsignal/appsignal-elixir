@@ -34,10 +34,15 @@ defmodule Appsignal.TransmitterTest do
       refute Keyword.has_key?(ssl_options, :customize_hostname_check)
     end
 
-    if System.otp_release() >= "20.3" do
-      assert ssl_options[:ciphers] == :ssl.cipher_suites(:default, :"tlsv1.2")
-    else
-      assert ssl_options[:ciphers] == :ssl.cipher_suites()
+    cond do
+      System.otp_release() >= "23" ->
+        assert ssl_options[:ciphers] == :ssl.cipher_suites(:default, :"tlsv1.3")
+
+      System.otp_release() >= "20.3" ->
+        assert ssl_options[:ciphers] == :ssl.cipher_suites(:default, :"tlsv1.2")
+
+      true ->
+        assert ssl_options[:ciphers] == :ssl.cipher_suites()
     end
 
     assert ssl_options[:honor_cipher_order] == :undefined
