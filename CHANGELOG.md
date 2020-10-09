@@ -1,3 +1,7 @@
+# 2.0.0-beta.10
+- Bump agent to v-5b16a75
+  - Fixed a version mismatch issue in the agent which caused no samples to be processed
+
 # 2.0.0-beta.9
 - Bump agent to v-38010f3
   - Use Rust 1.46.0 and spawn agent without waiting for it. PR #618
