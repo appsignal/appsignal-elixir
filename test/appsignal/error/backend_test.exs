@@ -1,19 +1,3 @@
-defmodule CrashingGenServer do
-  use GenServer
-
-  def start_link(_opts) do
-    GenServer.start(__MODULE__, [])
-  end
-
-  def init(opts), do: {:ok, opts}
-
-  def handle_cast(:raise_error, state) do
-    _ = Map.fetch!(%{}, :bad_key)
-
-    {:noreply, state}
-  end
-end
-
 defmodule Murphy do
   import ExUnit.Assertions
   use GenServer
