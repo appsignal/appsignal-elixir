@@ -43,8 +43,8 @@ defmodule Appsignal.Instrumentation.Decorators do
     quote do
       Appsignal.Instrumentation.instrument(
         "#{module_name(unquote(module))}.#{unquote(name)}/#{unquote(arity)}",
-	unquote(category),
-	fn -> unquote(body) end
+        unquote(category),
+        fn -> unquote(body) end
       )
     end
   end
