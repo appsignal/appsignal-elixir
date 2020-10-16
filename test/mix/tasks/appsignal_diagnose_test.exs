@@ -486,6 +486,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   end
 
   @tag :skip_env_test_no_nif
+  @tag :skip
   test "runs agent in diagnose mode", %{fake_nif: fake_nif} do
     FakeNif.update(fake_nif, :run_diagnose, true)
     output = run()
@@ -517,6 +518,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   end
 
   @tag :skip_env_test_no_nif
+  @tag :skip
   test "adds agent report to report", %{fake_report: fake_report, fake_nif: fake_nif} do
     FakeNif.update(fake_nif, :run_diagnose, true)
     run()
@@ -547,6 +549,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
   describe "when config is not active" do
     @tag :skip_env_test_no_nif
+    @tag :skip
     test "runs agent in diagnose mode, but doesn't change the active state", %{fake_nif: fake_nif} do
       FakeNif.update(fake_nif, :run_diagnose, true)
 
@@ -580,6 +583,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     end
 
     @tag :skip_env_test_no_nif
+    @tag :skip
     test "adds agent report to report", %{fake_report: fake_report, fake_nif: fake_nif} do
       FakeNif.update(fake_nif, :run_diagnose, true)
       run()

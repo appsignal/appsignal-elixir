@@ -1,4 +1,5 @@
-defmodule CrashingGenServer do
+defmodule Murphy do
+  import ExUnit.Assertions
   use GenServer
 
   def start_link(_opts) do
@@ -7,10 +8,16 @@ defmodule CrashingGenServer do
 
   def init(opts), do: {:ok, opts}
 
-  def handle_cast(:raise_error, state) do
-    _ = Map.fetch!(%{}, :bad_key)
+  def handle_call(fun, _from, _state) do
+    fun.()
+  end
 
-    {:noreply, state}
+  def call(pid, fun) do
+    ExUnit.CaptureLog.capture_log(fn ->
+      catch_exit do
+        GenServer.call(pid, fun)
+      end
+    end)
   end
 end
 
@@ -20,12 +27,13 @@ defmodule Appsignal.Error.BackendTest do
   alias Appsignal.{Error.Backend, Span, Test, Tracer}
 
   setup do
-    start_supervised(Test.Nif)
-    start_supervised(Test.Tracer)
-    start_supervised(Test.Span)
-    start_supervised(Test.Monitor)
+    {:ok, _pid} = start_supervised(Test.Nif)
+    {:ok, _pid} = start_supervised(Test.Tracer)
+    {:ok, _pid} = start_supervised(Test.Span)
+    {:ok, _pid} = start_supervised(Test.Monitor)
+    {:ok, pid} = start_supervised(Murphy)
 
-    :ok
+    %{pid: pid}
   end
 
   test "is added as a Logger backend" do
@@ -33,187 +41,119 @@ defmodule Appsignal.Error.BackendTest do
   end
 
   describe "handle_event/3, when no span exists" do
-    setup do
-      [pid: spawn(fn -> raise "Exception" end)]
+    setup %{pid: pid} do
+      Murphy.call(pid, fn -> raise "Exception" end)
+
+      :ok
     end
 
     test "creates a span", %{pid: pid} do
-      until(fn ->
-        assert {:ok, [{"background_job", nil, [pid: ^pid]}]} = Test.Tracer.get(:create_span)
-      end)
+      assert {:ok, [{"background_job", nil, [pid: ^pid]}]} = Test.Tracer.get(:create_span)
     end
 
     test "adds an error to the created span", %{pid: pid} do
-      until(fn ->
-        assert {:ok, [{%Span{pid: ^pid}, :error, %RuntimeError{message: "Exception"}, stack} | _]} =
-                 Test.Span.get(:add_error)
+      assert {:ok, [{%Span{pid: ^pid}, :error, %RuntimeError{message: "Exception"}, stack} | _]} =
+               Test.Span.get(:add_error)
 
-        assert is_list(stack)
-      end)
+      assert is_list(stack)
     end
 
     test "closes the created span" do
-      until(fn ->
-        assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
-      end)
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
     end
   end
 
   describe "handle_event/3, with an open span" do
-    setup do
+    setup %{pid: pid} do
       parent = self()
 
-      pid =
-        spawn(fn ->
-          span = Tracer.create_span("background_job")
-          send(parent, span)
-          raise "Exception"
-        end)
+      Murphy.call(pid, fn ->
+        span = Tracer.create_span("background_job")
+        send(parent, span)
+        raise "Exception"
+      end)
 
       span =
         receive do
           span -> span
         end
 
-      [pid: pid, span: span]
+      [span: span]
     end
 
     test "adds an error to the existing span", %{span: span} do
-      until(fn ->
-        assert {:ok, [{^span, :error, %RuntimeError{message: "Exception"}, _stack} | _]} =
-                 Test.Span.get(:add_error)
-      end)
+      assert {:ok, [{^span, :error, %RuntimeError{message: "Exception"}, _stack} | _]} =
+               Test.Span.get(:add_error)
     end
 
     test "closes the existing span", %{span: span} do
-      until(fn ->
-        assert {:ok, [{^span}]} = Test.Tracer.get(:close_span)
-      end)
+      assert {:ok, [{^span}]} = Test.Tracer.get(:close_span)
     end
   end
 
   describe "handle_event/3, with an ignored process" do
-    setup do
-      [
-        pid:
-          spawn(fn ->
-            Tracer.ignore()
-            raise "Exception"
-          end)
-      ]
+    setup %{pid: pid} do
+      Murphy.call(pid, fn ->
+        Tracer.ignore()
+        raise "Exception"
+      end)
+
+      :ok
     end
 
-    test "does not create a span", %{pid: pid} do
-      repeatedly(fn ->
-        assert Test.Tracer.get(:create_span) == :error
-      end)
+    test "does not create a span" do
+      assert Test.Tracer.get(:create_span) == :error
     end
   end
 
   describe "handle_event/3, with a :badarg" do
-    setup do
-      pid =
-        spawn(fn ->
-          :erlang.error(:badarg)
-        end)
+    setup %{pid: pid} do
+      Murphy.call(pid, fn ->
+        :erlang.error(:badarg)
+      end)
 
-      [pid: pid]
+      :ok
     end
 
     test "creates a span", %{pid: pid} do
-      until(fn ->
-        assert {:ok, [{"background_job", nil, [pid: ^pid]}]} = Test.Tracer.get(:create_span)
-      end)
+      assert {:ok, [{"background_job", nil, [pid: ^pid]}]} = Test.Tracer.get(:create_span)
     end
 
     test "adds an error to the created span", %{pid: pid} do
-      until(fn ->
-        assert {:ok,
-                [{%Span{pid: ^pid}, :error, %ArgumentError{message: "argument error"}, stack} | _]} =
-                 Test.Span.get(:add_error)
+      assert {:ok,
+              [{%Span{pid: ^pid}, :error, %ArgumentError{message: "argument error"}, stack} | _]} =
+               Test.Span.get(:add_error)
 
-        assert is_list(stack)
-      end)
+      assert is_list(stack)
     end
 
     test "closes the created span" do
-      until(fn ->
-        assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
-      end)
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
     end
   end
 
-  describe "handle_event/3, with a Task" do
-    setup do
-      parent = self()
-
-      spawn(fn ->
-        %Task{pid: pid} =
-          Task.async(fn ->
-            raise "Exception"
-          end)
-
-        send(parent, pid)
+  describe "handle_event/3, with a KeyError" do
+    setup %{pid: pid} do
+      Murphy.call(pid, fn ->
+        _ = Map.fetch!(%{}, :bad_key)
       end)
 
-      pid =
-        receive do
-          pid -> pid
-        end
-
-      [pid: pid]
+      :ok
     end
 
     test "creates a span", %{pid: pid} do
-      until(fn ->
-        assert {:ok, [{"background_job", nil, [pid: ^pid]}]} = Test.Tracer.get(:create_span)
-      end)
+      assert {:ok, [{"background_job", nil, [pid: ^pid]}]} = Test.Tracer.get(:create_span)
     end
 
     test "adds an error to the created span", %{pid: pid} do
-      until(fn ->
-        assert {:ok, [{%Span{pid: ^pid}, :error, %RuntimeError{message: "Exception"}, stack} | _]} =
-                 Test.Span.get(:add_error)
+      assert {:ok, [{%Span{pid: ^pid}, :error, %KeyError{}, stack} | _]} =
+               Test.Span.get(:add_error)
 
-        assert is_list(stack)
-      end)
+      assert is_list(stack)
     end
 
     test "closes the created span", %{pid: pid} do
-      until(fn ->
-        assert {:ok, [{%Span{pid: ^pid}} | _]} = Test.Tracer.get(:close_span)
-      end)
-    end
-  end
-
-  describe "handle_event/3, with a crashing GenServer" do
-    setup do
-      {:ok, pid} = start_supervised(CrashingGenServer)
-
-      GenServer.cast(pid, :raise_error)
-
-      [pid: pid]
-    end
-
-    test "creates a span", %{pid: pid} do
-      until(fn ->
-        assert {:ok, [{"background_job", nil, [pid: ^pid]}]} = Test.Tracer.get(:create_span)
-      end)
-    end
-
-    test "adds an error to the created span", %{pid: pid} do
-      until(fn ->
-        assert {:ok, [{%Span{pid: ^pid}, :error, %KeyError{}, stack} | _]} =
-                 Test.Span.get(:add_error)
-
-        assert is_list(stack)
-      end)
-    end
-
-    test "closes the created span", %{pid: pid} do
-      until(fn ->
-        assert {:ok, [{%Span{pid: ^pid}} | _]} = Test.Tracer.get(:close_span)
-      end)
+      assert {:ok, [{%Span{pid: ^pid}} | _]} = Test.Tracer.get(:close_span)
     end
   end
 
