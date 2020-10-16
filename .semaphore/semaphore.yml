@@ -5,83 +5,69 @@ agent:
     type: e1-standard-2
     os_image: ubuntu1804
 blocks:
-  - name: Run linters
+  - name: Run linters and tests
     task:
       prologue:
         commands:
           - checkout
-          - ERLANG_VERSION=23.1 ELIXIR_VERSION=1.10.4 . bin/setup
-          - mix deps.get
-
       jobs:
         - name: mix format --check-formatted
           commands:
+            - ERLANG_VERSION=23.1 ELIXIR_VERSION=1.10.4 . bin/setup
             - mix format --check-formatted
         - name: mix credo --strict
           commands:
+            - ERLANG_VERSION=23.1 ELIXIR_VERSION=1.10.4 . bin/setup
             - mix credo --strict
         - name: mix dialyzer
           commands:
+            - ERLANG_VERSION=23.1 ELIXIR_VERSION=1.10.4 . bin/setup
             - cache restore dialyzer-plt
-            - mix dialyzer --plt
+            - MIX_ENV=dev mix dialyzer --plt
             - cache store dialyzer-plt priv/plts/
-            - mix dialyzer
-  - name: Run tests
-    task:
-      jobs:
+            - MIX_ENV=dev mix dialyzer
         - name: Elixir master, OTP 23
           commands:
-            - checkout
             - ERLANG_VERSION=23.1 ELIXIR_VERSION=master . bin/setup
             - mix test
         - name: Elixir master, OTP 23, without the NIF loaded
           commands:
-            - checkout
             - ERLANG_VERSION=23.1 ELIXIR_VERSION=master . bin/setup
             - MIX_ENV=test_no_nif mix test
         - name: Elixir 1.11.0, OTP 23
           commands:
-            - checkout
             - ERLANG_VERSION=23.1 ELIXIR_VERSION=1.11.0 . bin/setup
             - mix test
         - name: Elixir 1.10.4, OTP 23
           commands:
-            - checkout
             - ERLANG_VERSION=23.1 ELIXIR_VERSION=1.10.4 . bin/setup
             - mix test
         - name: Elixir 1.11.0, OTP 22
           commands:
-            - checkout
             - ERLANG_VERSION=22.3 ELIXIR_VERSION=1.11.0 . bin/setup
             - mix test
         - name: Elixir 1.10.4, OTP 22
           commands:
-            - checkout
             - ERLANG_VERSION=22.3 ELIXIR_VERSION=1.10.4 . bin/setup
             - mix test
         - name: Elixir 1.11.0, OTP 21
           commands:
-            - checkout
             - ERLANG_VERSION=21.3 ELIXIR_VERSION=1.11.0 . bin/setup
             - mix test
         - name: Elixir 1.10.4, OTP 21
           commands:
-            - checkout
             - ERLANG_VERSION=21.3 ELIXIR_VERSION=1.10.4 . bin/setup
             - mix test
         - name: Elixir 1.9.4, OTP 22
           commands:
-            - checkout
             - ERLANG_VERSION=22.3 ELIXIR_VERSION=1.9.4 . bin/setup
             - mix test
         - name: Elixir 1.9.4, OTP 21
           commands:
-            - checkout
             - ERLANG_VERSION=21.3 ELIXIR_VERSION=1.9.4 . bin/setup
             - mix test
         - name: Elixir 1.9.4, OTP 20
           commands:
-            - checkout
             - ERLANG_VERSION=20.3.8.26 ELIXIR_VERSION=1.9.4 . bin/setup
             - mix test
       env_vars:
