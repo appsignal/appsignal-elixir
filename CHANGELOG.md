@@ -1,3 +1,11 @@
+# 2.0.0-beta.11
+- Set categories from `transaction_event/3` decorator fallback. PR #583
+- Remove Plug and Phoenix fallbacks in favour of post-install message. PR #582
+- Bump agent to v-881e3b3
+  - Agent writes diagnose to file, extension reads from file. PR #628
+  - Ignore actions when creating span payload. PR #630
+  - Update Cargo.lock after bumping probes-rs and running cargo update. PR #633
+
 # 2.0.0-beta.10
 - Bump agent to v-5b16a75
   - Fixed a version mismatch issue in the agent which caused no samples to be processed
