@@ -11,21 +11,29 @@ end
 defmodule Appsignal.Mixfile do
   use Mix.Project
 
+  @source_url "https://github.com/appsignal/appsignal-elixir"
+  @version "2.0.0-beta.11"
+
   def project do
     [
       app: :appsignal,
-      version: "2.0.0-beta.11",
+      version: @version,
       name: "AppSignal",
       description: description(),
       package: package(),
-      source_url: "https://github.com/appsignal/appsignal-elixir",
       homepage_url: "https://appsignal.com",
       test_paths: test_paths(Mix.env()),
       elixir: "~> 1.9",
       compilers: compilers(Mix.env()),
       elixirc_paths: elixirc_paths(Mix.env()),
       deps: deps(),
-      docs: [main: "Appsignal", logo: "logo.png"],
+      docs: [
+        main: "readme",
+        logo: "logo.png",
+        source_ref: @version,
+        source_url: @source_url,
+        extras: ["README.md", "CHANGELOG.md"]
+      ],
       dialyzer: [
         ignore_warnings: "dialyzer.ignore-warnings",
         plt_file: {:no_warn, "priv/plts/dialyzer.plt"}
@@ -48,11 +56,16 @@ defmodule Appsignal.Mixfile do
         "LICENSE",
         "Makefile",
         "agent.exs",
-        "priv/cacert.pem"
+        "priv/cacert.pem",
+        "README.md",
+        "CHANGELOG.md"
       ],
       maintainers: ["Jeff Kreeftmeijer", "Tom de Bruijn"],
       licenses: ["MIT"],
-      links: %{"GitHub" => "https://github.com/appsignal/appsignal-elixir"}
+      links: %{
+        "Changelog" => "#{@source_url}/blob/master/CHANGELOG.md",
+        "GitHub" => @source_url
+      }
     }
   end
 
