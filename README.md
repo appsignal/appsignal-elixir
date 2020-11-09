@@ -1,7 +1,13 @@
 # Appsignal for Elixir
 
 [![Build Status](https://travis-ci.org/appsignal/appsignal-elixir.png?branch=master)](https://travis-ci.org/appsignal/appsignal-elixir)
-[![Hex pm](http://img.shields.io/hexpm/v/appsignal.svg?style=flat)](https://hex.pm/packages/appsignal)
+[![Module Version](https://img.shields.io/hexpm/v/appsignal.svg)](https://hex.pm/packages/appsignal)
+[![Hex Docs](https://img.shields.io/badge/hex-docs-lightgreen.svg)](https://hexdocs.pm/appsignal/)
+[![Total Download](https://img.shields.io/hexpm/dt/appsignal.svg)](https://hex.pm/packages/appsignal)
+[![License](https://img.shields.io/hexpm/l/appsignal.svg)](https://hex.pm/packages/appsignal)
+[![Last Updated](https://img.shields.io/github/last-commit/appsignal/appsignal-elixir.svg)](https://github.com/appsignal/appsignal-elixir/commits/master)
+
+
 > ⚠️  **NOTE**: The `tracing` branch is part of an upcoming version of Appsignal
 > for Elixir, and hasn't been officially released. Aside from beta testing, we
 > recommend using [the current version of AppSignal for
@@ -89,11 +95,11 @@ request on `master`, if it's a new feature on `develop`.
 ### Publishing new versions
 
 1. Merge the `develop` branch to `master` if necessary.
--  Update the version number in `mix.exs`, e.g. `1.2.3`
--  Commit the change.
--  Tag the commit with the version number: `git tag 1.2.3`
--  Push the changes: `git push origin master 1.2.3`
--  Publish the package: `mix hex.publish`
+2. Update the version number in `mix.exs`, e.g. `1.2.3`
+3. Commit the change.
+4. Tag the commit with the version number: `git tag 1.2.3`
+5. Push the changes: `git push origin master 1.2.3`
+6. Publish the package: `mix hex.publish`
 
 ## Contributing
 
