@@ -201,6 +201,11 @@ defmodule Appsignal.InstrumentationTest do
                Test.Span.get(:set_name)
     end
 
+    test "sets the span's category attribute" do
+      assert {:ok, [{%Span{}, "appsignal:category", "call.event"}]} =
+               Test.Span.get(:set_attribute)
+    end
+
     test "closes the span" do
       assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
     end
