@@ -44,6 +44,11 @@ defmodule Appsignal.Instrumentation do
     end)
   end
 
+  @deprecated "Use Appsignal.instrument/3 instead."
+  def instrument(_, name, category, fun) do
+    instrument(name, category, fun)
+  end
+
   def set_error(kind, reason, stacktrace) do
     span = @tracer.current_span()
     @span.add_error(span, kind, reason, stacktrace)
