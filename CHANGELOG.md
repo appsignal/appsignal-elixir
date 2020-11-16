@@ -1,3 +1,8 @@
+# 1.13.5
+- Bump agent to v-20f7d0d
+  - Spawn agent without waiting for it. PR #618
+  - Agent writes diagnose to file, extension reads from file. PR #628
+
 # 1.13.4
 - Bump agent to v-4548c88
   - Fix issue with host metrics values being reported as "Infinity". PR #572
