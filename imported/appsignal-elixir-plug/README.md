@@ -1,10 +1,5 @@
 # Appsignal.Plug
 
-> ⚠️  **NOTE**: Appsignal.Plug is part of an upcoming version of Appsignal for
-> Elixir, and hasn't been officially released. Aside from beta testing, we
-> recommend using [the current version of AppSignal for Elixir](https://github.com/appsignal/appsignal-elixir/tree/main)
-> instead.
-
 AppSignal's Plug instrumentation instruments calls to Plug applications to
 gain performance insights and error reporting.
 
@@ -15,7 +10,7 @@ To install `Appsignal.Plug` into your Plug application, first add
 
 ``` elixir
 defp deps do
-  {:appsignal_plug, "~> 2.0.0-beta.1"}
+  {:appsignal_plug, "~> 2.0.0"}
 end
 ```
 
@@ -37,3 +32,6 @@ defmodule AppsignalPlugExample do
   end
 end
 ```
+
+For more information, check out the [Integrating AppSignal into
+Plug](https://docs.appsignal.com/elixir/integrations/plug.html) guide.
