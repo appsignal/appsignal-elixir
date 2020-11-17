@@ -1,10 +1,5 @@
 # Appsignal.Phoenix
 
-> ⚠️  **NOTE**: Appsignal.Phoenix is part of an upcoming version of Appsignal
-> for Elixir, and hasn't been officially released. Aside from beta testing, we
-> recommend using [the current version of AppSignal for
-> Elixir](https://github.com/appsignal/appsignal-elixir/tree/main) instead.
-
 AppSignal's Phoenix instrumentation instruments calls to Phoenix applications
 to gain performance insights and error reporting.
 
@@ -15,12 +10,12 @@ To install `Appsignal.Phoenix` into your Phoenix application, first add
 
 ``` elixir
 defp deps do
-  {:appsignal_phoenix, "~> 2.0.0-beta.1"},
+  {:appsignal_phoenix, "~> 2.0.0"},
 end
 ```
 
 After that, follow the [installation instructions for Appsignal for
-Elixir](https://github.com/appsignal/appsignal-elixir/tree/tracing).
+Elixir](https://docs.appsignal.com/elixir/installation/).
 
 Then, `use Appsignal.Phoenix` in your application's endpoint module:
 
@@ -59,3 +54,6 @@ defmodule AppsignalPhoenixExampleWeb do
   # ...
 end
 ```
+
+For more information, check out the [Integrating AppSignal into
+Phoenix](https://docs.appsignal.com/elixir/integrations/phoenix.html) guide.
