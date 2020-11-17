@@ -1,52 +1,32 @@
-# 2.0.0-beta.11
+# 2.0.0
 - Set categories from `transaction_event/3` decorator fallback. PR #583
 - Remove Plug and Phoenix fallbacks in favour of post-install message. PR #582
 - Bump agent to v-881e3b3
   - Agent writes diagnose to file, extension reads from file. PR #628
   - Ignore actions when creating span payload. PR #630
   - Update Cargo.lock after bumping probes-rs and running cargo update. PR #633
-
-# 2.0.0-beta.10
 - Bump agent to v-5b16a75
   - Fixed a version mismatch issue in the agent which caused no samples to be processed
-
-# 2.0.0-beta.9
 - Bump agent to v-38010f3
   - Use Rust 1.46.0 and spawn agent without waiting for it. PR #618
-
-# 2.0.0-beta.8
 - Set category names in demo command
   Commit dd5a4c019f403a5c55be0f4f07bda8d85385aef4
-
-# 2.0.0-beta.7
 - Add Repo configuration. PR #578
 - Link AppSignal config when config/config.exs does not exist. PR #577
 - Set category from Appsignal.Instrumentation.instrument/3
   Commit  c8a789e9ff5dfe0d5a522448a923f94a1f54b63d
-
-# 2.0.0-beta.6
 - Add debug log lines on handler attachment
   Commit 44f594dc6c4fa00b0ecb329aea16907cb106a67a
   Commit 23a9cd0bf063e96c9b87ca2b2cf797ab96d4f96b
   Commit a0ac8566f1d200152748b98f938ba78813767f9e
-
-# 2.0.0-beta.5
 - Bump agent to v-c8f8185. PR #575
 - Implement _set_span_namespace. PR #576
 - Tracer handles registry being down
   Commit 86e433e42ebfd080d5a1f8450f9a29784ef2d4d9
-
-# 2.0.0-beta.4
 - Handle nil-spans in span.set_namespace/2
   Commit d0f5d9d96890f0caaa80c58c7a34a343b722591e
-
-# 2.0.0-beta.3
 - Restore Appsignal.send_error/3 and Appsignal.set_error/3. PR #574
-
-# 2.0.0-beta.2
 - Remove unused module attributes from Appsignal module
-
-# 2.0.0-beta.1
 - Switch to span-based API
 - Reimplement error handling
 - Reimplement Ecto integration
