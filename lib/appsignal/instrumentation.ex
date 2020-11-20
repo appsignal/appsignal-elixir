@@ -38,9 +38,10 @@ defmodule Appsignal.Instrumentation do
 
   def instrument(name, category, fun) do
     instrument(fn span ->
-      _ = span
-      |> @span.set_name(name)
-      |> @span.set_attribute("appsignal:category", category)
+      _ =
+        span
+        |> @span.set_name(name)
+        |> @span.set_attribute("appsignal:category", category)
 
       call_with_optional_argument(fun, span)
     end)
