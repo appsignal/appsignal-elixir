@@ -32,7 +32,7 @@ defmodule Appsignal.Instrumentation.Decorators do
       Appsignal.Instrumentation.instrument(
         "#{module_name(unquote(module))}.#{unquote(name)}/#{unquote(arity)}",
         fn span ->
-          unquote(@span).set_namespace(span, unquote(namespace))
+          _ = unquote(@span).set_namespace(span, unquote(namespace))
           unquote(body)
         end
       )
