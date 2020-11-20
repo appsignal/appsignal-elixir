@@ -50,6 +50,18 @@ defmodule Appsignal.Error.Backend do
     {:ok, :ok, state}
   end
 
+  def handle_info(_message, state) do
+    {:ok, state}
+  end
+
+  def code_change(_old_vsn, state, _extra) do
+    {:ok, state}
+  end
+
+  def terminate(_reason, _state) do
+    :ok
+  end
+
   defp set_error_data(span, reason, stacktrace) do
     span
     |> @span.add_error(:error, reason, stacktrace)
