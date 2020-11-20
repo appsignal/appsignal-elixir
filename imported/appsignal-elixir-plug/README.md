@@ -15,7 +15,7 @@ end
 ```
 
 After that, follow the [installation instructions for Appsignal for
-Elixir](https://github.com/appsignal/appsignal-elixir/tree/tracing).
+Elixir](https://docs.appsignal.com/elixir/installation/).
 
 Finally, `use Appsignal.Plug` in your application's router module:
 
