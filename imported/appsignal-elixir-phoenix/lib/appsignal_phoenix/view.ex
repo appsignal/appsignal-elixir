@@ -50,8 +50,11 @@ defmodule Appsignal.Phoenix.View do
         path = Path.join(root, template)
 
         Appsignal.instrument("Render #{path}", fn span ->
-          @span.set_attribute(span, "title", path)
-          @span.set_attribute(span, "appsignal:category", "render.phoenix_template")
+          _ =
+            span
+            |> @span.set_attribute("title", path)
+            |> @span.set_attribute("appsignal:category", "render.phoenix_template")
+
           super(template, assigns)
         end)
       end

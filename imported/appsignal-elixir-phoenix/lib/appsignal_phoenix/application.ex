@@ -6,7 +6,7 @@ defmodule Appsignal.Phoenix.Application do
   use Application
 
   def start(_type, _args) do
-    EventHandler.attach()
+    _ = EventHandler.attach()
 
     opts = [strategy: :one_for_one, name: Appsignal.Phoenix.Supervisor]
     Supervisor.start_link([], opts)

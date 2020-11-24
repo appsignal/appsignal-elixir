@@ -39,7 +39,7 @@ defmodule Appsignal.Phoenix.Channel do
     Appsignal.instrument(
       "#{Appsignal.Utils.module_name(module)}##{name}",
       fn span ->
-        @span.set_namespace(span, "channel")
+        _ = @span.set_namespace(span, "channel")
 
         try do
           fun.()
@@ -47,19 +47,21 @@ defmodule Appsignal.Phoenix.Channel do
           kind, reason ->
             stack = __STACKTRACE__
 
-            span
-            |> @span.set_sample_data("params", params)
-            |> @span.set_sample_data("environment", Appsignal.Metadata.metadata(socket))
-            |> @span.add_error(kind, reason, stack)
-            |> @tracer.close_span()
+            _ =
+              span
+              |> @span.set_sample_data("params", params)
+              |> @span.set_sample_data("environment", Appsignal.Metadata.metadata(socket))
+              |> @span.add_error(kind, reason, stack)
+              |> @tracer.close_span()
 
             @tracer.ignore()
             :erlang.raise(kind, reason, stack)
         else
           result ->
-            span
-            |> @span.set_sample_data("params", params)
-            |> @span.set_sample_data("environment", Appsignal.Metadata.metadata(socket))
+            _ =
+              span
+              |> @span.set_sample_data("params", params)
+              |> @span.set_sample_data("environment", Appsignal.Metadata.metadata(socket))
 
             result
         end
