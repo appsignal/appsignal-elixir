@@ -16,7 +16,8 @@ defmodule Appsignal.Plug.MixProject do
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       dialyzer: [
-        plt_file: {:no_warn, "priv/plts/dialyzer.plt"}
+        plt_file: {:no_warn, "priv/plts/dialyzer.plt"},
+        flags: ["-Wunmatched_returns", "-Werror_handling", "-Wunderspecs"]
       ]
     ]
   end
