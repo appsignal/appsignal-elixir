@@ -1,3 +1,7 @@
+# 2.0.1
+- Ignore unhandled info, code_change and terminate in Error.Backend. PR #594
+- Explicitly ignore returns from Span functions. PR #593
+
 # 2.0.0
 - Set categories from `transaction_event/3` decorator fallback. PR #583
 - Remove Plug and Phoenix fallbacks in favour of post-install message. PR #582
