@@ -10,9 +10,9 @@ defmodule Appsignal.Error.Backend do
   def init(opts), do: {:ok, opts}
 
   def attach do
-    case ok?(Logger.add_backend(Appsignal.Error.Backend)) do
-      :ok -> Logger.debug("Appsignal.Error.Backend attached to Logger")
-      error -> Logger.warn("Appsignal.Error.Backend not attached to Logger: #{inspect(error)}")
+    case Logger.add_backend(Appsignal.Error.Backend) do
+      {:error, error} -> Logger.warn("Appsignal.Error.Backend not attached to Logger: #{error}")
+      _ -> Logger.debug("Appsignal.Error.Backend attached to Logger")
     end
   end
 
@@ -50,13 +50,21 @@ defmodule Appsignal.Error.Backend do
     {:ok, :ok, state}
   end
 
+  def handle_info(_message, state) do
+    {:ok, state}
+  end
+
+  def code_change(_old_vsn, state, _extra) do
+    {:ok, state}
+  end
+
+  def terminate(_reason, _state) do
+    :ok
+  end
+
   defp set_error_data(span, reason, stacktrace) do
     span
     |> @span.add_error(:error, reason, stacktrace)
     |> @tracer.close_span()
   end
-
-  defp ok?({:ok, _, _}), do: :ok
-  defp ok?({:ok, _}), do: :ok
-  defp ok?(error), do: error
 end

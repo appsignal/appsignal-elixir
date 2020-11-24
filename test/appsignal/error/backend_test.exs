@@ -162,4 +162,22 @@ defmodule Appsignal.Error.BackendTest do
       assert Backend.handle_call(:call, %{}) == {:ok, :ok, %{}}
     end
   end
+
+  describe "handle_info/2" do
+    test "returns {:ok, state}" do
+      assert Backend.handle_info({:io_reply, make_ref(), :ok}, %{}) == {:ok, %{}}
+    end
+  end
+
+  describe "code_change/3" do
+    test "returns {:ok, state}" do
+      assert Backend.code_change(123, %{}, :extra) == {:ok, %{}}
+    end
+  end
+
+  describe "terminate/2" do
+    test "returns :ok" do
+      assert Backend.terminate(:shutdown, %{}) == :ok
+    end
+  end
 end
