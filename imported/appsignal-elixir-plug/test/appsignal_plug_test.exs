@@ -1,8 +1,19 @@
+defmodule RequestId do
+  def init(_opts) do
+    :ok
+  end
+
+  def call(conn, _opts) do
+    Plug.Conn.put_resp_header(conn, "x-request-id", "request_id")
+  end
+end
+
 defmodule PlugWithAppsignal do
   use Plug.Router
   use Appsignal.Plug
   use Plug.ErrorHandler
 
+  plug(RequestId)
   plug(:match)
   plug(:dispatch)
 
@@ -123,7 +134,10 @@ defmodule Appsignal.PlugTest do
                "host" => "www.example.com",
                "method" => "GET",
                "port" => 80,
-               "request_path" => "/"
+               "request_path" => "/",
+               "status" => 200,
+               "request_id" => "request_id",
+               "req_headers.accept" => "text/html"
              })
     end
 
@@ -196,7 +210,10 @@ defmodule Appsignal.PlugTest do
                "host" => "www.example.com",
                "method" => "GET",
                "port" => 80,
-               "request_path" => "/instrumentation"
+               "request_path" => "/instrumentation",
+               "status" => 200,
+               "request_id" => "request_id",
+               "req_headers.accept" => "text/html"
              })
     end
 
@@ -227,7 +244,10 @@ defmodule Appsignal.PlugTest do
                "host" => "www.example.com",
                "method" => "GET",
                "port" => 80,
-               "request_path" => "/exception"
+               "request_path" => "/exception",
+               "status" => 500,
+               "request_id" => "request_id",
+               "req_headers.accept" => "text/html"
              })
     end
 
@@ -470,7 +490,10 @@ defmodule Appsignal.PlugTest do
   end
 
   defp get(path, params_or_body \\ nil) do
-    conn = conn(:get, path, params_or_body)
+    conn =
+      :get
+      |> conn(path, params_or_body)
+      |> put_req_header("accept", "text/html")
 
     try do
       [conn: PlugWithAppsignal.call(conn, [])]

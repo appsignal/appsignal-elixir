@@ -137,9 +137,11 @@ defmodule Appsignal.Plug do
 
   @doc false
   def handle_error(span, kind, reason, stack, conn) do
+    conn_with_status = Plug.Conn.put_status(conn, Plug.Exception.status(reason))
+
     span
     |> @span.add_error(kind, reason, stack)
-    |> set_conn_data(conn)
+    |> set_conn_data(conn_with_status)
   end
 
   defp set_name(span, %Plug.Conn{private: %{appsignal_name: name}}) do
