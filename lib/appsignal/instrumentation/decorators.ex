@@ -39,6 +39,18 @@ defmodule Appsignal.Instrumentation.Decorators do
     end
   end
 
+  defp do_instrument(body, %{module: module, name: name, namespace: namespace}) do
+    quote do
+      Appsignal.Instrumentation.instrument(
+        "#{module_name(unquote(module))}.#{unquote(name)}",
+        fn span ->
+          _ = unquote(@span).set_namespace(span, unquote(namespace))
+          unquote(body)
+        end
+      )
+    end
+  end
+
   defp do_instrument(body, %{module: module, name: name, arity: arity, category: category}) do
     quote do
       Appsignal.Instrumentation.instrument(
@@ -84,6 +96,6 @@ defmodule Appsignal.Instrumentation.Decorators do
   end
 
   def channel_action(body, %{module: module, args: [action, _payload, _socket]}) do
-    instrument(body, %{module: module, name: action})
+    instrument("channel", body, %{module: module, name: action})
   end
 end
