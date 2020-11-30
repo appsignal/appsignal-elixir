@@ -1,3 +1,6 @@
+# 2.0.2
+- Use "channel" namespace in channel_action decorator. PR #596
+
 # 2.0.1
 - Ignore unhandled info, code_change and terminate in Error.Backend. PR #594
 - Explicitly ignore returns from Span functions. PR #593
