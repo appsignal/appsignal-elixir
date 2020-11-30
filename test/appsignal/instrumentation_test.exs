@@ -224,6 +224,10 @@ defmodule Appsignal.InstrumentationTest do
       assert Test.Tracer.get(:create_span) == {:ok, [{"background_job", nil}]}
     end
 
+    test "sets the span's namespace" do
+      assert {:ok, [{%Span{}, "channel"}]} = Test.Span.get(:set_namespace)
+    end
+
     test "sets the span's name" do
       assert {:ok, [{%Span{}, "InstrumentedModule.action"}]} = Test.Span.get(:set_name)
     end
