@@ -1,3 +1,7 @@
+# 2.0.3
+- Bump agent to v-f9d2b57
+  - Add error counts to map for spans. PR #638
+
 # 2.0.2
 - Use "channel" namespace in channel_action decorator. PR #596
 
