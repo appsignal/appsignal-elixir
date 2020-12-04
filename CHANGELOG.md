@@ -1,3 +1,7 @@
+# 2.0.4
+- Bump agent to v-c55fb2c
+  - Fix ignore actions and spans without names bugs. PR #639
+
 # 2.0.3
 - Bump agent to v-f9d2b57
   - Add error counts to map for spans. PR #638
