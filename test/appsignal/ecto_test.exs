@@ -26,7 +26,7 @@ defmodule Appsignal.EctoTest do
     Application.delete_env(:appsignal, Appsignal.Test.Repo, telemetry_prefix: :my_repo)
   end
 
-  describe "handle_event/4" do
+  describe "handle_event/4, without a root span" do
     setup do
       Test.Nif.start_link()
       Test.Tracer.start_link()
@@ -52,8 +52,41 @@ defmodule Appsignal.EctoTest do
       )
     end
 
-    test "creates a span with a start time" do
-      {:ok, [{"http_request", nil, start_time: time}]} = Test.Tracer.get(:create_span)
+    test "does not create a span" do
+      assert Test.Tracer.get(:create_span) == :error
+    end
+  end
+
+  describe "handle_event/4, with a root span" do
+    setup do
+      Test.Nif.start_link()
+      Test.Tracer.start_link()
+      Test.Span.start_link()
+
+      Appsignal.Tracer.create_span("http_request")
+
+      :telemetry.execute(
+        [:appsignal, :test, :repo, :query],
+        %{
+          decode_time: 2_204_000,
+          query_time: 5_386_000,
+          queue_time: 1_239_000,
+          total_time: 8_829_000
+        },
+        %{
+          params: [],
+          query:
+            "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0",
+          repo: Appsignal.Test.Repo,
+          result: :ok,
+          source: "users",
+          type: :ecto_sql_query
+        }
+      )
+    end
+
+    test "creates a span with a parent and a start time" do
+      {:ok, [{"http_request", %Span{}, start_time: time}]} = Test.Tracer.get(:create_span)
       assert is_integer(time)
     end
 
@@ -89,6 +122,8 @@ defmodule Appsignal.EctoTest do
       event = [:appsignal, :test, :repo, :outside]
       :telemetry.attach({__MODULE__, event}, event, &Appsignal.Ecto.handle_event/4, :ok)
 
+      Appsignal.Tracer.create_span("http_request")
+
       :telemetry.execute(
         event,
         %{
@@ -109,8 +144,8 @@ defmodule Appsignal.EctoTest do
       )
     end
 
-    test "creates a span with a start time" do
-      {:ok, [{"http_request", nil, start_time: time}]} = Test.Tracer.get(:create_span)
+    test "creates a span with a parent and a start time" do
+      {:ok, [{"http_request", %Span{}, start_time: time}]} = Test.Tracer.get(:create_span)
       assert is_integer(time)
     end
 
