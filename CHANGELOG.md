@@ -1,3 +1,6 @@
+# 2.0.5
+- Don't register query spans without parents. PR #600
+
 # 2.0.4
 - Bump agent to v-c55fb2c
   - Fix ignore actions and spans without names bugs. PR #639
