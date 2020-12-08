@@ -52,6 +52,12 @@ defmodule Appsignal.Ecto do
   def handle_event(_event, _measurements, %{query: "commit"}, _config), do: :ok
 
   def handle_event(_event, %{total_time: total_time}, %{repo: repo, query: query}, _config) do
+    handle_query(@tracer.current_span(), total_time, repo, query)
+  end
+
+  defp handle_query(nil, _total_time, _repo, _query), do: nil
+
+  defp handle_query(current, total_time, repo, query) do
     time = :os.system_time()
 
     "http_request"
