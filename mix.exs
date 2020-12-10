@@ -63,7 +63,7 @@ defmodule Appsignal.Mixfile do
       maintainers: ["Jeff Kreeftmeijer", "Tom de Bruijn"],
       licenses: ["MIT"],
       links: %{
-        "Changelog" => "#{@source_url}/blob/master/CHANGELOG.md",
+        "Changelog" => "#{@source_url}/blob/main/CHANGELOG.md",
         "GitHub" => @source_url
       }
     }
