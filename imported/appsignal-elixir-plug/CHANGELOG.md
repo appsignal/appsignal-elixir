@@ -1,3 +1,6 @@
+# 2.0.4
+Drop all errors with a plug_status < 500, not just WrapperErrors. PR #7
+
 # 2.0.3
 Match on :done instead of true for plug_session_fetch. Commit 8af8836f17db60484fc6d02143666345fe607435
 
