@@ -1,3 +1,6 @@
+# 2.0.3
+Match on :done instead of true for plug_session_fetch. Commit 8af8836f17db60484fc6d02143666345fe607435
+
 # 2.0.2
 Add status and request_id and restore headers in Appsignal.Metadata. PR #5
 
