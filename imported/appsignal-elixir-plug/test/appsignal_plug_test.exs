@@ -461,7 +461,7 @@ defmodule Appsignal.PlugTest do
                private: %{
                  plug_route: {"/", fn -> :ok end},
                  plug_session: %{key: "value"},
-                 plug_session_fetch: true
+                 plug_session_fetch: :done
                }
              }) == span
 
@@ -483,7 +483,7 @@ defmodule Appsignal.PlugTest do
           private: %{
             plug_route: {"/", fn -> :ok end},
             plug_session: %{key: "value"},
-            plug_session_fetch: true
+            plug_session_fetch: :done
           }
         })
       after

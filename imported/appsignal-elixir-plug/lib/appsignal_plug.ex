@@ -184,7 +184,7 @@ defmodule Appsignal.Plug do
   end
 
   defp set_session_data(span, %{skip_session_data: false}, %Plug.Conn{
-         private: %{plug_session: session, plug_session_fetch: true}
+         private: %{plug_session: session, plug_session_fetch: :done}
        }) do
     @span.set_sample_data(span, "session_data", session)
   end
