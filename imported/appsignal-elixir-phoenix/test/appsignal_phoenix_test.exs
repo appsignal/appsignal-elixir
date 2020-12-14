@@ -85,6 +85,32 @@ defmodule Appsignal.PhoenixTest do
     end
   end
 
+  describe "GET /404" do
+    setup do
+      get("/404")
+    end
+
+    test "reraises the error", %{reason: reason} do
+      assert %Phoenix.Router.NoRouteError{} = reason
+    end
+
+    test "creates a root span" do
+      assert {:ok, [{_, nil}]} = Test.Tracer.get(:create_span)
+    end
+
+    test "sets the span's name" do
+      assert :error = Test.Span.get(:set_name)
+    end
+
+    test "adds an error to the span", %{reason: reason} do
+      assert :error = Test.Span.get(:add_error)
+    end
+
+    test "does not close the span" do
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    end
+  end
+
   defp get(path) do
     %{conn: get(build_conn(), path)}
   rescue
