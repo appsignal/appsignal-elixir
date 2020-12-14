@@ -468,6 +468,11 @@ defmodule Appsignal.PlugTest do
       assert sample_data("session_data", %{key: "value"})
     end
 
+    test "does not set unfetched session data", %{span: span} do
+      assert Appsignal.Plug.set_conn_data(span, %Plug.Conn{}) == span
+      refute sample_data("session_data", %{key: "value"})
+    end
+
     test "does not set session data when skip_session_data is set to true", %{span: span} do
       config = Application.get_env(:appsignal, :config)
       Application.put_env(:appsignal, :config, %{config | skip_session_data: true})
