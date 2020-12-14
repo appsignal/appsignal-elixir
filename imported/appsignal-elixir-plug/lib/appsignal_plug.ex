@@ -116,23 +116,16 @@ defmodule Appsignal.Plug do
   def handle_error(
         span,
         :error,
-        %Plug.Conn.WrapperError{reason: %{plug_status: status}},
-        _stack,
-        _conn
-      )
-      when status < 500 do
-    span
-  end
-
-  @doc false
-  def handle_error(
-        span,
-        :error,
         %Plug.Conn.WrapperError{conn: conn, reason: wrapped_reason, stack: stack},
         _stack,
         _conn
       ) do
     handle_error(span, :error, wrapped_reason, stack, conn)
+  end
+
+  @doc false
+  def handle_error(span, _kind, %{plug_status: status}, _stack, _conn) when status < 500 do
+    span
   end
 
   @doc false
