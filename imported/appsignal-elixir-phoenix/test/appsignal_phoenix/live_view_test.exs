@@ -35,7 +35,7 @@ defmodule Appsignal.Phoenix.LiveViewTest do
     end
 
     test "sets the span's namespace" do
-      assert {:ok, [{%Span{}, "channel"}]} = Test.Span.get(:set_namespace)
+      assert {:ok, [{%Span{}, "live_view"}]} = Test.Span.get(:set_namespace)
     end
 
     test "sets the span's sample data" do
@@ -71,7 +71,7 @@ defmodule Appsignal.Phoenix.LiveViewTest do
     end
 
     test "sets the span's namespace" do
-      assert {:ok, [{%Span{}, "channel"}]} = Test.Span.get(:set_namespace)
+      assert {:ok, [{%Span{}, "live_view"}]} = Test.Span.get(:set_namespace)
     end
 
     test "sets the span's parameters" do
@@ -111,7 +111,7 @@ defmodule Appsignal.Phoenix.LiveViewTest do
     end
 
     test "sets the span's namespace" do
-      assert {:ok, [{%Span{}, "channel"}]} = Test.Span.get(:set_namespace)
+      assert {:ok, [{%Span{}, "live_view"}]} = Test.Span.get(:set_namespace)
     end
 
     test "sets the span's parameters" do
