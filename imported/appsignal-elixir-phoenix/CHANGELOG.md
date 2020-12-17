@@ -1,3 +1,6 @@
+# 2.0.3
+* Use “live_view” namespace for LiveView samples. PR #10
+
 # 2.0.2
 * Explicitly ignore returns from Span functions. PR #7
 
