@@ -170,6 +170,7 @@ defmodule Appsignal.Tracer do
 
   defp register(%Span{pid: pid} = span) do
     :ets.insert(@table, {pid, span})
+    @monitor.add()
     span
   end
 

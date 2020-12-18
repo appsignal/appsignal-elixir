@@ -6,6 +6,7 @@ defmodule AppsignalTest do
     {:ok, _} = start_supervised(Appsignal.Test.Tracer)
     {:ok, _} = start_supervised(Appsignal.Test.Nif)
     {:ok, _} = start_supervised(Appsignal.Test.Span)
+    {:ok, _} = start_supervised(Appsignal.Test.Monitor)
 
     :ok
   end
