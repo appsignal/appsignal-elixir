@@ -931,18 +931,14 @@ static ERL_NIF_TERM _create_root_span_with_timestamp(ErlNifEnv* env, int argc, c
 }
 
 static ERL_NIF_TERM _create_child_span(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
+  span_ptr *parent;
   span_ptr *ptr;
-  ErlNifBinary trace_id;
-  ErlNifBinary span_id;
   ERL_NIF_TERM span_ref;
 
-  if (argc != 2) {
+  if (argc != 1) {
     return enif_make_badarg(env);
   }
-  if(!enif_inspect_iolist_as_binary(env, argv[0], &trace_id)) {
-    return enif_make_badarg(env);
-  }
-  if(!enif_inspect_iolist_as_binary(env, argv[1], &span_id)) {
+  if(!enif_get_resource(env, argv[0], appsignal_span_type, (void**) &parent)) {
     return enif_make_badarg(env);
   }
 
@@ -950,10 +946,7 @@ static ERL_NIF_TERM _create_child_span(ErlNifEnv* env, int argc, const ERL_NIF_T
   if(!ptr)
     return make_error_tuple(env, "no_memory");
 
-  ptr->span = appsignal_create_child_span(
-    make_appsignal_string(trace_id),
-    make_appsignal_string(span_id)
-  );
+  ptr->span = appsignal_create_child_span(parent->span);
 
   span_ref = enif_make_resource(env, ptr);
   enif_release_resource(ptr);
@@ -962,26 +955,22 @@ static ERL_NIF_TERM _create_child_span(ErlNifEnv* env, int argc, const ERL_NIF_T
 }
 
 static ERL_NIF_TERM _create_child_span_with_timestamp(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
+  span_ptr *parent;
   span_ptr *ptr;
-  ErlNifBinary trace_id;
-  ErlNifBinary span_id;
   long sec;
   long nsec;
   ERL_NIF_TERM span_ref;
 
-  if (argc != 4) {
+  if (argc != 3) {
     return enif_make_badarg(env);
   }
-  if(!enif_inspect_iolist_as_binary(env, argv[0], &trace_id)) {
+  if(!enif_get_resource(env, argv[0], appsignal_span_type, (void**) &parent)) {
     return enif_make_badarg(env);
   }
-  if(!enif_inspect_iolist_as_binary(env, argv[1], &span_id)) {
+  if(!enif_get_long(env, argv[1], &sec)) {
     return enif_make_badarg(env);
   }
-  if(!enif_get_long(env, argv[2], &sec)) {
-    return enif_make_badarg(env);
-  }
-  if(!enif_get_long(env, argv[3], &nsec)) {
+  if(!enif_get_long(env, argv[2], &nsec)) {
     return enif_make_badarg(env);
   }
 
@@ -989,12 +978,7 @@ static ERL_NIF_TERM _create_child_span_with_timestamp(ErlNifEnv* env, int argc, 
   if(!ptr)
     return make_error_tuple(env, "no_memory");
 
-  ptr->span = appsignal_create_child_span_with_timestamp(
-    make_appsignal_string(trace_id),
-    make_appsignal_string(span_id),
-    sec,
-    nsec
-  );
+  ptr->span = appsignal_create_child_span_with_timestamp(parent->span, sec, nsec);
 
   span_ref = enif_make_resource(env, ptr);
   enif_release_resource(ptr);
@@ -1281,38 +1265,6 @@ static ERL_NIF_TERM _close_span_with_timestamp(ErlNifEnv* env, int argc, const E
     return enif_make_atom(env, "ok");
 }
 
-static ERL_NIF_TERM _trace_id(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
-{
-  span_ptr *ptr;
-  appsignal_string_t id;
-
-  if (argc != 1) {
-    return enif_make_badarg(env);
-  }
-  if (!enif_get_resource(env, argv[0], appsignal_span_type, (void**) &ptr)) {
-    return enif_make_badarg(env);
-  }
-
-  id = appsignal_trace_id(ptr->span);
-  return make_ok_tuple(env, make_elixir_string(env,id));
-}
-
-static ERL_NIF_TERM _span_id(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
-{
-  span_ptr *ptr;
-  appsignal_string_t id;
-
-  if (argc != 1) {
-    return enif_make_badarg(env);
-  }
-  if (!enif_get_resource(env, argv[0], appsignal_span_type, (void**) &ptr)) {
-    return enif_make_badarg(env);
-  }
-
-  id = appsignal_span_id(ptr->span);
-  return make_ok_tuple(env, make_elixir_string(env,id));
-}
-
 static ERL_NIF_TERM _span_to_json(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
   span_ptr *ptr;
   appsignal_string_t json;
@@ -1430,8 +1382,8 @@ static ErlNifFunc nif_funcs[] =
     {"_loaded", 0, _loaded, 0},
     {"_create_root_span", 1, _create_root_span, 0},
     {"_create_root_span_with_timestamp", 3, _create_root_span_with_timestamp, 0},
-    {"_create_child_span", 2, _create_child_span, 0},
-    {"_create_child_span_with_timestamp", 4, _create_child_span_with_timestamp, 0},
+    {"_create_child_span", 1, _create_child_span, 0},
+    {"_create_child_span_with_timestamp", 3, _create_child_span_with_timestamp, 0},
     {"_set_span_name", 2, _set_span_name, 0},
     {"_set_span_namespace", 2, _set_span_namespace, 0},
     {"_set_span_attribute_string", 3, _set_span_attribute_string, 0},
@@ -1443,8 +1395,6 @@ static ErlNifFunc nif_funcs[] =
     {"_add_span_error", 4, _add_span_error, 0},
     {"_close_span", 1, _close_span, 0},
     {"_close_span_with_timestamp", 3, _close_span_with_timestamp, 0},
-    {"_trace_id", 1, _trace_id, 0},
-    {"_span_id", 1, _span_id, 0},
     {"_span_to_json", 1, _span_to_json, 0}
 };
 

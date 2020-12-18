@@ -15,14 +15,14 @@ defmodule Appsignal.Test.Nif do
     Nif.create_root_span_with_timestamp(namespace, sec, nsec)
   end
 
-  def create_child_span(trace_id, span_id) do
-    add(:create_child_span, {trace_id, span_id})
-    Nif.create_child_span(trace_id, span_id)
+  def create_child_span(parent) do
+    add(:create_child_span, {parent})
+    Nif.create_child_span(parent)
   end
 
-  def create_child_span_with_timestamp(trace_id, span_id, sec, nsec) do
-    add(:create_child_span_with_timestamp, {trace_id, span_id, sec, nsec})
-    Nif.create_child_span_with_timestamp(trace_id, span_id, sec, nsec)
+  def create_child_span_with_timestamp(parent, sec, nsec) do
+    add(:create_child_span_with_timestamp, {parent, sec, nsec})
+    Nif.create_child_span_with_timestamp(parent, sec, nsec)
   end
 
   def set_span_name(reference, name) do
