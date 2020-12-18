@@ -57,20 +57,18 @@ defmodule Appsignal.NifTest do
 
   describe "create_child_span/3" do
     test "returns an ok-tuple with a reference to the span" do
-      assert {:ok, ref} = Nif.create_child_span("trace_id", "span_id")
+      {:ok, parent} = Nif.create_root_span("http_request")
+
+      assert {:ok, ref} = Nif.create_child_span(parent)
       assert is_reference(ref)
     end
   end
 
   describe "create_child_span_with_timestamp/2" do
     setup do
-      {:ok, ref} =
-        Nif.create_child_span_with_timestamp(
-          "trace_id",
-          "span_id",
-          1_588_930_137,
-          508_176_000
-        )
+      {:ok, parent} = Nif.create_root_span("http_request")
+
+      {:ok, ref} = Nif.create_child_span_with_timestamp(parent, 1_588_930_137, 508_176_000)
 
       %{ref: ref}
     end

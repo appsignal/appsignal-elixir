@@ -138,8 +138,7 @@ defmodule Appsignal.TracerTest do
     end
 
     test "creates a child span through the Nif" do
-      assert [{_, _, 1_588_936_027, 128_939_000}] =
-               Test.Nif.get!(:create_child_span_with_timestamp)
+      assert [{_, 1_588_936_027, 128_939_000}] = Test.Nif.get!(:create_child_span_with_timestamp)
     end
   end
 

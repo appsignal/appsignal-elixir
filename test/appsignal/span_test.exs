@@ -90,11 +90,8 @@ defmodule AppsignalSpanTest do
       assert %Span{} = span
     end
 
-    test "creates a child span through the Nif", %{parent: parent} do
-      assert [{parent_trace_id, parent_span_id}] = Test.Nif.get!(:create_child_span)
-
-      assert {:ok, ^parent_trace_id} = Span.trace_id(parent)
-      assert {:ok, ^parent_span_id} = Span.span_id(parent)
+    test "creates a child span through the Nif", %{parent: %Span{reference: parent}} do
+      assert Test.Nif.get!(:create_child_span) == [{parent}]
     end
 
     test "sets the span's reference", %{span: span} do
@@ -113,11 +110,8 @@ defmodule AppsignalSpanTest do
       assert %Span{} = span
     end
 
-    test "creates a child span through the Nif", %{parent: parent} do
-      assert [{parent_trace_id, parent_span_id}] = Test.Nif.get!(:create_child_span)
-
-      assert {:ok, ^parent_trace_id} = Span.trace_id(parent)
-      assert {:ok, ^parent_span_id} = Span.span_id(parent)
+    test "creates a child span through the Nif", %{parent: %Span{reference: parent}} do
+      assert Test.Nif.get!(:create_child_span) == [{parent}]
     end
 
     test "sets the span's reference", %{span: span} do
@@ -159,32 +153,6 @@ defmodule AppsignalSpanTest do
     @tag :skip_env_test_no_nif
     test "sets the start time through the Nif", %{span: span} do
       assert %{"start_time" => 1_588_937_136} = Span.to_map(span)
-    end
-  end
-
-  describe ".trace_id/1" do
-    setup :create_root_span
-
-    test "returns an ok-tuple with the trace_id as a list", %{span: span} do
-      {:ok, trace_id} = Span.trace_id(span)
-      assert is_list(trace_id)
-    end
-
-    test "returns nil when passing a nil-span" do
-      {:ok, nil} = Span.trace_id(nil)
-    end
-  end
-
-  describe ".span_id/1" do
-    setup :create_root_span
-
-    test "returns an ok-tuple with the span_id as a list", %{span: span} do
-      {:ok, span_id} = Span.span_id(span)
-      assert is_list(span_id)
-    end
-
-    test "returns nil when passing a nil-span" do
-      {:ok, nil} = Span.span_id(nil)
     end
   end
 
