@@ -31,6 +31,7 @@ defmodule Appsignal.EctoTest do
       Test.Nif.start_link()
       Test.Tracer.start_link()
       Test.Span.start_link()
+      Test.Monitor.start_link()
 
       :telemetry.execute(
         [:appsignal, :test, :repo, :query],
@@ -62,6 +63,7 @@ defmodule Appsignal.EctoTest do
       Test.Nif.start_link()
       Test.Tracer.start_link()
       Test.Span.start_link()
+      Test.Monitor.start_link()
 
       Appsignal.Tracer.create_span("http_request")
 
@@ -118,6 +120,7 @@ defmodule Appsignal.EctoTest do
       Test.Nif.start_link()
       Test.Tracer.start_link()
       Test.Span.start_link()
+      Test.Monitor.start_link()
 
       event = [:appsignal, :test, :repo, :outside]
       :telemetry.attach({__MODULE__, event}, event, &Appsignal.Ecto.handle_event/4, :ok)
@@ -177,6 +180,7 @@ defmodule Appsignal.EctoTest do
       Test.Nif.start_link()
       Test.Tracer.start_link()
       Test.Span.start_link()
+      Test.Monitor.start_link()
 
       :telemetry.execute(
         [:appsignal, :test, :repo, :query],
@@ -207,6 +211,7 @@ defmodule Appsignal.EctoTest do
       Test.Nif.start_link()
       Test.Tracer.start_link()
       Test.Span.start_link()
+      Test.Monitor.start_link()
 
       :telemetry.execute(
         [:appsignal, :test, :repo, :query],

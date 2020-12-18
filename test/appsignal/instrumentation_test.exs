@@ -50,6 +50,8 @@ defmodule Appsignal.InstrumentationTest do
     start_supervised(Test.Nif)
     start_supervised(Test.Tracer)
     start_supervised(Test.Span)
+    start_supervised(Test.Monitor)
+
     :ok
   end
 

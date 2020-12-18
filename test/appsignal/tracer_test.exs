@@ -18,6 +18,10 @@ defmodule Appsignal.TracerTest do
     test "registers the span", %{span: span} do
       assert :ets.lookup(:"$appsignal_registry", self()) == [{self(), span}]
     end
+
+    test "creates a process monitor" do
+      assert Test.Monitor.get!(:add) == [{self()}]
+    end
   end
 
   describe "create_span/1, when disabled" do

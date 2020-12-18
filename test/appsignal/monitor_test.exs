@@ -20,21 +20,33 @@ defmodule Appsignal.MonitorTest do
     end)
   end
 
+  test "does not monitor a process more than once" do
+    Monitor.add()
+    Monitor.add()
+
+    until(fn ->
+      assert Process.info(monitor_pid(), :monitors) == {:monitors, [{:process, self()}]}
+    end)
+  end
+
   test "removes entries from the registry when their processes exit" do
     pid =
       spawn(fn ->
-        Tracer.create_span("root")
+        :ets.insert(:"$appsignal_registry", {self(), "span"})
         Monitor.add()
-        :timer.sleep(2)
       end)
 
     until(fn ->
-      assert %Span{} = Tracer.current_span(pid)
+      assert lookup(pid) == [{pid, "span"}]
     end)
 
     until(fn ->
-      assert Tracer.current_span(pid) == nil
+      assert lookup(pid) == []
     end)
+  end
+
+  defp lookup(pid) do
+    :ets.lookup(:"$appsignal_registry", pid)
   end
 
   defp monitor_pid do
