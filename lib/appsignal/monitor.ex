@@ -18,7 +18,7 @@ defmodule Appsignal.Monitor do
   end
 
   def handle_cast({:monitor, pid}, state) do
-    Process.monitor(pid)
+    unless pid in monitors(), do: Process.monitor(pid)
     {:noreply, state}
   end
 
@@ -30,5 +30,10 @@ defmodule Appsignal.Monitor do
   def handle_info({:delete, pid}, state) do
     Tracer.delete(pid)
     {:noreply, state}
+  end
+
+  defp monitors do
+    {:monitors, monitors} = Process.info(self(), :monitors)
+    Enum.map(monitors, fn {:process, process} -> process end)
   end
 end

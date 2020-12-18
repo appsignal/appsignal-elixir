@@ -20,6 +20,15 @@ defmodule Appsignal.MonitorTest do
     end)
   end
 
+  test "does not monitor a process more than once" do
+    Monitor.add()
+    Monitor.add()
+
+    until(fn ->
+      assert Process.info(monitor_pid(), :monitors) == {:monitors, [{:process, self()}]}
+    end)
+  end
+
   test "removes entries from the registry when their processes exit" do
     pid =
       spawn(fn ->
