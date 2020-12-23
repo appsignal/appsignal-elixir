@@ -2,11 +2,6 @@
 
 [![Build Status](https://travis-ci.org/appsignal/appsignal-elixir.png?branch=main)](https://travis-ci.org/appsignal/appsignal-elixir)
 [![Hex pm](http://img.shields.io/hexpm/v/appsignal.svg?style=flat)](https://hex.pm/packages/appsignal)
-> ⚠️  **NOTE**: The `tracing` branch is part of an upcoming version of Appsignal
-> for Elixir, and hasn't been officially released. Aside from beta testing, we
-> recommend using [the current version of AppSignal for
-> Elixir](https://github.com/appsignal/appsignal-elixir/tree/master)
-> instead.
 
 AppSignal for Elixir monitors errors, performance and servers for Elixir
 applications.

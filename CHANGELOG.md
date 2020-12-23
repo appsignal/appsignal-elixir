@@ -1,4 +1,4 @@
-# 2.0.6-beta.1
+# 2.0.6
 - Monitor all registered spans. PR #608
 - Switch to reference-based child Span API, fixes memory leak when using
   child spans. PR #607
