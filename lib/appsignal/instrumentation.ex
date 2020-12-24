@@ -53,8 +53,7 @@ defmodule Appsignal.Instrumentation do
   end
 
   def set_error(kind, reason, stacktrace) do
-    span = @tracer.current_span()
-    @span.add_error(span, kind, reason, stacktrace)
+    @span.add_error(@tracer.root_span(), kind, reason, stacktrace)
   end
 
   def send_error(kind, reason, stacktrace) do
