@@ -55,9 +55,11 @@ defmodule Appsignal.Ecto do
     handle_query(@tracer.current_span(), total_time, repo, query)
   end
 
+  def handle_event(_event, _measurements, _metadata, _config), do: :ok
+
   defp handle_query(nil, _total_time, _repo, _query), do: nil
 
-  defp handle_query(current, total_time, repo, query) do
+  defp handle_query(_current, total_time, repo, query) do
     time = :os.system_time()
 
     "http_request"
@@ -67,6 +69,4 @@ defmodule Appsignal.Ecto do
     |> @span.set_sql(query)
     |> @tracer.close_span(end_time: time)
   end
-
-  def handle_event(_event, _measurements, _metadata, _config), do: :ok
 end

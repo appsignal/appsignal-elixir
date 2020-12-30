@@ -4,7 +4,7 @@ defmodule Appsignal.Transaction do
   @deprecated "Use Appsignal.Tracer instead."
   def start(_id, _namespace), do: nil
 
-  @deprecated
+  @deprecated ""
   def generate_id, do: nil
 
   @deprecated "Use Appsignal.Span instead."

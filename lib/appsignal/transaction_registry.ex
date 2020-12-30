@@ -2,11 +2,11 @@ defmodule Appsignal.TransactionRegistry do
   @doc false
   @deprecated "Use Appsignal.Span instead."
 
-  def lookup(pid) do
+  def lookup(_pid) do
     nil
   end
 
-  def register(parent) do
+  def register(_parent) do
     nil
   end
 end
