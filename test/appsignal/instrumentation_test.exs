@@ -372,7 +372,7 @@ defmodule Appsignal.InstrumentationTest do
     end
   end
 
-  describe ".set_error/3" do
+  describe ".set_error/3, with a root span" do
     setup do
       span = Tracer.create_span("http_request")
 
@@ -397,6 +397,36 @@ defmodule Appsignal.InstrumentationTest do
     end
 
     test "adds the error to the span", %{reason: reason, stack: stack} do
+      assert {:ok, [{%Span{}, :error, ^reason, ^stack}]} = Test.Span.get(:add_error)
+    end
+  end
+
+  describe ".set_error/3, with a child span" do
+    setup do
+      root = Tracer.create_span("http_request")
+      Tracer.create_span("http_request")
+
+      {kind, reason, stack} =
+        try do
+          raise "Exception!"
+        catch
+          kind, reason -> {kind, reason, __STACKTRACE__}
+        end
+
+      [
+        span: root,
+        kind: kind,
+        reason: reason,
+        stack: stack,
+        return: Appsignal.Instrumentation.set_error(kind, reason, stack)
+      ]
+    end
+
+    test "returns the root span", %{span: span, return: return} do
+      assert return == span
+    end
+
+    test "adds the error to the root span", %{reason: reason, stack: stack} do
       assert {:ok, [{%Span{}, :error, ^reason, ^stack}]} = Test.Span.get(:add_error)
     end
   end
