@@ -1,3 +1,8 @@
+# 2.0.7
+- Let set error use root span. PR (#611)
+- Bump agent to v-44e4d97
+  - Implement ignore namespaces for spans. PR #645
+
 # 2.0.6
 - Monitor all registered spans. PR #608
 - Switch to reference-based child Span API, fixes memory leak when using
