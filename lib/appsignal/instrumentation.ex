@@ -52,6 +52,10 @@ defmodule Appsignal.Instrumentation do
     instrument(name, category, fun)
   end
 
+  def set_error(%_{__exception__: true} = exception, stacktrace) do
+    @span.add_error(@tracer.root_span(), exception, stacktrace)
+  end
+
   def set_error(kind, reason, stacktrace) do
     @span.add_error(@tracer.root_span(), kind, reason, stacktrace)
   end
