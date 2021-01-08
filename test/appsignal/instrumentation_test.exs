@@ -505,7 +505,36 @@ defmodule Appsignal.InstrumentationTest do
     end
   end
 
-  describe ".send_error/4" do
+  describe ".send_error/2" do
+    setup do
+      {exception, stack} =
+        try do
+          raise "Exception!"
+        rescue
+          exception -> {exception, __STACKTRACE__}
+        end
+
+      [
+        exception: exception,
+        stack: stack,
+        return: Appsignal.Instrumentation.send_error(exception, stack)
+      ]
+    end
+
+    test "creates a root span" do
+      assert Test.Span.get(:create_root) == {:ok, [{"http_request", self()}]}
+    end
+
+    test "adds the error to the span", %{exception: exception, stack: stack} do
+      assert {:ok, [{%Span{}, ^exception, ^stack}]} = Test.Span.get(:add_error)
+    end
+
+    test "closes the span" do
+      assert {:ok, [{%Span{}}]} = Test.Span.get(:close)
+    end
+  end
+
+  describe ".send_error/3" do
     setup do
       {kind, reason, stack} =
         try do
