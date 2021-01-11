@@ -52,8 +52,18 @@ defmodule Appsignal.Instrumentation do
     instrument(name, category, fun)
   end
 
+  def set_error(%_{__exception__: true} = exception, stacktrace) do
+    @span.add_error(@tracer.root_span(), exception, stacktrace)
+  end
+
   def set_error(kind, reason, stacktrace) do
     @span.add_error(@tracer.root_span(), kind, reason, stacktrace)
+  end
+
+  def send_error(%_{__exception__: true} = exception, stacktrace) do
+    @span.create_root("http_request", self())
+    |> @span.add_error(exception, stacktrace)
+    |> @span.close()
   end
 
   def send_error(kind, reason, stacktrace) do

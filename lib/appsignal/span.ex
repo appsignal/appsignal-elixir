@@ -107,23 +107,31 @@ defmodule Appsignal.Span do
 
   def set_sample_data(_span, _key, _value), do: nil
 
-  def add_error(%Span{reference: reference} = span, kind, reason, stacktrace) do
-    if Config.active?() do
-      {name, message, formatted_stacktrace} = Appsignal.Error.metadata(kind, reason, stacktrace)
+  def add_error(span, kind, reason, stacktrace) do
+    {name, message, formatted_stacktrace} = Appsignal.Error.metadata(kind, reason, stacktrace)
+    do_add_error(span, name, message, formatted_stacktrace)
+  end
 
+  def add_error(span, %_{__exception__: true} = exception, stacktrace) do
+    {name, message, formatted_stacktrace} = Appsignal.Error.metadata(exception, stacktrace)
+    do_add_error(span, name, message, formatted_stacktrace)
+  end
+
+  def do_add_error(%Span{reference: reference} = span, name, message, stacktrace) do
+    if Config.active?() do
       :ok =
         @nif.add_span_error(
           reference,
           name,
           message,
-          Appsignal.Utils.DataEncoder.encode(formatted_stacktrace)
+          Appsignal.Utils.DataEncoder.encode(stacktrace)
         )
 
       span
     end
   end
 
-  def add_error(nil, _kind, _reason, _stacktrace), do: nil
+  def do_add_error(nil, _name, _message, _stacktrace), do: nil
 
   def close(%Span{reference: reference} = span) do
     :ok = @nif.close_span(reference)

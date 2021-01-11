@@ -8,6 +8,11 @@ defmodule Appsignal.Test.Span do
     Span.create_root(namespace, pid)
   end
 
+  def add_error(span, exception, stacktrace) do
+    add(:add_error, {span, exception, stacktrace})
+    Span.add_error(span, exception, stacktrace)
+  end
+
   def add_error(span, kind, reason, stacktrace) do
     add(:add_error, {span, kind, reason, stacktrace})
     Span.add_error(span, kind, reason, stacktrace)
