@@ -227,6 +227,98 @@ defmodule AppsignalSpanTest do
     end
   end
 
+  describe ".add_error/3" do
+    setup :create_root_span
+
+    setup %{span: span} do
+      return =
+        try do
+          raise "Exception!"
+        rescue
+          exception -> Span.add_error(span, exception, __STACKTRACE__)
+        end
+
+      [return: return]
+    end
+
+    test "returns the span", %{span: span, return: return} do
+      assert return == span
+    end
+
+    test "sets the error through the Nif", %{span: %Span{reference: reference}} do
+      assert [{^reference, "RuntimeError", "** (RuntimeError) Exception!", _}] =
+               Test.Nif.get!(:add_span_error)
+    end
+  end
+
+  describe ".add_error/3, with a badarg" do
+    setup :create_root_span
+
+    setup %{span: span} do
+      return =
+        try do
+          _ = String.to_integer("one")
+        rescue
+          exception -> Span.add_error(span, exception, __STACKTRACE__)
+        end
+
+      [return: return]
+    end
+
+    test "returns the span", %{span: span, return: return} do
+      assert return == span
+    end
+
+    test "sets the error through the Nif", %{span: %Span{reference: reference}} do
+      assert [{^reference, "ArgumentError", "** (ArgumentError) argument error", _}] =
+               Test.Nif.get!(:add_span_error)
+    end
+  end
+
+  describe ".add_error/3, with a nil span" do
+    setup do
+      return =
+        try do
+          raise "Exception!"
+        rescue
+          exception -> Span.add_error(nil, exception, __STACKTRACE__)
+        end
+
+      [return: return]
+    end
+
+    test "returns nil", %{return: return} do
+      assert return == nil
+    end
+
+    test "does not set the error through the Nif" do
+      assert Test.Nif.get(:add_span_error) == :error
+    end
+  end
+
+  describe ".add_error/3, when disabled" do
+    setup [:create_root_span, :disable_appsignal]
+
+    setup %{span: span} do
+      return =
+        try do
+          raise "Exception!"
+        rescue
+          exception -> Span.add_error(span, exception, __STACKTRACE__)
+        end
+
+      [return: return]
+    end
+
+    test "returns nil", %{return: return} do
+      assert return == nil
+    end
+
+    test "does not set the error through the Nif" do
+      assert Test.Nif.get(:add_span_error) == :error
+    end
+  end
+
   describe ".add_error/4" do
     setup :create_root_span
 
