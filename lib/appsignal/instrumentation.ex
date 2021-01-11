@@ -67,8 +67,13 @@ defmodule Appsignal.Instrumentation do
   end
 
   def send_error(kind, reason, stacktrace) do
+    send_error(kind, reason, stacktrace, &Function.identity/1)
+  end
+
+  def send_error(kind, reason, stacktrace, fun) do
     @span.create_root("http_request", self())
     |> @span.add_error(kind, reason, stacktrace)
+    |> fun.()
     |> @span.close()
   end
 
