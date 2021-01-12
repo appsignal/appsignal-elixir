@@ -64,6 +64,13 @@ defmodule Appsignal.Probes do
     {:noreply, probes}
   end
 
+  def child_spec(_) do
+    %{
+      id: Appsignal.Probes,
+      start: {Appsignal.Probes, :start_link, []}
+    }
+  end
+
   defp genserver_running? do
     pid = Process.whereis(__MODULE__)
     !is_nil(pid) && Process.alive?(pid)

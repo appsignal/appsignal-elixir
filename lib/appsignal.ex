@@ -26,9 +26,9 @@ defmodule Appsignal do
     Appsignal.Ecto.attach()
 
     children = [
-      worker(Appsignal.Tracer, []),
-      worker(Appsignal.Monitor, []),
-      worker(Appsignal.Probes, [])
+      {Appsignal.Tracer, []},
+      {Appsignal.Monitor, []},
+      {Appsignal.Probes, []}
     ]
 
     result = Supervisor.start_link(children, strategy: :one_for_one, name: Appsignal.Supervisor)
