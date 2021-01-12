@@ -11,6 +11,10 @@ blocks:
         commands:
           - checkout
       jobs:
+        - name: mix compile --warnings-as-errors
+          commands:
+            - ERLANG_VERSION=23.1 ELIXIR_VERSION=1.10.4 . bin/setup
+            - mix compile --warnings-as-errors
         - name: mix format --check-formatted
           commands:
             - ERLANG_VERSION=23.1 ELIXIR_VERSION=1.10.4 . bin/setup
