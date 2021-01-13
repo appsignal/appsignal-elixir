@@ -98,6 +98,13 @@ defmodule Appsignal.Tracer do
     |> root()
   end
 
+  def child_spec(_) do
+    %{
+      id: Appsignal.Tracer,
+      start: {Appsignal.Tracer, :start_link, []}
+    }
+  end
+
   defp current({_pid, :ignore}), do: nil
 
   defp current({_pid, span}), do: span

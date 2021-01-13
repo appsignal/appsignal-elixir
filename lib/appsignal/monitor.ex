@@ -36,4 +36,11 @@ defmodule Appsignal.Monitor do
     {:monitors, monitors} = Process.info(self(), :monitors)
     Enum.map(monitors, fn {:process, process} -> process end)
   end
+
+  def child_spec(_) do
+    %{
+      id: Appsignal.Monitor,
+      start: {Appsignal.Monitor, :start_link, []}
+    }
+  end
 end
