@@ -1,3 +1,6 @@
+# 2.0.8
+- Clear warnings. PR #623
+
 # 2.0.7
 - Let set error use root span. PR (#611)
 - Bump agent to v-44e4d97
