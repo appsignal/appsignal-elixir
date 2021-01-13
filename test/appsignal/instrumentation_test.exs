@@ -563,4 +563,81 @@ defmodule Appsignal.InstrumentationTest do
       assert {:ok, [{%Span{}}]} = Test.Span.get(:close)
     end
   end
+
+  describe ".send_error/3, when passing a function" do
+    setup do
+      {exception, stack} =
+        try do
+          raise "Exception!"
+        rescue
+          exception -> {exception, __STACKTRACE__}
+        end
+
+      return =
+        Appsignal.Instrumentation.send_error(exception, stack, fn span ->
+          Appsignal.Test.Span.set_attribute(span, "key", "value")
+        end)
+
+      [
+        exception: exception,
+        stack: stack,
+        return: return
+      ]
+    end
+
+    test "creates a root span" do
+      assert Test.Span.get(:create_root) == {:ok, [{"http_request", self()}]}
+    end
+
+    test "adds the error to the span", %{exception: exception, stack: stack} do
+      assert {:ok, [{%Span{}, ^exception, ^stack}]} = Test.Span.get(:add_error)
+    end
+
+    test "closes the span" do
+      assert {:ok, [{%Span{}}]} = Test.Span.get(:close)
+    end
+
+    test "runs the function" do
+      assert {:ok, [{%Appsignal.Span{}, "key", "value"}]} = Test.Span.get(:set_attribute)
+    end
+  end
+
+  describe ".send_error/4, when passing a function" do
+    setup do
+      {kind, reason, stack} =
+        try do
+          raise "Exception!"
+        catch
+          kind, reason -> {kind, reason, __STACKTRACE__}
+        end
+
+      return =
+        Appsignal.Instrumentation.send_error(kind, reason, stack, fn span ->
+          Appsignal.Test.Span.set_attribute(span, "key", "value")
+        end)
+
+      [
+        kind: kind,
+        reason: reason,
+        stack: stack,
+        return: return
+      ]
+    end
+
+    test "creates a root span" do
+      assert Test.Span.get(:create_root) == {:ok, [{"http_request", self()}]}
+    end
+
+    test "adds the error to the span", %{reason: reason, stack: stack} do
+      assert {:ok, [{%Span{}, :error, ^reason, ^stack}]} = Test.Span.get(:add_error)
+    end
+
+    test "closes the span" do
+      assert {:ok, [{%Span{}}]} = Test.Span.get(:close)
+    end
+
+    test "runs the function" do
+      assert {:ok, [{%Appsignal.Span{}, "key", "value"}]} = Test.Span.get(:set_attribute)
+    end
+  end
 end
