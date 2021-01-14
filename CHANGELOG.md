@@ -1,3 +1,7 @@
+# 2.1.0
+- Pass functions to set error  PR #622
+- Pass Elixir exceptions to `Appsignal.Instrumentation.se(t|nd)_error/2`. PR #620
+
 # 2.0.8
 - Clear warnings. PR #623
 
