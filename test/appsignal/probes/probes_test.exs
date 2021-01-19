@@ -47,5 +47,15 @@ defmodule Appsignal.Probes.ProbesTest do
         Probes.unregister(:test_probe)
       end)
     end
+
+    test "handles non-exception errors", %{fake_probe: fake_probe} do
+      Probes.register(:test_probe, &FakeProbe.fail/0)
+
+      until(fn ->
+        assert FakeProbe.get(fake_probe, :probe_called)
+      end)
+
+      Probes.unregister(:test_probe)
+    end
   end
 end
