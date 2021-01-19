@@ -1,3 +1,6 @@
+# 2.1.1
+- Probes.handle_info/2 handles non-exception errors. PR #626
+
 # 2.1.0
 - Pass functions to set error  PR #622
 - Pass Elixir exceptions to `Appsignal.Instrumentation.se(t|nd)_error/2`. PR #620
