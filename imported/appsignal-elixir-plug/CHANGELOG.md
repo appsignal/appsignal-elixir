@@ -1,3 +1,6 @@
+# 2.0.5
+* Allow :appsignal versions between 2.0.6 and 3.0.0
+
 # 2.0.4
 Drop all errors with a plug_status < 500, not just WrapperErrors. PR #7
 
