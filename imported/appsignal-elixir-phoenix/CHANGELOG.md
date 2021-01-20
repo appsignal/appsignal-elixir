@@ -1,3 +1,6 @@
+# 2.0.4
+* Allow :appsignal_plug versions between 2.0.4 and 3.0.0
+
 # 2.0.3
 * Use “live_view” namespace for LiveView samples. PR #10
 
