@@ -1,3 +1,6 @@
+# 2.0.6
+* Fix send_params configuration in Appsignal.Plug. PR #9
+
 # 2.0.5
 * Allow :appsignal versions between 2.0.6 and 3.0.0
 
