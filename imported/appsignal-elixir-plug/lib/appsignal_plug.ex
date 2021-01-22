@@ -164,8 +164,16 @@ defmodule Appsignal.Plug do
   end
 
   defp set_params(span, conn) do
+    set_params(span, Application.get_env(:appsignal, :config), conn)
+  end
+
+  defp set_params(span, %{send_params: true}, conn) do
     %Plug.Conn{params: params} = Plug.Conn.fetch_query_params(conn)
     @span.set_sample_data(span, "params", params)
+  end
+
+  defp set_params(span, _config, _conn) do
+    span
   end
 
   defp set_sample_data(span, conn) do

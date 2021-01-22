@@ -455,6 +455,26 @@ defmodule Appsignal.PlugTest do
       assert Test.Span.get(:set_name) == :error
     end
 
+    test "sets the span's parameters", %{span: span} do
+      assert Appsignal.Plug.set_conn_data(span, %Plug.Conn{method: "GET", params: %{"id" => "4"}}) ==
+               span
+
+      assert sample_data("params", %{"id" => "4"})
+    end
+
+    test "does not set params when send_params is set to false", %{span: span} do
+      config = Application.get_env(:appsignal, :config)
+      Application.put_env(:appsignal, :config, %{config | send_params: false})
+
+      try do
+        Appsignal.Plug.set_conn_data(span, %Plug.Conn{method: "GET", params: %{"id" => "4"}})
+      after
+        Application.put_env(:appsignal, :config, config)
+      end
+
+      refute sample_data("params", %{"id" => "4"})
+    end
+
     test "sets the span's session data", %{span: span} do
       assert Appsignal.Plug.set_conn_data(span, %Plug.Conn{
                method: "GET",
