@@ -62,4 +62,35 @@ defmodule AppsignalTest do
       assert :ok = Appsignal.instrument("name", "category", fn -> :ok end)
     end
   end
+
+  describe "send_error/2" do
+    test "delegates to Appsignal.Instrumentation" do
+      assert %Appsignal.Span{} = Appsignal.send_error(%RuntimeError{}, [])
+    end
+  end
+
+  describe "send_error/3" do
+    test "delegates to Appsignal.Instrumentation" do
+      assert %Appsignal.Span{} = Appsignal.send_error(:error, %RuntimeError{}, [])
+    end
+  end
+
+  describe "send_error/4" do
+    test "delegates to Appsignal.Instrumentation" do
+      assert %Appsignal.Span{} =
+               Appsignal.send_error(:error, %RuntimeError{}, [], fn span -> span end)
+    end
+  end
+
+  describe "set_error/2" do
+    test "delegates to Appsignal.Instrumentation" do
+      assert Appsignal.set_error(%RuntimeError{}, []) == nil
+    end
+  end
+
+  describe "set_error/3" do
+    test "delegates to Appsignal.Instrumentation" do
+      assert Appsignal.set_error(:error, %RuntimeError{}, []) == nil
+    end
+  end
 end
