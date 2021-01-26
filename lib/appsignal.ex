@@ -138,6 +138,9 @@ defmodule Appsignal do
   defdelegate instrument(fun), to: Appsignal.Instrumentation
   defdelegate instrument(name, fun), to: Appsignal.Instrumentation
   defdelegate instrument(name, category, fun), to: Appsignal.Instrumentation
+  defdelegate set_error(exception, stacktrace), to: Appsignal.Instrumentation
   defdelegate set_error(kind, reason, stacktrace), to: Appsignal.Instrumentation
+  defdelegate send_error(exception, stacktrace), to: Appsignal.Instrumentation
   defdelegate send_error(kind, reason, stacktrace), to: Appsignal.Instrumentation
+  defdelegate send_error(kind, reason, stacktrace, fun), to: Appsignal.Instrumentation
 end
