@@ -1,3 +1,6 @@
+# 2.1.2
+- Make sure Appsignal.se(nd|t)_error is properly delegated (#629)
+
 # 2.1.1
 - Probes.handle_info/2 handles non-exception errors. PR #626
 
