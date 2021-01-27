@@ -42,6 +42,12 @@ defmodule Appsignal.Error.Backend do
     end
   end
 
+  defp handle_report(%{crash_reason: {reason, stacktrace}, pid: pid}) do
+    pid
+    |> @tracer.lookup()
+    |> do_handle_report(pid, reason, stacktrace)
+  end
+
   defp do_handle_report([{_pid, :ignore}], _, _, _) do
     :ok
   end
