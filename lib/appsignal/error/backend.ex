@@ -17,7 +17,7 @@ defmodule Appsignal.Error.Backend do
   end
 
   def handle_event({:error, gl, {_, _, _, metadata}}, state) when node(gl) == node() do
-    pid = metadata[:pid]
+    pid = extract_pid(metadata)
 
     case Keyword.get(metadata, :crash_reason) do
       {reason, stacktrace} ->
@@ -60,6 +60,18 @@ defmodule Appsignal.Error.Backend do
 
   def terminate(_reason, _state) do
     :ok
+  end
+
+  defp extract_pid([{:conn, %{owner: pid}} | _tail]) do
+    pid
+  end
+
+  defp extract_pid([{:pid, pid} | _tail]) do
+    pid
+  end
+
+  defp extract_pid([_ | tail]) do
+    extract_pid(tail)
   end
 
   defp set_error_data(span, reason, stacktrace) do
