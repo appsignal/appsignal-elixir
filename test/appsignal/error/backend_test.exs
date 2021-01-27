@@ -20,7 +20,7 @@ defmodule Murphy do
     end)
   end
 
-  def translate(min_level, level, kind, data) do
+  def with_conn(min_level, level, kind, data) do
     {:ok, chardata, metadata} = Logger.Translator.translate(min_level, level, kind, data)
     {:ok, chardata, metadata ++ [pid: "", conn: %{owner: self()}]}
   end
@@ -113,14 +113,14 @@ defmodule Appsignal.Error.BackendTest do
 
   describe "handle_event/3 with a conn, with an ignored process" do
     setup %{pid: pid} do
-      Logger.add_translator({Murphy, :translate})
+      Logger.add_translator({Murphy, :with_conn})
 
       Murphy.call(pid, fn ->
         Tracer.ignore()
         raise "Exception"
       end)
 
-      Logger.remove_translator({Murphy, :translate})
+      Logger.remove_translator({Murphy, :with_conn})
     end
 
     test "does not create a span" do
