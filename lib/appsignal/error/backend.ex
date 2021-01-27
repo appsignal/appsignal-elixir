@@ -17,33 +17,45 @@ defmodule Appsignal.Error.Backend do
   end
 
   def handle_event({:error, gl, {_, _, _, metadata}}, state) when node(gl) == node() do
-    pid = extract_pid(metadata)
-
-    case Keyword.get(metadata, :crash_reason) do
-      {reason, stacktrace} ->
-        case @tracer.lookup(pid) do
-          [{_pid, :ignore}] ->
-            :ok
-
-          [] ->
-            "background_job"
-            |> @tracer.create_span(nil, pid: pid)
-            |> set_error_data(reason, stacktrace)
-
-          spans when is_list(spans) ->
-            {_pid, span} = List.last(spans)
-            set_error_data(span, reason, stacktrace)
-        end
-
-      _ ->
-        :ok
-    end
+    metadata
+    |> Enum.into(%{})
+    |> handle_report()
 
     {:ok, state}
   end
 
   def handle_event(_event, state) do
     {:ok, state}
+  end
+
+  defp handle_report(%{crash_reason: {reason, stacktrace}, conn: %{owner: pid}}) do
+    pid
+    |> @tracer.lookup()
+    |> do_handle_report(pid, reason, stacktrace)
+  end
+
+  defp handle_report(%{crash_reason: {reason, stacktrace}, pid: pid, domain: domains}) do
+    unless :cowboy in domains do
+      pid
+      |> @tracer.lookup()
+      |> do_handle_report(pid, reason, stacktrace)
+    end
+  end
+
+  defp do_handle_report([{_pid, :ignore}], _, _, _) do
+    :ok
+  end
+
+  defp do_handle_report([], pid, reason, stacktrace) do
+    "background_job"
+    |> @tracer.create_span(nil, pid: pid)
+    |> set_error_data(reason, stacktrace)
+  end
+
+  defp do_handle_report(spans, _, reason, stacktrace) when is_list(spans) do
+    {_pid, span} = List.last(spans)
+
+    set_error_data(span, reason, stacktrace)
   end
 
   def handle_call(_event, state) do
@@ -60,18 +72,6 @@ defmodule Appsignal.Error.Backend do
 
   def terminate(_reason, _state) do
     :ok
-  end
-
-  defp extract_pid([{:conn, %{owner: pid}} | _tail]) do
-    pid
-  end
-
-  defp extract_pid([{:pid, pid} | _tail]) do
-    pid
-  end
-
-  defp extract_pid([_ | tail]) do
-    extract_pid(tail)
   end
 
   defp set_error_data(span, reason, stacktrace) do
