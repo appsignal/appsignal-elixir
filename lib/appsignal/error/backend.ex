@@ -48,6 +48,10 @@ defmodule Appsignal.Error.Backend do
     |> do_handle_report(pid, reason, stacktrace)
   end
 
+  defp handle_report(_) do
+    :ok
+  end
+
   defp do_handle_report([{_pid, :ignore}], _, _, _) do
     :ok
   end
