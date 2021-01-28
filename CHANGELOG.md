@@ -1,5 +1,8 @@
+# 2.1.3
+- Use pid from conn in Error.Backend if available. PR #631
+
 # 2.1.2
-- Make sure Appsignal.se(nd|t)_error is properly delegated (#629)
+- Make sure Appsignal.se(nd|t)_error is properly delegated. PR #629
 
 # 2.1.1
 - Probes.handle_info/2 handles non-exception errors. PR #626
