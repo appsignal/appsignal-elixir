@@ -1,3 +1,6 @@
+# 2.0.5
+* Exposes live_view_action/5 to help instrument handle_params. PR #11
+
 # 2.0.4
 * Allow :appsignal_plug versions between 2.0.4 and 3.0.0
 
