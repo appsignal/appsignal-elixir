@@ -43,4 +43,8 @@ defmodule Appsignal.Phoenix.LiveView do
   def live_view_action(module, name, socket, function) do
     instrument(module, name, socket, function)
   end
+
+  def live_view_action(module, name, params, socket, function) do
+    instrument(module, name, params, socket, function)
+  end
 end
