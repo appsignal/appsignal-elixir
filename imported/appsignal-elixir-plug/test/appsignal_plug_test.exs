@@ -95,8 +95,8 @@ defmodule Appsignal.PlugTest do
   doctest Appsignal.Plug
 
   setup do
-    Test.Tracer.start_link()
-    Test.Span.start_link()
+    start_supervised!(Test.Tracer)
+    start_supervised!(Test.Span)
     :ok
   end
 
