@@ -9,7 +9,7 @@ blocks:
     task:
       prologue:
         commands:
-          - sem-version erlang 22
+          - sem-version erlang 22.3
           - sem-version elixir master
           - elixir -v
           - checkout
@@ -38,7 +38,7 @@ blocks:
       jobs:
         - name: Elixir master, OTP 22
           commands:
-            - sem-version erlang 22
+            - sem-version erlang 22.3
             - sem-version elixir master
             - elixir -v
             - checkout
@@ -48,7 +48,7 @@ blocks:
             - mix test
         - name: Elixir master, OTP 21
           commands:
-            - sem-version erlang 21
+            - sem-version erlang 21.3
             - sem-version elixir master
             - elixir -v
             - checkout
@@ -58,7 +58,7 @@ blocks:
             - mix test
         - name: Elixir 1.10.3, OTP 22
           commands:
-            - sem-version erlang 22
+            - sem-version erlang 22.3
             - sem-version elixir 1.10.3
             - elixir -v
             - checkout
@@ -68,7 +68,7 @@ blocks:
             - mix test
         - name: Elixir 1.10.3, OTP 21
           commands:
-            - sem-version erlang 21
+            - sem-version erlang 21.3
             - sem-version elixir 1.10.3
             - elixir -v
             - checkout
@@ -78,7 +78,7 @@ blocks:
             - mix test
         - name: Elixir 1.9.4, OTP 22
           commands:
-            - sem-version erlang 22
+            - sem-version erlang 22.3
             - sem-version elixir 1.9.4
             - elixir -v
             - checkout
@@ -88,7 +88,7 @@ blocks:
             - mix test
         - name: Elixir 1.9.4, OTP 21
           commands:
-            - sem-version erlang 21
+            - sem-version erlang 21.3
             - sem-version elixir 1.9.4
             - elixir -v
             - checkout
@@ -98,7 +98,7 @@ blocks:
             - mix test
         - name: Elixir 1.9.4, OTP 20
           commands:
-            - sem-version erlang 20
+            - sem-version erlang 20.3
             - sem-version elixir 1.9.4
             - elixir -v
             - checkout
