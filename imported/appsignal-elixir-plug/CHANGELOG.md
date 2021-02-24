@@ -1,3 +1,6 @@
+# 2.0.7
+* Handle conns with nil `request_headers` attributes. PR #10
+
 # 2.0.6
 * Fix send_params configuration in Appsignal.Plug. PR #9
 
