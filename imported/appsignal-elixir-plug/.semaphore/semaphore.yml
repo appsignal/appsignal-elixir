@@ -36,6 +36,16 @@ blocks:
   - name: Run tests
     task:
       jobs:
+        - name: Elixir master, OTP 23
+          commands:
+            - sem-version erlang 23.2
+            - sem-version elixir master
+            - elixir -v
+            - checkout
+            - mix local.rebar --force
+            - mix local.hex --force
+            - mix deps.get
+            - mix test
         - name: Elixir master, OTP 22
           commands:
             - sem-version erlang 22.3
@@ -56,6 +66,16 @@ blocks:
             - mix local.hex --force
             - mix deps.get
             - mix test
+        - name: Elixir 1.11.3, OTP 23
+          commands:
+            - sem-version erlang 23.2
+            - sem-version elixir 1.11.3
+            - elixir -v
+            - checkout
+            - mix local.rebar --force
+            - mix local.hex --force
+            - mix deps.get
+            - mix test
         - name: Elixir 1.11.3, OTP 22
           commands:
             - sem-version erlang 22.3
@@ -70,6 +90,16 @@ blocks:
           commands:
             - sem-version erlang 21.3
             - sem-version elixir 1.11.3
+            - elixir -v
+            - checkout
+            - mix local.rebar --force
+            - mix local.hex --force
+            - mix deps.get
+            - mix test
+        - name: Elixir 1.10.4, OTP 23
+          commands:
+            - sem-version erlang 23.2
+            - sem-version elixir 1.10.4
             - elixir -v
             - checkout
             - mix local.rebar --force
