@@ -3,8 +3,8 @@ defmodule Appsignal.Phoenix.ChannelTest do
   alias Appsignal.{Span, Test}
 
   setup do
-    Test.Tracer.start_link()
-    Test.Span.start_link()
+    start_supervised!(Test.Tracer)
+    start_supervised!(Test.Span)
 
     %{
       socket: %Phoenix.Socket{

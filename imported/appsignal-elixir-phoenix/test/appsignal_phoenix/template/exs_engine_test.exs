@@ -3,8 +3,8 @@ defmodule Appsignal.Phoenix.Template.ExsEngineTest do
   alias Appsignal.{Phoenix.Template.ExsEngine, Span, Test}
 
   setup do
-    Test.Tracer.start_link()
-    Test.Span.start_link()
+    start_supervised!(Test.Tracer)
+    start_supervised!(Test.Span)
 
     return =
       "test/support/index.html.exs"

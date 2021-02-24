@@ -3,8 +3,8 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
   alias Appsignal.{Phoenix, Span, Test, Tracer}
 
   setup do
-    Test.Span.start_link()
-    Test.Tracer.start_link()
+    start_supervised!(Test.Tracer)
+    start_supervised!(Test.Span)
 
     :ok
   end

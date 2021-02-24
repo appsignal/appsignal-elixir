@@ -6,9 +6,9 @@ defmodule Appsignal.PhoenixTest do
   @endpoint PhoenixWeb.Endpoint
 
   setup do
-    PhoenixWeb.Endpoint.start_link([])
-    Test.Tracer.start_link()
-    Test.Span.start_link()
+    start_supervised!(PhoenixWeb.Endpoint)
+    start_supervised!(Test.Tracer)
+    start_supervised!(Test.Span)
 
     :ok
   end
