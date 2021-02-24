@@ -28,10 +28,20 @@ defimpl Appsignal.Metadata, for: Plug.Conn do
   end
 
   defp headers(req_headers) do
-    for {key, value} <- req_headers,
-        key in Appsignal.Config.request_headers() do
-      {"req_headers.#{key}", value}
-    end
-    |> Enum.into(%{})
+    headers(req_headers, %{})
+  end
+
+  defp headers([{key, value} | tail], acc) do
+    acc =
+      case key in Appsignal.Config.request_headers() do
+        true -> Map.put(acc, "req_headers.#{key}", value)
+        false -> acc
+      end
+
+    headers(tail, acc)
+  end
+
+  defp headers(_, acc) do
+    acc
   end
 end

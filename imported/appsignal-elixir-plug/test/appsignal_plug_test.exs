@@ -514,6 +514,12 @@ defmodule Appsignal.PlugTest do
     end
   end
 
+  test "handles requests with nil request headers" do
+    conn = %{conn(:get, "/", nil) | req_headers: nil}
+
+    assert PlugWithAppsignal.call(conn, [])
+  end
+
   defp get(path, params_or_body \\ nil) do
     conn =
       :get
