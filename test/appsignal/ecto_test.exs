@@ -28,10 +28,10 @@ defmodule Appsignal.EctoTest do
 
   describe "handle_event/4, without a root span" do
     setup do
-      Test.Nif.start_link()
-      Test.Tracer.start_link()
-      Test.Span.start_link()
-      Test.Monitor.start_link()
+      start_supervised!(Test.Nif)
+      start_supervised!(Test.Tracer)
+      start_supervised!(Test.Span)
+      start_supervised!(Test.Monitor)
 
       :telemetry.execute(
         [:appsignal, :test, :repo, :query],
@@ -60,10 +60,10 @@ defmodule Appsignal.EctoTest do
 
   describe "handle_event/4, with a root span" do
     setup do
-      Test.Nif.start_link()
-      Test.Tracer.start_link()
-      Test.Span.start_link()
-      Test.Monitor.start_link()
+      start_supervised!(Test.Nif)
+      start_supervised!(Test.Tracer)
+      start_supervised!(Test.Span)
+      start_supervised!(Test.Monitor)
 
       Appsignal.Tracer.create_span("http_request")
 
@@ -117,10 +117,10 @@ defmodule Appsignal.EctoTest do
 
   describe "handle_event/4, when attaching the handler from outside the Ecto module" do
     setup do
-      Test.Nif.start_link()
-      Test.Tracer.start_link()
-      Test.Span.start_link()
-      Test.Monitor.start_link()
+      start_supervised!(Test.Nif)
+      start_supervised!(Test.Tracer)
+      start_supervised!(Test.Span)
+      start_supervised!(Test.Monitor)
 
       event = [:appsignal, :test, :repo, :outside]
       :telemetry.attach({__MODULE__, event}, event, &Appsignal.Ecto.handle_event/4, :ok)
@@ -177,10 +177,10 @@ defmodule Appsignal.EctoTest do
 
   describe "handle_event/4, for a 'begin'" do
     setup do
-      Test.Nif.start_link()
-      Test.Tracer.start_link()
-      Test.Span.start_link()
-      Test.Monitor.start_link()
+      start_supervised!(Test.Nif)
+      start_supervised!(Test.Tracer)
+      start_supervised!(Test.Span)
+      start_supervised!(Test.Monitor)
 
       :telemetry.execute(
         [:appsignal, :test, :repo, :query],
@@ -208,10 +208,10 @@ defmodule Appsignal.EctoTest do
 
   describe "handle_event/4, for a 'commit'" do
     setup do
-      Test.Nif.start_link()
-      Test.Tracer.start_link()
-      Test.Span.start_link()
-      Test.Monitor.start_link()
+      start_supervised!(Test.Nif)
+      start_supervised!(Test.Tracer)
+      start_supervised!(Test.Span)
+      start_supervised!(Test.Monitor)
 
       :telemetry.execute(
         [:appsignal, :test, :repo, :query],

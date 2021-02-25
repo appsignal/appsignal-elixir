@@ -4,7 +4,7 @@ defmodule Appsignal.MonitorTest do
   alias Appsignal.{Monitor, Span, Test, Tracer}
 
   setup do
-    Test.Nif.start_link()
+    start_supervised!(Test.Nif)
     :ok
   end
 
