@@ -114,7 +114,7 @@ defmodule Appsignal.Config do
   defp do_active?(_), do: false
 
   def request_headers do
-    Application.fetch_env!(:appsignal, :config)[:request_headers]
+    Application.fetch_env!(:appsignal, :config)[:request_headers] || []
   end
 
   def ca_file_path do
