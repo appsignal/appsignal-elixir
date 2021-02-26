@@ -608,6 +608,18 @@ defmodule Appsignal.ConfigTest do
              ) == default_configuration() |> Map.put(:request_headers, ~w(accept accept-charset))
     end
 
+    test "request_headers overwrites file configuration" do
+      assert with_env(
+               %{"APPSIGNAL_REQUEST_HEADERS" => "accept,accept-charset"},
+               fn ->
+                 with_config(
+                   %{request_headers: []},
+                   &init_config/0
+                 )
+               end
+             ) == default_configuration() |> Map.put(:request_headers, ~w(accept accept-charset))
+    end
+
     test "revision" do
       assert with_env(
                %{"APP_REVISION" => "03bd9e"},
