@@ -13,38 +13,38 @@ blocks:
       jobs:
         - name: mix compile --warnings-as-errors
           commands:
-            - ERLANG_VERSION=23.1 ELIXIR_VERSION=1.10.4 . bin/setup
+            - ERLANG_VERSION=23.2 ELIXIR_VERSION=1.10.4 . bin/setup
             - mix compile --warnings-as-errors
         - name: mix format --check-formatted
           commands:
-            - ERLANG_VERSION=23.1 ELIXIR_VERSION=1.10.4 . bin/setup
+            - ERLANG_VERSION=23.2 ELIXIR_VERSION=1.10.4 . bin/setup
             - mix format --check-formatted
         - name: mix credo --strict
           commands:
-            - ERLANG_VERSION=23.1 ELIXIR_VERSION=1.10.4 . bin/setup
+            - ERLANG_VERSION=23.2 ELIXIR_VERSION=1.10.4 . bin/setup
             - mix credo --strict
         - name: mix dialyzer
           commands:
-            - ERLANG_VERSION=23.1 ELIXIR_VERSION=1.10.4 . bin/setup
+            - ERLANG_VERSION=23.2 ELIXIR_VERSION=1.10.4 . bin/setup
             - cache restore dialyzer-plt
             - MIX_ENV=dev mix dialyzer --plt
             - cache store dialyzer-plt priv/plts/
             - MIX_ENV=dev mix dialyzer
         - name: Elixir master, OTP 23
           commands:
-            - ERLANG_VERSION=23.1 ELIXIR_VERSION=master . bin/setup
+            - ERLANG_VERSION=23.2 ELIXIR_VERSION=master . bin/setup
             - mix test
         - name: Elixir master, OTP 23, without the NIF loaded
           commands:
-            - ERLANG_VERSION=23.1 ELIXIR_VERSION=master . bin/setup
+            - ERLANG_VERSION=23.2 ELIXIR_VERSION=master . bin/setup
             - MIX_ENV=test_no_nif mix test
         - name: Elixir 1.11.3, OTP 23
           commands:
-            - ERLANG_VERSION=23.1 ELIXIR_VERSION=1.11.3 . bin/setup
+            - ERLANG_VERSION=23.2 ELIXIR_VERSION=1.11.3 . bin/setup
             - mix test
         - name: Elixir 1.10.4, OTP 23
           commands:
-            - ERLANG_VERSION=23.1 ELIXIR_VERSION=1.10.4 . bin/setup
+            - ERLANG_VERSION=23.2 ELIXIR_VERSION=1.10.4 . bin/setup
             - mix test
         - name: Elixir 1.11.3, OTP 22
           commands:
