@@ -4,7 +4,7 @@
 :0: Unknown function 'Elixir.Jason':'encode!'/1
 :0: Unknown function 'Elixir.Mix.Project':config/0
 :0: Unknown type 'Elixir.Appsignal.Span':t/0
-lib/appsignal.ex:50: The inferred return type of config_change/3 (pid()) has nothing in common with 'ok', which is the expected return type for the callback of the 'Elixir.Application' behaviour
+lib/appsignal.ex:46: The inferred return type of config_change/3 (pid()) has nothing in common with 'ok', which is the expected return type for the callback of the 'Elixir.Application' behaviour
 lib/mix/tasks/appsignal.demo.ex:1: Callback info about the 'Elixir.Mix.Task' behaviour is not available
 lib/mix/tasks/appsignal.diagnose.ex:1: Callback info about the 'Elixir.Mix.Task' behaviour is not available
 lib/mix/tasks/appsignal.install.ex:1: Callback info about the 'Elixir.Mix.Task' behaviour is not available
