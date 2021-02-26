@@ -116,8 +116,8 @@ defmodule Appsignal.ConfigTest do
   end
 
   describe "request_headers" do
-    test "is nil by default" do
-      assert with_config(%{}, &Config.request_headers/0) == nil
+    test "returns an empty list by default" do
+      assert with_config(%{}, &Config.request_headers/0) == []
     end
 
     test "returns the request_headers config" do
