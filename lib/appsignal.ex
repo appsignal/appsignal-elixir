@@ -6,10 +6,6 @@ defmodule Appsignal do
 
   This module contains the main AppSignal OTP application, as well as a few
   helper functions for sending metrics to AppSignal.
-
-  These metrics do not rely on an active transaction being present. For
-  transaction related-functions, see the
-  [Appsignal.Transaction](Appsignal.Transaction.html) module.
   """
 
   use Application
