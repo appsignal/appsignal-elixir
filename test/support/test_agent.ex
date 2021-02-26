@@ -12,14 +12,6 @@ defmodule TestAgent do
             name: __MODULE__
           )
 
-        # Make sure the spawned process receives DOWN after its parent process
-        # is finished (as per https://elixirforum.com/t/3794/5), with a 500 ms
-        # timeout.
-        ExUnit.Callbacks.on_exit(fn ->
-          ref = Process.monitor(pid)
-          assert_receive {:DOWN, ^ref, _, _, _}, 500
-        end)
-
         {:ok, pid}
       end
 
@@ -33,6 +25,16 @@ defmodule TestAgent do
 
       def alive?() do
         !!Process.whereis(__MODULE__)
+      end
+
+      def child_spec(_opts) do
+        %{
+          id: __MODULE__,
+          start: {__MODULE__, :start_link, []},
+          type: :worker,
+          restart: :permanent,
+          shutdown: 500
+        }
       end
     end
   end

@@ -8,8 +8,7 @@ defmodule Appsignal.Probes.ErlangProbeTest do
     # from this test
     Appsignal.Probes.unregister(:erlang)
 
-    {:ok, fake_appsignal} = FakeAppsignal.start_link()
-    [fake_appsignal: fake_appsignal]
+    [fake_appsignal: start_supervised!(FakeAppsignal)]
   end
 
   describe "call/0" do
