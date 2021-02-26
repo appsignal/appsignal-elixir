@@ -21,13 +21,13 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       unfreeze_environment(environment)
     end)
 
-    {:ok, fake_report} = FakeReport.start_link()
-    {:ok, fake_system} = Appsignal.FakeSystem.start_link()
-    {:ok, fake_nif} = Appsignal.FakeNif.start_link()
+    fake_report = start_supervised!(FakeReport)
+    fake_system = start_supervised!(Appsignal.FakeSystem)
+    fake_nif = start_supervised!(Appsignal.FakeNif)
     # Set loaded? to the actual state of the Nif
     Appsignal.FakeNif.update(fake_nif, :loaded?, Appsignal.Nif.loaded?())
 
-    FakeOS.start_link()
+    start_supervised!(FakeOS)
 
     # By default, Push API key is valid
     auth_bypass = Bypass.open()
