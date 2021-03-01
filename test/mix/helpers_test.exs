@@ -8,9 +8,7 @@ defmodule Mix.Appsignal.HelperTest do
   import AppsignalTest.Utils
 
   setup do
-    {:ok, fake_system} = FakeSystem.start_link()
-    {:ok, fake_os} = FakeOS.start_link()
-    [fake_os: fake_os, fake_system: fake_system]
+    [fake_os: start_supervised!(FakeOS), fake_system: start_supervised!(FakeSystem)]
   end
 
   describe ".agent_platform" do
