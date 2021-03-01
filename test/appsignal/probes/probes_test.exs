@@ -16,8 +16,7 @@ defmodule Appsignal.Probes.ProbesTest do
 
   describe "integration test for probing" do
     setup do
-      {:ok, fake_probe} = FakeProbe.start_link()
-      [fake_probe: fake_probe]
+      [fake_probe: start_supervised!(FakeProbe)]
     end
 
     test "once a probe is registered, it is called by the probes system", %{
