@@ -1,3 +1,6 @@
+# 2.1.4
+- Ensure the `:request_headers` config returns an empty list by default. PR #637
+
 # 2.1.3
 - Use pid from conn in Error.Backend if available. PR #631
 
