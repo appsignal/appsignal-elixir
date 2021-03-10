@@ -5,6 +5,10 @@ defmodule Appsignal.Ecto do
 
   require Logger
 
+  @doc """
+  Attaches `Appsignal.Ecto` to the Ecto telemetry channel configured in the
+  application's configuration.
+  """
   def attach do
     otp_app =
       :appsignal
@@ -16,6 +20,10 @@ defmodule Appsignal.Ecto do
     |> Enum.each(&attach(otp_app, &1))
   end
 
+  @doc """
+  Attaches `Appsignal.Ecto` to the Ecto telemetry channel based on the passed
+  `otp_app` and `repo`.
+  """
   def attach(otp_app, repo) do
     event = telemetry_prefix(otp_app, repo) ++ [:query]
 
@@ -48,6 +56,7 @@ defmodule Appsignal.Ecto do
     end
   end
 
+  @doc false
   def handle_event(_event, _measurements, %{query: "begin"}, _config), do: :ok
   def handle_event(_event, _measurements, %{query: "commit"}, _config), do: :ok
 

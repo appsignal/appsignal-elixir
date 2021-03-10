@@ -1,5 +1,4 @@
 defmodule Appsignal.Tracer do
-  @moduledoc false
   alias Appsignal.Span
 
   @monitor Application.get_env(:appsignal, :appsignal_monitor, Appsignal.Monitor)
@@ -8,6 +7,7 @@ defmodule Appsignal.Tracer do
   @type option :: {:pid, pid} | {:start_time, integer}
   @type options :: [option]
 
+  @doc false
   def start_link do
     Agent.start_link(fn -> :ets.new(@table, [:named_table, :public, :duplicate_bag]) end,
       name: __MODULE__
@@ -16,20 +16,34 @@ defmodule Appsignal.Tracer do
 
   @doc """
   Creates a new root span.
+
+  ## Example
+      Appsignal.Tracer.create_span("http_request")
+
   """
-  @spec create_span(String.t()) :: Span.t()
+  @spec create_span(String.t()) :: Span.t() | nil
   def create_span(namespace), do: create_span(namespace, nil, [])
 
   @doc """
   Creates a new child span.
+
+  ## Example
+      parent = Appsignal.Tracer.current_span()
+
+      Appsignal.Tracer.create_span("http_request", parent)
   """
-  @spec create_span(String.t(), Span.t() | nil) :: Span.t()
+  @spec create_span(String.t(), Span.t() | nil) :: Span.t() | nil
   def create_span(namespace, parent), do: create_span(namespace, parent, [])
 
   @doc """
   Creates a new span, with an optional parent or pid.
+
+  ## Example
+      parent = Appsignal.Tracer.current_span()
+
+      Appsignal.Tracer.create_span("http_request", parent, [start_time: :os.system_time(), pid: self()])
   """
-  @spec create_span(String.t(), Span.t() | nil, options) :: Span.t()
+  @spec create_span(String.t(), Span.t() | nil, options) :: Span.t() | nil
   def create_span(namespace, nil, options) do
     pid = Keyword.get(options, :pid, self())
 
@@ -98,6 +112,7 @@ defmodule Appsignal.Tracer do
     |> root()
   end
 
+  @doc false
   def child_spec(_) do
     %{
       id: Appsignal.Tracer,
@@ -121,10 +136,15 @@ defmodule Appsignal.Tracer do
 
   defp root(_), do: nil
 
+  @spec close_span(Span.t() | nil) :: :ok | nil
   @doc """
   Closes a span and deregisters it.
+
+  ## Example
+      Appsignal.Tracer.current_span()
+      |> Appsignal.Tracer.close_span()
+
   """
-  @spec close_span(Span.t() | nil) :: :ok | nil
   def close_span(%Span{} = span) do
     if running?() do
       span
@@ -137,7 +157,18 @@ defmodule Appsignal.Tracer do
 
   def close_span(nil), do: nil
 
-  @spec close_span(Span.t() | nil, end_time: integer) :: :ok | nil
+  @spec close_span(Span.t() | nil, list()) :: :ok | nil
+  @doc """
+  Closes a span and deregisters it. Takes an options list, which currently only
+  accepts a `List` with an `:end_time` integer.
+
+  ## Example
+      Appsignal.Tracer.current_span()
+      |> Appsignal.Tracer.close_span(end_time: :os.system_time())
+
+  """
+  def close_span(span, options)
+
   def close_span(%Span{} = span, end_time: end_time) do
     if running?() do
       span

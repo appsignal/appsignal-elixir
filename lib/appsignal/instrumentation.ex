@@ -2,6 +2,7 @@ defmodule Appsignal.Instrumentation do
   @tracer Application.get_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
   @span Application.get_env(:appsignal, :appsignal_span, Appsignal.Span)
 
+  @spec instrument(function()) :: any()
   @doc false
   def instrument(fun) do
     span = @tracer.create_span("background_job", @tracer.current_span)
@@ -12,6 +13,7 @@ defmodule Appsignal.Instrumentation do
     result
   end
 
+  @spec instrument(String.t(), function()) :: any()
   @doc """
   Instrument a function.
 
@@ -36,6 +38,11 @@ defmodule Appsignal.Instrumentation do
     instrument(name, name, fun)
   end
 
+  @spec instrument(String.t(), String.t(), function()) :: any()
+  @doc """
+  Instrument a function, and set the `"appsignal:category"` attribute to the
+  value passed as the `category` argument.
+  """
   def instrument(name, category, fun) do
     instrument(fn span ->
       _ =
@@ -52,18 +59,35 @@ defmodule Appsignal.Instrumentation do
     instrument(name, category, fun)
   end
 
+  @spec set_error(Exception.t(), Exception.stacktrace()) :: Appsignal.Span.t() | nil
+  @doc """
+  Set an error in the current root span.
+  """
   def set_error(%_{__exception__: true} = exception, stacktrace) do
     @span.add_error(@tracer.root_span(), exception, stacktrace)
   end
 
+  @spec set_error(Exception.kind(), any(), Exception.stacktrace()) :: Appsignal.Span.t() | nil
+  @doc """
+  Set an error in the current root span by passing a `kind` and `reason`.
+  """
   def set_error(kind, reason, stacktrace) do
     @span.add_error(@tracer.root_span(), kind, reason, stacktrace)
   end
 
+  @spec send_error(Exception.t(), Exception.stacktrace()) :: Appsignal.Span.t() | nil
+  @doc """
+  Send an error in a newly created `Appsignal.Span`.
+  """
   def send_error(%_{__exception__: true} = exception, stacktrace) do
     send_error(exception, stacktrace, & &1)
   end
 
+  @spec send_error(Exception.t(), Exception.stacktrace(), function()) :: Appsignal.Span.t() | nil
+  @doc """
+  Send an error in a newly created `Appsignal.Span`. Calls the passed function
+  with the created `Appsignal.Span` before closing it.
+  """
   def send_error(%_{__exception__: true} = exception, stacktrace, fun) when is_function(fun) do
     @span.create_root("http_request", self())
     |> @span.add_error(exception, stacktrace)
@@ -71,6 +95,7 @@ defmodule Appsignal.Instrumentation do
     |> @span.close()
   end
 
+  @spec send_error(Exception.kind(), any(), Exception.stacktrace()) :: Appsignal.Span.t() | nil
   def send_error(kind, reason, stacktrace) do
     send_error(kind, reason, stacktrace, & &1)
   end
