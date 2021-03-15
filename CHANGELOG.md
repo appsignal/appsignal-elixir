@@ -1,3 +1,6 @@
+# 2.1.5
+- Add `Appsignal.Logger` to only log debug messages when the `:debug` configuration is turned on. PR #642
+
 # 2.1.4
 - Ensure the `:request_headers` config returns an empty list by default. PR #637
 
