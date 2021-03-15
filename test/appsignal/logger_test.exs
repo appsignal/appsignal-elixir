@@ -8,23 +8,25 @@ defmodule Appsignal.LoggerTest do
   end
 
   test "logs when debug mode is turned on" do
-    with_config(
-      %{debug: true},
-      fn ->
-        Appsignal.Logger.debug("debug!")
-      end
-    )
+    assert :ok ==
+             with_config(
+               %{debug: true},
+               fn ->
+                 Appsignal.Logger.debug("debug!")
+               end
+             )
 
     assert {:ok, [{"debug!"}]} == Appsignal.Test.Logger.get(:debug)
   end
 
   test "logs when debug mode is turned off" do
-    with_config(
-      %{debug: false},
-      fn ->
-        Appsignal.Logger.debug("debug!")
-      end
-    )
+    assert :ok ==
+             with_config(
+               %{debug: false},
+               fn ->
+                 Appsignal.Logger.debug("debug!")
+               end
+             )
 
     assert :error == Appsignal.Test.Logger.get(:debug)
   end
