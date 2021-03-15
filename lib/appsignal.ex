@@ -39,7 +39,7 @@ defmodule Appsignal do
 
   @doc false
   def stop(_state) do
-    Logger.debug("AppSignal stopping.")
+    Appsignal.Logger.debug("AppSignal stopping.")
   end
 
   @doc false
@@ -61,12 +61,12 @@ defmodule Appsignal do
         Logger.info("AppSignal disabled.")
 
       {:ok, true} ->
-        Logger.debug("AppSignal starting.")
+        Appsignal.Logger.debug("AppSignal starting.")
         Config.write_to_environment()
         Appsignal.Nif.start()
 
         if Appsignal.Nif.loaded?() do
-          Logger.debug("AppSignal started.")
+          Appsignal.Logger.debug("AppSignal started.")
         else
           Logger.error(
             "Failed to start AppSignal. Please run the diagnose task " <>

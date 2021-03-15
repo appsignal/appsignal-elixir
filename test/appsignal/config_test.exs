@@ -115,6 +115,20 @@ defmodule Appsignal.ConfigTest do
     end
   end
 
+  describe "debug?" do
+    test "when debug mode is turned on" do
+      assert with_config(%{debug: true}, &Config.debug?/0) == true
+    end
+
+    test "when debug mode is turned off" do
+      assert with_config(%{debug: false}, &Config.debug?/0) == false
+    end
+
+    test "when debug mode is not configured" do
+      assert with_config(%{}, &Config.debug?/0) == false
+    end
+  end
+
   describe "request_headers" do
     test "returns an empty list by default" do
       assert with_config(%{}, &Config.request_headers/0) == []

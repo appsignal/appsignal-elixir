@@ -6,6 +6,7 @@ if Mix.env() in [:bench, :test, :test_no_nif] do
   config :appsignal, appsignal_diagnose_report: Appsignal.Diagnose.FakeReport
   config :appsignal, appsignal: Appsignal.FakeAppsignal
   config :appsignal, inet: FakeInet
+  config :appsignal, logger: Appsignal.Test.Logger
 
   config :appsignal, appsignal_tracer_nif: Appsignal.Test.Nif
   config :appsignal, appsignal_tracer: Appsignal.Test.Tracer

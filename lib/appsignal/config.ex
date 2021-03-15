@@ -113,6 +113,14 @@ defmodule Appsignal.Config do
   defp do_active?(%{valid: true, active: true}), do: true
   defp do_active?(_), do: false
 
+  @doc """
+  Returns true if debug mode is turned on, false otherwise.
+  """
+  @spec debug?() :: boolean
+  def debug? do
+    Application.fetch_env!(:appsignal, :config)[:debug] || false
+  end
+
   def request_headers do
     Application.fetch_env!(:appsignal, :config)[:request_headers] || []
   end
