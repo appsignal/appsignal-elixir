@@ -1,3 +1,6 @@
+# 2.0.8
+* Use Appsignal.Logger in Appsignal.Plug. PR #11
+
 # 2.0.7
 * Handle conns with nil `request_headers` attributes. PR #10
 
