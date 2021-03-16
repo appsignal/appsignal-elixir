@@ -1,3 +1,6 @@
+# 2.0.6
+* Use Appsignal.Logger in Appsignal.Phoenix.View and .EventHandler. PR #12
+
 # 2.0.5
 * Exposes live_view_action/5 to help instrument handle_params. PR #11
 
