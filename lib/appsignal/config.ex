@@ -118,7 +118,7 @@ defmodule Appsignal.Config do
   """
   @spec debug?() :: boolean
   def debug? do
-    Application.fetch_env!(:appsignal, :config)[:debug] || false
+    Application.get_env(:appsignal, :config, @default_config)[:debug] || false
   end
 
   def request_headers do
