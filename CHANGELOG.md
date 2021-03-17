@@ -1,3 +1,8 @@
+# 2.16
+- Fix `Appsignal.logger` debug level issue on no config present. PR #644
+- Bump agent to d08ae6c. PR #645. Fix span API related issues with empty events
+  for error samples and missing incidents.
+
 # 2.1.5
 - Add `Appsignal.Logger` to only log debug messages when the `:debug` configuration is turned on. PR #642
 
