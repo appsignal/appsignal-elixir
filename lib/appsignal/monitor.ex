@@ -17,24 +17,23 @@ defmodule Appsignal.Monitor do
     GenServer.cast(__MODULE__, {:monitor, self()})
   end
 
-  def handle_cast({:monitor, pid}, state) do
-    unless pid in monitors(), do: Process.monitor(pid)
-    {:noreply, state}
+  def handle_cast({:monitor, pid}, monitors) do
+    if pid in monitors do
+      {:noreply, monitors}
+    else
+      Process.monitor(pid)
+      {:noreply, [pid | monitors]}
+    end
   end
 
-  def handle_info({:DOWN, _ref, :process, pid, _}, state) do
+  def handle_info({:DOWN, _ref, :process, pid, _}, monitors) do
     Process.send_after(self(), {:delete, pid}, @deletion_delay)
-    {:noreply, state}
+    {:noreply, monitors}
   end
 
-  def handle_info({:delete, pid}, state) do
+  def handle_info({:delete, pid}, monitors) do
     Tracer.delete(pid)
-    {:noreply, state}
-  end
-
-  defp monitors do
-    {:monitors, monitors} = Process.info(self(), :monitors)
-    Enum.map(monitors, fn {:process, process} -> process end)
+    {:noreply, List.delete(monitors, pid)}
   end
 
   def child_spec(_) do
