@@ -45,6 +45,15 @@ defmodule Appsignal.MonitorTest do
     end)
   end
 
+  test "automatically removes pids that don't exist from the monitor list" do
+    pid = :erlang.list_to_pid('<0.999.0>')
+    GenServer.cast(Appsignal.Monitor, {:monitor, pid})
+
+    until(fn ->
+      assert :sys.get_state(Appsignal.Monitor) == []
+    end)
+  end
+
   defp lookup(pid) do
     :ets.lookup(:"$appsignal_registry", pid)
   end
