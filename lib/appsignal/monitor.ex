@@ -1,6 +1,7 @@
 defmodule Appsignal.Monitor do
   @moduledoc false
   @deletion_delay Application.get_env(:appsignal, :deletion_delay, 5_000)
+  @sync_interval Application.get_env(:appsignal, :sync_interval, 60_000)
 
   use GenServer
   alias Appsignal.Tracer
@@ -10,6 +11,8 @@ defmodule Appsignal.Monitor do
   end
 
   def init(state) do
+    schedule_sync()
+
     {:ok, state}
   end
 
@@ -37,7 +40,13 @@ defmodule Appsignal.Monitor do
   end
 
   def handle_info(:sync, _monitors) do
-    {:noreply, monitored_pids()}
+    schedule_sync()
+
+    pids = monitored_pids()
+
+    Appsignal.Logger.debug("Synchronizing monitored PIDs in Appsignal.Monitor (#{length(pids)})")
+
+    {:noreply, pids}
   end
 
   def child_spec(_) do
@@ -50,5 +59,9 @@ defmodule Appsignal.Monitor do
   defp monitored_pids do
     {:monitors, monitors} = Process.info(self(), :monitors)
     Enum.map(monitors, fn {:process, process} -> process end)
+  end
+
+  defp schedule_sync do
+    Process.send_after(self(), :sync, @sync_interval)
   end
 end
