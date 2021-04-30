@@ -54,6 +54,21 @@ defmodule Appsignal.MonitorTest do
     end)
   end
 
+  test "syncs the monitors list" do
+    Monitor.add()
+    :sys.replace_state(Appsignal.Monitor, fn _ -> [] end)
+
+    until(fn ->
+      assert :sys.get_state(Appsignal.Monitor) == []
+    end)
+
+    send(Appsignal.Monitor, :sync)
+
+    until(fn ->
+      assert :sys.get_state(Appsignal.Monitor) == [self()]
+    end)
+  end
+
   defp lookup(pid) do
     :ets.lookup(:"$appsignal_registry", pid)
   end

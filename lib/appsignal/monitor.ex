@@ -36,10 +36,19 @@ defmodule Appsignal.Monitor do
     {:noreply, List.delete(monitors, pid)}
   end
 
+  def handle_info(:sync, _monitors) do
+    {:noreply, monitored_pids()}
+  end
+
   def child_spec(_) do
     %{
       id: Appsignal.Monitor,
       start: {Appsignal.Monitor, :start_link, []}
     }
+  end
+
+  defp monitored_pids do
+    {:monitors, monitors} = Process.info(self(), :monitors)
+    Enum.map(monitors, fn {:process, process} -> process end)
   end
 end
