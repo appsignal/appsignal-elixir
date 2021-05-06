@@ -1,4 +1,4 @@
-# 2.1.7-beta.1
+# 2.1.7
 - Keep internal list of monitors in Appsignal.Monitor process. PR 648
 
 # 2.1.6
