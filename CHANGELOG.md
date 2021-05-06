@@ -1,3 +1,6 @@
+# 2.1.7-beta.1
+- Keep internal list of monitors in Appsignal.Monitor process. PR 648
+
 # 2.1.6
 - Fix `Appsignal.logger` debug level issue on no config present. PR #644
 - Bump agent to d08ae6c. PR #645. Fix span API related issues with empty events
