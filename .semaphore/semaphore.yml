@@ -38,6 +38,12 @@ blocks:
           commands:
             - ERLANG_VERSION=23.2 ELIXIR_VERSION=master . bin/setup
             - MIX_ENV=test_no_nif mix test
+        - name: Elixir master, OTP 23, integration tests
+          commands:
+            - ERLANG_VERSION=23.2 ELIXIR_VERSION=master . bin/setup
+            - git submodule init
+            - git submodule update
+            - LANGUAGE=elixir test/integration/diagnose/bin/test
         - name: Elixir 1.11.3, OTP 23
           commands:
             - ERLANG_VERSION=23.2 ELIXIR_VERSION=1.11.3 . bin/setup
