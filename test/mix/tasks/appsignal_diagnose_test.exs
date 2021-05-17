@@ -65,7 +65,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   test "outputs AppSignal support header" do
     output = run()
     assert String.contains?(output, "AppSignal diagnose")
-    assert String.contains?(output, "http://docs.appsignal.com/")
+    assert String.contains?(output, "https://docs.appsignal.com/")
     assert String.contains?(output, "support@appsignal.com")
   end
 

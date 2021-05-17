@@ -83,7 +83,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     IO.puts(String.duplicate("=", 80))
     IO.puts("Use this information to debug your configuration.")
     IO.puts("More information is available on the documentation site.")
-    IO.puts("http://docs.appsignal.com/")
+    IO.puts("https://docs.appsignal.com/")
     IO.puts("Send this output to support@appsignal.com if you need help.")
     IO.puts(String.duplicate("=", 80))
   end
