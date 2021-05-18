@@ -72,7 +72,7 @@ blocks:
             - mix test
         - name: Elixir 1.9.4, OTP 20
           commands:
-            - ERLANG_VERSION=20.3.8.26 ELIXIR_VERSION=1.9.4 . bin/setup
+            - ERLANG_VERSION=20.3 ELIXIR_VERSION=1.9.4 . bin/setup
             - mix test
       env_vars:
         - name: MIX_ENV
