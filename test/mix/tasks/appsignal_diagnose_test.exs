@@ -317,7 +317,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
   test "outputs library information" do
     output = run()
-    assert String.contains?(output, "AppSignal agent")
+    assert String.contains?(output, "AppSignal library")
     assert String.contains?(output, "Language: Elixir")
     assert String.contains?(output, "Package version: #{@appsignal_version}")
     assert String.contains?(output, "Agent version: #{@agent_version}")

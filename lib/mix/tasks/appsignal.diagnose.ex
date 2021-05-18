@@ -89,7 +89,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
   end
 
   defp print_library_info(library_report) do
-    IO.puts("AppSignal agent")
+    IO.puts("AppSignal library")
     IO.puts("  Language: Elixir")
     IO.puts("  Package version: #{library_report[:package_version]}")
     IO.puts("  Agent version: #{library_report[:agent_version]}")
