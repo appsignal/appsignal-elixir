@@ -165,7 +165,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
   defp do_print_installation_report(installation_report) do
     result_report = installation_report["result"]
     IO.puts("  Installation result")
-    IO.puts("    Status: #{format_value(result_report["status"])}")
+    IO.puts("    Status: #{result_report["status"]}")
 
     if Map.has_key?(result_report, "message") do
       IO.puts("    Message: #{format_value(result_report["message"])}")
@@ -177,7 +177,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
 
     language_report = installation_report["language"]
     IO.puts("  Language details")
-    IO.puts("    Elixir version: #{format_value(language_report["version"])}")
+    IO.puts("    Elixir version: #{language_report["version"]}")
     IO.puts("    OTP version: #{format_value(language_report["otp_version"])}")
     do_print_download_report(installation_report)
     build_report = installation_report["build"]

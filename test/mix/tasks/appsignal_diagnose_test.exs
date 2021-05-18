@@ -149,7 +149,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       output = run()
       assert String.contains?(output, "Extension installation report")
       assert String.contains?(output, "  Installation result")
-      assert String.contains?(output, "  Status: \"failed\"")
+      assert String.contains?(output, "  Status: failed")
       assert String.contains?(output, "  Message: \"Unknown target platform")
       assert String.contains?(output, "  Source: nil")
     end
@@ -228,7 +228,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
       refute String.contains?(output, "  Error found while parsing the installation report")
 
-      assert String.contains?(output, "Installation result\n    Status: \"failed\"")
+      assert String.contains?(output, "Installation result\n    Status: failed")
     end
   end
 
