@@ -203,7 +203,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     download_report = installation_report["download"]
     IO.puts("  Download details")
     IO.puts("    Download time: #{format_value(download_report["time"])}")
-    IO.puts("    Download URL: #{format_value(download_report["download_url"])}")
+    IO.puts("    Download URL: #{download_report["download_url"]}")
     IO.puts("    Architecture: #{format_value(download_report["architecture"])}")
     IO.puts("    Target: #{format_value(download_report["target"])}")
     IO.puts("    Musl override: #{format_value(download_report["musl_override"])}")

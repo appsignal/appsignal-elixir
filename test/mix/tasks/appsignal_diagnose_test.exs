@@ -1123,7 +1123,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   defp assert_output_contains_download_report(output) do
     assert String.contains?(output, "Download details")
     assert String.contains?(output, "  Download time: \"20")
-    assert String.contains?(output, "  Download URL: \"https://")
+    assert String.contains?(output, "  Download URL: https://")
     assert output =~ ~r{Architecture: "x86(_64)?"}
     assert output =~ ~r{Target: "[\w-]+"}
     assert String.contains?(output, "  Musl override: false")
