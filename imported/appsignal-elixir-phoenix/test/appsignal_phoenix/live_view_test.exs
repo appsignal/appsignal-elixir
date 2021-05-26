@@ -10,7 +10,9 @@ defmodule Appsignal.Phoenix.LiveViewTest do
       socket: %Phoenix.LiveView.Socket{
         endpoint: PhoenixWeb.Endpoint,
         id: 1,
-        root_view: PhoenixWeb.LiveView,
+        private: %{
+          root_view: PhoenixWeb.LiveView
+        },
         router: PhoenixWeb.Router,
         view: PhoenixWeb.LiveView
       }
@@ -50,6 +52,32 @@ defmodule Appsignal.Phoenix.LiveViewTest do
 
     test "closes the span" do
       assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    end
+  end
+
+  describe "instrument/4, with a non-private root_view" do
+    setup %{socket: socket} do
+      %{
+        return:
+          PhoenixWeb.LiveView.mount(%{}, %{
+            __struct__: Phoenix.LiveView.Socket,
+            endpoint: PhoenixWeb.Endpoint,
+            id: 1,
+            root_view: PhoenixWeb.LiveView,
+            router: PhoenixWeb.Router,
+            view: PhoenixWeb.LiveView
+          })
+      }
+    end
+
+    test "sets the span's sample data" do
+      assert_sample_data("environment", %{
+        "endpoint" => PhoenixWeb.Endpoint,
+        "id" => 1,
+        "root_view" => PhoenixWeb.LiveView,
+        "router" => PhoenixWeb.Router,
+        "view" => PhoenixWeb.LiveView
+      })
     end
   end
 
