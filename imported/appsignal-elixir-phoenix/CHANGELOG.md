@@ -1,3 +1,7 @@
+# 2.0.7
+
+- [af399efc](https://github.com/appsignal/appsignal-elixir-phoenix/commit/af399efc8ad43ab7b93d34f848eb1df6d87c96ad) patch - Handle `root_view`s in phoenix_live_view 0.15.6 and up, which were made private in https://github.com/phoenixframework/phoenix_live_view/commit/8bb6f44554f22bf580048e20562b62dd6b26e2b5.
+
 # 2.0.6
 * Use Appsignal.Logger in Appsignal.Phoenix.View and .EventHandler. PR #12
 
