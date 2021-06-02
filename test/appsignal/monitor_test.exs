@@ -50,22 +50,22 @@ defmodule Appsignal.MonitorTest do
     GenServer.cast(Appsignal.Monitor, {:monitor, pid})
 
     until(fn ->
-      assert :sys.get_state(Appsignal.Monitor) == []
+      assert MapSet.size(:sys.get_state(Appsignal.Monitor)) == 0
     end)
   end
 
   test "syncs the monitors list" do
     Monitor.add()
-    :sys.replace_state(Appsignal.Monitor, fn _ -> [] end)
+    :sys.replace_state(Appsignal.Monitor, fn _ -> MapSet.new() end)
 
     until(fn ->
-      assert :sys.get_state(Appsignal.Monitor) == []
+      assert MapSet.size(:sys.get_state(Appsignal.Monitor)) == 0
     end)
 
     send(Appsignal.Monitor, :sync)
 
     until(fn ->
-      assert :sys.get_state(Appsignal.Monitor) == [self()]
+      assert MapSet.member?(:sys.get_state(Appsignal.Monitor), self())
     end)
   end
 

@@ -10,10 +10,10 @@ defmodule Appsignal.Monitor do
     GenServer.start_link(__MODULE__, [], name: __MODULE__)
   end
 
-  def init(state) do
+  def init(_) do
     schedule_sync()
 
-    {:ok, state}
+    {:ok, MapSet.new()}
   end
 
   def add do
@@ -21,11 +21,11 @@ defmodule Appsignal.Monitor do
   end
 
   def handle_cast({:monitor, pid}, monitors) do
-    if pid in monitors do
+    if MapSet.member?(monitors, pid) do
       {:noreply, monitors}
     else
       Process.monitor(pid)
-      {:noreply, [pid | monitors]}
+      {:noreply, MapSet.put(monitors, pid)}
     end
   end
 
@@ -36,15 +36,17 @@ defmodule Appsignal.Monitor do
 
   def handle_info({:delete, pid}, monitors) do
     Tracer.delete(pid)
-    {:noreply, List.delete(monitors, pid)}
+    {:noreply, MapSet.delete(monitors, pid)}
   end
 
   def handle_info(:sync, _monitors) do
     schedule_sync()
 
-    pids = monitored_pids()
+    pids = MapSet.new(monitored_pids())
 
-    Appsignal.Logger.debug("Synchronizing monitored PIDs in Appsignal.Monitor (#{length(pids)})")
+    Appsignal.Logger.debug(
+      "Synchronizing monitored PIDs in Appsignal.Monitor (#{MapSet.size(pids)})"
+    )
 
     {:noreply, pids}
   end
