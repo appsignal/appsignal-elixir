@@ -212,6 +212,34 @@ defmodule Appsignal.Probes.ErlangProbeTest do
              )
     end
 
+    test "gathers atom metrics", %{fake_appsignal: fake_appsignal} do
+      metrics = FakeAppsignal.get_gauges(fake_appsignal, "erlang_atoms")
+
+      assert Enum.any?(
+               metrics,
+               &match?(
+                 %{
+                   key: "erlang_atoms",
+                   tags: %{type: "count", hostname: "Bobs-MBP.example.com"},
+                   value: _
+                 },
+                 &1
+               )
+             )
+
+      assert Enum.any?(
+               metrics,
+               &match?(
+                 %{
+                   key: "erlang_atoms",
+                   tags: %{type: "limit", hostname: "Bobs-MBP.example.com"},
+                   value: _
+                 },
+                 &1
+               )
+             )
+    end
+
     test "gathers run queue lengths", %{fake_appsignal: fake_appsignal} do
       metrics = FakeAppsignal.get_gauges(fake_appsignal, "total_run_queue_lengths")
 

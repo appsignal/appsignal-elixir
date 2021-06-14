@@ -8,6 +8,7 @@ defmodule Appsignal.Probes.ErlangProbe do
     scheduler_metrics()
     process_metrics()
     memory_metrics()
+    atom_metrics()
     run_queue_lengths()
   end
 
@@ -39,6 +40,11 @@ defmodule Appsignal.Probes.ErlangProbe do
     Enum.each(memory, fn {key, value} ->
       set_gauge("erlang_memory", Kernel.div(value, 1024), %{type: to_string(key)})
     end)
+  end
+
+  defp atom_metrics do
+    set_gauge("erlang_atoms", :erlang.system_info(:atom_limit), %{type: "limit"})
+    set_gauge("erlang_atoms", :erlang.system_info(:atom_count), %{type: "count"})
   end
 
   defp run_queue_lengths do
