@@ -11,7 +11,7 @@ defmodule Appsignal.ErrorTest do
     end
 
     test "extracts the error's name", %{metadata: metadata} do
-      assert {"RuntimeError", _message, _stack} = metadata
+      assert {"** (RuntimeError) Exception!", _message, _stack} = metadata
     end
 
     test "extracts the error's message", %{metadata: metadata} do
@@ -36,7 +36,7 @@ defmodule Appsignal.ErrorTest do
     end
 
     test "extracts the error's name", %{metadata: metadata} do
-      assert {"RuntimeError", _message, _stack} = metadata
+      assert {"** (RuntimeError) Exception!", _message, _stack} = metadata
     end
 
     test "extracts the error's message", %{metadata: metadata} do
@@ -61,7 +61,7 @@ defmodule Appsignal.ErrorTest do
     end
 
     test "extracts the error's name", %{metadata: metadata} do
-      assert {"ArgumentError", _message, _stack} = metadata
+      assert {"** (ArgumentError) argument error", _message, _stack} = metadata
     end
 
     test "extracts the error's message", %{metadata: metadata} do
@@ -86,7 +86,7 @@ defmodule Appsignal.ErrorTest do
     end
 
     test "extracts the error's name", %{metadata: metadata} do
-      assert {":exit", _message, _stack} = metadata
+      assert {"** (exit) :exited", _message, _stack} = metadata
     end
 
     test "extracts the error's message", %{metadata: metadata} do
