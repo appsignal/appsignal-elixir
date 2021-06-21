@@ -263,8 +263,13 @@ defmodule Mix.Appsignal.Helper do
   defp make_args("test" <> _), do: ["-e", "CFLAGS_ADD=-DTEST"]
   defp make_args(_), do: []
 
-  defp verify_system_architecture(report) do
-    input_arch = :erlang.system_info(:system_architecture)
+  def verify_system_architecture(report) do
+    input_arch =
+      if force_linux_arm_build?() do
+        'aarch64-linux'
+      else
+        :erlang.system_info(:system_architecture)
+      end
 
     case map_arch(input_arch, agent_platform()) do
       {:ok, {arch, target} = architecture} ->
@@ -299,6 +304,7 @@ defmodule Mix.Appsignal.Helper do
     defp map_arch('x86-' ++ _, platform), do: build_for("i686", platform)
     defp map_arch('amd64-' ++ _, platform), do: build_for("x86_64", platform)
     defp map_arch('x86_64-' ++ _, platform), do: build_for("x86_64", platform)
+    defp map_arch('aarch64-' ++ _, platform), do: build_for("aarch64", platform)
   end
 
   defp map_arch(arch, platform), do: {:error, {:unknown, {arch, platform}}}
@@ -385,11 +391,14 @@ defmodule Mix.Appsignal.Helper do
   end
 
   def agent_platform do
-    case force_musl_build?() do
-      true ->
+    cond do
+      force_linux_arm_build?() == true ->
+        "linux"
+
+      force_musl_build?() == true ->
         "linux-musl"
 
-      false ->
+      true ->
         case @os.type() do
           {:unix, :linux} ->
             agent_platform_by_ldd_version()
@@ -628,6 +637,11 @@ defmodule Mix.Appsignal.Helper do
 
   defp force_musl_build? do
     env = System.get_env("APPSIGNAL_BUILD_FOR_MUSL")
+    env == "1" || env == "true"
+  end
+
+  defp force_linux_arm_build? do
+    env = System.get_env("APPSIGNAL_BUILD_FOR_LINUX_ARM")
     env == "1" || env == "true"
   end
 
