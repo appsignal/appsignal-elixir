@@ -11,6 +11,51 @@ defmodule Mix.Appsignal.HelperTest do
     [fake_os: start_supervised!(FakeOS), fake_system: start_supervised!(FakeSystem)]
   end
 
+  describe ".verify_system_architecture" do
+    @tag :skip_env_test_no_nif
+    test "returns 64-bit Linux build" do
+      report = %{build: %{}}
+
+      assert Mix.Appsignal.Helper.verify_system_architecture(report) == {
+               :ok,
+               {
+                 {"x86_64", "linux"},
+                 %{build: %{architecture: "x86_64", target: "linux"}}
+               }
+             }
+    end
+
+    @tag :skip_env_test_no_nif
+    test "returns the 64-bit Linux ARM build when using the APPSIGNAL_BUILD_FOR_LINUX_ARM='1' env var" do
+      with_env(%{"APPSIGNAL_BUILD_FOR_LINUX_ARM" => "1"}, fn ->
+        report = %{build: %{}}
+
+        assert Mix.Appsignal.Helper.verify_system_architecture(report) == {
+                 :ok,
+                 {
+                   {"aarch64", "linux"},
+                   %{build: %{architecture: "aarch64", target: "linux"}}
+                 }
+               }
+      end)
+    end
+
+    @tag :skip_env_test_no_nif
+    test "returns the 64-bit Linux ARM build when using the APPSIGNAL_BUILD_FOR_LINUX_ARM='true' env var" do
+      with_env(%{"APPSIGNAL_BUILD_FOR_LINUX_ARM" => "true"}, fn ->
+        report = %{build: %{}}
+
+        assert Mix.Appsignal.Helper.verify_system_architecture(report) == {
+                 :ok,
+                 {
+                   {"aarch64", "linux"},
+                   %{build: %{architecture: "aarch64", target: "linux"}}
+                 }
+               }
+      end)
+    end
+  end
+
   describe ".agent_platform" do
     test "returns libc build when the system detection doesn't work" do
       assert Mix.Appsignal.Helper.agent_platform() == "linux"
