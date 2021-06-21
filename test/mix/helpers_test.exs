@@ -12,7 +12,7 @@ defmodule Mix.Appsignal.HelperTest do
   end
 
   describe ".agent_platform" do
-    test "agent_platform returns libc build when the system detection doesn't work" do
+    test "returns libc build when the system detection doesn't work" do
       assert Mix.Appsignal.Helper.agent_platform() == "linux"
     end
 
@@ -68,7 +68,7 @@ defmodule Mix.Appsignal.HelperTest do
       assert Mix.Appsignal.Helper.agent_platform() == "linux-musl"
     end
 
-    test "agent_platform returns libc build when ldd doesn't return a version number", %{
+    test "returns libc build when ldd doesn't return a version number", %{
       fake_system: fake_system
     } do
       FakeSystem.update(fake_system, :cmd, fn _, _, _ ->
@@ -99,7 +99,7 @@ defmodule Mix.Appsignal.HelperTest do
       assert Mix.Appsignal.Helper.agent_platform() == "darwin"
     end
 
-    test "returns the darwin build when on a freebsd system", %{
+    test "returns the FreeBSD build when on a FreeBSD system", %{
       fake_os: fake_os,
       fake_system: fake_system
     } do
