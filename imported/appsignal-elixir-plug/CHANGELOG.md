@@ -1,26 +1,28 @@
-# 2.0.8
+# AppSignal for Elixir Plug changelog
+
+## 2.0.8
 * Use Appsignal.Logger in Appsignal.Plug. PR #11
 
-# 2.0.7
+## 2.0.7
 * Handle conns with nil `request_headers` attributes. PR #10
 
-# 2.0.6
+## 2.0.6
 * Fix send_params configuration in Appsignal.Plug. PR #9
 
-# 2.0.5
+## 2.0.5
 * Allow :appsignal versions between 2.0.6 and 3.0.0
 
-# 2.0.4
+## 2.0.4
 Drop all errors with a plug_status < 500, not just WrapperErrors. PR #7
 
-# 2.0.3
+## 2.0.3
 Match on :done instead of true for plug_session_fetch. Commit 8af8836f17db60484fc6d02143666345fe607435
 
-# 2.0.2
+## 2.0.2
 Add status and request_id and restore headers in Appsignal.Metadata. PR #5
 
-# 2.0.1
+## 2.0.1
 Explicitly ignore return from span functions in Appsignal.Plug. PR #4
 
-# 2.0.0
+## 2.0.0
 * Initial release, extracted from appsignal-elixir 🎉
