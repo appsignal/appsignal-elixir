@@ -627,7 +627,8 @@ defmodule Mix.Appsignal.Helper do
   end
 
   defp force_musl_build? do
-    !is_nil(System.get_env("APPSIGNAL_BUILD_FOR_MUSL"))
+    env = System.get_env("APPSIGNAL_BUILD_FOR_MUSL")
+    env == "1" || env == "true"
   end
 
   defp make do

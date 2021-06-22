@@ -16,8 +16,20 @@ defmodule Mix.Appsignal.HelperTest do
       assert Mix.Appsignal.Helper.agent_platform() == "linux"
     end
 
-    test "returns the musl build when using the APPSIGNAL_BUILD_FOR_MUSL env var" do
+    test "does not return the musl build when using the APPSIGNAL_BUILD_FOR_MUSL=='' env var" do
+      with_env(%{"APPSIGNAL_BUILD_FOR_MUSL" => ""}, fn ->
+        assert Mix.Appsignal.Helper.agent_platform() != "linux-musl"
+      end)
+    end
+
+    test "returns the musl build when using the APPSIGNAL_BUILD_FOR_MUSL==1 env var" do
       with_env(%{"APPSIGNAL_BUILD_FOR_MUSL" => "1"}, fn ->
+        assert Mix.Appsignal.Helper.agent_platform() == "linux-musl"
+      end)
+    end
+
+    test "returns the musl build when using the APPSIGNAL_BUILD_FOR_MUSL==true env var" do
+      with_env(%{"APPSIGNAL_BUILD_FOR_MUSL" => "true"}, fn ->
         assert Mix.Appsignal.Helper.agent_platform() == "linux-musl"
       end)
     end
