@@ -99,6 +99,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     assert Enum.member?(valid_architectures, download_report["architecture"])
     assert Enum.member?(valid_targets, download_report["target"])
     assert download_report["musl_override"] == false
+    assert download_report["linux_arm_override"] == false
     assert download_report["library_type"] == "static"
     assert download_report["checksum"] == "verified"
 
@@ -110,6 +111,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     assert Enum.member?(valid_architectures, build_report["architecture"])
     assert Enum.member?(valid_targets, build_report["target"])
     assert download_report["musl_override"] == false
+    assert download_report["linux_arm_override"] == false
     assert build_report["library_type"] == "static"
   end
 
@@ -1127,6 +1129,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     assert output =~ ~r{Architecture: "x86(_64)?"}
     assert output =~ ~r{Target: "[\w-]+"}
     assert String.contains?(output, "  Musl override: false")
+    assert String.contains?(output, "  Linux ARM override: false")
     assert String.contains?(output, "  Library type: \"static\"")
     assert output =~ ~r{Checksum: "(verified|unverified)"}
   end

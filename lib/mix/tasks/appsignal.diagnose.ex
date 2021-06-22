@@ -188,6 +188,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     IO.puts("    Architecture: #{format_value(build_report["architecture"])}")
     IO.puts("    Target: #{format_value(build_report["target"])}")
     IO.puts("    Musl override: #{format_value(build_report["musl_override"])}")
+    IO.puts("    Linux ARM override: #{format_value(build_report["linux_arm_override"])}")
     IO.puts("    Library type: #{format_value(build_report["library_type"])}")
     host_report = installation_report["host"]
     IO.puts("  Host details")
@@ -207,6 +208,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     IO.puts("    Architecture: #{format_value(download_report["architecture"])}")
     IO.puts("    Target: #{format_value(download_report["target"])}")
     IO.puts("    Musl override: #{format_value(download_report["musl_override"])}")
+    IO.puts("    Linux ARM override: #{format_value(download_report["linux_arm_override"])}")
     IO.puts("    Library type: #{format_value(download_report["library_type"])}")
     IO.puts("    Checksum: #{format_value(download_report["checksum"])}")
   end
