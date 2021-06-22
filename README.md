@@ -43,10 +43,14 @@ documentation](http://docs.appsignal.com/elixir/configuration/).
 Before you can start developing on the AppSignal for Elixir project make sure
 you have [Elixir installed](http://elixir-lang.org/install.html).
 
+This repository is managed by [mono](https://github.com/appsignal/mono/).
+Nstall mono on your local machine by [following the mono installation
+steps](https://github.com/appsignal/mono/#installation).
+
 Then make sure you have all the project's dependencies installed by running the
 following command:
 
-    $ mix deps.get
+    $ mono bootstrap
 
 ### Testing
 
@@ -54,6 +58,8 @@ Testing is done with ExUnit and can be run with the `mix test` command. You can
 also supply a path to a specific file path you want to test and even a specific
 line on which the test you want to run is defined.
 
+    $ mono test
+    # The original command can still be used
     $ mix test
     $ mix test test/appsignal/some_test.ex:123
 
@@ -81,14 +87,20 @@ library. The `develop` branch is used for development of features that
 will end up in the next minor release. If you fix a bug open a pull
 request on `main`, if it's a new feature on `develop`.
 
+### Making changes
+
+When making changes to the project that require a release, [add a
+changeset](https://github.com/appsignal/mono/#changeset-add) that will be used
+to update the generated `CHANGELOG.md` file upon
+[release](#publishing-new-version).
+
+    $ mono changeset add
+
 ### Publishing new versions
 
 1. Merge the `develop` branch to `main` if necessary.
--  Update the version number in `mix.exs`, e.g. `1.2.3`
--  Commit the change.
--  Tag the commit with the version number: `git tag 1.2.3`
--  Push the changes: `git push origin main 1.2.3`
--  Publish the package: `mix hex.publish`
+-  Run [`mono publish`](https://github.com/appsignal/mono/#publish) and follow
+   the instructions.
 
 ## Contributing
 

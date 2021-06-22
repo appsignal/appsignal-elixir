@@ -1,0 +1,7 @@
+---
+language: elixir
+repo: "https://github.com/appsignal/appsignal-elixir"
+clean:
+  post: |
+    rm -rf c_src/appsignal-agent c_src/appsignal.* c_src/libappsignal.*
+    rm -rf priv/appsignal-agent priv/appsignal_extension.* priv/appsignal.version priv/*.report priv/libappsignal.*
