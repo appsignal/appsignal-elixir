@@ -6,8 +6,8 @@
 AppSignal for Elixir monitors errors, performance and servers for Elixir
 applications.
 
-- [AppSignal.com website](https://appsignal.com/)
-- [AppSignal for Elixir documentation](http://docs.appsignal.com/elixir/)
+- [AppSignal.com website](https://www.appsignal.com/elixir)
+- [AppSignal for Elixir documentation](https://docs.appsignal.com/elixir/)
 - [Package documentation](https://hexdocs.pm/appsignal/)
 - [Support][contact]
 
@@ -15,7 +15,7 @@ applications.
 ## Installation
 
 Please follow the [installation
-guide](http://docs.appsignal.com/elixir/installation.html) on how to install
+guide](https://docs.appsignal.com/elixir/installation.html) on how to install
 and use this library.
 
 Then, add custom instrumentation or use one of the framework integrations to
@@ -28,13 +28,13 @@ thrown and any performance issues that might have occurred.
 
 You can also add extra information to requests by adding custom
 instrumentation. Read more in our [instrumentation
-guide](http://docs.appsignal.com/elixir/instrumentation/).
+guide](https://docs.appsignal.com/elixir/instrumentation/).
 
 ## Configuration
 
 A complete list of all configurable options for AppSignal for Elixir is
 available in [our
-documentation](http://docs.appsignal.com/elixir/configuration/).
+documentation](https://docs.appsignal.com/elixir/configuration/).
 
 ## Development
 
@@ -126,6 +126,6 @@ The AppSignal for Elixir package source code is released under the MIT License.
 Check the [LICENSE](LICENSE) file for more information.
 
 [contact]: mailto:support@appsignal.com
-[contributing-guide]: http://docs.appsignal.com/appsignal/contributing.html
+[contributing-guide]: https://docs.appsignal.com/appsignal/contributing.html
 [coc]: https://docs.appsignal.com/appsignal/code-of-conduct.html
 [waffles-page]: https://appsignal.com/waffles
