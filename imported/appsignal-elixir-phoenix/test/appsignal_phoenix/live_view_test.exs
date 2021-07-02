@@ -55,6 +55,23 @@ defmodule Appsignal.Phoenix.LiveViewTest do
     end
   end
 
+  describe "instrument/4, when a root span exists" do
+    setup %{socket: socket} do
+      %{
+        parent: Appsignal.Tracer.create_span("live_view"),
+        return: PhoenixWeb.LiveView.mount(%{}, socket)
+      }
+    end
+
+    test "creates a child span", %{parent: parent} do
+      assert {:ok, [{_, ^parent}]} = Test.Tracer.get(:create_span)
+    end
+
+    test "sets the span's namespace" do
+      assert {:ok, [{%Span{}, "live_view"}]} = Test.Span.get(:set_namespace)
+    end
+  end
+
   describe "instrument/4, with a non-private root_view" do
     setup %{socket: socket} do
       %{
