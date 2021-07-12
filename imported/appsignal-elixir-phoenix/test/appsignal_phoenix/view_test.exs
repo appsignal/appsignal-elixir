@@ -9,13 +9,26 @@ defmodule Appsignal.ViewTest do
     :ok
   end
 
-  describe "when calling render/2 with a binary first argument" do
+  describe "when calling render/2 without a parent span" do
     setup do
       %{return: PhoenixWeb.View.render("index.html", %{})}
     end
 
-    test "creates a root span" do
-      assert {:ok, [{_, nil}]} = Test.Tracer.get(:create_span)
+    test "does not create a root span" do
+      assert :error = Test.Tracer.get(:create_span)
+    end
+  end
+
+  describe "when a root span exist, calling render/2 with a binary first argument" do
+    setup do
+      %{
+        parent: Appsignal.Tracer.create_span("http_request"),
+        return: PhoenixWeb.View.render("index.html", %{})
+      }
+    end
+
+    test "creates a child span", %{parent: parent} do
+      assert {:ok, [{_, ^parent}]} = Test.Tracer.get(:create_span)
     end
 
     test "sets the span's name" do
@@ -39,13 +52,16 @@ defmodule Appsignal.ViewTest do
     end
   end
 
-  describe "when calling render/2 with a non-binary first argument" do
+  describe "when a root span exists, calling render/2 with a non-binary first argument" do
     setup do
-      %{return: PhoenixWeb.View.render(PhoenixWeb.View, "index.html")}
+      %{
+        parent: Appsignal.Tracer.create_span("http_request"),
+        return: PhoenixWeb.View.render("index.html", %{})
+      }
     end
 
-    test "creates a root span" do
-      assert {:ok, [{_, nil}]} = Test.Tracer.get(:create_span)
+    test "creates a child span", %{parent: parent} do
+      assert {:ok, [{_, ^parent}]} = Test.Tracer.get(:create_span)
     end
 
     test "sets the span's name" do

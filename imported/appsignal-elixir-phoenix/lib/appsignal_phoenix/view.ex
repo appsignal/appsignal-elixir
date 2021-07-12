@@ -41,21 +41,24 @@ defmodule Appsignal.Phoenix.View do
   defmacro __before_compile__(_env) do
     quote do
       @span Application.get_env(:appsignal, :appsignal_span, Appsignal.Span)
+      @tracer Application.get_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
 
       defoverridable render: 2
 
       def render(template, assigns) when is_binary(template) do
-        {root, _pattern, _names} = __templates__()
-        path = Path.join(root, template)
+        if @tracer.current_span do
+          {root, _pattern, _names} = __templates__()
+          path = Path.join(root, template)
 
-        Appsignal.instrument("Render #{path}", fn span ->
-          _ =
-            span
-            |> @span.set_attribute("title", path)
-            |> @span.set_attribute("appsignal:category", "render.phoenix_template")
+          Appsignal.instrument("Render #{path}", fn span ->
+            _ =
+              span
+              |> @span.set_attribute("title", path)
+              |> @span.set_attribute("appsignal:category", "render.phoenix_template")
 
-          super(template, assigns)
-        end)
+            super(template, assigns)
+          end)
+        end
       end
 
       def render(template, assigns) do
