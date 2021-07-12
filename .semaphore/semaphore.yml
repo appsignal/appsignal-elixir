@@ -11,6 +11,13 @@ blocks:
         commands:
           - checkout
       jobs:
+        - name: Git Lint (Lintje)
+          env_vars:
+            - name: LINTJE_VERSION
+              value: "0.2.0"
+          commands:
+            - script/install_lintje
+            - $HOME/bin/lintje $SEMAPHORE_GIT_COMMIT_RANGE
         - name: mix compile --warnings-as-errors
           commands:
             - ERLANG_VERSION=23.2 ELIXIR_VERSION=1.10.4 . bin/setup
