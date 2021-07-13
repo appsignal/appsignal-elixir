@@ -5,7 +5,20 @@ agent:
     type: e1-standard-2
     os_image: ubuntu1804
 blocks:
-  - name: Run linters
+  - name: Run other linters
+    dependencies: []
+    task:
+      env_vars:
+        - name: LINTJE_VERSION
+          value: "0.2.0"
+      jobs:
+        - name: Git Lint (Lintje)
+          commands:
+            - checkout
+            - script/install_lintje
+            - $HOME/bin/lintje $SEMAPHORE_GIT_COMMIT_RANGE
+  - name: Run Elixir linters
+    dependencies: []
     task:
       prologue:
         commands:
@@ -31,6 +44,7 @@ blocks:
             - cache store dialyzer-plt priv/plts/
             - mix dialyzer
   - name: Run tests
+    dependencies: []
     task:
       jobs:
         - name: Elixir master, OTP 23
