@@ -1,5 +1,12 @@
 # AppSignal for Elixir Phoenix changelog
 
+## 2.0.8
+
+- [af399ef](https://github.com/appsignal/appsignal-elixir-phoenix/commit/af399efc8ad43ab7b93d34f848eb1df6d87c96ad) patch - Handle `root_view`s in phoenix_live_view 0.15.6 and up, which were made private
+  in
+  https://github.com/phoenixframework/phoenix_live_view/commit/8bb6f44554f22bf580048e20562b62dd6b26e2b5.
+- [c19e006](https://github.com/appsignal/appsignal-elixir-phoenix/commit/c19e00695c45c5c50269fa568e550ed95e437408) patch - Don't track Phoenix render template events without root spans. For live view a lot of template events were tracked as separate incidents, causing a lot noise on the incidents overview for an app. This patch makes sure `Appsignal.View` doesn't create root spans anymore, skipping any template renders that can't be added to any existing trace.
+
 ## 2.0.7
 - [af399efc](https://github.com/appsignal/appsignal-elixir-phoenix/commit/af399efc8ad43ab7b93d34f848eb1df6d87c96ad) patch - Handle `root_view`s in phoenix_live_view 0.15.6 and up, which were made private in https://github.com/phoenixframework/phoenix_live_view/commit/8bb6f44554f22bf580048e20562b62dd6b26e2b5.
 

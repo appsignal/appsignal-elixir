@@ -1,7 +1,0 @@
----
-bump: "patch"
----
-
-Handle `root_view`s in phoenix_live_view 0.15.6 and up, which were made private
-in
-https://github.com/phoenixframework/phoenix_live_view/commit/8bb6f44554f22bf580048e20562b62dd6b26e2b5.

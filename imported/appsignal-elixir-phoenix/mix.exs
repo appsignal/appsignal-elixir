@@ -4,7 +4,7 @@ defmodule Appsignal.Phoenix.MixProject do
   def project do
     [
       app: :appsignal_phoenix,
-      version: "2.0.7",
+      version: "2.0.8",
       description:
         "AppSignal's Phoenix instrumentation instruments calls to Phoenix applications to gain performance insights and error reporting",
       package: %{
