@@ -14,7 +14,7 @@ blocks:
         - name: Git Lint (Lintje)
           env_vars:
             - name: LINTJE_VERSION
-              value: "0.2.0"
+              value: "0.3.0"
           commands:
             - script/install_lintje
             - $HOME/bin/lintje $SEMAPHORE_GIT_COMMIT_RANGE
