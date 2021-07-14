@@ -1,0 +1,18 @@
+#!/bin/bash
+
+set -eu
+
+mkdir -p $HOME/bin
+cache_key=v1-lintje-$LINTJE_VERSION
+cache restore $cache_key
+
+# File exists and is executable
+if [ -x "$HOME/bin/lintje" ]; then
+  echo "Restored Lintje $LINTJE_VERSION from cache"
+else
+  echo "Downloading Lintje $LINTJE_VERSION"
+  curl -L \
+    https://github.com/tombruijn/lintje/releases/download/v$LINTJE_VERSION/x86_64-unknown-linux-gnu.tar.gz | \
+    tar -xz --directory $HOME/bin
+  cache store $cache_key $HOME/bin/lintje
+fi

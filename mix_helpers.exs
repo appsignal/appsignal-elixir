@@ -473,6 +473,7 @@ defmodule Mix.Appsignal.Helper do
         architecture: nil,
         target: os,
         musl_override: force_musl_build?(),
+        linux_arm_override: force_linux_arm_build?(),
         library_type: "static"
       },
       host: %{
@@ -494,6 +495,7 @@ defmodule Mix.Appsignal.Helper do
         architecture: architecture,
         target: target,
         musl_override: musl_override,
+        linux_arm_override: linux_arm_override,
         library_type: library_type
       }
     } = report
@@ -511,6 +513,7 @@ defmodule Mix.Appsignal.Helper do
         architecture: architecture,
         target: target,
         musl_override: musl_override,
+        linux_arm_override: linux_arm_override,
         library_type: library_type,
         download_url: download_url,
         checksum: checksum || "unverified"
