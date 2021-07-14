@@ -1,5 +1,10 @@
 # AppSignal for Elixir changelog
 
+## 2.1.9
+
+- [76a31400](https://github.com/appsignal/appsignal-elixir/commit/76a314002321bc9a2df00fff66b549c61262f691) patch - Add Linux ARM override value to diagnose report. This was omitted from the original implementation of the `APPSIGNAL_BUILD_FOR_LINUX_ARM` flag.
+- [07d1ea17](https://github.com/appsignal/appsignal-elixir/commit/07d1ea17cc76e3407ae7dc81da030c9362122eca) patch - Bump agent to c2024bf with appsignal-agent diagnose timing issue fix when reading the report and improved filtering for HTTP request transmission logs.
+
 ## 2.1.8
 
 - [b2c888dc](https://github.com/appsignal/appsignal-elixir/commit/b2c888dc3a0c18ccde5e496995204a2ca1854b57) patch - Update `APPSIGNAL_BUILD_FOR_MUSL` behavior to only listen to the values `1` and `true`. This way `APPSIGNAL_BUILD_FOR_MUSL=false` is not interpreted to install the musl build.
