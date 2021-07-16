@@ -1,5 +1,9 @@
 # AppSignal for Elixir Phoenix changelog
 
+## 2.0.9
+
+- [097eeaf](https://github.com/appsignal/appsignal-elixir-phoenix/commit/097eeafc66319771dc300a7bfd5b923947647e9d) patch - `Appsignal.View` returns templates when AppSignal's view instrumentation is disabled.
+
 ## 2.0.8
 
 - [af399ef](https://github.com/appsignal/appsignal-elixir-phoenix/commit/af399efc8ad43ab7b93d34f848eb1df6d87c96ad) patch - Handle `root_view`s in phoenix_live_view 0.15.6 and up, which were made private
