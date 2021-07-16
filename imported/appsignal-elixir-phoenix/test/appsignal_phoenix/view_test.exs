@@ -17,6 +17,10 @@ defmodule Appsignal.ViewTest do
     test "does not create a root span" do
       assert :error = Test.Tracer.get(:create_span)
     end
+
+    test "renders the template", %{return: return} do
+      assert {:safe, ["<h1>Welcome to ", "Phoenix", "!</h1>\n"]} = return
+    end
   end
 
   describe "when a root span exist, calling render/2 with a binary first argument" do
