@@ -1,5 +1,9 @@
 # AppSignal for Elixir Phoenix changelog
 
+## 2.0.10
+
+- [8a219f9](https://github.com/appsignal/appsignal-elixir-phoenix/commit/8a219f9c213baaaab9cc66471f9307941b586f44) patch - Resolve duplicate view clause warnings from Appsignal.View
+
 ## 2.0.9
 
 - [097eeaf](https://github.com/appsignal/appsignal-elixir-phoenix/commit/097eeafc66319771dc300a7bfd5b923947647e9d) patch - `Appsignal.View` returns templates when AppSignal's view instrumentation is disabled.
