@@ -45,7 +45,7 @@ defmodule Appsignal.Phoenix.View do
 
       defoverridable render: 2
 
-      def render(template, assigns) do
+      def render(template, assigns) when is_binary(template) do
         {root, _pattern, _names} = __templates__()
         path = Path.join(root, template)
 

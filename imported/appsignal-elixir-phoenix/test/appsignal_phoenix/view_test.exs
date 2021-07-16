@@ -60,7 +60,7 @@ defmodule Appsignal.ViewTest do
     setup do
       %{
         parent: Appsignal.Tracer.create_span("http_request"),
-        return: PhoenixWeb.View.render("index.html", %{})
+        return: PhoenixWeb.View.render(PhoenixWeb.View, "index.html")
       }
     end
 
