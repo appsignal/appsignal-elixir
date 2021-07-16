@@ -10,6 +10,7 @@
 - [b2c888dc](https://github.com/appsignal/appsignal-elixir/commit/b2c888dc3a0c18ccde5e496995204a2ca1854b57) patch - Update `APPSIGNAL_BUILD_FOR_MUSL` behavior to only listen to the values `1` and `true`. This way `APPSIGNAL_BUILD_FOR_MUSL=false` is not interpreted to install the musl build.
 - [f467daf9](https://github.com/appsignal/appsignal-elixir/commit/f467daf9f8da435139a6b5e0d232b17927c07675) patch - Add Linux ARM 64-bit experimental build, available behind a feature flag. To test this set the `APPSIGNAL_BUILD_FOR_LINUX_ARM` flag before compiling your apps: `export APPSIGNAL_BUILD_FOR_LINUX_ARM=1 <command>`. Please be aware this is an experimental build. Please report any issue you may encounter at our [support email](mailto:support@appsignal.com).
 - [b8075176](https://github.com/appsignal/appsignal-elixir/commit/b8075176ed5fc4afac90ab2b788ba6397b41a814) patch - Use `MapSet`s for `Monitor`'s internal monitor list. As uniqueness is guaranteed (you can't monitor a particular pid more than once), MapSet is a better data structure to store this information, since all its operations are constant-time instead of linear-time.
+- Track `erlang_atoms` gauge in erlang probe. This reports the `atom_limit` and `atom_count` metrics. PR #651
 
 ## 2.1.7
 - Keep internal list of monitors in Appsignal.Monitor process. PR 648
