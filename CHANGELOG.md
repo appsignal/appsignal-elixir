@@ -1,5 +1,10 @@
 # AppSignal for Elixir changelog
 
+## 2.1.10
+
+- [523e229e](https://github.com/appsignal/appsignal-elixir/commit/523e229e7dee8ea76bfc46d43898f5a8667368ad) patch - Bump agent to version that is compatible with different error grouping
+  types.
+
 ## 2.1.9
 
 - [76a31400](https://github.com/appsignal/appsignal-elixir/commit/76a314002321bc9a2df00fff66b549c61262f691) patch - Add Linux ARM override value to diagnose report. This was omitted from the original implementation of the `APPSIGNAL_BUILD_FOR_LINUX_ARM` flag.
