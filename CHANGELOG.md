@@ -1,5 +1,9 @@
 # AppSignal for Elixir changelog
 
+## 2.1.11
+
+- [4ba38f9](https://github.com/appsignal/appsignal-elixir/commit/4ba38f90cbc762114649c02ed01a5740381d184b) patch - Bump agent to v-891c6b0. Add experimental Apple Silicon M1 ARM64 build.
+
 ## 2.1.10
 
 - [523e229e](https://github.com/appsignal/appsignal-elixir/commit/523e229e7dee8ea76bfc46d43898f5a8667368ad) patch - Bump agent to version that is compatible with different error grouping
