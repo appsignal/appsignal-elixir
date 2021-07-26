@@ -68,6 +68,22 @@ defmodule Appsignal.TracerTest do
     end
   end
 
+  describe "create_span/2, with a namespace that doesn't match the current span" do
+    setup [:create_root_span]
+
+    setup %{span: span} do
+      [span: Tracer.create_span("background_job", span), parent: span]
+    end
+
+    test "returns a span", %{span: span} do
+      assert %Span{} = span
+    end
+
+    test "registers the span without overwriting its parent", %{span: span, parent: parent} do
+      assert :ets.lookup(:"$appsignal_registry", self()) == [{self(), parent}, {self(), span}]
+    end
+  end
+
   describe "create_span/2, when ignored" do
     setup [:create_root_span, :ignore_process, :create_child_span]
 
