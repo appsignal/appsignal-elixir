@@ -394,6 +394,24 @@ defmodule Appsignal.TracerTest do
     end
   end
 
+  describe "multiple root spans" do
+    test "are created and closed in order" do
+      first = Tracer.create_span("http_request", nil)
+      second = Tracer.create_span("http_request", nil)
+
+      assert Test.Nif.get(:create_root_span) == {:ok, [{"http_request"}, {"http_request"}]}
+      assert Tracer.current_span() == second
+
+      Tracer.close_span(second)
+
+      assert Tracer.current_span() == first
+
+      Tracer.close_span(first)
+
+      assert Tracer.current_span() == nil
+    end
+  end
+
   defp create_root_span(_context) do
     [span: Tracer.create_span("http_request")]
   end
