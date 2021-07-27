@@ -424,6 +424,48 @@ defmodule Appsignal.InstrumentationTest do
     end
   end
 
+  describe "instrument_root/3" do
+    setup do
+      %{
+        return: Appsignal.Instrumentation.instrument_root("background_job", "name", fn -> :ok end)
+      }
+    end
+
+    test "creates a root span" do
+      assert Test.Tracer.get(:create_span) == {:ok, [{"background_job", nil}]}
+    end
+
+    test "calls the passed function, and returns its return", %{return: return} do
+      assert return == :ok
+    end
+
+    test "closes the span" do
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    end
+  end
+
+  describe "instrument_root/3, a root span" do
+    setup do
+      Tracer.create_span("root_span")
+
+      %{
+        return: Appsignal.Instrumentation.instrument_root("background_job", "name", fn -> :ok end)
+      }
+    end
+
+    test "creates a root span" do
+      assert Test.Tracer.get(:create_span) == {:ok, [{"background_job", nil}]}
+    end
+
+    test "calls the passed function, and returns its return", %{return: return} do
+      assert return == :ok
+    end
+
+    test "closes the span" do
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    end
+  end
+
   describe ".set_error/2, with a root span" do
     setup do
       span = Tracer.create_span("http_request")
