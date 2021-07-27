@@ -263,6 +263,34 @@ defmodule Appsignal.InstrumentationTest do
     end
   end
 
+  describe "channel_action/2, with a root span" do
+    setup do
+      Tracer.create_span("http_request")
+
+      %{return: InstrumentedModule.channel_action(:action, [], %{})}
+    end
+
+    test "calls the passed function, and returns its return", %{return: return} do
+      assert return == :ok
+    end
+
+    test "creates a root span" do
+      assert Test.Tracer.get(:create_span) == {:ok, [{"background_job", nil}]}
+    end
+
+    test "sets the span's namespace" do
+      assert {:ok, [{%Span{}, "channel"}]} = Test.Span.get(:set_namespace)
+    end
+
+    test "sets the span's name" do
+      assert {:ok, [{%Span{}, "InstrumentedModule.action"}]} = Test.Span.get(:set_name)
+    end
+
+    test "closes the span" do
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    end
+  end
+
   describe "instrument/1" do
     setup do
       %{return: Appsignal.Instrumentation.instrument(fn -> :ok end)}

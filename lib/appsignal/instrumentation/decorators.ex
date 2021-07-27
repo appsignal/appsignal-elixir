@@ -102,6 +102,12 @@ defmodule Appsignal.Instrumentation.Decorators do
   end
 
   def channel_action(body, %{module: module, args: [action, _payload, _socket]}) do
-    instrument("channel", body, %{module: module, name: action})
+    quote do
+      Appsignal.Instrumentation.instrument_root(
+        "channel",
+        "#{module_name(unquote(module))}.#{unquote(action)}",
+        fn -> unquote(body) end
+      )
+    end
   end
 end
