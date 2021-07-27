@@ -83,7 +83,14 @@ defmodule Appsignal.Instrumentation.Decorators do
     transaction("background_job", body, context)
   end
 
-  def transaction(namespace, body, %{module: module, name: name, arity: arity}) do
+  def transaction(namespace, body, context) when is_atom(namespace) do
+    namespace
+    |> Atom.to_string()
+    |> transaction(body, context)
+  end
+
+  def transaction(namespace, body, %{module: module, name: name, arity: arity})
+      when is_binary(namespace) do
     quote do
       Appsignal.Instrumentation.instrument_root(
         unquote(namespace),

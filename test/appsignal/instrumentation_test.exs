@@ -26,6 +26,11 @@ defmodule InstrumentedModule do
     :ok
   end
 
+  @decorate transaction(:background_job)
+  def background_transaction_with_atom_namespace do
+    :ok
+  end
+
   @decorate transaction_event()
   def transaction_event do
     :ok
@@ -174,6 +179,29 @@ defmodule Appsignal.InstrumentationTest do
 
     test "sets the span's name" do
       assert {:ok, [{%Span{}, "InstrumentedModule.background_transaction/0"}]} =
+               Test.Span.get(:set_name)
+    end
+
+    test "closes the span" do
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    end
+  end
+
+  describe "transaction/3, when passing the namespace as an atom" do
+    setup do
+      %{return: InstrumentedModule.background_transaction_with_atom_namespace()}
+    end
+
+    test "calls the passed function, and returns its return", %{return: return} do
+      assert return == :ok
+    end
+
+    test "creates a root span" do
+      assert Test.Tracer.get(:create_span) == {:ok, [{"background_job", nil}]}
+    end
+
+    test "sets the span's name" do
+      assert {:ok, [{%Span{}, "InstrumentedModule.background_transaction_with_atom_namespace/0"}]} =
                Test.Span.get(:set_name)
     end
 
