@@ -59,6 +59,21 @@ defmodule Appsignal.Instrumentation do
     instrument(name, category, fun)
   end
 
+  def instrument_root(namespace, name, fun) do
+    span = @tracer.create_span("background_job", nil)
+
+    span
+    |> @span.set_name(name)
+    |> @span.set_attribute("appsignal:category", name)
+    |> @span.set_namespace(namespace)
+
+    result = fun.()
+
+    @tracer.close_span(span)
+
+    result
+  end
+
   @spec set_error(Exception.t(), Exception.stacktrace()) :: Appsignal.Span.t() | nil
   @doc """
   Set an error in the current root span.

@@ -80,11 +80,17 @@ defmodule Appsignal.Instrumentation.Decorators do
   end
 
   def transaction(body, context) do
-    instrument(body, context)
+    transaction("background_job", body, context)
   end
 
-  def transaction(namespace, body, context) do
-    instrument(namespace, body, context)
+  def transaction(namespace, body, %{module: module, name: name, arity: arity}) do
+    quote do
+      Appsignal.Instrumentation.instrument_root(
+        unquote(namespace),
+        "#{module_name(unquote(module))}.#{unquote(name)}/#{unquote(arity)}",
+        fn -> unquote(body) end
+      )
+    end
   end
 
   def transaction_event(body, context) do
