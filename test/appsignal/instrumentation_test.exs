@@ -177,10 +177,6 @@ defmodule Appsignal.InstrumentationTest do
                Test.Span.get(:set_name)
     end
 
-    test "sets the span's namespace" do
-      assert {:ok, [{%Span{}, "background_job"}]} = Test.Span.get(:set_namespace)
-    end
-
     test "closes the span" do
       assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
     end
@@ -247,11 +243,7 @@ defmodule Appsignal.InstrumentationTest do
     end
 
     test "creates a root span" do
-      assert Test.Tracer.get(:create_span) == {:ok, [{"background_job", nil}]}
-    end
-
-    test "sets the span's namespace" do
-      assert {:ok, [{%Span{}, "channel"}]} = Test.Span.get(:set_namespace)
+      assert Test.Tracer.get(:create_span) == {:ok, [{"channel", nil}]}
     end
 
     test "sets the span's name" do
@@ -275,11 +267,7 @@ defmodule Appsignal.InstrumentationTest do
     end
 
     test "creates a root span" do
-      assert Test.Tracer.get(:create_span) == {:ok, [{"background_job", nil}]}
-    end
-
-    test "sets the span's namespace" do
-      assert {:ok, [{%Span{}, "channel"}]} = Test.Span.get(:set_namespace)
+      assert Test.Tracer.get(:create_span) == {:ok, [{"channel", nil}]}
     end
 
     test "sets the span's name" do
