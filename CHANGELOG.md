@@ -1,5 +1,9 @@
 # AppSignal for Elixir changelog
 
+## 2.1.12
+
+- [0e2cd629](https://github.com/appsignal/appsignal-elixir/commit/0e2cd6290abf284672582c9ecaf033e764ad7165) patch - Only create root spans from transaction and channel action decorators, as they're meant to only be used when no span exists yet.
+
 ## 2.1.11
 
 - [4ba38f9](https://github.com/appsignal/appsignal-elixir/commit/4ba38f90cbc762114649c02ed01a5740381d184b) patch - Bump agent to v-891c6b0. Add experimental Apple Silicon M1 ARM64 build.
