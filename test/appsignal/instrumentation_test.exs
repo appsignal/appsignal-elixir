@@ -26,6 +26,11 @@ defmodule InstrumentedModule do
     :ok
   end
 
+  @decorate transaction(:background_job)
+  def background_transaction_with_atom_namespace do
+    :ok
+  end
+
   @decorate transaction_event()
   def transaction_event do
     :ok
@@ -135,6 +140,30 @@ defmodule Appsignal.InstrumentationTest do
     end
   end
 
+  describe "transaction/2, with a root span" do
+    setup do
+      Tracer.create_span("http_request")
+
+      %{return: InstrumentedModule.transaction()}
+    end
+
+    test "calls the passed function, and returns its return", %{return: return} do
+      assert return == :ok
+    end
+
+    test "creates a root span" do
+      assert Test.Tracer.get(:create_span) == {:ok, [{"background_job", nil}]}
+    end
+
+    test "sets the span's name" do
+      assert {:ok, [{%Span{}, "InstrumentedModule.transaction/0"}]} = Test.Span.get(:set_name)
+    end
+
+    test "closes the span" do
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    end
+  end
+
   describe "transaction/3" do
     setup do
       %{return: InstrumentedModule.background_transaction()}
@@ -153,8 +182,27 @@ defmodule Appsignal.InstrumentationTest do
                Test.Span.get(:set_name)
     end
 
-    test "sets the span's namespace" do
-      assert {:ok, [{%Span{}, "background_job"}]} = Test.Span.get(:set_namespace)
+    test "closes the span" do
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    end
+  end
+
+  describe "transaction/3, when passing the namespace as an atom" do
+    setup do
+      %{return: InstrumentedModule.background_transaction_with_atom_namespace()}
+    end
+
+    test "calls the passed function, and returns its return", %{return: return} do
+      assert return == :ok
+    end
+
+    test "creates a root span" do
+      assert Test.Tracer.get(:create_span) == {:ok, [{"background_job", nil}]}
+    end
+
+    test "sets the span's name" do
+      assert {:ok, [{%Span{}, "InstrumentedModule.background_transaction_with_atom_namespace/0"}]} =
+               Test.Span.get(:set_name)
     end
 
     test "closes the span" do
@@ -223,11 +271,31 @@ defmodule Appsignal.InstrumentationTest do
     end
 
     test "creates a root span" do
-      assert Test.Tracer.get(:create_span) == {:ok, [{"background_job", nil}]}
+      assert Test.Tracer.get(:create_span) == {:ok, [{"channel", nil}]}
     end
 
-    test "sets the span's namespace" do
-      assert {:ok, [{%Span{}, "channel"}]} = Test.Span.get(:set_namespace)
+    test "sets the span's name" do
+      assert {:ok, [{%Span{}, "InstrumentedModule.action"}]} = Test.Span.get(:set_name)
+    end
+
+    test "closes the span" do
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    end
+  end
+
+  describe "channel_action/2, with a root span" do
+    setup do
+      Tracer.create_span("http_request")
+
+      %{return: InstrumentedModule.channel_action(:action, [], %{})}
+    end
+
+    test "calls the passed function, and returns its return", %{return: return} do
+      assert return == :ok
+    end
+
+    test "creates a root span" do
+      assert Test.Tracer.get(:create_span) == {:ok, [{"channel", nil}]}
     end
 
     test "sets the span's name" do
@@ -361,6 +429,48 @@ defmodule Appsignal.InstrumentationTest do
 
     test "sets the span's category attribute" do
       assert {:ok, [{%Span{}, "appsignal:category", "category"}]} = Test.Span.get(:set_attribute)
+    end
+
+    test "calls the passed function, and returns its return", %{return: return} do
+      assert return == :ok
+    end
+
+    test "closes the span" do
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    end
+  end
+
+  describe "instrument_root/3" do
+    setup do
+      %{
+        return: Appsignal.Instrumentation.instrument_root("background_job", "name", fn -> :ok end)
+      }
+    end
+
+    test "creates a root span" do
+      assert Test.Tracer.get(:create_span) == {:ok, [{"background_job", nil}]}
+    end
+
+    test "calls the passed function, and returns its return", %{return: return} do
+      assert return == :ok
+    end
+
+    test "closes the span" do
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    end
+  end
+
+  describe "instrument_root/3, a root span" do
+    setup do
+      Tracer.create_span("root_span")
+
+      %{
+        return: Appsignal.Instrumentation.instrument_root("background_job", "name", fn -> :ok end)
+      }
+    end
+
+    test "creates a root span" do
+      assert Test.Tracer.get(:create_span) == {:ok, [{"background_job", nil}]}
     end
 
     test "calls the passed function, and returns its return", %{return: return} do

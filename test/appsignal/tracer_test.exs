@@ -68,6 +68,22 @@ defmodule Appsignal.TracerTest do
     end
   end
 
+  describe "create_span/2, with a namespace that doesn't match the current span" do
+    setup [:create_root_span]
+
+    setup %{span: span} do
+      [span: Tracer.create_span("background_job", span), parent: span]
+    end
+
+    test "returns a span", %{span: span} do
+      assert %Span{} = span
+    end
+
+    test "registers the span without overwriting its parent", %{span: span, parent: parent} do
+      assert :ets.lookup(:"$appsignal_registry", self()) == [{self(), parent}, {self(), span}]
+    end
+  end
+
   describe "create_span/2, when ignored" do
     setup [:create_root_span, :ignore_process, :create_child_span]
 
@@ -106,7 +122,7 @@ defmodule Appsignal.TracerTest do
 
   describe "create_span/3, when passing a start time" do
     setup do
-      [span: Tracer.create_span("root", nil, start_time: 1_588_936_027_128_939_000)]
+      [span: Tracer.create_span("http_request", nil, start_time: 1_588_936_027_128_939_000)]
     end
 
     test "returns a span", %{span: span} do
@@ -118,7 +134,7 @@ defmodule Appsignal.TracerTest do
     end
 
     test "creates a root span through the Nif" do
-      assert [{"root", 1_588_936_027, 128_939_000}] =
+      assert [{"http_request", 1_588_936_027, 128_939_000}] =
                Test.Nif.get!(:create_root_span_with_timestamp)
     end
   end
@@ -154,7 +170,7 @@ defmodule Appsignal.TracerTest do
 
   describe "current_span/0, when a root span exists" do
     test "returns the created span" do
-      assert Tracer.create_span("current") == Tracer.current_span()
+      assert Tracer.create_span("http_request") == Tracer.current_span()
     end
   end
 
@@ -206,7 +222,7 @@ defmodule Appsignal.TracerTest do
 
   describe "root_span/0, when a root span exists" do
     test "returns the created span" do
-      assert Tracer.create_span("current") == Tracer.root_span()
+      assert Tracer.create_span("http_request") == Tracer.root_span()
     end
   end
 
@@ -378,17 +394,35 @@ defmodule Appsignal.TracerTest do
     end
   end
 
+  describe "multiple root spans" do
+    test "are created and closed in order" do
+      first = Tracer.create_span("http_request", nil)
+      second = Tracer.create_span("http_request", nil)
+
+      assert Test.Nif.get(:create_root_span) == {:ok, [{"http_request"}, {"http_request"}]}
+      assert Tracer.current_span() == second
+
+      Tracer.close_span(second)
+
+      assert Tracer.current_span() == first
+
+      Tracer.close_span(first)
+
+      assert Tracer.current_span() == nil
+    end
+  end
+
   defp create_root_span(_context) do
     [span: Tracer.create_span("http_request")]
   end
 
   defp create_child_span(%{span: span}) do
-    [span: Tracer.create_span("child", span), parent: span]
+    [span: Tracer.create_span("http_request", span), parent: span]
   end
 
   defp create_root_span_in_other_process(_context) do
     pid = Process.whereis(Test.Nif)
-    [span: Tracer.create_span("root", nil, pid: pid), pid: pid]
+    [span: Tracer.create_span("http_request", nil, pid: pid), pid: pid]
   end
 
   defp disable_appsignal(_context) do

@@ -80,11 +80,24 @@ defmodule Appsignal.Instrumentation.Decorators do
   end
 
   def transaction(body, context) do
-    instrument(body, context)
+    transaction("background_job", body, context)
   end
 
-  def transaction(namespace, body, context) do
-    instrument(namespace, body, context)
+  def transaction(namespace, body, context) when is_atom(namespace) do
+    namespace
+    |> Atom.to_string()
+    |> transaction(body, context)
+  end
+
+  def transaction(namespace, body, %{module: module, name: name, arity: arity})
+      when is_binary(namespace) do
+    quote do
+      Appsignal.Instrumentation.instrument_root(
+        unquote(namespace),
+        "#{module_name(unquote(module))}.#{unquote(name)}/#{unquote(arity)}",
+        fn -> unquote(body) end
+      )
+    end
   end
 
   def transaction_event(body, context) do
@@ -96,6 +109,12 @@ defmodule Appsignal.Instrumentation.Decorators do
   end
 
   def channel_action(body, %{module: module, args: [action, _payload, _socket]}) do
-    instrument("channel", body, %{module: module, name: action})
+    quote do
+      Appsignal.Instrumentation.instrument_root(
+        "channel",
+        "#{module_name(unquote(module))}.#{unquote(action)}",
+        fn -> unquote(body) end
+      )
+    end
   end
 end
