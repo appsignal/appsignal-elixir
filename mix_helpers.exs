@@ -305,6 +305,7 @@ defmodule Mix.Appsignal.Helper do
     defp map_arch('amd64-' ++ _, platform), do: build_for("x86_64", platform)
     defp map_arch('x86_64-' ++ _, platform), do: build_for("x86_64", platform)
     defp map_arch('aarch64-' ++ _, platform), do: build_for("aarch64", platform)
+    defp map_arch('arm-' ++ _, platform), do: build_for("aarch64", platform)
   end
 
   defp map_arch(arch, platform), do: {:error, {:unknown, {arch, platform}}}
