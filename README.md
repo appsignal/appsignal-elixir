@@ -11,7 +11,6 @@ applications.
 - [Package documentation](https://hexdocs.pm/appsignal/)
 - [Support][contact]
 
-
 ## Installation
 
 Please follow the [installation
@@ -19,7 +18,11 @@ guide](https://docs.appsignal.com/elixir/installation.html) on how to install
 and use this library.
 
 Then, add custom instrumentation or use one of the framework integrations to
-automatically gain performance insights and error notifications. Currently, AppSignal has framework integrations for [Phoenix]() and [Plug](https://github.com/appsignal/appsignal-elixir-plug) applications.
+automatically gain performance insights and error notifications. Currently,
+AppSignal has framework integrations for
+[Plug](https://github.com/appsignal/appsignal-elixir-plug) and
+[Phoenix](https://github.com/appsignal/appsignal-elixir-phoenix) and
+applications.
 
 ## Usage
 
