@@ -1,4 +1,4 @@
-# Appsignal for Elixir
+# AppSignal for Elixir
 
 [![Build Status](https://travis-ci.org/appsignal/appsignal-elixir.png?branch=main)](https://travis-ci.org/appsignal/appsignal-elixir)
 [![Hex pm](http://img.shields.io/hexpm/v/appsignal.svg?style=flat)](https://hex.pm/packages/appsignal)
