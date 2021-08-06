@@ -47,7 +47,7 @@ Before you can start developing on the AppSignal for Elixir project make sure
 you have [Elixir installed](http://elixir-lang.org/install.html).
 
 This repository is managed by [mono](https://github.com/appsignal/mono/).
-Nstall mono on your local machine by [following the mono installation
+Install mono on your local machine by [following the mono installation
 steps](https://github.com/appsignal/mono/#installation).
 
 Then make sure you have all the project's dependencies installed by running the
