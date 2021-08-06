@@ -1,5 +1,9 @@
 # AppSignal for Elixir changelog
 
+## 2.1.13
+
+- [2531288d](https://github.com/appsignal/appsignal-elixir/commit/2531288dd6e8b5e76572b8d83045bbb4118fadfa) patch - Fix Apple ARM detection. It wasn't properly detected as an Apple ARM host because the installer did not account for an architecture String a without 32/64-bit indicator.
+
 ## 2.1.12
 
 - [0e2cd629](https://github.com/appsignal/appsignal-elixir/commit/0e2cd6290abf284672582c9ecaf033e764ad7165) patch - Only create root spans from transaction and channel action decorators, as they're meant to only be used when no span exists yet.
