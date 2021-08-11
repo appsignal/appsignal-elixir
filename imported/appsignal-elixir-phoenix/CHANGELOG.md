@@ -1,5 +1,9 @@
 # AppSignal for Elixir Phoenix changelog
 
+## 2.0.11
+
+- [aaa3146](https://github.com/appsignal/appsignal-elixir-phoenix/commit/aaa31460c4120873e45be2da61d64bf5f87ecd47) patch - Allow using phoenix_html 3.0.0 and up
+
 ## 2.0.10
 
 - [8a219f9](https://github.com/appsignal/appsignal-elixir-phoenix/commit/8a219f9c213baaaab9cc66471f9307941b586f44) patch - Resolve duplicate view clause warnings from Appsignal.View
