@@ -45,7 +45,7 @@ defmodule Appsignal.Phoenix.MixProject do
     [
       {:appsignal_plug, ">= 2.0.8 and < 3.0.0"},
       {:phoenix, "~> 1.4"},
-      {:phoenix_html, "~> 2.11", optional: true},
+      {:phoenix_html, "~> 2.11 or ~> 3.0", optional: true},
       {:phoenix_live_view, "~> 0.9", optional: true},
       {:telemetry, "~> 0.4"},
       {:ex_doc, "~> 0.21", only: :dev, runtime: false},
