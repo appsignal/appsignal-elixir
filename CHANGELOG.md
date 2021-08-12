@@ -1,5 +1,14 @@
 # AppSignal for Elixir changelog
 
+## 2.1.14
+
+- [231abb13](https://github.com/appsignal/appsignal-elixir/commit/231abb135f962bd3fb8c18c781325bf04d07e9f5) patch - Bump agent to 0f40689
+  
+  - Add Apple Darwin ARM alias.
+  - Improve appsignal.h documentation.
+  - Improve transaction debug log for errors.
+  - Fix agent zombie/defunct issue on containers without process reaping.
+
 ## 2.1.13
 
 - [2531288d](https://github.com/appsignal/appsignal-elixir/commit/2531288dd6e8b5e76572b8d83045bbb4118fadfa) patch - Fix Apple ARM detection. It wasn't properly detected as an Apple ARM host because the installer did not account for an architecture String a without 32/64-bit indicator.
