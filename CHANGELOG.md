@@ -1,5 +1,9 @@
 # AppSignal for Elixir changelog
 
+## 2.1.15
+
+- [325c985](https://github.com/appsignal/appsignal-elixir/commit/325c98540407fe29d757c0438066ca265ce70502) patch - Add support for telemetry 1.0.0
+
 ## 2.1.14
 
 - [231abb13](https://github.com/appsignal/appsignal-elixir/commit/231abb135f962bd3fb8c18c781325bf04d07e9f5) patch - Bump agent to 0f40689
