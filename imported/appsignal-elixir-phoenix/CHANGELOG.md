@@ -1,5 +1,9 @@
 # AppSignal for Elixir Phoenix changelog
 
+## 2.0.12
+
+- [bd9b88d](https://github.com/appsignal/appsignal-elixir-phoenix/commit/bd9b88d4db6776a631ca59060a5412832c771dbe) patch - Remove unneeded telemetry dependency
+
 ## 2.0.11
 
 - [aaa3146](https://github.com/appsignal/appsignal-elixir-phoenix/commit/aaa31460c4120873e45be2da61d64bf5f87ecd47) patch - Allow using phoenix_html 3.0.0 and up
