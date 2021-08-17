@@ -46,8 +46,10 @@ static appsignal_string_t make_appsignal_string(ErlNifBinary binary)
     return retval;
 }
 
-static ERL_NIF_TERM make_elixir_string(ErlNifEnv* env, appsignal_string_t binary) {
-  return enif_make_string_len(env, binary.buf, binary.len, ERL_NIF_LATIN1);
+static ERL_NIF_TERM make_elixir_string(ErlNifEnv* env, appsignal_string_t string) {
+  ERL_NIF_TERM retval = enif_make_string_len(env, string.buf, string.len, ERL_NIF_LATIN1);
+  appsignal_free_string(string);
+  return retval;
 }
 
 static ERL_NIF_TERM _env_put(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
