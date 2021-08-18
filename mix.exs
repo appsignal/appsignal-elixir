@@ -107,6 +107,12 @@ defmodule Appsignal.Mixfile do
         _ -> "~> 1.2.3 or ~> 1.3"
       end
 
+    mime_dependency =
+      case Version.compare(system_version, "1.10.0") do
+        :lt -> [{:mime, "~> 1.0", only: [:test, :test_no_nif]}]
+        _ -> []
+      end
+
     [
       {:benchee, "~> 1.0", only: :bench},
       {:hackney, "~> 1.6"},
@@ -119,6 +125,6 @@ defmodule Appsignal.Mixfile do
       {:credo, "~> 1.0.0", only: [:test, :dev], runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
       {:telemetry, "~> 0.4 or ~> 1.0"}
-    ]
+    ] ++ mime_dependency
   end
 end
