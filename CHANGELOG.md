@@ -1,5 +1,14 @@
 # AppSignal for Elixir changelog
 
+## 2.2.0
+
+- [1d7b7a3](https://github.com/appsignal/appsignal-elixir/commit/1d7b7a3f560321a2056126be1ebbb3715ac823b5) minor - Use underscores instead of slashes in spans created from decorators. This will change action naming from `Module.function/1` to `Module.function_1`.
+- [7927a3f](https://github.com/appsignal/appsignal-elixir/commit/7927a3fc6e2f3ce4f1ca150d2dd6123d08e40967) patch - Bump agent to v-0318770.
+  
+  - Improve Dokku platform detection. Do not disable host metrics on
+    Dokku.
+  - Report CPU steal metric.
+
 ## 2.1.15
 
 - [325c985](https://github.com/appsignal/appsignal-elixir/commit/325c98540407fe29d757c0438066ca265ce70502) patch - Add support for telemetry 1.0.0
