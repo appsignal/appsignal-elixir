@@ -30,7 +30,7 @@ defmodule Appsignal.Instrumentation.Decorators do
   defp do_instrument(body, %{module: module, name: name, arity: arity, namespace: namespace}) do
     quote do
       Appsignal.Instrumentation.instrument(
-        "#{module_name(unquote(module))}.#{unquote(name)}/#{unquote(arity)}",
+        "#{module_name(unquote(module))}.#{unquote(name)}_#{unquote(arity)}",
         fn span ->
           _ = unquote(@span).set_namespace(span, unquote(namespace))
           unquote(body)
@@ -54,7 +54,7 @@ defmodule Appsignal.Instrumentation.Decorators do
   defp do_instrument(body, %{module: module, name: name, arity: arity, category: category}) do
     quote do
       Appsignal.Instrumentation.instrument(
-        "#{module_name(unquote(module))}.#{unquote(name)}/#{unquote(arity)}",
+        "#{module_name(unquote(module))}.#{unquote(name)}_#{unquote(arity)}",
         unquote(category),
         fn -> unquote(body) end
       )
@@ -64,7 +64,7 @@ defmodule Appsignal.Instrumentation.Decorators do
   defp do_instrument(body, %{module: module, name: name, arity: arity}) do
     quote do
       Appsignal.Instrumentation.instrument(
-        "#{module_name(unquote(module))}.#{unquote(name)}/#{unquote(arity)}",
+        "#{module_name(unquote(module))}.#{unquote(name)}_#{unquote(arity)}",
         fn -> unquote(body) end
       )
     end
@@ -94,7 +94,7 @@ defmodule Appsignal.Instrumentation.Decorators do
     quote do
       Appsignal.Instrumentation.instrument_root(
         unquote(namespace),
-        "#{module_name(unquote(module))}.#{unquote(name)}/#{unquote(arity)}",
+        "#{module_name(unquote(module))}.#{unquote(name)}_#{unquote(arity)}",
         fn -> unquote(body) end
       )
     end

@@ -74,7 +74,7 @@ defmodule Appsignal.InstrumentationTest do
     end
 
     test "sets the span's name" do
-      assert {:ok, [{%Span{}, "InstrumentedModule.instrument/0"}]} = Test.Span.get(:set_name)
+      assert {:ok, [{%Span{}, "InstrumentedModule.instrument_0"}]} = Test.Span.get(:set_name)
     end
 
     test "closes the span" do
@@ -96,7 +96,7 @@ defmodule Appsignal.InstrumentationTest do
     end
 
     test "sets the span's name" do
-      assert {:ok, [{%Span{}, "InstrumentedModule.background_job/0"}]} = Test.Span.get(:set_name)
+      assert {:ok, [{%Span{}, "InstrumentedModule.background_job_0"}]} = Test.Span.get(:set_name)
     end
 
     test "sets the span's namespace" do
@@ -132,7 +132,7 @@ defmodule Appsignal.InstrumentationTest do
     end
 
     test "sets the span's name" do
-      assert {:ok, [{%Span{}, "InstrumentedModule.transaction/0"}]} = Test.Span.get(:set_name)
+      assert {:ok, [{%Span{}, "InstrumentedModule.transaction_0"}]} = Test.Span.get(:set_name)
     end
 
     test "closes the span" do
@@ -156,7 +156,7 @@ defmodule Appsignal.InstrumentationTest do
     end
 
     test "sets the span's name" do
-      assert {:ok, [{%Span{}, "InstrumentedModule.transaction/0"}]} = Test.Span.get(:set_name)
+      assert {:ok, [{%Span{}, "InstrumentedModule.transaction_0"}]} = Test.Span.get(:set_name)
     end
 
     test "closes the span" do
@@ -178,7 +178,7 @@ defmodule Appsignal.InstrumentationTest do
     end
 
     test "sets the span's name" do
-      assert {:ok, [{%Span{}, "InstrumentedModule.background_transaction/0"}]} =
+      assert {:ok, [{%Span{}, "InstrumentedModule.background_transaction_0"}]} =
                Test.Span.get(:set_name)
     end
 
@@ -201,7 +201,7 @@ defmodule Appsignal.InstrumentationTest do
     end
 
     test "sets the span's name" do
-      assert {:ok, [{%Span{}, "InstrumentedModule.background_transaction_with_atom_namespace/0"}]} =
+      assert {:ok, [{%Span{}, "InstrumentedModule.background_transaction_with_atom_namespace_0"}]} =
                Test.Span.get(:set_name)
     end
 
@@ -224,7 +224,7 @@ defmodule Appsignal.InstrumentationTest do
     end
 
     test "sets the span's name" do
-      assert {:ok, [{%Span{}, "InstrumentedModule.transaction_event/0"}]} =
+      assert {:ok, [{%Span{}, "InstrumentedModule.transaction_event_0"}]} =
                Test.Span.get(:set_name)
     end
 
@@ -247,7 +247,7 @@ defmodule Appsignal.InstrumentationTest do
     end
 
     test "sets the span's name" do
-      assert {:ok, [{%Span{}, "InstrumentedModule.transaction_event_category/0"}]} =
+      assert {:ok, [{%Span{}, "InstrumentedModule.transaction_event_category_0"}]} =
                Test.Span.get(:set_name)
     end
 
