@@ -1,5 +1,9 @@
 # AppSignal for Elixir changelog
 
+## 2.2.1
+
+- [a7987f3](https://github.com/appsignal/appsignal-elixir/commit/a7987f31d110893e10255f4593b9137328245f34) patch - Add mirrors to download the agent
+
 ## 2.2.0
 
 - [1d7b7a3](https://github.com/appsignal/appsignal-elixir/commit/1d7b7a3f560321a2056126be1ebbb3715ac823b5) minor - Use underscores instead of slashes in spans created from decorators. This will change action naming from `Module.function/1` to `Module.function_1`.
