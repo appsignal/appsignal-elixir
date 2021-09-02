@@ -7,8 +7,6 @@ defmodule Mix.Appsignal.Helper do
   @os Application.get_env(:appsignal, :os, :os)
   @system Application.get_env(:appsignal, :mix_system, System)
 
-  @max_retries 5
-
   @proxy_env_vars [
     "APPSIGNAL_HTTP_PROXY",
     "https_proxy",
@@ -130,27 +128,27 @@ defmodule Mix.Appsignal.Helper do
 
   defp download_package(arch_config, report) do
     version = Appsignal.Agent.version()
+    filename = arch_config[:filename]
+
     File.mkdir_p!(priv_dir())
     clean_up_extension_files()
-    url = arch_config[:download_url]
-    report = merge_report(report, %{download: %{download_url: url}})
 
-    filename = Path.join(tmp_dir(), "appsignal-agent-#{version}.tar.gz")
+    local_filename = Path.join(tmp_dir(), "appsignal-agent-#{version}.tar.gz")
 
-    case File.exists?(filename) do
+    case File.exists?(local_filename) do
       true ->
-        {:ok, {filename, merge_report(report, %{build: %{source: "cached_in_tmp_dir"}})}}
+        {:ok, {local_filename, merge_report(report, %{build: %{source: "cached_in_tmp_dir"}})}}
 
       false ->
-        Mix.shell().info("Downloading agent release from #{url}")
+        Mix.shell().info("Downloading agent release")
         :application.ensure_all_started(:hackney)
 
-        case do_download_file!(url, filename, @max_retries) do
-          :ok ->
-            {:ok, {filename, report}}
+        case do_download_file!(filename, local_filename, Appsignal.Agent.mirrors()) do
+          {:ok, url} ->
+            {:ok, {local_filename, merge_report(report, %{download: %{download_url: url}})}}
 
-          error ->
-            {:error, {error, report}}
+          {error, url} ->
+            {:error, {error, merge_report(report, %{download: %{download_url: url}})}}
         end
     end
   end
@@ -174,13 +172,25 @@ defmodule Mix.Appsignal.Helper do
     end
   end
 
-  defp do_download_file!(url, filename, retries \\ 0)
+  defp do_download_file!(filename, local_filename, mirrors) do
+    Enum.reduce_while(mirrors, 1, fn mirror, acc ->
+      version = Appsignal.Agent.version()
+      url = build_download_url(mirror, version, filename)
+      result = do_download_file!(url, local_filename)
 
-  defp do_download_file!(url, filename, 0) do
+      if result == :ok or length(mirrors) == acc do
+        {:halt, {result, url}}
+      else
+        {:cont, acc + 1}
+      end
+    end)
+  end
+
+  defp do_download_file!(url, local_filename) do
     case :hackney.request(:get, url, [], "", download_options()) do
       {:ok, 200, _, reference} ->
         case :hackney.body(reference) do
-          {:ok, body} -> File.write(filename, body)
+          {:ok, body} -> File.write(local_filename, body)
           {:error, reason} -> {:error, reason}
         end
 
@@ -189,11 +199,8 @@ defmodule Mix.Appsignal.Helper do
     end
   end
 
-  defp do_download_file!(url, filename, retries) do
-    case do_download_file!(url, filename) do
-      :ok -> :ok
-      _ -> do_download_file!(url, filename, retries - 1)
-    end
+  defp build_download_url(mirror, version, filename) do
+    Enum.join([mirror, version, filename], "/")
   end
 
   defp download_options do
