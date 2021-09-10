@@ -82,6 +82,12 @@ defmodule PhoenixWeb.LiveView do
       {:ok, socket}
     end)
   end
+
+  def render(assigns) do
+    ~H"""
+    Hello World
+    """
+  end
 end
 
 defmodule PhoenixWeb.ErrorView do

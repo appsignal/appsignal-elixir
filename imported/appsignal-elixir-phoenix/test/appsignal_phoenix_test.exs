@@ -102,7 +102,7 @@ defmodule Appsignal.PhoenixTest do
       assert :error = Test.Span.get(:set_name)
     end
 
-    test "adds an error to the span", %{reason: reason} do
+    test "adds an error to the span", %{reason: _reason} do
       assert :error = Test.Span.get(:add_error)
     end
 

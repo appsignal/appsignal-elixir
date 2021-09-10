@@ -73,7 +73,7 @@ defmodule Appsignal.Phoenix.LiveViewTest do
   end
 
   describe "instrument/4, with a non-private root_view" do
-    setup %{socket: socket} do
+    setup %{socket: _socket} do
       %{
         return:
           PhoenixWeb.LiveView.mount(%{}, %{

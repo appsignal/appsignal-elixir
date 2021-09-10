@@ -61,7 +61,8 @@ defmodule Appsignal.Phoenix.MixProject do
       {:phoenix_live_view, "~> 0.9", optional: true},
       {:ex_doc, "~> 0.21", only: :dev, runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
-      {:credo, "~> 1.4", only: [:dev, :test], runtime: false}
+      {:credo, "~> 1.4", only: [:dev, :test], runtime: false},
+      {:poison, "~> 5.0", only: [:dev, :test], runtime: false}
     ] ++ mime_dependency
   end
 end
