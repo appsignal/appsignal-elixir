@@ -1,3 +1,7 @@
+if [[ $ELIXIR_VERSION == "master" ]]; then
+  kiex install $ELIXIR_VERSION
+fi
+
 sem-version erlang $ERLANG_VERSION
 erl -eval '{ok, Version} = file:read_file(filename:join([code:root_dir(), "releases", erlang:system_info(otp_release), "OTP_VERSION"])), io:fwrite(Version), halt().' -noshell
 sem-version elixir $ELIXIR_VERSION
