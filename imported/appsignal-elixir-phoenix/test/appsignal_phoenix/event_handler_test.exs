@@ -1,6 +1,6 @@
 defmodule Appsignal.Phoenix.EventHandlerTest do
   use ExUnit.Case
-  alias Appsignal.{Phoenix, Span, Test, Tracer}
+  alias Appsignal.{Span, Test, Tracer}
 
   setup do
     start_supervised!(Test.Tracer)
@@ -34,40 +34,8 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
     end
   end
 
-  defp attached?(event) do
-    event
-    |> :telemetry.list_handlers()
-    |> Enum.any?(fn %{id: id} ->
-      id == {Phoenix.EventHandler, event}
-    end)
-  end
-
   defp create_root_span(_context) do
     [span: Tracer.create_span("http_request")]
-  end
-
-  defp create_child_span(%{span: span}) do
-    [span: Tracer.create_span("http_request", span), parent: span]
-  end
-
-  defp router_dispatch_start_event(_context) do
-    do_router_dispatch_start_event()
-  end
-
-  defp do_router_dispatch_start_event(plug_opts \\ :index) do
-    :telemetry.execute(
-      [:phoenix, :router_dispatch, :start],
-      %{time: -576_460_736_044_040_000},
-      %{
-        conn: %Plug.Conn{},
-        log: :debug,
-        path_params: %{},
-        pipe_through: [:browser],
-        plug: AppsignalPhoenixExampleWeb.PageController,
-        plug_opts: plug_opts,
-        route: "/"
-      }
-    )
   end
 
   def endpoint_start_event(_context) do
