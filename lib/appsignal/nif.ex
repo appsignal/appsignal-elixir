@@ -21,9 +21,7 @@ defmodule Appsignal.Nif do
         arch = :erlang.system_info(:system_architecture)
 
         IO.warn(
-          "Error loading NIF (Is your operating system (#{arch}) supported? Please check http://docs.appsignal.com/support/operating-systems.html):\n#{
-            reason
-          }"
+          "Error loading NIF (Is your operating system (#{arch}) supported? Please check http://docs.appsignal.com/support/operating-systems.html):\n#{reason}"
         )
 
         :ok
