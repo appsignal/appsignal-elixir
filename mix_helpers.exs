@@ -508,12 +508,8 @@ defmodule Mix.Appsignal.Helper do
       }
     } = report
 
-    %{
-      download: %{
-        download_url: download_url,
-        checksum: checksum
-      }
-    } = report
+    %{download: %{checksum: checksum}} = report
+    download_url = Map.get(report.download, :download_url)
 
     download_report = %{
       download: %{
