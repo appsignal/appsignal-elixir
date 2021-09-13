@@ -1,5 +1,9 @@
 # AppSignal for Elixir changelog
 
+## 2.2.2
+
+- [c6772da3](https://github.com/appsignal/appsignal-elixir/commit/c6772da3dca036c020864303044aa4f265c6b18e) patch - Fix extension installer from cached source in `/tmp` directory. This would cause installation errors of the package if the AppSignal package was reinstalled again on a host that already installed it once.
+
 ## 2.2.1
 
 - [a7987f3](https://github.com/appsignal/appsignal-elixir/commit/a7987f31d110893e10255f4593b9137328245f34) patch - Add mirrors to download the agent
