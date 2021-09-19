@@ -123,12 +123,6 @@ defmodule Appsignal.Instrumentation do
     |> @span.close()
   end
 
-  defp call_with_optional_argument(fun, argument) do
-    case fun
-         |> :erlang.fun_info()
-         |> Keyword.get(:arity) do
-      0 -> fun.()
-      _ -> fun.(argument)
-    end
-  end
+  defp call_with_optional_argument(fun, _argument) when is_function(fun, 0), do: fun.()
+  defp call_with_optional_argument(fun, argument) when is_function(fun, 1), do: fun.(argument)
 end
