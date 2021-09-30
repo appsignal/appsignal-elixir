@@ -1,5 +1,12 @@
 # AppSignal for Elixir changelog
 
+## 2.2.3
+
+- [b89ab7bc](https://github.com/appsignal/appsignal-elixir/commit/b89ab7bc7958319e60c9ee1e7edf5664d8fc8973) patch - Bump agent to 7376537
+  
+  - Support JSON PostgreSQL operator in sql_lexer.
+  - Do not strip comments from SQL queries.
+
 ## 2.2.2
 
 - [c6772da3](https://github.com/appsignal/appsignal-elixir/commit/c6772da3dca036c020864303044aa4f265c6b18e) patch - Fix extension installer from cached source in `/tmp` directory. This would cause installation errors of the package if the AppSignal package was reinstalled again on a host that already installed it once.
