@@ -173,15 +173,34 @@ defmodule Mix.Appsignal.Helper do
   end
 
   defp do_download_file!(filename, local_filename, mirrors) do
-    Enum.reduce_while(mirrors, 1, fn mirror, acc ->
+    Enum.reduce_while(mirrors, {1, []}, fn mirror, {acc, errors} ->
       version = Appsignal.Agent.version()
       url = build_download_url(mirror, version, filename)
       result = do_download_file!(url, local_filename)
 
-      if result == :ok or length(mirrors) == acc do
-        {:halt, {result, url}}
+      if result == :ok do
+        # Success on download
+        {:halt, {:ok, url}}
       else
-        {:cont, acc + 1}
+        if length(mirrors) == acc do
+          # All mirrors failed. Write error message detailing all failures
+          error_messages =
+            Enum.map(Enum.reverse([result | errors]), fn {:error, message} ->
+              message
+            end)
+
+          message = """
+          Could not download archive from any of our mirrors.
+          Please make sure your network allows access to any of these mirrors.
+          Attempted to download the archive from the following urls:
+          #{Enum.join(error_messages, "\n")}
+          """
+
+          {:halt, {String.trim(message), url}}
+        else
+          # Try the next mirror
+          {:cont, {acc + 1, [result | errors]}}
+        end
       end
     end)
   end
@@ -195,7 +214,13 @@ defmodule Mix.Appsignal.Helper do
         end
 
       response ->
-        {:error, response}
+        message = """
+        - URL: #{url}
+        - Error (hackney response):
+        #{inspect(response)}
+        """
+
+        {:error, message}
     end
   end
 
