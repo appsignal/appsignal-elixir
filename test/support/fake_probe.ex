@@ -22,7 +22,7 @@ defmodule FakeServerProbe do
   end
 end
 
-defmodule FakeProbe do
+defmodule FakeFunctionProbe do
   use TestAgent
 
   def call do
