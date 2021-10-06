@@ -10,7 +10,7 @@ defmodule Appsignal.Probes do
   def register(name, probe) do
     if genserver_running?() do
       if is_function(probe) do
-        GenServer.cast(__MODULE__, {name, probe})
+        GenServer.cast(__MODULE__, {:register, {name, probe}})
         :ok
       else
         Logger.debug(fn ->
@@ -25,7 +25,7 @@ defmodule Appsignal.Probes do
   end
 
   def unregister(name) do
-    GenServer.cast(__MODULE__, name)
+    GenServer.cast(__MODULE__, {:unregister, name})
     :ok
   end
 
@@ -34,7 +34,7 @@ defmodule Appsignal.Probes do
     {:ok, %{}}
   end
 
-  def handle_cast({name, probe}, probes) do
+  def handle_cast({:register, {name, probe}}, probes) do
     if Map.has_key?(probes, name) do
       Logger.debug(fn -> "A probe with name '#{name}' already exists. Overriding that one." end)
     end
@@ -42,7 +42,7 @@ defmodule Appsignal.Probes do
     {:noreply, Map.put(probes, name, probe)}
   end
 
-  def handle_cast(name, probes) do
+  def handle_cast({:unregister, name}, probes) do
     {:noreply, Map.delete(probes, name)}
   end
 
