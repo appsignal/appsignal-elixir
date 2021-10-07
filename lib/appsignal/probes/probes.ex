@@ -7,48 +7,51 @@ defmodule Appsignal.Probes do
     GenServer.start_link(__MODULE__, [], name: __MODULE__)
   end
 
-  def register(name, probe) do
-    if genserver_running?() do
-      if is_function(probe) do
-        GenServer.cast(__MODULE__, {:register, {name, {Appsignal.Probes.FunctionProbe, [probe]}}})
-        :ok
-      else
-        Logger.debug(fn ->
-          "Trying to register probe #{name}. Ignoring probe since it's not a function."
-        end)
-
-        {:error, "Probe is not a function"}
-      end
-    else
-      {:error, "Probe genserver is not running"}
-    end
-  end
-
-  def unregister(name) do
-    GenServer.cast(__MODULE__, {:unregister, name})
-    :ok
-  end
-
   def init([]) do
     {:ok, %{}}
   end
 
-  def handle_cast({:register, {name, probe}}, probes) do
+  def register(name, probe) do
+    spec =
+      if is_function(probe) do
+        {Appsignal.Probes.FunctionProbe, [probe]}
+      else
+        probe
+      end
+
+    GenServer.cast(__MODULE__, {:register, {name, spec}})
+  end
+
+  def unregister(name) do
+    GenServer.cast(__MODULE__, {:unregister, name})
+  end
+
+  def handle_cast({:register, {name, spec}}, probes) do
     if Map.has_key?(probes, name) do
-      Logger.debug(fn -> "A probe with name '#{name}' already exists. Overriding that one." end)
+      Logger.debug(fn -> "A probe with name '#{name}' already exists. Terminating that one." end)
+      do_unregister(probes, name)
     end
 
-    {:ok, pid} = DynamicSupervisor.start_child(Appsignal.Probes.Supervisor, probe)
-
-    {:noreply, Map.put(probes, name, pid)}
+    do_register(probes, name, spec)
   end
 
   def handle_cast({:unregister, name}, probes) do
+    do_unregister(probes, name)
+
+    {:noreply, Map.delete(probes, name)}
+  end
+
+  defp do_register(probes, name, spec) do
+    case DynamicSupervisor.start_child(Appsignal.Probes.Supervisor, spec) do
+      {:ok, pid} -> {:noreply, Map.put(probes, name, pid)}
+      {:error, error} -> raise(error)
+    end
+  end
+
+  defp do_unregister(probes, name) do
     with {:ok, pid} <- Map.fetch(probes, name) do
       DynamicSupervisor.terminate_child(Appsignal.Probes.Supervisor, pid)
     end
-
-    {:noreply, Map.delete(probes, name)}
   end
 
   def child_spec(_) do
@@ -56,10 +59,5 @@ defmodule Appsignal.Probes do
       id: Appsignal.Probes,
       start: {Appsignal.Probes, :start_link, []}
     }
-  end
-
-  defp genserver_running? do
-    pid = Process.whereis(__MODULE__)
-    !is_nil(pid) && Process.alive?(pid)
   end
 end

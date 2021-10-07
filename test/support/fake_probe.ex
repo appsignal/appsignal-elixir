@@ -25,16 +25,20 @@ end
 defmodule FakeFunctionProbe do
   use TestAgent
 
-  def call do
-    if alive?() do
-      update(__MODULE__, :probe_called, true)
+  def call(pid) do
+    fn ->
+      if alive?() do
+        update(pid, :probe_called, true)
+      end
     end
   end
 
-  def fail do
-    if alive?() do
-      update(__MODULE__, :probe_called, true)
-      raise :nosup
+  def fail(pid) do
+    fn ->
+      if alive?() do
+        update(pid, :probe_called, true)
+        raise :nosup
+      end
     end
   end
 end
