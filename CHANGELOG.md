@@ -1,5 +1,9 @@
 # AppSignal for Elixir changelog
 
+## 2.2.4
+
+- [787684bf](https://github.com/appsignal/appsignal-elixir/commit/787684bf61dfdfca65bbb4bc70706942302dd80e) patch - Installation report improved for download errors. Download errors are more descriptive in the installation result of the diagnose report.
+
 ## 2.2.3
 
 - [b89ab7bc](https://github.com/appsignal/appsignal-elixir/commit/b89ab7bc7958319e60c9ee1e7edf5664d8fc8973) patch - Bump agent to 7376537
