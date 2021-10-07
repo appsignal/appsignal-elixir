@@ -11,9 +11,25 @@ defmodule Appsignal.Probes.ErlangProbeTest do
     [fake_appsignal: start_supervised!(FakeAppsignal)]
   end
 
-  describe "call/0" do
+  describe "when invoked by the scheduler" do
     setup do
-      ErlangProbe.call()
+      Appsignal.Probes.register(:erlang, ErlangProbe)
+      on_exit(fn -> Appsignal.Probes.unregister(:erlang) end)
+    end
+
+    test "gathers metrics", %{fake_appsignal: fake_appsignal} do
+      until(fn ->
+        metrics = FakeAppsignal.get_gauges(fake_appsignal, "erlang_scheduler_utilization")
+        refute Enum.empty?(metrics)
+      end)
+    end
+  end
+
+  describe "call/1" do
+    setup do
+      [
+        sample: ErlangProbe.call(nil)
+      ]
     end
 
     test "gathers IO metrics", %{fake_appsignal: fake_appsignal} do
@@ -279,11 +295,53 @@ defmodule Appsignal.Probes.ErlangProbeTest do
                )
              )
     end
+
+    test "gathers scheduler utilization metrics", %{
+      fake_appsignal: fake_appsignal,
+      sample: sample
+    } do
+      ErlangProbe.call(sample)
+
+      metrics = FakeAppsignal.get_gauges(fake_appsignal, "erlang_scheduler_utilization")
+
+      assert Enum.any?(
+               metrics,
+               &match?(
+                 %{
+                   key: "erlang_scheduler_utilization",
+                   tags: %{type: "total"},
+                   value: _
+                 },
+                 &1
+               )
+             )
+
+      scheduler_ids = Enum.to_list(1..:erlang.system_info(:schedulers))
+
+      scheduler_ids
+      |> Enum.map(fn scheduler_id -> "#{scheduler_id}" end)
+      |> Enum.each(fn scheduler_id ->
+        assert Enum.any?(
+                 metrics,
+                 &match?(
+                   %{
+                     key: "erlang_scheduler_utilization",
+                     tags: %{
+                       type: "scheduler",
+                       id: ^scheduler_id
+                     },
+                     value: _
+                   },
+                   &1
+                 )
+               )
+      end)
+    end
   end
 
-  describe "call/0, with a configured hostname" do
+  describe "call/1, with a configured hostname" do
     test "adds the configured hostname as a tag", %{fake_appsignal: fake_appsignal} do
-      with_config(%{hostname: "Alices-MBP.example.com"}, &ErlangProbe.call/0)
+      with_config(%{hostname: "Alices-MBP.example.com"}, fn -> ErlangProbe.call(nil) end)
 
       assert [%{tags: %{hostname: "Alices-MBP.example.com"}} | _] =
                FakeAppsignal.get_gauges(fake_appsignal, "erlang_io")
