@@ -233,11 +233,8 @@ defmodule Mix.Appsignal.Helper do
       ssl_options:
         [
           verify: :verify_peer,
-          cacertfile: priv_path("cacert.pem"),
-          depth: 4,
-          ciphers: ciphers(),
-          honor_cipher_order: :undefined
-        ] ++ customize_hostname_check_or_verify_fun()
+          cacertfile: priv_path("cacert.pem")
+        ] ++ tls_options() ++ customize_hostname_check_or_verify_fun()
     ]
 
     case check_proxy() do
@@ -679,6 +676,18 @@ defmodule Mix.Appsignal.Helper do
 
   defp make do
     if System.find_executable("gmake"), do: "gmake", else: "make"
+  end
+
+  if System.otp_release() >= "23" do
+    defp tls_options, do: [versions: [:"tlsv1.3", :"tlsv1.2"]]
+  else
+    defp tls_options do
+      [
+        depth: 4,
+        ciphers: ciphers(),
+        honor_cipher_order: :undefined
+      ]
+    end
   end
 
   if System.otp_release() >= "20.3" do
