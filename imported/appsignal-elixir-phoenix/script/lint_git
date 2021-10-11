@@ -2,6 +2,8 @@
 
 set -eu
 
+LINTJE_VERSION="0.4.1"
+
 mkdir -p $HOME/bin
 cache_key=v1-lintje-$LINTJE_VERSION
 cache restore $cache_key
@@ -16,3 +18,5 @@ else
     tar -xz --directory $HOME/bin
   cache store $cache_key $HOME/bin/lintje
 fi
+
+$HOME/bin/lintje $SEMAPHORE_GIT_COMMIT_RANGE
