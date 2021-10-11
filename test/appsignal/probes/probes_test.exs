@@ -25,10 +25,10 @@ defmodule Appsignal.Probes.ProbesTest do
     } do
       Probes.register(:test_probe, FakeFunctionProbe.call(fake_probe))
 
-      refute FakeFunctionProbe.get(fake_probe, :probe_called)
+      refute FakeFunctionProbe.called?(fake_probe)
 
       until(fn ->
-        assert FakeFunctionProbe.get(fake_probe, :probe_called)
+        assert FakeFunctionProbe.called?(fake_probe)
       end)
 
       Probes.unregister(:test_probe)
@@ -40,14 +40,14 @@ defmodule Appsignal.Probes.ProbesTest do
       Probes.register(:test_probe, FakeFunctionProbe.call(fake_probe))
 
       until(fn ->
-        assert FakeFunctionProbe.get(fake_probe, :probe_called)
+        assert FakeFunctionProbe.called?(fake_probe)
       end)
 
       Probes.unregister(:test_probe)
-      FakeFunctionProbe.update(fake_probe, :probe_called, false)
+      FakeFunctionProbe.clear(fake_probe)
 
       repeatedly(fn ->
-        refute FakeFunctionProbe.get(fake_probe, :probe_called)
+        refute FakeFunctionProbe.called?(fake_probe)
       end)
     end
 
@@ -57,24 +57,21 @@ defmodule Appsignal.Probes.ProbesTest do
       Probes.register(:test_probe, FakeFunctionProbe.call(fake_probe))
 
       until(fn ->
-        assert FakeFunctionProbe.get(fake_probe, :probe_called)
+        assert FakeFunctionProbe.called?(fake_probe)
       end)
 
-      agent = start_supervised!({Agent, fn -> false end})
+      other_fake_probe = start_supervised!(FakeFunctionProbe, %{id: "other_fake_probe"})
 
-      function = fn ->
-        Agent.update(agent, fn _ -> true end)
-      end
-
-      Probes.register(:test_probe, function)
-      FakeFunctionProbe.update(fake_probe, :probe_called, false)
+      Probes.register(:test_probe, FakeFunctionProbe.call(other_fake_probe))
 
       until(fn ->
-        assert Agent.get(agent, fn state -> state end)
+        assert FakeFunctionProbe.called?(other_fake_probe)
       end)
 
+      FakeFunctionProbe.clear(fake_probe)
+
       repeatedly(fn ->
-        refute FakeFunctionProbe.get(fake_probe, :probe_called)
+        refute FakeFunctionProbe.called?(fake_probe)
       end)
 
       Probes.unregister(:test_probe)
@@ -87,7 +84,7 @@ defmodule Appsignal.Probes.ProbesTest do
         Probes.register(:test_probe, FakeFunctionProbe.call(fake_probe))
 
         repeatedly(fn ->
-          refute FakeFunctionProbe.get(fake_probe, :probe_called)
+          refute FakeFunctionProbe.called?(fake_probe)
         end)
 
         Probes.unregister(:test_probe)
@@ -98,7 +95,7 @@ defmodule Appsignal.Probes.ProbesTest do
       Probes.register(:test_probe, FakeFunctionProbe.fail(fake_probe))
 
       until(fn ->
-        assert FakeFunctionProbe.get(fake_probe, :probe_called)
+        assert FakeFunctionProbe.called?(fake_probe)
       end)
 
       Probes.unregister(:test_probe)
