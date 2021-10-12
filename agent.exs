@@ -8,7 +8,6 @@ defmodule Appsignal.Agent do
 
   def mirrors do
     [
-      "https://appsignal-agent-releases.global.ssl.fastly.net",
       "https://d135dj0rjqvssy.cloudfront.net",
     ]
   end
