@@ -63,11 +63,15 @@ defmodule Appsignal.TransmitterTest do
     path = "test/fixtures/does_not_exist.pem"
 
     with_config(%{ca_file_path: path}, fn ->
-      assert capture_log(fn ->
-               assert [_method, _url, _headers, _body, []] =
-                        Transmitter.request(:get, "https://example.com")
-             end) =~
-               "[warn]  Ignoring non-existing or unreadable ca_file_path (test/fixtures/does_not_exist.pem): :enoent"
+      log =
+        capture_log(fn ->
+          assert [_method, _url, _headers, _body, []] =
+                   Transmitter.request(:get, "https://example.com")
+        end)
+
+      # credo:disable-for-lines:2 Credo.Check.Readability.MaxLineLength
+      assert log =~
+               ~r/\[warn(ing)?\](\s{1,2})Ignoring non-existing or unreadable ca_file_path \(test\/fixtures\/does_not_exist\.pem\): :enoent/
     end)
   end
 end
