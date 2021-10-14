@@ -2,8 +2,8 @@ defmodule Appsignal.Probes.FunctionProbeWrapper do
   use GenServer
   require Logger
 
-  def start_link(state) do
-    GenServer.start_link(__MODULE__, state)
+  def start_link(state, opts \\ []) do
+    GenServer.start_link(__MODULE__, state, opts)
   end
 
   def init([function]) do
