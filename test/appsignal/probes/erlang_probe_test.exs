@@ -6,18 +6,28 @@ defmodule Appsignal.Probes.ErlangProbeTest do
   setup do
     # Ensure the default probe is unregistered, that way we only record metrics
     # from this test
-    Appsignal.Probes.unregister(:erlang)
+    assert :ok == Appsignal.Probes.unregister(:erlang)
 
     [fake_appsignal: start_supervised!(FakeAppsignal)]
   end
 
   describe "when invoked by the scheduler" do
     setup do
-      Appsignal.Probes.register(:erlang, ErlangProbe)
-      on_exit(fn -> Appsignal.Probes.unregister(:erlang) end)
+      assert :ok == Appsignal.Probes.register(:erlang, ErlangProbe)
+
+      on_exit(fn ->
+        assert :ok == Appsignal.Probes.unregister(:erlang)
+      end)
     end
 
-    test "gathers metrics", %{fake_appsignal: fake_appsignal} do
+    test "gathers any metrics", %{fake_appsignal: fake_appsignal} do
+      until(fn ->
+        metrics = FakeAppsignal.get_gauges(fake_appsignal, "erlang_io")
+        refute Enum.empty?(metrics)
+      end)
+    end
+
+    test "gathers metrics using previous sample", %{fake_appsignal: fake_appsignal} do
       until(fn ->
         metrics = FakeAppsignal.get_gauges(fake_appsignal, "erlang_scheduler_utilization")
         refute Enum.empty?(metrics)
@@ -296,7 +306,15 @@ defmodule Appsignal.Probes.ErlangProbeTest do
              )
     end
 
-    test "gathers scheduler utilization metrics", %{
+    test "does not gather scheduler utilization metrics on the first run", %{
+      fake_appsignal: fake_appsignal
+    } do
+      metrics = FakeAppsignal.get_gauges(fake_appsignal, "erlang_scheduler_utilization")
+
+      assert Enum.empty?(metrics)
+    end
+
+    test "gathers scheduler utilization metrics on subsequent runs", %{
       fake_appsignal: fake_appsignal,
       sample: sample
     } do
