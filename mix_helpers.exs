@@ -20,30 +20,22 @@ defmodule Mix.Appsignal.Helper do
   def install do
     report = initial_report()
 
-    case verify_system_architecture(report) do
-      {:ok, {arch, report}} ->
-        case find_package_source(arch, report) do
-          {:ok, {arch_config, %{build: %{source: "remote"}} = report}} ->
-            case download_and_compile(arch_config, report) do
-              :ok ->
-                Logger.debug("""
-                AppSignal for Elixir #{Mix.Project.config()[:version]} succesfully installed!
-                If you're upgrading from version 1.x, please review our upgrade guide:
+    with {:ok, {arch, report}} <-
+           verify_system_architecture(report),
+         {:ok, {arch_config, %{build: %{source: "remote"}} = report}} <-
+           find_package_source(arch, report),
+         :ok <-
+           download_and_compile(arch_config, report) do
+      Logger.debug("""
+      AppSignal for Elixir #{Mix.Project.config()[:version]} succesfully installed!
+      If you're upgrading from version 1.x, please review our upgrade guide:
 
-                https://docs.appsignal.com/elixir/installation/upgrading-from-1.x-to-2.x.html
-                """)
-
-              {:error, {reason, report}} ->
-                abort_installation(reason, report)
-            end
-
-          {:ok, report} ->
-            # Installation using already downloaded package of the extension
-            compile(report)
-
-          {:error, {reason, report}} ->
-            abort_installation(reason, report)
-        end
+      https://docs.appsignal.com/elixir/installation/upgrading-from-1.x-to-2.x.html
+      """)
+    else
+      {:ok, report} ->
+        # Installation using already downloaded package of the extension
+        compile(report)
 
       {:error, {reason, report}} ->
         abort_installation(reason, report)
@@ -109,24 +101,14 @@ defmodule Mix.Appsignal.Helper do
   defp download_and_compile(arch_config, report) do
     report = merge_report(report, %{download: %{checksum: "unverified"}})
 
-    case download_package(arch_config, report) do
-      {:ok, {filename, report}} ->
-        case verify_download_package(filename, arch_config[:checksum], report) do
-          {:ok, {filename, report}} ->
-            case extract_package(filename) do
-              :ok ->
-                compile(report)
-
-              {:error, reason} ->
-                {:error, {reason, report}}
-            end
-
-          {:error, {reason, report}} ->
-            {:error, {reason, report}}
-        end
-
-      {:error, {reason, report}} ->
-        {:error, {reason, report}}
+    with {:ok, {filename, report}} <-
+           download_package(arch_config, report),
+         {:ok, {filename, report}} <-
+           verify_download_package(filename, arch_config[:checksum], report) do
+      case extract_package(filename) do
+        :ok -> compile(report)
+        {:error, reason} -> {:error, {reason, report}}
+      end
     end
   end
 
