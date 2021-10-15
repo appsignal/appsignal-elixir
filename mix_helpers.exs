@@ -24,14 +24,18 @@ defmodule Mix.Appsignal.Helper do
       {:ok, {arch, report}} ->
         case find_package_source(arch, report) do
           {:ok, {arch_config, %{build: %{source: "remote"}} = report}} ->
-            download_and_compile(arch_config, report)
+            case download_and_compile(arch_config, report) do
+              :ok ->
+                Logger.debug("""
+                AppSignal for Elixir #{Mix.Project.config()[:version]} succesfully installed!
+                If you're upgrading from version 1.x, please review our upgrade guide:
 
-            Logger.debug("""
-            AppSignal for Elixir #{Mix.Project.config()[:version]} succesfully installed!
-            If you're upgrading from version 1.x, please review our upgrade guide:
+                https://docs.appsignal.com/elixir/installation/upgrading-from-1.x-to-2.x.html
+                """)
 
-            https://docs.appsignal.com/elixir/installation/upgrading-from-1.x-to-2.x.html
-            """)
+              {:error, {reason, report}} ->
+                abort_installation(reason, report)
+            end
 
           {:ok, report} ->
             # Installation using already downloaded package of the extension
@@ -114,15 +118,15 @@ defmodule Mix.Appsignal.Helper do
                 compile(report)
 
               {:error, reason} ->
-                abort_installation(reason, report)
+                {:error, {reason, report}}
             end
 
           {:error, {reason, report}} ->
-            abort_installation(reason, report)
+            {:error, {reason, report}}
         end
 
       {:error, {reason, report}} ->
-        abort_installation(reason, report)
+        {:error, {reason, report}}
     end
   end
 
@@ -276,7 +280,7 @@ defmodule Mix.Appsignal.Helper do
       #{output}
       """
 
-      abort_installation(message, report)
+      {:error, {message, report}}
     end
   end
 
