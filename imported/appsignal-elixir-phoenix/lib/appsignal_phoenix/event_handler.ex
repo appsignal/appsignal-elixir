@@ -7,8 +7,8 @@ defmodule Appsignal.Phoenix.EventHandler do
 
   def attach do
     handlers = %{
-      [:phoenix, :endpoint, :start] => &phoenix_endpoint_start/4,
-      [:phoenix, :endpoint, :stop] => &phoenix_endpoint_stop/4
+      [:phoenix, :endpoint, :start] => &__MODULE__.phoenix_endpoint_start/4,
+      [:phoenix, :endpoint, :stop] => &__MODULE__.phoenix_endpoint_stop/4
     }
 
     for {event, fun} <- handlers do
@@ -41,7 +41,7 @@ defmodule Appsignal.Phoenix.EventHandler do
     |> @span.set_attribute("appsignal:category", "call.phoenix_endpoint")
   end
 
-  defp phoenix_endpoint_stop(_event, _measurements, _metadata, _config) do
+  def phoenix_endpoint_stop(_event, _measurements, _metadata, _config) do
     @tracer.close_span(@tracer.current_span())
   end
 
