@@ -1,7 +1,7 @@
 defmodule Appsignal.MonitorTest do
   use ExUnit.Case
   import AppsignalTest.Utils
-  alias Appsignal.{Monitor, Span, Test, Tracer}
+  alias Appsignal.{Monitor, Test}
 
   setup do
     start_supervised!(Test.Nif)
