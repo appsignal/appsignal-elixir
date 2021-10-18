@@ -1,5 +1,10 @@
 # AppSignal for Elixir changelog
 
+## 2.2.5
+
+- [e7d676a9](https://github.com/appsignal/appsignal-elixir/commit/e7d676a9832192f745bb331f2382857226768e36) patch - Update SSL configuration for OTP 23 and newer to fix the Cloudfront mirror download during installation.
+- [7ccf75ce](https://github.com/appsignal/appsignal-elixir/commit/7ccf75cea16b634eca4140ed785508b82baa19b8) patch - Fix install result message to no longer show a success message when an installation failure occurred.
+
 ## 2.2.4
 
 - [787684bf](https://github.com/appsignal/appsignal-elixir/commit/787684bf61dfdfca65bbb4bc70706942302dd80e) patch - Installation report improved for download errors. Download errors are more descriptive in the installation result of the diagnose report.
