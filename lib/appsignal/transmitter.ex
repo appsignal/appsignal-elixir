@@ -56,12 +56,12 @@ defmodule Appsignal.Transmitter do
         honor_cipher_order: :undefined
       ]
     end
-  end
 
-  if System.otp_release() >= "20.3" do
-    defp ciphers, do: :ssl.cipher_suites(:default, :"tlsv1.2")
-  else
-    defp ciphers, do: :ssl.cipher_suites()
+    if System.otp_release() >= "20.3" do
+      defp ciphers, do: :ssl.cipher_suites(:default, :"tlsv1.2")
+    else
+      defp ciphers, do: :ssl.cipher_suites()
+    end
   end
 
   if System.otp_release() >= "21" do
