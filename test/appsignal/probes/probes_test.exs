@@ -17,28 +17,29 @@ defmodule Appsignal.Probes.ProbesTest do
 
   describe "integration test for probing" do
     setup do
-      [fake_probe: start_supervised!(FakeFunctionProbe)]
+      fake_probe = start_supervised!(FakeFunctionProbe)
+      :ok = Probes.register(:test_probe, FakeFunctionProbe.call(fake_probe))
+
+      on_exit(fn ->
+        :ok = Probes.unregister(:test_probe)
+      end)
+
+      [fake_probe: fake_probe]
     end
 
     test "once a probe is registered, it is called by the probes system", %{
       fake_probe: fake_probe
     } do
-      assert :ok == Probes.register(:test_probe, FakeFunctionProbe.call(fake_probe))
-
       refute FakeFunctionProbe.called?(fake_probe)
 
       until(fn ->
         assert FakeFunctionProbe.called?(fake_probe)
       end)
-
-      assert :ok == Probes.unregister(:test_probe)
     end
 
     test "when a probe is unregistered, it is no longer called by the probes system", %{
       fake_probe: fake_probe
     } do
-      assert :ok == Probes.register(:test_probe, FakeFunctionProbe.call(fake_probe))
-
       until(fn ->
         assert FakeFunctionProbe.called?(fake_probe)
       end)
@@ -54,8 +55,6 @@ defmodule Appsignal.Probes.ProbesTest do
     test "when a probe with the same name is registered, the existing one is terminated", %{
       fake_probe: fake_probe
     } do
-      assert :ok == Probes.register(:test_probe, FakeFunctionProbe.call(fake_probe))
-
       until(fn ->
         assert FakeFunctionProbe.called?(fake_probe)
       end)
@@ -73,27 +72,19 @@ defmodule Appsignal.Probes.ProbesTest do
       repeatedly(fn ->
         refute FakeFunctionProbe.called?(fake_probe)
       end)
-
-      assert :ok == Probes.unregister(:test_probe)
     end
 
     test "a probe does not get called by the probes system if it's disabled", %{
       fake_probe: fake_probe
     } do
       AppsignalTest.Utils.with_config(%{enable_minutely_probes: false}, fn ->
-        assert :ok == Probes.register(:test_probe, FakeFunctionProbe.call(fake_probe))
-
         repeatedly(fn ->
           refute FakeFunctionProbe.called?(fake_probe)
         end)
-
-        assert :ok == Probes.unregister(:test_probe)
       end)
     end
 
     test "handles non-exception errors", %{fake_probe: fake_probe} do
-      assert :ok == Probes.register(:test_probe, FakeFunctionProbe.fail(fake_probe))
-
       until(fn ->
         assert FakeFunctionProbe.called?(fake_probe)
       end)
