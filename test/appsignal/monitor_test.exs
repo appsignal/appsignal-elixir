@@ -13,19 +13,25 @@ defmodule Appsignal.MonitorTest do
   end
 
   test "monitors a process" do
+    {:monitors, previous} = Process.info(monitor_pid(), :monitors)
+
     Monitor.add()
 
     until(fn ->
-      assert Process.info(monitor_pid(), :monitors) == {:monitors, [{:process, self()}]}
+      assert Process.info(monitor_pid(), :monitors) ==
+               {:monitors, previous ++ [{:process, self()}]}
     end)
   end
 
   test "does not monitor a process more than once" do
+    {:monitors, previous} = Process.info(monitor_pid(), :monitors)
+
     Monitor.add()
     Monitor.add()
 
     until(fn ->
-      assert Process.info(monitor_pid(), :monitors) == {:monitors, [{:process, self()}]}
+      assert Process.info(monitor_pid(), :monitors) ==
+               {:monitors, previous ++ [{:process, self()}]}
     end)
   end
 
@@ -50,7 +56,11 @@ defmodule Appsignal.MonitorTest do
     GenServer.cast(Appsignal.Monitor, {:monitor, pid})
 
     until(fn ->
-      assert MapSet.size(:sys.get_state(Appsignal.Monitor)) == 0
+      assert MapSet.member?(:sys.get_state(Appsignal.Monitor), pid)
+    end)
+
+    until(fn ->
+      refute MapSet.member?(:sys.get_state(Appsignal.Monitor), pid)
     end)
   end
 
