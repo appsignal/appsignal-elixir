@@ -120,8 +120,8 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     output = run()
     assert String.contains?(output, "Extension installation report")
     assert String.contains?(output, "Language details")
-    assert String.contains?(output, "  Elixir version: #{System.version()}")
-    assert String.contains?(output, "  OTP version: #{System.otp_release()}")
+    assert String.contains?(output, "  Elixir version: \"#{System.version()}\"")
+    assert String.contains?(output, "  OTP version: \"#{System.otp_release()}\"")
 
     assert_output_contains_download_report(output)
 
@@ -321,8 +321,8 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     output = run()
     assert String.contains?(output, "AppSignal library")
     assert String.contains?(output, "Language: Elixir")
-    assert String.contains?(output, "Package version: #{@appsignal_version}")
-    assert String.contains?(output, "Agent version: #{@agent_version}")
+    assert String.contains?(output, "Package version: \"#{@appsignal_version}\"")
+    assert output =~ ~r{Agent version: ("#{@agent_version}"|nil)}
   end
 
   test "adds library information to report", %{fake_report: fake_report} do
@@ -351,7 +351,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
     test "outputs that the Nif is loaded" do
       output = run()
-      assert String.contains?(output, "Nif loaded: yes")
+      assert String.contains?(output, "Nif loaded: true")
     end
 
     test "adds library extension_loaded true to report", %{fake_report: fake_report} do
@@ -368,7 +368,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
     test "outputs that the Nif is not loaded" do
       output = run()
-      assert String.contains?(output, "Nif loaded: no")
+      assert String.contains?(output, "Nif loaded: false")
     end
 
     test "adds library extension_loaded false to report", %{fake_report: fake_report} do
@@ -381,11 +381,16 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   test "outputs host information" do
     output = run()
     assert String.contains?(output, "Host information")
-    assert String.contains?(output, "Architecture: #{:erlang.system_info(:system_architecture)}")
-    assert String.contains?(output, "Elixir version: #{System.version()}")
-    assert String.contains?(output, "OTP version: #{System.otp_release()}")
+
+    assert String.contains?(
+             output,
+             "Architecture: \"#{:erlang.system_info(:system_architecture)}\""
+           )
+
+    assert String.contains?(output, "Elixir version: \"#{System.version()}\"")
+    assert String.contains?(output, "OTP version: \"#{System.otp_release()}\"")
     {_, os} = :os.type()
-    assert String.contains?(output, "Operating System: #{os}")
+    assert String.contains?(output, "Operating System: \"#{os}\"")
   end
 
   test "adds host information to report", %{fake_report: fake_report} do
@@ -411,9 +416,9 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       FakeSystem.update(fake_system, :heroku, true)
     end
 
-    test "outputs Heroku: yes" do
+    test "outputs Heroku: true" do
       output = run()
-      assert String.contains?(output, "Heroku: yes")
+      assert String.contains?(output, "Heroku: true")
     end
 
     test "adds host heroku true to report", %{fake_report: fake_report} do
@@ -428,9 +433,9 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       FakeNif.update(fake_nif, :running_in_container?, true)
     end
 
-    test "outputs Container: yes" do
+    test "outputs Running in container: true" do
       output = run()
-      assert String.contains?(output, "Container: yes")
+      assert String.contains?(output, "Running in container: true")
     end
 
     test "adds host running_in_container true to report", %{fake_report: fake_report} do
@@ -445,9 +450,9 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       FakeNif.update(fake_nif, :running_in_container?, false)
     end
 
-    test "outputs Container: no" do
+    test "outputs Running in container: false" do
       output = run()
-      assert String.contains?(output, "Container: no")
+      assert String.contains?(output, "Running in container: false")
     end
 
     test "adds host running_in_container false to report", %{fake_report: fake_report} do
@@ -458,9 +463,9 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   end
 
   describe "when not root user" do
-    test "outputs root user: no" do
+    test "outputs Root user: false" do
       output = run()
-      assert String.contains?(output, "root user: no")
+      assert String.contains?(output, "Root user: false")
     end
 
     test "adds host root false to report", %{fake_report: fake_report} do
@@ -477,7 +482,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
     test "outputs warning about running as root" do
       output = run()
-      assert String.contains?(output, "root user: yes (not recommended)")
+      assert String.contains?(output, "Root user: true (not recommended)")
     end
 
     test "adds host root true to report", %{fake_report: fake_report} do
@@ -882,12 +887,12 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
       assert String.contains?(
                output,
-               "Log directory\n    Path: #{inspect(log_dir_path)}\n    Writable?: yes"
+               "Log directory\n    Path: #{inspect(log_dir_path)}\n    Writable?: true"
              )
 
       assert String.contains?(
                output,
-               "AppSignal log\n    Path: #{inspect(log_file_path)}\n    Writable?: yes"
+               "AppSignal log\n    Path: #{inspect(log_file_path)}\n    Writable?: true"
              )
     end
 
@@ -945,8 +950,8 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
       assert String.contains?(
                output,
-               "Log directory\n    Path: \"#{log_dir_path}\"\n    Writable?: yes\n" <>
-                 "    Ownership?: yes (file: #{uid}, process: #{FakeSystem.get(fake_system, :uid)})"
+               "Log directory\n    Path: \"#{log_dir_path}\"\n    Writable?: true\n" <>
+                 "    Ownership?: true (file: #{uid}, process: #{FakeSystem.get(fake_system, :uid)})"
              )
     end
   end
@@ -964,8 +969,8 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
       assert String.contains?(
                output,
-               "Log directory\n    Path: \"#{log_dir_path}\"\n    Writable?: yes\n" <>
-                 "    Ownership?: no (file: #{uid}, process: #{FakeSystem.get(fake_system, :uid)})"
+               "Log directory\n    Path: \"#{log_dir_path}\"\n    Writable?: true\n" <>
+                 "    Ownership?: false (file: #{uid}, process: #{FakeSystem.get(fake_system, :uid)})"
              )
     end
   end
