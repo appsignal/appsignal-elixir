@@ -12,11 +12,11 @@ defmodule Appsignal.Diagnose.Paths do
   end
 
   def labels do
-    %{
-      working_dir: "Working directory",
-      log_dir_path: "Log directory",
-      "appsignal.log": "AppSignal log"
-    }
+    [
+      {:working_dir, "Working directory"},
+      {:log_dir_path, "Log directory"},
+      {:"appsignal.log", "AppSignal log"}
+    ]
   end
 
   defp path_report(path) do

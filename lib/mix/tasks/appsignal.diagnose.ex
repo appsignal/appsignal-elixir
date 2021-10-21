@@ -321,8 +321,8 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     IO.puts("Paths")
     labels = Diagnose.Paths.labels()
 
-    Enum.each(path_report, fn {name, path} ->
-      print_path(path, Map.fetch!(labels, name))
+    Enum.each(labels, fn {name, label} ->
+      print_path(Map.fetch!(path_report, name), label)
     end)
   end
 
