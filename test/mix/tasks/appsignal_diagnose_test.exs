@@ -980,7 +980,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       output = run("n")
       assert String.contains?(output, "Diagnostics report")
       assert String.contains?(output, "Send diagnostics report to AppSignal? (Y/n):")
-      assert String.contains?(output, "Not sending diagnostics report to AppSignal.")
+      assert String.contains?(output, "Not sending diagnostics information to AppSignal.")
 
       refute FakeReport.get(fake_report, :report_sent?)
     end
@@ -1058,7 +1058,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
                "Not sending report. (Specified with the --no-send-report option.)"
              )
 
-      assert String.contains?(output, "Not sending diagnostics report to AppSignal.")
+      assert String.contains?(output, "Not sending diagnostics information to AppSignal.")
 
       refute FakeReport.get(fake_report, :report_sent?)
     end
