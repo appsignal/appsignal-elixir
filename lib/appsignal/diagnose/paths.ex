@@ -13,7 +13,7 @@ defmodule Appsignal.Diagnose.Paths do
 
   def labels do
     [
-      {:working_dir, "Working directory"},
+      {:working_dir, "Current working directory"},
       {:log_dir_path, "Log directory"},
       {:"appsignal.log", "AppSignal log"}
     ]
