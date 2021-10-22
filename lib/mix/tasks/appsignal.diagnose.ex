@@ -141,13 +141,13 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     if download_parsing_error && install_parsing_error do
       do_print_parsing_error("download", report)
       do_print_parsing_error("installation", report)
-    end
-
-    if install_parsing_error do
-      do_print_download_report(report)
-      do_print_parsing_error("installation", report)
     else
-      do_print_installation_report(report)
+      if install_parsing_error do
+        do_print_download_report(report)
+        do_print_parsing_error("installation", report)
+      else
+        do_print_installation_report(report)
+      end
     end
   end
 
