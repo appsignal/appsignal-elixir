@@ -42,7 +42,7 @@ defmodule Appsignal.Diagnose.Paths do
                   :file ->
                     case read_file_content(path, size) do
                       {:ok, content} ->
-                        %{content: String.split(content, "\n")}
+                        %{content: String.split(String.trim_trailing(content), "\n")}
 
                       {:error, reason} ->
                         %{error: reason}
