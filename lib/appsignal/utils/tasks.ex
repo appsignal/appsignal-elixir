@@ -1,7 +1,7 @@
 defmodule :appsignal_tasks do
   @moduledoc false
-  def diagnose do
-    Mix.Tasks.Appsignal.Diagnose.run(nil)
+  def diagnose(args \\ []) do
+    Mix.Tasks.Appsignal.Diagnose.run(args)
     :init.stop()
   end
 

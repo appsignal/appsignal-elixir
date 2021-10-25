@@ -73,7 +73,6 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     path_report = Diagnose.Paths.info()
     report = Map.put(report, :paths, path_report)
     print_paths(path_report)
-    empty_line()
 
     send_report_to_appsignal_if_agreed_upon(config, report, send_report)
   end
@@ -142,13 +141,13 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     if download_parsing_error && install_parsing_error do
       do_print_parsing_error("download", report)
       do_print_parsing_error("installation", report)
-    end
-
-    if install_parsing_error do
-      do_print_download_report(report)
-      do_print_parsing_error("installation", report)
     else
-      do_print_installation_report(report)
+      if install_parsing_error do
+        do_print_download_report(report)
+        do_print_parsing_error("installation", report)
+      else
+        do_print_installation_report(report)
+      end
     end
   end
 
@@ -314,15 +313,15 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
 
   defp print_validation(validation_report) do
     IO.puts("Validation")
-    IO.puts("  Push API key: #{validation_report[:push_api_key]}")
+    IO.puts("  Validating Push API key: #{validation_report[:push_api_key]}")
   end
 
   defp print_paths(path_report) do
     IO.puts("Paths")
     labels = Diagnose.Paths.labels()
 
-    Enum.each(path_report, fn {name, path} ->
-      print_path(path, Map.fetch!(labels, name))
+    Enum.each(labels, fn {name, label} ->
+      print_path(Map.fetch!(path_report, name), label)
     end)
   end
 
@@ -346,16 +345,17 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     end
 
     if path[:error], do: IO.puts("    Error: #{path[:error]}")
+    empty_line()
   end
 
   defp send_report_to_appsignal_if_agreed_upon(config, report, send_report) do
-    IO.puts("\nDiagnostics report")
+    IO.puts("Diagnostics report")
     IO.puts("  Do you want to send this diagnostics report to AppSignal?")
 
     IO.puts(
       "  If you share this report you will be given a link to \n" <>
         "  AppSignal.com to validate the report.\n" <>
-        "  You can also contact us at support@appsignal.com\n  with your support token.\n\n"
+        "  You can also contact us at support@appsignal.com\n  with your support token.\n"
     )
 
     answer =
@@ -378,7 +378,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
         send_report_to_appsignal(config, report)
 
       false ->
-        IO.puts("  Not sending diagnostics report to AppSignal.")
+        IO.puts("  Not sending diagnostics information to AppSignal.")
     end
   end
 

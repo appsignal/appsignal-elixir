@@ -55,6 +55,20 @@ defmodule Mix.Tasks.Appsignal.Diagnose.PathsTest do
     end
   end
 
+  test "has label definitions for all path reports" do
+    path_keys =
+      Paths.info()
+      |> Map.keys()
+      |> MapSet.new()
+
+    label_keys =
+      Paths.labels()
+      |> Enum.map(fn {key, _value} -> key end)
+      |> MapSet.new()
+
+    assert path_keys == label_keys
+  end
+
   defp more_than_two_mebibytes_of_data do
     bytes_length = 2.1 * 1024 * 1024
 
