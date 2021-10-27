@@ -24,7 +24,9 @@ defmodule Appsignal do
     children = [
       {Appsignal.Tracer, []},
       {Appsignal.Monitor, []},
-      {Appsignal.Probes, []}
+      {DynamicSupervisor, strategy: :one_for_one, name: Appsignal.Probes.DynamicSupervisor},
+      {Registry, keys: :unique, name: Appsignal.Probes.Registry},
+      {Appsignal.Probes.Scheduler, []}
     ]
 
     result = Supervisor.start_link(children, strategy: :one_for_one, name: Appsignal.Supervisor)
@@ -85,7 +87,7 @@ defmodule Appsignal do
 
   @doc false
   def add_default_probes do
-    Appsignal.Probes.register(:erlang, &Appsignal.Probes.ErlangProbe.call/0)
+    Appsignal.Probes.register(:erlang, Appsignal.Probes.ErlangProbe)
   end
 
   @doc """
