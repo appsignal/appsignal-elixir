@@ -10,6 +10,7 @@ defmodule Appsignal.Config do
     dns_servers: [],
     enable_host_metrics: true,
     enable_minutely_probes: true,
+    enable_statsd: false,
     endpoint: "https://push.appsignal.com",
     diagnose_endpoint: "https://appsignal.com/diag",
     env: :dev,
@@ -196,6 +197,7 @@ defmodule Appsignal.Config do
     "APPSIGNAL_WORKING_DIRECTORY_PATH" => :working_directory_path,
     "APPSIGNAL_ENABLE_HOST_METRICS" => :enable_host_metrics,
     "APPSIGNAL_ENABLE_MINUTELY_PROBES" => :enable_minutely_probes,
+    "APPSIGNAL_ENABLE_STATSD" => :enable_statsd,
     "APPSIGNAL_SKIP_SESSION_DATA" => :skip_session_data,
     "APPSIGNAL_TRANSACTION_DEBUG_MODE" => :transaction_debug_mode,
     "APPSIGNAL_FILES_WORLD_ACCESSIBLE" => :files_world_accessible,
@@ -213,6 +215,7 @@ defmodule Appsignal.Config do
     APPSIGNAL_ENABLE_ALLOCATION_TRACKING APPSIGNAL_ENABLE_GC_INSTRUMENTATION APPSIGNAL_RUNNING_IN_CONTAINER
     APPSIGNAL_ENABLE_HOST_METRICS APPSIGNAL_SKIP_SESSION_DATA APPSIGNAL_TRANSACTION_DEBUG_MODE
     APPSIGNAL_FILES_WORLD_ACCESSIBLE APPSIGNAL_SEND_PARAMS APPSIGNAL_ENABLE_MINUTELY_PROBES
+    APPSIGNAL_ENABLE_STATSD
   )
   @atom_keys ~w(APPSIGNAL_APP_ENV APPSIGNAL_OTP_APP)
   @string_list_keys ~w(
