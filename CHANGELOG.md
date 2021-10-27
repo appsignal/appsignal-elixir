@@ -1,5 +1,22 @@
 # AppSignal for Elixir changelog
 
+## 2.2.6
+
+- [acb7295](https://github.com/appsignal/appsignal-elixir/commit/acb7295f1b876659f4ac8535c4c50592c77c336d) patch - Print String values in the diagnose report surrounded by quotes, and booleans as "true" and "false", rather than "yes" and "no". Makes it more clear that it's a value and not a label we print.
+- [e71792f](https://github.com/appsignal/appsignal-elixir/commit/e71792f9377a5ce98d338a63f2b0093a5ccee065) patch - Fix diagnose output rendering an additional empty line for the `appsignal.log` file. It appeared that only 9 lines were printed instead of the 10 expected lines.
+- [422cbd1](https://github.com/appsignal/appsignal-elixir/commit/422cbd128ecfc24ad6891cc39f889f1d1c531602) patch - Render the install report errors in the diagnose CLI output fewer times. A missing download and/or install report could sometimes be displayed up to two times, in total four errors.
+- [f7c0b1e](https://github.com/appsignal/appsignal-elixir/commit/f7c0b1e3f301e8eed72cadecdd9bf892c529173c) patch - Support mix task diagnose arguments. When an app is released with `mix release` CLI arguments cannot normally be passed to the diagnose task. Use the `eval` command pass along the CLI arguments as function arguments.
+  
+  ```
+  mix format
+  # Without arguments
+  bin/your_app eval ':appsignal_tasks.diagnose()'
+  # With arguments
+  bin/your_app eval ':appsignal_tasks.diagnose(["--send-report"])'
+  ```
+- [c51c065](https://github.com/appsignal/appsignal-elixir/commit/c51c065c71e08c4876b94680659b96062b5273b3) patch - Update diagnose output labels to be similar to our other language integrations.
+- [9d3e253](https://github.com/appsignal/appsignal-elixir/commit/9d3e25342cdf11ad8b6fb025209629552f816b1e) patch - Add new config option to enable/disable StatsD server in the AppSignal agent. This new config option is called `enable_statsd` and is set to `false` by default. If set to `true`, the AppSignal agent will start a StatsD server on port 8125 on the host.
+
 ## 2.2.5
 
 - [e7d676a9](https://github.com/appsignal/appsignal-elixir/commit/e7d676a9832192f745bb331f2382857226768e36) patch - Update SSL configuration for OTP 23 and newer to fix the Cloudfront mirror download during installation.
