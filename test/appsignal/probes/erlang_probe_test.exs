@@ -11,9 +11,33 @@ defmodule Appsignal.Probes.ErlangProbeTest do
     [fake_appsignal: start_supervised!(FakeAppsignal)]
   end
 
-  describe "call/0" do
+  describe "when invoked by the scheduler" do
     setup do
-      ErlangProbe.call()
+      assert :ok == Appsignal.Probes.register(:erlang, &ErlangProbe.call/1)
+
+      on_exit(fn ->
+        assert :ok == Appsignal.Probes.unregister(:erlang)
+      end)
+    end
+
+    test "gathers any metrics", %{fake_appsignal: fake_appsignal} do
+      until(fn ->
+        metrics = FakeAppsignal.get_gauges(fake_appsignal, "erlang_io")
+        refute Enum.empty?(metrics)
+      end)
+    end
+
+    test "gathers metrics using previous sample", %{fake_appsignal: fake_appsignal} do
+      until(fn ->
+        metrics = FakeAppsignal.get_gauges(fake_appsignal, "erlang_scheduler_utilization")
+        refute Enum.empty?(metrics)
+      end)
+    end
+  end
+
+  describe "call/1" do
+    setup do
+      [sample: ErlangProbe.call()]
     end
 
     test "gathers IO metrics", %{fake_appsignal: fake_appsignal} do
@@ -278,6 +302,44 @@ defmodule Appsignal.Probes.ErlangProbeTest do
                  &1
                )
              )
+    end
+
+    test "does not gather scheduler utilization metrics on the first run", %{
+      fake_appsignal: fake_appsignal
+    } do
+      metrics = FakeAppsignal.get_gauges(fake_appsignal, "erlang_scheduler_utilization")
+
+      assert Enum.empty?(metrics)
+    end
+
+    test "gathers scheduler utilization metrics on subsequent runs", %{
+      fake_appsignal: fake_appsignal,
+      sample: sample
+    } do
+      ErlangProbe.call(sample)
+
+      metrics = FakeAppsignal.get_gauges(fake_appsignal, "erlang_scheduler_utilization")
+
+      scheduler_ids = Enum.to_list(1..:erlang.system_info(:schedulers))
+
+      scheduler_ids
+      |> Enum.map(fn scheduler_id -> "#{scheduler_id}" end)
+      |> Enum.each(fn scheduler_id ->
+        assert Enum.any?(
+                 metrics,
+                 &match?(
+                   %{
+                     key: "erlang_scheduler_utilization",
+                     tags: %{
+                       type: "scheduler",
+                       id: ^scheduler_id
+                     },
+                     value: _
+                   },
+                   &1
+                 )
+               )
+      end)
     end
   end
 

@@ -33,6 +33,31 @@ defmodule Appsignal.Probes.ProbesTest do
       Probes.unregister(:test_probe)
     end
 
+    test "when a probe is registered with the name of a previous probe, it is overriden", %{
+      fake_probe: fake_probe
+    } do
+      Probes.register(:test_probe, &FakeProbe.call/0)
+
+      until(fn ->
+        assert FakeProbe.get(fake_probe, :probe_called)
+      end)
+
+      Probes.register(:test_probe, fn -> nil end)
+      FakeProbe.clear()
+
+      repeatedly(fn ->
+        refute FakeProbe.get(fake_probe, :probe_called)
+      end)
+
+      Probes.register(:test_probe, &FakeProbe.call/0)
+
+      until(fn ->
+        assert FakeProbe.get(fake_probe, :probe_called)
+      end)
+
+      Probes.unregister(:test_probe)
+    end
+
     test "a probe does not get called by the probes system if it's disabled", %{
       fake_probe: fake_probe
     } do
@@ -45,6 +70,19 @@ defmodule Appsignal.Probes.ProbesTest do
 
         Probes.unregister(:test_probe)
       end)
+    end
+
+    test "a probe receives the resulting state from its previous call", %{
+      fake_probe: fake_probe
+    } do
+      Probes.register(:test_probe, &FakeProbe.stateful/1, 0)
+
+      until(fn ->
+        assert FakeProbe.get(fake_probe, :probe_called)
+        assert FakeProbe.get(fake_probe, :probe_state) >= 3
+      end)
+
+      Probes.unregister(:test_probe)
     end
 
     test "handles non-exception errors", %{fake_probe: fake_probe} do
