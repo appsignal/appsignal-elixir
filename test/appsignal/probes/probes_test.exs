@@ -83,6 +83,20 @@ defmodule Appsignal.Probes.ProbesTest do
         end)
       end)
     end
+  end
+
+
+  describe "integration test for failing function probes" do
+    setup do
+      fake_probe = start_supervised!(FakeFunctionProbe)
+      :ok = Probes.register(:test_probe, FakeFunctionProbe.fail(fake_probe))
+
+      on_exit(fn ->
+        :ok = Probes.unregister(:test_probe)
+      end)
+
+      [fake_probe: fake_probe]
+    end
 
     test "handles non-exception errors", %{fake_probe: fake_probe} do
       until(fn ->

@@ -16,7 +16,7 @@ defmodule Appsignal.Probes do
 
   def unregister(name) do
     Registry.dispatch(Appsignal.Probes.Registry, name, fn [{pid, _value}] ->
-      DynamicSupervisor.terminate_child(Appsignal.Probes.DynamicSupervisor, pid)
+      :ok = DynamicSupervisor.terminate_child(Appsignal.Probes.DynamicSupervisor, pid)
     end)
   end
 
