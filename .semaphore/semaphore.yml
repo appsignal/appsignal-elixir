@@ -15,9 +15,7 @@ blocks:
           commands:
             - script/lint_git
         - name: mix compile --warnings-as-errors
-          commands:
-            - ERLANG_VERSION=24.0 ELIXIR_VERSION=1.10.4 . bin/setup
-            - mix compile --warnings-as-errors
+          commands_file: mix_compile_warnings
         - name: mix format --check-formatted
           commands:
             - ERLANG_VERSION=24.0 ELIXIR_VERSION=1.12.3 . bin/setup

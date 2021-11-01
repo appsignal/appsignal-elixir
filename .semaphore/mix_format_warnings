@@ -1,0 +1,6 @@
+#!/bin/bash
+
+set -e
+
+ERLANG_VERSION=24.0 ELIXIR_VERSION=1.10.4 . bin/setup
+mix compile --warnings-as-errors
