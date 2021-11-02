@@ -1,7 +1,10 @@
 defmodule Appsignal.Probes.ErlangProbe do
   @moduledoc false
-  @appsignal Application.get_env(:appsignal, :appsignal, Appsignal)
-  @inet Application.get_env(:appsignal, :inet, :inet)
+
+  require Appsignal.Utils
+
+  @appsignal Appsignal.Utils.compile_env(:appsignal, :appsignal, Appsignal)
+  @inet Appsignal.Utils.compile_env(:appsignal, :inet, :inet)
 
   def call do
     io_metrics()

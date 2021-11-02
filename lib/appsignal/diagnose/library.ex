@@ -1,8 +1,11 @@
 defmodule Appsignal.Diagnose.Library do
   @moduledoc false
+
+  require Appsignal.Utils
+
   @appsignal_version Mix.Project.config()[:version]
   @agent_version Appsignal.Nif.agent_version()
-  @nif Application.get_env(:appsignal, :appsignal_nif, Appsignal.Nif)
+  @nif Appsignal.Utils.compile_env(:appsignal, :appsignal_nif, Appsignal.Nif)
 
   def info do
     %{

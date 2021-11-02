@@ -1,7 +1,11 @@
 defmodule Appsignal.Span do
   alias Appsignal.{Config, Nif, Span}
+
   defstruct [:reference, :pid]
-  @nif Application.get_env(:appsignal, :appsignal_tracer_nif, Appsignal.Nif)
+
+  require Appsignal.Utils
+
+  @nif Appsignal.Utils.compile_env(:appsignal, :appsignal_tracer_nif, Appsignal.Nif)
 
   @type t() :: %__MODULE__{
           reference: reference(),
