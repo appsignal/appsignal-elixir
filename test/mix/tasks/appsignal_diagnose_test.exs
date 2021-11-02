@@ -913,7 +913,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
                type: :directory,
                path: log_dir_path,
                exists: true,
-               mode: mode,
+               mode: Integer.to_string(mode, 8),
                writable: true,
                ownership: %{uid: uid, gid: gid}
              }
@@ -924,7 +924,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
                type: :file,
                path: log_file_path,
                exists: true,
-               mode: mode,
+               mode: Integer.to_string(mode, 8),
                writable: true,
                ownership: %{uid: uid, gid: gid},
                content: ["log line 1", "log line 2", "log line 3"]
