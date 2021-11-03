@@ -3,8 +3,14 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
   alias Appsignal.Config
   alias Appsignal.Diagnose
 
-  @system Application.get_env(:appsignal, :appsignal_system, Appsignal.System)
-  @report Application.get_env(:appsignal, :appsignal_diagnose_report, Appsignal.Diagnose.Report)
+  require Appsignal.Utils
+
+  @system Appsignal.Utils.compile_env(:appsignal, :appsignal_system, Appsignal.System)
+  @report Appsignal.Utils.compile_env(
+            :appsignal,
+            :appsignal_diagnose_report,
+            Appsignal.Diagnose.Report
+          )
 
   @shortdoc "Starts and tests AppSignal while validating the configuration"
 

@@ -23,7 +23,7 @@ defmodule TestAgent do
         Agent.update(pid_or_module, &Map.put(&1, key, value))
       end
 
-      def alive?() do
+      def alive? do
         !!Process.whereis(__MODULE__)
       end
 

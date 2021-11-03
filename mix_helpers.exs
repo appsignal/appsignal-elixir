@@ -1,11 +1,28 @@
 {_, _} = Code.eval_file("agent.exs")
 
+defmodule Mix.Appsignal.Utils do
+  defmacro compile_env(app, key, default \\ nil) do
+    if Version.match?(System.version(), ">= 1.10.0") do
+      quote do
+        Application.compile_env(unquote(app), unquote(key), unquote(default))
+      end
+    else
+      quote do
+        Application.get_env(unquote(app), unquote(key), unquote(default))
+      end
+    end
+  end
+end
+
 defmodule Mix.Appsignal.Helper do
   @moduledoc """
   Helper functions for downloading and compiling the AppSignal agent library.
   """
-  @os Application.get_env(:appsignal, :os, :os)
-  @system Application.get_env(:appsignal, :mix_system, System)
+
+  require Mix.Appsignal.Utils
+
+  @os Mix.Appsignal.Utils.compile_env(:appsignal, :os, :os)
+  @system Mix.Appsignal.Utils.compile_env(:appsignal, :mix_system, System)
 
   @proxy_env_vars [
     "APPSIGNAL_HTTP_PROXY",

@@ -1,7 +1,10 @@
 defmodule Appsignal.Monitor do
   @moduledoc false
-  @deletion_delay Application.get_env(:appsignal, :deletion_delay, 5_000)
-  @sync_interval Application.get_env(:appsignal, :sync_interval, 60_000)
+
+  require Appsignal.Utils
+
+  @deletion_delay Appsignal.Utils.compile_env(:appsignal, :deletion_delay, 5_000)
+  @sync_interval Appsignal.Utils.compile_env(:appsignal, :sync_interval, 60_000)
 
   use GenServer
   alias Appsignal.Tracer
