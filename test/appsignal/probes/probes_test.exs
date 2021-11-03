@@ -106,6 +106,8 @@ defmodule Appsignal.Probes.ProbesTest do
 
       FakeFunctionProbe.clear(fake_probe)
 
+      :timer.sleep(100)
+
       repeatedly(fn ->
         refute FakeFunctionProbe.called?(fake_probe)
       end)
