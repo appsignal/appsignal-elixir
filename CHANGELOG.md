@@ -1,5 +1,13 @@
 # AppSignal for Elixir changelog
 
+## 2.2.7
+
+- [f07f9cf9](https://github.com/appsignal/appsignal-elixir/commit/f07f9cf9c1d0d9696ee1a226630238dc75162fd7) patch - Bump agent to 09308fb.
+  
+  - Update sql_lexer dependency with support for reversed operators in queries.
+  - Add debug level logging to custom metrics in transaction_debug_mode.
+  - Add hostname config option to standalone agent.
+
 ## 2.2.6
 
 - [acb7295](https://github.com/appsignal/appsignal-elixir/commit/acb7295f1b876659f4ac8535c4c50592c77c336d) patch - Print String values in the diagnose report surrounded by quotes, and booleans as "true" and "false", rather than "yes" and "no". Makes it more clear that it's a value and not a label we print.
