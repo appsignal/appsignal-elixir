@@ -30,7 +30,7 @@ defmodule Appsignal.Mixfile do
       docs: [
         main: "readme",
         logo: "logo.png",
-        source_ref: @version,
+        source_ref: "v#{@version}",
         source_url: @source_url,
         extras: ["README.md", "CHANGELOG.md"]
       ],
