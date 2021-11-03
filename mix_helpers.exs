@@ -525,7 +525,9 @@ defmodule Mix.Appsignal.Helper do
         target: os,
         musl_override: force_musl_build?(),
         linux_arm_override: force_linux_arm_build?(),
-        library_type: "static"
+        library_type: "static",
+        dependencies: %{},
+        flags: %{}
       },
       host: %{
         root_user: root?(),
@@ -547,7 +549,9 @@ defmodule Mix.Appsignal.Helper do
         target: target,
         musl_override: musl_override,
         linux_arm_override: linux_arm_override,
-        library_type: library_type
+        library_type: library_type,
+        dependencies: %{},
+        flags: %{}
       }
     } = report
 

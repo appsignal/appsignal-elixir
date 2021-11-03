@@ -33,7 +33,7 @@ defmodule Appsignal.Diagnose.Paths do
               r = %{
                 writable: file_writable(access),
                 type: file_type(type),
-                mode: mode,
+                mode: Integer.to_string(mode, 8),
                 ownership: %{uid: uid, gid: gid}
               }
 

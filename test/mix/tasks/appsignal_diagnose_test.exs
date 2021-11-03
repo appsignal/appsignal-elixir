@@ -754,8 +754,11 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       config = Application.get_env(:appsignal, :config)
 
       refute Enum.empty?(config)
+      # Filter out the diagnose_endpoint config option. Users don't need to see
+      # the config option. It's a private config option.
+      filtered_options = Enum.reject(config, fn {key, _} -> key == :diagnose_endpoint end)
 
-      Enum.each(config, fn {key, value} ->
+      Enum.each(filtered_options, fn {key, value} ->
         assert String.contains?(output, "  #{key}: #{inspect(value)}")
       end)
     end
@@ -913,7 +916,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
                type: :directory,
                path: log_dir_path,
                exists: true,
-               mode: mode,
+               mode: Integer.to_string(mode, 8),
                writable: true,
                ownership: %{uid: uid, gid: gid}
              }
@@ -924,7 +927,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
                type: :file,
                path: log_file_path,
                exists: true,
-               mode: mode,
+               mode: Integer.to_string(mode, 8),
                writable: true,
                ownership: %{uid: uid, gid: gid},
                content: ["log line 1", "log line 2", "log line 3"]
