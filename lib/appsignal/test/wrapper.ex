@@ -19,14 +19,16 @@ defmodule Appsignal.Test.Wrapper do
       end
 
       defp add(key, value) do
-        Agent.get_and_update(__MODULE__, fn state ->
-          Map.get_and_update(state, key, fn current ->
-            case current do
-              nil -> {nil, [value]}
-              _ -> {current, [value | current]}
-            end
+        if is_pid(Process.whereis(__MODULE__)) do
+          Agent.get_and_update(__MODULE__, fn state ->
+            Map.get_and_update(state, key, fn current ->
+              case current do
+                nil -> {nil, [value]}
+                _ -> {current, [value | current]}
+              end
+            end)
           end)
-        end)
+        end
       end
 
       def child_spec(_opts) do
