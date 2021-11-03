@@ -85,7 +85,6 @@ defmodule Appsignal.Probes.ProbesTest do
     end
   end
 
-
   describe "integration test for failing function probes" do
     setup do
       fake_probe = start_supervised!(FakeFunctionProbe)
