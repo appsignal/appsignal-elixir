@@ -378,7 +378,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
 
     case answer do
       true ->
-        IO.puts("\n  Transmitting diagnostics report")
+        IO.puts("  Transmitting diagnostics report\n")
         send_report_to_appsignal(config, report)
 
       false ->
