@@ -195,6 +195,8 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     IO.puts("    Musl override: #{build_report["musl_override"]}")
     IO.puts("    Linux ARM override: #{build_report["linux_arm_override"]}")
     IO.puts("    Library type: #{format_value(build_report["library_type"])}")
+    IO.puts("    Dependencies: #{format_value(build_report["dependencies"])}")
+    IO.puts("    Flags: #{format_value(build_report["flags"])}")
     host_report = installation_report["host"]
     IO.puts("  Host details")
     IO.puts("    Root user: #{format_value(host_report["root_user"])}")
