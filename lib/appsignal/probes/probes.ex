@@ -5,7 +5,7 @@ defmodule Appsignal.Probes do
   def register(name, probe) do
     spec = probe_spec(name, probe)
 
-    :ok = unregister(name)
+    unregister(name)
 
     case DynamicSupervisor.start_child(Appsignal.Probes.DynamicSupervisor, spec) do
       {:ok, _pid} -> :ok
@@ -16,7 +16,7 @@ defmodule Appsignal.Probes do
 
   def unregister(name) do
     Registry.dispatch(Appsignal.Probes.Registry, name, fn [{pid, _value}] ->
-      :ok = DynamicSupervisor.terminate_child(Appsignal.Probes.DynamicSupervisor, pid)
+      DynamicSupervisor.terminate_child(Appsignal.Probes.DynamicSupervisor, pid)
     end)
   end
 
