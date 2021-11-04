@@ -10,8 +10,11 @@ defmodule Appsignal.Diagnose.Validation do
       {:error, :invalid} ->
         %{push_api_key: "invalid"}
 
+      {:error, status_code} when is_number(status_code) ->
+        %{push_api_key: "Failed to validate: status #{status_code}"}
+
       {:error, reason} ->
-        %{push_api_key: "error: #{inspect(reason)}"}
+        %{push_api_key: "Failed to validate: #{inspect(reason)}"}
     end
   end
 end
