@@ -2,7 +2,7 @@
 
 set -e
 
-if [[ $ELIXIR_VERSION == "master" ]]; then
+if [[ $ELIXIR_VERSION == "main" ]]; then
   kiex install $ELIXIR_VERSION
 fi
 
