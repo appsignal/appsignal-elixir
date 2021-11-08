@@ -3,9 +3,17 @@ defmodule Appsignal.Utils.PushApiKeyValidator do
   alias Appsignal.Transmitter
 
   def validate(config) do
-    url = "#{config[:endpoint]}/1/auth?api_key=#{config[:push_api_key]}"
+    params =
+      URI.encode_query(%{
+        "api_key" => config[:push_api_key],
+        "name" => config[:name],
+        "environment" => config[:env],
+        "hostname" => config[:hostname]
+      })
 
-    case Transmitter.request(:get, url) do
+    url = "#{config[:endpoint]}/1/auth?#{params}"
+
+    case Transmitter.request(:post, url) do
       {:ok, 200, _, _} -> :ok
       {:ok, 401, _, _} -> {:error, :invalid}
       {:ok, status_code, _, _} -> {:error, status_code}
