@@ -1,4 +1,7 @@
 defmodule Appsignal.Utils.MapFilter do
+  # TO-DO: Move this module to the Phoenix package, affter
+  # `Appsignal.Span.set_sample_data/3` is removed.
+
   @moduledoc false
   require Logger
 

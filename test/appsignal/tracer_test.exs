@@ -250,6 +250,91 @@ defmodule Appsignal.TracerTest do
     end
   end
 
+  describe ".set_environment/1" do
+    setup :create_root_span
+
+    test "sets the environment sample data through the Nif",
+         %{span: %Span{reference: span_reference}} do
+      Tracer.set_environment(%{param: "value"})
+      assert [{^span_reference, "environment", _}] = Test.Nif.get!(:set_span_sample_data)
+    end
+  end
+
+  describe ".set_environment/1, when there is no root span" do
+    test "does not set the environment sample data through the Nif" do
+      Tracer.set_environment(%{param: "value"})
+      assert Test.Nif.get(:set_span_sample_data) == :error
+    end
+  end
+
+  describe ".set_params/1" do
+    setup :create_root_span
+
+    test "sets the params sample data through the Nif",
+         %{span: %Span{reference: span_reference}} do
+      Tracer.set_params(%{param: "value"})
+      assert [{^span_reference, "params", _}] = Test.Nif.get!(:set_span_sample_data)
+    end
+  end
+
+  describe ".set_params/1, when there is no root span" do
+    test "does not set the params sample data through the Nif" do
+      Tracer.set_params(%{param: "value"})
+      assert Test.Nif.get(:set_span_sample_data) == :error
+    end
+  end
+
+  describe ".set_session_data/1" do
+    setup :create_root_span
+
+    test "sets the session sample data through the Nif",
+         %{span: %Span{reference: span_reference}} do
+      Tracer.set_session_data(%{param: "value"})
+      assert [{^span_reference, "session_data", _}] = Test.Nif.get!(:set_span_sample_data)
+    end
+  end
+
+  describe ".set_session_data/1, when there is no root span" do
+    test "does not set the session sample data through the Nif" do
+      Tracer.set_session_data(%{param: "value"})
+      assert Test.Nif.get(:set_span_sample_data) == :error
+    end
+  end
+
+  describe ".set_custom_data/1" do
+    setup :create_root_span
+
+    test "sets the custom sample data through the Nif",
+         %{span: %Span{reference: span_reference}} do
+      Tracer.set_custom_data(%{param: "value"})
+      assert [{^span_reference, "custom_data", _}] = Test.Nif.get!(:set_span_sample_data)
+    end
+  end
+
+  describe ".set_custom_data/1, when there is no root span" do
+    test "does not set the custom sample data through the Nif" do
+      Tracer.set_custom_data(%{param: "value"})
+      assert Test.Nif.get(:set_span_sample_data) == :error
+    end
+  end
+
+  describe ".set_tags/1" do
+    setup :create_root_span
+
+    test "sets the custom sample data through the Nif",
+         %{span: %Span{reference: span_reference}} do
+      Tracer.set_tags(%{param: "value"})
+      assert [{^span_reference, "tags", _}] = Test.Nif.get!(:set_span_sample_data)
+    end
+  end
+
+  describe ".set_tags/1, when there is no root span" do
+    test "does not set the custom sample data through the Nif" do
+      Tracer.set_tags(%{param: "value"})
+      assert Test.Nif.get(:set_span_sample_data) == :error
+    end
+  end
+
   describe "close_span/1, when passing a nil" do
     test "returns nil" do
       assert Tracer.close_span(nil) == nil

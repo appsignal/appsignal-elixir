@@ -35,6 +35,11 @@ defmodule Appsignal.Test.Nif do
     Nif.set_span_namespace(reference, namespace)
   end
 
+  def set_span_sample_data(reference, key, data) do
+    add(:set_span_sample_data, {reference, key, data})
+    Nif.set_span_sample_data(reference, key, data)
+  end
+
   def add_span_error(reference, name, message, stacktrace) do
     add(:add_span_error, {reference, name, message, stacktrace})
     Nif.add_span_error(reference, name, message, stacktrace)

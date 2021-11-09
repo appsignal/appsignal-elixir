@@ -138,6 +138,86 @@ defmodule Appsignal.Tracer do
 
   defp root(_), do: nil
 
+  @spec set_tags(map()) :: nil
+  @doc """
+  Sets tags for the root span. Previously set tags are overriden.
+
+  ## Example
+      Appsignal.Tracer.set_tags(%{"id" => 123})
+
+  """
+  def set_tags(value) when is_map(value) do
+    Span.do_set_sample_data(root_span(), "tags", value)
+    nil
+  end
+
+  def set_tags(_value), do: nil
+
+  @spec set_params(map()) :: nil
+  @doc """
+  Sets request parameters for the root span. Previously set request
+  parameters are overriden.
+
+  ## Example
+      Appsignal.Tracer.set_params(%{"id" => 123})
+
+  """
+  def set_params(value) when is_map(value) do
+    Span.do_set_sample_data(root_span(), "params", value)
+    nil
+  end
+
+  def set_params(_value), do: nil
+
+  @spec set_environment(map()) :: nil
+  @doc """
+  Sets the request environment data for the root span. This usually
+  includes the request headers. Previously set request environment
+  data is overriden.
+
+  ## Example
+      Appsignal.Tracer.set_environment(%{"req_headers.x-request-id" => "a1b2c3"})
+
+  """
+  def set_environment(value) when is_map(value) do
+    Span.do_set_sample_data(root_span(), "environment", value)
+    nil
+  end
+
+  def set_environment(_value), do: nil
+
+  @spec set_session_data(map()) :: nil
+  @doc """
+  Sets session data for the root span. Previously set session data
+  is overriden.
+
+  ## Example
+      Appsignal.Tracer.set_session_data(%{"admin" => false})
+
+  """
+  def set_session_data(value) when is_map(value) do
+    Span.do_set_sample_data(root_span(), "session_data", value)
+    nil
+  end
+
+  def set_session_data(_value), do: nil
+
+  @spec set_custom_data(map()) :: nil
+  @doc """
+  Sets custom data for the root span. Previously set custom data
+  is overriden.
+
+  ## Example
+      Appsignal.Tracer.set_custom_data(%{"locale" => "en_GB"})
+
+  """
+  def set_custom_data(value) when is_map(value) do
+    Span.do_set_sample_data(root_span(), "custom_data", value)
+    nil
+  end
+
+  def set_custom_data(_value), do: nil
+
   @spec close_span(Span.t() | nil) :: :ok | nil
   @doc """
   Closes a span and deregisters it.

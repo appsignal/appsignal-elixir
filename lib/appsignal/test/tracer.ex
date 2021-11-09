@@ -25,6 +25,21 @@ defmodule Appsignal.Test.Tracer do
     Tracer.create_span(namespace, parent, options)
   end
 
+  def set_environment(value) do
+    add(:set_environment, {value})
+    Tracer.set_environment(value)
+  end
+
+  def set_params(value) do
+    add(:set_params, {value})
+    Tracer.set_params(value)
+  end
+
+  def set_session_data(value) do
+    add(:set_session_data, {value})
+    Tracer.set_session_data(value)
+  end
+
   def close_span(span) do
     add(:close_span, {span})
     Tracer.close_span(span)

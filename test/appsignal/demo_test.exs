@@ -58,7 +58,7 @@ defmodule Appsignal.DemoTest do
     end
 
     test "sets the span's sample data" do
-      assert_sample_data("environment", %{
+      assert_environment(%{
         "method" => "GET",
         "request_path" => "/"
       })
@@ -99,7 +99,7 @@ defmodule Appsignal.DemoTest do
     end
 
     test "sets the span's sample data" do
-      assert_sample_data("environment", %{
+      assert_environment(%{
         "method" => "GET",
         "request_path" => "/"
       })
@@ -108,14 +108,6 @@ defmodule Appsignal.DemoTest do
     test "closes all spans" do
       assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
     end
-  end
-
-  defp assert_sample_data(asserted_key, asserted_data) do
-    {:ok, sample_data} = Test.Span.get(:set_sample_data)
-
-    assert Enum.any?(sample_data, fn {%Span{}, key, data} ->
-             key == asserted_key and data == asserted_data
-           end)
   end
 
   defp attributes(asserted_key) do
@@ -132,5 +124,13 @@ defmodule Appsignal.DemoTest do
     Enum.any?(attributes, fn {%Span{}, key, data} ->
       key == asserted_key and data == asserted_data
     end)
+  end
+
+  defp assert_environment(asserted_data) do
+    {:ok, environment} = Test.Tracer.get(:set_environment)
+
+    assert Enum.any?(environment, fn {data} ->
+             data == asserted_data
+           end)
   end
 end

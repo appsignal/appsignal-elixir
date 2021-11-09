@@ -28,9 +28,9 @@ defmodule Appsignal.Instrumentation do
   When passing a function that takes an argument, the function is called with
   the created span to allow adding extra information.
 
-      def call(params) do
+      def call do
         Appsignal.instrument("foo.bar", fn span ->
-          Appsignal.Span.set_sample_data(span, "params", params)
+          Appsignal.Span.set_attribute(span, "expected_sleep", 1000)
           :timer.sleep(1000)
         end)
       end

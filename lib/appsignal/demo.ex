@@ -10,13 +10,15 @@ defmodule Appsignal.Demo do
   require Appsignal.Utils
 
   @span Appsignal.Utils.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
+  @tracer Appsignal.Utils.compile_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
 
   def send_performance_sample do
     instrument("DemoController#hello", "call.phoenix", fn span ->
       span
       |> @span.set_namespace("http_request")
       |> @span.set_attribute("demo_sample", true)
-      |> @span.set_sample_data("environment", %{"method" => "GET", "request_path" => "/"})
+
+      @tracer.set_environment(%{"method" => "GET", "request_path" => "/"})
 
       instrument("call.phoenix_endpoint", fn ->
         :timer.sleep(100)
@@ -44,8 +46,9 @@ defmodule Appsignal.Demo do
         span
         |> @span.set_namespace("http_request")
         |> @span.set_attribute("demo_sample", true)
-        |> @span.set_sample_data("environment", %{"method" => "GET", "request_path" => "/"})
         |> @span.add_error(kind, reason, __STACKTRACE__)
+
+        @tracer.set_environment(%{"method" => "GET", "request_path" => "/"})
       end)
   end
 end

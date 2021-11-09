@@ -1,4 +1,4 @@
-defmodule AppsignalSpanTest do
+defmodule Appsignal.SpanTest do
   use ExUnit.Case
   alias Appsignal.{Span, Test}
 
@@ -421,11 +421,19 @@ defmodule AppsignalSpanTest do
     test "returns the span", %{span: span, return: return} do
       assert return == span
     end
+
+    test "sets the sample data through the Nif", %{span: %Span{reference: reference}} do
+      assert [{^reference, "key", _}] = Test.Nif.get!(:set_span_sample_data)
+    end
   end
 
   describe ".set_sample_data/3, when passing a nil-span" do
     test "returns nil" do
       assert Span.set_sample_data(nil, "key", %{param: "value"}) == nil
+    end
+
+    test "does not set the sample data through the Nif" do
+      assert Test.Nif.get(:set_span_sample_data) == :error
     end
   end
 

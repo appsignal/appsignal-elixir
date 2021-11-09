@@ -181,27 +181,42 @@ defmodule Appsignal.Span do
 
   def set_sql(_span, _body), do: nil
 
+  @deprecated """
+  Use the `set_tags/1`, `set_params/1`, `set_headers/1`, `set_session_data/1`
+  or `set_custom_data/1` methods on `Appsignal.Tracer` instead.
+  """
   @spec set_sample_data(t() | nil, String.t(), map()) :: t() | nil
   @doc """
-  Sets sample data for an `Appsignal.Span`.
+  Sets sample data for an `Appsignal.Span`. Previously set
+  sample data with the same key is overriden. Sample data can only
+  be set on a root span.
+
+  **This method is deprecated.** You should instead use the
+  `set_tags/1`, `set_params/1`, `set_headers/1`, `set_session_data/1`
+  or `set_custom_data/1` methods on `Appsignal.Tracer`.
 
   ## Example
       Appsignal.Tracer.root_span()
       |> Appsignal.Span.set_sample_data("environment", %{"method" => "GET"})
 
   """
-  def set_sample_data(%Span{reference: reference} = span, key, value)
+  def set_sample_data(%Span{reference: _reference} = span, key, value)
       when is_binary(key) and is_map(value) do
-    data =
-      value
-      |> Appsignal.Utils.MapFilter.filter()
-      |> Appsignal.Utils.DataEncoder.encode()
-
-    :ok = Nif.set_span_sample_data(reference, key, data)
-    span
+    do_set_sample_data(span, key, Appsignal.Utils.MapFilter.filter(value))
   end
 
   def set_sample_data(_span, _key, _value), do: nil
+
+  @doc false
+  def do_set_sample_data(%Span{reference: reference} = span, key, value)
+      when is_binary(key) and is_map(value) do
+    data = Appsignal.Utils.DataEncoder.encode(value)
+
+    :ok = @nif.set_span_sample_data(reference, key, data)
+    span
+  end
+
+  def do_set_sample_data(_span, _key, _value), do: nil
 
   @spec add_error(t() | nil, Exception.kind(), any(), Exception.stacktrace()) :: t() | nil
   @doc """

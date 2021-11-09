@@ -17,7 +17,7 @@ defmodule Appsignal.Utils.MapFilterTest do
   end
 
   describe "filter/1, with a keeplist" do
-    test "returns the map as-is, and leaves filtering to the agent" do
+    test "filters out the values for keys not present in the keeplist" do
       Application.put_env(:phoenix, :filter_parameters, {:keep, [:name]})
       assert %{id: "[FILTERED]", name: "David"} = MapFilter.filter(%{id: 4, name: "David"})
       Application.delete_env(:phoenix, :filter_parameters)
