@@ -85,7 +85,7 @@ defmodule Appsignal do
 
   @doc false
   def add_default_probes do
-    Appsignal.Probes.register(:erlang, &Appsignal.Probes.ErlangProbe.call/0)
+    Appsignal.Probes.register(:erlang, &Appsignal.Probes.ErlangProbe.call/1)
   end
 
   @doc """
