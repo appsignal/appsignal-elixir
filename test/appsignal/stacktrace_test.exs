@@ -9,20 +9,29 @@ defmodule Appsignal.StacktraceTest do
     catch
       :error, _ ->
         %{
-          stack: Stacktrace.get(),
-          system_stacktrace: System.stacktrace()
+          stack: Stacktrace.get()
         }
-    end
-
-    test "returns the stacktrace", %{
-      stack: stack,
-      system_stacktrace: system_stacktrace
-    } do
-      assert stack == system_stacktrace
     end
 
     test "does not return an empty list", %{stack: stack} do
       assert length(stack) > 0
+    end
+
+    test "returns a stacktrace containing the error", %{
+      stack: stack
+    } do
+      [{Appsignal.StacktraceTest, _, _, location} | _] = stack
+
+      expected_location = [
+        file: 'test/appsignal/stacktrace_test.exs',
+        line: 8
+      ]
+
+      assert Enum.all?(expected_location, &Enum.member?(location, &1))
+
+      # On some versions, `error_info` may not be present
+      all_location = expected_location ++ [error_info: %{module: Exception}]
+      assert Enum.all?(location, &Enum.member?(all_location, &1))
     end
   end
 
