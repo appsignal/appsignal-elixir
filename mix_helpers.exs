@@ -704,7 +704,7 @@ defmodule Mix.Appsignal.Helper do
   end
 
   if System.otp_release() >= "23" do
-    defp tls_options, do: [versions: [:"tlsv1.3", :"tlsv1.2"]]
+    defp tls_options, do: [versions: :ssl.versions()[:supported]]
   else
     defp tls_options do
       [
