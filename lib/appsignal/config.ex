@@ -54,13 +54,11 @@ defmodule Appsignal.Config do
       |> Map.merge(sources[:file])
       |> Map.merge(sources[:env])
 
-    # Config is valid when we have a push api key
     config =
       config
       |> merge_filter_data_keys(Application.get_env(:phoenix, :filter_parameters, []))
       |> merge_filter_data_keys(config[:filter_parameters])
       |> merge_filter_data_keys(config[:filter_session_data])
-      |> Map.put(:valid, !empty?(config[:push_api_key]))
 
     if !empty?(config[:working_dir_path]) do
       Logger.warn(fn ->
@@ -72,7 +70,8 @@ defmodule Appsignal.Config do
 
     Application.put_env(:appsignal, :config, config)
 
-    case config[:valid] do
+    # Config is valid when we have a push api key
+    case !empty?(config[:push_api_key]) do
       true ->
         :ok
 
@@ -111,7 +110,7 @@ defmodule Appsignal.Config do
     |> do_active?
   end
 
-  defp do_active?(%{valid: true, active: true}), do: true
+  defp do_active?(%{active: true}), do: true
   defp do_active?(_), do: false
 
   @doc """

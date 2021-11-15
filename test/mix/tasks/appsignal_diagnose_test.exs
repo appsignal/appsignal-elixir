@@ -34,7 +34,6 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
     setup_with_config(%{
       active: true,
-      valid: true,
       name: "AppSignal test suite app v0",
       env: "test",
       push_api_key: "foo",
