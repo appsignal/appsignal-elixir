@@ -67,6 +67,22 @@ defmodule Appsignal.ConfigTest do
     assert default_configuration() == init_config()
   end
 
+  describe "valid?" do
+    test "when a push api key is set up" do
+      assert with_config(
+               %{push_api_key: "00000000-0000-0000-0000-000000000000"},
+               &Config.valid?/0
+             )
+    end
+
+    test "when no push api key is set up" do
+      refute with_config(
+               %{push_api_key: nil},
+               &Config.valid?/0
+             )
+    end
+  end
+
   describe "configured_as_active?" do
     test "when active" do
       assert with_config(
@@ -84,16 +100,23 @@ defmodule Appsignal.ConfigTest do
   end
 
   describe "active?" do
-    test "when active" do
+    test "when active and valid" do
       assert with_config(
-               %{active: true},
+               %{active: true, push_api_key: "00000000-0000-0000-0000-000000000000"},
                &Config.active?/0
              )
     end
 
-    test "when not active" do
+    test "when active and not valid" do
       refute with_config(
-               %{active: false},
+               %{push_api_key: nil, active: true},
+               &Config.active?/0
+             )
+    end
+
+    test "when not active and not valid" do
+      refute with_config(
+               %{push_api_key: nil, active: false},
                &Config.active?/0
              )
     end

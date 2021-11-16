@@ -70,8 +70,7 @@ defmodule Appsignal.Config do
 
     Application.put_env(:appsignal, :config, config)
 
-    # Config is valid when we have a push api key
-    case !empty?(config[:push_api_key]) do
+    case valid?() do
       true ->
         :ok
 
@@ -100,6 +99,17 @@ defmodule Appsignal.Config do
   end
 
   @doc """
+  Returns true if the configuration is valid. Configuration is considered
+  valid if there's an push API key set.
+  """
+  @spec valid?() :: boolean
+  def valid? do
+    Application.get_env(:appsignal, :config)[:push_api_key]
+    |> empty?
+    |> Kernel.not()
+  end
+
+  @doc """
   Returns true if the configuration is valid and the AppSignal agent is
   configured to start on application launch.
   """
@@ -110,7 +120,7 @@ defmodule Appsignal.Config do
     |> do_active?
   end
 
-  defp do_active?(%{active: true}), do: true
+  defp do_active?(%{active: true}), do: valid?()
   defp do_active?(_), do: false
 
   @doc """
