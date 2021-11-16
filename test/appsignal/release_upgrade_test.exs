@@ -53,8 +53,7 @@ defmodule Appsignal.ReleaseUpgradeTest do
       name: "AppSignal test suite app v1",
       push_api_key: "00000000-0000-0000-0000-000000000000",
       send_params: true,
-      skip_session_data: false,
-      valid: false
+      skip_session_data: false
     }
   end
 end

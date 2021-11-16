@@ -22,9 +22,7 @@ defmodule Appsignal.ConfigTest do
     test "stores sources in Application" do
       init_config()
 
-      default =
-        default_configuration()
-        |> Map.delete(:valid)
+      default = default_configuration()
 
       assert Application.get_env(:appsignal, :config_sources) == %{
                default: default,
@@ -69,17 +67,33 @@ defmodule Appsignal.ConfigTest do
     assert default_configuration() == init_config()
   end
 
+  describe "valid?" do
+    test "when a push api key is set up" do
+      assert with_config(
+               %{push_api_key: "00000000-0000-0000-0000-000000000000"},
+               &Config.valid?/0
+             )
+    end
+
+    test "when no push api key is set up" do
+      refute with_config(
+               %{push_api_key: nil},
+               &Config.valid?/0
+             )
+    end
+  end
+
   describe "configured_as_active?" do
     test "when active" do
       assert with_config(
-               %{active: true, valid: true},
+               %{active: true},
                &Config.configured_as_active?/0
              )
     end
 
     test "when not active" do
       refute with_config(
-               %{active: false, valid: true},
+               %{active: false},
                &Config.configured_as_active?/0
              )
     end
@@ -88,21 +102,21 @@ defmodule Appsignal.ConfigTest do
   describe "active?" do
     test "when active and valid" do
       assert with_config(
-               %{active: true, valid: true},
+               %{active: true, push_api_key: "00000000-0000-0000-0000-000000000000"},
                &Config.active?/0
              )
     end
 
-    test "when active but not valid" do
+    test "when active and not valid" do
       refute with_config(
-               %{active: true, valid: false},
+               %{push_api_key: nil, active: true},
                &Config.active?/0
              )
     end
 
     test "when not active and not valid" do
       refute with_config(
-               %{active: false, valid: true},
+               %{push_api_key: nil, active: false},
                &Config.active?/0
              )
     end
@@ -973,7 +987,6 @@ defmodule Appsignal.ConfigTest do
       send_params: true,
       skip_session_data: false,
       files_world_accessible: true,
-      valid: false,
       log: "file",
       request_headers: ~w(
         accept accept-charset accept-encoding accept-language cache-control
@@ -988,7 +1001,6 @@ defmodule Appsignal.ConfigTest do
   defp valid_configuration do
     default_configuration()
     |> Map.put(:active, true)
-    |> Map.put(:valid, true)
     |> Map.put(:push_api_key, "00000000-0000-0000-0000-000000000000")
   end
 
