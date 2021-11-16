@@ -231,25 +231,10 @@ defmodule Appsignal.ConfigTest do
                with_config(%{filter_session_data: ~w(accept connection)}, &init_config/0)
     end
 
-    test "filter_data_keys" do
-      assert %{filter_data_keys: ~w(password secret)} =
-               with_config(%{filter_data_keys: ~w(password secret)}, &init_config/0)
-    end
-
-    test "filter_data_keys loaded from the filter_parameters configuration option" do
-      assert %{filter_data_keys: ~w(password secret)} =
-               with_config(%{filter_parameters: ~w(password secret)}, &init_config/0)
-    end
-
-    test "filter_data_keys loaded from the filter_session_data configuration option" do
-      assert %{filter_data_keys: ~w(password secret)} =
-               with_config(%{filter_session_data: ~w(password secret)}, &init_config/0)
-    end
-
-    test "filter_data_keys loaded from Phoenix' filter_parameters configuration option" do
+    test "filter_parameters loaded from Phoenix' filter_parameters configuration option" do
       Application.put_env(:phoenix, :filter_parameters, ~w(token))
 
-      assert %{filter_data_keys: ~w(token)} = init_config()
+      assert %{filter_parameters: ~w(token)} = init_config()
 
       Application.delete_env(:phoenix, :filter_parameters)
     end
@@ -257,16 +242,16 @@ defmodule Appsignal.ConfigTest do
     test "ignores Phoenix' filter_parameters :keep-lists" do
       Application.put_env(:phoenix, :filter_parameters, {:keep, [:token]})
 
-      assert %{filter_data_keys: []} = init_config()
+      assert %{filter_parameters: []} = init_config()
 
       Application.delete_env(:phoenix, :filter_parameters)
     end
 
-    test "filter_data_keys merges appsignal and phoenix ignored keys" do
+    test "filter_parameters merges appsignal and phoenix ignored keys" do
       Application.put_env(:phoenix, :filter_parameters, ~w(token))
 
-      assert %{filter_data_keys: ~w(password secret token)} =
-               with_config(%{filter_data_keys: ~w(password secret)}, &init_config/0)
+      assert %{filter_parameters: ~w(password secret token)} =
+               with_config(%{filter_parameters: ~w(password secret)}, &init_config/0)
 
       Application.delete_env(:phoenix, :filter_parameters)
     end
@@ -475,7 +460,6 @@ defmodule Appsignal.ConfigTest do
              ) ==
                default_configuration()
                |> Map.merge(%{
-                 filter_data_keys: ~w(password secret),
                  filter_parameters: ~w(password secret)
                })
     end
@@ -487,16 +471,8 @@ defmodule Appsignal.ConfigTest do
              ) ==
                default_configuration()
                |> Map.merge(%{
-                 filter_data_keys: ~w(accept connection),
                  filter_session_data: ~w(accept connection)
                })
-    end
-
-    test "filter_data_keys" do
-      assert with_env(
-               %{"APPSIGNAL_FILTER_DATA_KEYS" => "password,secret"},
-               &init_config/0
-             ) == default_configuration() |> Map.put(:filter_data_keys, ~w(password secret))
     end
 
     test "frontend_error_catching_path" do
@@ -858,7 +834,8 @@ defmodule Appsignal.ConfigTest do
           files_world_accessible: false,
           revision: "03bd9e",
           transaction_debug_mode: true,
-          filter_data_keys: ["password"]
+          filter_parameters: ["password", "confirm_password"],
+          filter_session_data: ["key1", "key2"]
         },
         fn ->
           without_logger(&write_to_environment/0)
@@ -892,7 +869,8 @@ defmodule Appsignal.ConfigTest do
           assert Nif.env_get("_APPSIGNAL_WORKING_DIRECTORY_PATH") == '/tmp/appsignal'
           assert Nif.env_get("_APPSIGNAL_FILES_WORLD_ACCESSIBLE") == 'false'
           assert Nif.env_get("_APPSIGNAL_TRANSACTION_DEBUG_MODE") == 'true'
-          assert Nif.env_get("_APPSIGNAL_FILTER_DATA_KEYS") == 'password'
+          assert Nif.env_get("_APPSIGNAL_FILTER_PARAMETERS") == 'password,confirm_password'
+          assert Nif.env_get("_APPSIGNAL_FILTER_SESSION_DATA") == 'key1,key2'
           assert Nif.env_get("_APP_REVISION") == '03bd9e'
         end
       )
@@ -980,7 +958,6 @@ defmodule Appsignal.ConfigTest do
       env: :dev,
       filter_parameters: [],
       filter_session_data: [],
-      filter_data_keys: [],
       ignore_actions: [],
       ignore_errors: [],
       ignore_namespaces: [],
