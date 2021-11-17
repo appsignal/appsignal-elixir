@@ -81,6 +81,20 @@ defmodule Appsignal.ConfigTest do
                &Config.valid?/0
              )
     end
+
+    test "when the push api key is an empty string" do
+      refute with_config(
+               %{push_api_key: ""},
+               &Config.valid?/0
+             )
+    end
+
+    test "when the push api key is filled with whitespaces" do
+      refute with_config(
+               %{push_api_key: "    "},
+               &Config.valid?/0
+             )
+    end
   end
 
   describe "configured_as_active?" do
