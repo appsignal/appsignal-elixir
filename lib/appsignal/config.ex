@@ -104,10 +104,14 @@ defmodule Appsignal.Config do
   """
   @spec valid?() :: boolean
   def valid? do
-    Application.get_env(:appsignal, :config)[:push_api_key]
-    |> empty?
-    |> Kernel.not()
+    do_valid?(Application.get_env(:appsignal, :config)[:push_api_key])
   end
+
+  defp do_valid?(push_api_key) when is_binary(push_api_key) do
+    !empty?(String.trim(push_api_key))
+  end
+
+  defp do_valid?(_push_api_key), do: false
 
   @doc """
   Returns true if the configuration is valid and the AppSignal agent is
