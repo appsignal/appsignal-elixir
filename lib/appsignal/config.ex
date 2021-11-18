@@ -16,7 +16,6 @@ defmodule Appsignal.Config do
     env: :dev,
     filter_parameters: [],
     filter_session_data: [],
-    filter_data_keys: [],
     ignore_actions: [],
     ignore_errors: [],
     ignore_namespaces: [],
@@ -56,9 +55,7 @@ defmodule Appsignal.Config do
 
     config =
       config
-      |> merge_filter_data_keys(Application.get_env(:phoenix, :filter_parameters, []))
-      |> merge_filter_data_keys(config[:filter_parameters])
-      |> merge_filter_data_keys(config[:filter_session_data])
+      |> merge_filter_parameters(Application.get_env(:phoenix, :filter_parameters, []))
 
     if !empty?(config[:working_dir_path]) do
       Logger.warn(fn ->
@@ -79,13 +76,13 @@ defmodule Appsignal.Config do
     end
   end
 
-  defp merge_filter_data_keys(map, keys) when is_list(keys) do
-    {_, new_map} = Map.get_and_update(map, :filter_data_keys, &{&1, &1 ++ keys})
+  defp merge_filter_parameters(map, keys) when is_list(keys) do
+    {_, new_map} = Map.get_and_update(map, :filter_parameters, &{&1, &1 ++ keys})
 
     new_map
   end
 
-  defp merge_filter_data_keys(map, _keys) do
+  defp merge_filter_parameters(map, _keys) do
     map
   end
 
@@ -196,7 +193,6 @@ defmodule Appsignal.Config do
     "APPSIGNAL_SEND_PARAMS" => :send_params,
     "APPSIGNAL_FILTER_PARAMETERS" => :filter_parameters,
     "APPSIGNAL_FILTER_SESSION_DATA" => :filter_session_data,
-    "APPSIGNAL_FILTER_DATA_KEYS" => :filter_data_keys,
     "APPSIGNAL_DEBUG" => :debug,
     "APPSIGNAL_DNS_SERVERS" => :dns_servers,
     "APPSIGNAL_LOG" => :log,
@@ -233,7 +229,7 @@ defmodule Appsignal.Config do
   )
   @atom_keys ~w(APPSIGNAL_APP_ENV APPSIGNAL_OTP_APP)
   @string_list_keys ~w(
-    APPSIGNAL_FILTER_PARAMETERS APPSIGNAL_ECTO_REPOS APPSIGNAL_FILTER_DATA_KEYS
+    APPSIGNAL_FILTER_PARAMETERS APPSIGNAL_ECTO_REPOS
     APPSIGNAL_IGNORE_ACTIONS APPSIGNAL_IGNORE_ERRORS
     APPSIGNAL_IGNORE_NAMESPACES APPSIGNAL_DNS_SERVERS
     APPSIGNAL_FILTER_SESSION_DATA APPSIGNAL_REQUEST_HEADERS
@@ -336,7 +332,8 @@ defmodule Appsignal.Config do
     Nif.env_put("_APPSIGNAL_TRANSACTION_DEBUG_MODE", to_string(config[:transaction_debug_mode]))
     Nif.env_put("_APPSIGNAL_WORKING_DIR_PATH", to_string(config[:working_dir_path]))
     Nif.env_put("_APPSIGNAL_WORKING_DIRECTORY_PATH", to_string(config[:working_directory_path]))
-    Nif.env_put("_APPSIGNAL_FILTER_DATA_KEYS", config[:filter_data_keys] |> Enum.join(","))
+    Nif.env_put("_APPSIGNAL_FILTER_PARAMETERS", config[:filter_parameters] |> Enum.join(","))
+    Nif.env_put("_APPSIGNAL_FILTER_SESSION_DATA", config[:filter_session_data] |> Enum.join(","))
 
     Nif.env_put(
       "_APPSIGNAL_FILES_WORLD_ACCESSIBLE",
