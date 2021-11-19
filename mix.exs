@@ -116,6 +116,12 @@ defmodule Appsignal.Mixfile do
         _ -> []
       end
 
+    telemetry_dependency =
+      case Version.compare("#{System.otp_release()}.0.0", "21.0.0") do
+        :lt -> [{:telemetry, "~> 0.4"}]
+        _ -> [{:telemetry, "~> 0.4 or ~> 1.0"}]
+      end
+
     dd = [
       {:benchee, "~> 1.0", only: :bench},
       {:hackney, "~> 1.6"},
@@ -127,8 +133,7 @@ defmodule Appsignal.Mixfile do
       {:ex_doc, "~> 0.12", only: :dev, runtime: false},
       {:credo, "~> 1.5.6", only: [:test, :dev], runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
-      {:telemetry, "~> 0.4", optional: true}
-    ] ++ mime_dependency
+    ] ++ mime_dependency ++ telemetry_dependency
     IO.inspect dd
     dd
   end
