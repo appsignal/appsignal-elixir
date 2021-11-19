@@ -27,14 +27,16 @@ defmodule Appsignal.Ecto do
   `otp_app` and `repo`.
   """
   def attach(otp_app, repo) do
-    event = telemetry_prefix(otp_app, repo) ++ [:query]
+    if Code.ensure_loaded?(:telemetry) do
+      event = telemetry_prefix(otp_app, repo) ++ [:query]
 
-    case :telemetry.attach({__MODULE__, event}, event, &handle_event/4, :ok) do
-      :ok ->
-        Appsignal.Logger.debug("Appsignal.Ecto attached to #{inspect(event)}")
+      case :telemetry.attach({__MODULE__, event}, event, &handle_event/4, :ok) do
+        :ok ->
+          Appsignal.Logger.debug("Appsignal.Ecto attached to #{inspect(event)}")
 
-      {:error, _} = error ->
-        Logger.warn("Appsignal.Ecto not attached to #{inspect(event)}: #{inspect(error)}")
+        {:error, _} = error ->
+          Logger.warn("Appsignal.Ecto not attached to #{inspect(event)}: #{inspect(error)}")
+      end
     end
   end
 
