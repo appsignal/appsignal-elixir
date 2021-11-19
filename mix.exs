@@ -117,7 +117,7 @@ defmodule Appsignal.Mixfile do
       end
 
     telemetry_dependency =
-      case Version.compare(System.otp_release(), "21") do
+      case Version.compare("#{System.otp_release()}.0.0", "21.0.0") do
         value when value in [:gt, :eq] -> [{:telemetry, "~> 0.4 or ~> 1.0", optional: true}]
         _ -> []
       end
