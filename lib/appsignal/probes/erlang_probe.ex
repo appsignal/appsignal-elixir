@@ -7,7 +7,7 @@ defmodule Appsignal.Probes.ErlangProbe do
   @inet Appsignal.Utils.compile_env(:appsignal, :inet, :inet)
 
   def call(sample \\ nil) do
-    next_sample = :scheduler.sample()
+    next_sample = sample_schedulers()
 
     io_metrics()
     scheduler_metrics()
@@ -81,7 +81,7 @@ defmodule Appsignal.Probes.ErlangProbe do
   defp scheduler_utilization_metrics(nil, _), do: nil
 
   defp scheduler_utilization_metrics(sample, next_sample) do
-    utilization = :scheduler.utilization(sample, next_sample)
+    utilization = scheduler_utilization(sample, next_sample)
 
     utilization
     |> Enum.map(&Tuple.to_list/1)
@@ -89,6 +89,31 @@ defmodule Appsignal.Probes.ErlangProbe do
     |> Enum.each(fn [_, id, value, _] ->
       set_gauge("erlang_scheduler_utilization", value * 100, %{type: "normal", id: "#{id}"})
     end)
+  end
+
+  if Code.ensure_loaded?(:scheduler) do
+    defp sample_schedulers, do: :scheduler.sample()
+
+    defp scheduler_utilization(sample, next_sample) do
+      :scheduler.utilization(sample, next_sample)
+    end
+  else
+    defp sample_schedulers do
+      scheduler_wall_time = Enum.sort(:erlang.statistics(:scheduler_wall_time))
+      scheduler_count = :erlang.system_info(:schedulers)
+
+      Enum.take(scheduler_wall_time, scheduler_count)
+    end
+
+    defp scheduler_utilization(sample, next_sample) do
+      Enum.map(Enum.zip(sample, next_sample), fn {old, new} ->
+        {id, old_active, old_total} = old
+        {^id, new_active, new_total} = new
+
+        utilization = (new_active - old_active) / (new_total - old_total)
+        {:normal, id, utilization, nil}
+      end)
+    end
   end
 
   defp set_gauge(name, value, tags) do
