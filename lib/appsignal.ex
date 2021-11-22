@@ -85,6 +85,9 @@ defmodule Appsignal do
 
   @doc false
   def add_default_probes do
+    # This is a workaround for https://github.com/erlang/otp/issues/5425.
+    :erlang.system_flag(:scheduler_wall_time, true)
+
     Appsignal.Probes.register(:erlang, &Appsignal.Probes.ErlangProbe.call/1)
   end
 

@@ -7,13 +7,17 @@ defmodule Appsignal.Probes.ErlangProbe do
   @inet Appsignal.Utils.compile_env(:appsignal, :inet, :inet)
 
   def call(sample \\ nil) do
+    next_sample = sample_schedulers()
+
     io_metrics()
     scheduler_metrics()
     process_metrics()
     memory_metrics()
     atom_metrics()
     run_queue_lengths()
-    scheduler_utilization_metrics(sample)
+    scheduler_utilization_metrics(sample, next_sample)
+
+    next_sample
   end
 
   defp io_metrics do
@@ -74,19 +78,42 @@ defmodule Appsignal.Probes.ErlangProbe do
     set_gauge("total_run_queue_lengths", total - cpu, %{type: "io"})
   end
 
-  defp scheduler_utilization_metrics(sample) do
-    unless is_nil(sample) do
-      utilization = :scheduler.utilization(sample)
+  defp scheduler_utilization_metrics(nil, _), do: nil
 
-      utilization
-      |> Enum.map(&Tuple.to_list/1)
-      |> Enum.filter(fn [type | _] -> type == :normal end)
-      |> Enum.each(fn [_, id, value, _] ->
-        set_gauge("erlang_scheduler_utilization", value * 100, %{type: "normal", id: "#{id}"})
-      end)
+  defp scheduler_utilization_metrics(sample, next_sample) do
+    utilization = scheduler_utilization(sample, next_sample)
+
+    utilization
+    |> Enum.map(&Tuple.to_list/1)
+    |> Enum.filter(fn [type | _] -> type == :normal end)
+    |> Enum.each(fn [_, id, value, _] ->
+      set_gauge("erlang_scheduler_utilization", value * 100, %{type: "normal", id: "#{id}"})
+    end)
+  end
+
+  if Code.ensure_loaded?(:scheduler) do
+    defp sample_schedulers, do: :scheduler.sample()
+
+    defp scheduler_utilization(sample, next_sample) do
+      :scheduler.utilization(sample, next_sample)
+    end
+  else
+    defp sample_schedulers do
+      scheduler_wall_time = Enum.sort(:erlang.statistics(:scheduler_wall_time))
+      scheduler_count = :erlang.system_info(:schedulers)
+
+      Enum.take(scheduler_wall_time, scheduler_count)
     end
 
-    :scheduler.sample()
+    defp scheduler_utilization(sample, next_sample) do
+      Enum.map(Enum.zip(sample, next_sample), fn {old, new} ->
+        {id, old_active, old_total} = old
+        {^id, new_active, new_total} = new
+
+        utilization = (new_active - old_active) / (new_total - old_total)
+        {:normal, id, utilization, nil}
+      end)
+    end
   end
 
   defp set_gauge(name, value, tags) do
