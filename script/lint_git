@@ -19,4 +19,13 @@ else
   cache store $cache_key $HOME/bin/lintje
 fi
 
-$HOME/bin/lintje $SEMAPHORE_GIT_COMMIT_RANGE
+# When force-pushing, the commit range may begin at a commit that does not
+# exist. When this happens, check only the commit at the head of the range.
+base_commit="$(echo "$SEMAPHORE_GIT_COMMIT_RANGE" | cut -d '.' -f 1)"
+
+if git cat-file -e "$base_commit"; then
+  $HOME/bin/lintje "$SEMAPHORE_GIT_COMMIT_RANGE"
+else
+  head_commit="$(echo "$SEMAPHORE_GIT_COMMIT_RANGE" | cut -d '.' -f 4)"
+  $HOME/bin/lintje "$head_commit"
+fi
