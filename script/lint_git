@@ -8,6 +8,8 @@ mkdir -p $HOME/bin
 cache_key=v1-lintje-$LINTJE_VERSION
 cache restore $cache_key
 
+env | grep "SEMAPHORE_GIT"
+
 # File exists and is executable
 if [ -x "$HOME/bin/lintje" ]; then
   echo "Restored Lintje $LINTJE_VERSION from cache"
