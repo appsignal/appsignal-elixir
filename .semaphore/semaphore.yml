@@ -117,6 +117,10 @@ blocks:
             - ERLANG_VERSION=21.3 ELIXIR_VERSION=1.9.4 . bin/setup
             - mix compile
             - mix test --no-compile
+        - name: Elixir 1.9.4, OTP 20
+          commands:
+            - ERLANG_VERSION=20.3 ELIXIR_VERSION=1.9.4 . bin/setup
+            - mix test
       env_vars:
         - name: MIX_ENV
           value: test
