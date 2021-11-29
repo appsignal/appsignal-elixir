@@ -962,29 +962,29 @@ defmodule Appsignal.ConfigTest do
   defp default_configuration do
     %{
       active: false,
+      ca_file_path: Path.join(:code.priv_dir(:appsignal), "cacert.pem"),
       debug: false,
+      diagnose_endpoint: "https://appsignal.com/diag",
       dns_servers: [],
       enable_host_metrics: true,
       enable_minutely_probes: true,
       enable_statsd: false,
       endpoint: "https://push.appsignal.com",
-      diagnose_endpoint: "https://appsignal.com/diag",
       env: :dev,
+      files_world_accessible: true,
       filter_parameters: [],
       filter_session_data: [],
       ignore_actions: [],
       ignore_errors: [],
       ignore_namespaces: [],
-      send_params: true,
-      skip_session_data: false,
-      files_world_accessible: true,
       log: "file",
       request_headers: ~w(
         accept accept-charset accept-encoding accept-language cache-control
         connection content-length path-info range request-method request-uri
         server-name server-port server-protocol
       ),
-      ca_file_path: Path.join(:code.priv_dir(:appsignal), "cacert.pem"),
+      send_params: true,
+      skip_session_data: false,
       transaction_debug_mode: false
     }
   end

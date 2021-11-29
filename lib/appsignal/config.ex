@@ -7,28 +7,28 @@ defmodule Appsignal.Config do
   @default_config %{
     active: false,
     debug: false,
+    diagnose_endpoint: "https://appsignal.com/diag",
     dns_servers: [],
     enable_host_metrics: true,
     enable_minutely_probes: true,
     enable_statsd: false,
     endpoint: "https://push.appsignal.com",
-    diagnose_endpoint: "https://appsignal.com/diag",
     env: :dev,
+    files_world_accessible: true,
     filter_parameters: [],
     filter_session_data: [],
     ignore_actions: [],
     ignore_errors: [],
     ignore_namespaces: [],
-    send_params: true,
-    skip_session_data: false,
-    transaction_debug_mode: false,
-    files_world_accessible: true,
     log: "file",
     request_headers: ~w(
       accept accept-charset accept-encoding accept-language cache-control
       connection content-length path-info range request-method request-uri
       server-name server-port server-protocol
-    )
+    ),
+    send_params: true,
+    skip_session_data: false,
+    transaction_debug_mode: false
   }
 
   @doc """
@@ -181,37 +181,37 @@ defmodule Appsignal.Config do
 
   @env_to_key_mapping %{
     "APPSIGNAL_ACTIVE" => :active,
-    "APPSIGNAL_PUSH_API_KEY" => :push_api_key,
-    "APPSIGNAL_OTP_APP" => :otp_app,
-    "APPSIGNAL_APP_NAME" => :name,
     "APPSIGNAL_APP_ENV" => :env,
+    "APPSIGNAL_APP_NAME" => :name,
     "APPSIGNAL_CA_FILE_PATH" => :ca_file_path,
-    "APPSIGNAL_ECTO_REPOS" => :ecto_repos,
-    "APPSIGNAL_PUSH_API_ENDPOINT" => :endpoint,
-    "APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH" => :frontend_error_catching_path,
-    "APPSIGNAL_HOSTNAME" => :hostname,
-    "APPSIGNAL_SEND_PARAMS" => :send_params,
-    "APPSIGNAL_FILTER_PARAMETERS" => :filter_parameters,
-    "APPSIGNAL_FILTER_SESSION_DATA" => :filter_session_data,
     "APPSIGNAL_DEBUG" => :debug,
+    "APPSIGNAL_DIAGNOSE_ENDPOINT" => :diagnose_endpoint,
     "APPSIGNAL_DNS_SERVERS" => :dns_servers,
-    "APPSIGNAL_LOG" => :log,
-    "APPSIGNAL_LOG_PATH" => :log_path,
-    "APPSIGNAL_IGNORE_ACTIONS" => :ignore_actions,
-    "APPSIGNAL_IGNORE_ERRORS" => :ignore_errors,
-    "APPSIGNAL_IGNORE_NAMESPACES" => :ignore_namespaces,
-    "APPSIGNAL_HTTP_PROXY" => :http_proxy,
-    "APPSIGNAL_RUNNING_IN_CONTAINER" => :running_in_container,
-    "APPSIGNAL_WORKING_DIR_PATH" => :working_dir_path,
-    "APPSIGNAL_WORKING_DIRECTORY_PATH" => :working_directory_path,
+    "APPSIGNAL_ECTO_REPOS" => :ecto_repos,
     "APPSIGNAL_ENABLE_HOST_METRICS" => :enable_host_metrics,
     "APPSIGNAL_ENABLE_MINUTELY_PROBES" => :enable_minutely_probes,
     "APPSIGNAL_ENABLE_STATSD" => :enable_statsd,
+    "APPSIGNAL_FILES_WORLD_ACCESSIBLE" => :files_world_accessible,
+    "APPSIGNAL_FILTER_PARAMETERS" => :filter_parameters,
+    "APPSIGNAL_FILTER_SESSION_DATA" => :filter_session_data,
+    "APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH" => :frontend_error_catching_path,
+    "APPSIGNAL_HOSTNAME" => :hostname,
+    "APPSIGNAL_HTTP_PROXY" => :http_proxy,
+    "APPSIGNAL_IGNORE_ACTIONS" => :ignore_actions,
+    "APPSIGNAL_IGNORE_ERRORS" => :ignore_errors,
+    "APPSIGNAL_IGNORE_NAMESPACES" => :ignore_namespaces,
+    "APPSIGNAL_LOG" => :log,
+    "APPSIGNAL_LOG_PATH" => :log_path,
+    "APPSIGNAL_OTP_APP" => :otp_app,
+    "APPSIGNAL_PUSH_API_ENDPOINT" => :endpoint,
+    "APPSIGNAL_PUSH_API_KEY" => :push_api_key,
+    "APPSIGNAL_REQUEST_HEADERS" => :request_headers,
+    "APPSIGNAL_RUNNING_IN_CONTAINER" => :running_in_container,
+    "APPSIGNAL_SEND_PARAMS" => :send_params,
     "APPSIGNAL_SKIP_SESSION_DATA" => :skip_session_data,
     "APPSIGNAL_TRANSACTION_DEBUG_MODE" => :transaction_debug_mode,
-    "APPSIGNAL_FILES_WORLD_ACCESSIBLE" => :files_world_accessible,
-    "APPSIGNAL_REQUEST_HEADERS" => :request_headers,
-    "APPSIGNAL_DIAGNOSE_ENDPOINT" => :diagnose_endpoint,
+    "APPSIGNAL_WORKING_DIRECTORY_PATH" => :working_directory_path,
+    "APPSIGNAL_WORKING_DIR_PATH" => :working_dir_path,
     "APP_REVISION" => :revision
   }
 
@@ -306,8 +306,8 @@ defmodule Appsignal.Config do
 
     Nif.env_put("_APPSIGNAL_ACTIVE", to_string(config[:active]))
     Nif.env_put("_APPSIGNAL_AGENT_PATH", List.to_string(:code.priv_dir(:appsignal)))
-    Nif.env_put("_APPSIGNAL_APP_PATH", List.to_string(:code.priv_dir(:appsignal)))
     Nif.env_put("_APPSIGNAL_APP_NAME", to_string(config[:name]))
+    Nif.env_put("_APPSIGNAL_APP_PATH", List.to_string(:code.priv_dir(:appsignal)))
     Nif.env_put("_APPSIGNAL_CA_FILE_PATH", to_string(config[:ca_file_path]))
     Nif.env_put("_APPSIGNAL_DEBUG_LOGGING", to_string(config[:debug]))
     Nif.env_put("_APPSIGNAL_DNS_SERVERS", config[:dns_servers] |> Enum.join(","))
@@ -320,6 +320,14 @@ defmodule Appsignal.Config do
     Nif.env_put("_APPSIGNAL_IGNORE_NAMESPACES", config[:ignore_namespaces] |> Enum.join(","))
 
     Nif.env_put(
+      "_APPSIGNAL_FILES_WORLD_ACCESSIBLE",
+      to_string(config[:files_world_accessible])
+    )
+
+    Nif.env_put("_APPSIGNAL_FILTER_PARAMETERS", config[:filter_parameters] |> Enum.join(","))
+    Nif.env_put("_APPSIGNAL_FILTER_SESSION_DATA", config[:filter_session_data] |> Enum.join(","))
+
+    Nif.env_put(
       "_APPSIGNAL_LANGUAGE_INTEGRATION_VERSION",
       "elixir-" <> @language_integration_version
     )
@@ -330,16 +338,8 @@ defmodule Appsignal.Config do
     Nif.env_put("_APPSIGNAL_PUSH_API_KEY", config[:push_api_key] || "")
     Nif.env_put("_APPSIGNAL_RUNNING_IN_CONTAINER", to_string(config[:running_in_container]))
     Nif.env_put("_APPSIGNAL_TRANSACTION_DEBUG_MODE", to_string(config[:transaction_debug_mode]))
-    Nif.env_put("_APPSIGNAL_WORKING_DIR_PATH", to_string(config[:working_dir_path]))
     Nif.env_put("_APPSIGNAL_WORKING_DIRECTORY_PATH", to_string(config[:working_directory_path]))
-    Nif.env_put("_APPSIGNAL_FILTER_PARAMETERS", config[:filter_parameters] |> Enum.join(","))
-    Nif.env_put("_APPSIGNAL_FILTER_SESSION_DATA", config[:filter_session_data] |> Enum.join(","))
-
-    Nif.env_put(
-      "_APPSIGNAL_FILES_WORLD_ACCESSIBLE",
-      to_string(config[:files_world_accessible])
-    )
-
+    Nif.env_put("_APPSIGNAL_WORKING_DIR_PATH", to_string(config[:working_dir_path]))
     Nif.env_put("_APP_REVISION", to_string(config[:revision]))
   end
 
