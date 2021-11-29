@@ -26,6 +26,7 @@ defmodule Appsignal.Config do
       connection content-length path-info range request-method request-uri
       server-name server-port server-protocol
     ),
+    send_environment_metadata: true,
     send_params: true,
     skip_session_data: false,
     transaction_debug_mode: false
@@ -207,6 +208,7 @@ defmodule Appsignal.Config do
     "APPSIGNAL_PUSH_API_KEY" => :push_api_key,
     "APPSIGNAL_REQUEST_HEADERS" => :request_headers,
     "APPSIGNAL_RUNNING_IN_CONTAINER" => :running_in_container,
+    "APPSIGNAL_SEND_ENVIRONMENT_METADATA" => :send_environment_metadata,
     "APPSIGNAL_SEND_PARAMS" => :send_params,
     "APPSIGNAL_SKIP_SESSION_DATA" => :skip_session_data,
     "APPSIGNAL_TRANSACTION_DEBUG_MODE" => :transaction_debug_mode,
@@ -225,7 +227,7 @@ defmodule Appsignal.Config do
     APPSIGNAL_ENABLE_ALLOCATION_TRACKING APPSIGNAL_ENABLE_GC_INSTRUMENTATION APPSIGNAL_RUNNING_IN_CONTAINER
     APPSIGNAL_ENABLE_HOST_METRICS APPSIGNAL_SKIP_SESSION_DATA APPSIGNAL_TRANSACTION_DEBUG_MODE
     APPSIGNAL_FILES_WORLD_ACCESSIBLE APPSIGNAL_SEND_PARAMS APPSIGNAL_ENABLE_MINUTELY_PROBES
-    APPSIGNAL_ENABLE_STATSD
+    APPSIGNAL_ENABLE_STATSD APPSIGNAL_SEND_ENVIRONMENT_METADATA
   )
   @atom_keys ~w(APPSIGNAL_APP_ENV APPSIGNAL_OTP_APP)
   @string_list_keys ~w(
@@ -336,6 +338,12 @@ defmodule Appsignal.Config do
     Nif.env_put("_APPSIGNAL_LOG_FILE_PATH", to_string(log_file_path()))
     Nif.env_put("_APPSIGNAL_PUSH_API_ENDPOINT", config[:endpoint] || "")
     Nif.env_put("_APPSIGNAL_PUSH_API_KEY", config[:push_api_key] || "")
+
+    Nif.env_put(
+      "_APPSIGNAL_SEND_ENVIRONMENT_METADATA",
+      to_string(config[:send_environment_metadata])
+    )
+
     Nif.env_put("_APPSIGNAL_RUNNING_IN_CONTAINER", to_string(config[:running_in_container]))
     Nif.env_put("_APPSIGNAL_TRANSACTION_DEBUG_MODE", to_string(config[:transaction_debug_mode]))
     Nif.env_put("_APPSIGNAL_WORKING_DIRECTORY_PATH", to_string(config[:working_directory_path]))

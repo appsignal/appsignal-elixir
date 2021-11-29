@@ -368,6 +368,11 @@ defmodule Appsignal.ConfigTest do
                with_config(%{working_directory_path: "/tmp/appsignal"}, &init_config/0)
     end
 
+    test "send_environment_metadata" do
+      assert %{send_environment_metadata: false} =
+               with_config(%{send_environment_metadata: false}, &init_config/0)
+    end
+
     test "request_headers" do
       assert %{request_headers: ~w(accept accept-charset)} =
                with_config(%{request_headers: ~w(accept accept-charset)}, &init_config/0)
@@ -630,6 +635,13 @@ defmodule Appsignal.ConfigTest do
              ) == default_configuration() |> Map.put(:working_directory_path, "/tmp/appsignal")
     end
 
+    test "send_environment_metadata" do
+      assert with_env(
+               %{"APPSIGNAL_SEND_ENVIRONMENT_METADATA" => "false"},
+               &init_config/0
+             ) == default_configuration() |> Map.put(:send_environment_metadata, false)
+    end
+
     test "request_headers" do
       assert with_env(
                %{"APPSIGNAL_REQUEST_HEADERS" => "accept,accept-charset"},
@@ -885,6 +897,7 @@ defmodule Appsignal.ConfigTest do
           assert Nif.env_get("_APPSIGNAL_TRANSACTION_DEBUG_MODE") == 'true'
           assert Nif.env_get("_APPSIGNAL_FILTER_PARAMETERS") == 'password,confirm_password'
           assert Nif.env_get("_APPSIGNAL_FILTER_SESSION_DATA") == 'key1,key2'
+          assert Nif.env_get("_APPSIGNAL_SEND_ENVIRONMENT_METADATA") == 'true'
           assert Nif.env_get("_APP_REVISION") == '03bd9e'
         end
       )
@@ -983,6 +996,7 @@ defmodule Appsignal.ConfigTest do
         connection content-length path-info range request-method request-uri
         server-name server-port server-protocol
       ),
+      send_environment_metadata: true,
       send_params: true,
       skip_session_data: false,
       transaction_debug_mode: false
