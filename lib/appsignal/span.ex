@@ -190,18 +190,23 @@ defmodule Appsignal.Span do
       |> Appsignal.Span.set_sample_data("environment", %{"method" => "GET"})
 
   """
-  def set_sample_data(%Span{reference: reference} = span, key, value)
-      when is_binary(key) and is_map(value) do
-    data =
-      value
-      |> Appsignal.Utils.MapFilter.filter()
-      |> Appsignal.Utils.DataEncoder.encode()
+  def set_sample_data(span, "params", value) do
+    do_set_sample_data(span, "params", Appsignal.Utils.MapFilter.filter(value))
+  end
+
+  def set_sample_data(span, key, value) do
+    do_set_sample_data(span, key, value)
+  end
+
+  defp do_set_sample_data(%Span{reference: reference} = span, key, value)
+       when is_binary(key) and is_map(value) do
+    data = Appsignal.Utils.DataEncoder.encode(value)
 
     :ok = Nif.set_span_sample_data(reference, key, data)
     span
   end
 
-  def set_sample_data(_span, _key, _value), do: nil
+  defp do_set_sample_data(_span, _key, _value), do: nil
 
   @spec add_error(t() | nil, Exception.kind(), any(), Exception.stacktrace()) :: t() | nil
   @doc """
