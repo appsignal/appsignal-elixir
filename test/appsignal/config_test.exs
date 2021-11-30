@@ -314,6 +314,10 @@ defmodule Appsignal.ConfigTest do
       assert %{log: "stdout"} = with_config(%{log: "stdout"}, &init_config/0)
     end
 
+    test "log_level" do
+      assert %{log_level: "warning"} = with_config(%{log_level: "warning"}, &init_config/0)
+    end
+
     test "log_path" do
       log_path = File.cwd!()
 
@@ -552,6 +556,13 @@ defmodule Appsignal.ConfigTest do
                %{"APPSIGNAL_LOG" => "stdout"},
                &init_config/0
              ) == default_configuration() |> Map.put(:log, "stdout")
+    end
+
+    test "log_level" do
+      assert with_env(
+               %{"APPSIGNAL_LOG_LEVEL" => "debug"},
+               &init_config/0
+             ) == default_configuration() |> Map.put(:log_level, "debug")
     end
 
     test "log_path" do
@@ -852,6 +863,7 @@ defmodule Appsignal.ConfigTest do
           ignore_errors: ~w(VerySpecificError AnotherError),
           ignore_namespaces: ~w(admin private_namespace),
           log: "stdout",
+          log_level: "info",
           log_path: "/tmp",
           name: "AppSignal test suite app",
           running_in_container: false,
@@ -887,6 +899,7 @@ defmodule Appsignal.ConfigTest do
                    'elixir-' ++ String.to_charlist(Mix.Project.config()[:version])
 
           assert Nif.env_get("_APPSIGNAL_LOG") == 'stdout'
+          assert Nif.env_get("_APPSIGNAL_LOG_LEVEL") == 'info'
           assert Nif.env_get("_APPSIGNAL_LOG_FILE_PATH") == '/tmp/appsignal.log'
           assert Nif.env_get("_APPSIGNAL_PUSH_API_ENDPOINT") == 'https://push.staging.lol'
           assert Nif.env_get("_APPSIGNAL_PUSH_API_KEY") == '00000000-0000-0000-0000-000000000000'
@@ -991,6 +1004,7 @@ defmodule Appsignal.ConfigTest do
       ignore_errors: [],
       ignore_namespaces: [],
       log: "file",
+      log_level: "info",
       request_headers: ~w(
         accept accept-charset accept-encoding accept-language cache-control
         connection content-length path-info range request-method request-uri
