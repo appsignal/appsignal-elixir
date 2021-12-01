@@ -29,7 +29,7 @@ defmodule Appsignal.Ecto do
   def attach(otp_app, repo) do
     event = telemetry_prefix(otp_app, repo) ++ [:query]
 
-    case :telemetry.attach({__MODULE__, event}, event, &handle_event/4, :ok) do
+    case :telemetry.attach({__MODULE__, event}, event, &__MODULE__.handle_event/4, :ok) do
       :ok ->
         Appsignal.Logger.debug("Appsignal.Ecto attached to #{inspect(event)}")
 
