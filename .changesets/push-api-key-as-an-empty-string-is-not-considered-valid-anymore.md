@@ -1,5 +1,6 @@
 ---
 bump: "patch"
+type: "fix"
 ---
 
 When the Push API key config option value is an empty string,
