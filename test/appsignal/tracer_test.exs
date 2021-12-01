@@ -304,7 +304,7 @@ defmodule Appsignal.TracerTest do
     end
   end
 
-  describe "delete/1, with no registed spans" do
+  describe "delete/1, with no registered spans" do
     setup do
       [return: Tracer.delete(self())]
     end

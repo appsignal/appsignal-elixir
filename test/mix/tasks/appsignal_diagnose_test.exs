@@ -682,7 +682,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       assert String.contains?(output, "    Working directory permissions: -")
     end
 
-    test "missings tests are not added to report", %{fake_report: fake_report} do
+    test "missing tests are not added to report", %{fake_report: fake_report} do
       run()
 
       assert received_report(fake_report)[:agent] == %{

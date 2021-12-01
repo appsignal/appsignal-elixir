@@ -604,7 +604,7 @@
 * Force the agent to run in diagnostics mode even if the app's config doesn't
   have AppSignal marked as active. (#132 and #160)
 * Remove duplicate config file linking output in installer (#159)
-* Upon install deactive test env if available rather than activate any other
+* Upon install deactivate test env if available rather than activate any other
   env (#159)
 * Print missing APPSIGNAL_APP_ENV env var in installation instructions. (#161)
 
@@ -684,7 +684,7 @@
 * Registry.register/1 returns nil if Appsignal is not started (#70)
 * Appsignal.Transaction.set_error/4 handles unformatted stacktraces (#72)
 * Fix missing paren warnings in Elixir 1.4 (#59)
-* Add suport to refs and pids inside payloads (#57)
+* Add support to refs and pids inside payloads (#57)
 * Add centos/redhat support for agent installation (#48)
 
 ## 0.9.2
