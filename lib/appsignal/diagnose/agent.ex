@@ -1,6 +1,9 @@
 defmodule Appsignal.Diagnose.Agent do
   @moduledoc false
-  @nif Application.get_env(:appsignal, :appsignal_nif, Appsignal.Nif)
+
+  require Appsignal.Utils
+
+  @nif Appsignal.Utils.compile_env(:appsignal, :appsignal_nif, Appsignal.Nif)
 
   def report do
     if @nif.loaded?() do
@@ -29,9 +32,9 @@ defmodule Appsignal.Diagnose.Agent do
     if report["error"] do
       IO.puts("  Error: #{report["error"]}")
     else
-      Enum.each(report_definition(), fn {component, definition} ->
+      Enum.each(report_definition(), fn definition ->
         IO.puts("  #{definition[:label]}")
-        print_component(report[component] || %{}, definition[:tests])
+        print_component(report[definition[:key]] || %{}, definition[:tests])
       end)
     end
 
@@ -45,8 +48,11 @@ defmodule Appsignal.Diagnose.Agent do
   end
 
   defp print_category(report, tests) do
-    Enum.each(tests, fn {test, definition} ->
-      print_test(report[test] || %{}, definition)
+    Enum.each(tests, fn test ->
+      print_test(
+        report[test[:key]] || %{},
+        test
+      )
     end)
   end
 
@@ -78,56 +84,99 @@ defmodule Appsignal.Diagnose.Agent do
   end
 
   defp report_definition do
-    %{
-      "extension" => %{
+    [
+      %{
+        :key => "extension",
         :label => "Extension tests",
-        :tests => %{
-          "config" => %{
-            "valid" => %{
-              :label => "Configuration",
-              :values => %{true: "valid", false: "invalid"}
-            }
+        :tests => [
+          {
+            "config",
+            [
+              %{
+                :key => "valid",
+                :label => "Configuration",
+                :values => %{true: "valid", false: "invalid"}
+              }
+            ]
           }
-        }
+        ]
       },
-      "agent" => %{
+      %{
+        :key => "agent",
         :label => "Agent tests",
-        :tests => %{
-          "boot" => %{
-            "started" => %{
-              :label => "Started",
-              :values => %{true: "started", false: "not started"}
-            }
+        :tests => [
+          {
+            "boot",
+            [
+              %{
+                :key => "started",
+                :label => "Started",
+                :values => %{true: "started", false: "not started"}
+              }
+            ]
           },
-          "host" => %{
-            "uid" => %{:label => "Process user id"},
-            "gid" => %{:label => "Process user group id"}
+          {
+            "host",
+            [
+              %{
+                :key => "uid",
+                :label => "Process user id"
+              },
+              %{
+                :key => "gid",
+                :label => "Process user group id"
+              }
+            ]
           },
-          "config" => %{
-            "valid" => %{
-              :label => "Configuration",
-              :values => %{true: "valid", false: "invalid"}
-            }
+          {
+            "config",
+            [
+              %{
+                :key => "valid",
+                :label => "Configuration",
+                :values => %{true: "valid", false: "invalid"}
+              }
+            ]
           },
-          "logger" => %{
-            "started" => %{
-              :label => "Logger",
-              :values => %{true: "started", false: "not started"}
-            }
+          {
+            "logger",
+            [
+              %{
+                :key => "started",
+                :label => "Logger",
+                :values => %{true: "started", false: "not started"}
+              }
+            ]
           },
-          "working_directory_stat" => %{
-            "uid" => %{:label => "Working directory user id"},
-            "gid" => %{:label => "Working directory user group id"},
-            "mode" => %{:label => "Working directory permissions"}
+          {
+            "working_directory_stat",
+            [
+              %{
+                :key => "uid",
+                :label => "Working directory user id"
+              },
+              %{
+                :key => "gid",
+                :label => "Working directory user group id"
+              },
+              %{
+                :key => "mode",
+                :label => "Working directory permissions"
+              }
+            ]
           },
-          "lock_path" => %{
-            "created" => %{
-              :label => "Lock path",
-              :values => %{true: "writable", false: "not writable"}
-            }
+          {
+            "lock_path",
+            [
+              %{
+                :key => "created",
+                :label => "Lock path",
+                :values => %{true: "writable", false: "not writable"}
+              }
+            ]
           }
-        }
+        ]
       }
-    }
+    ]
   end
 end

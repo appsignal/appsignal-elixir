@@ -1,6 +1,8 @@
 defmodule Appsignal.Instrumentation do
-  @tracer Application.get_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
-  @span Application.get_env(:appsignal, :appsignal_span, Appsignal.Span)
+  require Appsignal.Utils
+
+  @tracer Appsignal.Utils.compile_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
+  @span Appsignal.Utils.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
 
   @spec instrument(function()) :: any()
   @doc false
@@ -123,12 +125,6 @@ defmodule Appsignal.Instrumentation do
     |> @span.close()
   end
 
-  defp call_with_optional_argument(fun, argument) do
-    case fun
-         |> :erlang.fun_info()
-         |> Keyword.get(:arity) do
-      0 -> fun.()
-      _ -> fun.(argument)
-    end
-  end
+  defp call_with_optional_argument(fun, _argument) when is_function(fun, 0), do: fun.()
+  defp call_with_optional_argument(fun, argument) when is_function(fun, 1), do: fun.(argument)
 end

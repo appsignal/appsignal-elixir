@@ -21,9 +21,7 @@ defmodule Appsignal.Nif do
         arch = :erlang.system_info(:system_architecture)
 
         IO.warn(
-          "Error loading NIF (Is your operating system (#{arch}) supported? Please check http://docs.appsignal.com/support/operating-systems.html):\n#{
-            reason
-          }"
+          "Error loading NIF (Is your operating system (#{arch}) supported? Please check http://docs.appsignal.com/support/operating-systems.html):\n#{reason}"
         )
 
         :ok
@@ -134,10 +132,6 @@ defmodule Appsignal.Nif do
 
   def data_map_new do
     _data_map_new()
-  end
-
-  def data_filtered_map_new do
-    _data_filtered_map_new()
   end
 
   def data_set_string(resource, key, value) do
@@ -373,10 +367,6 @@ defmodule Appsignal.Nif do
   end
 
   def _data_map_new do
-    {:ok, nil}
-  end
-
-  def _data_filtered_map_new do
     {:ok, nil}
   end
 

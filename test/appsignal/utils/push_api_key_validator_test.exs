@@ -13,7 +13,7 @@ defmodule Appsignal.Utils.PushApiKeyValidatorTest do
     setup %{bypass: bypass, config: config} do
       Bypass.expect(bypass, fn conn ->
         assert "/1/auth" == conn.request_path
-        assert "GET" == conn.method
+        assert "POST" == conn.method
         Plug.Conn.resp(conn, 200, "")
       end)
 
@@ -29,7 +29,7 @@ defmodule Appsignal.Utils.PushApiKeyValidatorTest do
     setup %{bypass: bypass, config: config} do
       Bypass.expect(bypass, fn conn ->
         assert "/1/auth" == conn.request_path
-        assert "GET" == conn.method
+        assert "POST" == conn.method
         Plug.Conn.resp(conn, 401, "")
       end)
 
@@ -45,7 +45,7 @@ defmodule Appsignal.Utils.PushApiKeyValidatorTest do
     setup %{bypass: bypass, config: config} do
       Bypass.expect(bypass, fn conn ->
         assert "/1/auth" == conn.request_path
-        assert "GET" == conn.method
+        assert "POST" == conn.method
         Plug.Conn.resp(conn, 500, "")
       end)
 

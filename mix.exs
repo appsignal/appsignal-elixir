@@ -12,7 +12,7 @@ defmodule Appsignal.Mixfile do
   use Mix.Project
 
   @source_url "https://github.com/appsignal/appsignal-elixir"
-  @version "2.1.15"
+  @version "2.2.7"
 
   def project do
     [
@@ -30,7 +30,7 @@ defmodule Appsignal.Mixfile do
       docs: [
         main: "readme",
         logo: "logo.png",
-        source_ref: @version,
+        source_ref: "v#{@version}",
         source_url: @source_url,
         extras: ["README.md", "CHANGELOG.md"]
       ],
@@ -71,7 +71,10 @@ defmodule Appsignal.Mixfile do
 
   def application do
     [
-      extra_applications: [:logger],
+      extra_applications: [
+        :logger,
+        :runtime_tools
+      ],
       mod: {Appsignal, []}
     ]
   end
@@ -122,7 +125,7 @@ defmodule Appsignal.Mixfile do
       {:plug_cowboy, "~> 1.0", only: [:test, :test_no_nif]},
       {:bypass, "~> 0.6.0", only: [:test, :test_no_nif]},
       {:ex_doc, "~> 0.12", only: :dev, runtime: false},
-      {:credo, "~> 1.0.0", only: [:test, :dev], runtime: false},
+      {:credo, "~> 1.5.6", only: [:test, :dev], runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
       {:telemetry, "~> 0.4 or ~> 1.0"}
     ] ++ mime_dependency

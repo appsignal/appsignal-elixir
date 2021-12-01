@@ -1,13 +1,28 @@
 {_, _} = Code.eval_file("agent.exs")
 
+defmodule Mix.Appsignal.Utils do
+  defmacro compile_env(app, key, default \\ nil) do
+    if Version.match?(System.version(), ">= 1.10.0") do
+      quote do
+        Application.compile_env(unquote(app), unquote(key), unquote(default))
+      end
+    else
+      quote do
+        Application.get_env(unquote(app), unquote(key), unquote(default))
+      end
+    end
+  end
+end
+
 defmodule Mix.Appsignal.Helper do
   @moduledoc """
   Helper functions for downloading and compiling the AppSignal agent library.
   """
-  @os Application.get_env(:appsignal, :os, :os)
-  @system Application.get_env(:appsignal, :mix_system, System)
 
-  @max_retries 5
+  require Mix.Appsignal.Utils
+
+  @os Mix.Appsignal.Utils.compile_env(:appsignal, :os, :os)
+  @system Mix.Appsignal.Utils.compile_env(:appsignal, :mix_system, System)
 
   @proxy_env_vars [
     "APPSIGNAL_HTTP_PROXY",
@@ -26,14 +41,18 @@ defmodule Mix.Appsignal.Helper do
       {:ok, {arch, report}} ->
         case find_package_source(arch, report) do
           {:ok, {arch_config, %{build: %{source: "remote"}} = report}} ->
-            download_and_compile(arch_config, report)
+            case download_and_compile(arch_config, report) do
+              :ok ->
+                Logger.debug("""
+                AppSignal for Elixir #{Mix.Project.config()[:version]} successfully installed!
+                If you're upgrading from version 1.x, please review our upgrade guide:
 
-            Logger.debug("""
-            AppSignal for Elixir #{Mix.Project.config()[:version]} succesfully installed!
-            If you're upgrading from version 1.x, please review our upgrade guide:
+                https://docs.appsignal.com/elixir/installation/upgrading-from-1.x-to-2.x.html
+                """)
 
-            https://docs.appsignal.com/elixir/installation/upgrading-from-1.x-to-2.x.html
-            """)
+              {:error, {reason, report}} ->
+                abort_installation(reason, report)
+            end
 
           {:ok, report} ->
             # Installation using already downloaded package of the extension
@@ -49,7 +68,7 @@ defmodule Mix.Appsignal.Helper do
   end
 
   @doc """
-  Checks to see if a proxy is defined in any of the accepted OS enviroment
+  Checks to see if a proxy is defined in any of the accepted OS environment
   variables (as per `@proxy_env_vars`).
 
   Returns `nil` if no proxy is defined, or a `{variable_name, proxy_url}` tuple
@@ -116,41 +135,41 @@ defmodule Mix.Appsignal.Helper do
                 compile(report)
 
               {:error, reason} ->
-                abort_installation(reason, report)
+                {:error, {reason, report}}
             end
 
           {:error, {reason, report}} ->
-            abort_installation(reason, report)
+            {:error, {reason, report}}
         end
 
       {:error, {reason, report}} ->
-        abort_installation(reason, report)
+        {:error, {reason, report}}
     end
   end
 
   defp download_package(arch_config, report) do
     version = Appsignal.Agent.version()
+    filename = arch_config[:filename]
+
     File.mkdir_p!(priv_dir())
     clean_up_extension_files()
-    url = arch_config[:download_url]
-    report = merge_report(report, %{download: %{download_url: url}})
 
-    filename = Path.join(tmp_dir(), "appsignal-agent-#{version}.tar.gz")
+    local_filename = Path.join(tmp_dir(), "appsignal-agent-#{version}.tar.gz")
 
-    case File.exists?(filename) do
+    case File.exists?(local_filename) do
       true ->
-        {:ok, {filename, merge_report(report, %{build: %{source: "cached_in_tmp_dir"}})}}
+        {:ok, {local_filename, merge_report(report, %{build: %{source: "cached_in_tmp_dir"}})}}
 
       false ->
-        Mix.shell().info("Downloading agent release from #{url}")
+        Mix.shell().info("Downloading agent release")
         :application.ensure_all_started(:hackney)
 
-        case do_download_file!(url, filename, @max_retries) do
-          :ok ->
-            {:ok, {filename, report}}
+        case do_download_file!(filename, local_filename, Appsignal.Agent.mirrors()) do
+          {:ok, url} ->
+            {:ok, {local_filename, merge_report(report, %{download: %{download_url: url}})}}
 
-          error ->
-            {:error, {error, report}}
+          {error, url} ->
+            {:error, {error, merge_report(report, %{download: %{download_url: url}})}}
         end
     end
   end
@@ -174,26 +193,60 @@ defmodule Mix.Appsignal.Helper do
     end
   end
 
-  defp do_download_file!(url, filename, retries \\ 0)
+  defp do_download_file!(filename, local_filename, mirrors) do
+    Enum.reduce_while(mirrors, {1, []}, fn mirror, {acc, errors} ->
+      version = Appsignal.Agent.version()
+      url = build_download_url(mirror, version, filename)
+      result = do_download_file!(url, local_filename)
 
-  defp do_download_file!(url, filename, 0) do
+      if result == :ok do
+        # Success on download
+        {:halt, {:ok, url}}
+      else
+        if length(mirrors) == acc do
+          # All mirrors failed. Write error message detailing all failures
+          error_messages =
+            Enum.map(Enum.reverse([result | errors]), fn {:error, message} ->
+              message
+            end)
+
+          message = """
+          Could not download archive from any of our mirrors.
+          Please make sure your network allows access to any of these mirrors.
+          Attempted to download the archive from the following urls:
+          #{Enum.join(error_messages, "\n")}
+          """
+
+          {:halt, {String.trim(message), url}}
+        else
+          # Try the next mirror
+          {:cont, {acc + 1, [result | errors]}}
+        end
+      end
+    end)
+  end
+
+  defp do_download_file!(url, local_filename) do
     case :hackney.request(:get, url, [], "", download_options()) do
       {:ok, 200, _, reference} ->
         case :hackney.body(reference) do
-          {:ok, body} -> File.write(filename, body)
+          {:ok, body} -> File.write(local_filename, body)
           {:error, reason} -> {:error, reason}
         end
 
       response ->
-        {:error, response}
+        message = """
+        - URL: #{url}
+        - Error (hackney response):
+        #{inspect(response)}
+        """
+
+        {:error, message}
     end
   end
 
-  defp do_download_file!(url, filename, retries) do
-    case do_download_file!(url, filename) do
-      :ok -> :ok
-      _ -> do_download_file!(url, filename, retries - 1)
-    end
+  defp build_download_url(mirror, version, filename) do
+    Enum.join([mirror, version, filename], "/")
   end
 
   defp download_options do
@@ -201,11 +254,8 @@ defmodule Mix.Appsignal.Helper do
       ssl_options:
         [
           verify: :verify_peer,
-          cacertfile: priv_path("cacert.pem"),
-          depth: 4,
-          ciphers: ciphers(),
-          honor_cipher_order: :undefined
-        ] ++ customize_hostname_check_or_verify_fun()
+          cacertfile: priv_path("cacert.pem")
+        ] ++ tls_options() ++ customize_hostname_check_or_verify_fun()
     ]
 
     case check_proxy() do
@@ -247,7 +297,7 @@ defmodule Mix.Appsignal.Helper do
       #{output}
       """
 
-      abort_installation(message, report)
+      {:error, {message, report}}
     end
   end
 
@@ -475,7 +525,9 @@ defmodule Mix.Appsignal.Helper do
         target: os,
         musl_override: force_musl_build?(),
         linux_arm_override: force_linux_arm_build?(),
-        library_type: "static"
+        library_type: "static",
+        dependencies: %{},
+        flags: %{}
       },
       host: %{
         root_user: root?(),
@@ -497,16 +549,14 @@ defmodule Mix.Appsignal.Helper do
         target: target,
         musl_override: musl_override,
         linux_arm_override: linux_arm_override,
-        library_type: library_type
+        library_type: library_type,
+        dependencies: %{},
+        flags: %{}
       }
     } = report
 
-    %{
-      download: %{
-        download_url: download_url,
-        checksum: checksum
-      }
-    } = report
+    %{download: %{checksum: checksum}} = report
+    download_url = Map.get(report.download, :download_url)
 
     download_report = %{
       download: %{
@@ -653,10 +703,22 @@ defmodule Mix.Appsignal.Helper do
     if System.find_executable("gmake"), do: "gmake", else: "make"
   end
 
-  if System.otp_release() >= "20.3" do
-    defp ciphers, do: :ssl.cipher_suites(:default, :"tlsv1.2")
+  if System.otp_release() >= "23" do
+    defp tls_options, do: [versions: :ssl.versions()[:supported]]
   else
-    defp ciphers, do: :ssl.cipher_suites()
+    defp tls_options do
+      [
+        depth: 4,
+        ciphers: ciphers(),
+        honor_cipher_order: :undefined
+      ]
+    end
+
+    if System.otp_release() >= "20.3" do
+      defp ciphers, do: :ssl.cipher_suites(:default, :"tlsv1.2")
+    else
+      defp ciphers, do: :ssl.cipher_suites()
+    end
   end
 
   if System.otp_release() >= "21" do

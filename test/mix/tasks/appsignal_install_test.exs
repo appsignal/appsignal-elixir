@@ -49,7 +49,7 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
     setup %{bypass: bypass} do
       Bypass.expect(bypass, fn conn ->
         assert "/1/auth" == conn.request_path
-        assert "GET" == conn.method
+        assert "POST" == conn.method
         Plug.Conn.resp(conn, 401, "")
       end)
 
@@ -84,7 +84,7 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
     setup context do
       Bypass.expect(context[:bypass], fn conn ->
         assert "/1/auth" == conn.request_path
-        assert "GET" == conn.method
+        assert "POST" == conn.method
         Plug.Conn.resp(conn, 200, "")
       end)
 

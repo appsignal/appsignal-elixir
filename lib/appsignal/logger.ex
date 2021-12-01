@@ -1,6 +1,8 @@
 defmodule Appsignal.Logger do
   require Logger
-  @logger Application.get_env(:appsignal, :logger, Logger)
+  require Appsignal.Utils
+
+  @logger Appsignal.Utils.compile_env(:appsignal, :logger, Logger)
 
   @spec debug(any()) :: :ok
   @doc """

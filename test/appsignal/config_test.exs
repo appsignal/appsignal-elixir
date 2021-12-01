@@ -1,6 +1,6 @@
 defmodule Appsignal.ConfigTest do
   @moduledoc """
-  Test the configuratoin
+  Test the configuration
   """
 
   use ExUnit.Case
@@ -22,9 +22,7 @@ defmodule Appsignal.ConfigTest do
     test "stores sources in Application" do
       init_config()
 
-      default =
-        default_configuration()
-        |> Map.delete(:valid)
+      default = default_configuration()
 
       assert Application.get_env(:appsignal, :config_sources) == %{
                default: default,
@@ -69,17 +67,47 @@ defmodule Appsignal.ConfigTest do
     assert default_configuration() == init_config()
   end
 
+  describe "valid?" do
+    test "when a push api key is set up" do
+      assert with_config(
+               %{push_api_key: "00000000-0000-0000-0000-000000000000"},
+               &Config.valid?/0
+             )
+    end
+
+    test "when no push api key is set up" do
+      refute with_config(
+               %{push_api_key: nil},
+               &Config.valid?/0
+             )
+    end
+
+    test "when the push api key is an empty string" do
+      refute with_config(
+               %{push_api_key: ""},
+               &Config.valid?/0
+             )
+    end
+
+    test "when the push api key is filled with whitespaces" do
+      refute with_config(
+               %{push_api_key: "    "},
+               &Config.valid?/0
+             )
+    end
+  end
+
   describe "configured_as_active?" do
     test "when active" do
       assert with_config(
-               %{active: true, valid: true},
+               %{active: true},
                &Config.configured_as_active?/0
              )
     end
 
     test "when not active" do
       refute with_config(
-               %{active: false, valid: true},
+               %{active: false},
                &Config.configured_as_active?/0
              )
     end
@@ -88,21 +116,21 @@ defmodule Appsignal.ConfigTest do
   describe "active?" do
     test "when active and valid" do
       assert with_config(
-               %{active: true, valid: true},
+               %{active: true, push_api_key: "00000000-0000-0000-0000-000000000000"},
                &Config.active?/0
              )
     end
 
-    test "when active but not valid" do
+    test "when active and not valid" do
       refute with_config(
-               %{active: true, valid: false},
+               %{push_api_key: nil, active: true},
                &Config.active?/0
              )
     end
 
     test "when not active and not valid" do
       refute with_config(
-               %{active: false, valid: true},
+               %{push_api_key: nil, active: false},
                &Config.active?/0
              )
     end
@@ -194,6 +222,10 @@ defmodule Appsignal.ConfigTest do
                with_config(%{enable_minutely_probes: false}, &init_config/0)
     end
 
+    test "enable_statsd" do
+      assert %{enable_statsd: true} = with_config(%{enable_statsd: true}, &init_config/0)
+    end
+
     test "endpoint" do
       assert %{endpoint: "https://push.staging.lol"} =
                with_config(%{endpoint: "https://push.staging.lol"}, &init_config/0)
@@ -213,25 +245,10 @@ defmodule Appsignal.ConfigTest do
                with_config(%{filter_session_data: ~w(accept connection)}, &init_config/0)
     end
 
-    test "filter_data_keys" do
-      assert %{filter_data_keys: ~w(password secret)} =
-               with_config(%{filter_data_keys: ~w(password secret)}, &init_config/0)
-    end
-
-    test "filter_data_keys loaded from the filter_parameters configuration option" do
-      assert %{filter_data_keys: ~w(password secret)} =
-               with_config(%{filter_parameters: ~w(password secret)}, &init_config/0)
-    end
-
-    test "filter_data_keys loaded from the filter_session_data configuration option" do
-      assert %{filter_data_keys: ~w(password secret)} =
-               with_config(%{filter_session_data: ~w(password secret)}, &init_config/0)
-    end
-
-    test "filter_data_keys loaded from Phoenix' filter_parameters configuration option" do
+    test "filter_parameters loaded from Phoenix' filter_parameters configuration option" do
       Application.put_env(:phoenix, :filter_parameters, ~w(token))
 
-      assert %{filter_data_keys: ~w(token)} = init_config()
+      assert %{filter_parameters: ~w(token)} = init_config()
 
       Application.delete_env(:phoenix, :filter_parameters)
     end
@@ -239,16 +256,16 @@ defmodule Appsignal.ConfigTest do
     test "ignores Phoenix' filter_parameters :keep-lists" do
       Application.put_env(:phoenix, :filter_parameters, {:keep, [:token]})
 
-      assert %{filter_data_keys: []} = init_config()
+      assert %{filter_parameters: []} = init_config()
 
       Application.delete_env(:phoenix, :filter_parameters)
     end
 
-    test "filter_data_keys merges appsignal and phoenix ignored keys" do
+    test "filter_parameters merges appsignal and phoenix ignored keys" do
       Application.put_env(:phoenix, :filter_parameters, ~w(token))
 
-      assert %{filter_data_keys: ~w(password secret token)} =
-               with_config(%{filter_data_keys: ~w(password secret)}, &init_config/0)
+      assert %{filter_parameters: ~w(password secret token)} =
+               with_config(%{filter_parameters: ~w(password secret)}, &init_config/0)
 
       Application.delete_env(:phoenix, :filter_parameters)
     end
@@ -351,6 +368,11 @@ defmodule Appsignal.ConfigTest do
                with_config(%{working_directory_path: "/tmp/appsignal"}, &init_config/0)
     end
 
+    test "send_environment_metadata" do
+      assert %{send_environment_metadata: false} =
+               with_config(%{send_environment_metadata: false}, &init_config/0)
+    end
+
     test "request_headers" do
       assert %{request_headers: ~w(accept accept-charset)} =
                with_config(%{request_headers: ~w(accept accept-charset)}, &init_config/0)
@@ -429,6 +451,13 @@ defmodule Appsignal.ConfigTest do
              ) == default_configuration() |> Map.put(:enable_minutely_probes, false)
     end
 
+    test "enable_statsd" do
+      assert with_env(
+               %{"APPSIGNAL_ENABLE_STATSD" => "true"},
+               &init_config/0
+             ) == default_configuration() |> Map.put(:enable_statsd, true)
+    end
+
     test "endpoint" do
       assert with_env(
                %{"APPSIGNAL_PUSH_API_ENDPOINT" => "https://push.staging.lol"},
@@ -450,7 +479,6 @@ defmodule Appsignal.ConfigTest do
              ) ==
                default_configuration()
                |> Map.merge(%{
-                 filter_data_keys: ~w(password secret),
                  filter_parameters: ~w(password secret)
                })
     end
@@ -462,16 +490,8 @@ defmodule Appsignal.ConfigTest do
              ) ==
                default_configuration()
                |> Map.merge(%{
-                 filter_data_keys: ~w(accept connection),
                  filter_session_data: ~w(accept connection)
                })
-    end
-
-    test "filter_data_keys" do
-      assert with_env(
-               %{"APPSIGNAL_FILTER_DATA_KEYS" => "password,secret"},
-               &init_config/0
-             ) == default_configuration() |> Map.put(:filter_data_keys, ~w(password secret))
     end
 
     test "frontend_error_catching_path" do
@@ -613,6 +633,13 @@ defmodule Appsignal.ConfigTest do
                %{"APPSIGNAL_WORKING_DIRECTORY_PATH" => "/tmp/appsignal"},
                &init_config/0
              ) == default_configuration() |> Map.put(:working_directory_path, "/tmp/appsignal")
+    end
+
+    test "send_environment_metadata" do
+      assert with_env(
+               %{"APPSIGNAL_SEND_ENVIRONMENT_METADATA" => "false"},
+               &init_config/0
+             ) == default_configuration() |> Map.put(:send_environment_metadata, false)
     end
 
     test "request_headers" do
@@ -833,7 +860,8 @@ defmodule Appsignal.ConfigTest do
           files_world_accessible: false,
           revision: "03bd9e",
           transaction_debug_mode: true,
-          filter_data_keys: ["password"]
+          filter_parameters: ["password", "confirm_password"],
+          filter_session_data: ["key1", "key2"]
         },
         fn ->
           without_logger(&write_to_environment/0)
@@ -867,7 +895,9 @@ defmodule Appsignal.ConfigTest do
           assert Nif.env_get("_APPSIGNAL_WORKING_DIRECTORY_PATH") == '/tmp/appsignal'
           assert Nif.env_get("_APPSIGNAL_FILES_WORLD_ACCESSIBLE") == 'false'
           assert Nif.env_get("_APPSIGNAL_TRANSACTION_DEBUG_MODE") == 'true'
-          assert Nif.env_get("_APPSIGNAL_FILTER_DATA_KEYS") == 'password'
+          assert Nif.env_get("_APPSIGNAL_FILTER_PARAMETERS") == 'password,confirm_password'
+          assert Nif.env_get("_APPSIGNAL_FILTER_SESSION_DATA") == 'key1,key2'
+          assert Nif.env_get("_APPSIGNAL_SEND_ENVIRONMENT_METADATA") == 'true'
           assert Nif.env_get("_APP_REVISION") == '03bd9e'
         end
       )
@@ -945,30 +975,30 @@ defmodule Appsignal.ConfigTest do
   defp default_configuration do
     %{
       active: false,
+      ca_file_path: Path.join(:code.priv_dir(:appsignal), "cacert.pem"),
       debug: false,
+      diagnose_endpoint: "https://appsignal.com/diag",
       dns_servers: [],
       enable_host_metrics: true,
       enable_minutely_probes: true,
+      enable_statsd: false,
       endpoint: "https://push.appsignal.com",
-      diagnose_endpoint: "https://appsignal.com/diag",
       env: :dev,
+      files_world_accessible: true,
       filter_parameters: [],
       filter_session_data: [],
-      filter_data_keys: [],
       ignore_actions: [],
       ignore_errors: [],
       ignore_namespaces: [],
-      send_params: true,
-      skip_session_data: false,
-      files_world_accessible: true,
-      valid: false,
       log: "file",
       request_headers: ~w(
         accept accept-charset accept-encoding accept-language cache-control
         connection content-length path-info range request-method request-uri
         server-name server-port server-protocol
       ),
-      ca_file_path: Path.join(:code.priv_dir(:appsignal), "cacert.pem"),
+      send_environment_metadata: true,
+      send_params: true,
+      skip_session_data: false,
       transaction_debug_mode: false
     }
   end
@@ -976,7 +1006,6 @@ defmodule Appsignal.ConfigTest do
   defp valid_configuration do
     default_configuration()
     |> Map.put(:active, true)
-    |> Map.put(:valid, true)
     |> Map.put(:push_api_key, "00000000-0000-0000-0000-000000000000")
   end
 

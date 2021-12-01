@@ -3,8 +3,14 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
   alias Appsignal.Config
   alias Appsignal.Diagnose
 
-  @system Application.get_env(:appsignal, :appsignal_system, Appsignal.System)
-  @report Application.get_env(:appsignal, :appsignal_diagnose_report, Appsignal.Diagnose.Report)
+  require Appsignal.Utils
+
+  @system Appsignal.Utils.compile_env(:appsignal, :appsignal_system, Appsignal.System)
+  @report Appsignal.Utils.compile_env(
+            :appsignal,
+            :appsignal_diagnose_report,
+            Appsignal.Diagnose.Report
+          )
 
   @shortdoc "Starts and tests AppSignal while validating the configuration"
 
@@ -73,7 +79,6 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     path_report = Diagnose.Paths.info()
     report = Map.put(report, :paths, path_report)
     print_paths(path_report)
-    empty_line()
 
     send_report_to_appsignal_if_agreed_upon(config, report, send_report)
   end
@@ -91,9 +96,9 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
   defp print_library_info(library_report) do
     IO.puts("AppSignal library")
     IO.puts("  Language: Elixir")
-    IO.puts("  Package version: #{library_report[:package_version]}")
-    IO.puts("  Agent version: #{library_report[:agent_version]}")
-    IO.puts("  Nif loaded: #{yes_or_no(library_report[:extension_loaded])}")
+    IO.puts("  Package version: #{format_value(library_report[:package_version])}")
+    IO.puts("  Agent version: #{format_value(library_report[:agent_version])}")
+    IO.puts("  Nif loaded: #{format_value(library_report[:extension_loaded])}")
   end
 
   defp fetch_installation_report do
@@ -142,23 +147,23 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     if download_parsing_error && install_parsing_error do
       do_print_parsing_error("download", report)
       do_print_parsing_error("installation", report)
-    end
-
-    if install_parsing_error do
-      do_print_download_report(report)
-      do_print_parsing_error("installation", report)
     else
-      do_print_installation_report(report)
+      if install_parsing_error do
+        do_print_download_report(report)
+        do_print_parsing_error("installation", report)
+      else
+        do_print_installation_report(report)
+      end
     end
   end
 
   defp do_print_parsing_error(key, report) do
     parsing_report = report["#{key}_parsing_error"]
     IO.puts("  Error found while parsing the #{key} report.")
-    IO.puts("  Error: #{format_value(parsing_report["error"])}")
+    IO.puts("  Error: #{inspect(parsing_report["error"])}")
 
     if Map.has_key?(parsing_report, "raw") do
-      IO.puts("  Raw report:\n#{format_value(parsing_report["raw"])}")
+      IO.puts("  Raw report:\n#{inspect(parsing_report["raw"])}")
     end
   end
 
@@ -177,7 +182,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
 
     language_report = installation_report["language"]
     IO.puts("  Language details")
-    IO.puts("    Elixir version: #{language_report["version"]}")
+    IO.puts("    Elixir version: #{format_value(language_report["version"])}")
     IO.puts("    OTP version: #{format_value(language_report["otp_version"])}")
     do_print_download_report(installation_report)
     build_report = installation_report["build"]
@@ -187,9 +192,11 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     IO.puts("    Agent version: #{format_value(build_report["agent_version"])}")
     IO.puts("    Architecture: #{format_value(build_report["architecture"])}")
     IO.puts("    Target: #{format_value(build_report["target"])}")
-    IO.puts("    Musl override: #{format_value(build_report["musl_override"])}")
-    IO.puts("    Linux ARM override: #{format_value(build_report["linux_arm_override"])}")
+    IO.puts("    Musl override: #{build_report["musl_override"]}")
+    IO.puts("    Linux ARM override: #{build_report["linux_arm_override"]}")
     IO.puts("    Library type: #{format_value(build_report["library_type"])}")
+    IO.puts("    Dependencies: #{format_value(build_report["dependencies"])}")
+    IO.puts("    Flags: #{format_value(build_report["flags"])}")
     host_report = installation_report["host"]
     IO.puts("  Host details")
     IO.puts("    Root user: #{format_value(host_report["root_user"])}")
@@ -207,26 +214,26 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     IO.puts("    Download URL: #{format_value(download_report["download_url"])}")
     IO.puts("    Architecture: #{format_value(download_report["architecture"])}")
     IO.puts("    Target: #{format_value(download_report["target"])}")
-    IO.puts("    Musl override: #{format_value(download_report["musl_override"])}")
-    IO.puts("    Linux ARM override: #{format_value(download_report["linux_arm_override"])}")
+    IO.puts("    Musl override: #{download_report["musl_override"]}")
+    IO.puts("    Linux ARM override: #{download_report["linux_arm_override"]}")
     IO.puts("    Library type: #{format_value(download_report["library_type"])}")
     IO.puts("    Checksum: #{format_value(download_report["checksum"])}")
   end
 
   defp print_host_information(host_report) do
     IO.puts("Host information")
-    IO.puts("  Architecture: #{host_report[:architecture]}")
-    IO.puts("  Elixir version: #{host_report[:language_version]}")
-    IO.puts("  OTP version: #{host_report[:otp_version]}")
-    IO.puts("  Operating System: #{host_report[:os]}")
-    root_user = if host_report[:root], do: "yes (not recommended)", else: "no"
-    IO.puts("  root user: #{root_user}")
+    IO.puts("  Architecture: #{format_value(host_report[:architecture])}")
+    IO.puts("  Operating System: #{format_value(host_report[:os])}")
+    IO.puts("  Elixir version: #{format_value(host_report[:language_version])}")
+    IO.puts("  OTP version: #{format_value(host_report[:otp_version])}")
+    root_user = if host_report[:root], do: "true (not recommended)", else: "false"
+    IO.puts("  Root user: #{root_user}")
 
     if host_report[:heroku] do
-      IO.puts("  Heroku: yes")
+      IO.puts("  Heroku: true")
     end
 
-    IO.puts("  Container: #{yes_or_no(host_report[:running_in_container])}")
+    IO.puts("  Running in container: #{format_value(host_report[:running_in_container])}")
   end
 
   defp configure_appsignal do
@@ -241,7 +248,11 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
   defp print_configuration(config) do
     IO.puts("Configuration")
 
-    Enum.each(config[:options], fn {key, _} = option ->
+    # Filter out the diagnose_endpoint config option. Users don't need to see
+    # the config option. It's a private config option.
+    filtered_options = Enum.reject(config[:options], fn {key, _} -> key == :diagnose_endpoint end)
+
+    Enum.each(filtered_options, fn {key, _} = option ->
       config_label = configuration_option_label(option)
       option_sources = config[:sources]
       sources = sources_for_option(key, option_sources)
@@ -301,21 +312,28 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     |> Enum.reject(fn value -> value == nil end)
   end
 
-  defp format_value(value) do
-    inspect(value)
+  defp format_value(value) when is_nil(value), do: "nil"
+  defp format_value(value) when is_boolean(value), do: value
+
+  defp format_value(value) when is_atom(value) do
+    value
+    |> Atom.to_string()
+    |> format_value
   end
+
+  defp format_value(value), do: inspect(value)
 
   defp print_validation(validation_report) do
     IO.puts("Validation")
-    IO.puts("  Push API key: #{validation_report[:push_api_key]}")
+    IO.puts("  Validating Push API key: #{validation_report[:push_api_key]}")
   end
 
   defp print_paths(path_report) do
     IO.puts("Paths")
     labels = Diagnose.Paths.labels()
 
-    Enum.each(path_report, fn {name, path} ->
-      print_path(path, Map.fetch!(labels, name))
+    Enum.each(labels, fn {name, label} ->
+      print_path(Map.fetch!(path_report, name), label)
     end)
   end
 
@@ -324,10 +342,10 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     IO.puts("    Path: #{inspect(path[:path])}")
 
     if path[:exists] do
-      IO.puts("    Writable?: #{yes_or_no(path[:writable])}")
+      IO.puts("    Writable?: #{format_value(path[:writable])}")
       file_uid = path[:ownership][:uid]
       process_uid = @system.uid()
-      IO.write("    Ownership?: #{yes_or_no(file_uid == process_uid)}")
+      IO.write("    Ownership?: #{format_value(file_uid == process_uid)}")
       IO.puts(" (file: #{file_uid}, process: #{process_uid})")
     else
       IO.puts("    Exists?: no")
@@ -339,16 +357,17 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     end
 
     if path[:error], do: IO.puts("    Error: #{path[:error]}")
+    empty_line()
   end
 
   defp send_report_to_appsignal_if_agreed_upon(config, report, send_report) do
-    IO.puts("\nDiagnostics report")
+    IO.puts("Diagnostics report")
     IO.puts("  Do you want to send this diagnostics report to AppSignal?")
 
     IO.puts(
       "  If you share this report you will be given a link to \n" <>
         "  AppSignal.com to validate the report.\n" <>
-        "  You can also contact us at support@appsignal.com\n  with your support token.\n\n"
+        "  You can also contact us at support@appsignal.com\n  with your support token.\n"
     )
 
     answer =
@@ -367,11 +386,11 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
 
     case answer do
       true ->
-        IO.puts("\n  Transmitting diagnostics report")
+        IO.puts("  Transmitting diagnostics report\n")
         send_report_to_appsignal(config, report)
 
       false ->
-        IO.puts("  Not sending diagnostics report to AppSignal.")
+        IO.puts("  Not sending diagnostics information to AppSignal.")
     end
   end
 
@@ -397,9 +416,6 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
   end
 
   defp empty_line, do: IO.puts("")
-
-  defp yes_or_no(true), do: "yes"
-  defp yes_or_no(false), do: "no"
 
   # Ask for a yes or no input from the user
   defp yes_or_no?(prompt) do

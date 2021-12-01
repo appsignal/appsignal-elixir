@@ -17,7 +17,7 @@ defmodule Appsignal.NifTest do
     assert is_reference_or_binary(reference)
   end
 
-  if not (Mix.env() in [:test_no_nif]) do
+  if Mix.env() not in [:test_no_nif] do
     test "the nif is loaded" do
       assert true == Nif.loaded?()
     end

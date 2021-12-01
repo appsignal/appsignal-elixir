@@ -1,5 +1,63 @@
 # AppSignal for Elixir changelog
 
+## 2.2.7
+
+- [f07f9cf9](https://github.com/appsignal/appsignal-elixir/commit/f07f9cf9c1d0d9696ee1a226630238dc75162fd7) patch - Bump agent to 09308fb.
+  
+  - Update sql_lexer dependency with support for reversed operators in queries.
+  - Add debug level logging to custom metrics in transaction_debug_mode.
+  - Add hostname config option to standalone agent.
+
+## 2.2.6
+
+- [acb7295](https://github.com/appsignal/appsignal-elixir/commit/acb7295f1b876659f4ac8535c4c50592c77c336d) patch - Print String values in the diagnose report surrounded by quotes, and booleans as "true" and "false", rather than "yes" and "no". Makes it more clear that it's a value and not a label we print.
+- [e71792f](https://github.com/appsignal/appsignal-elixir/commit/e71792f9377a5ce98d338a63f2b0093a5ccee065) patch - Fix diagnose output rendering an additional empty line for the `appsignal.log` file. It appeared that only 9 lines were printed instead of the 10 expected lines.
+- [422cbd1](https://github.com/appsignal/appsignal-elixir/commit/422cbd128ecfc24ad6891cc39f889f1d1c531602) patch - Render the install report errors in the diagnose CLI output fewer times. A missing download and/or install report could sometimes be displayed up to two times, in total four errors.
+- [f7c0b1e](https://github.com/appsignal/appsignal-elixir/commit/f7c0b1e3f301e8eed72cadecdd9bf892c529173c) patch - Support mix task diagnose arguments. When an app is released with `mix release` CLI arguments cannot normally be passed to the diagnose task. Use the `eval` command pass along the CLI arguments as function arguments.
+  
+  ```
+  mix format
+  # Without arguments
+  bin/your_app eval ':appsignal_tasks.diagnose()'
+  # With arguments
+  bin/your_app eval ':appsignal_tasks.diagnose(["--send-report"])'
+  ```
+- [c51c065](https://github.com/appsignal/appsignal-elixir/commit/c51c065c71e08c4876b94680659b96062b5273b3) patch - Update diagnose output labels to be similar to our other language integrations.
+- [9d3e253](https://github.com/appsignal/appsignal-elixir/commit/9d3e25342cdf11ad8b6fb025209629552f816b1e) patch - Add new config option to enable/disable StatsD server in the AppSignal agent. This new config option is called `enable_statsd` and is set to `false` by default. If set to `true`, the AppSignal agent will start a StatsD server on port 8125 on the host.
+
+## 2.2.5
+
+- [e7d676a9](https://github.com/appsignal/appsignal-elixir/commit/e7d676a9832192f745bb331f2382857226768e36) patch - Update SSL configuration for OTP 23 and newer to fix the Cloudfront mirror download during installation.
+- [7ccf75ce](https://github.com/appsignal/appsignal-elixir/commit/7ccf75cea16b634eca4140ed785508b82baa19b8) patch - Fix install result message to no longer show a success message when an installation failure occurred.
+
+## 2.2.4
+
+- [787684bf](https://github.com/appsignal/appsignal-elixir/commit/787684bf61dfdfca65bbb4bc70706942302dd80e) patch - Installation report improved for download errors. Download errors are more descriptive in the installation result of the diagnose report.
+
+## 2.2.3
+
+- [b89ab7bc](https://github.com/appsignal/appsignal-elixir/commit/b89ab7bc7958319e60c9ee1e7edf5664d8fc8973) patch - Bump agent to 7376537
+  
+  - Support JSON PostgreSQL operator in sql_lexer.
+  - Do not strip comments from SQL queries.
+
+## 2.2.2
+
+- [c6772da3](https://github.com/appsignal/appsignal-elixir/commit/c6772da3dca036c020864303044aa4f265c6b18e) patch - Fix extension installer from cached source in `/tmp` directory. This would cause installation errors of the package if the AppSignal package was reinstalled again on a host that already installed it once.
+
+## 2.2.1
+
+- [a7987f3](https://github.com/appsignal/appsignal-elixir/commit/a7987f31d110893e10255f4593b9137328245f34) patch - Add mirrors to download the agent
+
+## 2.2.0
+
+- [1d7b7a3](https://github.com/appsignal/appsignal-elixir/commit/1d7b7a3f560321a2056126be1ebbb3715ac823b5) minor - Use underscores instead of slashes in spans created from decorators. This will change action naming from `Module.function/1` to `Module.function_1`.
+- [7927a3f](https://github.com/appsignal/appsignal-elixir/commit/7927a3fc6e2f3ce4f1ca150d2dd6123d08e40967) patch - Bump agent to v-0318770.
+  
+  - Improve Dokku platform detection. Do not disable host metrics on
+    Dokku.
+  - Report CPU steal metric.
+
 ## 2.1.15
 
 - [325c985](https://github.com/appsignal/appsignal-elixir/commit/325c98540407fe29d757c0438066ca265ce70502) patch - Add support for telemetry 1.0.0
@@ -546,7 +604,7 @@
 * Force the agent to run in diagnostics mode even if the app's config doesn't
   have AppSignal marked as active. (#132 and #160)
 * Remove duplicate config file linking output in installer (#159)
-* Upon install deactive test env if available rather than activate any other
+* Upon install deactivate test env if available rather than activate any other
   env (#159)
 * Print missing APPSIGNAL_APP_ENV env var in installation instructions. (#161)
 
@@ -626,7 +684,7 @@
 * Registry.register/1 returns nil if Appsignal is not started (#70)
 * Appsignal.Transaction.set_error/4 handles unformatted stacktraces (#72)
 * Fix missing paren warnings in Elixir 1.4 (#59)
-* Add suport to refs and pids inside payloads (#57)
+* Add support to refs and pids inside payloads (#57)
 * Add centos/redhat support for agent installation (#48)
 
 ## 0.9.2

@@ -7,28 +7,29 @@ defmodule Appsignal.Config do
   @default_config %{
     active: false,
     debug: false,
+    diagnose_endpoint: "https://appsignal.com/diag",
     dns_servers: [],
     enable_host_metrics: true,
     enable_minutely_probes: true,
+    enable_statsd: false,
     endpoint: "https://push.appsignal.com",
-    diagnose_endpoint: "https://appsignal.com/diag",
     env: :dev,
+    files_world_accessible: true,
     filter_parameters: [],
     filter_session_data: [],
-    filter_data_keys: [],
     ignore_actions: [],
     ignore_errors: [],
     ignore_namespaces: [],
-    send_params: true,
-    skip_session_data: false,
-    transaction_debug_mode: false,
-    files_world_accessible: true,
     log: "file",
     request_headers: ~w(
       accept accept-charset accept-encoding accept-language cache-control
       connection content-length path-info range request-method request-uri
       server-name server-port server-protocol
-    )
+    ),
+    send_environment_metadata: true,
+    send_params: true,
+    skip_session_data: false,
+    transaction_debug_mode: false
   }
 
   @doc """
@@ -53,13 +54,9 @@ defmodule Appsignal.Config do
       |> Map.merge(sources[:file])
       |> Map.merge(sources[:env])
 
-    # Config is valid when we have a push api key
     config =
       config
-      |> merge_filter_data_keys(Application.get_env(:phoenix, :filter_parameters, []))
-      |> merge_filter_data_keys(config[:filter_parameters])
-      |> merge_filter_data_keys(config[:filter_session_data])
-      |> Map.put(:valid, !empty?(config[:push_api_key]))
+      |> merge_filter_parameters(Application.get_env(:phoenix, :filter_parameters, []))
 
     if !empty?(config[:working_dir_path]) do
       Logger.warn(fn ->
@@ -71,7 +68,7 @@ defmodule Appsignal.Config do
 
     Application.put_env(:appsignal, :config, config)
 
-    case config[:valid] do
+    case valid?() do
       true ->
         :ok
 
@@ -80,13 +77,13 @@ defmodule Appsignal.Config do
     end
   end
 
-  defp merge_filter_data_keys(map, keys) when is_list(keys) do
-    {_, new_map} = Map.get_and_update(map, :filter_data_keys, &{&1, &1 ++ keys})
+  defp merge_filter_parameters(map, keys) when is_list(keys) do
+    {_, new_map} = Map.get_and_update(map, :filter_parameters, &{&1, &1 ++ keys})
 
     new_map
   end
 
-  defp merge_filter_data_keys(map, _keys) do
+  defp merge_filter_parameters(map, _keys) do
     map
   end
 
@@ -100,6 +97,21 @@ defmodule Appsignal.Config do
   end
 
   @doc """
+  Returns true if the configuration is valid. Configuration is considered
+  valid if there's an push API key set.
+  """
+  @spec valid?() :: boolean
+  def valid? do
+    do_valid?(Application.get_env(:appsignal, :config)[:push_api_key])
+  end
+
+  defp do_valid?(push_api_key) when is_binary(push_api_key) do
+    !empty?(String.trim(push_api_key))
+  end
+
+  defp do_valid?(_push_api_key), do: false
+
+  @doc """
   Returns true if the configuration is valid and the AppSignal agent is
   configured to start on application launch.
   """
@@ -110,7 +122,7 @@ defmodule Appsignal.Config do
     |> do_active?
   end
 
-  defp do_active?(%{valid: true, active: true}), do: true
+  defp do_active?(%{active: true}), do: valid?()
   defp do_active?(_), do: false
 
   @doc """
@@ -170,53 +182,56 @@ defmodule Appsignal.Config do
 
   @env_to_key_mapping %{
     "APPSIGNAL_ACTIVE" => :active,
-    "APPSIGNAL_PUSH_API_KEY" => :push_api_key,
-    "APPSIGNAL_OTP_APP" => :otp_app,
-    "APPSIGNAL_APP_NAME" => :name,
     "APPSIGNAL_APP_ENV" => :env,
+    "APPSIGNAL_APP_NAME" => :name,
     "APPSIGNAL_CA_FILE_PATH" => :ca_file_path,
+    "APPSIGNAL_DEBUG" => :debug,
+    "APPSIGNAL_DIAGNOSE_ENDPOINT" => :diagnose_endpoint,
+    "APPSIGNAL_DNS_SERVERS" => :dns_servers,
     "APPSIGNAL_ECTO_REPOS" => :ecto_repos,
-    "APPSIGNAL_PUSH_API_ENDPOINT" => :endpoint,
-    "APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH" => :frontend_error_catching_path,
-    "APPSIGNAL_HOSTNAME" => :hostname,
-    "APPSIGNAL_SEND_PARAMS" => :send_params,
+    "APPSIGNAL_ENABLE_HOST_METRICS" => :enable_host_metrics,
+    "APPSIGNAL_ENABLE_MINUTELY_PROBES" => :enable_minutely_probes,
+    "APPSIGNAL_ENABLE_STATSD" => :enable_statsd,
+    "APPSIGNAL_FILES_WORLD_ACCESSIBLE" => :files_world_accessible,
     "APPSIGNAL_FILTER_PARAMETERS" => :filter_parameters,
     "APPSIGNAL_FILTER_SESSION_DATA" => :filter_session_data,
-    "APPSIGNAL_FILTER_DATA_KEYS" => :filter_data_keys,
-    "APPSIGNAL_DEBUG" => :debug,
-    "APPSIGNAL_DNS_SERVERS" => :dns_servers,
-    "APPSIGNAL_LOG" => :log,
-    "APPSIGNAL_LOG_PATH" => :log_path,
+    "APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH" => :frontend_error_catching_path,
+    "APPSIGNAL_HOSTNAME" => :hostname,
+    "APPSIGNAL_HTTP_PROXY" => :http_proxy,
     "APPSIGNAL_IGNORE_ACTIONS" => :ignore_actions,
     "APPSIGNAL_IGNORE_ERRORS" => :ignore_errors,
     "APPSIGNAL_IGNORE_NAMESPACES" => :ignore_namespaces,
-    "APPSIGNAL_HTTP_PROXY" => :http_proxy,
+    "APPSIGNAL_LOG" => :log,
+    "APPSIGNAL_LOG_PATH" => :log_path,
+    "APPSIGNAL_OTP_APP" => :otp_app,
+    "APPSIGNAL_PUSH_API_ENDPOINT" => :endpoint,
+    "APPSIGNAL_PUSH_API_KEY" => :push_api_key,
+    "APPSIGNAL_REQUEST_HEADERS" => :request_headers,
     "APPSIGNAL_RUNNING_IN_CONTAINER" => :running_in_container,
-    "APPSIGNAL_WORKING_DIR_PATH" => :working_dir_path,
-    "APPSIGNAL_WORKING_DIRECTORY_PATH" => :working_directory_path,
-    "APPSIGNAL_ENABLE_HOST_METRICS" => :enable_host_metrics,
-    "APPSIGNAL_ENABLE_MINUTELY_PROBES" => :enable_minutely_probes,
+    "APPSIGNAL_SEND_ENVIRONMENT_METADATA" => :send_environment_metadata,
+    "APPSIGNAL_SEND_PARAMS" => :send_params,
     "APPSIGNAL_SKIP_SESSION_DATA" => :skip_session_data,
     "APPSIGNAL_TRANSACTION_DEBUG_MODE" => :transaction_debug_mode,
-    "APPSIGNAL_FILES_WORLD_ACCESSIBLE" => :files_world_accessible,
-    "APPSIGNAL_REQUEST_HEADERS" => :request_headers,
+    "APPSIGNAL_WORKING_DIRECTORY_PATH" => :working_directory_path,
+    "APPSIGNAL_WORKING_DIR_PATH" => :working_dir_path,
     "APP_REVISION" => :revision
   }
 
   @string_keys ~w(
     APPSIGNAL_APP_NAME APPSIGNAL_PUSH_API_KEY APPSIGNAL_PUSH_API_ENDPOINT APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH
     APPSIGNAL_HOSTNAME APPSIGNAL_HTTP_PROXY APPSIGNAL_LOG APPSIGNAL_LOG_PATH APPSIGNAL_WORKING_DIR_PATH
-    APPSIGNAL_WORKING_DIRECTORY_PATH APPSIGNAL_CA_FILE_PATH APP_REVISION
+    APPSIGNAL_WORKING_DIRECTORY_PATH APPSIGNAL_CA_FILE_PATH APPSIGNAL_DIAGNOSE_ENDPOINT APP_REVISION
   )
   @bool_keys ~w(
     APPSIGNAL_ACTIVE APPSIGNAL_DEBUG APPSIGNAL_INSTRUMENT_NET_HTTP APPSIGNAL_ENABLE_FRONTEND_ERROR_CATCHING
-    APPSIGNAL_ENABLE_ALLOCATION_TRACKING APPSIGNAL_ENABLE_GC_INSTRUMENTATION APPSIGNAL_RUNNING_IN_CONTAINER
+    APPSIGNAL_ENABLE_GC_INSTRUMENTATION APPSIGNAL_RUNNING_IN_CONTAINER
     APPSIGNAL_ENABLE_HOST_METRICS APPSIGNAL_SKIP_SESSION_DATA APPSIGNAL_TRANSACTION_DEBUG_MODE
     APPSIGNAL_FILES_WORLD_ACCESSIBLE APPSIGNAL_SEND_PARAMS APPSIGNAL_ENABLE_MINUTELY_PROBES
+    APPSIGNAL_ENABLE_STATSD APPSIGNAL_SEND_ENVIRONMENT_METADATA
   )
   @atom_keys ~w(APPSIGNAL_APP_ENV APPSIGNAL_OTP_APP)
   @string_list_keys ~w(
-    APPSIGNAL_FILTER_PARAMETERS APPSIGNAL_ECTO_REPOS APPSIGNAL_FILTER_DATA_KEYS
+    APPSIGNAL_FILTER_PARAMETERS APPSIGNAL_ECTO_REPOS
     APPSIGNAL_IGNORE_ACTIONS APPSIGNAL_IGNORE_ERRORS
     APPSIGNAL_IGNORE_NAMESPACES APPSIGNAL_DNS_SERVERS
     APPSIGNAL_FILTER_SESSION_DATA APPSIGNAL_REQUEST_HEADERS
@@ -293,8 +308,8 @@ defmodule Appsignal.Config do
 
     Nif.env_put("_APPSIGNAL_ACTIVE", to_string(config[:active]))
     Nif.env_put("_APPSIGNAL_AGENT_PATH", List.to_string(:code.priv_dir(:appsignal)))
-    Nif.env_put("_APPSIGNAL_APP_PATH", List.to_string(:code.priv_dir(:appsignal)))
     Nif.env_put("_APPSIGNAL_APP_NAME", to_string(config[:name]))
+    Nif.env_put("_APPSIGNAL_APP_PATH", List.to_string(:code.priv_dir(:appsignal)))
     Nif.env_put("_APPSIGNAL_CA_FILE_PATH", to_string(config[:ca_file_path]))
     Nif.env_put("_APPSIGNAL_DEBUG_LOGGING", to_string(config[:debug]))
     Nif.env_put("_APPSIGNAL_DNS_SERVERS", config[:dns_servers] |> Enum.join(","))
@@ -307,6 +322,14 @@ defmodule Appsignal.Config do
     Nif.env_put("_APPSIGNAL_IGNORE_NAMESPACES", config[:ignore_namespaces] |> Enum.join(","))
 
     Nif.env_put(
+      "_APPSIGNAL_FILES_WORLD_ACCESSIBLE",
+      to_string(config[:files_world_accessible])
+    )
+
+    Nif.env_put("_APPSIGNAL_FILTER_PARAMETERS", config[:filter_parameters] |> Enum.join(","))
+    Nif.env_put("_APPSIGNAL_FILTER_SESSION_DATA", config[:filter_session_data] |> Enum.join(","))
+
+    Nif.env_put(
       "_APPSIGNAL_LANGUAGE_INTEGRATION_VERSION",
       "elixir-" <> @language_integration_version
     )
@@ -315,17 +338,16 @@ defmodule Appsignal.Config do
     Nif.env_put("_APPSIGNAL_LOG_FILE_PATH", to_string(log_file_path()))
     Nif.env_put("_APPSIGNAL_PUSH_API_ENDPOINT", config[:endpoint] || "")
     Nif.env_put("_APPSIGNAL_PUSH_API_KEY", config[:push_api_key] || "")
-    Nif.env_put("_APPSIGNAL_RUNNING_IN_CONTAINER", to_string(config[:running_in_container]))
-    Nif.env_put("_APPSIGNAL_TRANSACTION_DEBUG_MODE", to_string(config[:transaction_debug_mode]))
-    Nif.env_put("_APPSIGNAL_WORKING_DIR_PATH", to_string(config[:working_dir_path]))
-    Nif.env_put("_APPSIGNAL_WORKING_DIRECTORY_PATH", to_string(config[:working_directory_path]))
-    Nif.env_put("_APPSIGNAL_FILTER_DATA_KEYS", config[:filter_data_keys] |> Enum.join(","))
 
     Nif.env_put(
-      "_APPSIGNAL_FILES_WORLD_ACCESSIBLE",
-      to_string(config[:files_world_accessible])
+      "_APPSIGNAL_SEND_ENVIRONMENT_METADATA",
+      to_string(config[:send_environment_metadata])
     )
 
+    Nif.env_put("_APPSIGNAL_RUNNING_IN_CONTAINER", to_string(config[:running_in_container]))
+    Nif.env_put("_APPSIGNAL_TRANSACTION_DEBUG_MODE", to_string(config[:transaction_debug_mode]))
+    Nif.env_put("_APPSIGNAL_WORKING_DIRECTORY_PATH", to_string(config[:working_directory_path]))
+    Nif.env_put("_APPSIGNAL_WORKING_DIR_PATH", to_string(config[:working_dir_path]))
     Nif.env_put("_APP_REVISION", to_string(config[:revision]))
   end
 

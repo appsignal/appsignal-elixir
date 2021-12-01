@@ -4,7 +4,7 @@ set -eu
 
 # Change version number to a release/tag available on the mono repo to update it
 # https://github.com/appsignal/mono/releases
-MONO_VERSION="v0.5.6"
+MONO_VERSION="v0.6.0"
 
 MONO_PATH="$HOME/mono"
 

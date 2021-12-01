@@ -12,11 +12,11 @@ defmodule Appsignal.Diagnose.Paths do
   end
 
   def labels do
-    %{
-      working_dir: "Working directory",
-      log_dir_path: "Log directory",
-      "appsignal.log": "AppSignal log"
-    }
+    [
+      {:working_dir, "Current working directory"},
+      {:log_dir_path, "Log directory"},
+      {:"appsignal.log", "AppSignal log"}
+    ]
   end
 
   defp path_report(path) do
@@ -33,7 +33,7 @@ defmodule Appsignal.Diagnose.Paths do
               r = %{
                 writable: file_writable(access),
                 type: file_type(type),
-                mode: mode,
+                mode: Integer.to_string(mode, 8),
                 ownership: %{uid: uid, gid: gid}
               }
 
@@ -42,7 +42,7 @@ defmodule Appsignal.Diagnose.Paths do
                   :file ->
                     case read_file_content(path, size) do
                       {:ok, content} ->
-                        %{content: String.split(content, "\n")}
+                        %{content: String.split(String.trim_trailing(content), "\n")}
 
                       {:error, reason} ->
                         %{error: reason}

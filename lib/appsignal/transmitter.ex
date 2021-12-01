@@ -20,11 +20,8 @@ defmodule Appsignal.Transmitter do
              ssl_options:
                [
                  verify: :verify_peer,
-                 cacertfile: ca_file_path,
-                 depth: 4,
-                 ciphers: ciphers(),
-                 honor_cipher_order: :undefined
-               ] ++ customize_hostname_check_or_verify_fun()
+                 cacertfile: ca_file_path
+               ] ++ tls_options() ++ customize_hostname_check_or_verify_fun()
            ]}
 
         {:ok, %{access: access}} ->
@@ -41,9 +38,7 @@ defmodule Appsignal.Transmitter do
       {:error, message} ->
         unless ca_file_path == packaged_ca_file_path() do
           Logger.warn(
-            "Ignoring non-existing or unreadable ca_file_path (#{ca_file_path}): #{
-              inspect(message)
-            }"
+            "Ignoring non-existing or unreadable ca_file_path (#{ca_file_path}): #{inspect(message)}"
           )
         end
 
@@ -51,19 +46,22 @@ defmodule Appsignal.Transmitter do
     end
   end
 
-  defp packaged_ca_file_path do
-    Path.join(:code.priv_dir(:appsignal), "cacert.pem")
-  end
+  if System.otp_release() >= "23" do
+    defp tls_options, do: [versions: :ssl.versions()[:supported]]
+  else
+    defp tls_options do
+      [
+        depth: 4,
+        ciphers: ciphers(),
+        honor_cipher_order: :undefined
+      ]
+    end
 
-  cond do
-    System.otp_release() >= "23" ->
-      defp ciphers, do: :ssl.cipher_suites(:default, :"tlsv1.3")
-
-    System.otp_release() >= "20.3" ->
+    if System.otp_release() >= "20.3" do
       defp ciphers, do: :ssl.cipher_suites(:default, :"tlsv1.2")
-
-    true ->
+    else
       defp ciphers, do: :ssl.cipher_suites()
+    end
   end
 
   if System.otp_release() >= "21" do
@@ -86,5 +84,9 @@ defmodule Appsignal.Transmitter do
            end, self()}
       ]
     end
+  end
+
+  defp packaged_ca_file_path do
+    Path.join(:code.priv_dir(:appsignal), "cacert.pem")
   end
 end

@@ -12,19 +12,15 @@ blocks:
           - checkout
       jobs:
         - name: Git Lint (Lintje)
-          env_vars:
-            - name: LINTJE_VERSION
-              value: "0.3.0"
           commands:
-            - script/install_lintje
-            - $HOME/bin/lintje $SEMAPHORE_GIT_COMMIT_RANGE
+            - script/lint_git
         - name: mix compile --warnings-as-errors
           commands:
             - ERLANG_VERSION=24.0 ELIXIR_VERSION=1.10.4 . bin/setup
             - mix compile --warnings-as-errors
         - name: mix format --check-formatted
           commands:
-            - ERLANG_VERSION=24.0 ELIXIR_VERSION=1.10.4 . bin/setup
+            - ERLANG_VERSION=24.0 ELIXIR_VERSION=1.12.3 . bin/setup
             - mix format --check-formatted
         - name: mix credo --strict
           commands:
@@ -37,13 +33,24 @@ blocks:
             - MIX_ENV=dev mix dialyzer --plt
             - cache store dialyzer-plt priv/plts/
             - MIX_ENV=dev mix dialyzer
-        - name: Elixir master, OTP 24
+        - name: Elixir 1.12.2, OTP 24 - Diagnose tests
+          env_vars:
+            - name: LANGUAGE
+              value: elixir
+            - name: MIX_ENV
+              value: dev
           commands:
-            - ERLANG_VERSION=24.0 ELIXIR_VERSION=master . bin/setup
+            - ERLANG_VERSION=24.0 ELIXIR_VERSION=1.12.2 . bin/setup
+            - git submodule init
+            - git submodule update
+            - test/integration/diagnose/bin/test
+        - name: Elixir main, OTP 24
+          commands:
+            - ERLANG_VERSION=24.0 ELIXIR_VERSION=main . bin/setup
             - mix test
-        - name: Elixir master, OTP 24, without the NIF loaded
+        - name: Elixir main, OTP 24, without the NIF loaded
           commands:
-            - ERLANG_VERSION=24.0 ELIXIR_VERSION=master . bin/setup
+            - ERLANG_VERSION=24.0 ELIXIR_VERSION=main . bin/setup
             - MIX_ENV=test_no_nif mix test
         - name: Elixir 1.12.2, OTP 24
           commands:
@@ -92,10 +99,6 @@ blocks:
         - name: Elixir 1.9.4, OTP 21
           commands:
             - ERLANG_VERSION=21.3 ELIXIR_VERSION=1.9.4 . bin/setup
-            - mix test
-        - name: Elixir 1.9.4, OTP 20
-          commands:
-            - ERLANG_VERSION=20.3 ELIXIR_VERSION=1.9.4 . bin/setup
             - mix test
       env_vars:
         - name: MIX_ENV
