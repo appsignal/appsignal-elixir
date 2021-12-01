@@ -1,5 +1,6 @@
 ---
 bump: "patch"
+type: "change"
 ---
 
 Bump agent to v-5b63505
