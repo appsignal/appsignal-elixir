@@ -1,6 +1,6 @@
 defmodule Appsignal.ConfigTest do
   @moduledoc """
-  Test the configuratoin
+  Test the configuration
   """
 
   use ExUnit.Case

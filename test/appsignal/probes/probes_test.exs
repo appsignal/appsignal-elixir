@@ -9,7 +9,7 @@ defmodule Appsignal.Probes.ProbesTest do
       assert :ok == Probes.register(:some_probe, fn -> nil end)
     end
 
-    test "returns an error tupple when probe is not a function" do
+    test "returns an error tuple when probe is not a function" do
       assert {:error, _} = Probes.register(:some_probe, :some_value)
     end
   end
@@ -33,7 +33,7 @@ defmodule Appsignal.Probes.ProbesTest do
       Probes.unregister(:test_probe)
     end
 
-    test "when a probe is registered with the name of a previous probe, it is overriden", %{
+    test "when a probe is registered with the name of a previous probe, it is overridden", %{
       fake_probe: fake_probe
     } do
       Probes.register(:test_probe, &FakeProbe.call/0)
@@ -85,7 +85,7 @@ defmodule Appsignal.Probes.ProbesTest do
       Probes.unregister(:test_probe)
     end
 
-    test "when a probe is overriden, its state is reset", %{
+    test "when a probe is overridden, its state is reset", %{
       fake_probe: fake_probe
     } do
       Probes.register(:test_probe, &FakeProbe.stateful/1, 0)
