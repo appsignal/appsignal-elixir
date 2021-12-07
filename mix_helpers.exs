@@ -44,7 +44,7 @@ defmodule Mix.Appsignal.Helper do
             case download_and_compile(arch_config, report) do
               :ok ->
                 Logger.debug("""
-                AppSignal for Elixir #{Mix.Project.config()[:version]} succesfully installed!
+                AppSignal for Elixir #{Mix.Project.config()[:version]} successfully installed!
                 If you're upgrading from version 1.x, please review our upgrade guide:
 
                 https://docs.appsignal.com/elixir/installation/upgrading-from-1.x-to-2.x.html
@@ -68,7 +68,7 @@ defmodule Mix.Appsignal.Helper do
   end
 
   @doc """
-  Checks to see if a proxy is defined in any of the accepted OS enviroment
+  Checks to see if a proxy is defined in any of the accepted OS environment
   variables (as per `@proxy_env_vars`).
 
   Returns `nil` if no proxy is defined, or a `{variable_name, proxy_url}` tuple
