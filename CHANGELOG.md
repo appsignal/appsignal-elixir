@@ -1,5 +1,57 @@
 # AppSignal for Elixir changelog
 
+## 2.2.8
+
+### Added
+
+- [4a9bcca3](https://github.com/appsignal/appsignal-elixir/commit/4a9bcca39e20370cc59560ba526618f5cb829ea4) patch - Add "log_level" config option. This new option allows you to select the type of messages
+  AppSignal's logger will log and up. The "debug" option will log all "debug", "info", "warning"
+  and "error" log messages. The default value is: "info"
+  
+  The allowed values are:
+  - error
+  - warning
+  - info
+  - debug
+- [10078177](https://github.com/appsignal/appsignal-elixir/commit/1007817782db6c59377eb7c61f24e884b200affb) patch - Add `send_environment_metadata` config option to configure the environment metadata collection. For more information, see our [environment metadata docs](https://docs.appsignal.com/application/environment-metadata.html).
+- [10078177](https://github.com/appsignal/appsignal-elixir/commit/1007817782db6c59377eb7c61f24e884b200affb) patch - Add the Erlang scheduler utilization to the metrics reported by the minutely probes. The metric is reported as a percentage value with the name `erlang_scheduler_utilization`, with the tag `type` set to `"normal"` and the tag `id` set to the ID of the scheduler in the Erlang VM.
+
+### Changed
+
+- [10078177](https://github.com/appsignal/appsignal-elixir/commit/1007817782db6c59377eb7c61f24e884b200affb) patch - Bump agent to v-5b63505
+  
+  - Only filter parameters with the `filter_parameters` config option.
+  - Only filter session data with the `filter_session_data` config option.
+- [10078177](https://github.com/appsignal/appsignal-elixir/commit/1007817782db6c59377eb7c61f24e884b200affb) patch - Remove the `valid` key from the diagnose output. It's not a configuration option that
+  can be configured, but an internal state check if the configuration was considered valid.
+- [10078177](https://github.com/appsignal/appsignal-elixir/commit/1007817782db6c59377eb7c61f24e884b200affb) patch - Print the extension installation dependencies and flags in the diagnose report output.
+- [10078177](https://github.com/appsignal/appsignal-elixir/commit/1007817782db6c59377eb7c61f24e884b200affb) patch - Standardize diagnose validation failure message. Explain the diagnose request failed and why.
+- [f3bb8546](https://github.com/appsignal/appsignal-elixir/commit/f3bb854629c9e075056a68fcfe52072f96752dc0) patch - Bump agent to v-0db01c2
+  
+  - Add `log_level` config option in extension.
+  - Deprecate `debug` and `transaction_debug_mode` option in extension.
+
+### Deprecated
+
+- [4a9bcca3](https://github.com/appsignal/appsignal-elixir/commit/4a9bcca39e20370cc59560ba526618f5cb829ea4) patch - Deprecate "debug" and "transaction_debug_mode" config options in favor of the new "log_level"
+  config option.
+
+### Removed
+
+- [f40ead99](https://github.com/appsignal/appsignal-elixir/commit/f40ead993de3dc80a825ef821eb481f2eb3ecd66) patch - Remove the unused allocation tracking config option.
+
+### Fixed
+
+- [10078177](https://github.com/appsignal/appsignal-elixir/commit/1007817782db6c59377eb7c61f24e884b200affb) patch - Fix a bug where setting the `:phoenix, :filter_parameters` configuration key to an allow-list of the form `{:keep, [keys]}` would apply this filtering to all sample data maps. The filtering is now only applied to the params sample data map.
+- [10078177](https://github.com/appsignal/appsignal-elixir/commit/1007817782db6c59377eb7c61f24e884b200affb) patch - Fix the Push API key validator request query params encoding.
+- [10078177](https://github.com/appsignal/appsignal-elixir/commit/1007817782db6c59377eb7c61f24e884b200affb) patch - When the Push API key config option value is an empty string,
+  or a string with only whitespace characters, it is not considered valid anymore.
+- [10078177](https://github.com/appsignal/appsignal-elixir/commit/1007817782db6c59377eb7c61f24e884b200affb) patch - Transmit the path file modes in the diagnose report as an octal number. Previously it send values like `33188` and now it transmits `100644`, which is a bit more human readable.
+- [10078177](https://github.com/appsignal/appsignal-elixir/commit/1007817782db6c59377eb7c61f24e884b200affb) patch - Improve parameter and session data filtering options. Previously all filtering was done with one combined denylist of parameters and session data. Now `filter_parameters` only applies to parameters, and `filter_session_data` only applies to session data.
+- [10078177](https://github.com/appsignal/appsignal-elixir/commit/1007817782db6c59377eb7c61f24e884b200affb) patch - Fix the download of the agent during installation when Erlang is
+  using an OpenSSL version that does not support TLS 1.3, such as versions below OpenSSL 1.1.1.
+- [ad0b00f1](https://github.com/appsignal/appsignal-elixir/commit/ad0b00f1030d5b80910a9dd7c73b80512762f27d) patch - Suppress a warning emitted by Telemetry 1.0.0, regarding the performance penalty of using local functions as event handlers, by specifying the module of the captured function.
+
 ## 2.2.7
 
 - [f07f9cf9](https://github.com/appsignal/appsignal-elixir/commit/f07f9cf9c1d0d9696ee1a226630238dc75162fd7) patch - Bump agent to 09308fb.
