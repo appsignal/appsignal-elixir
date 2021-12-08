@@ -21,7 +21,6 @@ defmodule Appsignal.Config do
     ignore_errors: [],
     ignore_namespaces: [],
     log: "file",
-    log_level: "info",
     request_headers: ~w(
       accept accept-charset accept-encoding accept-language cache-control
       connection content-length path-info range request-method request-uri
@@ -338,7 +337,7 @@ defmodule Appsignal.Config do
     )
 
     Nif.env_put("_APPSIGNAL_LOG", config[:log])
-    Nif.env_put("_APPSIGNAL_LOG_LEVEL", config[:log_level])
+    Nif.env_put("_APPSIGNAL_LOG_LEVEL", config[:log_level] || "")
     Nif.env_put("_APPSIGNAL_LOG_FILE_PATH", to_string(log_file_path()))
     Nif.env_put("_APPSIGNAL_PUSH_API_ENDPOINT", config[:endpoint] || "")
     Nif.env_put("_APPSIGNAL_PUSH_API_KEY", config[:push_api_key] || "")

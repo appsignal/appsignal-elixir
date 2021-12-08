@@ -863,7 +863,7 @@ defmodule Appsignal.ConfigTest do
           ignore_errors: ~w(VerySpecificError AnotherError),
           ignore_namespaces: ~w(admin private_namespace),
           log: "stdout",
-          log_level: "info",
+          log_level: "warn",
           log_path: "/tmp",
           name: "AppSignal test suite app",
           running_in_container: false,
@@ -899,7 +899,7 @@ defmodule Appsignal.ConfigTest do
                    'elixir-' ++ String.to_charlist(Mix.Project.config()[:version])
 
           assert Nif.env_get("_APPSIGNAL_LOG") == 'stdout'
-          assert Nif.env_get("_APPSIGNAL_LOG_LEVEL") == 'info'
+          assert Nif.env_get("_APPSIGNAL_LOG_LEVEL") == 'warn'
           assert Nif.env_get("_APPSIGNAL_LOG_FILE_PATH") == '/tmp/appsignal.log'
           assert Nif.env_get("_APPSIGNAL_PUSH_API_ENDPOINT") == 'https://push.staging.lol'
           assert Nif.env_get("_APPSIGNAL_PUSH_API_KEY") == '00000000-0000-0000-0000-000000000000'
@@ -1004,7 +1004,6 @@ defmodule Appsignal.ConfigTest do
       ignore_errors: [],
       ignore_namespaces: [],
       log: "file",
-      log_level: "info",
       request_headers: ~w(
         accept accept-charset accept-encoding accept-language cache-control
         connection content-length path-info range request-method request-uri
