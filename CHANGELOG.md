@@ -1,5 +1,11 @@
 # AppSignal for Elixir changelog
 
+## 2.2.9
+
+### Fixed
+
+- [2b78e1e2](https://github.com/appsignal/appsignal-elixir/commit/2b78e1e2dfed237bfed38705411d837f1211c4b4) patch - Fix debug and transaction_debug_mode log options. If set, previously the log_level would remain "info", since version 2.2.8.
+
 ## 2.2.8
 
 ### Added
