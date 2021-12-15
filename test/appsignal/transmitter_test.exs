@@ -43,7 +43,11 @@ defmodule Appsignal.TransmitterTest do
 
       refute Keyword.has_key?(ssl_options, :verify_fun)
     else
-      assert ssl_options[:verify_fun] == (&:ssl_verify_hostname.verify_fun/3)
+      assert match?(
+               {fun, pid} when is_function(fun, 3) and is_pid(pid),
+               ssl_options[:verify_fun]
+             )
+
       refute Keyword.has_key?(ssl_options, :customize_hostname_check)
     end
   end
