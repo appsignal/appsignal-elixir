@@ -23,8 +23,7 @@ defmodule Appsignal.Config do
     log: "file",
     request_headers: ~w(
       accept accept-charset accept-encoding accept-language cache-control
-      connection content-length path-info range request-method request-uri
-      server-name server-port server-protocol
+      connection content-length range
     ),
     send_environment_metadata: true,
     send_params: true,
