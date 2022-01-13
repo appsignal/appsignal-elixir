@@ -28,16 +28,6 @@ defmodule Appsignal.Nif do
     end
   end
 
-  def agent_version do
-    case :appsignal
-         |> :code.priv_dir()
-         |> Path.join("appsignal.version")
-         |> File.read() do
-      {:ok, contents} -> String.trim(contents)
-      _ -> nil
-    end
-  end
-
   def env_put(key, value) do
     _env_put(key, value)
   end
