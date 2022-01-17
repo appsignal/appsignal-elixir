@@ -95,16 +95,4 @@ defmodule Appsignal.NifTest do
       assert Nif.close_span(ref) == :ok
     end
   end
-
-  describe "agent_version" do
-    @tag :skip_env_test_no_nif
-    test "returns the installed agent version" do
-      assert Nif.agent_version() == Appsignal.Agent.version()
-    end
-
-    @tag :skip_env_test
-    test "does not return the agent version if the agent is not installed" do
-      assert Nif.agent_version() == nil
-    end
-  end
 end

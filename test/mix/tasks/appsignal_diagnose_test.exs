@@ -5,7 +5,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   alias Appsignal.{Diagnose.FakeReport, FakeNif, FakeSystem}
 
   @appsignal_version Mix.Project.config()[:version]
-  @agent_version Appsignal.Nif.agent_version()
+  @agent_version Appsignal.Agent.version()
 
   defp run, do: capture_io("Y", &run_fn/0)
   defp run(args) when is_list(args), do: capture_io(fn -> run_fn(args) end)
