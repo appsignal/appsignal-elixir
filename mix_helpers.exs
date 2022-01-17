@@ -1,4 +1,6 @@
-{_, _} = Code.eval_file("agent.exs")
+unless Code.ensure_loaded?(Appsignal.Agent) do
+  {_, _} = Code.eval_file("agent.exs")
+end
 
 defmodule Mix.Appsignal.Utils do
   defmacro compile_env(app, key, default \\ nil) do

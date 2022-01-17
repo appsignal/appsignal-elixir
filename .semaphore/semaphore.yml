@@ -47,59 +47,76 @@ blocks:
         - name: Elixir main, OTP 24
           commands:
             - ERLANG_VERSION=24.0 ELIXIR_VERSION=main . bin/setup
-            - mix test
+            - mix compile
+            - mix test --no-compile
         - name: Elixir main, OTP 24, without the NIF loaded
+          env_vars:
+            - name: MIX_ENV
+              value: test_no_nif
           commands:
             - ERLANG_VERSION=24.0 ELIXIR_VERSION=main . bin/setup
-            - MIX_ENV=test_no_nif mix test
+            - mix compile
+            - mix test --no-compile
         - name: Elixir 1.12.2, OTP 24
           commands:
             - ERLANG_VERSION=24.0 ELIXIR_VERSION=1.12.2 . bin/setup
-            - mix test
+            - mix compile
+            - mix test --no-compile
         - name: Elixir 1.12.2, OTP 23
           commands:
             - ERLANG_VERSION=23.3 ELIXIR_VERSION=1.12.2 . bin/setup
-            - mix test
+            - mix compile
+            - mix test --no-compile
         - name: Elixir 1.12.2, OTP 22
           commands:
             - ERLANG_VERSION=22.3 ELIXIR_VERSION=1.12.2 . bin/setup
-            - mix test
+            - mix compile
+            - mix test --no-compile
         - name: Elixir 1.11.4, OTP 24
           commands:
             - ERLANG_VERSION=24.0 ELIXIR_VERSION=1.11.4 . bin/setup
-            - mix test
+            - mix compile
+            - mix test --no-compile
         - name: Elixir 1.11.4, OTP 23
           commands:
             - ERLANG_VERSION=23.3 ELIXIR_VERSION=1.11.4 . bin/setup
-            - mix test
+            - mix compile
+            - mix test --no-compile
         - name: Elixir 1.11.4, OTP 22
           commands:
             - ERLANG_VERSION=22.3 ELIXIR_VERSION=1.11.4 . bin/setup
-            - mix test
+            - mix compile
+            - mix test --no-compile
         - name: Elixir 1.11.4, OTP 21
           commands:
             - ERLANG_VERSION=21.3 ELIXIR_VERSION=1.11.4 . bin/setup
-            - mix test
+            - mix compile
+            - mix test --no-compile
         - name: Elixir 1.10.4, OTP 23
           commands:
             - ERLANG_VERSION=23.3 ELIXIR_VERSION=1.10.4 . bin/setup
-            - mix test
+            - mix compile
+            - mix test --no-compile
         - name: Elixir 1.10.4, OTP 22
           commands:
             - ERLANG_VERSION=22.3 ELIXIR_VERSION=1.10.4 . bin/setup
-            - mix test
+            - mix compile
+            - mix test --no-compile
         - name: Elixir 1.10.4, OTP 21
           commands:
             - ERLANG_VERSION=21.3 ELIXIR_VERSION=1.10.4 . bin/setup
-            - mix test
+            - mix compile
+            - mix test --no-compile
         - name: Elixir 1.9.4, OTP 22
           commands:
             - ERLANG_VERSION=22.3 ELIXIR_VERSION=1.9.4 . bin/setup
-            - mix test
+            - mix compile
+            - mix test --no-compile
         - name: Elixir 1.9.4, OTP 21
           commands:
             - ERLANG_VERSION=21.3 ELIXIR_VERSION=1.9.4 . bin/setup
-            - mix test
+            - mix compile
+            - mix test --no-compile
       env_vars:
         - name: MIX_ENV
           value: test

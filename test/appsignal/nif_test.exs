@@ -1,3 +1,7 @@
+unless Code.ensure_loaded?(Appsignal.Agent) do
+  {_, _} = Code.eval_file("agent.exs")
+end
+
 defmodule Appsignal.NifTest do
   alias Appsignal.Nif
   use ExUnit.Case, async: true
