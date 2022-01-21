@@ -22,7 +22,10 @@ defmodule Appsignal.ConfigTest do
     test "stores sources in Application" do
       init_config()
 
-      default = default_configuration()
+      # The send_session_data config must be deleted for this test as it is set up
+      # after the config is initialized. This test checks the default configuration hash
+      # has the desired shape.
+      default = default_configuration() |> Map.drop([:send_session_data, :skip_session_data])
 
       assert Application.get_env(:appsignal, :config_sources) == %{
                default: default,
@@ -346,8 +349,31 @@ defmodule Appsignal.ConfigTest do
       assert %{send_params: true} = with_config(%{send_params: true}, &init_config/0)
     end
 
+    test "send_session_data" do
+      config = %{send_session_data: false}
+
+      assert %{send_session_data: false, skip_session_data: true} =
+               with_config(%{send_session_data: false}, &init_config/0)
+    end
+
     test "skip_session_data" do
-      assert %{skip_session_data: true} = with_config(%{skip_session_data: true}, &init_config/0)
+      config = %{skip_session_data: true}
+
+      output =
+        capture_io(:stderr, fn ->
+          assert %{skip_session_data: true, send_session_data: false} =
+                   with_config(config, &init_config/0)
+        end)
+
+      assert with_config(
+               config,
+               fn ->
+                 init_config()
+                 Application.get_env(:appsignal, :config_sources)[:system]
+               end
+             ) == %{send_session_data: false}
+
+      assert output =~ "Deprecation warning: The `skip_session_data` config option is deprecated."
     end
 
     test "transaction_debug_mode" do
@@ -609,11 +635,37 @@ defmodule Appsignal.ConfigTest do
              ) == default_configuration() |> Map.put(:send_params, false)
     end
 
-    test "skip_session_data" do
+    test "send_session_data" do
       assert with_env(
-               %{"APPSIGNAL_SKIP_SESSION_DATA" => "true"},
+               %{"APPSIGNAL_SEND_SESSION_DATA" => "false"},
                &init_config/0
-             ) == default_configuration() |> Map.put(:skip_session_data, true)
+             ) ==
+               default_configuration()
+               |> Map.put(:send_session_data, false)
+               |> Map.put(:skip_session_data, true)
+    end
+
+    test "skip_session_data" do
+      output =
+        capture_io(:stderr, fn ->
+          assert with_env(
+                   %{"APPSIGNAL_SKIP_SESSION_DATA" => "true"},
+                   &init_config/0
+                 ) ==
+                   default_configuration()
+                   |> Map.put(:skip_session_data, true)
+                   |> Map.put(:send_session_data, false)
+
+          assert with_env(
+                   %{"APPSIGNAL_SKIP_SESSION_DATA" => "true"},
+                   fn ->
+                     init_config()
+                     Application.get_env(:appsignal, :config_sources)[:system]
+                   end
+                 ) == %{send_session_data: false}
+        end)
+
+      assert output =~ "Deprecation warning: The `skip_session_data` config option is deprecated."
     end
 
     test "transaction_debug_mode" do
@@ -1010,6 +1062,7 @@ defmodule Appsignal.ConfigTest do
       ),
       send_environment_metadata: true,
       send_params: true,
+      send_session_data: true,
       skip_session_data: false,
       transaction_debug_mode: false
     }
