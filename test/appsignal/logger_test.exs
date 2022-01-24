@@ -7,10 +7,10 @@ defmodule Appsignal.LoggerTest do
     :ok
   end
 
-  test "logs when debug mode is turned on" do
+  test "logs when log level is debug or trace" do
     assert :ok ==
              with_config(
-               %{debug: true},
+               %{log_level: "debug"},
                fn ->
                  Appsignal.Logger.debug("debug!")
                end
@@ -19,10 +19,10 @@ defmodule Appsignal.LoggerTest do
     assert {:ok, [{"debug!"}]} == Appsignal.Test.Logger.get(:debug)
   end
 
-  test "logs when debug mode is turned off" do
+  test "logs when log level is not debug or trace" do
     assert :ok ==
              with_config(
-               %{debug: false},
+               %{log_level: "warn"},
                fn ->
                  Appsignal.Logger.debug("debug!")
                end

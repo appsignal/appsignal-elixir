@@ -144,15 +144,65 @@ defmodule Appsignal.ConfigTest do
   end
 
   describe "debug?" do
-    test "when debug mode is turned on" do
+    test "when debug is turned on" do
       assert with_config(%{debug: true}, &Config.debug?/0) == true
     end
 
-    test "when debug mode is turned off" do
+    test "when debug is turned off" do
       assert with_config(%{debug: false}, &Config.debug?/0) == false
     end
 
-    test "when debug mode is not configured" do
+    test "when transaction debug mode is turned on" do
+      assert with_config(%{transaction_debug_mode: true}, &Config.debug?/0) == true
+    end
+
+    test "when transaction debug mode is turned off" do
+      assert with_config(%{transaction_debug_mode: false}, &Config.debug?/0) == false
+    end
+
+    test "when log_level is trace" do
+      assert with_config(%{log_level: "trace"}, &Config.debug?/0) == true
+    end
+
+    test "when log_level is debug" do
+      assert with_config(%{log_level: "debug"}, &Config.debug?/0) == true
+    end
+
+    test "when log_level is a logging level other than debug or trace" do
+      config = %{log_level: "warn"}
+
+      assert with_config(config, &Config.debug?/0) == false
+
+      # ignores debug and transaction_debug_mode
+      assert with_config(
+               Map.put(config, :debug, true),
+               &Config.debug?/0
+             ) == false
+
+      assert with_config(
+               Map.put(config, :transaction_debug_mode, true),
+               &Config.debug?/0
+             ) == false
+    end
+
+    test "when log_level is not a logging level" do
+      config = %{log_level: "foobar"}
+
+      assert with_config(config, &Config.debug?/0) == false
+
+      # checks debug and transaction_debug_mode
+      assert with_config(
+               Map.put(config, :debug, true),
+               &Config.debug?/0
+             ) == true
+
+      assert with_config(
+               Map.put(config, :transaction_debug_mode, true),
+               &Config.debug?/0
+             ) == true
+    end
+
+    test "with empty config" do
       assert with_config(%{}, &Config.debug?/0) == false
     end
   end

@@ -129,7 +129,14 @@ defmodule Appsignal.Config do
   """
   @spec debug?() :: boolean
   def debug? do
-    Application.get_env(:appsignal, :config, @default_config)[:debug] || false
+    config = Application.get_env(:appsignal, :config, @default_config)
+    log_level = config[:log_level]
+
+    if Enum.member?(["error", "warn", "info", "debug", "trace"], log_level) do
+      log_level == "debug" || log_level == "trace"
+    else
+      !!(config[:debug] || config[:transaction_debug_mode])
+    end
   end
 
   def request_headers do
