@@ -1,5 +1,30 @@
 # AppSignal for Elixir changelog
 
+## 2.2.10
+
+### Added
+
+- [0469f4b2](https://github.com/appsignal/appsignal-elixir/commit/0469f4b2bd80822debd7e5163db13f46ee13e051) patch - Add `send_session_data` option to configure if session data is automatically included in
+  spans. By default this is turned on. It can be disabled by configuring
+  `send_session_data` to `false`.
+
+### Changed
+
+- [ffe65216](https://github.com/appsignal/appsignal-elixir/commit/ffe652167bb3bfe69b031e2d932ef95ab730a389) patch - Remove Ruby exclusive headers from request_headers defaults.
+- [c0a98928](https://github.com/appsignal/appsignal-elixir/commit/c0a98928fb331436f01b7b41212decf7ab949ed1) patch - Bump AppSignal agent version to 15ee07b. Add internal tracking of transmission duration.
+- [8c14f827](https://github.com/appsignal/appsignal-elixir/commit/8c14f82737381798a3c230275c99c4333f635238) patch - The diagnose library report now reports the agent version from the committed agent file,
+  rather than the downloaded version, which is reported in the installation report.
+
+### Deprecated
+
+- [0469f4b2](https://github.com/appsignal/appsignal-elixir/commit/0469f4b2bd80822debd7e5163db13f46ee13e051) patch - Deprecate `skip_session_data` option in favor of the newly introduced `send_session_data` option.
+  If it is configured, it will print a warning on AppSignal load, but will also retain its
+  functionality until the config option is fully removed in the next major release.
+
+### Fixed
+
+- [e4ec8e68](https://github.com/appsignal/appsignal-elixir/commit/e4ec8e68abb1d625a0a4a0241e52b167a98a9f3d) patch - Prefer the value of the `log_level` config option, instead of the deprecated `debug` config option, when deciding whether to log a debug message. If `log_level` does not have a value, or its value is invalid, the values of the deprecated `debug` and `transaction_debug_mode` config options are taken into account.
+
 ## 2.2.9
 
 ### Fixed
