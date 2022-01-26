@@ -27,7 +27,6 @@ defmodule Appsignal.Config do
     ),
     send_environment_metadata: true,
     send_params: true,
-    skip_session_data: false,
     transaction_debug_mode: false
   }
 
@@ -57,6 +56,10 @@ defmodule Appsignal.Config do
       config
       |> merge_filter_parameters(Application.get_env(:phoenix, :filter_parameters, []))
 
+    config =
+      config
+      |> skip_session_data_backwards_compatibility(config[:skip_session_data])
+
     if !empty?(config[:working_dir_path]) do
       Logger.warn(fn ->
         "'working_dir_path' is deprecated, please use " <>
@@ -84,6 +87,41 @@ defmodule Appsignal.Config do
 
   defp merge_filter_parameters(map, _keys) do
     map
+  end
+
+  defp skip_session_data_backwards_compatibility(config, nil) do
+    if Map.has_key?(config, :send_session_data) do
+      Map.put(config, :skip_session_data, !config[:send_session_data])
+    else
+      config
+      |> Map.merge(%{send_session_data: true, skip_session_data: false})
+    end
+  end
+
+  defp skip_session_data_backwards_compatibility(config, skip_session_data) do
+    IO.warn(
+      "appsignal: Deprecation warning: The `skip_session_data` config option is " <>
+        "deprecated. Please use `send_session_data` instead."
+    )
+
+    if Map.has_key?(config, :send_session_data) do
+      config
+    else
+      update_system_sources(%{send_session_data: !skip_session_data})
+      Map.put(config, :send_session_data, !skip_session_data)
+    end
+  end
+
+  defp update_system_sources(map) do
+    sources = Application.get_env(:appsignal, :config_sources, %{})
+
+    system_sources =
+      sources[:system]
+      |> Map.merge(map)
+
+    new_sources = Map.put(sources, :system, system_sources)
+
+    Application.put_env(:appsignal, :config_sources, new_sources)
   end
 
   @doc """
@@ -217,6 +255,7 @@ defmodule Appsignal.Config do
     "APPSIGNAL_RUNNING_IN_CONTAINER" => :running_in_container,
     "APPSIGNAL_SEND_ENVIRONMENT_METADATA" => :send_environment_metadata,
     "APPSIGNAL_SEND_PARAMS" => :send_params,
+    "APPSIGNAL_SEND_SESSION_DATA" => :send_session_data,
     "APPSIGNAL_SKIP_SESSION_DATA" => :skip_session_data,
     "APPSIGNAL_TRANSACTION_DEBUG_MODE" => :transaction_debug_mode,
     "APPSIGNAL_WORKING_DIRECTORY_PATH" => :working_directory_path,
@@ -233,9 +272,9 @@ defmodule Appsignal.Config do
   @bool_keys ~w(
     APPSIGNAL_ACTIVE APPSIGNAL_DEBUG APPSIGNAL_INSTRUMENT_NET_HTTP APPSIGNAL_ENABLE_FRONTEND_ERROR_CATCHING
     APPSIGNAL_ENABLE_GC_INSTRUMENTATION APPSIGNAL_RUNNING_IN_CONTAINER
-    APPSIGNAL_ENABLE_HOST_METRICS APPSIGNAL_SKIP_SESSION_DATA APPSIGNAL_TRANSACTION_DEBUG_MODE
-    APPSIGNAL_FILES_WORLD_ACCESSIBLE APPSIGNAL_SEND_PARAMS APPSIGNAL_ENABLE_MINUTELY_PROBES
-    APPSIGNAL_ENABLE_STATSD APPSIGNAL_SEND_ENVIRONMENT_METADATA
+    APPSIGNAL_ENABLE_HOST_METRICS APPSIGNAL_SEND_SESSION_DATA APPSIGNAL_SKIP_SESSION_DATA
+    APPSIGNAL_TRANSACTION_DEBUG_MODE APPSIGNAL_FILES_WORLD_ACCESSIBLE APPSIGNAL_SEND_PARAMS
+    APPSIGNAL_ENABLE_MINUTELY_PROBES APPSIGNAL_ENABLE_STATSD APPSIGNAL_SEND_ENVIRONMENT_METADATA
   )
   @atom_keys ~w(APPSIGNAL_APP_ENV APPSIGNAL_OTP_APP)
   @string_list_keys ~w(
