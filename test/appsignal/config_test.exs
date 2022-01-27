@@ -31,7 +31,8 @@ defmodule Appsignal.ConfigTest do
                default: default,
                system: %{},
                file: %{},
-               env: %{}
+               env: %{},
+               override: %{send_session_data: true, skip_session_data: false}
              }
     end
 
@@ -417,7 +418,7 @@ defmodule Appsignal.ConfigTest do
                config,
                fn ->
                  init_config()
-                 Application.get_env(:appsignal, :config_sources)[:system]
+                 Application.get_env(:appsignal, :config_sources)[:override]
                end
              ) == %{send_session_data: false}
 
@@ -708,7 +709,7 @@ defmodule Appsignal.ConfigTest do
                    %{"APPSIGNAL_SKIP_SESSION_DATA" => "true"},
                    fn ->
                      init_config()
-                     Application.get_env(:appsignal, :config_sources)[:system]
+                     Application.get_env(:appsignal, :config_sources)[:override]
                    end
                  ) == %{send_session_data: false}
         end)
