@@ -22,7 +22,7 @@ defmodule Murphy do
 
   def with_conn(min_level, level, kind, data) do
     {:ok, chardata, metadata} = Logger.Translator.translate(min_level, level, kind, data)
-    {:ok, chardata, metadata ++ [pid: "", conn: %{owner: self()}]}
+    {:ok, chardata, metadata ++ [pid: "", conn: %{owner: Appsignal.Error.BackendTest.pid()}]}
   end
 
   def from_cowboy(min_level, level, kind, data) do
@@ -120,7 +120,7 @@ defmodule Appsignal.Error.BackendTest do
       Logger.add_translator({Murphy, :with_conn})
 
       Murphy.call(pid, fn ->
-        Tracer.ignore()
+        ignore_pid()
         raise "Exception"
       end)
 
@@ -220,6 +220,22 @@ defmodule Appsignal.Error.BackendTest do
   describe "terminate/2" do
     test "returns :ok" do
       assert Backend.terminate(:shutdown, %{}) == :ok
+    end
+  end
+
+  def pid do
+    if System.otp_release() < "21" do
+      :erlang.list_to_pid('<0.123.0>')
+    else
+      self()
+    end
+  end
+
+  defp ignore_pid do
+    if System.otp_release() < "21" do
+      :ets.insert(:"$appsignal_registry", {pid(), :ignore})
+    else
+      Tracer.ignore()
     end
   end
 end
