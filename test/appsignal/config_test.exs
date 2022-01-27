@@ -400,8 +400,6 @@ defmodule Appsignal.ConfigTest do
     end
 
     test "send_session_data" do
-      config = %{send_session_data: false}
-
       assert %{send_session_data: false, skip_session_data: true} =
                with_config(%{send_session_data: false}, &init_config/0)
     end
