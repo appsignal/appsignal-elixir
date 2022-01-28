@@ -1,5 +1,13 @@
 # AppSignal for Elixir Plug changelog
 
+## 2.0.9
+
+### Changed
+
+- [067ddf6](https://github.com/appsignal/appsignal-elixir-plug/commit/067ddf61e0f2b70041dc8858832bd74537211010) patch - Update the plug integration to listen to the `send_session_data` config option instead of
+  `skip_session_data`. The `send_session_data` config option is backwards compatible with
+  the `skip_session_data` config option.
+
 ## 2.0.8
 * Use Appsignal.Logger in Appsignal.Plug. PR #11
 
