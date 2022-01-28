@@ -493,9 +493,9 @@ defmodule Appsignal.PlugTest do
       refute sample_data("session_data", %{key: "value"})
     end
 
-    test "does not set session data when skip_session_data is set to true", %{span: span} do
+    test "does not set session data when send_session_data is set to false", %{span: span} do
       config = Application.get_env(:appsignal, :config)
-      Application.put_env(:appsignal, :config, %{config | skip_session_data: true})
+      Application.put_env(:appsignal, :config, %{config | send_session_data: false})
 
       try do
         Appsignal.Plug.set_conn_data(span, %Plug.Conn{
