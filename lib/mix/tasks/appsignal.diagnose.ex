@@ -303,7 +303,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
   end
 
   defp sources_for_option(key, sources) do
-    [:default, :system, :file, :env]
+    [:default, :system, :file, :env, :override]
     |> Enum.map(fn source ->
       if Map.has_key?(sources[source], key) do
         source

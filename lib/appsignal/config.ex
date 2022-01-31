@@ -44,21 +44,18 @@ defmodule Appsignal.Config do
       env: load_from_environment()
     }
 
-    Application.put_env(:appsignal, :config_sources, sources)
-
     config =
       sources[:default]
       |> Map.merge(sources[:system])
       |> Map.merge(sources[:file])
       |> Map.merge(sources[:env])
 
-    config =
-      config
-      |> merge_filter_parameters(Application.get_env(:phoenix, :filter_parameters, []))
+    sources = Map.put(sources, :override, determine_overrides(config))
+    config = Map.merge(config, sources[:override])
 
     config =
       config
-      |> skip_session_data_backwards_compatibility(config[:skip_session_data])
+      |> merge_filter_parameters(Application.get_env(:phoenix, :filter_parameters, []))
 
     if !empty?(config[:working_dir_path]) do
       Logger.warn(fn ->
@@ -68,6 +65,7 @@ defmodule Appsignal.Config do
       end)
     end
 
+    Application.put_env(:appsignal, :config_sources, sources)
     Application.put_env(:appsignal, :config, config)
 
     case valid?() do
@@ -89,12 +87,16 @@ defmodule Appsignal.Config do
     map
   end
 
+  defp determine_overrides(config) do
+    %{}
+    |> Map.merge(skip_session_data_backwards_compatibility(config, config[:skip_session_data]))
+  end
+
   defp skip_session_data_backwards_compatibility(config, nil) do
     if Map.has_key?(config, :send_session_data) do
-      Map.put(config, :skip_session_data, !config[:send_session_data])
+      %{:skip_session_data => !config[:send_session_data]}
     else
-      config
-      |> Map.merge(%{send_session_data: true, skip_session_data: false})
+      %{send_session_data: true, skip_session_data: false}
     end
   end
 
@@ -105,23 +107,10 @@ defmodule Appsignal.Config do
     )
 
     if Map.has_key?(config, :send_session_data) do
-      config
+      %{}
     else
-      update_system_sources(%{send_session_data: !skip_session_data})
-      Map.put(config, :send_session_data, !skip_session_data)
+      %{:send_session_data => !skip_session_data}
     end
-  end
-
-  defp update_system_sources(map) do
-    sources = Application.get_env(:appsignal, :config_sources, %{})
-
-    system_sources =
-      sources[:system]
-      |> Map.merge(map)
-
-    new_sources = Map.put(sources, :system, system_sources)
-
-    Application.put_env(:appsignal, :config_sources, new_sources)
   end
 
   @doc """
