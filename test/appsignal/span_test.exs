@@ -270,8 +270,7 @@ defmodule AppsignalSpanTest do
     end
 
     test "sets the error through the Nif", %{span: %Span{reference: reference}} do
-      assert [{^reference, "ArgumentError", "** (ArgumentError) argument error", _}] =
-               Test.Nif.get!(:add_span_error)
+      assert [{^reference, "ArgumentError", _message, _}] = Test.Nif.get!(:add_span_error)
     end
   end
 
@@ -362,8 +361,7 @@ defmodule AppsignalSpanTest do
     end
 
     test "sets the error through the Nif", %{span: %Span{reference: reference}} do
-      assert [{^reference, "ArgumentError", "** (ArgumentError) argument error", _}] =
-               Test.Nif.get!(:add_span_error)
+      assert [{^reference, "ArgumentError", _message, _}] = Test.Nif.get!(:add_span_error)
     end
   end
 

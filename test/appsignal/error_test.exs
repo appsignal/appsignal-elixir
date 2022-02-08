@@ -65,7 +65,9 @@ defmodule Appsignal.ErrorTest do
     end
 
     test "extracts the error's message", %{metadata: metadata} do
-      assert {_name, "** (ArgumentError) argument error", _stack} = metadata
+      {_name, error_message, _stack} = metadata
+
+      assert String.match?(error_message, ~r/(ArgumentError)/)
     end
 
     test "format's the error's stack trace", %{metadata: metadata} do
