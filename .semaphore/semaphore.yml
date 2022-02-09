@@ -57,6 +57,21 @@ blocks:
             - ERLANG_VERSION=24.0 ELIXIR_VERSION=main . bin/setup
             - mix compile
             - mix test --no-compile
+        - name: Elixir 1.13.2, OTP 24
+          commands:
+            - ERLANG_VERSION=24.2 ELIXIR_VERSION=1.13.2 . bin/setup
+            - mix compile
+            - mix test --no-compile
+        - name: Elixir 1.13.2, OTP 23
+          commands:
+            - ERLANG_VERSION=23.3 ELIXIR_VERSION=1.13.2 . bin/setup
+            - mix compile
+            - mix test --no-compile
+        - name: Elixir 1.13.2, OTP 22
+          commands:
+            - ERLANG_VERSION=22.3 ELIXIR_VERSION=1.13.2 . bin/setup
+            - mix compile
+            - mix test --no-compile
         - name: Elixir 1.12.2, OTP 24
           commands:
             - ERLANG_VERSION=24.0 ELIXIR_VERSION=1.12.2 . bin/setup
