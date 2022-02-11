@@ -23,6 +23,7 @@ defmodule Mix.Appsignal.Helper do
 
   require Mix.Appsignal.Utils
 
+  @erlang Mix.Appsignal.Utils.compile_env(:appsignal, :erlang, :erlang)
   @os Mix.Appsignal.Utils.compile_env(:appsignal, :os, :os)
   @system Mix.Appsignal.Utils.compile_env(:appsignal, :mix_system, System)
 
@@ -320,7 +321,7 @@ defmodule Mix.Appsignal.Helper do
       if force_linux_arm_build?() do
         'aarch64-linux'
       else
-        :erlang.system_info(:system_architecture)
+        @erlang.system_info(:system_architecture)
       end
 
     case map_arch(input_arch, agent_platform()) do

@@ -1,4 +1,5 @@
 :code.delete(Mix.Appsignal.Helper)
+Application.put_env(:appsignal, :erlang, FakeErlang)
 Application.put_env(:appsignal, :os, FakeOS)
 Application.put_env(:appsignal, :mix_system, FakeSystem)
 {_, _} = Code.eval_file("mix_helpers.exs")
@@ -12,8 +13,12 @@ defmodule Mix.Appsignal.HelperTest do
   end
 
   describe ".verify_system_architecture" do
+    setup do
+      [fake_erlang: start_supervised!(FakeErlang)]
+    end
+
     @tag :skip_env_test_no_nif
-    test "returns 64-bit Linux build" do
+    test "returns 64-bit Linux build", %{fake_erlang: fake_erlang} do
       report = %{build: %{}}
 
       assert Mix.Appsignal.Helper.verify_system_architecture(report) == {

@@ -88,7 +88,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     assert is_map(host_report["dependencies"])
 
     # Incomplete list for common test values
-    valid_architectures = ["x86", "x86_64"]
+    valid_architectures = ["x86", "x86_64", "aarch64"]
     valid_targets = ["darwin", "linux", "linux-gnu"]
     valid_sources = ["remote", "cached_in_priv_dir", "cached_in_tmp_dir"]
 
@@ -1133,7 +1133,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     assert String.contains?(output, "Download details")
     assert String.contains?(output, "  Download time: \"20")
     assert String.contains?(output, "  Download URL: \"https://")
-    assert output =~ ~r{Architecture: "x86(_64)?"}
+    assert output =~ ~r{Architecture: "(x86(_64)?|aarch64)"}
     assert output =~ ~r{Target: "[\w-]+"}
     assert String.contains?(output, "  Musl override: false")
     assert String.contains?(output, "  Linux ARM override: false")
