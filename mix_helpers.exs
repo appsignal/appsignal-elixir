@@ -253,11 +253,28 @@ defmodule Mix.Appsignal.Helper do
   end
 
   defp download_options do
+    default_cacert_file_path = priv_path("cacert.pem")
+
+    cacert_file =
+      case check_cacert_access(default_cacert_file_path) do
+        :ok ->
+          default_cacert_file_path
+
+        {:error, message} ->
+          Logger.warn(
+            "The cacert file path: #{default_cacert_file_path} is not accessible. " <>
+              "Reason: #{inspect(message)}. " <>
+              "Using system defaults instead."
+          )
+
+          :certifi.cacertfile()
+      end
+
     options = [
       ssl_options:
         [
           verify: :verify_peer,
-          cacertfile: priv_path("cacert.pem")
+          cacertfile: cacert_file
         ] ++ tls_options() ++ customize_hostname_check_or_verify_fun()
     ]
 
@@ -268,6 +285,19 @@ defmodule Mix.Appsignal.Helper do
       {var, url} ->
         Mix.shell().info("- using proxy from #{var} (#{url})")
         options ++ [proxy: url]
+    end
+  end
+
+  defp check_cacert_access(cacert_path) do
+    case File.stat(cacert_path) do
+      {:ok, %{access: access}} when access in [:read, :read_write] ->
+        :ok
+
+      {:ok, %{access: access}} ->
+        {:error, "File access is #{inspect(access)}"}
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
