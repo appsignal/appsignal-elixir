@@ -204,11 +204,9 @@ defmodule Appsignal.Tracer do
   """
   @spec ignore(pid()) :: :ok | nil
   def ignore(pid) do
-    if running?(pid) do
-      delete(pid)
-      :ets.insert(@table, {pid, :ignore})
-      @monitor.add()
-    end
+    :ets.delete(@table, pid)
+    :ets.insert(@table, {pid, :ignore})
+    @monitor.add()
 
     :ok
   end
