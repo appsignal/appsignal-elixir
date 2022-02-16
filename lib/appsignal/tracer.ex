@@ -200,6 +200,18 @@ defmodule Appsignal.Tracer do
   end
 
   @doc """
+  Ignores the given process.
+  """
+  @spec ignore(pid()) :: :ok | nil
+  def ignore(pid) do
+    :ets.delete(@table, pid)
+    :ets.insert(@table, {pid, :ignore})
+    @monitor.add()
+
+    :ok
+  end
+
+  @doc """
   Removes the process' spans from the registry.
   """
   @spec delete(pid()) :: :ok
