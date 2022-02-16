@@ -244,8 +244,4 @@ defmodule Appsignal.Tracer do
   defp running? do
     is_pid(Process.whereis(__MODULE__))
   end
-
-  defp running?(pid) do
-    is_pid(pid)
-  end
 end
