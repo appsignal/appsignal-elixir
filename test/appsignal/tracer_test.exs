@@ -48,6 +48,18 @@ defmodule Appsignal.TracerTest do
     end
   end
 
+  describe "create_span/1 in other process when ignored" do
+    setup [:set_pid, :ignore_process_with_pid, :create_root_span_in_other_process]
+
+    test "returns nil", %{span: span} do
+      assert span == nil
+    end
+
+    test "does not register a span", %{pid: pid} do
+      assert :ets.lookup(:"$appsignal_registry", pid) == [{pid, :ignore}]
+    end
+  end
+
   describe "create_span/1, without the registry" do
     setup [:terminate_registry, :create_root_span]
 
@@ -105,7 +117,7 @@ defmodule Appsignal.TracerTest do
   end
 
   describe "create_span/3, when passing a pid" do
-    setup :create_root_span_in_other_process
+    setup [:set_pid, :create_root_span_in_other_process]
 
     test "returns a span", %{span: span} do
       assert %Span{} = span
@@ -191,7 +203,7 @@ defmodule Appsignal.TracerTest do
   end
 
   describe "current_span/1, when a span exists in another process" do
-    setup :create_root_span_in_other_process
+    setup [:set_pid, :create_root_span_in_other_process]
 
     test "returns the created span", %{span: span, pid: pid} do
       assert span == Tracer.current_span(pid)
@@ -235,7 +247,7 @@ defmodule Appsignal.TracerTest do
   end
 
   describe "root_span/1, when a span exists in another process" do
-    setup :create_root_span_in_other_process
+    setup [:set_pid, :create_root_span_in_other_process]
 
     test "returns the created span", %{span: span, pid: pid} do
       assert span == Tracer.root_span(pid)
@@ -284,7 +296,7 @@ defmodule Appsignal.TracerTest do
   end
 
   describe "close_span/1, when passing a span in another process" do
-    setup :create_root_span_in_other_process
+    setup [:set_pid, :create_root_span_in_other_process]
 
     test "returns :ok", %{span: span} do
       assert Tracer.close_span(span) == :ok
@@ -358,7 +370,7 @@ defmodule Appsignal.TracerTest do
     end
   end
 
-  describe "ignore/1" do
+  describe "ignore/0" do
     setup :ignore_process
 
     test "returns nil", %{return: return} do
@@ -374,7 +386,7 @@ defmodule Appsignal.TracerTest do
     end
   end
 
-  describe "ignore/1, with an open span" do
+  describe "ignore/0, with an open span" do
     setup [:create_root_span, :ignore_process]
 
     test "returns nil", %{return: return} do
@@ -386,8 +398,49 @@ defmodule Appsignal.TracerTest do
     end
   end
 
-  describe "ignore/1, without the registry" do
+  describe "ignore/0, without the registry" do
     setup [:create_root_span, :terminate_registry, :ignore_process]
+
+    test "returns nil", %{return: return} do
+      assert return == :ok
+    end
+  end
+
+  describe "ignore/1" do
+    setup [:set_pid, :ignore_process_with_pid]
+
+    test "returns nil", %{return: return} do
+      assert return == :ok
+    end
+
+    test "marks a pid as ignored", %{pid: pid} do
+      assert :ets.lookup(:"$appsignal_registry", pid) == [{pid, :ignore}]
+    end
+
+    test "creates a process monitor" do
+      assert Test.Monitor.get!(:add) == [{self()}]
+    end
+  end
+
+  describe "ignore/1, with an open span" do
+    setup [:set_pid, :create_root_span_in_other_process, :ignore_process_with_pid]
+
+    test "returns nil", %{return: return} do
+      assert return == :ok
+    end
+
+    test "removes existing spans", %{pid: pid} do
+      assert :ets.lookup(:"$appsignal_registry", pid) == [{pid, :ignore}]
+    end
+  end
+
+  describe "ignore/1, without the registry" do
+    setup [
+      :set_pid,
+      :create_root_span_in_other_process,
+      :terminate_registry,
+      :ignore_process_with_pid
+    ]
 
     test "returns nil", %{return: return} do
       assert return == :ok
@@ -420,8 +473,11 @@ defmodule Appsignal.TracerTest do
     [span: Tracer.create_span("http_request", span), parent: span]
   end
 
-  defp create_root_span_in_other_process(_context) do
-    pid = Process.whereis(Test.Nif)
+  defp set_pid(_context) do
+    [pid: Process.whereis(Test.Nif)]
+  end
+
+  defp create_root_span_in_other_process(%{pid: pid}) do
     [span: Tracer.create_span("http_request", nil, pid: pid), pid: pid]
   end
 
@@ -436,6 +492,10 @@ defmodule Appsignal.TracerTest do
 
   defp ignore_process(_context) do
     [return: Tracer.ignore()]
+  end
+
+  defp ignore_process_with_pid(%{pid: pid}) do
+    [return: Tracer.ignore(pid)]
   end
 
   defp terminate_registry(_) do
