@@ -29,6 +29,6 @@ fi
 kiex use $ELIXIR_VERSION
 elixir -v
 
-mix local.rebar --force
+mix local.rebar
 mix local.hex --force
 mix deps.get
