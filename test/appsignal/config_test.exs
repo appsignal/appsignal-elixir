@@ -12,6 +12,7 @@ defmodule Appsignal.ConfigTest do
     environment = freeze_environment()
     Application.delete_env(:appsignal, :config)
     Application.delete_env(:appsignal, :config_sources)
+    Application.delete_env(:appsignal, :"$log_file_path")
 
     ExUnit.Callbacks.on_exit(fn ->
       unfreeze_environment(environment)
@@ -147,23 +148,29 @@ defmodule Appsignal.ConfigTest do
     end
   end
 
+  describe "log_level" do
+    test "when log level is set to a known log level" do
+      assert with_config(%{log_level: "warn"}, &Config.log_level/0) == :warn
+    end
+
+    test "when log level is set to an invalid value" do
+      assert with_config(%{log_level: "foobar"}, &Config.log_level/0) == :info
+    end
+
+    test "when log level is not set" do
+      assert with_config(%{}, &Config.log_level/0) == :info
+    end
+
+    test "when log level is not set and debug is set" do
+      assert with_config(%{debug: true}, &Config.log_level/0) == :debug
+    end
+
+    test "when log level is not set and transaction debug mode is set" do
+      assert with_config(%{transaction_debug_mode: true}, &Config.log_level/0) == :trace
+    end
+  end
+
   describe "debug?" do
-    test "when debug is turned on" do
-      assert with_config(%{debug: true}, &Config.debug?/0) == true
-    end
-
-    test "when debug is turned off" do
-      assert with_config(%{debug: false}, &Config.debug?/0) == false
-    end
-
-    test "when transaction debug mode is turned on" do
-      assert with_config(%{transaction_debug_mode: true}, &Config.debug?/0) == true
-    end
-
-    test "when transaction debug mode is turned off" do
-      assert with_config(%{transaction_debug_mode: false}, &Config.debug?/0) == false
-    end
-
     test "when log_level is trace" do
       assert with_config(%{log_level: "trace"}, &Config.debug?/0) == true
     end
@@ -172,42 +179,8 @@ defmodule Appsignal.ConfigTest do
       assert with_config(%{log_level: "debug"}, &Config.debug?/0) == true
     end
 
-    test "when log_level is a logging level other than debug or trace" do
-      config = %{log_level: "warn"}
-
-      assert with_config(config, &Config.debug?/0) == false
-
-      # ignores debug and transaction_debug_mode
-      assert with_config(
-               Map.put(config, :debug, true),
-               &Config.debug?/0
-             ) == false
-
-      assert with_config(
-               Map.put(config, :transaction_debug_mode, true),
-               &Config.debug?/0
-             ) == false
-    end
-
-    test "when log_level is not a logging level" do
-      config = %{log_level: "foobar"}
-
-      assert with_config(config, &Config.debug?/0) == false
-
-      # checks debug and transaction_debug_mode
-      assert with_config(
-               Map.put(config, :debug, true),
-               &Config.debug?/0
-             ) == true
-
-      assert with_config(
-               Map.put(config, :transaction_debug_mode, true),
-               &Config.debug?/0
-             ) == true
-    end
-
-    test "with empty config" do
-      assert with_config(%{}, &Config.debug?/0) == false
+    test "when log_level is something other than trace or debug" do
+      assert with_config(%{log_level: "warn"}, &Config.debug?/0) == false
     end
   end
 
@@ -875,6 +848,9 @@ defmodule Appsignal.ConfigTest do
         end)
 
       assert output =~ "Deprecation warning: File names are no longer supported in the 'log_path'"
+
+      # assert warning is emitted only once
+      assert capture_io(:stderr, &Config.log_file_path/0) == ""
     end
 
     test "falls back on /tmp/appsignal.log when user path is not writable" do
@@ -892,6 +868,9 @@ defmodule Appsignal.ConfigTest do
                "appsignal: Unable to log to '#{log_path}' or the " <>
                  "'#{system_tmp_dir}' fallback. " <>
                  "Please check the write permissions for the log directory."
+
+      # assert warning is emitted only once
+      assert capture_io(:stderr, &Config.log_file_path/0) == ""
     end
   end
 
