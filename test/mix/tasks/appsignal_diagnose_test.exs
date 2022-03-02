@@ -16,6 +16,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     environment = freeze_environment()
     Application.delete_env(:appsignal, :config)
     Application.delete_env(:appsignal, :config_sources)
+    Application.delete_env(:appsignal, :"$log_file_path")
 
     ExUnit.Callbacks.on_exit(fn ->
       unfreeze_environment(environment)

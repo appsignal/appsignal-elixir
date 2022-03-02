@@ -156,14 +156,9 @@ defmodule Appsignal.Config do
   """
   @spec debug?() :: boolean
   def debug? do
-    config = Application.get_env(:appsignal, :config, @default_config)
-    log_level = config[:log_level]
+    level = log_level()
 
-    if Enum.member?(["error", "warn", "info", "debug", "trace"], log_level) do
-      log_level == "debug" || log_level == "trace"
-    else
-      !!(config[:debug] || config[:transaction_debug_mode])
-    end
+    level == :debug || level == :trace
   end
 
   def request_headers do
@@ -390,9 +385,43 @@ defmodule Appsignal.Config do
 
   @log_filename "appsignal.log"
 
-  def log_file_path do
+  def log_level do
     config = Application.fetch_env!(:appsignal, :config)
-    do_log_file_path(config[:log_path])
+
+    log_level(config)
+  end
+
+  defp log_level(config) do
+    case config[:log_level] do
+      "trace" -> :trace
+      "debug" -> :debug
+      "info" -> :info
+      "warn" -> :warn
+      "error" -> :error
+      _ -> deprecated_log_level(config)
+    end
+  end
+
+  defp deprecated_log_level(config) do
+    cond do
+      config[:transaction_debug_mode] -> :trace
+      config[:debug] -> :debug
+      true -> :info
+    end
+  end
+
+  def log_file_path do
+    case Application.fetch_env(:appsignal, :"$log_file_path") do
+      {:ok, value} ->
+        value
+
+      :error ->
+        config = Application.fetch_env!(:appsignal, :config)
+        value = do_log_file_path(config[:log_path])
+        Application.put_env(:appsignal, :"$log_file_path", value)
+
+        value
+    end
   end
 
   defp do_log_file_path(nil), do: log_file_path_tmp_location()

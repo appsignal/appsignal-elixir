@@ -3,6 +3,11 @@ defmodule Mix.Tasks.Appsignal.Diagnose.PathsTest do
   import AppsignalTest.Utils
   alias Appsignal.Diagnose.Paths
 
+  setup do
+    Application.delete_env(:appsignal, :"$log_file_path")
+    :ok
+  end
+
   describe "with file bigger than 2 Mebibytes" do
     setup do
       path = System.tmp_dir()
