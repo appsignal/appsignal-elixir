@@ -1,5 +1,6 @@
 defmodule Appsignal.Plug do
-  @span Application.get_env(:appsignal, :appsignal_span, Appsignal.Span)
+  require Appsignal.Utils
+  @span Appsignal.Utils.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
   import Appsignal.Utils, only: [module_name: 1]
 
   @moduledoc """
@@ -28,10 +29,11 @@ defmodule Appsignal.Plug do
   defmacro __using__(_) do
     quote do
       require Logger
+      require Appsignal.Utils
       Appsignal.Logger.debug("AppSignal.Plug attached to #{__MODULE__}")
 
-      @tracer Application.get_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
-      @span Application.get_env(:appsignal, :appsignal_span, Appsignal.Span)
+      @tracer Appsignal.Utils.compile_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
+      @span Appsignal.Utils.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
 
       use Plug.ErrorHandler
 
