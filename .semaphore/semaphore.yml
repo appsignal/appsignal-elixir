@@ -16,19 +16,19 @@ blocks:
             - script/lint_git
         - name: mix compile --warnings-as-errors
           commands:
-            - ERLANG_VERSION=24.0 ELIXIR_VERSION=1.10.4 . bin/setup
+            - ERLANG_VERSION=24.3 ELIXIR_VERSION=1.10.4 . bin/setup
             - mix compile --warnings-as-errors
         - name: mix format --check-formatted
           commands:
-            - ERLANG_VERSION=24.0 ELIXIR_VERSION=1.12.3 . bin/setup
+            - ERLANG_VERSION=24.3 ELIXIR_VERSION=1.12.3 . bin/setup
             - mix format --check-formatted
         - name: mix credo --strict
           commands:
-            - ERLANG_VERSION=24.0 ELIXIR_VERSION=1.10.4 . bin/setup
+            - ERLANG_VERSION=24.3 ELIXIR_VERSION=1.10.4 . bin/setup
             - mix credo --strict
         - name: mix dialyzer
           commands:
-            - ERLANG_VERSION=24.0 ELIXIR_VERSION=1.10.4 . bin/setup
+            - ERLANG_VERSION=24.3 ELIXIR_VERSION=1.10.4 . bin/setup
             - cache restore dialyzer-plt
             - MIX_ENV=dev mix dialyzer --plt
             - cache store dialyzer-plt priv/plts/
@@ -40,13 +40,13 @@ blocks:
             - name: MIX_ENV
               value: dev
           commands:
-            - ERLANG_VERSION=24.0 ELIXIR_VERSION=1.12.3 . bin/setup
+            - ERLANG_VERSION=24.3 ELIXIR_VERSION=1.12.3 . bin/setup
             - git submodule init
             - git submodule update
             - test/integration/diagnose/bin/test
         - name: Elixir main, OTP 24
           commands:
-            - ERLANG_VERSION=24.0 ELIXIR_VERSION=main . bin/setup
+            - ERLANG_VERSION=24.3 ELIXIR_VERSION=main . bin/setup
             - mix compile
             - mix test --no-compile
         - name: Elixir main, OTP 24, without the NIF loaded
@@ -54,12 +54,12 @@ blocks:
             - name: MIX_ENV
               value: test_no_nif
           commands:
-            - ERLANG_VERSION=24.0 ELIXIR_VERSION=main . bin/setup
+            - ERLANG_VERSION=24.3 ELIXIR_VERSION=main . bin/setup
             - mix compile
             - mix test --no-compile
         - name: Elixir 1.13.3, OTP 24
           commands:
-            - ERLANG_VERSION=24.2 ELIXIR_VERSION=1.13.3 . bin/setup
+            - ERLANG_VERSION=24.3 ELIXIR_VERSION=1.13.3 . bin/setup
             - mix compile
             - mix test --no-compile
         - name: Elixir 1.13.3, OTP 23
@@ -74,7 +74,7 @@ blocks:
             - mix test --no-compile
         - name: Elixir 1.12.3 OTP 24
           commands:
-            - ERLANG_VERSION=24.0 ELIXIR_VERSION=1.12.3 . bin/setup
+            - ERLANG_VERSION=24.3 ELIXIR_VERSION=1.12.3 . bin/setup
             - mix compile
             - mix test --no-compile
         - name: Elixir 1.12.3 OTP 23
@@ -89,7 +89,7 @@ blocks:
             - mix test --no-compile
         - name: Elixir 1.11.4, OTP 24
           commands:
-            - ERLANG_VERSION=24.0 ELIXIR_VERSION=1.11.4 . bin/setup
+            - ERLANG_VERSION=24.3 ELIXIR_VERSION=1.11.4 . bin/setup
             - mix compile
             - mix test --no-compile
         - name: Elixir 1.11.4, OTP 23
