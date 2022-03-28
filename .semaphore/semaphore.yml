@@ -33,14 +33,14 @@ blocks:
             - MIX_ENV=dev mix dialyzer --plt
             - cache store dialyzer-plt priv/plts/
             - MIX_ENV=dev mix dialyzer
-        - name: Elixir 1.12.2, OTP 24 - Diagnose tests
+        - name: Elixir 1.12.3 OTP 24 - Diagnose tests
           env_vars:
             - name: LANGUAGE
               value: elixir
             - name: MIX_ENV
               value: dev
           commands:
-            - ERLANG_VERSION=24.0 ELIXIR_VERSION=1.12.2 . bin/setup
+            - ERLANG_VERSION=24.0 ELIXIR_VERSION=1.12.3 . bin/setup
             - git submodule init
             - git submodule update
             - test/integration/diagnose/bin/test
@@ -72,19 +72,19 @@ blocks:
             - ERLANG_VERSION=22.3 ELIXIR_VERSION=1.13.3 . bin/setup
             - mix compile
             - mix test --no-compile
-        - name: Elixir 1.12.2, OTP 24
+        - name: Elixir 1.12.3 OTP 24
           commands:
-            - ERLANG_VERSION=24.0 ELIXIR_VERSION=1.12.2 . bin/setup
+            - ERLANG_VERSION=24.0 ELIXIR_VERSION=1.12.3 . bin/setup
             - mix compile
             - mix test --no-compile
-        - name: Elixir 1.12.2, OTP 23
+        - name: Elixir 1.12.3 OTP 23
           commands:
-            - ERLANG_VERSION=23.3 ELIXIR_VERSION=1.12.2 . bin/setup
+            - ERLANG_VERSION=23.3 ELIXIR_VERSION=1.12.3 . bin/setup
             - mix compile
             - mix test --no-compile
-        - name: Elixir 1.12.2, OTP 22
+        - name: Elixir 1.12.3 OTP 22
           commands:
-            - ERLANG_VERSION=22.3 ELIXIR_VERSION=1.12.2 . bin/setup
+            - ERLANG_VERSION=22.3 ELIXIR_VERSION=1.12.3 . bin/setup
             - mix compile
             - mix test --no-compile
         - name: Elixir 1.11.4, OTP 24
