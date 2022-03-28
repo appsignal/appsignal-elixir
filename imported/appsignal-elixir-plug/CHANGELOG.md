@@ -1,5 +1,11 @@
 # AppSignal for Elixir Plug changelog
 
+## 2.0.10
+
+### Fixed
+
+- [3b13393](https://github.com/appsignal/appsignal-elixir-plug/commit/3b133934588362865c9d52f6ad79813bee5ede71) patch - Fix application environment warnings on Elixir 1.14
+
 ## 2.0.9
 
 ### Changed
