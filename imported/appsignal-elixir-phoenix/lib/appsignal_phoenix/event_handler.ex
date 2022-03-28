@@ -1,6 +1,7 @@
 defmodule Appsignal.Phoenix.EventHandler do
-  @tracer Application.get_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
-  @span Application.get_env(:appsignal, :appsignal_span, Appsignal.Span)
+  require Appsignal.Utils
+  @tracer Appsignal.Utils.compile_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
+  @span Appsignal.Utils.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
   @moduledoc false
 
   require Logger

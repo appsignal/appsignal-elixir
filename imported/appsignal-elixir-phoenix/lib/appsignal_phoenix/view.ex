@@ -40,8 +40,9 @@ defmodule Appsignal.Phoenix.View do
 
   defmacro __before_compile__(_env) do
     quote do
-      @span Application.get_env(:appsignal, :appsignal_span, Appsignal.Span)
-      @tracer Application.get_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
+      require Appsignal.Utils
+      @span Appsignal.Utils.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
+      @tracer Appsignal.Utils.compile_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
 
       defoverridable render: 2
 
