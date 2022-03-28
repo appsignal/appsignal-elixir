@@ -1,5 +1,11 @@
 # AppSignal for Elixir Phoenix changelog
 
+## 2.0.14
+
+### Fixed
+
+- [42b2cdd](https://github.com/appsignal/appsignal-elixir-phoenix/commit/42b2cdd816b3b54627cd77bdb3a6e87b20d5d38f) patch - Fix application environment warnings on Elixir 1.14
+
 ## 2.0.13
 
 - [31a29c2](https://github.com/appsignal/appsignal-elixir-phoenix/commit/31a29c229211ab9e84fec5a5383fae6044c3c628) patch - Fix Telemetry 1.x warning caused by the Phoenix EventHandler
