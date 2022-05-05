@@ -55,7 +55,9 @@ defmodule Appsignal.NifTest do
     test "sets the span's start time to the passed value", %{ref: ref} do
       {:ok, json} = Nif.span_to_json(ref)
 
-      assert {:ok, %{"start_time" => 1_588_930_137}} = Jason.decode(json)
+      assert {:ok,
+              %{"start_time_seconds" => 1_588_930_137, "start_time_nanoseconds" => 508_176_000}} =
+               Jason.decode(json)
     end
   end
 
@@ -85,7 +87,9 @@ defmodule Appsignal.NifTest do
     test "sets the span's start time to the passed value", %{ref: ref} do
       {:ok, json} = Nif.span_to_json(ref)
 
-      assert {:ok, %{"start_time" => 1_588_930_137}} = Jason.decode(json)
+      assert {:ok,
+              %{"start_time_seconds" => 1_588_930_137, "start_time_nanoseconds" => 508_176_000}} =
+               Jason.decode(json)
     end
   end
 
