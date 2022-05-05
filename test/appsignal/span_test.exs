@@ -79,7 +79,8 @@ defmodule AppsignalSpanTest do
 
     @tag :skip_env_test_no_nif
     test "sets the start time through the Nif", %{span: span} do
-      assert %{"start_time" => 1_588_937_136} = Span.to_map(span)
+      assert %{"start_time_seconds" => 1_588_937_136, "start_time_nanoseconds" => 283_541_000} =
+               Span.to_map(span)
     end
   end
 
@@ -152,7 +153,8 @@ defmodule AppsignalSpanTest do
 
     @tag :skip_env_test_no_nif
     test "sets the start time through the Nif", %{span: span} do
-      assert %{"start_time" => 1_588_937_136} = Span.to_map(span)
+      assert %{"start_time_seconds" => 1_588_937_136, "start_time_nanoseconds" => 283_541_000} =
+               Span.to_map(span)
     end
   end
 
