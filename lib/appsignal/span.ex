@@ -190,11 +190,19 @@ defmodule Appsignal.Span do
       |> Appsignal.Span.set_sample_data("environment", %{"method" => "GET"})
 
   """
-  def set_sample_data(span, "params", value) do
+  def set_sample_data(span, key, value) do
+    set_sample_data(span, Application.get_env(:appsignal, :config), key, value)
+  end
+
+  defp set_sample_data(span, %{send_params: true}, "params", value) do
     do_set_sample_data(span, "params", Appsignal.Utils.MapFilter.filter(value))
   end
 
-  def set_sample_data(span, key, value) do
+  defp set_sample_data(span, _config, "params", _value) do
+    span
+  end
+
+  defp set_sample_data(span, _config, key, value) do
     do_set_sample_data(span, key, value)
   end
 
