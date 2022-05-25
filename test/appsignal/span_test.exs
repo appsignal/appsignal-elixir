@@ -415,11 +415,15 @@ defmodule AppsignalSpanTest do
     setup :create_root_span
 
     setup %{span: span} do
-      [return: Span.set_sample_data(span, "key", %{param: "value"})]
+      [return: Span.set_sample_data(span, "key", %{foo: "bar"})]
     end
 
     test "returns the span", %{span: span, return: return} do
       assert return == span
+    end
+
+    test "sets the sample data", %{span: span} do
+      assert %{"sample_data" => %{"key" => "{\"foo\":\"bar\"}"}} = Span.to_map(span)
     end
   end
 
