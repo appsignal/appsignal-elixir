@@ -198,7 +198,15 @@ defmodule Appsignal.Span do
     do_set_sample_data(span, "params", Appsignal.Utils.MapFilter.filter(value))
   end
 
+  defp set_sample_data(span, %{send_session_data: true}, "session_data", value) do
+    do_set_sample_data(span, "session-data", value)
+  end
+
   defp set_sample_data(span, _config, "params", _value) do
+    span
+  end
+
+  defp set_sample_data(span, _config, "session_data", _value) do
     span
   end
 

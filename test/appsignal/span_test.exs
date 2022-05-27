@@ -472,6 +472,50 @@ defmodule AppsignalSpanTest do
     end
   end
 
+  describe ".set_sample_data/3, if send_session_data is set to false" do
+    setup :create_root_span
+
+    setup %{span: span} do
+      config = Application.get_env(:appsignal, :config)
+      Application.put_env(:appsignal, :config, %{config | send_session_data: false})
+
+      try do
+        Span.set_sample_data(span, "key", %{foo: "bar"})
+      after
+        Application.put_env(:appsignal, :config, config)
+      end
+
+      :ok
+    end
+
+    @tag :skip_env_test_no_nif
+    test "sets the sample data", %{span: span} do
+      assert %{"sample_data" => %{"key" => "{\"foo\":\"bar\"}"}} = Span.to_map(span)
+    end
+  end
+
+  describe ".set_sample_data/3, if send_session_data is set to false, when using 'session_data' as the key" do
+    setup :create_root_span
+
+    setup %{span: span} do
+      config = Application.get_env(:appsignal, :config)
+      Application.put_env(:appsignal, :config, %{config | send_session_data: false})
+
+      try do
+        Span.set_sample_data(span, "session_data", %{foo: "bar"})
+      after
+        Application.put_env(:appsignal, :config, config)
+      end
+
+      :ok
+    end
+
+    @tag :skip_env_test_no_nif
+    test "does not set the sample data", %{span: span} do
+      assert Span.to_map(span)["sample_data"] == %{}
+    end
+  end
+
   describe ".set_sample_data/3, when passing a nil-span" do
     test "returns nil" do
       assert Span.set_sample_data(nil, "key", %{param: "value"}) == nil
