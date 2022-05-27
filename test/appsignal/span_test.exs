@@ -415,11 +415,60 @@ defmodule AppsignalSpanTest do
     setup :create_root_span
 
     setup %{span: span} do
-      [return: Span.set_sample_data(span, "key", %{param: "value"})]
+      [return: Span.set_sample_data(span, "key", %{foo: "bar"})]
     end
 
     test "returns the span", %{span: span, return: return} do
       assert return == span
+    end
+
+    @tag :skip_env_test_no_nif
+    test "sets the sample data", %{span: span} do
+      assert %{"sample_data" => %{"key" => "{\"foo\":\"bar\"}"}} = Span.to_map(span)
+    end
+  end
+
+  describe ".set_sample_data/3, if send_params is set to false" do
+    setup :create_root_span
+
+    setup %{span: span} do
+      config = Application.get_env(:appsignal, :config)
+      Application.put_env(:appsignal, :config, %{config | send_params: false})
+
+      try do
+        Span.set_sample_data(span, "key", %{foo: "bar"})
+      after
+        Application.put_env(:appsignal, :config, config)
+      end
+
+      :ok
+    end
+
+    @tag :skip_env_test_no_nif
+    test "sets the sample data", %{span: span} do
+      assert %{"sample_data" => %{"key" => "{\"foo\":\"bar\"}"}} = Span.to_map(span)
+    end
+  end
+
+  describe ".set_sample_data/3, if send_params is set to false, when using 'params' as the key" do
+    setup :create_root_span
+
+    setup %{span: span} do
+      config = Application.get_env(:appsignal, :config)
+      Application.put_env(:appsignal, :config, %{config | send_params: false})
+
+      try do
+        Span.set_sample_data(span, "params", %{foo: "bar"})
+      after
+        Application.put_env(:appsignal, :config, config)
+      end
+
+      :ok
+    end
+
+    @tag :skip_env_test_no_nif
+    test "does not set the sample data", %{span: span} do
+      assert Span.to_map(span)["sample_data"] == %{}
     end
   end
 
