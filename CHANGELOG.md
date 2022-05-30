@@ -1,5 +1,11 @@
 # AppSignal for Elixir changelog
 
+## 2.2.13
+
+### Fixed
+
+- [26be6e58](https://github.com/appsignal/appsignal-elixir/commit/26be6e58443fab533206f230743da65c66d3bc89) patch - Fix session data by reverting the sample data key change
+
 ## 2.2.12
 
 ### Added
