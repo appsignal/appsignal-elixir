@@ -428,6 +428,40 @@ defmodule AppsignalSpanTest do
     end
   end
 
+  describe ".set_sample_data/3, setting params" do
+    setup :create_root_span
+
+    setup %{span: span} do
+      [return: Span.set_sample_data(span, "params", %{foo: "bar"})]
+    end
+
+    test "returns the span", %{span: span, return: return} do
+      assert return == span
+    end
+
+    @tag :skip_env_test_no_nif
+    test "sets the sample data", %{span: span} do
+      assert %{"sample_data" => %{"params" => ~s({"foo":"bar"})}} = Span.to_map(span)
+    end
+  end
+
+  describe ".set_sample_data/3, setting session_data" do
+    setup :create_root_span
+
+    setup %{span: span} do
+      [return: Span.set_sample_data(span, "session_data", %{foo: "bar"})]
+    end
+
+    test "returns the span", %{span: span, return: return} do
+      assert return == span
+    end
+
+    @tag :skip_env_test_no_nif
+    test "sets the sample data", %{span: span} do
+      assert %{"sample_data" => %{"session_data" => ~s({"foo":"bar"})}} = Span.to_map(span)
+    end
+  end
+
   describe ".set_sample_data/3, if send_params is set to false" do
     setup :create_root_span
 

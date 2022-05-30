@@ -199,7 +199,7 @@ defmodule Appsignal.Span do
   end
 
   defp set_sample_data(span, %{send_session_data: true}, "session_data", value) do
-    do_set_sample_data(span, "session-data", value)
+    do_set_sample_data(span, "session_data", value)
   end
 
   defp set_sample_data(span, _config, "params", _value) do
