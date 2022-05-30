@@ -1,5 +1,28 @@
 # AppSignal for Elixir changelog
 
+## 2.2.11
+
+### Added
+
+- [e287e58c](https://github.com/appsignal/appsignal-elixir/commit/e287e58cd8baf3234ee7a2c4e9ded33c6f0fd719) patch - Allow ignoring specific pids through Tracer.ignore/1
+- [c325114a](https://github.com/appsignal/appsignal-elixir/commit/c325114aa6278d8b4f4cf9587cb288345f5c492f) patch - Log messages are now sent through a centralised logger, defaulting to logging
+  to the `/tmp/appsignal.log` file.
+  To log to standard output instead, set the `log` config property to `"stdout"`.
+- [96c60363](https://github.com/appsignal/appsignal-elixir/commit/96c60363b06f64ed43b1f8a88484ecde45c1710a) patch - Don't set parameters when the send_params configuration is set to false
+
+### Changed
+
+- [bb6c7a65](https://github.com/appsignal/appsignal-elixir/commit/bb6c7a6514261a21d4ce44b9556db4d7ea77f9fb) patch - Add the config "override" source to better communicate and help debug when certain config options are set. This is used by the diagnose report. The override source is used to set the new config option value when a config option has been renamed, like `send_session_data`.
+- [003a2edd](https://github.com/appsignal/appsignal-elixir/commit/003a2eddf5f4fe376caf75d044beddb5f70f5037) patch - The extension installation will no longer fail when the CA certificate file is not accessible.
+- [db97b2f6](https://github.com/appsignal/appsignal-elixir/commit/db97b2f6593696de577da7971198afb1c4e6b83a) patch - Bump agent to v-bbc830a
+  
+  - Support batched statsd messages
+  - Set start times for spans with traceparents
+  - Check duration in transactions for negative and too high values
+- [709224ad](https://github.com/appsignal/appsignal-elixir/commit/709224ad62326f7ede0b86497fe9df87c3713a6d) patch - Bump agent to v-f57e6cb
+  
+  - Enable process metrics on Heroku and Dokku
+
 ## 2.2.10
 
 ### Added
