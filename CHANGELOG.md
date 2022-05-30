@@ -1,5 +1,11 @@
 # AppSignal for Elixir changelog
 
+## 2.2.12
+
+### Added
+
+- [65c5d716](https://github.com/appsignal/appsignal-elixir/commit/65c5d71648a6e25dc91e3e310483e6ce5079cd53) patch - Don't set session data when the send_session_data configuration is set to false
+
 ## 2.2.11
 
 ### Added
