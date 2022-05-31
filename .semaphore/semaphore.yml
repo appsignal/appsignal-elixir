@@ -32,7 +32,7 @@ blocks:
             - cache restore dialyzer-plt
             - MIX_ENV=dev mix dialyzer --plt
             - cache store dialyzer-plt priv/plts/
-            - MIX_ENV=dev mix dialyzer
+            - MIX_ENV=dev mix dialyzer --format dialyzer
         - name: Elixir 1.12.3 OTP 24 - Diagnose tests
           env_vars:
             - name: LANGUAGE
