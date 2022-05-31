@@ -18,7 +18,6 @@ defmodule Appsignal.Phoenix.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: compilers(Mix.env()),
       dialyzer: [
-        ignore_warnings: "dialyzer.ignore-warnings",
         plt_file: {:no_warn, "priv/plts/dialyzer.plt"},
         plt_add_apps: [:phoenix_live_view],
         flags: ["-Wunmatched_returns", "-Werror_handling", "-Wunderspecs"]
