@@ -28,7 +28,7 @@ blocks:
             - cache restore dialyzer-plt
             - MIX_ENV=dev mix dialyzer --plt
             - cache store dialyzer-plt priv/plts/
-            - MIX_ENV=dev mix dialyzer
+            - MIX_ENV=dev mix dialyzer --format dialyzer
         - name: Elixir main, OTP 24
           commands:
             - ERLANG_VERSION=24.0 ELIXIR_VERSION=main . bin/setup
