@@ -459,7 +459,7 @@ defmodule Appsignal.PlugTest do
       assert Appsignal.Plug.set_conn_data(span, %Plug.Conn{method: "GET", params: %{"id" => "4"}}) ==
                span
 
-      assert sample_data("params", %{"id" => "4"})
+      assert %{"sample_data" => %{"params" => ~s({"id":"4"})}} = Appsignal.Span.to_map(span)
     end
 
     test "does not set params when send_params is set to false", %{span: span} do
@@ -472,7 +472,8 @@ defmodule Appsignal.PlugTest do
         Application.put_env(:appsignal, :config, config)
       end
 
-      refute sample_data("params", %{"id" => "4"})
+      %{"sample_data" => sample_data} = Appsignal.Span.to_map(span)
+      refute Map.has_key?(sample_data, "params")
     end
 
     test "sets the span's session data", %{span: span} do
@@ -485,12 +486,15 @@ defmodule Appsignal.PlugTest do
                }
              }) == span
 
-      assert sample_data("session_data", %{key: "value"})
+      %{"sample_data" => sample_data} = Appsignal.Span.to_map(span)
+      assert ~s({"key":"value"}) == sample_data["session_data"]
     end
 
     test "does not set unfetched session data", %{span: span} do
       assert Appsignal.Plug.set_conn_data(span, %Plug.Conn{}) == span
-      refute sample_data("session_data", %{key: "value"})
+
+      %{"sample_data" => sample_data} = Appsignal.Span.to_map(span)
+      refute Map.has_key?(sample_data, "session_data")
     end
 
     test "does not set session data when send_session_data is set to false", %{span: span} do
@@ -510,7 +514,8 @@ defmodule Appsignal.PlugTest do
         Application.put_env(:appsignal, :config, config)
       end
 
-      refute sample_data("session_data", %{key: "value"})
+      %{"sample_data" => sample_data} = Appsignal.Span.to_map(span)
+      refute Map.has_key?(sample_data, "session_data")
     end
   end
 

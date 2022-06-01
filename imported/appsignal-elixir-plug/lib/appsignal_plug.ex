@@ -166,33 +166,21 @@ defmodule Appsignal.Plug do
   end
 
   defp set_params(span, conn) do
-    set_params(span, Application.get_env(:appsignal, :config), conn)
-  end
-
-  defp set_params(span, %{send_params: true}, conn) do
     %Plug.Conn{params: params} = Plug.Conn.fetch_query_params(conn)
     @span.set_sample_data(span, "params", params)
-  end
-
-  defp set_params(span, _config, _conn) do
-    span
   end
 
   defp set_sample_data(span, conn) do
     @span.set_sample_data(span, "environment", Appsignal.Metadata.metadata(conn))
   end
 
-  defp set_session_data(span, conn) do
-    set_session_data(span, Application.get_env(:appsignal, :config), conn)
-  end
-
-  defp set_session_data(span, %{send_session_data: true}, %Plug.Conn{
+  defp set_session_data(span, %Plug.Conn{
          private: %{plug_session: session, plug_session_fetch: :done}
        }) do
     @span.set_sample_data(span, "session_data", session)
   end
 
-  defp set_session_data(span, _config, _conn) do
+  defp set_session_data(span, _conn) do
     span
   end
 end
