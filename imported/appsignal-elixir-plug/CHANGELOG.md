@@ -1,5 +1,11 @@
 # AppSignal for Elixir Plug changelog
 
+## 2.0.11
+
+### Removed
+
+- [6ea5f3a](https://github.com/appsignal/appsignal-elixir-plug/commit/6ea5f3a0e0898a56eede4ff4dad142880dbdeeb8) patch - Remove duplicate session and param filter checks
+
 ## 2.0.10
 
 ### Fixed
