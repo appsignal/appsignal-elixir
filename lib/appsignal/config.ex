@@ -386,7 +386,7 @@ defmodule Appsignal.Config do
   @log_filename "appsignal.log"
 
   def log_level do
-    config = Application.fetch_env!(:appsignal, :config)
+    config = Application.get_env(:appsignal, :config, @default_config)
 
     log_level(config)
   end
