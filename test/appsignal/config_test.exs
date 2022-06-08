@@ -204,6 +204,10 @@ defmodule Appsignal.ConfigTest do
     test "returns the request_headers config" do
       assert with_config(%{request_headers: []}, &Config.request_headers/0) == []
     end
+
+    test "without an appsignal config" do
+      assert without_config(&Config.request_headers/0) == []
+    end
   end
 
   describe "ca_file_path" do
