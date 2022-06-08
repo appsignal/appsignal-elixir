@@ -38,6 +38,13 @@ defmodule AppsignalTest.Utils do
     end)
   end
 
+  def without_config(function) do
+    with_frozen_environment(fn ->
+      Application.delete_env(:appsignal, :config)
+      function.()
+    end)
+  end
+
   defp put_merged_config_for(app, config) do
     config =
       app
