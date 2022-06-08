@@ -150,6 +150,10 @@ defmodule Appsignal.ConfigTest do
                Config.active?()
              end)
     end
+
+    test "without an appsignal config" do
+      refute without_config(&Config.active?/0)
+    end
   end
 
   describe "log_level" do

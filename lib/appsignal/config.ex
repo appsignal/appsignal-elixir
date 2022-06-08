@@ -144,7 +144,7 @@ defmodule Appsignal.Config do
   @spec active?() :: boolean
   def active? do
     :appsignal
-    |> Application.fetch_env!(:config)
+    |> Application.get_env(:config, @default_config)
     |> do_active?
   end
 
