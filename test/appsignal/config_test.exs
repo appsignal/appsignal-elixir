@@ -116,6 +116,10 @@ defmodule Appsignal.ConfigTest do
                &Config.configured_as_active?/0
              )
     end
+
+    test "without an appsignal config" do
+      refute without_config(&Config.configured_as_active?/0)
+    end
   end
 
   describe "active?" do
