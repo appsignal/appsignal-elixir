@@ -149,6 +149,10 @@ defmodule Appsignal.ConfigTest do
   end
 
   describe "log_level" do
+    test "without an appsignal config" do
+      assert without_config(&Config.log_level/0) == :info
+    end
+
     test "when log level is set to a known log level" do
       assert with_config(%{log_level: "warn"}, &Config.log_level/0) == :warn
     end
