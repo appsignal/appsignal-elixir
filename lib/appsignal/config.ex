@@ -166,7 +166,8 @@ defmodule Appsignal.Config do
   end
 
   def ca_file_path do
-    Application.fetch_env!(:appsignal, :config)[:ca_file_path]
+    config = Application.get_env(:appsignal, :config, %{ca_file_path: default_ca_file_path()})
+    config[:ca_file_path]
   end
 
   def minutely_probes_enabled? do

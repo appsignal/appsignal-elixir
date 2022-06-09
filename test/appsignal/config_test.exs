@@ -221,6 +221,11 @@ defmodule Appsignal.ConfigTest do
                Path.join(:code.priv_dir(:appsignal), "cacert.pem")
     end
 
+    test "uses the priv path when no config is set" do
+      assert without_config(&Config.ca_file_path/0) ==
+               Path.join(:code.priv_dir(:appsignal), "cacert.pem")
+    end
+
     test "returns user override when set" do
       assert with_config(%{ca_file_path: "/foo/bar/bat.ca"}, &Config.ca_file_path/0) ==
                "/foo/bar/bat.ca"
