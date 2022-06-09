@@ -416,7 +416,7 @@ defmodule Appsignal.Config do
         value
 
       :error ->
-        config = Application.fetch_env!(:appsignal, :config)
+        config = Application.get_env(:appsignal, :config, %{})
         value = do_log_file_path(config[:log_path])
         Application.put_env(:appsignal, :"$log_file_path", value)
 

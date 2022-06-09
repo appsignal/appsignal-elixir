@@ -853,6 +853,14 @@ defmodule Appsignal.ConfigTest do
       end)
     end
 
+    test "defaults to /tmp/appsignal.log without a config" do
+      system_tmp_dir = Appsignal.Utils.FileSystem.system_tmp_dir()
+
+      without_config(fn ->
+        assert Config.log_file_path() == Path.join(system_tmp_dir, "appsignal.log")
+      end)
+    end
+
     test "overrides user specified filename when set" do
       output =
         capture_io(:stderr, fn ->
