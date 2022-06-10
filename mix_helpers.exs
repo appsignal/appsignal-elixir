@@ -391,7 +391,7 @@ defmodule Mix.Appsignal.Helper do
     defp map_arch('arm-' ++ _, platform), do: build_for("aarch64", platform)
   end
 
-  defp map_arch(arch, platform), do: {:error, {:unknown, {arch, platform}}}
+  defp map_arch(arch, platform), do: {:error, {:unknown, {to_string(arch), platform}}}
 
   defp build_for(bit, platform) do
     arch = {bit, platform}
