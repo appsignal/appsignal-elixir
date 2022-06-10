@@ -8,6 +8,10 @@ defmodule Appsignal do
   helper functions for sending metrics to AppSignal.
   """
 
+  require Mix.Appsignal.Utils
+
+  @os Mix.Appsignal.Utils.compile_env(:appsignal, :os_internal, :os)
+
   use Application
   alias Appsignal.Config
   require Logger
@@ -68,11 +72,7 @@ defmodule Appsignal do
         if Appsignal.Nif.loaded?() do
           Appsignal.Logger.debug("AppSignal started.")
         else
-          Logger.error(
-            "Failed to start AppSignal. Please run the diagnose task " <>
-              "(https://docs.appsignal.com/elixir/command-line/diagnose.html) " <>
-              "to debug your installation."
-          )
+          log_nif_loading_error()
         end
 
       {{:error, :invalid_config}, true} ->
@@ -142,4 +142,56 @@ defmodule Appsignal do
   defdelegate send_error(exception, stacktrace), to: Appsignal.Instrumentation
   defdelegate send_error(kind, reason, stacktrace), to: Appsignal.Instrumentation
   defdelegate send_error(kind, reason, stacktrace, fun), to: Appsignal.Instrumentation
+
+  defp log_nif_loading_error do
+    arch = parse_architecture(to_string(:erlang.system_info(:system_architecture)))
+    {_, target_list} = @os.type()
+    target = to_string(target_list)
+    {install_arch, install_target} = fetch_installed_architecture_target()
+
+    if arch == install_arch && target == install_target do
+      Appsignal.Logger.error(
+        "AppSignal failed to load the extension. Please run the diagnose tool and email us at support@appsignal.com: https://docs.appsignal.com/elixir/command-line/diagnose.html\n",
+        stderr: true
+      )
+    else
+      Appsignal.Logger.error(
+        "The AppSignal NIF was installed for architecture '#{install_arch}-#{install_target}', but the current architecture is '#{arch}-#{target}'. Please reinstall the AppSignal package on the host the app is started: mix deps.compile appsignal --force",
+        stderr: true
+      )
+    end
+  end
+
+  # Parse install report and fetch the architecture and target
+  defp fetch_installed_architecture_target do
+    case File.read(Path.join([:code.priv_dir(:appsignal), "install.report"])) do
+      {:ok, raw_report} ->
+        case Appsignal.Json.decode(raw_report) do
+          {:ok, report} ->
+            %{"build" => %{"architecture" => arch, "target" => target}} = report
+            {parse_architecture(arch), target}
+
+          {:error, reason} ->
+            Appsignal.Logger.error(
+              "Failed to parse the AppSignal 'install.report' file: #{inspect(reason)}",
+              stderr: true
+            )
+
+            {"unknown", "unknown"}
+        end
+
+      {:error, reason} ->
+        Appsignal.Logger.error(
+          "Failed to read the AppSignal 'install.report' file: #{inspect(reason)}",
+          stderr: true
+        )
+
+        {"unknown", "unknown"}
+    end
+  end
+
+  # Transform `aarch64-apple-darwin21.3.0` to `aarch64`
+  defp parse_architecture(arch_parts) do
+    List.first(String.split(arch_parts, "-", parts: 2))
+  end
 end
