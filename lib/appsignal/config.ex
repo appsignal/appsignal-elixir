@@ -119,7 +119,7 @@ defmodule Appsignal.Config do
   """
   @spec configured_as_active?() :: boolean
   def configured_as_active? do
-    Application.get_env(:appsignal, :config, @default_config).active
+    Application.get_env(:appsignal, :config, @default_config)[:active] || false
   end
 
   @doc """
