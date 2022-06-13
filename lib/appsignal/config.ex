@@ -162,7 +162,7 @@ defmodule Appsignal.Config do
   end
 
   def request_headers do
-    Application.get_env(:appsignal, :config, %{request_headers: []})[:request_headers] || []
+    Application.get_env(:appsignal, :config, @default_config)[:request_headers] || []
   end
 
   def ca_file_path do

@@ -213,7 +213,8 @@ defmodule Appsignal.ConfigTest do
     end
 
     test "without an appsignal config" do
-      assert without_config(&Config.request_headers/0) == []
+      assert without_config(&Config.request_headers/0) ==
+               default_configuration()[:request_headers]
     end
   end
 
