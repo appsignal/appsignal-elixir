@@ -116,6 +116,17 @@ defmodule Appsignal.ConfigTest do
                &Config.configured_as_active?/0
              )
     end
+
+    test "with an empty config" do
+      refute with_config(
+               %{},
+               &Config.configured_as_active?/0
+             )
+    end
+
+    test "without an appsignal config" do
+      refute without_config(&Config.configured_as_active?/0)
+    end
   end
 
   describe "active?" do
@@ -145,6 +156,10 @@ defmodule Appsignal.ConfigTest do
                Application.put_env(:appsignal, :config, [])
                Config.active?()
              end)
+    end
+
+    test "without an appsignal config" do
+      refute without_config(&Config.active?/0)
     end
   end
 
@@ -196,6 +211,11 @@ defmodule Appsignal.ConfigTest do
     test "returns the request_headers config" do
       assert with_config(%{request_headers: []}, &Config.request_headers/0) == []
     end
+
+    test "without an appsignal config" do
+      assert without_config(&Config.request_headers/0) ==
+               default_configuration()[:request_headers]
+    end
   end
 
   describe "ca_file_path" do
@@ -206,6 +226,11 @@ defmodule Appsignal.ConfigTest do
 
     test "uses the priv path by default" do
       assert with_config(%{}, &Config.ca_file_path/0) ==
+               Path.join(:code.priv_dir(:appsignal), "cacert.pem")
+    end
+
+    test "uses the priv path when no config is set" do
+      assert without_config(&Config.ca_file_path/0) ==
                Path.join(:code.priv_dir(:appsignal), "cacert.pem")
     end
 
@@ -837,6 +862,14 @@ defmodule Appsignal.ConfigTest do
       system_tmp_dir = Appsignal.Utils.FileSystem.system_tmp_dir()
 
       with_config(%{}, fn ->
+        assert Config.log_file_path() == Path.join(system_tmp_dir, "appsignal.log")
+      end)
+    end
+
+    test "defaults to /tmp/appsignal.log without a config" do
+      system_tmp_dir = Appsignal.Utils.FileSystem.system_tmp_dir()
+
+      without_config(fn ->
         assert Config.log_file_path() == Path.join(system_tmp_dir, "appsignal.log")
       end)
     end

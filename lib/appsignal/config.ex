@@ -119,7 +119,7 @@ defmodule Appsignal.Config do
   """
   @spec configured_as_active?() :: boolean
   def configured_as_active? do
-    Application.fetch_env!(:appsignal, :config).active
+    Application.get_env(:appsignal, :config, @default_config)[:active] || false
   end
 
   @doc """
@@ -144,7 +144,7 @@ defmodule Appsignal.Config do
   @spec active?() :: boolean
   def active? do
     :appsignal
-    |> Application.fetch_env!(:config)
+    |> Application.get_env(:config, @default_config)
     |> do_active?
   end
 
@@ -162,11 +162,12 @@ defmodule Appsignal.Config do
   end
 
   def request_headers do
-    Application.fetch_env!(:appsignal, :config)[:request_headers] || []
+    Application.get_env(:appsignal, :config, @default_config)[:request_headers] || []
   end
 
   def ca_file_path do
-    Application.fetch_env!(:appsignal, :config)[:ca_file_path]
+    config = Application.get_env(:appsignal, :config, %{ca_file_path: default_ca_file_path()})
+    config[:ca_file_path]
   end
 
   def minutely_probes_enabled? do
@@ -416,7 +417,7 @@ defmodule Appsignal.Config do
         value
 
       :error ->
-        config = Application.fetch_env!(:appsignal, :config)
+        config = Application.get_env(:appsignal, :config, %{})
         value = do_log_file_path(config[:log_path])
         Application.put_env(:appsignal, :"$log_file_path", value)
 
