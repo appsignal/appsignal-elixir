@@ -1,5 +1,13 @@
 # AppSignal for Elixir changelog
 
+## 2.2.14
+
+### Fixed
+
+- [ffb3ab29](https://github.com/appsignal/appsignal-elixir/commit/ffb3ab299e2b7a09ab19cdb6ba60ab0accfe4496) patch - Fix compile-time error with empty configurations
+- [c3599ae9](https://github.com/appsignal/appsignal-elixir/commit/c3599ae9e496f15ca17eb536019223ade3bb0a8f) patch - Improve the error message on extension load failure. The error message will now print more details about the installed and expected architecture when they mismatch. This is most common on apps mounted on a container after first being installed on the host with a different architecture than the container.
+- [4ac415f1](https://github.com/appsignal/appsignal-elixir/commit/4ac415f19b4cb1a8344e23c3de74effc86ef7eb0) patch - Don't crash at compile time when AppSignal is not configured
+
 ## 2.2.13
 
 ### Fixed
