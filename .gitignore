@@ -14,3 +14,4 @@ mix.lock
 /c_src/libappsignal.dylib
 /priv/*appsignal*
 /priv/*.report
+priv/plts
