@@ -2,6 +2,7 @@ defmodule Appsignal.Phoenix.LiveView do
   require Appsignal.Utils
   @tracer Appsignal.Utils.compile_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
   @span Appsignal.Utils.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
+  @os Appsignal.Utils.compile_env(:appsignal_plug, :os, :os)
 
   def instrument(module, name, socket, fun) do
     instrument(module, name, %{}, socket, fun)
@@ -47,5 +48,67 @@ defmodule Appsignal.Phoenix.LiveView do
 
   def live_view_action(module, name, params, socket, function) do
     instrument(module, name, params, socket, function)
+  end
+
+  def attach do
+    [
+      [:phoenix, :live_view, :mount],
+      [:phoenix, :live_view, :handle_params],
+      [:phoenix, :live_view, :handle_event],
+      [:phoenix, :live_component, :handle_event]
+    ]
+    |> Enum.each(fn event ->
+      name = Enum.join(event, ".")
+
+      _ =
+        :telemetry.attach(
+          {__MODULE__, event ++ [:start]},
+          event ++ [:start],
+          &__MODULE__.handle_event_start/4,
+          name
+        )
+
+      _ =
+        :telemetry.attach(
+          {__MODULE__, event ++ [:stop]},
+          event ++ [:stop],
+          &__MODULE__.handle_event_stop/4,
+          name
+        )
+
+      _ =
+        :telemetry.attach(
+          {__MODULE__, event ++ [:exception]},
+          event ++ [:exception],
+          &__MODULE__.handle_event_exception/4,
+          name
+        )
+    end)
+  end
+
+  def handle_event_start(
+        [:phoenix, :live_view, name, :start],
+        %{system_time: system_time},
+        metadata,
+        _event_name
+      ) do
+    "live_view"
+    |> @tracer.create_span(nil, start_time: system_time)
+    |> @span.set_name("#{Appsignal.Utils.module_name(metadata[:socket].view)}##{name}")
+    |> @span.set_attribute("appsignal:category", "#{name}.live_view")
+    |> @span.set_sample_data("params", metadata[:params])
+    |> @span.set_sample_data("session_data", metadata[:session])
+  end
+
+  def handle_event_stop(_event, _params, _metadata, _event_name) do
+    @tracer.close_span(@tracer.current_span(), end_time: @os.system_time())
+  end
+
+  def handle_event_exception(_event, _params, metadata, _event_name) do
+    @tracer.current_span()
+    |> @span.add_error(metadata[:kind], metadata[:reason], metadata[:stacktrace])
+    |> @tracer.close_span(end_time: @os.system_time())
+
+    @tracer.ignore()
   end
 end
