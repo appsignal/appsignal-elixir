@@ -1,5 +1,11 @@
 # AppSignal for Elixir Phoenix changelog
 
+## 2.1.0
+
+### Added
+
+- [108d9dd](https://github.com/appsignal/appsignal-elixir-phoenix/commit/108d9dd33cc9f5465aac63d720f3d445577b9849) minor - Semi-automatic LiveView instrumentation
+
 ## 2.0.14
 
 ### Fixed
