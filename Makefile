@@ -28,3 +28,4 @@ all:
 
 clean:
 	@$(RM) -r "$(LIB_DIR)"/*appsignal* "$(LIB_DIR)"/*.report
+	@$(RM) -r c_src/libappsignal* c_src/appsignal-agent c_src/appsignal.*
