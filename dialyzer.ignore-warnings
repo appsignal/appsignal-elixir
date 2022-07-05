@@ -2,4 +2,3 @@ lib/appsignal/json.ex:31: Unknown function 'Elixir.Jason':encode/1
 lib/appsignal/json.ex:32: Unknown function 'Elixir.Jason':'encode!'/1
 lib/appsignal/json.ex:33: Unknown function 'Elixir.Jason':decode/1
 lib/appsignal/json.ex:34: Unknown function 'Elixir.Jason':'decode!'/1
-lib/appsignal.ex:50: The inferred return type of config_change/3 (pid()) has nothing in common with 'ok', which is the expected return type for the callback of the 'Elixir.Application' behaviour
