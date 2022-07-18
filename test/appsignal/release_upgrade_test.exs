@@ -24,8 +24,20 @@ defmodule Appsignal.ReleaseUpgradeTest do
         |> Map.put(:name, "AppSignal test suite app v2")
 
       with_config(new_config, fn ->
+        pids_before = Process.list()
         # Hot reload / upgrade
-        config_reload_pid = Appsignal.config_change([], [], [])
+        Appsignal.config_change([], [], [])
+
+        pids_after = Process.list()
+        new_pids = pids_after -- pids_before
+
+        if length(new_pids) > 1 do
+          raise "More than one new process started (#{length(new_pids)}).
+            There should only be one new process, otherwise we can't tell
+            which one restarted the config."
+        end
+
+        config_reload_pid = List.first(new_pids)
         # The config is reloaded in a separate process so we wait for it here
         assert Process.alive?(config_reload_pid)
 
