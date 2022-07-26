@@ -563,6 +563,10 @@ defmodule AppsignalSpanTest do
       assert Span.set_attribute(span, "key", "value") == span
     end
 
+    test "returns span when sending nil values" do
+      assert Span.set_attribute(nil, "key", nil) == span
+    end
+
     test "returns nil when passing a nil-span" do
       assert Span.set_attribute(nil, "key", "value") == nil
     end
