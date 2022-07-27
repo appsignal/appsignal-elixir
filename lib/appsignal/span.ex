@@ -163,7 +163,7 @@ defmodule Appsignal.Span do
     span
   end
 
-  def set_attribute(_span, _key, _value), do: nil
+  def set_attribute(span, _key, _value), do: span
 
   @spec set_sql(t() | nil, String.t()) :: t() | nil
   @doc """
@@ -179,7 +179,7 @@ defmodule Appsignal.Span do
     span
   end
 
-  def set_sql(_span, _body), do: nil
+  def set_sql(span, _body), do: span
 
   @spec set_sample_data(t() | nil, String.t(), map()) :: t() | nil
   @doc """

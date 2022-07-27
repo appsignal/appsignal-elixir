@@ -563,8 +563,28 @@ defmodule AppsignalSpanTest do
       assert Span.set_attribute(span, "key", "value") == span
     end
 
+    test "returns span when sending nil values", %{span: span} do
+      assert Span.set_attribute(span, "key", nil) == span
+    end
+
     test "returns nil when passing a nil-span" do
       assert Span.set_attribute(nil, "key", "value") == nil
+    end
+  end
+
+  describe ".set_sql/2" do
+    setup :create_root_span
+
+    test "returns the span", %{span: span} do
+      assert Span.set_sql(span, "SELECT * FROM users") == span
+    end
+
+    test "returns span when sending nil values", %{span: span} do
+      assert Span.set_sql(span, nil) == span
+    end
+
+    test "returns nil when passing a nil-span" do
+      assert Span.set_sql(nil, "SELECT * FROM users") == nil
     end
   end
 
