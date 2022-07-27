@@ -1,5 +1,18 @@
 # AppSignal for Elixir changelog
 
+## 2.2.15
+
+### Changed
+
+- [ab876253](https://github.com/appsignal/appsignal-elixir/commit/ab876253936838369654f11bbcd387a7c52c3994) patch - Bump agent to v-d573c9b
+  
+  - Clean up payload storage before sending. Should fix issues with locally queued payloads blocking data from being sent.
+  - Add OpenTelemetry support for the Span API. Not currently implemented in this package's extension.
+
+### Fixed
+
+- [d66ad2d8](https://github.com/appsignal/appsignal-elixir/commit/d66ad2d84192d4c6e5e20b489023f8c0264c7c56) patch - Always return the Span from Span.set_attribute/3, making it easier to chain this function call.
+
 ## 2.2.14
 
 ### Fixed
