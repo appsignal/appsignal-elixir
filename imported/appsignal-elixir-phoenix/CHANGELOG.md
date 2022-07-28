@@ -1,5 +1,11 @@
 # AppSignal for Elixir Phoenix changelog
 
+## 2.1.1
+
+### Added
+
+- [fcfba2d](https://github.com/appsignal/appsignal-elixir-phoenix/commit/fcfba2dc1457176fc4998259b2d3e0ead86d0729) patch - Add event names to LiveView events
+
 ## 2.1.0
 
 ### Added
