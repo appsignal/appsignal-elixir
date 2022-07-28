@@ -327,7 +327,8 @@ defmodule Appsignal.Phoenix.LiveViewTest do
         %{monotonic_time: -576_457_566_461_433_920, system_time: 1_653_474_764_790_125_080},
         %{
           params: %{foo: "bar"},
-          socket: %Phoenix.LiveView.Socket{view: __MODULE__}
+          socket: %Phoenix.LiveView.Socket{view: __MODULE__},
+          event: "event"
         }
       )
     end
@@ -347,6 +348,14 @@ defmodule Appsignal.Phoenix.LiveViewTest do
 
       assert Enum.any?(attributes, fn {%Span{}, key, data} ->
                key == "appsignal:category" and data == "handle_event.live_view"
+             end)
+    end
+
+    test "sets the span's event name" do
+      assert {:ok, attributes} = Test.Span.get(:set_attribute)
+
+      assert Enum.any?(attributes, fn {%Span{}, key, data} ->
+               key == "event" and data == "event"
              end)
     end
 
