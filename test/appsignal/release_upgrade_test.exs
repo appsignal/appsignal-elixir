@@ -25,16 +25,12 @@ defmodule Appsignal.ReleaseUpgradeTest do
 
       with_config(new_config, fn ->
         # Hot reload / upgrade
-        config_reload_pid = Appsignal.config_change([], [], [])
-        # The config is reloaded in a separate process so we wait for it here
-        assert Process.alive?(config_reload_pid)
+        :ok = Appsignal.config_change([], [], [])
 
-        Process.monitor(config_reload_pid)
-
-        assert_receive({:DOWN, _, :process, ^config_reload_pid, _}, 5000)
-
-        assert config()[:name] == "AppSignal test suite app v2"
-        assert Nif.env_get("_APPSIGNAL_APP_NAME") == 'AppSignal test suite app v2'
+        until(fn ->
+          assert config()[:name] == "AppSignal test suite app v2"
+          assert Nif.env_get("_APPSIGNAL_APP_NAME") == 'AppSignal test suite app v2'
+        end)
       end)
     end)
   end
