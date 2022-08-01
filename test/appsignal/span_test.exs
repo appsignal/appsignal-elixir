@@ -181,11 +181,12 @@ defmodule AppsignalSpanTest do
 
   describe ".set_name/2, with a span that doesn't have a reference" do
     setup do
-      [return: Span.set_name(%Span{}, "test")]
+      span = %Span{}
+      [return: Span.set_name(span, "test"), span: span]
     end
 
-    test "returns nil", %{return: return} do
-      assert return == nil
+    test "returns the span", %{span: span, return: return} do
+      assert return == span
     end
 
     test "does not set the name through the Nif" do
@@ -226,6 +227,22 @@ defmodule AppsignalSpanTest do
 
     test "returns nil when passing a nil-span" do
       assert Span.set_namespace(nil, "test") == nil
+    end
+  end
+
+  describe ".set_namespace/2, when passing a non-string namespace" do
+    setup :create_root_span
+
+    setup %{span: span} do
+      %{return: Span.set_namespace(span, :non_string)}
+    end
+
+    test "returns the span", %{return: return, span: span} do
+      assert return == span
+    end
+
+    test "does not set the namespace", %{span: %Span{reference: reference}} do
+      assert :error = Test.Nif.get(:set_span_namespace)
     end
   end
 
@@ -547,6 +564,14 @@ defmodule AppsignalSpanTest do
     @tag :skip_env_test_no_nif
     test "does not set the sample data", %{span: span} do
       assert Span.to_map(span)["sample_data"] == %{}
+    end
+  end
+
+  describe ".set_sample_data/3, when passing invalid data" do
+    setup :create_root_span
+
+    test "returns the span", %{span: span} do
+      assert Span.set_sample_data(span, "key", "non-map value") == span
     end
   end
 

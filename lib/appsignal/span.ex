@@ -104,7 +104,7 @@ defmodule Appsignal.Span do
     end
   end
 
-  def set_name(_span, _name), do: nil
+  def set_name(span, _name), do: span
 
   @spec set_namespace(t() | nil, String.t()) :: t() | nil
   @doc """
@@ -123,7 +123,7 @@ defmodule Appsignal.Span do
     span
   end
 
-  def set_namespace(_span, _name), do: nil
+  def set_namespace(span, _name), do: span
 
   @spec set_attribute(t() | nil, String.t(), String.t() | integer() | boolean() | float()) ::
           t() | nil
@@ -222,7 +222,7 @@ defmodule Appsignal.Span do
     span
   end
 
-  defp do_set_sample_data(_span, _key, _value), do: nil
+  defp do_set_sample_data(span, _key, _value), do: span
 
   @spec add_error(t() | nil, Exception.kind(), any(), Exception.stacktrace()) :: t() | nil
   @doc """
