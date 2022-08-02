@@ -1,5 +1,21 @@
 # AppSignal for Elixir changelog
 
+## 2.2.16
+
+### Changed
+
+- [03b8306a](https://github.com/appsignal/appsignal-elixir/commit/03b8306a1a78ce4c29b5b90cd19656e4cb0f0a6e) patch - Bump agent to 06391fb
+  
+  - Accept "warning" value for the `log_level` config option.
+  - Add aarch64 Linux musl build.
+  - Improve debug logging from the extension.
+  - Fix high CPU issue for appsignal-agent when nothing could be read from the socket.
+
+### Fixed
+
+- [4d72d791](https://github.com/appsignal/appsignal-elixir/commit/4d72d791401a6b70432eecd5d85a7f6afeec322a) patch - Always return :ok from Appsignal.config_change/3
+- [914f013b](https://github.com/appsignal/appsignal-elixir/commit/914f013b3d6ff865a6067409518e67aafdaf1ae5) patch - Always return the Span from span setter functions, to allow for chaining setter calls with optional values
+
 ## 2.2.15
 
 ### Changed
