@@ -53,12 +53,15 @@ defmodule Appsignal do
     # calling itself once it reached `Application.put_env` in
     # `Appsignal.Config`.
     spawn(fn ->
-      :ok = Appsignal.Nif.stop()
-      :ok = initialize()
+      Appsignal.Nif.stop()
+      initialize()
     end)
+
+    :ok
   end
 
   @doc false
+  @spec initialize() :: :ok
   def initialize do
     case {Config.initialize(), Config.configured_as_active?()} do
       {_, false} ->
