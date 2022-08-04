@@ -1,5 +1,11 @@
 # AppSignal for Elixir Phoenix changelog
 
+## 2.1.2
+
+### Added
+
+- [c915a34](https://github.com/appsignal/appsignal-elixir-phoenix/commit/c915a349fc4507c5266bb59130a118b2ca1e3270) patch - Handle live_component events in LiveView integration
+
 ## 2.1.1
 
 ### Added
