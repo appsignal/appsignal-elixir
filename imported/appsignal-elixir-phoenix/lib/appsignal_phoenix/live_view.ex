@@ -87,7 +87,7 @@ defmodule Appsignal.Phoenix.LiveView do
   end
 
   def handle_event_start(
-        [:phoenix, :live_view, name, :start],
+        [:phoenix, _type, name, :start],
         %{system_time: system_time},
         metadata,
         _event_name
