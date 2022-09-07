@@ -60,12 +60,12 @@ blocks:
             - ERLANG_VERSION=<%= NEWEST_OTP %> ELIXIR_VERSION=main . bin/setup
             - mix compile
             - mix test --no-compile
-        - name: Elixir main, OTP <%= NEWEST_OTP %>, without the NIF loaded
+        - name: Elixir <%= NEWEST_ELIXIR %>, OTP <%= NEWEST_OTP %>, without the NIF loaded
           env_vars:
             - name: MIX_ENV
               value: test_no_nif
           commands:
-            - ERLANG_VERSION=<%= NEWEST_OTP %> ELIXIR_VERSION=main . bin/setup
+            - ERLANG_VERSION=<%= NEWEST_OTP %> ELIXIR_VERSION=<%= NEWEST_ELIXIR %> . bin/setup
             - mix compile
             - mix test --no-compile
 <% VERSIONS.each do |otp_version, elixir_versions| -%>
