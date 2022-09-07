@@ -292,12 +292,10 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     max_source_label_length = max_source_label_length + 1
 
     sources_label =
-      sources
-      |> Enum.map(fn source ->
+      Enum.map_join(sources, "\n", fn source ->
         label = String.pad_trailing("#{source}:", max_source_label_length)
         "      #{label} #{format_value(option_sources[source][key])}"
       end)
-      |> Enum.join("\n")
 
     "\n    Sources:\n#{sources_label}"
   end
