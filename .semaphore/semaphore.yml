@@ -44,17 +44,17 @@ blocks:
             - git submodule init
             - git submodule update
             - test/integration/diagnose/bin/test
-        - name: Elixir main, OTP 24.3
-          commands:
-            - ERLANG_VERSION=24.3 ELIXIR_VERSION=main . bin/setup
-            - mix compile
-            - mix test --no-compile
         - name: Elixir 1.14.0, OTP 24.3, without the NIF loaded
           env_vars:
             - name: MIX_ENV
               value: test_no_nif
           commands:
             - ERLANG_VERSION=24.3 ELIXIR_VERSION=1.14.0 . bin/setup
+            - mix compile
+            - mix test --no-compile
+        - name: Elixir main, OTP 24.3
+          commands:
+            - ERLANG_VERSION=24.3 ELIXIR_VERSION=main . bin/setup
             - mix compile
             - mix test --no-compile
         - name: Elixir 1.14.0, OTP 24.3
