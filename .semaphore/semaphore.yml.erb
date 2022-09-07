@@ -1,0 +1,77 @@
+version: v1.0
+name: AppSignal Elixir Build and Tests
+agent:
+  machine:
+    type: e1-standard-2
+    os_image: ubuntu1804
+blocks:
+  - name: Run linters and tests
+    task:
+      prologue:
+        commands:
+          - checkout
+      jobs:
+        - name: Git Lint (Lintje)
+          commands:
+            - script/lint_git
+        - name: mix compile --warnings-as-errors
+          commands:
+            - ERLANG_VERSION=24.3 ELIXIR_VERSION=1.10.4 . bin/setup
+            - mix compile --warnings-as-errors
+        - name: mix format --check-formatted
+          commands:
+            - ERLANG_VERSION=24.3 ELIXIR_VERSION=1.12.3 . bin/setup
+            - mix format --check-formatted
+        - name: mix credo --strict
+          commands:
+            - ERLANG_VERSION=24.3 ELIXIR_VERSION=1.10.4 . bin/setup
+            - mix credo --strict
+        - name: mix dialyzer
+          commands:
+            - ERLANG_VERSION=24.3 ELIXIR_VERSION=1.10.4 . bin/setup
+            - cache restore dialyzer-plt
+            - MIX_ENV=dev mix dialyzer --plt
+            - cache store dialyzer-plt priv/plts/
+            - MIX_ENV=dev mix dialyzer --format dialyzer
+        - name: Elixir 1.12.3 OTP 24 - Diagnose tests
+          env_vars:
+            - name: LANGUAGE
+              value: elixir
+            - name: MIX_ENV
+              value: dev
+          commands:
+            - ERLANG_VERSION=24.3 ELIXIR_VERSION=1.12.3 . bin/setup
+            - git submodule init
+            - git submodule update
+            - test/integration/diagnose/bin/test
+        - name: Elixir main, OTP 24
+          commands:
+            - ERLANG_VERSION=24.3 ELIXIR_VERSION=main . bin/setup
+            - mix compile
+            - mix test --no-compile
+        - name: Elixir main, OTP 24, without the NIF loaded
+          env_vars:
+            - name: MIX_ENV
+              value: test_no_nif
+          commands:
+            - ERLANG_VERSION=24.3 ELIXIR_VERSION=main . bin/setup
+            - mix compile
+            - mix test --no-compile
+<% {
+  "24.3" => ["1.13.3", "1.12.3", "1.11.4"],
+  "23.3" => ["1.13.3", "1.12.3", "1.11.4", "1.10.4"],
+  "22.3" => ["1.13.3", "1.12.3", "1.11.4", "1.10.4", "1.9.4"],
+  "21.3" => ["1.11.4", "1.10.4", "1.9.4"],
+  "20.3" => ["1.9.4"]
+}.each do |otp_version, elixir_versions| -%>
+<% elixir_versions.each do |elixir_version| -%>
+        - name: Elixir <%= elixir_version %>, OTP <%= otp_version %>
+          commands:
+            - ERLANG_VERSION=<%= otp_version %> ELIXIR_VERSION=<%= elixir_version %> . bin/setup
+            - mix compile
+            - mix test --no-compile
+<% end -%>
+<% end -%>
+      env_vars:
+        - name: MIX_ENV
+          value: test
