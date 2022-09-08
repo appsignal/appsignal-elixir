@@ -1,3 +1,7 @@
+# DO NOT EDIT
+# This is a generated file by the `script/generate_ci_matrix` task.
+# See `.semaphore/semaphore.yml.erb` for the build matrix.
+# Generate this file with `script/generate_ci_matrix`.
 version: v1.0
 name: AppSignal Elixir Build and Tests
 agent:
