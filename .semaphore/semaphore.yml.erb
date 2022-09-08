@@ -19,6 +19,9 @@ blocks:
         - name: Git Lint (Lintje)
           commands:
             - script/lint_git
+        - name: Validate CI matrix
+          commands:
+            - script/validate_ci_matrix
         - name: mix compile --warnings-as-errors
           commands:
             - ERLANG_VERSION=<%= NEWEST_OTP %> ELIXIR_VERSION=<%= NEWEST_ELIXIR %> . bin/setup
