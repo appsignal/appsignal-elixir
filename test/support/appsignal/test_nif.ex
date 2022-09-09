@@ -2,9 +2,6 @@ defmodule Appsignal.Test.Nif do
   use Appsignal.Test.Wrapper
   alias Appsignal.Nif
 
-  defdelegate trace_id(span), to: Nif
-  defdelegate span_id(span), to: Nif
-
   def create_root_span(namespace) do
     add(:create_root_span, {namespace})
     Nif.create_root_span(namespace)
