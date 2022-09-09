@@ -105,6 +105,11 @@ to update the generated `CHANGELOG.md` file upon
 -  Run [`mono publish`](https://github.com/appsignal/mono/#publish) and follow
    the instructions.
 
+### Updating the CI build matrix
+
+1. Update `.semaphore/versions.rb` to add or remove Elixir/OTP versions, or `.semaphore/semaphore.yml.erb`.
+2. Run `script/generate_ci_matrix`.
+
 ## Contributing
 
 Thinking of contributing to our Elixir package? Awesome! 🚀
