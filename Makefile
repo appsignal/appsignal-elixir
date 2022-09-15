@@ -22,21 +22,21 @@ endif
 ifeq ($(shell uname),Darwin)
 	# Specify symbols used in the appsignal_extension.c file.
 	# The symbols are looked up at runtime, when the Elixir Nif library is loaded.
-	LDFLAGS += -dynamiclib -Wl,-fatal_warnings, \
-		-U,_enif_alloc_resource, \
-		-U,_enif_get_double, \
-		-U,_enif_get_int, \
-		-U,_enif_get_long, \
-		-U,_enif_get_resource, \
-		-U,_enif_inspect_iolist_as_binary, \
-		-U,_enif_make_atom, \
-		-U,_enif_make_badarg, \
-		-U,_enif_make_resource, \
-		-U,_enif_make_string, \
-		-U,_enif_make_string_len, \
-		-U,_enif_make_tuple, \
-		-U,_enif_open_resource_type, \
-		-U,_enif_release_resource
+	LDFLAGS += -dynamiclib -Wl,-fatal_warnings \
+		-Wl,-U,_enif_alloc_resource, \
+		-Wl,-U,_enif_get_double \
+		-Wl,-U,_enif_get_int \
+		-Wl,-U,_enif_get_long \
+		-Wl,-U,_enif_get_resource \
+		-Wl,-U,_enif_inspect_iolist_as_binary \
+		-Wl,-U,_enif_make_atom \
+		-Wl,-U,_enif_make_badarg \
+		-Wl,-U,_enif_make_resource \
+		-Wl,-U,_enif_make_string \
+		-Wl,-U,_enif_make_string_len \
+		-Wl,-U,_enif_make_tuple \
+		-Wl,-U,_enif_open_resource_type \
+		-Wl,-U,_enif_release_resource
 endif
 
 all:
