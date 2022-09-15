@@ -1,5 +1,11 @@
 # AppSignal for Elixir changelog
 
+## 2.2.18
+
+### Fixed
+
+- [05f59d31](https://github.com/appsignal/appsignal-elixir/commit/05f59d312b2c093296e2eba8182d81deff2ecdbf) patch - Fix compile-time error about symbol names starting with a comma. Updated the linking script to not include the comma.
+
 ## 2.2.17
 
 ### Fixed
