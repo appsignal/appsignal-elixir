@@ -1,5 +1,12 @@
 # AppSignal for Elixir changelog
 
+## 2.2.17
+
+### Fixed
+
+- [b600e85a](https://github.com/appsignal/appsignal-elixir/commit/b600e85a3940fce6df899e0e78f110d4ceb512cd) patch - Fix compile-time warning about an unused funtion in the extension. The `_set_span_attribute_sql_string` function wasn't hooked up, which didn't produce any issues since the SQL queries coming from Ecto don't need to be sanitized any further (sensitive data is already stripped out). This patch still runs them through AppSignal's SQL sanitizer to fix the warning and behave as promised, theoretically.
+- [910ad1dd](https://github.com/appsignal/appsignal-elixir/commit/910ad1dd956d8c9a2adf526cf21584d0c90a0d98) patch - Fix compile-time error that broke linking on macOS 12.6, more specifically the latest Xcode at this time (version 14.0 14A309).
+
 ## 2.2.16
 
 ### Changed
