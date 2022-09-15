@@ -20,7 +20,23 @@ ifneq ($(OS),Windows_NT)
 endif
 
 ifeq ($(shell uname),Darwin)
-	LDFLAGS += -dynamiclib -undefined dynamic_lookup
+	# Specify symbols used in the appsignal_extension.c file.
+	# The symbols are looked up at runtime, when the Elixir Nif library is loaded.
+	LDFLAGS += -dynamiclib -Wl,-fatal_warnings, \
+		-U,_enif_alloc_resource, \
+		-U,_enif_get_double, \
+		-U,_enif_get_int, \
+		-U,_enif_get_long, \
+		-U,_enif_get_resource, \
+		-U,_enif_inspect_iolist_as_binary, \
+		-U,_enif_make_atom, \
+		-U,_enif_make_badarg, \
+		-U,_enif_make_resource, \
+		-U,_enif_make_string, \
+		-U,_enif_make_string_len, \
+		-U,_enif_make_tuple, \
+		-U,_enif_open_resource_type, \
+		-U,_enif_release_resource
 endif
 
 all:
