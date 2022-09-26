@@ -73,7 +73,7 @@ defmodule Appsignal.FinchTest do
     end
 
     test "sets the span's name" do
-      assert {:ok, [{%Span{}, "FinchTest: GET https://example.com/"}]} = Test.Span.get(:set_name)
+      assert {:ok, [{%Span{}, "GET https://example.com/"}]} = Test.Span.get(:set_name)
     end
 
     test "sets the span's category" do

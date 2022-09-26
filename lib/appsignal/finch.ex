@@ -3,7 +3,6 @@ defmodule Appsignal.Finch do
 
   @tracer Appsignal.Utils.compile_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
   @span Appsignal.Utils.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
-  import Appsignal.Utils, only: [module_name: 1]
 
   @moduledoc false
 
@@ -52,7 +51,7 @@ defmodule Appsignal.Finch do
 
     "http_request"
     |> @tracer.create_span(parent)
-    |> @span.set_name("#{module_name(name)}: #{request.method} #{URI.to_string(uri)}")
+    |> @span.set_name("#{request.method} #{URI.to_string(uri)}")
     |> @span.set_attribute("appsignal:category", "request.finch")
   end
 
