@@ -40,7 +40,7 @@ defmodule Appsignal.Finch do
 
   defp do_finch_request_start(nil, _name, _request), do: nil
 
-  defp do_finch_request_start(parent, name, request) do
+  defp do_finch_request_start(parent, _name, request) do
     uri = %URI{
       scheme: Atom.to_string(request.scheme),
       path: request.path,
