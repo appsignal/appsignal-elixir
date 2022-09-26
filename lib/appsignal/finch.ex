@@ -11,7 +11,8 @@ defmodule Appsignal.Finch do
   def attach do
     handlers = %{
       [:finch, :request, :start] => &__MODULE__.finch_request_start/4,
-      [:finch, :request, :stop] => &__MODULE__.finch_request_stop/4
+      [:finch, :request, :stop] => &__MODULE__.finch_request_stop/4,
+      [:finch, :request, :exception] => &__MODULE__.finch_request_exception/4
     }
 
     for {event, fun} <- handlers do
@@ -57,5 +58,13 @@ defmodule Appsignal.Finch do
 
   def finch_request_stop(_event, _measurements, _metadata, _config) do
     @tracer.close_span(@tracer.current_span())
+  end
+
+  def finch_request_exception(_event, _measurements, metadata, _config) do
+    @tracer.current_span()
+    |> @span.add_error(metadata[:kind], metadata[:reason], metadata[:stacktrace])
+    |> @tracer.close_span()
+
+    @tracer.ignore()
   end
 end

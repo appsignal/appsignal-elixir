@@ -85,6 +85,38 @@ defmodule Appsignal.FinchTest do
     end
   end
 
+  describe "finch_request_exception/4" do
+    setup do
+      start_supervised!(Test.Nif)
+      start_supervised!(Test.Tracer)
+      start_supervised!(Test.Span)
+      start_supervised!(Test.Monitor)
+
+      Appsignal.Tracer.create_span("http_request")
+      reason = %RuntimeError{message: "Exception!"}
+
+      :telemetry.execute(
+        [:finch, :request, :exception],
+        %{},
+        %{kind: :error, reason: reason, stacktrace: []}
+      )
+
+      [reason: reason]
+    end
+
+    test "adds an error to the current span", %{reason: reason} do
+      assert {:ok, [{%Span{}, :error, ^reason, []}]} = Test.Span.get(:add_error)
+    end
+
+    test "closes the span" do
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    end
+
+    test "ignores the process in the registry" do
+      assert :ets.lookup(:"$appsignal_registry", self()) == [{self(), :ignore}]
+    end
+  end
+
   defp attribute(asserted_key, asserted_data) do
     {:ok, attributes} = Test.Span.get(:set_attribute)
 
