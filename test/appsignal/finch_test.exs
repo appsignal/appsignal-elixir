@@ -23,7 +23,7 @@ defmodule Appsignal.FinchTest do
             method: "GET",
             scheme: :https,
             path: "/",
-            query: "",
+            query: "foo=bar",
             host: "example.com",
             port: 443
           }
@@ -54,7 +54,7 @@ defmodule Appsignal.FinchTest do
             method: "GET",
             scheme: :https,
             path: "/",
-            query: nil,
+            query: "foo=bar",
             host: "example.com",
             port: 443
           }
@@ -73,7 +73,7 @@ defmodule Appsignal.FinchTest do
     end
 
     test "sets the span's name" do
-      assert {:ok, [{%Span{}, "GET https://example.com/"}]} = Test.Span.get(:set_name)
+      assert {:ok, [{%Span{}, "GET https://example.com"}]} = Test.Span.get(:set_name)
     end
 
     test "sets the span's category" do

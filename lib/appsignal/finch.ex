@@ -42,13 +42,7 @@ defmodule Appsignal.Finch do
   defp do_finch_request_start(nil, _name, _request), do: nil
 
   defp do_finch_request_start(parent, _name, request) do
-    uri = %URI{
-      scheme: Atom.to_string(request.scheme),
-      path: request.path,
-      query: request.query,
-      host: request.host,
-      port: request.port
-    }
+    uri = %URI{scheme: Atom.to_string(request.scheme), host: request.host, port: request.port}
 
     "http_request"
     |> @tracer.create_span(parent)
