@@ -1,5 +1,11 @@
 # AppSignal for Elixir changelog
 
+## 2.2.19
+
+### Fixed
+
+- [be7825e1](https://github.com/appsignal/appsignal-elixir/commit/be7825e13bdcdb4a8c1100dd39a4afa990ea04fa) patch - Fix extension linking on Alpine Linux ARM64 systems.
+
 ## 2.2.18
 
 ### Fixed
