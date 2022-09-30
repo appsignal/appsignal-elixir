@@ -4,6 +4,9 @@ LIB_DIR ?= ./priv
 CFLAGS = -g -O3 -pedantic -Wall -Wextra -I"$(ERLANG_PATH)" -I"$(LIB_DIR)"
 ifeq ($(shell uname),Linux)
 	LDFLAGS = -Wl,--whole-archive "$(LIB_DIR)"/$(LIB_NAME) -Wl,--no-whole-archive -static-libgcc -Wl,-fatal_warnings
+	ifeq ($(shell arch),aarch64)
+		LDFLAGS += -Wl,--allow-multiple-definition
+	endif
 else
 	ifeq ($(shell uname),FreeBSD)
 		LDFLAGS = -Wl,--whole-archive "$(LIB_DIR)"/$(LIB_NAME) -Wl,--no-whole-archive -Wl,--fatal-warnings
