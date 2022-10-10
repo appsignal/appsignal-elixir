@@ -24,6 +24,7 @@ defmodule Appsignal do
 
     Appsignal.Error.Backend.attach()
     Appsignal.Ecto.attach()
+    Appsignal.Finch.attach()
 
     children = [
       {Appsignal.Tracer, []},
