@@ -1,5 +1,11 @@
 # AppSignal for Elixir changelog
 
+## 2.3.0
+
+### Added
+
+- [2aaf55be](https://github.com/appsignal/appsignal-elixir/commit/2aaf55bea35b339276aa7d5c1933f20f861ecb95) minor - Add Finch integration. HTTP requests performed with Finch will show up as events in the sample view.
+
 ## 2.2.19
 
 ### Fixed
