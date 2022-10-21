@@ -5,6 +5,7 @@ defmodule Appsignal.FinchTest do
   test "attaches to Finch events automatically" do
     assert attached?([:finch, :request, :start])
     assert attached?([:finch, :request, :stop])
+    assert attached?([:finch, :request, :exception])
   end
 
   describe "finch_request_start/4, without a root span" do
@@ -36,6 +37,68 @@ defmodule Appsignal.FinchTest do
     end
   end
 
+  describe "finch_request_start/4, with an unsupported event shape" do
+    setup do
+      start_supervised!(Test.Nif)
+      start_supervised!(Test.Tracer)
+      start_supervised!(Test.Span)
+      start_supervised!(Test.Monitor)
+
+      :telemetry.execute(
+        [:finch, :request, :start],
+        %{},
+        # Finch 0.11 will emit events such as this, where the properties
+        # of the request are not contained in a `request` map.
+        %{
+          method: "GET",
+          scheme: :https,
+          path: "/",
+          host: "example.com",
+          port: 443
+        }
+      )
+    end
+
+    test "does not create a span" do
+      assert Test.Tracer.get(:create_span) == :error
+    end
+
+    test "does not detach the handler" do
+      assert attached?([:finch, :request, :start])
+    end
+  end
+
+  describe "finch_request_stop/4, with an unsupported event shape" do
+    setup do
+      start_supervised!(Test.Nif)
+      start_supervised!(Test.Tracer)
+      start_supervised!(Test.Span)
+      start_supervised!(Test.Monitor)
+
+      :telemetry.execute(
+        [:finch, :request, :stop],
+        %{},
+        # Finch 0.11 will emit events such as this, where the properties
+        # of the request are not contained in a `request` map.
+        %{
+          method: "GET",
+          scheme: :https,
+          path: "/",
+          host: "example.com",
+          port: 443
+        }
+      )
+    end
+
+    test "does not close a span" do
+      assert Test.Tracer.get(:close_span) == :error
+    end
+
+    test "does not detach the handler" do
+      assert attached?([:finch, :request, :stop])
+    end
+  end
+
   describe "finch_request_start/4, and finch_request_stop/4 with a root span" do
     setup do
       start_supervised!(Test.Nif)
@@ -64,7 +127,7 @@ defmodule Appsignal.FinchTest do
       :telemetry.execute(
         [:finch, :request, :stop],
         %{},
-        %{}
+        %{request: %{}}
       )
     end
 
@@ -77,7 +140,7 @@ defmodule Appsignal.FinchTest do
     end
 
     test "sets the span's category" do
-      assert attribute("appsignal:category", "request.finch")
+      assert attribute?("appsignal:category", "request.finch")
     end
 
     test "closes the span" do
@@ -117,7 +180,7 @@ defmodule Appsignal.FinchTest do
     end
   end
 
-  defp attribute(asserted_key, asserted_data) do
+  defp attribute?(asserted_key, asserted_data) do
     {:ok, attributes} = Test.Span.get(:set_attribute)
 
     Enum.any?(attributes, fn {%Span{}, key, data} ->
