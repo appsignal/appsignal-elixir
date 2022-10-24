@@ -1,5 +1,11 @@
 # AppSignal for Elixir changelog
 
+## 2.3.1
+
+### Fixed
+
+- [5a9b4b6c](https://github.com/appsignal/appsignal-elixir/commit/5a9b4b6ced14470e0af7c5111923673798d624d8) patch - Fix FunctionClauseError for old Finch versions. This change explicitly ignores events from old Finch versions, meaning only Finch versions 0.12 and above will be instrumented, but using Finch versions 0.11 and below won't cause an event handler crash.
+
 ## 2.3.0
 
 ### Added
