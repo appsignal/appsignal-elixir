@@ -33,26 +33,24 @@ defmodule Appsignal.StacktraceTest do
       all_location = expected_location ++ [error_info: %{module: Exception}]
       assert Enum.all?(location, &Enum.member?(all_location, &1))
     end
+
+    test "formats stacktrace lines", %{stack: stack} do
+      [line | _] = stack
+      assert Stacktrace.format([line]) == [Exception.format_stacktrace_entry(line)]
+    end
   end
 
-  test "formats stacktrace lines" do
-    stacktrace =
-      [line] = [
-        {:elixir_translator, :guard_op, 2, [file: 'src/elixir_translator.erl', line: 317]}
-      ]
+  describe "get/0, with an exception with included arguments" do
+    setup do
+      String.to_atom("string", :extra_argument)
+    catch
+      :error, _ -> %{stack: Stacktrace.get()}
+    end
 
-    assert Stacktrace.format(stacktrace) == [
-             Exception.format_stacktrace_entry(line)
-           ]
-  end
-
-  test "replaces arguments with arities" do
-    stacktrace = [
-      {:erl_internal, :op_type, [:get_stacktrace, 0], [file: 'erl_internal.erl', line: 212]}
-    ]
-
-    [line] = Stacktrace.format(stacktrace)
-    assert line =~ ~r{\(stdlib( [\w.-]+)?\) erl_internal.erl:212: :erl_internal.op_type/2}
+    test "replaces arguments with arities", %{stack: stack} do
+      [line | _] = Stacktrace.format(stack)
+      assert line =~ ~r{\(elixir( [\w.-]+)?\) String.to_atom/2}
+    end
   end
 
   test "handles lists of binaries" do
