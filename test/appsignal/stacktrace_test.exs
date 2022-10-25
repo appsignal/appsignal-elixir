@@ -49,7 +49,7 @@ defmodule Appsignal.StacktraceTest do
 
     test "replaces arguments with arities", %{stack: stack} do
       [line | _] = Stacktrace.format(stack)
-      assert line =~ ~r{\(elixir( [\w.-]+)?\) String.to_atom/2}
+      assert line =~ ~r{\(elixir( [\w.-]+)?\) String.to_atom\(binary, atom\)}
     end
   end
 
