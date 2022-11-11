@@ -11,42 +11,40 @@ defmodule Appsignal.Utils.TypeTest do
   alias Appsignal.Utils.Type
 
   test "atom" do
-    assert Type.of(:foo) == "atom"
+    assert Type.from(:foo).type == "atom"
   end
 
   test "booleans" do
-    assert Type.of(true) == "boolean"
-    assert Type.of(false) == "boolean"
+    assert Type.from(true).type == "boolean"
+    assert Type.from(false).type == "boolean"
   end
 
   test "nils" do
-    assert Type.of(nil) == "nil"
+    assert Type.from(nil).type == "nil"
   end
 
   test "binary" do
-    assert Type.of("bar") == "binary"
+    assert Type.from("bar").type == "binary"
   end
 
   test "bitstring" do
-    assert Type.of(<<1::1>>) == "bitstring"
+    assert Type.from(<<1::1>>).type == "bitstring"
   end
 
   test "function" do
-    assert Type.of(fn() -> end) == "function"
+    assert Type.from(fn() -> end).type == "function"
   end
 
   test "float" do
-    assert Type.of(1.2) == "float"
+    assert Type.from(1.2).type == "float"
   end
 
   test "integer" do
-    assert Type.of(1) == "integer"
+    assert Type.from(1).type == "integer"
   end
 
   test "pid" do
-    assert '<0.0.0>'
-           |> :erlang.list_to_pid()
-           |> Type.of() == "pid"
+    assert Type.from(:erlang.list_to_pid('<0.0.0>')).type == "pid"
   end
 
   test "port" do
@@ -58,39 +56,39 @@ defmodule Appsignal.Utils.TypeTest do
   end
 
   test "empty tuple" do
-    assert Type.of({}) == "{}"
+    assert Type.from({}).type == "{}"
   end
 
   test "non-empty tuple" do
-    assert Type.of({:foo, "bar"}) == "{atom, binary}"
+    assert Type.from({:foo, "bar"}).type == "{atom, binary}"
   end
 
   test "empty list" do
-    assert Type.of([]) == "[]"
+    assert Type.from([]).type == "[]"
   end
 
   test "non-empty list" do
-    assert Type.of([:foo]) == "[atom]"
+    assert Type.from([:foo]).type == "[atom]"
   end
 
   test "keyword list" do
-    assert Type.of([foo: "bar"]) == "[{atom, binary}]"
+    assert Type.from([foo: "bar"]).type == "[{atom, binary}]"
   end
 
   test "empty map" do
-    assert Type.of(%{}) == "%{}"
+    assert Type.from(%{}).type == "%{}"
   end
 
   test "non-empty map" do
-    assert Type.of(%{foo: "bar"}) == "%{atom => binary}"
+    assert Type.from(%{foo: "bar"}).type == "%{atom => binary}"
   end
 
   test "empty struct" do
-    assert Type.of(%EmptyStruct{}) == "%EmptyStruct{}"
+    assert Type.from(%EmptyStruct{}).type == "%EmptyStruct{}"
   end
 
   test "non-empty struct" do
-    assert Type.of(%NonEmptyStruct{foo: 1}) == "%NonEmptyStruct{atom => integer}"
+    assert Type.from(%NonEmptyStruct{foo: 1}).type == "%NonEmptyStruct{atom => integer}"
   end
 
   test "inspect" do
