@@ -31,7 +31,7 @@ defmodule Appsignal.Ecto do
 
     case :telemetry.attach({__MODULE__, event}, event, &__MODULE__.handle_event/4, :ok) do
       :ok ->
-        Appsignal.Logger.debug("Appsignal.Ecto attached to #{inspect(event)}")
+        Appsignal.IntegrationLogger.debug("Appsignal.Ecto attached to #{inspect(event)}")
 
       {:error, _} = error ->
         Logger.warn("Appsignal.Ecto not attached to #{inspect(event)}: #{inspect(error)}")

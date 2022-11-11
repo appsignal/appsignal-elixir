@@ -1,4 +1,4 @@
-defmodule Appsignal.LoggerTest do
+defmodule Appsignal.IntegrationLoggerTest do
   import AppsignalTest.Utils
   use ExUnit.Case
 
@@ -11,11 +11,11 @@ defmodule Appsignal.LoggerTest do
 
   test "all methods log messages when config log level is trace" do
     with_config(%{log_level: "trace"}, fn ->
-      Appsignal.Logger.trace("trace!")
-      Appsignal.Logger.debug("debug!")
-      Appsignal.Logger.info("info!")
-      Appsignal.Logger.warn("warning!")
-      Appsignal.Logger.error("error!")
+      Appsignal.IntegrationLogger.trace("trace!")
+      Appsignal.IntegrationLogger.debug("debug!")
+      Appsignal.IntegrationLogger.info("info!")
+      Appsignal.IntegrationLogger.warn("warning!")
+      Appsignal.IntegrationLogger.error("error!")
     end)
 
     until(fn -> assert FakeFile.count() == 5 end)
@@ -39,11 +39,11 @@ defmodule Appsignal.LoggerTest do
 
   test "only error method logs messages when config log level is error" do
     with_config(%{log_level: "error"}, fn ->
-      Appsignal.Logger.trace("trace!")
-      Appsignal.Logger.debug("debug!")
-      Appsignal.Logger.info("info!")
-      Appsignal.Logger.warn("warning!")
-      Appsignal.Logger.error("error!")
+      Appsignal.IntegrationLogger.trace("trace!")
+      Appsignal.IntegrationLogger.debug("debug!")
+      Appsignal.IntegrationLogger.info("info!")
+      Appsignal.IntegrationLogger.warn("warning!")
+      Appsignal.IntegrationLogger.error("error!")
     end)
 
     until(fn -> assert FakeFile.count() == 1 end)
@@ -54,7 +54,7 @@ defmodule Appsignal.LoggerTest do
 
   test "logs info message when config log level is debug" do
     with_config(%{log_level: "debug"}, fn ->
-      Appsignal.Logger.info("info!")
+      Appsignal.IntegrationLogger.info("info!")
     end)
 
     until(fn -> assert FakeFile.count() == 1 end)
@@ -65,7 +65,7 @@ defmodule Appsignal.LoggerTest do
 
   test "logs debug message when config log level is debug" do
     with_config(%{log_level: "debug"}, fn ->
-      Appsignal.Logger.debug("debug!")
+      Appsignal.IntegrationLogger.debug("debug!")
     end)
 
     until(fn -> assert FakeFile.count() == 1 end)
@@ -76,7 +76,7 @@ defmodule Appsignal.LoggerTest do
 
   test "does not log trace message when config log level is debug" do
     with_config(%{log_level: "debug"}, fn ->
-      Appsignal.Logger.trace("trace!")
+      Appsignal.IntegrationLogger.trace("trace!")
     end)
 
     repeatedly(fn -> assert FakeFile.count() == 0 end)
@@ -84,7 +84,7 @@ defmodule Appsignal.LoggerTest do
 
   test "logs to file by default" do
     with_config(%{}, fn ->
-      Appsignal.Logger.info("info!")
+      Appsignal.IntegrationLogger.info("info!")
     end)
 
     until(fn ->
@@ -100,7 +100,7 @@ defmodule Appsignal.LoggerTest do
 
   test "logs to stdout when config log is stdout" do
     with_config(%{log: "stdout"}, fn ->
-      Appsignal.Logger.info("info!")
+      Appsignal.IntegrationLogger.info("info!")
     end)
 
     until(fn ->
@@ -115,7 +115,7 @@ defmodule Appsignal.LoggerTest do
 
   test "logs to stderr instead of stdout when stderr is set" do
     with_config(%{log: "stdout"}, fn ->
-      Appsignal.Logger.warn("warning!", stderr: true)
+      Appsignal.IntegrationLogger.warn("warning!", stderr: true)
     end)
 
     until(fn ->
@@ -130,7 +130,7 @@ defmodule Appsignal.LoggerTest do
 
   test "logs to stderr and to file when stderr is set" do
     with_config(%{}, fn ->
-      Appsignal.Logger.warn("warning!", stderr: true)
+      Appsignal.IntegrationLogger.warn("warning!", stderr: true)
     end)
 
     until(fn ->
@@ -154,7 +154,7 @@ defmodule Appsignal.LoggerTest do
     on_exit(fn -> File.rm_rf("/tmp/foo") end)
 
     with_config(%{log_path: "/tmp/foo"}, fn ->
-      Appsignal.Logger.warn("warning!")
+      Appsignal.IntegrationLogger.warn("warning!")
     end)
 
     until(fn -> assert FakeFile.count() == 1 end)

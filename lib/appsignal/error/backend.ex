@@ -15,7 +15,7 @@ defmodule Appsignal.Error.Backend do
   def attach do
     case Logger.add_backend(Appsignal.Error.Backend) do
       {:error, error} -> Logger.warn("Appsignal.Error.Backend not attached to Logger: #{error}")
-      _ -> Appsignal.Logger.debug("Appsignal.Error.Backend attached to Logger")
+      _ -> Appsignal.IntegrationLogger.debug("Appsignal.Error.Backend attached to Logger")
     end
   end
 

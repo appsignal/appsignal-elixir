@@ -44,7 +44,7 @@ defmodule Appsignal do
 
   @doc false
   def stop(_state) do
-    Appsignal.Logger.debug("AppSignal stopping.")
+    Appsignal.IntegrationLogger.debug("AppSignal stopping.")
   end
 
   @doc false
@@ -69,12 +69,12 @@ defmodule Appsignal do
         Logger.info("AppSignal disabled.")
 
       {:ok, true} ->
-        Appsignal.Logger.debug("AppSignal starting.")
+        Appsignal.IntegrationLogger.debug("AppSignal starting.")
         Config.write_to_environment()
         Appsignal.Nif.start()
 
         if Appsignal.Nif.loaded?() do
-          Appsignal.Logger.debug("AppSignal started.")
+          Appsignal.IntegrationLogger.debug("AppSignal started.")
         else
           log_nif_loading_error()
         end
@@ -154,12 +154,12 @@ defmodule Appsignal do
     {install_arch, install_target} = fetch_installed_architecture_target()
 
     if arch == install_arch && target == install_target do
-      Appsignal.Logger.error(
+      Appsignal.IntegrationLogger.error(
         "AppSignal failed to load the extension. Please run the diagnose tool and email us at support@appsignal.com: https://docs.appsignal.com/elixir/command-line/diagnose.html\n",
         stderr: true
       )
     else
-      Appsignal.Logger.error(
+      Appsignal.IntegrationLogger.error(
         "The AppSignal NIF was installed for architecture '#{install_arch}-#{install_target}', but the current architecture is '#{arch}-#{target}'. Please reinstall the AppSignal package on the host the app is started: mix deps.compile appsignal --force",
         stderr: true
       )
@@ -176,7 +176,7 @@ defmodule Appsignal do
             {parse_architecture(arch), target}
 
           {:error, reason} ->
-            Appsignal.Logger.error(
+            Appsignal.IntegrationLogger.error(
               "Failed to parse the AppSignal 'install.report' file: #{inspect(reason)}",
               stderr: true
             )
@@ -185,7 +185,7 @@ defmodule Appsignal do
         end
 
       {:error, reason} ->
-        Appsignal.Logger.error(
+        Appsignal.IntegrationLogger.error(
           "Failed to read the AppSignal 'install.report' file: #{inspect(reason)}",
           stderr: true
         )

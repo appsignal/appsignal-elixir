@@ -1,4 +1,4 @@
-defmodule Appsignal.Logger do
+defmodule Appsignal.IntegrationLogger do
   require Appsignal.Utils
 
   @io Appsignal.Utils.compile_env(:appsignal, :io, IO)
