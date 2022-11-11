@@ -380,6 +380,11 @@ defmodule Appsignal.ConfigTest do
       assert %{log_path: ^log_path} = with_config(%{log_path: log_path}, &init_config/0)
     end
 
+    test "logging_endpoint" do
+      assert %{logging_endpoint: "https://push.staging.lol"} =
+               with_config(%{logging_endpoint: "https://push.staging.lol"}, &init_config/0)
+    end
+
     test "name" do
       assert %{name: "AppSignal test suite app"} =
                with_config(%{name: "AppSignal test suite app"}, &init_config/0)
@@ -649,6 +654,14 @@ defmodule Appsignal.ConfigTest do
                %{"APPSIGNAL_LOG_PATH" => log_path},
                &init_config/0
              ) == default_configuration() |> Map.put(:log_path, log_path)
+    end
+
+    test "logging_endpoint" do
+      assert with_env(
+               %{"APPSIGNAL_LOGGING_ENDPOINT" => "https://push.staging.lol"},
+               &init_config/0
+             ) ==
+               default_configuration() |> Map.put(:logging_endpoint, "https://push.staging.lol")
     end
 
     test "otp_app" do
@@ -982,6 +995,7 @@ defmodule Appsignal.ConfigTest do
           log: "stdout",
           log_level: "warn",
           log_path: "/tmp",
+          logging_endpoint: "https://push.staging.lol",
           name: "AppSignal test suite app",
           running_in_container: false,
           working_dir_path: "/tmp/appsignal-deprecated",
@@ -1018,6 +1032,7 @@ defmodule Appsignal.ConfigTest do
           assert Nif.env_get("_APPSIGNAL_LOG") == 'stdout'
           assert Nif.env_get("_APPSIGNAL_LOG_LEVEL") == 'warn'
           assert Nif.env_get("_APPSIGNAL_LOG_FILE_PATH") == '/tmp/appsignal.log'
+          assert Nif.env_get("_APPSIGNAL_LOGGING_ENDPOINT") == 'https://push.staging.lol'
           assert Nif.env_get("_APPSIGNAL_PUSH_API_ENDPOINT") == 'https://push.staging.lol'
           assert Nif.env_get("_APPSIGNAL_PUSH_API_KEY") == '00000000-0000-0000-0000-000000000000'
           assert Nif.env_get("_APPSIGNAL_RUNNING_IN_CONTAINER") == 'false'
@@ -1121,6 +1136,7 @@ defmodule Appsignal.ConfigTest do
       ignore_errors: [],
       ignore_namespaces: [],
       log: "file",
+      logging_endpoint: "https://appsignal-endpoint.net",
       request_headers: ~w(
         accept accept-charset accept-encoding accept-language cache-control
         connection content-length range

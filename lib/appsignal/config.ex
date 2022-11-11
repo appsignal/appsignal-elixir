@@ -21,6 +21,7 @@ defmodule Appsignal.Config do
     ignore_errors: [],
     ignore_namespaces: [],
     log: "file",
+    logging_endpoint: "https://appsignal-endpoint.net",
     request_headers: ~w(
       accept accept-charset accept-encoding accept-language cache-control
       connection content-length range
@@ -233,6 +234,7 @@ defmodule Appsignal.Config do
     "APPSIGNAL_LOG" => :log,
     "APPSIGNAL_LOG_LEVEL" => :log_level,
     "APPSIGNAL_LOG_PATH" => :log_path,
+    "APPSIGNAL_LOGGING_ENDPOINT" => :logging_endpoint,
     "APPSIGNAL_OTP_APP" => :otp_app,
     "APPSIGNAL_PUSH_API_ENDPOINT" => :endpoint,
     "APPSIGNAL_PUSH_API_KEY" => :push_api_key,
@@ -251,7 +253,7 @@ defmodule Appsignal.Config do
   @string_keys ~w(
     APPSIGNAL_APP_NAME APPSIGNAL_PUSH_API_KEY APPSIGNAL_PUSH_API_ENDPOINT APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH
     APPSIGNAL_HOSTNAME APPSIGNAL_HTTP_PROXY APPSIGNAL_LOG APPSIGNAL_LOG_LEVEL APPSIGNAL_LOG_PATH
-    APPSIGNAL_WORKING_DIR_PATH APPSIGNAL_WORKING_DIRECTORY_PATH APPSIGNAL_CA_FILE_PATH
+    APPSIGNAL_LOGGING_ENDPOINT APPSIGNAL_WORKING_DIR_PATH APPSIGNAL_WORKING_DIRECTORY_PATH APPSIGNAL_CA_FILE_PATH
     APPSIGNAL_DIAGNOSE_ENDPOINT APP_REVISION
   )
   @bool_keys ~w(
@@ -369,6 +371,7 @@ defmodule Appsignal.Config do
     Nif.env_put("_APPSIGNAL_LOG", config[:log])
     Nif.env_put("_APPSIGNAL_LOG_LEVEL", config[:log_level] || "")
     Nif.env_put("_APPSIGNAL_LOG_FILE_PATH", to_string(log_file_path()))
+    Nif.env_put("_APPSIGNAL_LOGGING_ENDPOINT", config[:logging_endpoint] || "")
     Nif.env_put("_APPSIGNAL_PUSH_API_ENDPOINT", config[:endpoint] || "")
     Nif.env_put("_APPSIGNAL_PUSH_API_KEY", config[:push_api_key] || "")
 
