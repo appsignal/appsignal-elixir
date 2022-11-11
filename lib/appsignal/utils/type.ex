@@ -1,4 +1,10 @@
 defmodule Appsignal.Utils.Type do
+  defstruct [:type]
+
+  def from(term) do
+    %__MODULE__{type: of(term)}
+  end
+
   def of(term) when is_boolean(term), do: "boolean"
 
   def of(nil), do: "nil"
@@ -42,4 +48,8 @@ defmodule Appsignal.Utils.Type do
   end
 
   def of(_term), do: "unknown"
+end
+
+defimpl Inspect, for: Appsignal.Utils.Type do
+  def inspect(%Appsignal.Utils.Type{type: type}, _opts), do: type
 end
