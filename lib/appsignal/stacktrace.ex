@@ -1,22 +1,3 @@
-defmodule ArgumentType do
-  defstruct [:value, :type]
-
-  def from_term(term) do
-    %ArgumentType{value: term, type: typeof(term)}
-  end
-
-  for type <-
-        ~w[boolean binary bitstring float function integer list map nil pid port reference tuple atom] do
-    defp typeof(x) when unquote(:"is_#{type}")(x), do: unquote(type)
-  end
-
-  defp typeof(_), do: "unknown"
-end
-
-defimpl Inspect, for: ArgumentType do
-  def inspect(%ArgumentType{type: type}, _opts), do: type
-end
-
 defmodule Appsignal.Stacktrace do
   @moduledoc false
 
@@ -52,6 +33,6 @@ defmodule Appsignal.Stacktrace do
   end
 
   defp to_types(arguments) do
-    Enum.map(arguments, &ArgumentType.from_term/1)
+    Enum.map(arguments, &Appsignal.Utils.Type.from/1)
   end
 end
