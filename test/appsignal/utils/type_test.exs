@@ -92,4 +92,8 @@ defmodule Appsignal.Utils.TypeTest do
   test "non-empty struct" do
     assert Type.of(%NonEmptyStruct{foo: 1}) == "%NonEmptyStruct{atom => integer}"
   end
+
+  test "inspect" do
+    assert inspect(Type.from("string")) == "binary"
+  end
 end
