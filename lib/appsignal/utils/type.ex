@@ -49,3 +49,7 @@ end
 defimpl Inspect, for: Appsignal.Utils.Type do
   def inspect(%Appsignal.Utils.Type{type: type}, _opts), do: type
 end
+
+defimpl String.Chars, for: Appsignal.Utils.Type do
+  def to_string(%Appsignal.Utils.Type{type: type}), do: type
+end

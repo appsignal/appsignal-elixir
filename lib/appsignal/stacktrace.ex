@@ -33,6 +33,6 @@ defmodule Appsignal.Stacktrace do
   end
 
   defp to_types(arguments) do
-    Enum.map(arguments, &Appsignal.Utils.Type.from/1)
+    Enum.map(arguments, &Appsignal.Utils.ArgumentCleaner.clean/1)
   end
 end
