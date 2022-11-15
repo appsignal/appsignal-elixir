@@ -1,3 +1,5 @@
+# credo:disable-for-this-file Credo.Check.Refactor.CyclomaticComplexity
+
 defmodule Mix.Tasks.Compile.Appsignal do
   use Mix.Task
 
@@ -124,12 +126,19 @@ defmodule Appsignal.Mixfile do
         _ -> []
       end
 
+    plug_version =
+      case Version.compare(system_version, "1.10.0") do
+        :lt -> "~> 1.13.6"
+        _ -> "~> 1.14"
+      end
+
     [
       {:benchee, "~> 1.0", only: :bench},
       {:hackney, "~> 1.6"},
       {:jason, "~> 1.0", optional: true},
       {:poison, poison_version, optional: true},
       {:decorator, decorator_version},
+      {:plug, plug_version, only: [:test, :test_no_nif]},
       {:plug_cowboy, "~> 1.0", only: [:test, :test_no_nif]},
       {:bypass, "~> 0.6.0", only: [:test, :test_no_nif]},
       {:ex_doc, "~> 0.12", only: :dev, runtime: false},
