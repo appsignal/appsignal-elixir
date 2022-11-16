@@ -47,7 +47,7 @@ defmodule Appsignal.StacktraceTest do
       :error, _ -> %{stack: Stacktrace.get()}
     end
 
-    test "replaces arguments with arities", %{stack: stack} do
+    test "replaces arguments with types", %{stack: stack} do
       [line | _] = Stacktrace.format(stack)
       assert line =~ ~r{\(elixir( [\w.-]+)?\) String.to_atom\(binary, atom\)}
     end
