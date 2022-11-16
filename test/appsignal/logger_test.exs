@@ -7,14 +7,6 @@ defmodule Appsignal.LoggerTest do
     :ok
   end
 
-  test "trace/3 sends the trace log call through the extension" do
-    metadata = %{some: "metadata"}
-
-    Logger.trace("app", "This is a trace", metadata)
-
-    assert [{"app", 1, "This is a trace", _encoded_metadata}] = Test.Nif.get!(:log)
-  end
-
   test "debug/3 sends the debug log call through the extension" do
     metadata = %{some: "metadata"}
 
@@ -31,12 +23,20 @@ defmodule Appsignal.LoggerTest do
     assert [{"app", 3, "This is an info", _encoded_metadata}] = Test.Nif.get!(:log)
   end
 
-  test "warn/3 sends the warn log call through the extension" do
+  test "notice/3 sends the notice log call through the extension" do
     metadata = %{some: "metadata"}
 
-    Logger.warn("app", "This is a warn", metadata)
+    Logger.notice("app", "This is a notice", metadata)
 
-    assert [{"app", 5, "This is a warn", _encoded_metadata}] = Test.Nif.get!(:log)
+    assert [{"app", 4, "This is a notice", _encoded_metadata}] = Test.Nif.get!(:log)
+  end
+
+  test "warning/3 sends the warning log call through the extension" do
+    metadata = %{some: "metadata"}
+
+    Logger.warning("app", "This is a warning", metadata)
+
+    assert [{"app", 5, "This is a warning", _encoded_metadata}] = Test.Nif.get!(:log)
   end
 
   test "error/3 sends the error log call through the extension" do
@@ -45,5 +45,29 @@ defmodule Appsignal.LoggerTest do
     Logger.error("app", "This is an error", metadata)
 
     assert [{"app", 6, "This is an error", _encoded_metadata}] = Test.Nif.get!(:log)
+  end
+
+  test "critical/3 sends the critical log call through the extension" do
+    metadata = %{some: "metadata"}
+
+    Logger.critical("app", "This is a critical", metadata)
+
+    assert [{"app", 7, "This is a critical", _encoded_metadata}] = Test.Nif.get!(:log)
+  end
+
+  test "alert/3 sends the alert log call through the extension" do
+    metadata = %{some: "metadata"}
+
+    Logger.alert("app", "This is an alert", metadata)
+
+    assert [{"app", 8, "This is an alert", _encoded_metadata}] = Test.Nif.get!(:log)
+  end
+
+  test "emergency/3 sends the emergency log call through the extension" do
+    metadata = %{some: "metadata"}
+
+    Logger.emergency("app", "This is an emergency", metadata)
+
+    assert [{"app", 9, "This is an emergency", _encoded_metadata}] = Test.Nif.get!(:log)
   end
 end
