@@ -46,4 +46,9 @@ defmodule Appsignal.Test.Nif do
     add(:close_span_with_timestamp, {reference, sec, nsec})
     Nif.close_span_with_timestamp(reference, sec, nsec)
   end
+
+  def log(group, severity, message, metadata) do
+    add(:log, {group, severity, message, metadata})
+    Nif.log(group, severity, message, metadata)
+  end
 end

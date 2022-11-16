@@ -18,7 +18,7 @@ defmodule Appsignal.Finch do
     for {event, fun} <- handlers do
       case :telemetry.attach({__MODULE__, event}, event, fun, :ok) do
         :ok ->
-          _ = Appsignal.Logger.debug("Appsignal.Finch attached to #{inspect(event)}")
+          _ = Appsignal.IntegrationLogger.debug("Appsignal.Finch attached to #{inspect(event)}")
 
           :ok
 

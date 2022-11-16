@@ -1,186 +1,73 @@
 defmodule Appsignal.LoggerTest do
-  import AppsignalTest.Utils
   use ExUnit.Case
+  alias Appsignal.{Logger, Test}
 
   setup do
-    Application.delete_env(:appsignal, :"$log_file_path")
-    start_supervised!(FakeIO)
-    start_supervised!(FakeFile)
+    start_supervised(Test.Nif)
     :ok
   end
 
-  test "all methods log messages when config log level is trace" do
-    with_config(%{log_level: "trace"}, fn ->
-      Appsignal.Logger.trace("trace!")
-      Appsignal.Logger.debug("debug!")
-      Appsignal.Logger.info("info!")
-      Appsignal.Logger.warn("warning!")
-      Appsignal.Logger.error("error!")
-    end)
+  test "debug/3 sends the debug log call through the extension" do
+    metadata = %{some: "metadata"}
 
-    until(fn -> assert FakeFile.count() == 5 end)
+    Logger.debug("app", "This is a debug", metadata)
 
-    expected = [
-      %{"level" => "ERROR", "message" => "error!"},
-      %{"level" => "WARNING", "message" => "warning!"},
-      %{"level" => "INFO", "message" => "info!"},
-      %{"level" => "DEBUG", "message" => "debug!"},
-      %{"level" => "TRACE", "message" => "trace!"}
-    ]
-
-    actual =
-      Enum.map(
-        FakeFile.all(),
-        fn {_, output, _} -> match_file_format(output) end
-      )
-
-    assert expected == actual
+    assert [{"app", 2, "This is a debug", _encoded_metadata}] = Test.Nif.get!(:log)
   end
 
-  test "only error method logs messages when config log level is error" do
-    with_config(%{log_level: "error"}, fn ->
-      Appsignal.Logger.trace("trace!")
-      Appsignal.Logger.debug("debug!")
-      Appsignal.Logger.info("info!")
-      Appsignal.Logger.warn("warning!")
-      Appsignal.Logger.error("error!")
-    end)
+  test "info/3 sends the info call through the extension" do
+    metadata = %{some: "metadata"}
 
-    until(fn -> assert FakeFile.count() == 1 end)
+    Logger.info("app", "This is an info", metadata)
 
-    [{_, output, _}] = FakeFile.all()
-    assert %{"level" => "ERROR", "message" => "error!"} = match_file_format(output)
+    assert [{"app", 3, "This is an info", _encoded_metadata}] = Test.Nif.get!(:log)
   end
 
-  test "logs info message when config log level is debug" do
-    with_config(%{log_level: "debug"}, fn ->
-      Appsignal.Logger.info("info!")
-    end)
+  test "notice/3 sends the notice log call through the extension" do
+    metadata = %{some: "metadata"}
 
-    until(fn -> assert FakeFile.count() == 1 end)
+    Logger.notice("app", "This is a notice", metadata)
 
-    [{_, output, _}] = FakeFile.all()
-    assert %{"level" => "INFO", "message" => "info!"} = match_file_format(output)
+    assert [{"app", 4, "This is a notice", _encoded_metadata}] = Test.Nif.get!(:log)
   end
 
-  test "logs debug message when config log level is debug" do
-    with_config(%{log_level: "debug"}, fn ->
-      Appsignal.Logger.debug("debug!")
-    end)
+  test "warning/3 sends the warning log call through the extension" do
+    metadata = %{some: "metadata"}
 
-    until(fn -> assert FakeFile.count() == 1 end)
+    Logger.warning("app", "This is a warning", metadata)
 
-    [{_, output, _}] = FakeFile.all()
-    assert %{"level" => "DEBUG", "message" => "debug!"} = match_file_format(output)
+    assert [{"app", 5, "This is a warning", _encoded_metadata}] = Test.Nif.get!(:log)
   end
 
-  test "does not log trace message when config log level is debug" do
-    with_config(%{log_level: "debug"}, fn ->
-      Appsignal.Logger.trace("trace!")
-    end)
+  test "error/3 sends the error log call through the extension" do
+    metadata = %{some: "metadata"}
 
-    repeatedly(fn -> assert FakeFile.count() == 0 end)
+    Logger.error("app", "This is an error", metadata)
+
+    assert [{"app", 6, "This is an error", _encoded_metadata}] = Test.Nif.get!(:log)
   end
 
-  test "logs to file by default" do
-    with_config(%{}, fn ->
-      Appsignal.Logger.info("info!")
-    end)
+  test "critical/3 sends the critical log call through the extension" do
+    metadata = %{some: "metadata"}
 
-    until(fn ->
-      assert FakeFile.count() == 1
-      assert FakeIO.count() == 0
-    end)
+    Logger.critical("app", "This is a critical", metadata)
 
-    [{file, output, modes}] = FakeFile.all()
-    assert file == "/tmp/appsignal.log"
-    assert %{"level" => "INFO", "message" => "info!"} = match_file_format(output)
-    assert modes == [:append, :utf8]
+    assert [{"app", 7, "This is a critical", _encoded_metadata}] = Test.Nif.get!(:log)
   end
 
-  test "logs to stdout when config log is stdout" do
-    with_config(%{log: "stdout"}, fn ->
-      Appsignal.Logger.info("info!")
-    end)
+  test "alert/3 sends the alert log call through the extension" do
+    metadata = %{some: "metadata"}
 
-    until(fn ->
-      assert FakeIO.count() == 1
-      assert FakeFile.count() == 0
-    end)
+    Logger.alert("app", "This is an alert", metadata)
 
-    [{device, output}] = FakeIO.all()
-    assert device == :stdio
-    assert %{"level" => "INFO", "message" => "info!"} = match_stdout_format(output)
+    assert [{"app", 8, "This is an alert", _encoded_metadata}] = Test.Nif.get!(:log)
   end
 
-  test "logs to stderr instead of stdout when stderr is set" do
-    with_config(%{log: "stdout"}, fn ->
-      Appsignal.Logger.warn("warning!", stderr: true)
-    end)
+  test "emergency/3 sends the emergency log call through the extension" do
+    metadata = %{some: "metadata"}
 
-    until(fn ->
-      assert FakeIO.count() == 1
-      assert FakeFile.count() == 0
-    end)
+    Logger.emergency("app", "This is an emergency", metadata)
 
-    [{device, output}] = FakeIO.all()
-    assert device == :stderr
-    assert %{"level" => "WARNING", "message" => "warning!"} = match_stderr_format(output)
-  end
-
-  test "logs to stderr and to file when stderr is set" do
-    with_config(%{}, fn ->
-      Appsignal.Logger.warn("warning!", stderr: true)
-    end)
-
-    until(fn ->
-      assert FakeIO.count() == 1
-      assert FakeFile.count() == 1
-    end)
-
-    [{device, device_output}] = FakeIO.all()
-    [{file, file_output, modes}] = FakeFile.all()
-
-    assert device == :stderr
-    assert %{"level" => "WARNING", "message" => "warning!"} = match_stderr_format(device_output)
-
-    assert file == "/tmp/appsignal.log"
-    assert %{"level" => "WARNING", "message" => "warning!"} = match_file_format(file_output)
-    assert modes == [:append, :utf8]
-  end
-
-  test "will log to the given path when log_path is set" do
-    File.mkdir("/tmp/foo")
-    on_exit(fn -> File.rm_rf("/tmp/foo") end)
-
-    with_config(%{log_path: "/tmp/foo"}, fn ->
-      Appsignal.Logger.warn("warning!")
-    end)
-
-    until(fn -> assert FakeFile.count() == 1 end)
-
-    [{file, _, _}] = FakeFile.all()
-    assert file == "/tmp/foo/appsignal.log"
-  end
-
-  defp match_file_format(output) do
-    regex = ~r/^\[[\d-:T]{19} \(process\) #\d+\]\[(?<level>\w+)\] (?<message>.*)\n$/
-    match_format(output, regex)
-  end
-
-  defp match_stdout_format(output) do
-    regex = ~r/^\n\[[\d-:T]{19} \(process\) #\d+\]\[appsignal\]\[(?<level>\w+)\] (?<message>.*)$/
-    match_format(output, regex)
-  end
-
-  defp match_stderr_format(output) do
-    regex = ~r/^\n\[appsignal\]\[(?<level>\w+)\] (?<message>.*)$/
-    match_format(output, regex)
-  end
-
-  defp match_format(output, regex) do
-    captures = Regex.named_captures(regex, output)
-    assert captures != nil
-    captures
+    assert [{"app", 9, "This is an emergency", _encoded_metadata}] = Test.Nif.get!(:log)
   end
 end

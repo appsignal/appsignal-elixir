@@ -47,7 +47,7 @@ defmodule Appsignal.Monitor do
 
     pids = MapSet.new(monitored_pids())
 
-    Appsignal.Logger.debug(
+    Appsignal.IntegrationLogger.debug(
       "Synchronizing monitored PIDs in Appsignal.Monitor (#{MapSet.size(pids)})"
     )
 
