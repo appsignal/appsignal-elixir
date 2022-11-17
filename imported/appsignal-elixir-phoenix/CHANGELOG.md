@@ -1,5 +1,11 @@
 # AppSignal for Elixir Phoenix changelog
 
+## 2.1.3
+
+### Fixed
+
+- [916db4b](https://github.com/appsignal/appsignal-elixir-phoenix/commit/916db4be845a8f46f293106776a2bf32683e5043) patch - Fix Appsignal.Logger error on AppSignal for Elixir 1.4.0
+
 ## 2.1.2
 
 ### Added
