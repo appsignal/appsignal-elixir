@@ -24,11 +24,15 @@ defmodule Appsignal.Stacktrace do
 
   defp format_stacktrace_entry(entry) when is_binary(entry), do: entry
 
-  defp format_stacktrace_entry({module, function, arity, location}) when is_list(arity) do
-    format_stacktrace_entry({module, function, length(arity), location})
+  defp format_stacktrace_entry({module, function, arguments, location}) when is_list(arguments) do
+    Exception.format_stacktrace_entry({module, function, to_types(arguments), location})
   end
 
   defp format_stacktrace_entry(entry) do
     Exception.format_stacktrace_entry(entry)
+  end
+
+  defp to_types(arguments) do
+    Enum.map(arguments, &Appsignal.Utils.ArgumentCleaner.clean/1)
   end
 end
