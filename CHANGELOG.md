@@ -1,5 +1,15 @@
 # AppSignal for Elixir changelog
 
+## 2.4.0
+
+### Added
+
+- [beb0c43b](https://github.com/appsignal/appsignal-elixir/commit/beb0c43b16b5f1efb9ba43c0449b682efd302375) minor - Support log collection from Elixir apps using the new AppSignal Logging feature. Learn more about [AppSignal's Logging on our docs](https://docs.appsignal.com/logging/platforms/integrations/nodejs.html).
+
+### Changed
+
+- [b2dddb11](https://github.com/appsignal/appsignal-elixir/commit/b2dddb111d80bfaa66eee5df35590432a6e50786) patch - Replace arguments in stack traces with sanitized versions instead of stripping them out completely
+
 ## 2.3.1
 
 ### Fixed
