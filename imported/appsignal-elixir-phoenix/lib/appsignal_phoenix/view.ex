@@ -32,7 +32,7 @@ defmodule Appsignal.Phoenix.View do
   """
   defmacro __using__(_) do
     quote do
-      Appsignal.Logger.debug("AppSignal.Phoenix.View attached to #{__MODULE__}")
+      Appsignal.IntegrationLogger.debug("AppSignal.Phoenix.View attached to #{__MODULE__}")
 
       @before_compile Appsignal.Phoenix.View
     end

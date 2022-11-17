@@ -16,7 +16,7 @@ defmodule Appsignal.Phoenix.EventHandler do
       case :telemetry.attach({__MODULE__, event}, event, fun, :ok) do
         :ok ->
           _ =
-            Appsignal.Logger.debug("Appsignal.Phoenix.EventHandler attached to #{inspect(event)}")
+            Appsignal.IntegrationLogger.debug("Appsignal.Phoenix.EventHandler attached to #{inspect(event)}")
 
           :ok
 
