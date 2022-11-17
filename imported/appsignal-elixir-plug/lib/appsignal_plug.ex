@@ -30,7 +30,7 @@ defmodule Appsignal.Plug do
     quote do
       require Logger
       require Appsignal.Utils
-      Appsignal.Logger.debug("AppSignal.Plug attached to #{__MODULE__}")
+      Appsignal.IntegrationLogger.debug("AppSignal.Plug attached to #{__MODULE__}")
 
       @tracer Appsignal.Utils.compile_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
       @span Appsignal.Utils.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
