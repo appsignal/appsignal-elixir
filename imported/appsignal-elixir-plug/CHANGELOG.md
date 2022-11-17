@@ -1,5 +1,11 @@
 # AppSignal for Elixir Plug changelog
 
+## 2.0.12
+
+### Fixed
+
+- [37b1a9c](https://github.com/appsignal/appsignal-elixir-plug/commit/37b1a9c83b5b63af870516747febf2315033d8b9) patch - Fix Appsignal.Logger error on AppSignal for Elixir 1.4.0
+
 ## 2.0.11
 
 ### Removed
