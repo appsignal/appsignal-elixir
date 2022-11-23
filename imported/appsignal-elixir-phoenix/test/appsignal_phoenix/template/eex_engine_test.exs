@@ -31,7 +31,7 @@ defmodule Appsignal.Phoenix.Template.EExEngineTest do
   end
 
   test "renders the template", %{return: return} do
-    assert {"<h1>Welcome to Phoenix!</h1>\n", _} = return
+    assert {{:safe, ["<h1>Welcome to ", "Phoenix", "!</h1>\n"]}, _} = return
   end
 
   test "closes the span" do
