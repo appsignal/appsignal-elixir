@@ -282,6 +282,11 @@ defmodule Appsignal.ConfigTest do
       assert %{enable_statsd: true} = with_config(%{enable_statsd: true}, &init_config/0)
     end
 
+    test "enable_error_backend" do
+      assert %{enable_error_backend: false} =
+               with_config(%{enable_error_backend: false}, &init_config/0)
+    end
+
     test "endpoint" do
       assert %{endpoint: "https://push.staging.lol"} =
                with_config(%{endpoint: "https://push.staging.lol"}, &init_config/0)
@@ -542,6 +547,13 @@ defmodule Appsignal.ConfigTest do
                %{"APPSIGNAL_ENABLE_STATSD" => "true"},
                &init_config/0
              ) == default_configuration() |> Map.put(:enable_statsd, true)
+    end
+
+    test "enable_error_backend" do
+      assert with_env(
+               %{"APPSIGNAL_ENABLE_ERROR_BACKEND" => "false"},
+               &init_config/0
+             ) == default_configuration() |> Map.put(:enable_error_backend, false)
     end
 
     test "endpoint" do
@@ -1127,6 +1139,7 @@ defmodule Appsignal.ConfigTest do
       enable_host_metrics: true,
       enable_minutely_probes: true,
       enable_statsd: false,
+      enable_error_backend: true,
       endpoint: "https://push.appsignal.com",
       env: :dev,
       files_world_accessible: true,

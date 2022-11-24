@@ -12,6 +12,7 @@ defmodule Appsignal.Config do
     enable_host_metrics: true,
     enable_minutely_probes: true,
     enable_statsd: false,
+    enable_error_backend: true,
     endpoint: "https://push.appsignal.com",
     env: :dev,
     files_world_accessible: true,
@@ -178,6 +179,13 @@ defmodule Appsignal.Config do
     end
   end
 
+  def error_backend_enabled? do
+    case Application.fetch_env(:appsignal, :config) do
+      {:ok, value} -> !!value[:enable_error_backend]
+      _ -> true
+    end
+  end
+
   defp default_ca_file_path do
     Path.join(:code.priv_dir(:appsignal), "cacert.pem")
   end
@@ -222,6 +230,7 @@ defmodule Appsignal.Config do
     "APPSIGNAL_ENABLE_HOST_METRICS" => :enable_host_metrics,
     "APPSIGNAL_ENABLE_MINUTELY_PROBES" => :enable_minutely_probes,
     "APPSIGNAL_ENABLE_STATSD" => :enable_statsd,
+    "APPSIGNAL_ENABLE_ERROR_BACKEND" => :enable_error_backend,
     "APPSIGNAL_FILES_WORLD_ACCESSIBLE" => :files_world_accessible,
     "APPSIGNAL_FILTER_PARAMETERS" => :filter_parameters,
     "APPSIGNAL_FILTER_SESSION_DATA" => :filter_session_data,
@@ -261,7 +270,8 @@ defmodule Appsignal.Config do
     APPSIGNAL_ENABLE_GC_INSTRUMENTATION APPSIGNAL_RUNNING_IN_CONTAINER
     APPSIGNAL_ENABLE_HOST_METRICS APPSIGNAL_SEND_SESSION_DATA APPSIGNAL_SKIP_SESSION_DATA
     APPSIGNAL_TRANSACTION_DEBUG_MODE APPSIGNAL_FILES_WORLD_ACCESSIBLE APPSIGNAL_SEND_PARAMS
-    APPSIGNAL_ENABLE_MINUTELY_PROBES APPSIGNAL_ENABLE_STATSD APPSIGNAL_SEND_ENVIRONMENT_METADATA
+    APPSIGNAL_ENABLE_MINUTELY_PROBES APPSIGNAL_ENABLE_STATSD APPSIGNAL_ENABLE_ERROR_BACKEND
+    APPSIGNAL_SEND_ENVIRONMENT_METADATA
   )
   @atom_keys ~w(APPSIGNAL_APP_ENV APPSIGNAL_OTP_APP)
   @string_list_keys ~w(
