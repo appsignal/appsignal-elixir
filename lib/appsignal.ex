@@ -22,7 +22,10 @@ defmodule Appsignal do
 
     initialize()
 
-    Appsignal.Error.Backend.attach()
+    if Config.error_backend_enabled?() do
+      Appsignal.Error.Backend.attach()
+    end
+
     Appsignal.Ecto.attach()
     Appsignal.Finch.attach()
 
