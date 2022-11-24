@@ -55,10 +55,10 @@ defmodule Appsignal.Phoenix.MixProject do
       end
 
     phoenix_live_view_version =
-      case {otp_version < "21", system_version < "1.12.0"} do
+      case {otp_version < "21", Version.compare(system_version, "1.12.0")} do
         {true, _} -> ">= 0.9.0 and < 0.17.4"
-        {_, true} -> ">= 0.9.0 and < 0.18.0"
-        {false, false} -> "~> 0.9"
+        {_, :lt} -> ">= 0.9.0 and < 0.18.0"
+        {_, _} -> "~> 0.9"
       end
 
     telemetry_version =
