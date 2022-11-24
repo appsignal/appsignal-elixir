@@ -1,5 +1,11 @@
 # AppSignal for Elixir changelog
 
+## 2.4.1
+
+### Changed
+
+- [4473ffee](https://github.com/appsignal/appsignal-elixir/commit/4473ffeecb424d589aad59e5ec988bb37968e816) patch - Add enable_error_backend configuration option
+
 ## 2.4.0
 
 ### Added
