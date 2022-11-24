@@ -1,4 +1,4 @@
-use Mix.Config
+import Config
 
 if Mix.env() in [:bench, :test, :test_no_nif] do
   config :appsignal, appsignal_system: Appsignal.FakeSystem
