@@ -42,14 +42,14 @@ defmodule Appsignal.StacktraceTest do
 
   describe "get/0, with an exception with included arguments" do
     setup do
-      String.to_atom("string", :extra_argument)
+      String.to_atom("string", :extra_argument, 123, :erlang.list_to_pid('<0.0.0>'))
     catch
       :error, _ -> %{stack: Stacktrace.get()}
     end
 
-    test "replaces arguments with types", %{stack: stack} do
+    test "replaces sensitive arguments with types", %{stack: stack} do
       [line | _] = Stacktrace.format(stack)
-      assert line =~ ~r{\(elixir( [\w.-]+)?\) String.to_atom\(binary, atom\)}
+      assert line =~ ~r{\(elixir( [\w.-]+)?\) String.to_atom\(binary, atom, 123, #PID<0.0.0>\)}
     end
   end
 
