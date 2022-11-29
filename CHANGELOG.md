@@ -1,5 +1,11 @@
 # AppSignal for Elixir changelog
 
+## 2.4.2
+
+### Fixed
+
+- [a5c810d4](https://github.com/appsignal/appsignal-elixir/commit/a5c810d44b0ec1273cf1b4c7d4081371d6d74826) patch - Fix an issue where reporting an exception for a function call whose arguments contain a map of PID would raise a second exception instead.
+
 ## 2.4.1
 
 ### Changed
