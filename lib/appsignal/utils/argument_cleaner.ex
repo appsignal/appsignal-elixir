@@ -10,7 +10,7 @@ defmodule Appsignal.Utils.ArgumentCleaner do
   def clean(argument) when is_map(argument) do
     {struct, map} = Map.pop(argument, :__struct__)
 
-    "%#{Appsignal.Utils.module_name(struct)}{#{Enum.map_join(map, ", ", fn {key, value} -> "#{inspect(key)} => #{clean(value)}" end)}}"
+    "%#{Appsignal.Utils.module_name(struct)}{#{Enum.map_join(map, ", ", fn {key, value} -> "#{inspect(key)} => #{inspect(clean(value))}" end)}}"
   end
 
   def clean(argument), do: Type.from(argument)
