@@ -1,5 +1,11 @@
 # AppSignal for Elixir Phoenix changelog
 
+## 2.2.0
+
+### Added
+
+- [3207e18](https://github.com/appsignal/appsignal-elixir-phoenix/commit/3207e18fe98f4dd08c843304590039acda1e3db5) minor - Add automatic template instrumentation for Phoenix 1.7. Phoenix's upcoming release adds telemetry to templates, so using Appsignal.Phoenix.View is no longer needed.
+
 ## 2.1.3
 
 ### Fixed
