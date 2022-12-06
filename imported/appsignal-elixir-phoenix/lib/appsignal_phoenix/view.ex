@@ -40,38 +40,50 @@ defmodule Appsignal.Phoenix.View do
 
   defmacro __before_compile__(_env) do
     quote do
-      require Appsignal.Utils
-      @span Appsignal.Utils.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
-      @tracer Appsignal.Utils.compile_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
+      if Module.defines?(__MODULE__, {:__templates__, 0}) &&
+           Module.defines?(__MODULE__, {:render, 2}) do
+        require Appsignal.Utils
+        @span Appsignal.Utils.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
+        @tracer Appsignal.Utils.compile_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
 
-      defoverridable render: 2
+        defoverridable render: 2
 
-      def render(template, assigns) when is_binary(template) do
-        {root, _pattern, _names} = __templates__()
-        path = Path.join(root, template)
+        def render(template, assigns) when is_binary(template) do
+          {root, _pattern, _names} = __templates__()
+          path = Path.join(root, template)
 
-        do_render(@tracer.current_span, path, fn ->
+          do_render(@tracer.current_span, path, fn ->
+            super(template, assigns)
+          end)
+        end
+
+        def render(template, assigns) do
           super(template, assigns)
-        end)
-      end
+        end
 
-      def render(template, assigns) do
-        super(template, assigns)
-      end
+        defp do_render(%Appsignal.Span{} = span, path, fun) do
+          Appsignal.instrument("Render #{path}", fn span ->
+            _ =
+              span
+              |> @span.set_attribute("title", path)
+              |> @span.set_attribute("appsignal:category", "render.phoenix_template")
 
-      defp do_render(%Appsignal.Span{} = span, path, fun) do
-        Appsignal.instrument("Render #{path}", fn span ->
-          _ =
-            span
-            |> @span.set_attribute("title", path)
-            |> @span.set_attribute("appsignal:category", "render.phoenix_template")
+            fun.()
+          end)
+        end
 
+        defp do_render(_span, _path, fun) do
           fun.()
-        end)
-      end
+        end
+      else
+        require Logger
 
-      defp do_render(_span, _path, fun) do
-        fun.()
+        Logger.warn("""
+        AppSignal.Phoenix.View NOT attached to #{__MODULE__}
+
+        Template rendering instrumentation is now set up automatically, so using
+        Appsignal.Phoenix.View in your app's web module is no longer needed.
+        """)
       end
     end
   end
