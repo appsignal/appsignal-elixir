@@ -59,7 +59,7 @@ defmodule Appsignal.Phoenix.EventHandler do
     "http_request"
     |> @tracer.create_span(parent)
     |> @span.set_name(
-      "Render #{inspect(metadata.template)} (#{metadata.type}) template from #{module_name(metadata.view)}"
+      "Render #{inspect(metadata.template)} (#{metadata.format}) template from #{module_name(metadata.view)}"
     )
     |> @span.set_attribute("appsignal:category", "render.phoenix_template")
   end

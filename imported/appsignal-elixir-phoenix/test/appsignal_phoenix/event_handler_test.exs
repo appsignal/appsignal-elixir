@@ -98,7 +98,7 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
     :telemetry.execute(
       [:phoenix, :controller, :render, :start],
       %{time: -576_460_736_044_040_000},
-      %{view: PhoenixWeb.View, template: "template", type: "html"}
+      %{view: PhoenixWeb.View, template: "template", format: "html"}
     )
   end
 
