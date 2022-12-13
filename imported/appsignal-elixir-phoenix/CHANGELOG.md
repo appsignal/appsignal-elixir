@@ -1,5 +1,11 @@
 # AppSignal for Elixir Phoenix changelog
 
+## 2.2.1
+
+### Fixed
+
+- [25bc948](https://github.com/appsignal/appsignal-elixir-phoenix/commit/25bc948c620c24a2efe330ec76c657d945f25fce) patch - Fix metadata issue for template telemetry
+
 ## 2.2.0
 
 ### Added
