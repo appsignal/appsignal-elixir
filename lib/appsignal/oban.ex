@@ -99,20 +99,22 @@ defmodule Appsignal.Oban do
 
     @span.set_attribute(span, "appsignal:category", "insert_job.oban")
 
-    changes = metadata[:changeset].changes
+    case metadata[:changeset] do
+      %{changes: %{worker: worker}} ->
+        @span.set_name(span, "Insert job (#{worker})")
 
-    if changes[:worker] do
-      @span.set_name(span, "Insert job (#{changes[:worker]})")
-    else
-      @span.set_name(span, "Insert job")
+      _ ->
+        @span.set_name(span, "Insert job")
     end
   end
 
   def oban_insert_job_stop(_event, _measurements, metadata, _config) do
-    changes = metadata[:changeset].changes
+    case metadata[:changeset] do
+      %{changes: %{worker: worker}} ->
+        @appsignal.increment_counter("oban_job_insert", 1, %{worker: to_string(worker)})
 
-    if changes[:worker] do
-      @appsignal.increment_counter("oban_job_insert", 1, %{worker: changes[:worker]})
+      _ ->
+        nil
     end
 
     @tracer.close_span(@tracer.current_span())
