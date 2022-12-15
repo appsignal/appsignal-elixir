@@ -14,9 +14,26 @@ defmodule Appsignal.Diagnose.Host do
       language_version: System.version(),
       otp_version: System.otp_release(),
       os: os,
+      os_distribution: os_distribution(),
       heroku: @system.heroku?(),
       root: @system.root?(),
       running_in_container: @nif.running_in_container?()
     }
+  end
+
+  defp os_distribution do
+    file_path = "/etc/os-release"
+
+    if File.exists?(file_path) do
+      case File.read(file_path) do
+        {:ok, contents} ->
+          contents
+
+        {:error, reason} ->
+          "Error reading #{file_path}: #{reason}"
+      end
+    else
+      ""
+    end
   end
 end
