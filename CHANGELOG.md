@@ -1,5 +1,11 @@
 # AppSignal for Elixir changelog
 
+## 2.4.3
+
+### Fixed
+
+- [1b69bf4e](https://github.com/appsignal/appsignal-elixir/commit/1b69bf4e784850b35125003c67f2aaaae4504e8d) patch - Fix an issue where user configuration enabling metrics for Hackney would cause the AppSignal Agent installation to fail.
+
 ## 2.4.2
 
 ### Fixed
