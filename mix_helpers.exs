@@ -165,6 +165,7 @@ defmodule Mix.Appsignal.Helper do
 
       false ->
         Mix.shell().info("Downloading agent release")
+        :application.unset_env(:hackney, :mod_metrics)
         :application.ensure_all_started(:hackney)
 
         case do_download_file!(filename, local_filename, Appsignal.Agent.mirrors()) do
