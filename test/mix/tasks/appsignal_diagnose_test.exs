@@ -401,12 +401,21 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       |> Map.drop([:root, :running_in_container])
 
     {_, os} = :os.type()
+    file_path = "/etc/os-release"
+
+    os_distribution =
+      if File.exists?(file_path) do
+        File.read!(file_path)
+      else
+        ""
+      end
 
     assert report == %{
              architecture: to_string(:erlang.system_info(:system_architecture)),
              language_version: System.version(),
              otp_version: System.otp_release(),
              os: os,
+             os_distribution: os_distribution,
              heroku: false
            }
   end
