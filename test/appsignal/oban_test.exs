@@ -27,7 +27,7 @@ defmodule Appsignal.ObanTest do
     end
 
     test "sets the span's name" do
-      assert {:ok, [{%Span{}, "Test.Worker"}]} = Test.Span.get(:set_name)
+      assert {:ok, [{%Span{}, "Test.Worker#perform"}]} = Test.Span.get(:set_name)
     end
 
     test "sets the span's category" do

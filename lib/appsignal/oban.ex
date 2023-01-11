@@ -43,7 +43,7 @@ defmodule Appsignal.Oban do
     span = @tracer.create_span("oban")
 
     span
-    |> @span.set_name(to_string(job.worker))
+    |> @span.set_name("#{to_string(job.worker)}#perform")
     |> @span.set_sample_data("params", job.args)
     |> @span.set_attribute("id", job.id)
     |> @span.set_attribute("queue", to_string(job.queue))
