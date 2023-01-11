@@ -126,6 +126,7 @@ defmodule Appsignal.Oban do
   defp add_job_duration_value(job, duration, state) do
     tag_combinations = [
       %{worker: to_string(job.worker), state: to_string(state)},
+      %{worker: to_string(job.worker), hostname: Appsignal.Utils.Hostname.hostname()},
       %{worker: to_string(job.worker)}
     ]
 

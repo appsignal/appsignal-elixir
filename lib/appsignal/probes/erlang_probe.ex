@@ -4,7 +4,6 @@ defmodule Appsignal.Probes.ErlangProbe do
   require Appsignal.Utils
 
   @appsignal Appsignal.Utils.compile_env(:appsignal, :appsignal, Appsignal)
-  @inet Appsignal.Utils.compile_env(:appsignal, :inet, :inet)
 
   def call(sample \\ nil) do
     next_sample = sample_schedulers()
@@ -120,18 +119,7 @@ defmodule Appsignal.Probes.ErlangProbe do
     @appsignal.set_gauge(
       name,
       value,
-      Map.merge(tags, %{hostname: hostname()})
+      Map.merge(tags, %{hostname: Appsignal.Utils.Hostname.hostname()})
     )
-  end
-
-  defp hostname do
-    case Application.fetch_env(:appsignal, :config) do
-      {:ok, %{hostname: hostname}} ->
-        hostname
-
-      _ ->
-        {:ok, hostname} = @inet.gethostname()
-        List.to_string(hostname)
-    end
   end
 end

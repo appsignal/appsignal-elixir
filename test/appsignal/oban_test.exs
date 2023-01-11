@@ -98,6 +98,11 @@ defmodule Appsignal.ObanTest do
     test "adds job duration distribution value" do
       assert [
                %{key: _, value: 123, tags: %{worker: "Test.Worker"}},
+               %{
+                 key: _,
+                 value: 123,
+                 tags: %{hostname: "Bobs-MBP.example.com", worker: "Test.Worker"}
+               },
                %{key: _, value: 123, tags: %{state: "success", worker: "Test.Worker"}}
              ] = FakeAppsignal.get_distribution_values("oban_job_duration")
     end
@@ -156,6 +161,11 @@ defmodule Appsignal.ObanTest do
     test "adds job duration distribution value" do
       assert [
                %{key: _, value: 123, tags: %{worker: "Test.Worker"}},
+               %{
+                 key: _,
+                 value: 123,
+                 tags: %{hostname: "Bobs-MBP.example.com", worker: "Test.Worker"}
+               },
                %{key: _, value: 123, tags: %{state: "success", worker: "Test.Worker"}}
              ] = FakeAppsignal.get_distribution_values("oban_job_duration")
     end
