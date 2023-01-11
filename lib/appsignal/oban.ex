@@ -55,8 +55,6 @@ defmodule Appsignal.Oban do
       @span.set_attribute(span, "job_tag_#{key}", value)
     end
 
-    increment_job_start_counter(job)
-
     add_job_queue_time_value(job)
   end
 
@@ -124,26 +122,16 @@ defmodule Appsignal.Oban do
     @tracer.close_span(@tracer.current_span())
   end
 
-  defp increment_job_start_counter(job) do
-    tag_combinations = [
-      %{worker: to_string(job.worker), queue: to_string(job.queue)},
-      %{worker: to_string(job.worker)},
-      %{queue: to_string(job.queue)}
-    ]
-
-    Enum.each(tag_combinations, fn tags ->
-      @appsignal.increment_counter("oban_job_start", 1, tags)
-    end)
-  end
-
   defp increment_job_stop_counter(job, state) do
     tag_combinations = [
+      %{worker: to_string(job.worker), queue: to_string(job.queue), state: to_string(state)},
       %{worker: to_string(job.worker), state: to_string(state)},
+      %{queue: to_string(job.queue), state: to_string(state)},
       %{state: to_string(state)}
     ]
 
     Enum.each(tag_combinations, fn tags ->
-      @appsignal.increment_counter("oban_job_stop", 1, tags)
+      @appsignal.increment_counter("oban_job_count", 1, tags)
     end)
   end
 

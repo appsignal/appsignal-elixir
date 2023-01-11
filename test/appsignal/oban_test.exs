@@ -50,14 +50,6 @@ defmodule Appsignal.ObanTest do
       assert attribute?("job_tag_baz", 123)
     end
 
-    test "increments job start counter" do
-      assert [
-               %{key: _, value: 1, tags: %{queue: "default"}},
-               %{key: _, value: 1, tags: %{worker: "Test.Worker"}},
-               %{key: _, value: 1, tags: %{queue: "default", worker: "Test.Worker"}}
-             ] = FakeAppsignal.get_counters("oban_job_start")
-    end
-
     test "adds job queue time distribution value" do
       assert [
                %{key: _, value: 3000, tags: %{queue: "default"}}
@@ -93,8 +85,14 @@ defmodule Appsignal.ObanTest do
     test "increments job stop counter" do
       assert [
                %{key: _, value: 1, tags: %{state: "success"}},
-               %{key: _, value: 1, tags: %{state: "success", worker: "Test.Worker"}}
-             ] = FakeAppsignal.get_counters("oban_job_stop")
+               %{key: _, value: 1, tags: %{state: "success", queue: "default"}},
+               %{key: _, value: 1, tags: %{state: "success", worker: "Test.Worker"}},
+               %{
+                 key: _,
+                 value: 1,
+                 tags: %{state: "success", worker: "Test.Worker", queue: "default"}
+               }
+             ] = FakeAppsignal.get_counters("oban_job_count")
     end
 
     test "adds job duration distribution value" do
@@ -145,8 +143,14 @@ defmodule Appsignal.ObanTest do
     test "increments job stop counter" do
       assert [
                %{key: _, value: 1, tags: %{state: "success"}},
-               %{key: _, value: 1, tags: %{state: "success", worker: "Test.Worker"}}
-             ] = FakeAppsignal.get_counters("oban_job_stop")
+               %{key: _, value: 1, tags: %{state: "success", queue: "default"}},
+               %{key: _, value: 1, tags: %{state: "success", worker: "Test.Worker"}},
+               %{
+                 key: _,
+                 value: 1,
+                 tags: %{state: "success", worker: "Test.Worker", queue: "default"}
+               }
+             ] = FakeAppsignal.get_counters("oban_job_count")
     end
 
     test "adds job duration distribution value" do
