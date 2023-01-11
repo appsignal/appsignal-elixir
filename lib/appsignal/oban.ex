@@ -16,7 +16,7 @@ defmodule Appsignal.Oban do
       [:oban, :job, :exception] => &__MODULE__.oban_job_exception/4,
       [:oban, :engine, :insert_job, :start] => &__MODULE__.oban_insert_job_start/4,
       [:oban, :engine, :insert_job, :stop] => &__MODULE__.oban_insert_job_stop/4,
-      [:oban, :engine, :insert_job, :exception] => &__MODULE__.oban_insert_job_exception/4
+      [:oban, :engine, :insert_job, :exception] => &__MODULE__.oban_insert_job_stop/4
     }
 
     for {event, fun} <- handlers do
@@ -106,19 +106,7 @@ defmodule Appsignal.Oban do
     end
   end
 
-  def oban_insert_job_stop(_event, _measurements, metadata, _config) do
-    case metadata[:changeset] do
-      %{changes: %{worker: worker}} ->
-        @appsignal.increment_counter("oban_job_insert", 1, %{worker: to_string(worker)})
-
-      _ ->
-        nil
-    end
-
-    @tracer.close_span(@tracer.current_span())
-  end
-
-  def oban_insert_job_exception(_event, _measurements, _metadata, _config) do
+  def oban_insert_job_stop(_event, _measurements, _metadata, _config) do
     @tracer.close_span(@tracer.current_span())
   end
 

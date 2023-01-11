@@ -237,37 +237,6 @@ defmodule Appsignal.ObanTest do
       assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
     end
 
-    test "increments job insert counter" do
-      assert [
-               %{key: _, value: 1, tags: %{worker: "Test.Worker"}}
-             ] = FakeAppsignal.get_counters("oban_job_insert")
-    end
-
-    test "does not detach the handler" do
-      assert attached?([:oban, :engine, :insert_job, :stop])
-    end
-  end
-
-  describe "oban_insert_job_stop/4, without a changeset" do
-    setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
-      start_supervised!(FakeAppsignal)
-      execute_insert_job(:start, %{})
-
-      execute_insert_job(:stop, %{})
-    end
-
-    test "closes a span" do
-      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
-    end
-
-    test "does not increment job insert counter" do
-      assert [] = FakeAppsignal.get_counters("oban_job_insert")
-    end
-
     test "does not detach the handler" do
       assert attached?([:oban, :engine, :insert_job, :stop])
     end
