@@ -8,8 +8,7 @@ defmodule Appsignal.Probes.ErlangProbeTest do
     # from this test
     Appsignal.Probes.unregister(:erlang)
 
-    start_supervised!(FakeAppsignal)
-    :ok
+    [fake_appsignal: start_supervised!(FakeAppsignal)]
   end
 
   describe "when invoked by the scheduler" do
@@ -21,16 +20,16 @@ defmodule Appsignal.Probes.ErlangProbeTest do
       end)
     end
 
-    test "gathers any metrics" do
+    test "gathers any metrics", %{fake_appsignal: fake_appsignal} do
       until(fn ->
-        metrics = FakeAppsignal.get_gauges("erlang_io")
+        metrics = FakeAppsignal.get_gauges(fake_appsignal, "erlang_io")
         refute Enum.empty?(metrics)
       end)
     end
 
-    test "gathers metrics using previous sample" do
+    test "gathers metrics using previous sample", %{fake_appsignal: fake_appsignal} do
       until(fn ->
-        metrics = FakeAppsignal.get_gauges("erlang_scheduler_utilization")
+        metrics = FakeAppsignal.get_gauges(fake_appsignal, "erlang_scheduler_utilization")
         refute Enum.empty?(metrics)
       end)
     end
@@ -41,8 +40,8 @@ defmodule Appsignal.Probes.ErlangProbeTest do
       [sample: ErlangProbe.call()]
     end
 
-    test "gathers IO metrics" do
-      metrics = FakeAppsignal.get_gauges("erlang_io")
+    test "gathers IO metrics", %{fake_appsignal: fake_appsignal} do
+      metrics = FakeAppsignal.get_gauges(fake_appsignal, "erlang_io")
 
       assert Enum.any?(
                metrics,
@@ -69,8 +68,8 @@ defmodule Appsignal.Probes.ErlangProbeTest do
              )
     end
 
-    test "gathers scheduler metrics" do
-      metrics = FakeAppsignal.get_gauges("erlang_schedulers")
+    test "gathers scheduler metrics", %{fake_appsignal: fake_appsignal} do
+      metrics = FakeAppsignal.get_gauges(fake_appsignal, "erlang_schedulers")
 
       assert Enum.any?(
                metrics,
@@ -97,8 +96,8 @@ defmodule Appsignal.Probes.ErlangProbeTest do
              )
     end
 
-    test "gathers process metrics" do
-      metrics = FakeAppsignal.get_gauges("erlang_processes")
+    test "gathers process metrics", %{fake_appsignal: fake_appsignal} do
+      metrics = FakeAppsignal.get_gauges(fake_appsignal, "erlang_processes")
 
       assert Enum.any?(
                metrics,
@@ -125,8 +124,8 @@ defmodule Appsignal.Probes.ErlangProbeTest do
              )
     end
 
-    test "gathers memory metrics" do
-      metrics = FakeAppsignal.get_gauges("erlang_memory")
+    test "gathers memory metrics", %{fake_appsignal: fake_appsignal} do
+      metrics = FakeAppsignal.get_gauges(fake_appsignal, "erlang_memory")
 
       assert Enum.any?(
                metrics,
@@ -237,8 +236,8 @@ defmodule Appsignal.Probes.ErlangProbeTest do
              )
     end
 
-    test "gathers atom metrics" do
-      metrics = FakeAppsignal.get_gauges("erlang_atoms")
+    test "gathers atom metrics", %{fake_appsignal: fake_appsignal} do
+      metrics = FakeAppsignal.get_gauges(fake_appsignal, "erlang_atoms")
 
       assert Enum.any?(
                metrics,
@@ -265,8 +264,8 @@ defmodule Appsignal.Probes.ErlangProbeTest do
              )
     end
 
-    test "gathers run queue lengths" do
-      metrics = FakeAppsignal.get_gauges("total_run_queue_lengths")
+    test "gathers run queue lengths", %{fake_appsignal: fake_appsignal} do
+      metrics = FakeAppsignal.get_gauges(fake_appsignal, "total_run_queue_lengths")
 
       assert Enum.any?(
                metrics,
@@ -305,16 +304,21 @@ defmodule Appsignal.Probes.ErlangProbeTest do
              )
     end
 
-    test "does not gather scheduler utilization metrics on the first run" do
-      metrics = FakeAppsignal.get_gauges("erlang_scheduler_utilization")
+    test "does not gather scheduler utilization metrics on the first run", %{
+      fake_appsignal: fake_appsignal
+    } do
+      metrics = FakeAppsignal.get_gauges(fake_appsignal, "erlang_scheduler_utilization")
 
       assert Enum.empty?(metrics)
     end
 
-    test "gathers scheduler utilization metrics on subsequent runs", %{sample: sample} do
+    test "gathers scheduler utilization metrics on subsequent runs", %{
+      fake_appsignal: fake_appsignal,
+      sample: sample
+    } do
       ErlangProbe.call(sample)
 
-      metrics = FakeAppsignal.get_gauges("erlang_scheduler_utilization")
+      metrics = FakeAppsignal.get_gauges(fake_appsignal, "erlang_scheduler_utilization")
 
       scheduler_ids = Enum.to_list(1..:erlang.system_info(:schedulers))
 
@@ -340,11 +344,11 @@ defmodule Appsignal.Probes.ErlangProbeTest do
   end
 
   describe "call/0, with a configured hostname" do
-    test "adds the configured hostname as a tag" do
+    test "adds the configured hostname as a tag", %{fake_appsignal: fake_appsignal} do
       with_config(%{hostname: "Alices-MBP.example.com"}, &ErlangProbe.call/0)
 
       assert [%{tags: %{hostname: "Alices-MBP.example.com"}} | _] =
-               FakeAppsignal.get_gauges("erlang_io")
+               FakeAppsignal.get_gauges(fake_appsignal, "erlang_io")
     end
   end
 end

@@ -17,9 +17,11 @@ defmodule Appsignal.ObanTest do
       start_supervised!(Test.Tracer)
       start_supervised!(Test.Span)
       start_supervised!(Test.Monitor)
-      start_supervised!(FakeAppsignal)
+      fake_appsignal = start_supervised!(FakeAppsignal)
 
       execute_job_start()
+
+      [fake_appsignal: fake_appsignal]
     end
 
     test "creates a span" do
@@ -50,10 +52,10 @@ defmodule Appsignal.ObanTest do
       assert attribute?("job_tag_baz", 123)
     end
 
-    test "adds job queue time distribution value" do
+    test "adds job queue time distribution value", %{fake_appsignal: fake_appsignal} do
       assert [
                %{key: _, value: 3000, tags: %{queue: "default"}}
-             ] = FakeAppsignal.get_distribution_values("oban_job_queue_time")
+             ] = FakeAppsignal.get_distribution_values(fake_appsignal, "oban_job_queue_time")
     end
 
     test "does not detach the handler" do
@@ -67,10 +69,13 @@ defmodule Appsignal.ObanTest do
       start_supervised!(Test.Tracer)
       start_supervised!(Test.Span)
       start_supervised!(Test.Monitor)
-      start_supervised!(FakeAppsignal)
+      fake_appsignal = start_supervised!(FakeAppsignal)
+
       execute_job_start()
 
       execute_job_stop()
+
+      [fake_appsignal: fake_appsignal]
     end
 
     test "closes a span" do
@@ -82,7 +87,7 @@ defmodule Appsignal.ObanTest do
       assert attribute?("result", ":ok")
     end
 
-    test "increments job stop counter" do
+    test "increments job stop counter", %{fake_appsignal: fake_appsignal} do
       assert [
                %{key: _, value: 1, tags: %{state: "success"}},
                %{key: _, value: 1, tags: %{state: "success", queue: "default"}},
@@ -92,10 +97,10 @@ defmodule Appsignal.ObanTest do
                  value: 1,
                  tags: %{state: "success", worker: "Test.Worker", queue: "default"}
                }
-             ] = FakeAppsignal.get_counters("oban_job_count")
+             ] = FakeAppsignal.get_counters(fake_appsignal, "oban_job_count")
     end
 
-    test "adds job duration distribution value" do
+    test "adds job duration distribution value", %{fake_appsignal: fake_appsignal} do
       assert [
                %{key: _, value: 123, tags: %{worker: "Test.Worker"}},
                %{
@@ -104,7 +109,7 @@ defmodule Appsignal.ObanTest do
                  tags: %{hostname: "Bobs-MBP.example.com", worker: "Test.Worker"}
                },
                %{key: _, value: 123, tags: %{state: "success", worker: "Test.Worker"}}
-             ] = FakeAppsignal.get_distribution_values("oban_job_duration")
+             ] = FakeAppsignal.get_distribution_values(fake_appsignal, "oban_job_duration")
     end
 
     test "does not detach the handler" do
@@ -118,10 +123,13 @@ defmodule Appsignal.ObanTest do
       start_supervised!(Test.Tracer)
       start_supervised!(Test.Span)
       start_supervised!(Test.Monitor)
-      start_supervised!(FakeAppsignal)
+      fake_appsignal = start_supervised!(FakeAppsignal)
+
       execute_job_start()
 
       execute_job_exception()
+
+      [fake_appsignal: fake_appsignal]
     end
 
     test "closes a span" do
@@ -145,7 +153,7 @@ defmodule Appsignal.ObanTest do
               ]} = Test.Span.get(:add_error)
     end
 
-    test "increments job stop counter" do
+    test "increments job stop counter", %{fake_appsignal: fake_appsignal} do
       assert [
                %{key: _, value: 1, tags: %{state: "success"}},
                %{key: _, value: 1, tags: %{state: "success", queue: "default"}},
@@ -155,10 +163,10 @@ defmodule Appsignal.ObanTest do
                  value: 1,
                  tags: %{state: "success", worker: "Test.Worker", queue: "default"}
                }
-             ] = FakeAppsignal.get_counters("oban_job_count")
+             ] = FakeAppsignal.get_counters(fake_appsignal, "oban_job_count")
     end
 
-    test "adds job duration distribution value" do
+    test "adds job duration distribution value", %{fake_appsignal: fake_appsignal} do
       assert [
                %{key: _, value: 123, tags: %{worker: "Test.Worker"}},
                %{
@@ -167,7 +175,7 @@ defmodule Appsignal.ObanTest do
                  tags: %{hostname: "Bobs-MBP.example.com", worker: "Test.Worker"}
                },
                %{key: _, value: 123, tags: %{state: "success", worker: "Test.Worker"}}
-             ] = FakeAppsignal.get_distribution_values("oban_job_duration")
+             ] = FakeAppsignal.get_distribution_values(fake_appsignal, "oban_job_duration")
     end
 
     test "does not detach the handler" do
@@ -181,7 +189,6 @@ defmodule Appsignal.ObanTest do
       start_supervised!(Test.Tracer)
       start_supervised!(Test.Span)
       start_supervised!(Test.Monitor)
-      start_supervised!(FakeAppsignal)
 
       execute_insert_job(:start)
     end
@@ -238,6 +245,7 @@ defmodule Appsignal.ObanTest do
       start_supervised!(Test.Span)
       start_supervised!(Test.Monitor)
       start_supervised!(FakeAppsignal)
+
       execute_insert_job(:start)
 
       execute_insert_job(:stop)
@@ -259,6 +267,7 @@ defmodule Appsignal.ObanTest do
       start_supervised!(Test.Span)
       start_supervised!(Test.Monitor)
       start_supervised!(FakeAppsignal)
+
       execute_insert_job(:start)
 
       execute_insert_job(:exception)

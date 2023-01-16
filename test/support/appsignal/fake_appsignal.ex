@@ -17,20 +17,20 @@ defmodule Appsignal.FakeAppsignal do
     add(:gauges, %{key: key, value: value, tags: tags})
   end
 
-  def get_distribution_values(key) do
-    Enum.filter(get(__MODULE__, :distribution_values), fn element ->
+  def get_distribution_values(pid_or_module, key) do
+    Enum.filter(get(pid_or_module, :distribution_values), fn element ->
       match?(%{key: ^key, tags: _, value: _}, element)
     end)
   end
 
-  def get_counters(key) do
-    Enum.filter(get(__MODULE__, :counters), fn element ->
+  def get_counters(pid_or_module, key) do
+    Enum.filter(get(pid_or_module, :counters), fn element ->
       match?(%{key: ^key, tags: _, value: _}, element)
     end)
   end
 
-  def get_gauges(key) do
-    Enum.filter(get(__MODULE__, :gauges), fn element ->
+  def get_gauges(pid_or_module, key) do
+    Enum.filter(get(pid_or_module, :gauges), fn element ->
       match?(%{key: ^key, tags: _, value: _}, element)
     end)
   end
