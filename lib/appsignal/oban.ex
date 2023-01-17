@@ -37,59 +37,99 @@ defmodule Appsignal.Oban do
   def oban_job_start(
         _event,
         _measurements,
-        %{job: job},
+        %{
+          id: id,
+          args: args,
+          queue: queue,
+          worker: worker,
+          attempt: attempt
+        } = metadata,
         _config
       ) do
     span = @tracer.create_span("oban")
 
     span
-    |> @span.set_name("#{to_string(job.worker)}#perform")
-    |> @span.set_sample_data("params", job.args)
-    |> @span.set_attribute("id", job.id)
-    |> @span.set_attribute("queue", to_string(job.queue))
-    |> @span.set_attribute("attempt", job.attempt)
-    |> @span.set_attribute("priority", job.priority)
+    |> @span.set_name("#{to_string(worker)}#perform")
+    |> @span.set_sample_data("params", args)
+    |> @span.set_attribute("id", id)
+    |> @span.set_attribute("queue", to_string(queue))
+    |> @span.set_attribute("attempt", attempt)
+    |> @span.set_attribute("worker", to_string(worker))
     |> @span.set_attribute("appsignal:category", "job.oban")
 
-    for {key, value} <- job.tags do
-      @span.set_attribute(span, "job_tag_#{key}", value)
+    # The `:job` metadata key was added in Oban v2.3.1.
+    job = metadata[:job]
+
+    if job do
+      @span.set_attribute(span, "priority", job.priority)
+
+      add_job_queue_time_value(job, queue)
+
+      set_job_meta_attributes(span, job)
     end
 
-    add_job_queue_time_value(job)
+    # The `:tags` metadata key was added in v2.1.0.
+    for tag <- Map.get(metadata, :tags, []) do
+      @span.set_attribute(span, "job_tag_#{tag}", true)
+    end
   end
 
   def oban_job_stop(
         _event,
         %{duration: duration},
-        %{state: state, result: result, job: job},
+        %{
+          worker: worker,
+          queue: queue
+        } = metadata,
         _config
       ) do
-    @tracer.current_span()
-    |> @span.set_attribute("state", to_string(state))
-    |> @span.set_attribute("result", inspect(result))
-    |> @tracer.close_span()
+    # The `:state` metadata key was added in Oban v2.4.0.
+    # If not present, assume the job succeeded.
+    state = Map.get(metadata, :state, "success")
 
-    increment_job_stop_counter(job, state)
-
-    add_job_duration_value(job, duration, state)
-  end
-
-  def oban_job_exception(_event, %{duration: duration}, metadata, _config) do
     span =
       @tracer.current_span()
-      |> @span.set_attribute("state", to_string(metadata[:state]))
-      |> @span.set_attribute("worker", to_string(metadata[:job].worker))
+      |> @span.set_attribute("state", to_string(state))
 
-    if Map.has_key?(metadata, :kind) and Map.has_key?(metadata, :reason) and
-         Map.has_key?(metadata, :stacktrace) do
-      @span.add_error(span, metadata[:kind], metadata[:reason], metadata[:stacktrace])
+    # The `:result` metadata key was added in Oban v2.5.0.
+    if Map.has_key?(metadata, :result) do
+      @span.set_attribute(span, "result", inspect(metadata[:result]))
     end
 
     @tracer.close_span(span)
 
-    increment_job_stop_counter(metadata[:job], metadata[:state])
+    increment_job_stop_counter(worker, queue, state)
 
-    add_job_duration_value(metadata[:job], duration, metadata[:state])
+    add_job_duration_value(worker, duration, state)
+  end
+
+  def oban_job_exception(
+        _event,
+        %{duration: duration},
+        %{
+          worker: worker,
+          queue: queue,
+          kind: kind,
+          error: reason,
+          stacktrace: stacktrace
+        } = metadata,
+        _config
+      ) do
+    # The `:state` metadata key was added in Oban v2.4.0.
+    # If not present, assume the job failed.
+    state = Map.get(metadata, :state, "failure")
+
+    span =
+      @tracer.current_span()
+      |> @span.set_attribute("state", state)
+
+    @span.add_error(span, kind, reason, stacktrace)
+
+    @tracer.close_span(span)
+
+    increment_job_stop_counter(worker, queue, state)
+
+    add_job_duration_value(worker, duration, state)
   end
 
   def oban_insert_job_start(_event, _measurements, metadata, _config) do
@@ -102,6 +142,10 @@ defmodule Appsignal.Oban do
         @span.set_name(span, "Insert job (#{worker})")
 
       _ ->
+        # The changeset containing the worker appears in the metadata for
+        # this event in every version where this event is emitted (from
+        # v2.11.0 until v2.13.6, latest at the time of writing) but it's
+        # undocumented. To be safe, account for it not being present.
         @span.set_name(span, "Insert job")
     end
   end
@@ -110,11 +154,11 @@ defmodule Appsignal.Oban do
     @tracer.close_span(@tracer.current_span())
   end
 
-  defp increment_job_stop_counter(job, state) do
+  defp increment_job_stop_counter(worker, queue, state) do
     tag_combinations = [
-      %{worker: to_string(job.worker), queue: to_string(job.queue), state: to_string(state)},
-      %{worker: to_string(job.worker), state: to_string(state)},
-      %{queue: to_string(job.queue), state: to_string(state)},
+      %{worker: to_string(worker), queue: to_string(queue), state: to_string(state)},
+      %{worker: to_string(worker), state: to_string(state)},
+      %{queue: to_string(queue), state: to_string(state)},
       %{state: to_string(state)}
     ]
 
@@ -123,11 +167,11 @@ defmodule Appsignal.Oban do
     end)
   end
 
-  defp add_job_duration_value(job, duration, state) do
+  defp add_job_duration_value(worker, duration, state) do
     tag_combinations = [
-      %{worker: to_string(job.worker), state: to_string(state)},
-      %{worker: to_string(job.worker), hostname: Appsignal.Utils.Hostname.hostname()},
-      %{worker: to_string(job.worker)}
+      %{worker: to_string(worker), state: to_string(state)},
+      %{worker: to_string(worker), hostname: Appsignal.Utils.Hostname.hostname()},
+      %{worker: to_string(worker)}
     ]
 
     Enum.each(tag_combinations, fn tags ->
@@ -139,11 +183,31 @@ defmodule Appsignal.Oban do
     end)
   end
 
-  defp add_job_queue_time_value(job) do
+  defp add_job_queue_time_value(job, queue) do
     delay = DateTime.diff(job.attempted_at, job.scheduled_at, :millisecond)
 
     @appsignal.add_distribution_value("oban_job_queue_time", delay, %{
-      queue: to_string(job.queue)
+      queue: to_string(queue)
     })
+  end
+
+  defp set_job_meta_attributes(span, job) do
+    for {key, value} <- job.meta do
+      value =
+        cond do
+          is_binary(value) or is_number(value) or is_boolean(value) ->
+            value
+
+          is_atom(value) ->
+            inspect(value)
+
+          true ->
+            nil
+        end
+
+      if value do
+        @span.set_attribute(span, "job_meta_#{key}", value)
+      end
+    end
   end
 end
