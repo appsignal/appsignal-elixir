@@ -28,6 +28,7 @@ defmodule Appsignal do
 
     Appsignal.Ecto.attach()
     Appsignal.Finch.attach()
+    Appsignal.Oban.attach()
 
     children = [
       {Appsignal.Tracer, []},
