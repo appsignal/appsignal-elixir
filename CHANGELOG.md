@@ -1,5 +1,12 @@
 # AppSignal for Elixir changelog
 
+## 2.5.0
+
+### Added
+
+- [bc14f302](https://github.com/appsignal/appsignal-elixir/commit/bc14f30275cbdedb773835cc908f1d4b0c3161fa) minor - Add Oban instrumentation. Jobs processed by your Oban workers will now be instrumented with AppSignal, and job insertions will appear as events in your performance samples' event timelines.
+- [65107c60](https://github.com/appsignal/appsignal-elixir/commit/65107c60f46db7fe004f031c0b737dd71628d3d6) patch - Track the Operating System release/distro in the diagnose report. This helps us with debugging what exact version of Linux an app is running on, for example.
+
 ## 2.4.3
 
 ### Fixed
