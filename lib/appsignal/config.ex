@@ -360,6 +360,7 @@ defmodule Appsignal.Config do
     Nif.env_put("_APPSIGNAL_DEBUG_LOGGING", to_string(config[:debug]))
     Nif.env_put("_APPSIGNAL_DNS_SERVERS", config[:dns_servers] |> Enum.join(","))
     Nif.env_put("_APPSIGNAL_ENABLE_HOST_METRICS", to_string(config[:enable_host_metrics]))
+    Nif.env_put("_APPSIGNAL_ENABLE_STATSD", to_string(config[:enable_statsd]))
     Nif.env_put("_APPSIGNAL_ENABLE_NGINX_METRICS", to_string(config[:enable_nginx_metrics]))
     Nif.env_put("_APPSIGNAL_ENVIRONMENT", to_string(config[:env]))
     Nif.env_put("_APPSIGNAL_HOSTNAME", to_string(config[:hostname]))
@@ -393,6 +394,8 @@ defmodule Appsignal.Config do
       to_string(config[:send_environment_metadata])
     )
 
+    Nif.env_put("_APPSIGNAL_SEND_PARAMS", to_string(config[:send_params]))
+    Nif.env_put("_APPSIGNAL_SEND_SESSION_DATA", to_string(config[:send_session_data]))
     Nif.env_put("_APPSIGNAL_RUNNING_IN_CONTAINER", to_string(config[:running_in_container]))
     Nif.env_put("_APPSIGNAL_TRANSACTION_DEBUG_MODE", to_string(config[:transaction_debug_mode]))
     Nif.env_put("_APPSIGNAL_WORKING_DIRECTORY_PATH", to_string(config[:working_directory_path]))
