@@ -1150,6 +1150,7 @@ defmodule Appsignal.ConfigTest do
       dns_servers: [],
       enable_host_metrics: true,
       enable_minutely_probes: true,
+      enable_nginx_metrics: false,
       enable_statsd: false,
       enable_error_backend: true,
       endpoint: "https://push.appsignal.com",
