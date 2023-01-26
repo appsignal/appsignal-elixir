@@ -50,8 +50,14 @@ defmodule Appsignal.Plug.MixProject do
         false -> "~> 0.4 or ~> 1.0"
       end
 
+    plug_version =
+      case Version.compare(system_version, "1.10.0") do
+        :lt -> ">= 1.1.0 and < 1.14.0"
+        _ -> ">= 1.1.0"
+      end
+
     [
-      {:plug, ">= 1.1.0"},
+      {:plug, plug_version},
       {:appsignal, ">= 2.4.0 and < 3.0.0"},
       {:credo, "~> 1.2", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
