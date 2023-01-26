@@ -6,5 +6,5 @@ AppsignalTest.Utils.purge(Appsignal.SystemBehaviour)
 AppsignalTest.Utils.purge(Appsignal.System)
 
 :error_logger.tty(false)
-excludes = [String.to_atom("skip_env_#{Mix.env()}")]
+excludes = [String.to_atom("skip_env_#{Mix.env()}"), :skip]
 ExUnit.start(exclude: excludes)
