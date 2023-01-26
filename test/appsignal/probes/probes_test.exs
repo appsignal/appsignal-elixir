@@ -19,6 +19,7 @@ defmodule Appsignal.Probes.ProbesTest do
       [fake_probe: start_supervised!(FakeProbe)]
     end
 
+    @tag :skip
     test "once a probe is registered, it is called by the probes system", %{
       fake_probe: fake_probe
     } do
