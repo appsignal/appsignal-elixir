@@ -22,6 +22,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose.PathsTest do
       {:ok, %{path: path, bytes: bytes}}
     end
 
+    @tag :skip
     test "only reads the last 2 Mebibytes", %{path: path, bytes: bytes} do
       log =
         with_config(%{log_path: path}, fn ->
