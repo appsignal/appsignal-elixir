@@ -424,7 +424,7 @@ defmodule Appsignal.ObanTest do
   defp has_attribute?(asserted_key) do
     {:ok, attributes} = Test.Span.get(:set_attribute)
 
-    Enum.any?(attributes, fn {%Span{}, key, data} ->
+    Enum.any?(attributes, fn {%Span{}, key, _data} ->
       key == asserted_key
     end)
   end

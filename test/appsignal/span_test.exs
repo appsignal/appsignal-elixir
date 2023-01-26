@@ -241,7 +241,7 @@ defmodule AppsignalSpanTest do
       assert return == span
     end
 
-    test "does not set the namespace", %{span: %Span{reference: reference}} do
+    test "does not set the namespace" do
       assert :error = Test.Nif.get(:set_span_namespace)
     end
   end

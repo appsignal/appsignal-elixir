@@ -18,7 +18,7 @@ defmodule Mix.Appsignal.HelperTest do
     end
 
     @tag :skip_env_test_no_nif
-    test "returns 64-bit Linux build", %{fake_erlang: fake_erlang} do
+    test "returns 64-bit Linux build" do
       report = %{build: %{}}
 
       assert Mix.Appsignal.Helper.verify_system_architecture(report) == {

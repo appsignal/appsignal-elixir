@@ -19,7 +19,7 @@ defmodule AppsignalTest do
       [{:stderr, device_output}] = FakeIO.all()
       output = String.trim(device_output)
 
-      assert output =
+      assert output ==
                "[appsignal][ERROR] AppSignal failed to load the extension. Please run the diagnose tool and email us at support@appsignal.com: https://docs.appsignal.com/elixir/command-line/diagnose.html"
     end
 
