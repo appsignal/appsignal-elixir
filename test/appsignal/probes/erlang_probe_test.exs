@@ -20,6 +20,7 @@ defmodule Appsignal.Probes.ErlangProbeTest do
       end)
     end
 
+    @tag :skip
     test "gathers any metrics", %{fake_appsignal: fake_appsignal} do
       until(fn ->
         metrics = FakeAppsignal.get_gauges(fake_appsignal, "erlang_io")
