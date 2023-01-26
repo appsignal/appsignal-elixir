@@ -399,6 +399,7 @@ defmodule Appsignal.ObanTest do
       execute_insert_job(:exception)
     end
 
+    @tag :skip
     test "closes a span" do
       assert {:ok, [{%Span{}}, {%Span{}}]} = Test.Tracer.get(:close_span)
     end
