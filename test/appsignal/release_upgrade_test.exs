@@ -4,7 +4,6 @@ defmodule Appsignal.ReleaseUpgradeTest do
   alias Appsignal.Nif
   import AppsignalTest.Utils
 
-  @tag :skip
   @tag :skip_env_test_no_nif
   test "config_change/3" do
     assert Nif.env_get("_APPSIGNAL_APP_NAME") == 'AppSignal test suite app v0'
