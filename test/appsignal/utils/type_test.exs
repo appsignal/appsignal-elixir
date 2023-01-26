@@ -1,11 +1,3 @@
-defmodule EmptyStruct do
-  defstruct []
-end
-
-defmodule NonEmptyStruct do
-  defstruct [:foo]
-end
-
 defmodule Appsignal.Utils.TypeTest do
   use ExUnit.Case
   alias Appsignal.Utils.Type

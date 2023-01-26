@@ -1,7 +1,3 @@
-defmodule NonEmptyStruct do
-  defstruct [:foo]
-end
-
 defmodule Appsignal.Utils.ArgumentCleanerTest do
   alias Appsignal.Utils.{ArgumentCleaner, Type}
   use ExUnit.Case
