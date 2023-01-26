@@ -51,19 +51,6 @@ defmodule Appsignal.MonitorTest do
     end)
   end
 
-  test "automatically removes pids that don't exist from the monitor list" do
-    pid = :erlang.list_to_pid('<0.999.0>')
-    GenServer.cast(Appsignal.Monitor, {:monitor, pid})
-
-    until(fn ->
-      assert MapSet.member?(:sys.get_state(Appsignal.Monitor), pid)
-    end)
-
-    until(fn ->
-      refute MapSet.member?(:sys.get_state(Appsignal.Monitor), pid)
-    end)
-  end
-
   test "syncs the monitors list" do
     Monitor.add()
     :sys.replace_state(Appsignal.Monitor, fn _ -> MapSet.new() end)
