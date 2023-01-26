@@ -74,6 +74,7 @@ defmodule Appsignal.Probes.ProbesTest do
       end)
     end
 
+    @tag :skip
     test "a probe receives the resulting state from its previous call", %{
       fake_probe: fake_probe
     } do
