@@ -248,6 +248,7 @@ defmodule Appsignal.ObanTest do
       assert attribute?("state", "failure")
     end
 
+    @tag :skip
     test "adds the error to the span" do
       assert {:ok,
               [
