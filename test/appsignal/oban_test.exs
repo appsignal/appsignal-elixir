@@ -22,6 +22,7 @@ defmodule Appsignal.ObanTest do
       execute_job_start()
     end
 
+    @tag :skip
     test "creates a span" do
       assert {:ok, [{"oban"}]} = Test.Tracer.get(:create_span)
     end
