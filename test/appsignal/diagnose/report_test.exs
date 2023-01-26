@@ -70,7 +70,6 @@ defmodule Mix.Tasks.Appsignal.Diagnose.ReportTest do
     end
   end
 
-  @tag :skip
   describe "with no server response" do
     setup %{diagnose_bypass: diagnose_bypass} do
       Bypass.down(diagnose_bypass)
