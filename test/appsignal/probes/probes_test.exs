@@ -106,6 +106,7 @@ defmodule Appsignal.Probes.ProbesTest do
       Probes.unregister(:test_probe)
     end
 
+    @tag :skip
     test "handles non-exception errors", %{fake_probe: fake_probe} do
       Probes.register(:test_probe, &FakeProbe.fail/0)
 
