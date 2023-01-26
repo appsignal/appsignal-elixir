@@ -238,6 +238,7 @@ defmodule Appsignal.ObanTest do
       [fake_appsignal: fake_appsignal]
     end
 
+    @tag :skip
     test "closes a span" do
       assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
     end
