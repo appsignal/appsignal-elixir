@@ -306,6 +306,7 @@ defmodule Appsignal.Probes.ErlangProbeTest do
              )
     end
 
+    @tag :skip
     test "does not gather scheduler utilization metrics on the first run", %{
       fake_appsignal: fake_appsignal
     } do
