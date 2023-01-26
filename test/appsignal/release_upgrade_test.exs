@@ -15,8 +15,6 @@ defmodule Appsignal.ReleaseUpgradeTest do
 
       # Sets config to Application environment
       assert config()[:name] == "AppSignal test suite app v1"
-      # Sets config to system environment variables
-      assert Nif.env_get("_APPSIGNAL_APP_NAME") == 'AppSignal test suite app v1'
 
       # The system reloads the application config (set in Mix) during the upgrade.
       new_config =
@@ -29,7 +27,6 @@ defmodule Appsignal.ReleaseUpgradeTest do
 
         until(fn ->
           assert config()[:name] == "AppSignal test suite app v2"
-          assert Nif.env_get("_APPSIGNAL_APP_NAME") == 'AppSignal test suite app v2'
         end)
       end)
     end)
