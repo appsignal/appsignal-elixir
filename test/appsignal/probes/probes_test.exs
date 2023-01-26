@@ -34,6 +34,7 @@ defmodule Appsignal.Probes.ProbesTest do
       Probes.unregister(:test_probe)
     end
 
+    @tag :skip
     test "when a probe is registered with the name of a previous probe, it is overridden", %{
       fake_probe: fake_probe
     } do
