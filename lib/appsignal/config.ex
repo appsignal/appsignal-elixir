@@ -31,6 +31,7 @@ defmodule Appsignal.Config do
       accept accept-charset accept-encoding accept-language cache-control
       connection content-length range
     ),
+    report_oban_errors: "all",
     send_environment_metadata: true,
     send_params: true,
     transaction_debug_mode: false
@@ -211,6 +212,20 @@ defmodule Appsignal.Config do
     end
   end
 
+  def report_oban_errors do
+    case Application.fetch_env(:appsignal, :config) do
+      {:ok, value} ->
+        case value[:report_oban_errors] do
+          "discard" -> "discard"
+          "none" -> "none"
+          _ -> "all"
+        end
+
+      _ ->
+        "all"
+    end
+  end
+
   defp default_ca_file_path do
     Path.join(:code.priv_dir(:appsignal), "cacert.pem")
   end
@@ -276,6 +291,7 @@ defmodule Appsignal.Config do
     "APPSIGNAL_OTP_APP" => :otp_app,
     "APPSIGNAL_PUSH_API_ENDPOINT" => :endpoint,
     "APPSIGNAL_PUSH_API_KEY" => :push_api_key,
+    "APPSIGNAL_REPORT_OBAN_ERRORS" => :report_oban_errors,
     "APPSIGNAL_REQUEST_HEADERS" => :request_headers,
     "APPSIGNAL_RUNNING_IN_CONTAINER" => :running_in_container,
     "APPSIGNAL_SEND_ENVIRONMENT_METADATA" => :send_environment_metadata,
@@ -292,7 +308,7 @@ defmodule Appsignal.Config do
     APPSIGNAL_APP_NAME APPSIGNAL_PUSH_API_KEY APPSIGNAL_PUSH_API_ENDPOINT APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH
     APPSIGNAL_HOSTNAME APPSIGNAL_HTTP_PROXY APPSIGNAL_LOG APPSIGNAL_LOG_LEVEL APPSIGNAL_LOG_PATH
     APPSIGNAL_LOGGING_ENDPOINT APPSIGNAL_WORKING_DIR_PATH APPSIGNAL_WORKING_DIRECTORY_PATH APPSIGNAL_CA_FILE_PATH
-    APPSIGNAL_DIAGNOSE_ENDPOINT APP_REVISION
+    APPSIGNAL_DIAGNOSE_ENDPOINT APP_REVISION APPSIGNAL_REPORT_OBAN_ERRORS
   )
   @bool_keys ~w(
     APPSIGNAL_ACTIVE APPSIGNAL_DEBUG APPSIGNAL_INSTRUMENT_NET_HTTP APPSIGNAL_ENABLE_FRONTEND_ERROR_CATCHING

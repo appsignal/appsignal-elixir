@@ -10,23 +10,38 @@ defmodule Appsignal.Oban do
   require Logger
 
   def attach do
+    exception_handler =
+      case Appsignal.Config.report_oban_errors() do
+        "all" -> &__MODULE__.oban_job_exception/4
+        "discard" -> &__MODULE__.oban_job_discard/4
+        "none" -> &__MODULE__.oban_job_stop/4
+      end
+
     handlers = %{
       [:oban, :job, :start] => &__MODULE__.oban_job_start/4,
       [:oban, :job, :stop] => &__MODULE__.oban_job_stop/4,
-      [:oban, :job, :exception] => &__MODULE__.oban_job_exception/4,
+      [:oban, :job, :exception] => exception_handler,
       [:oban, :engine, :insert_job, :start] => &__MODULE__.oban_insert_job_start/4,
       [:oban, :engine, :insert_job, :stop] => &__MODULE__.oban_insert_job_stop/4,
       [:oban, :engine, :insert_job, :exception] => &__MODULE__.oban_insert_job_stop/4
     }
 
     for {event, fun} <- handlers do
-      case :telemetry.attach({__MODULE__, event}, event, fun, :ok) do
-        :ok ->
+      detach = :telemetry.detach({__MODULE__, event})
+      attach = :telemetry.attach({__MODULE__, event}, event, fun, :ok)
+
+      case {detach, attach} do
+        {:ok, :ok} ->
+          _ = Appsignal.IntegrationLogger.debug("Appsignal.Oban reattached to #{inspect(event)}")
+
+          :ok
+
+        {{:error, :not_found}, :ok} ->
           _ = Appsignal.IntegrationLogger.debug("Appsignal.Oban attached to #{inspect(event)}")
 
           :ok
 
-        {:error, _} = error ->
+        {_, {:error, _} = error} ->
           Logger.warn("Appsignal.Oban not attached to #{inspect(event)}: #{inspect(error)}")
 
           error
@@ -121,7 +136,7 @@ defmodule Appsignal.Oban do
 
     span =
       @tracer.current_span()
-      |> @span.set_attribute("state", state)
+      |> @span.set_attribute("state", to_string(state))
 
     @span.add_error(span, kind, reason, stacktrace)
 
@@ -130,6 +145,18 @@ defmodule Appsignal.Oban do
     increment_job_stop_counter(worker, queue, state)
 
     add_job_duration_value(worker, duration, state)
+  end
+
+  def oban_job_discard(event, measurements, metadata, config) do
+    # The `:state` metadata key was added in Oban v2.4.0.
+    # If not present, assume the job was discarded.
+    state = Map.get(metadata, :state, "discard")
+
+    if to_string(state) == "discard" do
+      oban_job_exception(event, measurements, metadata, config)
+    else
+      oban_job_stop(event, measurements, metadata, config)
+    end
   end
 
   def oban_insert_job_start(_event, _measurements, metadata, _config) do

@@ -259,6 +259,44 @@ defmodule Appsignal.ConfigTest do
     end
   end
 
+  describe "report_oban_errors" do
+    test "when discard" do
+      assert with_config(
+               %{report_oban_errors: "discard"},
+               &Config.report_oban_errors/0
+             ) == "discard"
+    end
+
+    test "when none" do
+      assert with_config(
+               %{report_oban_errors: "none"},
+               &Config.report_oban_errors/0
+             ) == "none"
+    end
+
+    test "when all" do
+      assert with_config(
+               %{report_oban_errors: "all"},
+               &Config.report_oban_errors/0
+             ) == "all"
+    end
+
+    test "when something else" do
+      assert with_config(
+               %{report_oban_errors: "foo"},
+               &Config.report_oban_errors/0
+             ) == "all"
+    end
+
+    test "when unset" do
+      assert with_config(%{}, &Config.report_oban_errors/0) == "all"
+    end
+
+    test "without an appsignal config" do
+      assert without_config(&Config.report_oban_errors/0) == "all"
+    end
+  end
+
   describe "log_level" do
     test "without an appsignal config" do
       assert without_config(&Config.log_level/0) == :info
@@ -1270,7 +1308,8 @@ defmodule Appsignal.ConfigTest do
       transaction_debug_mode: false,
       instrument_ecto: true,
       instrument_finch: true,
-      instrument_oban: true
+      instrument_oban: true,
+      report_oban_errors: "all"
     }
   end
 
