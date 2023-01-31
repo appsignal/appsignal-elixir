@@ -7,6 +7,16 @@ defmodule Appsignal.EctoTest do
     assert attached?([:appsignal, :test, :repo, :query])
   end
 
+  test "is not attached automatically when :instrument_ecto is set to false" do
+    :telemetry.detach({Ecto, [:appsignal, :test, :repo, :query]})
+
+    with_config(%{instrument_ecto: false}, fn -> Appsignal.start([], []) end)
+
+    assert !attached?([:appsignal, :test, :repo, :query])
+
+    :ok = Ecto.attach()
+  end
+
   test "attach/0 attaches to configured repos" do
     assert with_config(
              %{ecto_repos: [Appsignal.Test.RepoOne, Appsignal.Test.RepoTwo]},

@@ -1,6 +1,7 @@
 defmodule Appsignal.ObanTest do
   use ExUnit.Case
   alias Appsignal.{FakeAppsignal, Span, Test}
+  import AppsignalTest.Utils, only: [with_config: 2]
 
   test "attaches to Oban events automatically" do
     assert attached?([:oban, :job, :start])
@@ -9,6 +10,26 @@ defmodule Appsignal.ObanTest do
     assert attached?([:oban, :engine, :insert_job, :start])
     assert attached?([:oban, :engine, :insert_job, :stop])
     assert attached?([:oban, :engine, :insert_job, :exception])
+  end
+
+  test "does not attach to Oban events when :instrument_oban is set to false" do
+    :telemetry.detach({Appsignal.Oban, [:oban, :job, :start]})
+    :telemetry.detach({Appsignal.Oban, [:oban, :job, :stop]})
+    :telemetry.detach({Appsignal.Oban, [:oban, :job, :exception]})
+    :telemetry.detach({Appsignal.Oban, [:oban, :engine, :insert_job, :start]})
+    :telemetry.detach({Appsignal.Oban, [:oban, :engine, :insert_job, :stop]})
+    :telemetry.detach({Appsignal.Oban, [:oban, :engine, :insert_job, :exception]})
+
+    with_config(%{instrument_oban: false}, fn -> Appsignal.start([], []) end)
+
+    assert !attached?([:oban, :job, :start])
+    assert !attached?([:oban, :job, :stop])
+    assert !attached?([:oban, :job, :exception])
+    assert !attached?([:oban, :engine, :insert_job, :start])
+    assert !attached?([:oban, :engine, :insert_job, :stop])
+    assert !attached?([:oban, :engine, :insert_job, :exception])
+
+    [:ok, :ok, :ok, :ok, :ok, :ok] = Appsignal.Oban.attach()
   end
 
   describe "oban_job_start/4" do

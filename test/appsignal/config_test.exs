@@ -163,6 +163,102 @@ defmodule Appsignal.ConfigTest do
     end
   end
 
+  describe "error_backend_enabled?" do
+    test "when true" do
+      assert with_config(
+               %{enable_error_backend: true},
+               &Config.error_backend_enabled?/0
+             )
+    end
+
+    test "when false" do
+      refute with_config(
+               %{enable_error_backend: false},
+               &Config.error_backend_enabled?/0
+             )
+    end
+
+    test "when unset" do
+      assert with_config(%{}, &Config.error_backend_enabled?/0)
+    end
+
+    test "without an appsignal config" do
+      assert without_config(&Config.error_backend_enabled?/0)
+    end
+  end
+
+  describe "instrument_oban?" do
+    test "when true" do
+      assert with_config(
+               %{instrument_oban: true},
+               &Config.instrument_oban?/0
+             )
+    end
+
+    test "when false" do
+      refute with_config(
+               %{instrument_oban: false},
+               &Config.instrument_oban?/0
+             )
+    end
+
+    test "when unset" do
+      assert with_config(%{}, &Config.instrument_oban?/0)
+    end
+
+    test "without an appsignal config" do
+      assert without_config(&Config.instrument_oban?/0)
+    end
+  end
+
+  describe "instrument_ecto?" do
+    test "when true" do
+      assert with_config(
+               %{instrument_ecto: true},
+               &Config.instrument_ecto?/0
+             )
+    end
+
+    test "when false" do
+      refute with_config(
+               %{instrument_ecto: false},
+               &Config.instrument_ecto?/0
+             )
+    end
+
+    test "when unset" do
+      assert with_config(%{}, &Config.instrument_ecto?/0)
+    end
+
+    test "without an appsignal config" do
+      assert without_config(&Config.instrument_ecto?/0)
+    end
+  end
+
+  describe "instrument_finch?" do
+    test "when discard" do
+      assert with_config(
+               %{instrument_finch: true},
+               &Config.instrument_finch?/0
+             )
+    end
+
+    test "when false" do
+      refute with_config(
+               %{instrument_finch: false},
+               &Config.instrument_finch?/0
+             )
+    end
+
+    test "when unset" do
+      assert with_config(%{}, &Config.instrument_finch?/0)
+    end
+
+    test "without an appsignal config" do
+      assert without_config(&Config.instrument_finch?/0)
+    end
+  end
+
   describe "log_level" do
     test "without an appsignal config" do
       assert without_config(&Config.log_level/0) == :info
@@ -1171,7 +1267,10 @@ defmodule Appsignal.ConfigTest do
       send_params: true,
       send_session_data: true,
       skip_session_data: false,
-      transaction_debug_mode: false
+      transaction_debug_mode: false,
+      instrument_ecto: true,
+      instrument_finch: true,
+      instrument_oban: true
     }
   end
 

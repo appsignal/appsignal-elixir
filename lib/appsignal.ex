@@ -26,9 +26,17 @@ defmodule Appsignal do
       Appsignal.Error.Backend.attach()
     end
 
-    Appsignal.Ecto.attach()
-    Appsignal.Finch.attach()
-    Appsignal.Oban.attach()
+    if Config.instrument_ecto?() do
+      Appsignal.Ecto.attach()
+    end
+
+    if Config.instrument_finch?() do
+      Appsignal.Finch.attach()
+    end
+
+    if Config.instrument_oban?() do
+      Appsignal.Oban.attach()
+    end
 
     children = [
       {Appsignal.Tracer, []},
