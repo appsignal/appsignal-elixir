@@ -215,10 +215,25 @@ defmodule Appsignal.Config do
   def report_oban_errors do
     case Application.fetch_env(:appsignal, :config) do
       {:ok, value} ->
-        case value[:report_oban_errors] do
-          "discard" -> "discard"
-          "none" -> "none"
-          _ -> "all"
+        case to_string(value[:report_oban_errors]) do
+          "discard" ->
+            "discard"
+
+          x when x in ["none", "false"] ->
+            "none"
+
+          # to_string(nil) == ""
+          x when x in ["all", "true", ""] ->
+            "all"
+
+          unknown ->
+            Logger.warn(
+              "Unknown value #{inspect(unknown)} for report_oban_errors config " <>
+                ~s(option. Valid values are "discard", "none", "all". ) <>
+                ~s(Defaulting to "all".)
+            )
+
+            "all"
         end
 
       _ ->

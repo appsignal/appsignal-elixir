@@ -267,25 +267,37 @@ defmodule Appsignal.ConfigTest do
              ) == "discard"
     end
 
-    test "when none" do
+    test "when none or false" do
       assert with_config(
                %{report_oban_errors: "none"},
                &Config.report_oban_errors/0
              ) == "none"
+
+      assert with_config(
+               %{report_oban_errors: "false"},
+               &Config.report_oban_errors/0
+             ) == "none"
     end
 
-    test "when all" do
+    test "when all or true" do
       assert with_config(
                %{report_oban_errors: "all"},
+               &Config.report_oban_errors/0
+             ) == "all"
+
+      assert with_config(
+               %{report_oban_errors: "true"},
                &Config.report_oban_errors/0
              ) == "all"
     end
 
     test "when something else" do
-      assert with_config(
-               %{report_oban_errors: "foo"},
-               &Config.report_oban_errors/0
-             ) == "all"
+      without_logger(fn ->
+        assert with_config(
+                 %{report_oban_errors: "foo"},
+                 &Config.report_oban_errors/0
+               ) == "all"
+      end)
     end
 
     test "when unset" do
