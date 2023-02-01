@@ -5,11 +5,14 @@ defmodule Appsignal.Probes.ProbesTest do
   use ExUnit.Case
 
   setup do
-    on_exit fn ->
+    on_exit(fn ->
       Probes.unregister(:test_probe)
-    end
+    end)
 
-    [fun: fn -> :ok end]
+    [
+      fake_probe: start_supervised!(FakeProbe),
+      fun: &FakeProbe.call/0
+    ]
   end
 
   describe "with a registered probe" do
@@ -20,6 +23,10 @@ defmodule Appsignal.Probes.ProbesTest do
 
     test "registers a probe", %{fun: fun} do
       assert Probes.probes()[:test_probe] == fun
+    end
+
+    test "calls the probe", %{fake_probe: fake_probe} do
+      until(fn -> assert FakeProbe.get(fake_probe, :probe_called) end)
     end
   end
 
@@ -48,20 +55,6 @@ defmodule Appsignal.Probes.ProbesTest do
   describe "integration test for probing" do
     setup do
       [fake_probe: start_supervised!(FakeProbe)]
-    end
-
-    test "once a probe is registered, it is called by the probes system", %{
-      fake_probe: fake_probe
-    } do
-      Probes.register(:test_probe, &FakeProbe.call/0)
-
-      refute FakeProbe.get(fake_probe, :probe_called)
-
-      until(fn ->
-        assert FakeProbe.get(fake_probe, :probe_called)
-      end)
-
-      Probes.unregister(:test_probe)
     end
 
     test "when a probe is registered with the name of a previous probe, it is overridden", %{
