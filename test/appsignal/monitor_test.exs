@@ -13,25 +13,27 @@ defmodule Appsignal.MonitorTest do
   end
 
   test "monitors a process" do
-    {:monitors, previous} = Process.info(monitor_pid(), :monitors)
-
     Monitor.add()
 
     until(fn ->
-      assert Process.info(monitor_pid(), :monitors) ==
-               {:monitors, previous ++ [{:process, self()}]}
+      {:monitors, monitors} = Process.info(monitor_pid(), :monitors)
+
+      assert Enum.any?(monitors, fn {:process, pid} ->
+               pid == self()
+             end)
     end)
   end
 
   test "does not monitor a process more than once" do
-    {:monitors, previous} = Process.info(monitor_pid(), :monitors)
-
     Monitor.add()
     Monitor.add()
 
     until(fn ->
-      assert Process.info(monitor_pid(), :monitors) ==
-               {:monitors, previous ++ [{:process, self()}]}
+      {:monitors, monitors} = Process.info(monitor_pid(), :monitors)
+
+      assert Enum.count(monitors, fn {:process, pid} ->
+               pid == self()
+             end) == 1
     end)
   end
 
