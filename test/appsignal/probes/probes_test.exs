@@ -4,13 +4,44 @@ defmodule Appsignal.Probes.ProbesTest do
   import AppsignalTest.Utils
   use ExUnit.Case
 
-  describe "register/2" do
-    test "registers a probe when given a function as probe" do
-      assert :ok == Probes.register(:some_probe, fn -> nil end)
+  setup do
+    on_exit fn ->
+      Probes.unregister(:test_probe)
     end
 
-    test "returns an error tuple when probe is not a function" do
-      assert {:error, _} = Probes.register(:some_probe, :some_value)
+    [fun: fn -> :ok end]
+  end
+
+  describe "with a registered probe" do
+    setup %{fun: fun} do
+      :ok = Probes.register(:test_probe, fun)
+      [fun: fun]
+    end
+
+    test "registers a probe", %{fun: fun} do
+      assert Probes.probes()[:test_probe] == fun
+    end
+  end
+
+  describe "with a non-function probe" do
+    setup do
+      {:error, "Probe is not a function"} = Probes.register(:test_probe, :error)
+      :ok
+    end
+
+    test "does not register a probe" do
+      refute Map.has_key?(Probes.probes(), :test_probe)
+    end
+  end
+
+  describe "with an unregistered probe" do
+    setup %{fun: fun} do
+      :ok = Probes.register(:test_probe, fun)
+      :ok = Probes.unregister(:test_probe)
+    end
+
+    test "unregisters a probe" do
+      refute Map.has_key?(Probes.probes(), :test_probe)
     end
   end
 
