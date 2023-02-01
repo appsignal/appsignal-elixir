@@ -22,12 +22,15 @@ defmodule Appsignal.Probes.ProbesTest do
       assert Probes.probes()[:test_probe] == fun
     end
 
-    test "calls the probe" do
+    test "calls the probe automatically" do
       until(fn -> assert Probes.states()[:test_probe] > 0 end)
     end
 
     test "increments internal state" do
-      until(fn -> assert Probes.states()[:test_probe] > 1 end)
+      run_probes()
+      run_probes()
+
+      assert Probes.states()[:test_probe] > 1
     end
   end
 
@@ -74,7 +77,9 @@ defmodule Appsignal.Probes.ProbesTest do
     end
 
     test "does not call the probe" do
-      repeatedly(fn -> assert Probes.states()[:test_probe] == 0 end)
+      run_probes()
+
+      assert Probes.states()[:test_probe] == 0
     end
   end
 
@@ -85,7 +90,11 @@ defmodule Appsignal.Probes.ProbesTest do
     end
 
     test "calls the probe without crashing the probes" do
-      send(Process.whereis(Probes), :run_probes)
+      run_probes()
     end
+  end
+
+  defp run_probes do
+    send(Process.whereis(Probes), :run_probes)
   end
 end
