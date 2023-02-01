@@ -9,15 +9,12 @@ defmodule Appsignal.Probes.ProbesTest do
       Probes.unregister(:test_probe)
     end)
 
-    [
-      fake_probe: start_supervised!(FakeProbe),
-      fun: &FakeProbe.call/0
-    ]
+    [fun: fn state -> state + 1 end]
   end
 
   describe "with a registered probe" do
     setup %{fun: fun} do
-      :ok = Probes.register(:test_probe, fun)
+      :ok = Probes.register(:test_probe, fun, 0)
       [fun: fun]
     end
 
@@ -25,8 +22,12 @@ defmodule Appsignal.Probes.ProbesTest do
       assert Probes.probes()[:test_probe] == fun
     end
 
-    test "calls the probe", %{fake_probe: fake_probe} do
-      until(fn -> assert FakeProbe.get(fake_probe, :probe_called) end)
+    test "calls the probe" do
+      until(fn -> assert Probes.states()[:test_probe] > 0 end)
+    end
+
+    test "increments internal state" do
+      until(fn -> assert Probes.states()[:test_probe] > 1 end)
     end
   end
 
@@ -69,11 +70,11 @@ defmodule Appsignal.Probes.ProbesTest do
     setup %{fun: fun} do
       setup_with_config(%{enable_minutely_probes: false})
 
-      :ok = Probes.register(:test_probe, fun)
+      :ok = Probes.register(:test_probe, fun, 0)
     end
 
-    test "does not call the probe", %{fake_probe: fake_probe} do
-      repeatedly(fn -> refute FakeProbe.get(fake_probe, :probe_called) end)
+    test "does not call the probe" do
+      repeatedly(fn -> assert Probes.states()[:test_probe] == 0 end)
     end
   end
 
