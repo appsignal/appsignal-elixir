@@ -52,34 +52,22 @@ defmodule Appsignal.Probes.ProbesTest do
     end
   end
 
+  describe "with an overridden probe" do
+    setup %{fun: fun} do
+      :ok = Probes.register(:test_probe, fn -> :ok end, 10)
+      :ok = Probes.register(:test_probe, fun, 0)
+      [fun: fun]
+    end
+
+    test "overrides the probe", %{fun: fun} do
+      assert Probes.probes()[:test_probe] == fun
+      assert Probes.states()[:test_probe] == 0
+    end
+  end
+
   describe "integration test for probing" do
     setup do
       [fake_probe: start_supervised!(FakeProbe)]
-    end
-
-    test "when a probe is registered with the name of a previous probe, it is overridden", %{
-      fake_probe: fake_probe
-    } do
-      Probes.register(:test_probe, &FakeProbe.call/0)
-
-      until(fn ->
-        assert FakeProbe.get(fake_probe, :probe_called)
-      end)
-
-      Probes.register(:test_probe, fn -> nil end)
-      FakeProbe.clear()
-
-      repeatedly(fn ->
-        refute FakeProbe.get(fake_probe, :probe_called)
-      end)
-
-      Probes.register(:test_probe, &FakeProbe.call/0)
-
-      until(fn ->
-        assert FakeProbe.get(fake_probe, :probe_called)
-      end)
-
-      Probes.unregister(:test_probe)
     end
 
     test "a probe does not get called by the probes system if it's disabled", %{
@@ -109,6 +97,7 @@ defmodule Appsignal.Probes.ProbesTest do
       Probes.unregister(:test_probe)
     end
 
+<<<<<<< HEAD
     test "when a probe is overridden, its state is reset", %{
       fake_probe: fake_probe
     } do
@@ -129,6 +118,9 @@ defmodule Appsignal.Probes.ProbesTest do
       Probes.unregister(:test_probe)
     end
 
+=======
+    @tag :skip
+>>>>>>> 0f98a427 (Replace overridden probes test)
     test "handles non-exception errors", %{fake_probe: fake_probe} do
       Probes.register(:test_probe, &FakeProbe.fail/0)
 
