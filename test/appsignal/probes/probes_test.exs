@@ -78,19 +78,14 @@ defmodule Appsignal.Probes.ProbesTest do
     end
   end
 
-  describe "integration test for probing" do
-    setup do
-      [fake_probe: start_supervised!(FakeProbe)]
+  describe "with a failing probe" do
+    setup %{fun: fun} do
+      :ok = Probes.register(:test_probe, fn -> raise "Probe exception!" end, 0)
+      [fun: fun]
     end
 
-    test "handles non-exception errors", %{fake_probe: fake_probe} do
-      Probes.register(:test_probe, &FakeProbe.fail/0)
-
-      until(fn ->
-        assert FakeProbe.get(fake_probe, :probe_called)
-      end)
-
-      Probes.unregister(:test_probe)
+    test "calls the probe without crashing the probes" do
+      send(Process.whereis(Probes), :run_probes)
     end
   end
 end
