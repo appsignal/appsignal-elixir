@@ -12,6 +12,7 @@ defmodule Appsignal.Config do
     enable_host_metrics: true,
     enable_minutely_probes: true,
     enable_statsd: false,
+    enable_nginx_metrics: false,
     enable_error_backend: true,
     endpoint: "https://push.appsignal.com",
     env: :dev,
@@ -230,6 +231,7 @@ defmodule Appsignal.Config do
     "APPSIGNAL_ENABLE_HOST_METRICS" => :enable_host_metrics,
     "APPSIGNAL_ENABLE_MINUTELY_PROBES" => :enable_minutely_probes,
     "APPSIGNAL_ENABLE_STATSD" => :enable_statsd,
+    "APPSIGNAL_ENABLE_NGINX_METRICS" => :enable_nginx_metrics,
     "APPSIGNAL_ENABLE_ERROR_BACKEND" => :enable_error_backend,
     "APPSIGNAL_FILES_WORLD_ACCESSIBLE" => :files_world_accessible,
     "APPSIGNAL_FILTER_PARAMETERS" => :filter_parameters,
@@ -270,8 +272,8 @@ defmodule Appsignal.Config do
     APPSIGNAL_ENABLE_GC_INSTRUMENTATION APPSIGNAL_RUNNING_IN_CONTAINER
     APPSIGNAL_ENABLE_HOST_METRICS APPSIGNAL_SEND_SESSION_DATA APPSIGNAL_SKIP_SESSION_DATA
     APPSIGNAL_TRANSACTION_DEBUG_MODE APPSIGNAL_FILES_WORLD_ACCESSIBLE APPSIGNAL_SEND_PARAMS
-    APPSIGNAL_ENABLE_MINUTELY_PROBES APPSIGNAL_ENABLE_STATSD APPSIGNAL_ENABLE_ERROR_BACKEND
-    APPSIGNAL_SEND_ENVIRONMENT_METADATA
+    APPSIGNAL_ENABLE_MINUTELY_PROBES APPSIGNAL_ENABLE_STATSD APPSIGNAL_ENABLE_NGINX_METRICS
+    APPSIGNAL_ENABLE_ERROR_BACKEND APPSIGNAL_SEND_ENVIRONMENT_METADATA
   )
   @atom_keys ~w(APPSIGNAL_APP_ENV APPSIGNAL_OTP_APP)
   @string_list_keys ~w(
@@ -358,6 +360,8 @@ defmodule Appsignal.Config do
     Nif.env_put("_APPSIGNAL_DEBUG_LOGGING", to_string(config[:debug]))
     Nif.env_put("_APPSIGNAL_DNS_SERVERS", config[:dns_servers] |> Enum.join(","))
     Nif.env_put("_APPSIGNAL_ENABLE_HOST_METRICS", to_string(config[:enable_host_metrics]))
+    Nif.env_put("_APPSIGNAL_ENABLE_STATSD", to_string(config[:enable_statsd]))
+    Nif.env_put("_APPSIGNAL_ENABLE_NGINX_METRICS", to_string(config[:enable_nginx_metrics]))
     Nif.env_put("_APPSIGNAL_ENVIRONMENT", to_string(config[:env]))
     Nif.env_put("_APPSIGNAL_HOSTNAME", to_string(config[:hostname]))
     Nif.env_put("_APPSIGNAL_HTTP_PROXY", to_string(config[:http_proxy]))
@@ -390,6 +394,8 @@ defmodule Appsignal.Config do
       to_string(config[:send_environment_metadata])
     )
 
+    Nif.env_put("_APPSIGNAL_SEND_PARAMS", to_string(config[:send_params]))
+    Nif.env_put("_APPSIGNAL_SEND_SESSION_DATA", to_string(config[:send_session_data]))
     Nif.env_put("_APPSIGNAL_RUNNING_IN_CONTAINER", to_string(config[:running_in_container]))
     Nif.env_put("_APPSIGNAL_TRANSACTION_DEBUG_MODE", to_string(config[:transaction_debug_mode]))
     Nif.env_put("_APPSIGNAL_WORKING_DIRECTORY_PATH", to_string(config[:working_directory_path]))

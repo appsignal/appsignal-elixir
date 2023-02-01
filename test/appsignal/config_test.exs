@@ -282,6 +282,11 @@ defmodule Appsignal.ConfigTest do
       assert %{enable_statsd: true} = with_config(%{enable_statsd: true}, &init_config/0)
     end
 
+    test "enable_nginx_metrics" do
+      assert %{enable_nginx_metrics: true} =
+               with_config(%{enable_nginx_metrics: true}, &init_config/0)
+    end
+
     test "enable_error_backend" do
       assert %{enable_error_backend: false} =
                with_config(%{enable_error_backend: false}, &init_config/0)
@@ -547,6 +552,13 @@ defmodule Appsignal.ConfigTest do
                %{"APPSIGNAL_ENABLE_STATSD" => "true"},
                &init_config/0
              ) == default_configuration() |> Map.put(:enable_statsd, true)
+    end
+
+    test "enable_nginx_metrics" do
+      assert with_env(
+               %{"APPSIGNAL_ENABLE_NGINX_METRICS" => "true"},
+               &init_config/0
+             ) == default_configuration() |> Map.put(:enable_nginx_metrics, true)
     end
 
     test "enable_error_backend" do
@@ -1138,6 +1150,7 @@ defmodule Appsignal.ConfigTest do
       dns_servers: [],
       enable_host_metrics: true,
       enable_minutely_probes: true,
+      enable_nginx_metrics: false,
       enable_statsd: false,
       enable_error_backend: true,
       endpoint: "https://push.appsignal.com",
