@@ -65,62 +65,23 @@ defmodule Appsignal.Probes.ProbesTest do
     end
   end
 
+  describe "with minutely probes disabled" do
+    setup %{fun: fun} do
+      setup_with_config(%{enable_minutely_probes: false})
+
+      :ok = Probes.register(:test_probe, fun)
+    end
+
+    test "does not call the probe", %{fake_probe: fake_probe} do
+      repeatedly(fn -> refute FakeProbe.get(fake_probe, :probe_called) end)
+    end
+  end
+
   describe "integration test for probing" do
     setup do
       [fake_probe: start_supervised!(FakeProbe)]
     end
 
-    test "a probe does not get called by the probes system if it's disabled", %{
-      fake_probe: fake_probe
-    } do
-      AppsignalTest.Utils.with_config(%{enable_minutely_probes: false}, fn ->
-        Probes.register(:test_probe, &FakeProbe.call/0)
-
-        repeatedly(fn ->
-          refute FakeProbe.get(fake_probe, :probe_called)
-        end)
-
-        Probes.unregister(:test_probe)
-      end)
-    end
-
-    test "a probe receives the resulting state from its previous call", %{
-      fake_probe: fake_probe
-    } do
-      Probes.register(:test_probe, &FakeProbe.stateful/1, 0)
-
-      until(fn ->
-        assert FakeProbe.get(fake_probe, :probe_called)
-        assert FakeProbe.get(fake_probe, :probe_state) >= 3
-      end)
-
-      Probes.unregister(:test_probe)
-    end
-
-<<<<<<< HEAD
-    test "when a probe is overridden, its state is reset", %{
-      fake_probe: fake_probe
-    } do
-      Probes.register(:test_probe, &FakeProbe.stateful/1, 0)
-
-      until(fn ->
-        assert FakeProbe.get(fake_probe, :probe_called)
-        assert FakeProbe.get(fake_probe, :probe_state) >= 3
-      end)
-
-      Probes.register(:test_probe, &FakeProbe.stateful/1, 0)
-
-      until(fn ->
-        assert FakeProbe.get(fake_probe, :probe_called)
-        assert FakeProbe.get(fake_probe, :probe_state) < 3
-      end)
-
-      Probes.unregister(:test_probe)
-    end
-
-=======
-    @tag :skip
->>>>>>> 0f98a427 (Replace overridden probes test)
     test "handles non-exception errors", %{fake_probe: fake_probe} do
       Probes.register(:test_probe, &FakeProbe.fail/0)
 
