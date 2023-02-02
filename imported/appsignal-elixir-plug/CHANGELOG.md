@@ -1,5 +1,11 @@
 # AppSignal for Elixir Plug changelog
 
+## 2.0.13
+
+### Added
+
+- [13849fa](https://github.com/appsignal/appsignal-elixir-plug/commit/13849fa3ad0a764006eebd6d37e4aaac837bb035) patch - Add metadata functions for Plug/Phoenix apps
+
 ## 2.0.12
 
 ### Fixed
