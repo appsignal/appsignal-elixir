@@ -10,19 +10,26 @@ defmodule Appsignal.Probes.ErlangProbe do
 
     sample
     |> metrics(next_sample)
-    |> Enum.each(&set_gauge/1)
+    |> Enum.each(fn {key, value, tags} ->
+      Appsignal.set_gauge(key, value, tags)
+    end)
 
     next_sample
   end
 
-  defp metrics(sample, next_sample) do
-    io_metrics() ++
-      scheduler_metrics() ++
-      process_metrics() ++
-      memory_metrics() ++
-      atom_metrics() ++
-      run_queue_lengths() ++
-      scheduler_utilization_metrics(sample, next_sample)
+  def metrics(sample, next_sample) do
+    metrics =
+      io_metrics() ++
+        scheduler_metrics() ++
+        process_metrics() ++
+        memory_metrics() ++
+        atom_metrics() ++
+        run_queue_lengths() ++
+        scheduler_utilization_metrics(sample, next_sample)
+
+    Enum.map(metrics, fn {key, value, tags} ->
+      {key, value, Map.merge(tags, %{hostname: Appsignal.Utils.Hostname.hostname()})}
+    end)
   end
 
   defp io_metrics do
@@ -102,13 +109,13 @@ defmodule Appsignal.Probes.ErlangProbe do
   end
 
   if Code.ensure_loaded?(:scheduler) do
-    defp sample_schedulers, do: :scheduler.sample()
+    def sample_schedulers, do: :scheduler.sample()
 
     defp scheduler_utilization(sample, next_sample) do
       :scheduler.utilization(sample, next_sample)
     end
   else
-    defp sample_schedulers do
+    def sample_schedulers do
       scheduler_wall_time = Enum.sort(:erlang.statistics(:scheduler_wall_time))
       scheduler_count = :erlang.system_info(:schedulers)
 
@@ -124,13 +131,5 @@ defmodule Appsignal.Probes.ErlangProbe do
         {:normal, id, utilization, nil}
       end)
     end
-  end
-
-  defp set_gauge({name, value, tags}) do
-    @appsignal.set_gauge(
-      name,
-      value,
-      Map.merge(tags, %{hostname: Appsignal.Utils.Hostname.hostname()})
-    )
   end
 end
