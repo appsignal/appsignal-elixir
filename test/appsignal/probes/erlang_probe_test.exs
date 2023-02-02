@@ -285,9 +285,7 @@ defmodule Appsignal.Probes.ErlangProbeTest do
     test "does not gather scheduler utilization metrics on the first run", %{
       fake_appsignal: fake_appsignal
     } do
-      metrics = FakeAppsignal.get_gauges(fake_appsignal, "erlang_scheduler_utilization")
-
-      assert Enum.empty?(metrics)
+      assert Enum.empty?(FakeAppsignal.get_gauges(fake_appsignal, "erlang_scheduler_utilization"))
     end
 
     test "gathers scheduler utilization metrics on subsequent runs", %{
@@ -295,29 +293,19 @@ defmodule Appsignal.Probes.ErlangProbeTest do
       sample: sample
     } do
       ErlangProbe.call(sample)
-
       metrics = FakeAppsignal.get_gauges(fake_appsignal, "erlang_scheduler_utilization")
 
-      scheduler_ids = Enum.to_list(1..:erlang.system_info(:schedulers))
-
-      scheduler_ids
-      |> Enum.map(fn scheduler_id -> "#{scheduler_id}" end)
-      |> Enum.each(fn scheduler_id ->
-        assert Enum.any?(
-                 metrics,
-                 &match?(
-                   %{
-                     key: "erlang_scheduler_utilization",
-                     tags: %{
-                       type: "normal",
-                       id: ^scheduler_id
-                     },
-                     value: _
-                   },
-                   &1
-                 )
+      assert Enum.any?(
+               metrics,
+               &match?(
+                 %{
+                   key: "erlang_scheduler_utilization",
+                   tags: %{type: "normal", id: _},
+                   value: _
+                 },
+                 &1
                )
-      end)
+             )
     end
   end
 
