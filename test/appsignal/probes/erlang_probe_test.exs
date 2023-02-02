@@ -15,6 +15,12 @@ defmodule Appsignal.Probes.ErlangProbeTest do
 
   describe "call/1" do
     setup do
+      Probes.unregister(:erlang)
+
+      on_exit(fn ->
+        Probes.register(:erlang, &ErlangProbe.call/1)
+      end)
+
       [sample: ErlangProbe.call()]
     end
 
