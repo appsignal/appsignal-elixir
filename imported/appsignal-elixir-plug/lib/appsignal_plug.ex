@@ -1,7 +1,6 @@
 defmodule Appsignal.Plug do
   require Appsignal.Utils
   @span Appsignal.Utils.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
-  import Appsignal.Utils, only: [module_name: 1]
 
   @moduledoc """
   AppSignal's Plug instrumentation instruments calls to Plug applications to
@@ -107,11 +106,11 @@ defmodule Appsignal.Plug do
   @doc false
   def set_conn_data(span, conn) do
     span
-    |> set_name(conn)
-    |> set_category(conn)
-    |> set_params(conn)
-    |> set_sample_data(conn)
-    |> set_session_data(conn)
+    |> @span.set_name(Appsignal.Metadata.name(conn))
+    |> @span.set_attribute("appsignal:category", Appsignal.Metadata.category(conn))
+    |> @span.set_sample_data("params", Appsignal.Metadata.params(conn))
+    |> @span.set_sample_data("environment", Appsignal.Metadata.metadata(conn))
+    |> @span.set_sample_data("session_data", Appsignal.Metadata.session(conn))
   end
 
   @doc false
@@ -137,50 +136,5 @@ defmodule Appsignal.Plug do
     span
     |> @span.add_error(kind, reason, stack)
     |> set_conn_data(conn_with_status)
-  end
-
-  defp set_name(span, %Plug.Conn{private: %{appsignal_name: name}}) do
-    @span.set_name(span, name)
-  end
-
-  defp set_name(span, %Plug.Conn{
-         private: %{phoenix_action: action, phoenix_controller: controller}
-       }) do
-    @span.set_name(span, "#{module_name(controller)}##{action}")
-  end
-
-  defp set_name(span, %Plug.Conn{method: method, private: %{plug_route: {path, _fun}}}) do
-    @span.set_name(span, "#{method} #{path}")
-  end
-
-  defp set_name(span, _conn) do
-    span
-  end
-
-  defp set_category(span, %Plug.Conn{private: %{phoenix_endpoint: _endpoint}}) do
-    @span.set_attribute(span, "appsignal:category", "call.phoenix")
-  end
-
-  defp set_category(span, _conn) do
-    @span.set_attribute(span, "appsignal:category", "call.plug")
-  end
-
-  defp set_params(span, conn) do
-    %Plug.Conn{params: params} = Plug.Conn.fetch_query_params(conn)
-    @span.set_sample_data(span, "params", params)
-  end
-
-  defp set_sample_data(span, conn) do
-    @span.set_sample_data(span, "environment", Appsignal.Metadata.metadata(conn))
-  end
-
-  defp set_session_data(span, %Plug.Conn{
-         private: %{plug_session: session, plug_session_fetch: :done}
-       }) do
-    @span.set_sample_data(span, "session_data", session)
-  end
-
-  defp set_session_data(span, _conn) do
-    span
   end
 end

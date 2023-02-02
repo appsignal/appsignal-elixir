@@ -98,4 +98,70 @@ defmodule Appsignal.Plug.MetadataTest do
       assert Appsignal.Metadata.metadata(conn)
     end
   end
+
+  test "does not extract the conn's name if unset", %{conn: conn} do
+    assert Appsignal.Metadata.name(conn) == nil
+  end
+
+  describe "when an appsignal_name is set" do
+    setup %{conn: conn} do
+      %{conn: Plug.Conn.put_private(conn, :appsignal_name, "appsignal_name")}
+    end
+
+    test "extracts the conn's name", %{conn: conn} do
+      assert Appsignal.Metadata.name(conn) == "appsignal_name"
+    end
+  end
+
+  describe "when phoenix_controller and phoenix_action are set" do
+    setup %{conn: conn} do
+      %{
+        conn:
+          conn
+          |> Plug.Conn.put_private(:phoenix_controller, "TestController")
+          |> Plug.Conn.put_private(:phoenix_action, "index")
+      }
+    end
+
+    test "extracts the conn's name", %{conn: conn} do
+      assert Appsignal.Metadata.name(conn) == "TestController#index"
+    end
+  end
+
+  describe "when method and plug_route are set" do
+    setup %{conn: conn} do
+      %{
+        conn:
+          conn
+          |> Map.put(:method, "GET")
+          |> Plug.Conn.put_private(:plug_route, {"/", nil})
+      }
+    end
+
+    test "extracts the conn's name", %{conn: conn} do
+      assert Appsignal.Metadata.name(conn) == "GET /"
+    end
+  end
+
+  test "extracts the conn's category", %{conn: conn} do
+    assert Appsignal.Metadata.category(conn) == "call.plug"
+  end
+
+  describe "with a phoenix_endpoint" do
+    setup %{conn: conn} do
+      %{conn: Plug.Conn.put_private(conn, :phoenix_endpoint, Endpoint)}
+    end
+
+    test "extracts the conn's category", %{conn: conn} do
+      assert Appsignal.Metadata.category(conn) == "call.phoenix"
+    end
+  end
+
+  test "extracts the conn's params", %{conn: conn} do
+    assert Appsignal.Metadata.params(conn) == %{}
+  end
+
+  test "extracts the conn's session data", %{conn: conn} do
+    assert Appsignal.Metadata.session(conn) == %{}
+  end
 end

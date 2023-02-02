@@ -446,15 +446,6 @@ defmodule Appsignal.PlugTest do
                Test.Span.get(:set_attribute)
     end
 
-    test "ignores Phoenix conns", %{span: span} do
-      assert Appsignal.Plug.set_conn_data(span, %Plug.Conn{
-               method: "GET",
-               private: %{phoenix_endpoint: AppsignalPhoenixExampleWeb.Endpoint}
-             }) == span
-
-      assert Test.Span.get(:set_name) == :error
-    end
-
     test "sets the span's parameters", %{span: span} do
       assert Appsignal.Plug.set_conn_data(span, %Plug.Conn{method: "GET", params: %{"id" => "4"}}) ==
                span
@@ -488,34 +479,6 @@ defmodule Appsignal.PlugTest do
 
       %{"sample_data" => sample_data} = Appsignal.Span.to_map(span)
       assert ~s({"key":"value"}) == sample_data["session_data"]
-    end
-
-    test "does not set unfetched session data", %{span: span} do
-      assert Appsignal.Plug.set_conn_data(span, %Plug.Conn{}) == span
-
-      %{"sample_data" => sample_data} = Appsignal.Span.to_map(span)
-      refute Map.has_key?(sample_data, "session_data")
-    end
-
-    test "does not set session data when send_session_data is set to false", %{span: span} do
-      config = Application.get_env(:appsignal, :config)
-      Application.put_env(:appsignal, :config, %{config | send_session_data: false})
-
-      try do
-        Appsignal.Plug.set_conn_data(span, %Plug.Conn{
-          method: "GET",
-          private: %{
-            plug_route: {"/", fn -> :ok end},
-            plug_session: %{key: "value"},
-            plug_session_fetch: :done
-          }
-        })
-      after
-        Application.put_env(:appsignal, :config, config)
-      end
-
-      %{"sample_data" => sample_data} = Appsignal.Span.to_map(span)
-      refute Map.has_key?(sample_data, "session_data")
     end
   end
 
