@@ -1,5 +1,20 @@
 # AppSignal for Elixir changelog
 
+## 2.5.1
+
+### Added
+
+- [837e0285](https://github.com/appsignal/appsignal-elixir/commit/837e0285a336854646967567d939a0277473c1a4) patch - Add config options to disable automatic Ecto, Finch and Oban instrumentations.
+  Set `instrument_ecto`, `instrument_finch` or `instrument_oban` to `true` in
+  order to disable that instrumentation.
+- [b3a77a73](https://github.com/appsignal/appsignal-elixir/commit/b3a77a73c5f8a136d0333c1c64154b3350cec28f) patch - Add a `report_oban_errors` config option to decide when to report Oban errors. When set to `"all"`, all errors will be reported; when set to `"none"`, no errors will be reported. Set it to `"discard"` to only report errors when the job is discarded due to the error and won't be re-attempted.
+- [e52997c8](https://github.com/appsignal/appsignal-elixir/commit/e52997c8dfa081822da840dd84d28e9bf6148259) patch - Add metadata functions for Plug/Phoenix apps
+
+### Fixed
+
+- [837e0285](https://github.com/appsignal/appsignal-elixir/commit/837e0285a336854646967567d939a0277473c1a4) patch - Fix the default value of `enable_error_backend` so it defaults to `true` when
+  the config option is not set.
+
 ## 2.5.0
 
 ### Added
