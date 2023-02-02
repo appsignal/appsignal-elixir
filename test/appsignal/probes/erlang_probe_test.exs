@@ -1,38 +1,16 @@
 defmodule Appsignal.Probes.ErlangProbeTest do
-  alias Appsignal.{FakeAppsignal, Probes.ErlangProbe}
+  alias Appsignal.{FakeAppsignal, Probes, Probes.ErlangProbe}
   import AppsignalTest.Utils
   use ExUnit.Case
 
   setup do
-    # Ensure the default probe is unregistered, that way we only record metrics
-    # from this test
-    Appsignal.Probes.unregister(:erlang)
-
     [fake_appsignal: start_supervised!(FakeAppsignal)]
   end
 
-  describe "when invoked by the scheduler" do
-    setup do
-      assert :ok == Appsignal.Probes.register(:erlang, &ErlangProbe.call/1)
-
-      on_exit(fn ->
-        assert :ok == Appsignal.Probes.unregister(:erlang)
-      end)
-    end
-
-    test "gathers any metrics", %{fake_appsignal: fake_appsignal} do
-      until(fn ->
-        metrics = FakeAppsignal.get_gauges(fake_appsignal, "erlang_io")
-        refute Enum.empty?(metrics)
-      end)
-    end
-
-    test "gathers metrics using previous sample", %{fake_appsignal: fake_appsignal} do
-      until(fn ->
-        metrics = FakeAppsignal.get_gauges(fake_appsignal, "erlang_scheduler_utilization")
-        refute Enum.empty?(metrics)
-      end)
-    end
+  test "is added to the probes automatically" do
+    until(fn ->
+      assert Probes.probes()[:erlang] == (&ErlangProbe.call/1)
+    end)
   end
 
   describe "call/1" do
