@@ -1,9 +1,6 @@
 defmodule Appsignal.Probes.ErlangProbe do
   @moduledoc false
-
   require Appsignal.Utils
-
-  @appsignal Appsignal.Utils.compile_env(:appsignal, :appsignal, Appsignal)
 
   def call(sample \\ nil) do
     next_sample = sample_schedulers()

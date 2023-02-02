@@ -1,11 +1,7 @@
 defmodule Appsignal.Probes.ErlangProbeTest do
-  alias Appsignal.{FakeAppsignal, Probes, Probes.ErlangProbe}
+  alias Appsignal.{Probes, Probes.ErlangProbe}
   import AppsignalTest.Utils
   use ExUnit.Case
-
-  setup do
-    [fake_appsignal: start_supervised!(FakeAppsignal)]
-  end
 
   test "is added to the probes automatically" do
     until(fn ->
