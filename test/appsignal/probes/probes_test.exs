@@ -94,8 +94,4 @@ defmodule Appsignal.Probes.ProbesTest do
       run_probes()
     end
   end
-
-  defp run_probes do
-    send(Process.whereis(Probes), :run_probes)
-  end
 end

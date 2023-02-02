@@ -131,4 +131,8 @@ defmodule AppsignalTest.Utils do
     :timer.sleep(10)
     repeatedly(assertion, retries - 1)
   end
+
+  def run_probes do
+    send(Process.whereis(Appsignal.Probes), :run_probes)
+  end
 end
