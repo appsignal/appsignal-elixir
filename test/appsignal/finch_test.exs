@@ -1,11 +1,26 @@
 defmodule Appsignal.FinchTest do
   use ExUnit.Case
   alias Appsignal.{Span, Test}
+  import AppsignalTest.Utils, only: [with_config: 2]
 
   test "attaches to Finch events automatically" do
     assert attached?([:finch, :request, :start])
     assert attached?([:finch, :request, :stop])
     assert attached?([:finch, :request, :exception])
+  end
+
+  test "does not attach to Finch events when :instrument_finch is set to false" do
+    :telemetry.detach({Appsignal.Finch, [:finch, :request, :start]})
+    :telemetry.detach({Appsignal.Finch, [:finch, :request, :stop]})
+    :telemetry.detach({Appsignal.Finch, [:finch, :request, :exception]})
+
+    with_config(%{instrument_finch: false}, fn -> Appsignal.start([], []) end)
+
+    assert !attached?([:finch, :request, :start])
+    assert !attached?([:finch, :request, :stop])
+    assert !attached?([:finch, :request, :exception])
+
+    [:ok, :ok, :ok] = Appsignal.Finch.attach()
   end
 
   describe "finch_request_start/4, without a root span" do

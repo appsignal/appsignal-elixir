@@ -22,12 +22,16 @@ defmodule Appsignal.Config do
     ignore_actions: [],
     ignore_errors: [],
     ignore_namespaces: [],
+    instrument_ecto: true,
+    instrument_finch: true,
+    instrument_oban: true,
     log: "file",
     logging_endpoint: "https://appsignal-endpoint.net",
     request_headers: ~w(
       accept accept-charset accept-encoding accept-language cache-control
       connection content-length range
     ),
+    report_oban_errors: "all",
     send_environment_metadata: true,
     send_params: true,
     transaction_debug_mode: false
@@ -175,15 +179,65 @@ defmodule Appsignal.Config do
 
   def minutely_probes_enabled? do
     case Application.fetch_env(:appsignal, :config) do
-      {:ok, value} -> !!value[:enable_minutely_probes]
+      {:ok, value} -> !!Map.get(value, :enable_minutely_probes, false)
       _ -> false
     end
   end
 
   def error_backend_enabled? do
     case Application.fetch_env(:appsignal, :config) do
-      {:ok, value} -> !!value[:enable_error_backend]
+      {:ok, value} -> !!Map.get(value, :enable_error_backend, true)
       _ -> true
+    end
+  end
+
+  def instrument_ecto? do
+    case Application.fetch_env(:appsignal, :config) do
+      {:ok, value} -> !!Map.get(value, :instrument_ecto, true)
+      _ -> true
+    end
+  end
+
+  def instrument_finch? do
+    case Application.fetch_env(:appsignal, :config) do
+      {:ok, value} -> !!Map.get(value, :instrument_finch, true)
+      _ -> true
+    end
+  end
+
+  def instrument_oban? do
+    case Application.fetch_env(:appsignal, :config) do
+      {:ok, value} -> !!Map.get(value, :instrument_oban, true)
+      _ -> true
+    end
+  end
+
+  def report_oban_errors do
+    case Application.fetch_env(:appsignal, :config) do
+      {:ok, value} ->
+        case to_string(value[:report_oban_errors]) do
+          "discard" ->
+            "discard"
+
+          x when x in ["none", "false"] ->
+            "none"
+
+          # to_string(nil) == ""
+          x when x in ["all", "true", ""] ->
+            "all"
+
+          unknown ->
+            Logger.warn(
+              "Unknown value #{inspect(unknown)} for report_oban_errors config " <>
+                ~s(option. Valid values are "discard", "none", "all". ) <>
+                ~s(Defaulting to "all".)
+            )
+
+            "all"
+        end
+
+      _ ->
+        "all"
     end
   end
 
@@ -242,6 +296,9 @@ defmodule Appsignal.Config do
     "APPSIGNAL_IGNORE_ACTIONS" => :ignore_actions,
     "APPSIGNAL_IGNORE_ERRORS" => :ignore_errors,
     "APPSIGNAL_IGNORE_NAMESPACES" => :ignore_namespaces,
+    "APPSIGNAL_INSTRUMENT_ECTO" => :instrument_ecto,
+    "APPSIGNAL_INSTRUMENT_FINCH" => :instrument_finch,
+    "APPSIGNAL_INSTRUMENT_OBAN" => :instrument_oban,
     "APPSIGNAL_LOG" => :log,
     "APPSIGNAL_LOG_LEVEL" => :log_level,
     "APPSIGNAL_LOG_PATH" => :log_path,
@@ -249,6 +306,7 @@ defmodule Appsignal.Config do
     "APPSIGNAL_OTP_APP" => :otp_app,
     "APPSIGNAL_PUSH_API_ENDPOINT" => :endpoint,
     "APPSIGNAL_PUSH_API_KEY" => :push_api_key,
+    "APPSIGNAL_REPORT_OBAN_ERRORS" => :report_oban_errors,
     "APPSIGNAL_REQUEST_HEADERS" => :request_headers,
     "APPSIGNAL_RUNNING_IN_CONTAINER" => :running_in_container,
     "APPSIGNAL_SEND_ENVIRONMENT_METADATA" => :send_environment_metadata,
@@ -265,7 +323,7 @@ defmodule Appsignal.Config do
     APPSIGNAL_APP_NAME APPSIGNAL_PUSH_API_KEY APPSIGNAL_PUSH_API_ENDPOINT APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH
     APPSIGNAL_HOSTNAME APPSIGNAL_HTTP_PROXY APPSIGNAL_LOG APPSIGNAL_LOG_LEVEL APPSIGNAL_LOG_PATH
     APPSIGNAL_LOGGING_ENDPOINT APPSIGNAL_WORKING_DIR_PATH APPSIGNAL_WORKING_DIRECTORY_PATH APPSIGNAL_CA_FILE_PATH
-    APPSIGNAL_DIAGNOSE_ENDPOINT APP_REVISION
+    APPSIGNAL_DIAGNOSE_ENDPOINT APP_REVISION APPSIGNAL_REPORT_OBAN_ERRORS
   )
   @bool_keys ~w(
     APPSIGNAL_ACTIVE APPSIGNAL_DEBUG APPSIGNAL_INSTRUMENT_NET_HTTP APPSIGNAL_ENABLE_FRONTEND_ERROR_CATCHING
@@ -274,6 +332,7 @@ defmodule Appsignal.Config do
     APPSIGNAL_TRANSACTION_DEBUG_MODE APPSIGNAL_FILES_WORLD_ACCESSIBLE APPSIGNAL_SEND_PARAMS
     APPSIGNAL_ENABLE_MINUTELY_PROBES APPSIGNAL_ENABLE_STATSD APPSIGNAL_ENABLE_NGINX_METRICS
     APPSIGNAL_ENABLE_ERROR_BACKEND APPSIGNAL_SEND_ENVIRONMENT_METADATA
+    APPSIGNAL_INSTRUMENT_ECTO APPSIGNAL_INSTRUMENT_FINCH APPSIGNAL_INSTRUMENT_OBAN
   )
   @atom_keys ~w(APPSIGNAL_APP_ENV APPSIGNAL_OTP_APP)
   @string_list_keys ~w(

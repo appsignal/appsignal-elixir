@@ -1,6 +1,7 @@
 defmodule Appsignal.ObanTest do
   use ExUnit.Case
   alias Appsignal.{FakeAppsignal, Span, Test}
+  import AppsignalTest.Utils, only: [with_config: 2]
 
   test "attaches to Oban events automatically" do
     assert attached?([:oban, :job, :start])
@@ -9,6 +10,26 @@ defmodule Appsignal.ObanTest do
     assert attached?([:oban, :engine, :insert_job, :start])
     assert attached?([:oban, :engine, :insert_job, :stop])
     assert attached?([:oban, :engine, :insert_job, :exception])
+  end
+
+  test "does not attach to Oban events when :instrument_oban is set to false" do
+    :telemetry.detach({Appsignal.Oban, [:oban, :job, :start]})
+    :telemetry.detach({Appsignal.Oban, [:oban, :job, :stop]})
+    :telemetry.detach({Appsignal.Oban, [:oban, :job, :exception]})
+    :telemetry.detach({Appsignal.Oban, [:oban, :engine, :insert_job, :start]})
+    :telemetry.detach({Appsignal.Oban, [:oban, :engine, :insert_job, :stop]})
+    :telemetry.detach({Appsignal.Oban, [:oban, :engine, :insert_job, :exception]})
+
+    with_config(%{instrument_oban: false}, fn -> Appsignal.start([], []) end)
+
+    assert !attached?([:oban, :job, :start])
+    assert !attached?([:oban, :job, :stop])
+    assert !attached?([:oban, :job, :exception])
+    assert !attached?([:oban, :engine, :insert_job, :start])
+    assert !attached?([:oban, :engine, :insert_job, :stop])
+    assert !attached?([:oban, :engine, :insert_job, :exception])
+
+    [:ok, :ok, :ok, :ok, :ok, :ok] = Appsignal.Oban.attach()
   end
 
   describe "oban_job_start/4" do
@@ -231,6 +252,8 @@ defmodule Appsignal.ObanTest do
       start_supervised!(Test.Monitor)
       fake_appsignal = start_supervised!(FakeAppsignal)
 
+      with_config(%{}, &Appsignal.Oban.attach/0)
+
       execute_job_start()
 
       execute_job_exception()
@@ -296,6 +319,8 @@ defmodule Appsignal.ObanTest do
       start_supervised!(Test.Monitor)
       fake_appsignal = start_supervised!(FakeAppsignal)
 
+      with_config(%{}, &Appsignal.Oban.attach/0)
+
       execute_job_start()
 
       execute_job_exception(%{
@@ -332,6 +357,172 @@ defmodule Appsignal.ObanTest do
                },
                %{key: _, value: 123, tags: %{state: "discard", worker: "Test.Worker"}}
              ] = FakeAppsignal.get_distribution_values(fake_appsignal, "oban_job_duration")
+    end
+  end
+
+  describe "oban_job_discard/4, with no :state metadata key" do
+    setup do
+      start_supervised!(Test.Nif)
+      start_supervised!(Test.Tracer)
+      start_supervised!(Test.Span)
+      start_supervised!(Test.Monitor)
+      fake_appsignal = start_supervised!(FakeAppsignal)
+
+      with_config(
+        %{report_oban_errors: "discard"},
+        &Appsignal.Oban.attach/0
+      )
+
+      execute_job_start()
+
+      execute_job_exception()
+
+      [fake_appsignal: fake_appsignal]
+    end
+
+    test "closes a span" do
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    end
+
+    test "adds the error to the span" do
+      assert {:ok,
+              [
+                {
+                  %Span{},
+                  :error,
+                  %RuntimeError{message: "Exception!"},
+                  [{Appsignal.ObanTest, :execute_job_exception, _, _} | _]
+                }
+              ]} = Test.Span.get(:add_error)
+    end
+
+    test "does not detach the handler" do
+      assert attached?([:oban, :job, :exception])
+    end
+  end
+
+  describe "oban_job_discard/4, with a :state metadata key set to discard" do
+    setup do
+      start_supervised!(Test.Nif)
+      start_supervised!(Test.Tracer)
+      start_supervised!(Test.Span)
+      start_supervised!(Test.Monitor)
+      fake_appsignal = start_supervised!(FakeAppsignal)
+
+      with_config(
+        %{report_oban_errors: "discard"},
+        &Appsignal.Oban.attach/0
+      )
+
+      execute_job_start()
+
+      execute_job_exception(%{
+        state: "discard"
+      })
+
+      [fake_appsignal: fake_appsignal]
+    end
+
+    test "closes a span" do
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    end
+
+    test "sets the state attribute to failure" do
+      assert attribute?("state", "discard")
+    end
+
+    test "adds the error to the span" do
+      assert {:ok,
+              [
+                {
+                  %Span{},
+                  :error,
+                  %RuntimeError{message: "Exception!"},
+                  [{Appsignal.ObanTest, :execute_job_exception, _, _} | _]
+                }
+              ]} = Test.Span.get(:add_error)
+    end
+  end
+
+  describe "oban_job_discard/4, with a :state metadata key set to failure" do
+    setup do
+      start_supervised!(Test.Nif)
+      start_supervised!(Test.Tracer)
+      start_supervised!(Test.Span)
+      start_supervised!(Test.Monitor)
+      fake_appsignal = start_supervised!(FakeAppsignal)
+
+      with_config(
+        %{report_oban_errors: "discard"},
+        &Appsignal.Oban.attach/0
+      )
+
+      execute_job_start()
+
+      execute_job_exception(%{
+        state: "failure"
+      })
+
+      [fake_appsignal: fake_appsignal]
+    end
+
+    test "closes a span" do
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    end
+
+    test "sets the state attribute to failure" do
+      assert attribute?("state", "failure")
+    end
+
+    test "does not add the error to the span" do
+      assert :error = Test.Span.get(:add_error)
+    end
+  end
+
+  describe ":report_oban_errors config option" do
+    test "attaches oban_job_exception/4 to [:oban, :job, :exception] when unset" do
+      with_config(%{}, &Appsignal.Oban.attach/0)
+
+      assert attached?(
+               [:oban, :job, :exception],
+               &Appsignal.Oban.oban_job_exception/4
+             )
+    end
+
+    test "attaches oban_job_exception/4 to [:oban, :job, :exception] when set to all" do
+      with_config(
+        %{report_oban_errors: "all"},
+        &Appsignal.Oban.attach/0
+      )
+
+      assert attached?(
+               [:oban, :job, :exception],
+               &Appsignal.Oban.oban_job_exception/4
+             )
+    end
+
+    test "attaches oban_job_discard/4 to [:oban, :job, :exception] when set to discard" do
+      with_config(
+        %{report_oban_errors: "discard"},
+        &Appsignal.Oban.attach/0
+      )
+
+      assert attached?(
+               [:oban, :job, :exception],
+               &Appsignal.Oban.oban_job_discard/4
+             )
+    end
+
+    test "attaches oban_job_stop/4 to [:oban, :job, :exception] when set to none" do
+      with_config(
+        %{report_oban_errors: "none"},
+        &Appsignal.Oban.attach/0
+      )
+
+      assert attached?(
+               [:oban, :job, :exception],
+               &Appsignal.Oban.oban_job_stop/4
+             )
     end
   end
 
@@ -425,11 +616,14 @@ defmodule Appsignal.ObanTest do
     end)
   end
 
-  defp attached?(event) do
+  defp attached?(event, function \\ nil) do
     event
     |> :telemetry.list_handlers()
     |> Enum.any?(fn %{id: id} ->
-      id == {Appsignal.Oban, event}
+      case function do
+        nil -> true
+        f -> function == f
+      end && id == {Appsignal.Oban, event}
     end)
   end
 

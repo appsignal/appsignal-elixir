@@ -33,8 +33,12 @@ defmodule Appsignal.Ecto do
       :ok ->
         Appsignal.IntegrationLogger.debug("Appsignal.Ecto attached to #{inspect(event)}")
 
+        :ok
+
       {:error, _} = error ->
         Logger.warn("Appsignal.Ecto not attached to #{inspect(event)}: #{inspect(error)}")
+
+        error
     end
   end
 
