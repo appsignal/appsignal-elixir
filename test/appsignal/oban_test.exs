@@ -1,6 +1,6 @@
 defmodule Appsignal.ObanTest do
   use ExUnit.Case
-  alias Appsignal.{FakeAppsignal, Span, Test}
+  alias Appsignal.{FakeAppsignal, Span, Test, Tracer}
   import AppsignalTest.Utils, only: [with_config: 2]
 
   setup do
@@ -128,14 +128,15 @@ defmodule Appsignal.ObanTest do
       fake_appsignal = start_supervised!(FakeAppsignal)
 
       execute_job_start()
-
+      span = Tracer.current_span()
       execute_job_stop()
 
-      [fake_appsignal: fake_appsignal]
+      [span: span, fake_appsignal: fake_appsignal]
     end
 
-    test "closes a span" do
-      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    test "closes the span", %{span: span} do
+      {:ok, closed_spans} = Test.Tracer.get(:close_span)
+      assert Enum.member?(closed_spans, {span})
     end
 
     test "sets the state attribute to success" do
@@ -236,14 +237,15 @@ defmodule Appsignal.ObanTest do
       with_config(%{}, &Appsignal.Oban.attach/0)
 
       execute_job_start()
-
+      span = Tracer.current_span()
       execute_job_exception()
 
-      [fake_appsignal: fake_appsignal]
+      [span: span, fake_appsignal: fake_appsignal]
     end
 
-    test "closes a span" do
-      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    test "closes the span", %{span: span} do
+      {:ok, closed_spans} = Test.Tracer.get(:close_span)
+      assert Enum.member?(closed_spans, {span})
     end
 
     test "sets the state attribute to failure" do
@@ -347,14 +349,15 @@ defmodule Appsignal.ObanTest do
       )
 
       execute_job_start()
-
+      span = Tracer.current_span()
       execute_job_exception()
 
-      [fake_appsignal: fake_appsignal]
+      [span: span, fake_appsignal: fake_appsignal]
     end
 
-    test "closes a span" do
-      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    test "closes the span", %{span: span} do
+      {:ok, closed_spans} = Test.Tracer.get(:close_span)
+      assert Enum.member?(closed_spans, {span})
     end
 
     test "adds the error to the span" do
@@ -384,16 +387,18 @@ defmodule Appsignal.ObanTest do
       )
 
       execute_job_start()
+      span = Tracer.current_span()
 
       execute_job_exception(%{
         state: "discard"
       })
 
-      [fake_appsignal: fake_appsignal]
+      [span: span, fake_appsignal: fake_appsignal]
     end
 
-    test "closes a span" do
-      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    test "closes the span", %{span: span} do
+      {:ok, closed_spans} = Test.Tracer.get(:close_span)
+      assert Enum.member?(closed_spans, {span})
     end
 
     test "sets the state attribute to failure" do
@@ -423,16 +428,18 @@ defmodule Appsignal.ObanTest do
       )
 
       execute_job_start()
+      span = Tracer.current_span()
 
       execute_job_exception(%{
         state: "failure"
       })
 
-      [fake_appsignal: fake_appsignal]
+      [span: span, fake_appsignal: fake_appsignal]
     end
 
-    test "closes a span" do
-      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    test "closes the span", %{span: span} do
+      {:ok, closed_spans} = Test.Tracer.get(:close_span)
+      assert Enum.member?(closed_spans, {span})
     end
 
     test "sets the state attribute to failure" do
@@ -530,16 +537,20 @@ defmodule Appsignal.ObanTest do
   describe "oban_insert_job_stop/4 and oban_insert_job_exception/4" do
     setup do
       execute_insert_job(:start)
-
+      first_span = Tracer.current_span()
       execute_insert_job(:stop)
 
       execute_insert_job(:start)
-
+      second_span = Tracer.current_span()
       execute_insert_job(:exception)
+
+      [first_span: first_span, second_span: second_span]
     end
 
-    test "closes a span" do
-      assert {:ok, [{%Span{}}, {%Span{}}]} = Test.Tracer.get(:close_span)
+    test "closes both spans", %{first_span: first_span, second_span: second_span} do
+      {:ok, closed_spans} = Test.Tracer.get(:close_span)
+      assert Enum.member?(closed_spans, {first_span})
+      assert Enum.member?(closed_spans, {second_span})
     end
 
     test "does not detach the handler" do
