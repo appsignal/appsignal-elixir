@@ -4,115 +4,98 @@ defmodule Appsignal.Probes.ProbesTest do
   import AppsignalTest.Utils
   use ExUnit.Case
 
-  describe "register/2" do
-    test "registers a probe when given a function as probe" do
-      assert :ok == Probes.register(:some_probe, fn -> nil end)
+  setup do
+    on_exit(fn ->
+      Probes.unregister(:test_probe)
+    end)
+
+    [fun: fn state -> state + 1 end]
+  end
+
+  describe "with a registered probe" do
+    setup %{fun: fun} do
+      :ok = Probes.register(:test_probe, fun, 0)
+      [fun: fun]
     end
 
-    test "returns an error tuple when probe is not a function" do
-      assert {:error, _} = Probes.register(:some_probe, :some_value)
+    test "registers a probe", %{fun: fun} do
+      assert Probes.probes()[:test_probe] == fun
+    end
+
+    test "calls the probe automatically" do
+      until(fn -> assert Probes.states()[:test_probe] > 0 end)
+    end
+
+    test "increments internal state" do
+      run_probes()
+      run_probes()
+
+      assert Probes.states()[:test_probe] > 1
     end
   end
 
-  describe "integration test for probing" do
+  describe "with a non-function probe" do
     setup do
-      [fake_probe: start_supervised!(FakeProbe)]
+      {:error, "Probe is not a function"} = Probes.register(:test_probe, :error)
+      :ok
     end
 
-    test "once a probe is registered, it is called by the probes system", %{
-      fake_probe: fake_probe
-    } do
-      Probes.register(:test_probe, &FakeProbe.call/0)
+    test "does not register a probe" do
+      refute Map.has_key?(Probes.probes(), :test_probe)
+    end
+  end
 
-      refute FakeProbe.get(fake_probe, :probe_called)
-
-      until(fn ->
-        assert FakeProbe.get(fake_probe, :probe_called)
-      end)
-
-      Probes.unregister(:test_probe)
+  describe "with an unregistered probe" do
+    setup %{fun: fun} do
+      :ok = Probes.register(:test_probe, fun)
+      :ok = Probes.unregister(:test_probe)
     end
 
-    test "when a probe is registered with the name of a previous probe, it is overridden", %{
-      fake_probe: fake_probe
-    } do
-      Probes.register(:test_probe, &FakeProbe.call/0)
+    test "unregisters a probe" do
+      refute Map.has_key?(Probes.probes(), :test_probe)
+    end
+  end
 
-      until(fn ->
-        assert FakeProbe.get(fake_probe, :probe_called)
-      end)
-
-      Probes.register(:test_probe, fn -> nil end)
-      FakeProbe.clear()
-
-      repeatedly(fn ->
-        refute FakeProbe.get(fake_probe, :probe_called)
-      end)
-
-      Probes.register(:test_probe, &FakeProbe.call/0)
-
-      until(fn ->
-        assert FakeProbe.get(fake_probe, :probe_called)
-      end)
-
-      Probes.unregister(:test_probe)
+  describe "with an overridden probe" do
+    setup do
+      fun = fn -> :two end
+      :ok = Probes.register(:test_probe, fn -> :one end, 10)
+      :ok = Probes.register(:test_probe, fun, 0)
+      [fun: fun]
     end
 
-    test "a probe does not get called by the probes system if it's disabled", %{
-      fake_probe: fake_probe
-    } do
-      AppsignalTest.Utils.with_config(%{enable_minutely_probes: false}, fn ->
-        Probes.register(:test_probe, &FakeProbe.call/0)
+    test "overrides the probe", %{fun: fun} do
+      assert Probes.probes()[:test_probe] == fun
+      assert Probes.states()[:test_probe] == 0
+    end
+  end
 
-        repeatedly(fn ->
-          refute FakeProbe.get(fake_probe, :probe_called)
-        end)
+  describe "with minutely probes disabled" do
+    setup %{fun: fun} do
+      setup_with_config(%{enable_minutely_probes: false})
 
-        Probes.unregister(:test_probe)
-      end)
+      :ok = Probes.register(:test_probe, fun, 0)
     end
 
-    test "a probe receives the resulting state from its previous call", %{
-      fake_probe: fake_probe
-    } do
-      Probes.register(:test_probe, &FakeProbe.stateful/1, 0)
+    test "does not call the probe" do
+      run_probes()
 
-      until(fn ->
-        assert FakeProbe.get(fake_probe, :probe_called)
-        assert FakeProbe.get(fake_probe, :probe_state) >= 3
-      end)
+      assert Probes.states()[:test_probe] == 0
+    end
+  end
 
-      Probes.unregister(:test_probe)
+  describe "with a failing probe" do
+    setup %{fun: fun} do
+      :ok = Probes.register(:test_probe, fn -> raise "Probe exception!" end, 0)
+      [fun: fun]
     end
 
-    test "when a probe is overridden, its state is reset", %{
-      fake_probe: fake_probe
-    } do
-      Probes.register(:test_probe, &FakeProbe.stateful/1, 0)
-
-      until(fn ->
-        assert FakeProbe.get(fake_probe, :probe_called)
-        assert FakeProbe.get(fake_probe, :probe_state) >= 3
-      end)
-
-      Probes.register(:test_probe, &FakeProbe.stateful/1, 0)
-
-      until(fn ->
-        assert FakeProbe.get(fake_probe, :probe_called)
-        assert FakeProbe.get(fake_probe, :probe_state) < 3
-      end)
-
-      Probes.unregister(:test_probe)
+    test "calls the probe without crashing the probes" do
+      run_probes()
     end
+  end
 
-    test "handles non-exception errors", %{fake_probe: fake_probe} do
-      Probes.register(:test_probe, &FakeProbe.fail/0)
-
-      until(fn ->
-        assert FakeProbe.get(fake_probe, :probe_called)
-      end)
-
-      Probes.unregister(:test_probe)
-    end
+  defp run_probes do
+    send(Process.whereis(Probes), :run_probes)
   end
 end

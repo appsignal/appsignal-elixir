@@ -7,6 +7,14 @@ defmodule Appsignal.Probes do
     GenServer.start_link(__MODULE__, [], name: __MODULE__)
   end
 
+  def probes do
+    GenServer.call(__MODULE__, :probes)
+  end
+
+  def states do
+    GenServer.call(__MODULE__, :states)
+  end
+
   def register(name, probe, state \\ nil) do
     if genserver_running?() do
       if is_function(probe) do
@@ -32,6 +40,14 @@ defmodule Appsignal.Probes do
   def init([]) do
     schedule_probes()
     {:ok, {%{}, %{}}}
+  end
+
+  def handle_call(:probes, _from, {probes, states}) do
+    {:reply, probes, {probes, states}}
+  end
+
+  def handle_call(:states, _from, {probes, states}) do
+    {:reply, states, {probes, states}}
   end
 
   def handle_cast({:register, {name, probe, state}}, {probes, states}) do
