@@ -3,6 +3,15 @@ defmodule Appsignal.ObanTest do
   alias Appsignal.{FakeAppsignal, Span, Test}
   import AppsignalTest.Utils, only: [with_config: 2]
 
+  setup do
+    start_supervised!(Test.Nif)
+    start_supervised!(Test.Tracer)
+    start_supervised!(Test.Span)
+    start_supervised!(Test.Monitor)
+
+    :ok
+  end
+
   test "attaches to Oban events automatically" do
     assert attached?([:oban, :job, :start])
     assert attached?([:oban, :job, :stop])
@@ -40,11 +49,6 @@ defmodule Appsignal.ObanTest do
 
   describe "oban_job_start/4" do
     setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
-
       execute_job_start()
     end
 
@@ -78,11 +82,6 @@ defmodule Appsignal.ObanTest do
 
   describe "oban_job_start/4, with a :tags metadata key (v2.1.0)" do
     setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
-
       execute_job_start(%{
         tags: ["foo", "bar"]
       })
@@ -96,10 +95,6 @@ defmodule Appsignal.ObanTest do
 
   describe "oban_job_start/4, with a :job metadata key (v2.3.1)" do
     setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
       fake_appsignal = start_supervised!(FakeAppsignal)
 
       execute_job_start(%{
@@ -130,10 +125,6 @@ defmodule Appsignal.ObanTest do
 
   describe "oban_job_stop/4" do
     setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
       fake_appsignal = start_supervised!(FakeAppsignal)
 
       execute_job_start()
@@ -183,10 +174,6 @@ defmodule Appsignal.ObanTest do
 
   describe "oban_job_stop/4, with a :state metadata key (v2.4.0)" do
     setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
       fake_appsignal = start_supervised!(FakeAppsignal)
 
       execute_job_start()
@@ -230,11 +217,6 @@ defmodule Appsignal.ObanTest do
 
   describe "oban_job_stop/4, with a :result metadata key (v2.5.0)" do
     setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
-
       execute_job_start()
 
       execute_job_stop(%{
@@ -249,10 +231,6 @@ defmodule Appsignal.ObanTest do
 
   describe "oban_job_exception/4" do
     setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
       fake_appsignal = start_supervised!(FakeAppsignal)
 
       with_config(%{}, &Appsignal.Oban.attach/0)
@@ -316,10 +294,6 @@ defmodule Appsignal.ObanTest do
 
   describe "oban_job_exception/4, with a :state metadata key (v2.4.0)" do
     setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
       fake_appsignal = start_supervised!(FakeAppsignal)
 
       with_config(%{}, &Appsignal.Oban.attach/0)
@@ -365,10 +339,6 @@ defmodule Appsignal.ObanTest do
 
   describe "oban_job_discard/4, with no :state metadata key" do
     setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
       fake_appsignal = start_supervised!(FakeAppsignal)
 
       with_config(
@@ -406,10 +376,6 @@ defmodule Appsignal.ObanTest do
 
   describe "oban_job_discard/4, with a :state metadata key set to discard" do
     setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
       fake_appsignal = start_supervised!(FakeAppsignal)
 
       with_config(
@@ -449,10 +415,6 @@ defmodule Appsignal.ObanTest do
 
   describe "oban_job_discard/4, with a :state metadata key set to failure" do
     setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
       fake_appsignal = start_supervised!(FakeAppsignal)
 
       with_config(
@@ -531,11 +493,6 @@ defmodule Appsignal.ObanTest do
 
   describe "oban_insert_job_start/4" do
     setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
-
       execute_insert_job(:start)
     end
 
@@ -558,11 +515,6 @@ defmodule Appsignal.ObanTest do
 
   describe "oban_insert_job_start/4, without a changeset" do
     setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
-
       execute_insert_job(:start, %{})
     end
 
@@ -577,11 +529,6 @@ defmodule Appsignal.ObanTest do
 
   describe "oban_insert_job_stop/4 and oban_insert_job_exception/4" do
     setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
-
       execute_insert_job(:start)
 
       execute_insert_job(:stop)
