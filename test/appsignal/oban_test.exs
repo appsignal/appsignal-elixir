@@ -44,7 +44,6 @@ defmodule Appsignal.ObanTest do
       start_supervised!(Test.Tracer)
       start_supervised!(Test.Span)
       start_supervised!(Test.Monitor)
-      start_supervised!(FakeAppsignal)
 
       execute_job_start()
     end
@@ -83,7 +82,6 @@ defmodule Appsignal.ObanTest do
       start_supervised!(Test.Tracer)
       start_supervised!(Test.Span)
       start_supervised!(Test.Monitor)
-      start_supervised!(FakeAppsignal)
 
       execute_job_start(%{
         tags: ["foo", "bar"]
@@ -236,7 +234,6 @@ defmodule Appsignal.ObanTest do
       start_supervised!(Test.Tracer)
       start_supervised!(Test.Span)
       start_supervised!(Test.Monitor)
-      start_supervised!(FakeAppsignal)
 
       execute_job_start()
 
@@ -565,7 +562,6 @@ defmodule Appsignal.ObanTest do
       start_supervised!(Test.Tracer)
       start_supervised!(Test.Span)
       start_supervised!(Test.Monitor)
-      start_supervised!(FakeAppsignal)
 
       execute_insert_job(:start, %{})
     end
@@ -585,7 +581,6 @@ defmodule Appsignal.ObanTest do
       start_supervised!(Test.Tracer)
       start_supervised!(Test.Span)
       start_supervised!(Test.Monitor)
-      start_supervised!(FakeAppsignal)
 
       execute_insert_job(:start)
 
