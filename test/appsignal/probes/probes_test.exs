@@ -58,8 +58,8 @@ defmodule Appsignal.Probes.ProbesTest do
 
   describe "with an overridden probe" do
     setup do
-      fun = fn -> :two end
-      :ok = Probes.register(:test_probe, fn -> :one end, 10)
+      fun = fn state -> state end
+      :ok = Probes.register(:test_probe, fn state -> state end, 10)
       :ok = Probes.register(:test_probe, fun, 0)
       [fun: fun]
     end
