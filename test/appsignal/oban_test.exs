@@ -1,7 +1,16 @@
 defmodule Appsignal.ObanTest do
   use ExUnit.Case
-  alias Appsignal.{FakeAppsignal, Span, Test}
+  alias Appsignal.{FakeAppsignal, Span, Test, Tracer}
   import AppsignalTest.Utils, only: [with_config: 2]
+
+  setup do
+    start_supervised!(Test.Nif)
+    start_supervised!(Test.Tracer)
+    start_supervised!(Test.Span)
+    start_supervised!(Test.Monitor)
+
+    :ok
+  end
 
   test "attaches to Oban events automatically" do
     assert attached?([:oban, :job, :start])
@@ -12,34 +21,34 @@ defmodule Appsignal.ObanTest do
     assert attached?([:oban, :engine, :insert_job, :exception])
   end
 
-  test "does not attach to Oban events when :instrument_oban is set to false" do
-    :telemetry.detach({Appsignal.Oban, [:oban, :job, :start]})
-    :telemetry.detach({Appsignal.Oban, [:oban, :job, :stop]})
-    :telemetry.detach({Appsignal.Oban, [:oban, :job, :exception]})
-    :telemetry.detach({Appsignal.Oban, [:oban, :engine, :insert_job, :start]})
-    :telemetry.detach({Appsignal.Oban, [:oban, :engine, :insert_job, :stop]})
-    :telemetry.detach({Appsignal.Oban, [:oban, :engine, :insert_job, :exception]})
+  describe "when :instrument_oban is set to false" do
+    setup do
+      :telemetry.detach({Appsignal.Oban, [:oban, :job, :start]})
+      :telemetry.detach({Appsignal.Oban, [:oban, :job, :stop]})
+      :telemetry.detach({Appsignal.Oban, [:oban, :job, :exception]})
+      :telemetry.detach({Appsignal.Oban, [:oban, :engine, :insert_job, :start]})
+      :telemetry.detach({Appsignal.Oban, [:oban, :engine, :insert_job, :stop]})
+      :telemetry.detach({Appsignal.Oban, [:oban, :engine, :insert_job, :exception]})
 
-    with_config(%{instrument_oban: false}, fn -> Appsignal.start([], []) end)
+      with_config(%{instrument_oban: false}, fn -> Appsignal.start([], []) end)
 
-    assert !attached?([:oban, :job, :start])
-    assert !attached?([:oban, :job, :stop])
-    assert !attached?([:oban, :job, :exception])
-    assert !attached?([:oban, :engine, :insert_job, :start])
-    assert !attached?([:oban, :engine, :insert_job, :stop])
-    assert !attached?([:oban, :engine, :insert_job, :exception])
+      on_exit(fn ->
+        [:ok, :ok, :ok, :ok, :ok, :ok] = Appsignal.Oban.attach()
+      end)
+    end
 
-    [:ok, :ok, :ok, :ok, :ok, :ok] = Appsignal.Oban.attach()
+    test "does not attach to Oban events" do
+      assert !attached?([:oban, :job, :start])
+      assert !attached?([:oban, :job, :stop])
+      assert !attached?([:oban, :job, :exception])
+      assert !attached?([:oban, :engine, :insert_job, :start])
+      assert !attached?([:oban, :engine, :insert_job, :stop])
+      assert !attached?([:oban, :engine, :insert_job, :exception])
+    end
   end
 
   describe "oban_job_start/4" do
     setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
-      start_supervised!(FakeAppsignal)
-
       execute_job_start()
     end
 
@@ -73,12 +82,6 @@ defmodule Appsignal.ObanTest do
 
   describe "oban_job_start/4, with a :tags metadata key (v2.1.0)" do
     setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
-      start_supervised!(FakeAppsignal)
-
       execute_job_start(%{
         tags: ["foo", "bar"]
       })
@@ -92,10 +95,6 @@ defmodule Appsignal.ObanTest do
 
   describe "oban_job_start/4, with a :job metadata key (v2.3.1)" do
     setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
       fake_appsignal = start_supervised!(FakeAppsignal)
 
       execute_job_start(%{
@@ -126,21 +125,18 @@ defmodule Appsignal.ObanTest do
 
   describe "oban_job_stop/4" do
     setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
       fake_appsignal = start_supervised!(FakeAppsignal)
 
       execute_job_start()
-
+      span = Tracer.current_span()
       execute_job_stop()
 
-      [fake_appsignal: fake_appsignal]
+      [span: span, fake_appsignal: fake_appsignal]
     end
 
-    test "closes a span" do
-      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    test "closes the span", %{span: span} do
+      {:ok, closed_spans} = Test.Tracer.get(:close_span)
+      assert Enum.member?(closed_spans, {span})
     end
 
     test "sets the state attribute to success" do
@@ -179,10 +175,6 @@ defmodule Appsignal.ObanTest do
 
   describe "oban_job_stop/4, with a :state metadata key (v2.4.0)" do
     setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
       fake_appsignal = start_supervised!(FakeAppsignal)
 
       execute_job_start()
@@ -226,12 +218,6 @@ defmodule Appsignal.ObanTest do
 
   describe "oban_job_stop/4, with a :result metadata key (v2.5.0)" do
     setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
-      start_supervised!(FakeAppsignal)
-
       execute_job_start()
 
       execute_job_stop(%{
@@ -246,23 +232,20 @@ defmodule Appsignal.ObanTest do
 
   describe "oban_job_exception/4" do
     setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
       fake_appsignal = start_supervised!(FakeAppsignal)
 
       with_config(%{}, &Appsignal.Oban.attach/0)
 
       execute_job_start()
-
+      span = Tracer.current_span()
       execute_job_exception()
 
-      [fake_appsignal: fake_appsignal]
+      [span: span, fake_appsignal: fake_appsignal]
     end
 
-    test "closes a span" do
-      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    test "closes the span", %{span: span} do
+      {:ok, closed_spans} = Test.Tracer.get(:close_span)
+      assert Enum.member?(closed_spans, {span})
     end
 
     test "sets the state attribute to failure" do
@@ -313,10 +296,6 @@ defmodule Appsignal.ObanTest do
 
   describe "oban_job_exception/4, with a :state metadata key (v2.4.0)" do
     setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
       fake_appsignal = start_supervised!(FakeAppsignal)
 
       with_config(%{}, &Appsignal.Oban.attach/0)
@@ -362,10 +341,6 @@ defmodule Appsignal.ObanTest do
 
   describe "oban_job_discard/4, with no :state metadata key" do
     setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
       fake_appsignal = start_supervised!(FakeAppsignal)
 
       with_config(
@@ -374,14 +349,15 @@ defmodule Appsignal.ObanTest do
       )
 
       execute_job_start()
-
+      span = Tracer.current_span()
       execute_job_exception()
 
-      [fake_appsignal: fake_appsignal]
+      [span: span, fake_appsignal: fake_appsignal]
     end
 
-    test "closes a span" do
-      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    test "closes the span", %{span: span} do
+      {:ok, closed_spans} = Test.Tracer.get(:close_span)
+      assert Enum.member?(closed_spans, {span})
     end
 
     test "adds the error to the span" do
@@ -403,10 +379,6 @@ defmodule Appsignal.ObanTest do
 
   describe "oban_job_discard/4, with a :state metadata key set to discard" do
     setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
       fake_appsignal = start_supervised!(FakeAppsignal)
 
       with_config(
@@ -415,16 +387,18 @@ defmodule Appsignal.ObanTest do
       )
 
       execute_job_start()
+      span = Tracer.current_span()
 
       execute_job_exception(%{
         state: "discard"
       })
 
-      [fake_appsignal: fake_appsignal]
+      [span: span, fake_appsignal: fake_appsignal]
     end
 
-    test "closes a span" do
-      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    test "closes the span", %{span: span} do
+      {:ok, closed_spans} = Test.Tracer.get(:close_span)
+      assert Enum.member?(closed_spans, {span})
     end
 
     test "sets the state attribute to failure" do
@@ -446,10 +420,6 @@ defmodule Appsignal.ObanTest do
 
   describe "oban_job_discard/4, with a :state metadata key set to failure" do
     setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
       fake_appsignal = start_supervised!(FakeAppsignal)
 
       with_config(
@@ -458,16 +428,18 @@ defmodule Appsignal.ObanTest do
       )
 
       execute_job_start()
+      span = Tracer.current_span()
 
       execute_job_exception(%{
         state: "failure"
       })
 
-      [fake_appsignal: fake_appsignal]
+      [span: span, fake_appsignal: fake_appsignal]
     end
 
-    test "closes a span" do
-      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    test "closes the span", %{span: span} do
+      {:ok, closed_spans} = Test.Tracer.get(:close_span)
+      assert Enum.member?(closed_spans, {span})
     end
 
     test "sets the state attribute to failure" do
@@ -528,11 +500,6 @@ defmodule Appsignal.ObanTest do
 
   describe "oban_insert_job_start/4" do
     setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
-
       execute_insert_job(:start)
     end
 
@@ -555,12 +522,6 @@ defmodule Appsignal.ObanTest do
 
   describe "oban_insert_job_start/4, without a changeset" do
     setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
-      start_supervised!(FakeAppsignal)
-
       execute_insert_job(:start, %{})
     end
 
@@ -575,23 +536,21 @@ defmodule Appsignal.ObanTest do
 
   describe "oban_insert_job_stop/4 and oban_insert_job_exception/4" do
     setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
-      start_supervised!(FakeAppsignal)
-
       execute_insert_job(:start)
-
+      first_span = Tracer.current_span()
       execute_insert_job(:stop)
 
       execute_insert_job(:start)
-
+      second_span = Tracer.current_span()
       execute_insert_job(:exception)
+
+      [first_span: first_span, second_span: second_span]
     end
 
-    test "closes a span" do
-      assert {:ok, [{%Span{}}, {%Span{}}]} = Test.Tracer.get(:close_span)
+    test "closes both spans", %{first_span: first_span, second_span: second_span} do
+      {:ok, closed_spans} = Test.Tracer.get(:close_span)
+      assert Enum.member?(closed_spans, {first_span})
+      assert Enum.member?(closed_spans, {second_span})
     end
 
     test "does not detach the handler" do
