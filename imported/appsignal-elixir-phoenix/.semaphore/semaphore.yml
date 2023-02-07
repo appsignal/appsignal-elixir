@@ -23,42 +23,34 @@ blocks:
             - script/validate_ci_matrix
         - name: mix compile
           commands:
-            - ERLANG_VERSION=25.0 ELIXIR_VERSION=1.14.0 . bin/setup
+            - ERLANG_VERSION=25.2 ELIXIR_VERSION=1.13.4 . bin/setup
             - mix compile
         - name: mix format --check-formatted
           commands:
-            - ERLANG_VERSION=25.0 ELIXIR_VERSION=1.14.0 . bin/setup
+            - ERLANG_VERSION=25.2 ELIXIR_VERSION=1.13.4 . bin/setup
             - mix format --check-formatted
         - name: mix credo --strict
           commands:
-            - ERLANG_VERSION=25.0 ELIXIR_VERSION=1.14.0 . bin/setup
+            - ERLANG_VERSION=25.2 ELIXIR_VERSION=1.13.4 . bin/setup
             - mix credo --strict
         - name: mix dialyzer
           commands:
-            - ERLANG_VERSION=25.0 ELIXIR_VERSION=1.14.0 . bin/setup
+            - ERLANG_VERSION=25.2 ELIXIR_VERSION=1.13.4 . bin/setup
             - cache restore dialyzer-plt
             - MIX_ENV=dev mix dialyzer --plt
             - cache store dialyzer-plt priv/plts/
             - MIX_ENV=dev mix dialyzer --format dialyzer
-        - name: Elixir main, OTP 25.0
+        - name: Elixir 1.14.3, OTP 25.2
           commands:
-            - ERLANG_VERSION=25.0 ELIXIR_VERSION=main . bin/setup
+            - ERLANG_VERSION=25.2 ELIXIR_VERSION=1.14.3 . bin/setup
             - mix test
-        - name: Elixir 1.14.0, OTP 25.0
+        - name: Elixir 1.13.4, OTP 25.2
           commands:
-            - ERLANG_VERSION=25.0 ELIXIR_VERSION=1.14.0 . bin/setup
+            - ERLANG_VERSION=25.2 ELIXIR_VERSION=1.13.4 . bin/setup
             - mix test
-        - name: Elixir 1.13.4, OTP 25.0
+        - name: Elixir 1.14.3, OTP 24.3
           commands:
-            - ERLANG_VERSION=25.0 ELIXIR_VERSION=1.13.4 . bin/setup
-            - mix test
-        - name: Elixir main, OTP 24.3
-          commands:
-            - ERLANG_VERSION=24.3 ELIXIR_VERSION=main . bin/setup
-            - mix test
-        - name: Elixir 1.14.0, OTP 24.3
-          commands:
-            - ERLANG_VERSION=24.3 ELIXIR_VERSION=1.14.0 . bin/setup
+            - ERLANG_VERSION=24.3 ELIXIR_VERSION=1.14.3 . bin/setup
             - mix test
         - name: Elixir 1.13.3, OTP 24.3
           commands:
@@ -72,9 +64,9 @@ blocks:
           commands:
             - ERLANG_VERSION=24.3 ELIXIR_VERSION=1.11.4 . bin/setup
             - mix test
-        - name: Elixir 1.14.0, OTP 23.3
+        - name: Elixir 1.14.3, OTP 23.3
           commands:
-            - ERLANG_VERSION=23.3 ELIXIR_VERSION=1.14.0 . bin/setup
+            - ERLANG_VERSION=23.3 ELIXIR_VERSION=1.14.3 . bin/setup
             - mix test
         - name: Elixir 1.13.3, OTP 23.3
           commands:
