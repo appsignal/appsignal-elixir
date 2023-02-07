@@ -68,7 +68,7 @@ defmodule Appsignal.Phoenix.MixProject do
       end
 
     [
-      {:appsignal, ">= 2.4.0 and < 3.0.0"},
+      {:appsignal, ">= 2.4.0 and < 2.5.1"},
       {:appsignal_plug, ">= 2.0.12 and < 3.0.0"},
       {:phoenix, "~> 1.4"},
       {:phoenix_html, "~> 2.11 or ~> 3.0", optional: true},
