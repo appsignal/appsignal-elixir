@@ -1,5 +1,11 @@
 # AppSignal for Elixir changelog
 
+## 2.5.2
+
+### Added
+
+- [63adf596](https://github.com/appsignal/appsignal-elixir/commit/63adf596bd56f2da8bd2e843086d283f5137c24e) patch - Add NGINX metrics support. See [our documentation](https://docs.appsignal.com/metrics/nginx.html) for details.
+
 ## 2.5.1
 
 ### Added
