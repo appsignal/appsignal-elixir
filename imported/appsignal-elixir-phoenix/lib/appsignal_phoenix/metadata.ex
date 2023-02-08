@@ -10,6 +10,11 @@ defimpl Appsignal.Metadata, for: Phoenix.Socket do
       "transport" => Map.get(socket, :transport)
     }
   end
+
+  defdelegate name(socket), to: Appsignal.Metadata.Any
+  defdelegate category(socket), to: Appsignal.Metadata.Any
+  defdelegate params(socket), to: Appsignal.Metadata.Any
+  defdelegate session(socket), to: Appsignal.Metadata.Any
 end
 
 if Code.ensure_loaded?(Phoenix.LiveView) do
@@ -27,5 +32,10 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
     defp root_view(socket) do
       socket |> Map.get(:private, %{}) |> Map.get(:root_view) || Map.get(socket, :root_view)
     end
+
+    defdelegate name(socket), to: Appsignal.Metadata.Any
+    defdelegate category(socket), to: Appsignal.Metadata.Any
+    defdelegate params(socket), to: Appsignal.Metadata.Any
+    defdelegate session(socket), to: Appsignal.Metadata.Any
   end
 end

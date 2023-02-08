@@ -17,9 +17,7 @@ defmodule Appsignal.Phoenix do
 
   """
 
+  @deprecated "Since AppSignal for Phoenix 2.3.0, Phoenix instrumentation is up automatically. The `use Appsignal.Phoenix` line is no longer needed and should be removed from your app's endpoint file."
   defmacro __using__(_) do
-    quote do
-      use Appsignal.Plug
-    end
   end
 end

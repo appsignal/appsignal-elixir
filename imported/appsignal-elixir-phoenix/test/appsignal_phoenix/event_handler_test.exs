@@ -16,10 +16,6 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
       assert {:ok, [{"http_request", ^parent}]} = Test.Tracer.get(:create_span)
     end
 
-    test "sets the span's name" do
-      assert {:ok, [{%Span{}, "PhoenixWeb.Endpoint.call/2"}]} = Test.Span.get(:set_name)
-    end
-
     test "sets the span's category" do
       assert {:ok, [{%Span{}, "appsignal:category", "call.phoenix_endpoint"}]} =
                Test.Span.get(:set_attribute)
@@ -29,7 +25,106 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
   describe "after receiving an endpoint-start and an endpoint-stop event" do
     setup [:create_root_span, :endpoint_start_event, :endpoint_finish_event]
 
+    test "sets the span's name" do
+      assert {:ok, [{%Span{}, "AppsignalPhoenixExampleWeb.PageController#index"}]} =
+               Test.Span.get(:set_name)
+    end
+
     test "finishes an event" do
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    end
+
+    test "sets the root span's sample data" do
+      {:ok, calls} = Test.Span.get(:set_sample_data)
+
+      [{%Span{}, "environment", environment}] =
+        Enum.filter(calls, fn {_span, key, _value} -> key == "environment" end)
+
+      assert %{
+               "host" => "www.example.com",
+               "method" => "GET",
+               "port" => 80,
+               "request_id" => nil,
+               "request_path" => "/",
+               "status" => 200
+             } == environment
+    end
+  end
+
+  describe "after receiving an endpoint-start and an router_dispatch-exception event" do
+    setup [:create_root_span, :endpoint_start_event]
+
+    setup do
+      :telemetry.execute(
+        [:phoenix, :router_dispatch, :exception],
+        %{duration: 49_474_000},
+        %{
+          conn: conn(),
+          reason: %RuntimeError{},
+          stack: [],
+          options: []
+        }
+      )
+    end
+
+    test "sets the root span's name" do
+      assert {:ok, [{%Span{}, "AppsignalPhoenixExampleWeb.PageController#index"}]} =
+               Test.Span.get(:set_name)
+    end
+
+    test "sets the root span's error" do
+      assert {:ok, [{%Span{}, :error, %RuntimeError{}, []}]} = Test.Span.get(:add_error)
+    end
+
+    test "closes the root span" do
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    end
+
+    test "sets the root span's sample data" do
+      {:ok, calls} = Test.Span.get(:set_sample_data)
+
+      [{%Span{}, "environment", environment}] =
+        Enum.filter(calls, fn {_span, key, _value} -> key == "environment" end)
+
+      assert %{
+               "host" => "www.example.com",
+               "method" => "GET",
+               "port" => 80,
+               "request_id" => nil,
+               "request_path" => "/",
+               "status" => 200
+             } == environment
+    end
+  end
+
+  describe "after receiving an endpoint-start and a wrapped router_dispatch-exception event" do
+    setup [:create_root_span, :endpoint_start_event]
+
+    setup do
+      :telemetry.execute(
+        [:phoenix, :router_dispatch, :exception],
+        %{duration: 49_474_000},
+        %{
+          reason: %Plug.Conn.WrapperError{
+            conn: conn(),
+            reason: %RuntimeError{},
+            stack: []
+          },
+          options: []
+        }
+      )
+    end
+
+    test "sets the root span's name" do
+      assert {:ok, [{%Span{}, "AppsignalPhoenixExampleWeb.PageController#index"}]} =
+               Test.Span.get(:set_name)
+    end
+
+    test "sets the root span's error" do
+      assert {:ok, [{%Span{}, :error, %RuntimeError{}, []}]} = Test.Span.get(:add_error)
+    end
+
+    test "closes the root span" do
       assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
     end
   end
@@ -87,10 +182,7 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
     :telemetry.execute(
       [:phoenix, :endpoint, :stop],
       %{duration: 49_474_000},
-      %{
-        conn: %Plug.Conn{status: 200},
-        options: []
-      }
+      %{conn: conn(), options: []}
     )
   end
 
@@ -116,5 +208,18 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
       %{duration: 49_474_000},
       %{}
     )
+  end
+
+  defp conn do
+    %Plug.Conn{
+      params: %{"foo" => "bar"},
+      private: %{
+        phoenix_action: :index,
+        phoenix_controller: AppsignalPhoenixExampleWeb.PageController
+      },
+      port: 80,
+      request_path: "/",
+      status: 200
+    }
   end
 end

@@ -12,7 +12,8 @@ defmodule Appsignal.Phoenix.EventHandler do
       [:phoenix, :endpoint, :stop] => &__MODULE__.phoenix_endpoint_stop/4,
       [:phoenix, :controller, :render, :start] => &__MODULE__.phoenix_template_render_start/4,
       [:phoenix, :controller, :render, :stop] => &__MODULE__.phoenix_template_render_stop/4,
-      [:phoenix, :controller, :render, :exception] => &__MODULE__.phoenix_template_render_stop/4
+      [:phoenix, :controller, :render, :exception] => &__MODULE__.phoenix_template_render_stop/4,
+      [:phoenix, :router_dispatch, :exception] => &__MODULE__.phoenix_router_dispatch_exception/4
     }
 
     for {event, fun} <- handlers do
@@ -35,22 +36,45 @@ defmodule Appsignal.Phoenix.EventHandler do
     end
   end
 
-  def phoenix_endpoint_start(
-        _event,
-        _measurements,
-        %{conn: %Plug.Conn{private: %{phoenix_endpoint: endpoint}}},
-        _config
-      ) do
+  def phoenix_endpoint_start(_event, _measurements, _metadata, _config) do
     parent = @tracer.current_span()
 
     "http_request"
     |> @tracer.create_span(parent)
-    |> @span.set_name("#{module_name(endpoint)}.call/2")
     |> @span.set_attribute("appsignal:category", "call.phoenix_endpoint")
   end
 
-  def phoenix_endpoint_stop(_event, _measurements, _metadata, _config) do
-    @tracer.close_span(@tracer.current_span())
+  def phoenix_endpoint_stop(_event, _measurements, %{conn: conn}, _config) do
+    @tracer.current_span()
+    |> Appsignal.Plug.set_conn_data(conn)
+    |> @tracer.close_span()
+  end
+
+  def phoenix_router_dispatch_exception(
+        _event,
+        _measurements,
+        %{reason: %Plug.Conn.WrapperError{conn: conn, reason: reason, stack: stack}},
+        _config
+      ) do
+    add_error(@tracer.root_span(), conn, reason, stack)
+  end
+
+  def phoenix_router_dispatch_exception(
+        _event,
+        _measurements,
+        %{conn: conn, reason: reason, stack: stack},
+        _config
+      ) do
+    add_error(@tracer.root_span(), conn, reason, stack)
+  end
+
+  defp add_error(span, conn, reason, stack) do
+    span
+    |> @span.add_error(:error, reason, stack)
+    |> Appsignal.Plug.set_conn_data(conn)
+    |> @tracer.close_span()
+
+    @tracer.ignore()
   end
 
   def phoenix_template_render_start(_event, _measurements, metadata, _config) do
