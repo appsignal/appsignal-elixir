@@ -1,5 +1,11 @@
 # AppSignal for Elixir Phoenix changelog
 
+## 2.3.0
+
+### Added
+
+- [2fe4d48](https://github.com/appsignal/appsignal-elixir-phoenix/commit/2fe4d489149e7a343463eb87e3e64be74a4599c1) minor - Add :telemetry-only Phoenix instrumentation to remove the need for includes in Phoenix application endpoints
+
 ## 2.2.1
 
 ### Fixed
