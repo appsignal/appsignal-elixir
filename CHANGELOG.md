@@ -1,5 +1,13 @@
 # AppSignal for Elixir changelog
 
+## 2.5.3
+
+### Changed
+
+- [a4a23ded](https://github.com/appsignal/appsignal-elixir/commit/a4a23dedc53f19262a83ced76c69bf8597fde7e3) patch - Bump agent to 0d593d5
+  
+  - Report shared memory metric state.
+
 ## 2.5.2
 
 ### Added
