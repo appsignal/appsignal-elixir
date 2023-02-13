@@ -17,19 +17,8 @@ end
 After that, follow the [installation instructions for Appsignal for
 Elixir](https://docs.appsignal.com/elixir/installation/).
 
-Then, `use Appsignal.Phoenix` in your application's endpoint module:
-
-``` elixir
-defmodule AppsignalPhoenixExampleWeb.Endpoint do
-  use Phoenix.Endpoint, otp_app: :appsignal_phoenix_example
-  use Appsignal.Phoenix
-
-  # ...
-end
-```
-
-Finally, `use Appsignal.Phoenix.View` in the `view/0` function in your app's web
-module.
+Finally, `use Appsignal.Phoenix.View` in the `view/0` function in your app's
+web module.
 
 ``` elixir
 defmodule AppsignalPhoenixExampleWeb do
