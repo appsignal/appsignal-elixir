@@ -1,5 +1,11 @@
 # AppSignal for Elixir Phoenix changelog
 
+## 2.3.1
+
+### Fixed
+
+- [4e4e422](https://github.com/appsignal/appsignal-elixir-phoenix/commit/4e4e422dd9194ba0d8e3afccc955c227eacae9fb) patch - Fix exception handling for unwrapped Phoenix errors
+
 ## 2.3.0
 
 ### Added
