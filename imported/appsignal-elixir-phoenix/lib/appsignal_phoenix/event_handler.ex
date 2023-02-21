@@ -62,7 +62,7 @@ defmodule Appsignal.Phoenix.EventHandler do
   def phoenix_router_dispatch_exception(
         _event,
         _measurements,
-        %{conn: conn, reason: reason, stack: stack},
+        %{conn: conn, reason: reason, stacktrace: stack},
         _config
       ) do
     add_error(@tracer.root_span(), conn, reason, stack)

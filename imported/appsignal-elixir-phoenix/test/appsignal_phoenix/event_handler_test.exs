@@ -61,7 +61,7 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
         %{
           conn: conn(),
           reason: %RuntimeError{},
-          stack: [],
+          stacktrace: [],
           options: []
         }
       )
