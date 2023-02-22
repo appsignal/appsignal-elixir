@@ -1288,6 +1288,7 @@ static ERL_NIF_TERM _log(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
   appsignal_log(
     make_appsignal_string(group),
     severity,
+    0,
     make_appsignal_string(message),
     data_ptr->data
   );
