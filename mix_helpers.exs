@@ -262,7 +262,7 @@ defmodule Mix.Appsignal.Helper do
           default_cacert_file_path
 
         {:error, message} ->
-          Logger.warn(
+          Logger.warning(
             "The cacert file path: #{default_cacert_file_path} is not accessible. " <>
               "Reason: #{inspect(message)}. " <>
               "Using system defaults instead."

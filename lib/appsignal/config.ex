@@ -67,7 +67,7 @@ defmodule Appsignal.Config do
       |> merge_filter_parameters(Application.get_env(:phoenix, :filter_parameters, []))
 
     if !empty?(config[:working_dir_path]) do
-      Logger.warn(fn ->
+      Logger.warning(fn ->
         "'working_dir_path' is deprecated, please use " <>
           "'working_directory_path' instead and specify the " <>
           "full path to the working directory"
@@ -236,7 +236,7 @@ defmodule Appsignal.Config do
             "all"
 
           unknown ->
-            Logger.warn(
+            Logger.warning(
               "Unknown value #{inspect(unknown)} for report_oban_errors config " <>
                 ~s(option. Valid values are "discard", "none", "all". ) <>
                 ~s(Defaulting to "all".)

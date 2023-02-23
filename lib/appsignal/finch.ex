@@ -23,7 +23,7 @@ defmodule Appsignal.Finch do
           :ok
 
         {:error, _} = error ->
-          Logger.warn("Appsignal.Finch not attached to #{inspect(event)}: #{inspect(error)}")
+          Logger.warning("Appsignal.Finch not attached to #{inspect(event)}: #{inspect(error)}")
 
           error
       end

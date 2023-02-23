@@ -37,7 +37,7 @@ defmodule Appsignal.Transmitter do
 
       {:error, message} ->
         unless ca_file_path == packaged_ca_file_path() do
-          Logger.warn(
+          Logger.warning(
             "Ignoring non-existing or unreadable ca_file_path (#{ca_file_path}): #{inspect(message)}"
           )
         end

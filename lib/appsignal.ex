@@ -100,7 +100,7 @@ defmodule Appsignal do
         end
 
       {{:error, :invalid_config}, true} ->
-        Logger.warn(
+        Logger.warning(
           "Warning: No valid AppSignal configuration found, continuing with " <>
             "AppSignal metrics disabled."
         )
