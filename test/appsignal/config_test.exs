@@ -1102,7 +1102,7 @@ defmodule Appsignal.ConfigTest do
                  Appsignal.Config.reset_environment_config!()
                  Nif.env_get("_APPSIGNAL_APP_NAME")
                end
-             ) == ''
+             ) == ~c""
     end
   end
 
@@ -1115,16 +1115,16 @@ defmodule Appsignal.ConfigTest do
     @tag :skip_env_test_no_nif
     test "empty config options get written to the env" do
       write_to_environment()
-      assert Nif.env_get("_APPSIGNAL_APP_NAME") == ''
-      assert Nif.env_get("_APPSIGNAL_HTTP_PROXY") == ''
-      assert Nif.env_get("_APPSIGNAL_IGNORE_ACTIONS") == ''
-      assert Nif.env_get("_APPSIGNAL_IGNORE_ERRORS") == ''
-      assert Nif.env_get("_APPSIGNAL_IGNORE_NAMESPACES") == ''
-      assert Nif.env_get("_APPSIGNAL_LOG_FILE_PATH") == '/tmp/appsignal.log'
-      assert Nif.env_get("_APPSIGNAL_WORKING_DIR_PATH") == ''
-      assert Nif.env_get("_APPSIGNAL_WORKING_DIRECTORY_PATH") == ''
-      assert Nif.env_get("_APPSIGNAL_RUNNING_IN_CONTAINER") == ''
-      assert Nif.env_get("_APP_REVISION") == ''
+      assert Nif.env_get("_APPSIGNAL_APP_NAME") == ~c""
+      assert Nif.env_get("_APPSIGNAL_HTTP_PROXY") == ~c""
+      assert Nif.env_get("_APPSIGNAL_IGNORE_ACTIONS") == ~c""
+      assert Nif.env_get("_APPSIGNAL_IGNORE_ERRORS") == ~c""
+      assert Nif.env_get("_APPSIGNAL_IGNORE_NAMESPACES") == ~c""
+      assert Nif.env_get("_APPSIGNAL_LOG_FILE_PATH") == ~c"/tmp/appsignal.log"
+      assert Nif.env_get("_APPSIGNAL_WORKING_DIR_PATH") == ~c""
+      assert Nif.env_get("_APPSIGNAL_WORKING_DIRECTORY_PATH") == ~c""
+      assert Nif.env_get("_APPSIGNAL_RUNNING_IN_CONTAINER") == ~c""
+      assert Nif.env_get("_APP_REVISION") == ~c""
     end
 
     test "deletes existing configuration in environment" do
@@ -1136,7 +1136,7 @@ defmodule Appsignal.ConfigTest do
           with_config(%{name: ""}, fn ->
             write_to_environment()
             # So it doesn't get written to the new agent environment configuration
-            assert Nif.env_get("_APPSIGNAL_APP_NAME") == ''
+            assert Nif.env_get("_APPSIGNAL_APP_NAME") == ~c""
           end)
         end
       )
@@ -1179,41 +1179,44 @@ defmodule Appsignal.ConfigTest do
         fn ->
           without_logger(&write_to_environment/0)
 
-          assert Nif.env_get("_APPSIGNAL_ACTIVE") == 'true'
+          assert Nif.env_get("_APPSIGNAL_ACTIVE") == ~c"true"
           assert Nif.env_get("_APPSIGNAL_AGENT_PATH") == :code.priv_dir(:appsignal)
-          assert Nif.env_get("_APPSIGNAL_APP_NAME") == 'AppSignal test suite app'
-          assert Nif.env_get("_APPSIGNAL_CA_FILE_PATH") == '/foo/bar/zab.ca'
-          assert Nif.env_get("_APPSIGNAL_DEBUG_LOGGING") == 'true'
-          assert Nif.env_get("_APPSIGNAL_DNS_SERVERS") == '8.8.8.8,8.8.4.4'
-          assert Nif.env_get("_APPSIGNAL_ENABLE_HOST_METRICS") == 'false'
-          assert Nif.env_get("_APPSIGNAL_ENVIRONMENT") == 'prod'
-          assert Nif.env_get("_APPSIGNAL_HOSTNAME") == 'My hostname'
-          assert Nif.env_get("_APPSIGNAL_HTTP_PROXY") == 'http://10.10.10.10:8888'
+          assert Nif.env_get("_APPSIGNAL_APP_NAME") == ~c"AppSignal test suite app"
+          assert Nif.env_get("_APPSIGNAL_CA_FILE_PATH") == ~c"/foo/bar/zab.ca"
+          assert Nif.env_get("_APPSIGNAL_DEBUG_LOGGING") == ~c"true"
+          assert Nif.env_get("_APPSIGNAL_DNS_SERVERS") == ~c"8.8.8.8,8.8.4.4"
+          assert Nif.env_get("_APPSIGNAL_ENABLE_HOST_METRICS") == ~c"false"
+          assert Nif.env_get("_APPSIGNAL_ENVIRONMENT") == ~c"prod"
+          assert Nif.env_get("_APPSIGNAL_HOSTNAME") == ~c"My hostname"
+          assert Nif.env_get("_APPSIGNAL_HTTP_PROXY") == ~c"http://10.10.10.10:8888"
 
           assert Nif.env_get("_APPSIGNAL_IGNORE_ACTIONS") ==
-                   'ExampleApplication.PageController#ignored,ExampleApplication.PageController#also_ignored'
+                   ~c"ExampleApplication.PageController#ignored,ExampleApplication.PageController#also_ignored"
 
-          assert Nif.env_get("_APPSIGNAL_IGNORE_ERRORS") == 'VerySpecificError,AnotherError'
-          assert Nif.env_get("_APPSIGNAL_IGNORE_NAMESPACES") == 'admin,private_namespace'
+          assert Nif.env_get("_APPSIGNAL_IGNORE_ERRORS") == ~c"VerySpecificError,AnotherError"
+          assert Nif.env_get("_APPSIGNAL_IGNORE_NAMESPACES") == ~c"admin,private_namespace"
 
           assert Nif.env_get("_APPSIGNAL_LANGUAGE_INTEGRATION_VERSION") ==
-                   'elixir-' ++ String.to_charlist(Mix.Project.config()[:version])
+                   ~c"elixir-" ++ String.to_charlist(Mix.Project.config()[:version])
 
-          assert Nif.env_get("_APPSIGNAL_LOG") == 'stdout'
-          assert Nif.env_get("_APPSIGNAL_LOG_LEVEL") == 'warn'
-          assert Nif.env_get("_APPSIGNAL_LOG_FILE_PATH") == '/tmp/appsignal.log'
-          assert Nif.env_get("_APPSIGNAL_LOGGING_ENDPOINT") == 'https://push.staging.lol'
-          assert Nif.env_get("_APPSIGNAL_PUSH_API_ENDPOINT") == 'https://push.staging.lol'
-          assert Nif.env_get("_APPSIGNAL_PUSH_API_KEY") == '00000000-0000-0000-0000-000000000000'
-          assert Nif.env_get("_APPSIGNAL_RUNNING_IN_CONTAINER") == 'false'
-          assert Nif.env_get("_APPSIGNAL_WORKING_DIR_PATH") == '/tmp/appsignal-deprecated'
-          assert Nif.env_get("_APPSIGNAL_WORKING_DIRECTORY_PATH") == '/tmp/appsignal'
-          assert Nif.env_get("_APPSIGNAL_FILES_WORLD_ACCESSIBLE") == 'false'
-          assert Nif.env_get("_APPSIGNAL_TRANSACTION_DEBUG_MODE") == 'true'
-          assert Nif.env_get("_APPSIGNAL_FILTER_PARAMETERS") == 'password,confirm_password'
-          assert Nif.env_get("_APPSIGNAL_FILTER_SESSION_DATA") == 'key1,key2'
-          assert Nif.env_get("_APPSIGNAL_SEND_ENVIRONMENT_METADATA") == 'true'
-          assert Nif.env_get("_APP_REVISION") == '03bd9e'
+          assert Nif.env_get("_APPSIGNAL_LOG") == ~c"stdout"
+          assert Nif.env_get("_APPSIGNAL_LOG_LEVEL") == ~c"warn"
+          assert Nif.env_get("_APPSIGNAL_LOG_FILE_PATH") == ~c"/tmp/appsignal.log"
+          assert Nif.env_get("_APPSIGNAL_LOGGING_ENDPOINT") == ~c"https://push.staging.lol"
+          assert Nif.env_get("_APPSIGNAL_PUSH_API_ENDPOINT") == ~c"https://push.staging.lol"
+
+          assert Nif.env_get("_APPSIGNAL_PUSH_API_KEY") ==
+                   ~c"00000000-0000-0000-0000-000000000000"
+
+          assert Nif.env_get("_APPSIGNAL_RUNNING_IN_CONTAINER") == ~c"false"
+          assert Nif.env_get("_APPSIGNAL_WORKING_DIR_PATH") == ~c"/tmp/appsignal-deprecated"
+          assert Nif.env_get("_APPSIGNAL_WORKING_DIRECTORY_PATH") == ~c"/tmp/appsignal"
+          assert Nif.env_get("_APPSIGNAL_FILES_WORLD_ACCESSIBLE") == ~c"false"
+          assert Nif.env_get("_APPSIGNAL_TRANSACTION_DEBUG_MODE") == ~c"true"
+          assert Nif.env_get("_APPSIGNAL_FILTER_PARAMETERS") == ~c"password,confirm_password"
+          assert Nif.env_get("_APPSIGNAL_FILTER_SESSION_DATA") == ~c"key1,key2"
+          assert Nif.env_get("_APPSIGNAL_SEND_ENVIRONMENT_METADATA") == ~c"true"
+          assert Nif.env_get("_APP_REVISION") == ~c"03bd9e"
         end
       )
     end
@@ -1222,7 +1225,7 @@ defmodule Appsignal.ConfigTest do
     test "name as atom" do
       with_config(%{name: :appsignal_test_suite_app}, fn ->
         write_to_environment()
-        assert Nif.env_get("_APPSIGNAL_APP_NAME") == 'appsignal_test_suite_app'
+        assert Nif.env_get("_APPSIGNAL_APP_NAME") == ~c"appsignal_test_suite_app"
       end)
     end
 
@@ -1230,14 +1233,14 @@ defmodule Appsignal.ConfigTest do
     test "name as string" do
       with_config(%{name: "AppSignal test suite app"}, fn ->
         write_to_environment()
-        assert Nif.env_get("_APPSIGNAL_APP_NAME") == 'AppSignal test suite app'
+        assert Nif.env_get("_APPSIGNAL_APP_NAME") == ~c"AppSignal test suite app"
       end)
     end
 
     test "writes dns_servers to env if empty" do
       with_config(%{dns_servers: []}, fn ->
         write_to_environment()
-        assert Nif.env_get("_APPSIGNAL_DNS_SERVERS") == ''
+        assert Nif.env_get("_APPSIGNAL_DNS_SERVERS") == ~c""
       end)
     end
 
@@ -1256,13 +1259,13 @@ defmodule Appsignal.ConfigTest do
         fn ->
           write_to_environment()
 
-          assert Nif.env_get("_APPSIGNAL_ACTIVE") == 'true'
-          assert Nif.env_get("_APPSIGNAL_DEBUG_LOGGING") == 'false'
-          assert Nif.env_get("_APPSIGNAL_ENABLE_HOST_METRICS") == 'true'
-          assert Nif.env_get("_APPSIGNAL_ENVIRONMENT") == 'prod'
-          assert Nif.env_get("_APPSIGNAL_RUNNING_IN_CONTAINER") == 'false'
-          assert Nif.env_get("_APPSIGNAL_FILES_WORLD_ACCESSIBLE") == 'false'
-          assert Nif.env_get("_APPSIGNAL_TRANSACTION_DEBUG_MODE") == 'false'
+          assert Nif.env_get("_APPSIGNAL_ACTIVE") == ~c"true"
+          assert Nif.env_get("_APPSIGNAL_DEBUG_LOGGING") == ~c"false"
+          assert Nif.env_get("_APPSIGNAL_ENABLE_HOST_METRICS") == ~c"true"
+          assert Nif.env_get("_APPSIGNAL_ENVIRONMENT") == ~c"prod"
+          assert Nif.env_get("_APPSIGNAL_RUNNING_IN_CONTAINER") == ~c"false"
+          assert Nif.env_get("_APPSIGNAL_FILES_WORLD_ACCESSIBLE") == ~c"false"
+          assert Nif.env_get("_APPSIGNAL_TRANSACTION_DEBUG_MODE") == ~c"false"
         end
       )
     end
@@ -1282,7 +1285,7 @@ defmodule Appsignal.ConfigTest do
       with_config(%{ca_file_path: nil}, fn ->
         write_to_environment()
 
-        assert Nif.env_get("_APPSIGNAL_CA_FILE_PATH") == ''
+        assert Nif.env_get("_APPSIGNAL_CA_FILE_PATH") == ~c""
       end)
     end
   end

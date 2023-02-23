@@ -233,7 +233,7 @@ defmodule Appsignal.Error.BackendTest do
 
   def pid do
     if System.otp_release() < "21" do
-      :erlang.list_to_pid('<0.123.0>')
+      :erlang.list_to_pid(~c"<0.123.0>")
     else
       self()
     end

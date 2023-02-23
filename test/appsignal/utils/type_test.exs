@@ -36,7 +36,7 @@ defmodule Appsignal.Utils.TypeTest do
   end
 
   test "pid" do
-    assert Type.from(:erlang.list_to_pid('<0.0.0>')).type == "pid"
+    assert Type.from(:erlang.list_to_pid(~c"<0.0.0>")).type == "pid"
   end
 
   test "port" do
