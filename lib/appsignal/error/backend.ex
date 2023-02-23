@@ -8,14 +8,14 @@ defmodule Appsignal.Error.Backend do
 
   @behaviour :gen_event
 
-  require Logger
+  import Appsignal.Utils, only: [warning: 1]
 
   def init(opts), do: {:ok, opts}
 
   def attach do
     case Logger.add_backend(Appsignal.Error.Backend) do
       {:error, error} ->
-        Logger.warning("Appsignal.Error.Backend not attached to Logger: #{error}")
+        warning("Appsignal.Error.Backend not attached to Logger: #{error}")
         :error
 
       _ ->
