@@ -42,7 +42,7 @@ defmodule Appsignal.Oban do
           :ok
 
         {_, {:error, _} = error} ->
-          Logger.warn("Appsignal.Oban not attached to #{inspect(event)}: #{inspect(error)}")
+          Logger.warning("Appsignal.Oban not attached to #{inspect(event)}: #{inspect(error)}")
 
           error
       end
