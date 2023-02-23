@@ -6,7 +6,7 @@ defmodule Appsignal.ReleaseUpgradeTest do
 
   @tag :skip_env_test_no_nif
   test "config_change/3" do
-    assert Nif.env_get("_APPSIGNAL_APP_NAME") == 'AppSignal test suite app v0'
+    assert Nif.env_get("_APPSIGNAL_APP_NAME") == ~c"AppSignal test suite app v0"
 
     with_config(valid_configuration(), fn ->
       # First start

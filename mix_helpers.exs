@@ -350,7 +350,7 @@ defmodule Mix.Appsignal.Helper do
   def verify_system_architecture(report) do
     input_arch =
       if force_linux_arm_build?() do
-        'aarch64-linux'
+        ~c"aarch64-linux"
       else
         @erlang.system_info(:system_architecture)
       end
@@ -383,13 +383,13 @@ defmodule Mix.Appsignal.Helper do
   end
 
   if Mix.env() != :test_no_nif do
-    defp map_arch('i386-' ++ _, platform), do: build_for("i686", platform)
-    defp map_arch('i686-' ++ _, platform), do: build_for("i686", platform)
-    defp map_arch('x86-' ++ _, platform), do: build_for("i686", platform)
-    defp map_arch('amd64-' ++ _, platform), do: build_for("x86_64", platform)
-    defp map_arch('x86_64-' ++ _, platform), do: build_for("x86_64", platform)
-    defp map_arch('aarch64-' ++ _, platform), do: build_for("aarch64", platform)
-    defp map_arch('arm-' ++ _, platform), do: build_for("aarch64", platform)
+    defp map_arch(~c"i386-" ++ _, platform), do: build_for("i686", platform)
+    defp map_arch(~c"i686-" ++ _, platform), do: build_for("i686", platform)
+    defp map_arch(~c"x86-" ++ _, platform), do: build_for("i686", platform)
+    defp map_arch(~c"amd64-" ++ _, platform), do: build_for("x86_64", platform)
+    defp map_arch(~c"x86_64-" ++ _, platform), do: build_for("x86_64", platform)
+    defp map_arch(~c"aarch64-" ++ _, platform), do: build_for("aarch64", platform)
+    defp map_arch(~c"arm-" ++ _, platform), do: build_for("aarch64", platform)
   end
 
   defp map_arch(arch, platform), do: {:error, {:unknown, {to_string(arch), platform}}}

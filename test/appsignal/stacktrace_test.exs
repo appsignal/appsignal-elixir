@@ -23,7 +23,7 @@ defmodule Appsignal.StacktraceTest do
       [{Appsignal.StacktraceTest, _, _, location} | _] = stack
 
       expected_location = [
-        file: 'test/appsignal/stacktrace_test.exs',
+        file: ~c"test/appsignal/stacktrace_test.exs",
         line: 8
       ]
 
@@ -42,7 +42,7 @@ defmodule Appsignal.StacktraceTest do
 
   describe "get/0, with an exception with included arguments" do
     setup do
-      String.to_atom("string", :extra_argument, 123, :erlang.list_to_pid('<0.0.0>'))
+      String.to_atom("string", :extra_argument, 123, :erlang.list_to_pid(~c"<0.0.0>"))
     catch
       :error, _ -> %{stack: Stacktrace.get()}
     end

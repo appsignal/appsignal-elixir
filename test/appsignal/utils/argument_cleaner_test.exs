@@ -18,7 +18,7 @@ defmodule Appsignal.Utils.ArgumentCleanerTest do
     # is_float
     assert ArgumentCleaner.clean(1.2) == 1.2
     # is_pid
-    pid = :erlang.list_to_pid('<0.0.0>')
+    pid = :erlang.list_to_pid(~c"<0.0.0>")
     assert ArgumentCleaner.clean(pid) == pid
     # is_port
     port = Port.open({:spawn, "true"}, [])
@@ -31,7 +31,7 @@ defmodule Appsignal.Utils.ArgumentCleanerTest do
   test "values inside composite types are converted to type structs" do
     assert ArgumentCleaner.clean({1, :foo}) == %Type{type: "{integer, atom}"}
 
-    assert ArgumentCleaner.clean([:erlang.list_to_pid('<0.0.0>'), "bar"]) ==
+    assert ArgumentCleaner.clean([:erlang.list_to_pid(~c"<0.0.0>"), "bar"]) ==
              %Type{type: "[pid, binary]"}
   end
 
@@ -40,7 +40,7 @@ defmodule Appsignal.Utils.ArgumentCleanerTest do
     assert ArgumentCleaner.clean(%{foo: "bar"}) == "%{:foo => binary}"
     assert ArgumentCleaner.clean(%NonEmptyStruct{foo: "bar"}) == "%NonEmptyStruct{:foo => binary}"
 
-    assert ArgumentCleaner.clean(%{foo: :erlang.list_to_pid('<0.0.0>')}) ==
+    assert ArgumentCleaner.clean(%{foo: :erlang.list_to_pid(~c"<0.0.0>")}) ==
              "%{:foo => #PID<0.0.0>}"
   end
 end

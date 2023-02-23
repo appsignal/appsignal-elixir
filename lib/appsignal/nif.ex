@@ -11,7 +11,7 @@ defmodule Appsignal.Nif do
   @on_load :init
 
   def init do
-    path = :filename.join(:code.priv_dir(:appsignal), 'appsignal_extension')
+    path = :filename.join(:code.priv_dir(:appsignal), ~c"appsignal_extension")
 
     case :erlang.load_nif(path, 1) do
       :ok ->
@@ -267,7 +267,7 @@ defmodule Appsignal.Nif do
   end
 
   def _env_get(_key) do
-    ''
+    ~c""
   end
 
   def _env_delete(_key) do
