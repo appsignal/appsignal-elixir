@@ -7,6 +7,30 @@ defmodule Appsignal.LoggerTest do
     :ok
   end
 
+  test "log/4 sends the log calls through the extension" do
+    metadata = %{some: "metadata"}
+
+    Logger.log(:debug, "app", "This is a debug", metadata)
+    Logger.log(:info, "app", "This is an info", metadata)
+    Logger.log(:notice, "app", "This is a notice", metadata)
+    Logger.log(:warning, "app", "This is a warning", metadata)
+    Logger.log(:error, "app", "This is an error", metadata)
+    Logger.log(:critical, "app", "This is a critical", metadata)
+    Logger.log(:alert, "app", "This is an alert", metadata)
+    Logger.log(:emergency, "app", "This is an emergency", metadata)
+
+    assert [
+             {"app", 9, "This is an emergency", _},
+             {"app", 8, "This is an alert", _},
+             {"app", 7, "This is a critical", _},
+             {"app", 6, "This is an error", _},
+             {"app", 5, "This is a warning", _},
+             {"app", 4, "This is a notice", _},
+             {"app", 3, "This is an info", _},
+             {"app", 2, "This is a debug", _}
+           ] = Test.Nif.get!(:log)
+  end
+
   test "debug/3 sends the debug log call through the extension" do
     metadata = %{some: "metadata"}
 

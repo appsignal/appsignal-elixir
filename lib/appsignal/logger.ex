@@ -57,7 +57,7 @@ defmodule Appsignal.Logger do
   end
 
   @spec log(log_level(), String.t(), String.t(), %{}) :: :ok
-  defp log(log_level, group, message, metadata) do
+  def log(log_level, group, message, metadata) do
     severity = @severity[log_level]
     encoded_metadata = Appsignal.Utils.DataEncoder.encode(metadata)
 
