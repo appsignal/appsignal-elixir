@@ -23,102 +23,102 @@ blocks:
             - script/validate_ci_matrix
         - name: mix compile
           commands:
-            - ERLANG_VERSION=25.2 ELIXIR_VERSION=1.13.4 . bin/setup
+            - "ERLANG_VERSION=25.2 ELIXIR_VERSION=1.13.4 . bin/setup"
             - mix compile
         - name: mix format --check-formatted
           commands:
-            - ERLANG_VERSION=25.2 ELIXIR_VERSION=1.13.4 . bin/setup
+            - "ERLANG_VERSION=25.2 ELIXIR_VERSION=1.13.4 . bin/setup"
             - mix format --check-formatted
         - name: mix credo --strict
           commands:
-            - ERLANG_VERSION=25.2 ELIXIR_VERSION=1.13.4 . bin/setup
+            - "ERLANG_VERSION=25.2 ELIXIR_VERSION=1.13.4 . bin/setup"
             - mix credo --strict
         - name: mix dialyzer
           commands:
-            - ERLANG_VERSION=25.2 ELIXIR_VERSION=1.13.4 . bin/setup
+            - "ERLANG_VERSION=25.2 ELIXIR_VERSION=1.13.4 . bin/setup"
             - cache restore dialyzer-plt
             - MIX_ENV=dev mix dialyzer --plt
             - cache store dialyzer-plt priv/plts/
             - MIX_ENV=dev mix dialyzer --format dialyzer
-        - name: Elixir 1.14.3, OTP 25.2
+        - name: Elixir 1.14.3, OTP 25.2, Phoenix ~> 1.7.0
           commands:
-            - ERLANG_VERSION=25.2 ELIXIR_VERSION=1.14.3 . bin/setup
+            - "ERLANG_VERSION=25.2 ELIXIR_VERSION=1.14.3 PHOENIX_VERSION=\"~> 1.7.0\" . bin/setup"
             - mix test
-        - name: Elixir 1.13.4, OTP 25.2
+        - name: Elixir 1.13.4, OTP 25.2, Phoenix ~> 1.7.0
           commands:
-            - ERLANG_VERSION=25.2 ELIXIR_VERSION=1.13.4 . bin/setup
+            - "ERLANG_VERSION=25.2 ELIXIR_VERSION=1.13.4 PHOENIX_VERSION=\"~> 1.7.0\" . bin/setup"
             - mix test
-        - name: Elixir 1.14.3, OTP 24.3
+        - name: Elixir 1.14.3, OTP 24.3, Phoenix ~> 1.7.0
           commands:
-            - ERLANG_VERSION=24.3 ELIXIR_VERSION=1.14.3 . bin/setup
+            - "ERLANG_VERSION=24.3 ELIXIR_VERSION=1.14.3 PHOENIX_VERSION=\"~> 1.7.0\" . bin/setup"
             - mix test
-        - name: Elixir 1.13.3, OTP 24.3
+        - name: Elixir 1.13.3, OTP 24.3, Phoenix ~> 1.7.0
           commands:
-            - ERLANG_VERSION=24.3 ELIXIR_VERSION=1.13.3 . bin/setup
+            - "ERLANG_VERSION=24.3 ELIXIR_VERSION=1.13.3 PHOENIX_VERSION=\"~> 1.7.0\" . bin/setup"
             - mix test
-        - name: Elixir 1.12.3, OTP 24.3
+        - name: Elixir 1.12.3, OTP 24.3, Phoenix ~> 1.7.0
           commands:
-            - ERLANG_VERSION=24.3 ELIXIR_VERSION=1.12.3 . bin/setup
+            - "ERLANG_VERSION=24.3 ELIXIR_VERSION=1.12.3 PHOENIX_VERSION=\"~> 1.7.0\" . bin/setup"
             - mix test
-        - name: Elixir 1.11.4, OTP 24.3
+        - name: Elixir 1.11.4, OTP 24.3, Phoenix ~> 1.7.0
           commands:
-            - ERLANG_VERSION=24.3 ELIXIR_VERSION=1.11.4 . bin/setup
+            - "ERLANG_VERSION=24.3 ELIXIR_VERSION=1.11.4 PHOENIX_VERSION=\"~> 1.7.0\" . bin/setup"
             - mix test
-        - name: Elixir 1.14.3, OTP 23.3
+        - name: Elixir 1.14.3, OTP 23.3, Phoenix ~> 1.6.0
           commands:
-            - ERLANG_VERSION=23.3 ELIXIR_VERSION=1.14.3 . bin/setup
+            - "ERLANG_VERSION=23.3 ELIXIR_VERSION=1.14.3 PHOENIX_VERSION=\"~> 1.6.0\" . bin/setup"
             - mix test
-        - name: Elixir 1.13.3, OTP 23.3
+        - name: Elixir 1.13.3, OTP 23.3, Phoenix ~> 1.6.0
           commands:
-            - ERLANG_VERSION=23.3 ELIXIR_VERSION=1.13.3 . bin/setup
+            - "ERLANG_VERSION=23.3 ELIXIR_VERSION=1.13.3 PHOENIX_VERSION=\"~> 1.6.0\" . bin/setup"
             - mix test
-        - name: Elixir 1.12.3, OTP 23.3
+        - name: Elixir 1.12.3, OTP 23.3, Phoenix ~> 1.6.0
           commands:
-            - ERLANG_VERSION=23.3 ELIXIR_VERSION=1.12.3 . bin/setup
+            - "ERLANG_VERSION=23.3 ELIXIR_VERSION=1.12.3 PHOENIX_VERSION=\"~> 1.6.0\" . bin/setup"
             - mix test
-        - name: Elixir 1.11.4, OTP 23.3
+        - name: Elixir 1.11.4, OTP 23.3, Phoenix ~> 1.6.0
           commands:
-            - ERLANG_VERSION=23.3 ELIXIR_VERSION=1.11.4 . bin/setup
+            - "ERLANG_VERSION=23.3 ELIXIR_VERSION=1.11.4 PHOENIX_VERSION=\"~> 1.6.0\" . bin/setup"
             - mix test
-        - name: Elixir 1.10.4, OTP 23.3
+        - name: Elixir 1.10.4, OTP 23.3, Phoenix ~> 1.6.0
           commands:
-            - ERLANG_VERSION=23.3 ELIXIR_VERSION=1.10.4 . bin/setup
+            - "ERLANG_VERSION=23.3 ELIXIR_VERSION=1.10.4 PHOENIX_VERSION=\"~> 1.6.0\" . bin/setup"
             - mix test
-        - name: Elixir 1.13.3, OTP 22.3
+        - name: Elixir 1.13.3, OTP 22.3, Phoenix ~> 1.6.0
           commands:
-            - ERLANG_VERSION=22.3 ELIXIR_VERSION=1.13.3 . bin/setup
+            - "ERLANG_VERSION=22.3 ELIXIR_VERSION=1.13.3 PHOENIX_VERSION=\"~> 1.6.0\" . bin/setup"
             - mix test
-        - name: Elixir 1.12.3, OTP 22.3
+        - name: Elixir 1.12.3, OTP 22.3, Phoenix ~> 1.6.0
           commands:
-            - ERLANG_VERSION=22.3 ELIXIR_VERSION=1.12.3 . bin/setup
+            - "ERLANG_VERSION=22.3 ELIXIR_VERSION=1.12.3 PHOENIX_VERSION=\"~> 1.6.0\" . bin/setup"
             - mix test
-        - name: Elixir 1.11.4, OTP 22.3
+        - name: Elixir 1.11.4, OTP 22.3, Phoenix ~> 1.6.0
           commands:
-            - ERLANG_VERSION=22.3 ELIXIR_VERSION=1.11.4 . bin/setup
+            - "ERLANG_VERSION=22.3 ELIXIR_VERSION=1.11.4 PHOENIX_VERSION=\"~> 1.6.0\" . bin/setup"
             - mix test
-        - name: Elixir 1.10.4, OTP 22.3
+        - name: Elixir 1.10.4, OTP 22.3, Phoenix ~> 1.6.0
           commands:
-            - ERLANG_VERSION=22.3 ELIXIR_VERSION=1.10.4 . bin/setup
+            - "ERLANG_VERSION=22.3 ELIXIR_VERSION=1.10.4 PHOENIX_VERSION=\"~> 1.6.0\" . bin/setup"
             - mix test
-        - name: Elixir 1.9.4, OTP 22.3
+        - name: Elixir 1.9.4, OTP 22.3, Phoenix ~> 1.6.0
           commands:
-            - ERLANG_VERSION=22.3 ELIXIR_VERSION=1.9.4 . bin/setup
+            - "ERLANG_VERSION=22.3 ELIXIR_VERSION=1.9.4 PHOENIX_VERSION=\"~> 1.6.0\" . bin/setup"
             - mix test
-        - name: Elixir 1.11.4, OTP 21.3
+        - name: Elixir 1.11.4, OTP 21.3, Phoenix ~> 1.6.0
           commands:
-            - ERLANG_VERSION=21.3 ELIXIR_VERSION=1.11.4 . bin/setup
+            - "ERLANG_VERSION=21.3 ELIXIR_VERSION=1.11.4 PHOENIX_VERSION=\"~> 1.6.0\" . bin/setup"
             - mix test
-        - name: Elixir 1.10.4, OTP 21.3
+        - name: Elixir 1.10.4, OTP 21.3, Phoenix ~> 1.6.0
           commands:
-            - ERLANG_VERSION=21.3 ELIXIR_VERSION=1.10.4 . bin/setup
+            - "ERLANG_VERSION=21.3 ELIXIR_VERSION=1.10.4 PHOENIX_VERSION=\"~> 1.6.0\" . bin/setup"
             - mix test
-        - name: Elixir 1.9.4, OTP 21.3
+        - name: Elixir 1.9.4, OTP 21.3, Phoenix ~> 1.6.0
           commands:
-            - ERLANG_VERSION=21.3 ELIXIR_VERSION=1.9.4 . bin/setup
+            - "ERLANG_VERSION=21.3 ELIXIR_VERSION=1.9.4 PHOENIX_VERSION=\"~> 1.6.0\" . bin/setup"
             - mix test
-        - name: Elixir 1.9.4, OTP 20.3
+        - name: Elixir 1.9.4, OTP 20.3, Phoenix ~> 1.6.0
           commands:
-            - ERLANG_VERSION=20.3 ELIXIR_VERSION=1.9.4 . bin/setup
+            - "ERLANG_VERSION=20.3 ELIXIR_VERSION=1.9.4 PHOENIX_VERSION=\"~> 1.6.0\" . bin/setup"
             - mix test
       env_vars:
         - name: MIX_ENV

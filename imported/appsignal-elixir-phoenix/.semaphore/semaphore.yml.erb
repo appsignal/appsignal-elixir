@@ -1,7 +1,8 @@
 <%
  require_relative "versions"
  NEWEST_OTP = VERSIONS.keys.first
- NEWEST_ELIXIR = VERSIONS[NEWEST_OTP][1]
+ NEWEST_ELIXIR = VERSIONS[NEWEST_OTP][:elixir][1]
+ NEWEST_PHOENIX = VERSIONS[NEWEST_OTP][:phoenix][1]
 -%>
 # DO NOT EDIT
 # This is a generated file by the `script/generate_ci_matrix` task.
@@ -28,29 +29,31 @@ blocks:
             - script/validate_ci_matrix
         - name: mix compile
           commands:
-            - ERLANG_VERSION=<%= NEWEST_OTP %> ELIXIR_VERSION=<%= NEWEST_ELIXIR %> . bin/setup
+            - "ERLANG_VERSION=<%= NEWEST_OTP %> ELIXIR_VERSION=<%= NEWEST_ELIXIR %> . bin/setup"
             - mix compile
         - name: mix format --check-formatted
           commands:
-            - ERLANG_VERSION=<%= NEWEST_OTP %> ELIXIR_VERSION=<%= NEWEST_ELIXIR %> . bin/setup
+            - "ERLANG_VERSION=<%= NEWEST_OTP %> ELIXIR_VERSION=<%= NEWEST_ELIXIR %> . bin/setup"
             - mix format --check-formatted
         - name: mix credo --strict
           commands:
-            - ERLANG_VERSION=<%= NEWEST_OTP %> ELIXIR_VERSION=<%= NEWEST_ELIXIR %> . bin/setup
+            - "ERLANG_VERSION=<%= NEWEST_OTP %> ELIXIR_VERSION=<%= NEWEST_ELIXIR %> . bin/setup"
             - mix credo --strict
         - name: mix dialyzer
           commands:
-            - ERLANG_VERSION=<%= NEWEST_OTP %> ELIXIR_VERSION=<%= NEWEST_ELIXIR %> . bin/setup
+            - "ERLANG_VERSION=<%= NEWEST_OTP %> ELIXIR_VERSION=<%= NEWEST_ELIXIR %> . bin/setup"
             - cache restore dialyzer-plt
             - MIX_ENV=dev mix dialyzer --plt
             - cache store dialyzer-plt priv/plts/
             - MIX_ENV=dev mix dialyzer --format dialyzer
-<% VERSIONS.each do |otp_version, elixir_versions| -%>
-<% elixir_versions.each do |elixir_version| -%>
-        - name: Elixir <%= elixir_version %>, OTP <%= otp_version %>
+<% VERSIONS.each do |otp_version, versions| -%>
+<% versions[:elixir].each do |elixir_version| -%>
+<% versions[:phoenix].each do |phoenix_version| -%>
+        - name: Elixir <%= elixir_version %>, OTP <%= otp_version %>, Phoenix <%= phoenix_version %>
           commands:
-            - ERLANG_VERSION=<%= otp_version %> ELIXIR_VERSION=<%= elixir_version %> . bin/setup
+            - "ERLANG_VERSION=<%= otp_version %> ELIXIR_VERSION=<%= elixir_version %> PHOENIX_VERSION=\"<%= phoenix_version %>\" . bin/setup"
             - mix test
+<% end -%>
 <% end -%>
 <% end -%>
       env_vars:

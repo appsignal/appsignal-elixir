@@ -66,7 +66,7 @@ defmodule Appsignal.Phoenix.MixProject do
     [
       {:appsignal, ">= 2.5.1 and < 3.0.0"},
       {:appsignal_plug, ">= 2.0.13 and < 3.0.0"},
-      {:phoenix, "~> 1.4"},
+      {:phoenix, System.get_env("PHOENIX_VERSION", "~> 1.4")},
       {:phoenix_html, "~> 2.11 or ~> 3.0", optional: true},
       {:phoenix_live_view, phoenix_live_view_version, optional: true},
       {:ex_doc, "~> 0.21", only: :dev, runtime: false},
