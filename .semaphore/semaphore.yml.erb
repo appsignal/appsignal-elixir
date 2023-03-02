@@ -1,7 +1,7 @@
 <%
 require_relative "versions"
 NEWEST_OTP = VERSIONS.keys.first
-NEWEST_ELIXIR = VERSIONS[NEWEST_OTP][1]
+NEWEST_ELIXIR = VERSIONS[NEWEST_OTP][:elixir][1]
 -%>
 # DO NOT EDIT
 # This is a generated file by the `script/generate_ci_matrix` task.
@@ -64,8 +64,8 @@ blocks:
             - ERLANG_VERSION=<%= NEWEST_OTP %> ELIXIR_VERSION=<%= NEWEST_ELIXIR %> . bin/setup
             - mix compile
             - mix test --no-compile
-<% VERSIONS.each do |otp_version, elixir_versions| -%>
-<% elixir_versions.each do |elixir_version| -%>
+<% VERSIONS.each do |otp_version, versions| -%>
+<% versions[:elixir].each do |elixir_version| -%>
         - name: Elixir <%= elixir_version %>, OTP <%= otp_version %>
           commands:
             - ERLANG_VERSION=<%= otp_version %> ELIXIR_VERSION=<%= elixir_version %> . bin/setup
