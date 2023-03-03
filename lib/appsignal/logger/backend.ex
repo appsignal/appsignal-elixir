@@ -6,7 +6,7 @@ defmodule Appsignal.Logger.Backend do
   end
 
   def init(_) do
-    {:ok, "phoenix"}
+    {:ok, "app"}
   end
 
   def handle_event({level, _gl, {Logger, message, _timestamp, metadata}}, group) do
