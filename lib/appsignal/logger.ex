@@ -2,17 +2,6 @@ defmodule Appsignal.Logger do
   require Appsignal.Utils
 
   @nif Appsignal.Utils.compile_env(:appsignal, :appsignal_tracer_nif, Appsignal.Nif)
-  @severity %{
-    debug: 2,
-    info: 3,
-    notice: 4,
-    warn: 5,
-    warning: 5,
-    error: 6,
-    critical: 7,
-    alert: 8,
-    emergency: 9
-  }
 
   @type log_level ::
           :debug | :info | :notice | :warning | :error | :critical | :alert | :emergency
@@ -59,14 +48,19 @@ defmodule Appsignal.Logger do
 
   @spec log(log_level(), String.t(), String.t(), %{}) :: :ok
   def log(log_level, group, message, metadata) do
-    severity = @severity[log_level]
     encoded_metadata = Appsignal.Utils.DataEncoder.encode(metadata)
 
-    @nif.log(
-      group,
-      severity,
-      message,
-      encoded_metadata
-    )
+    @nif.log(group, severity(log_level), message, encoded_metadata)
   end
+
+  defp severity(:debug), do: 2
+  defp severity(:info), do: 3
+  defp severity(:notice), do: 4
+  defp severity(:warn), do: 5
+  defp severity(:warning), do: 5
+  defp severity(:error), do: 6
+  defp severity(:critical), do: 7
+  defp severity(:alert), do: 8
+  defp severity(:emergency), do: 9
+  defp severity(_), do: 3
 end

@@ -19,8 +19,10 @@ defmodule Appsignal.LoggerTest do
     Logger.log(:critical, "app", "This is a critical", metadata)
     Logger.log(:alert, "app", "This is an alert", metadata)
     Logger.log(:emergency, "app", "This is an emergency", metadata)
+    Logger.log(:rhubarb, "app", "This is a... rhubarb?", metadata)
 
     assert [
+             {"app", 3, "This is a... rhubarb?", _},
              {"app", 9, "This is an emergency", _},
              {"app", 8, "This is an alert", _},
              {"app", 7, "This is a critical", _},
