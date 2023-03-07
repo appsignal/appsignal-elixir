@@ -248,8 +248,8 @@ defmodule Appsignal.Nif do
     _span_to_json(resource)
   end
 
-  def log(group, severity, message, attributes) do
-    _log(group, severity, message, attributes)
+  def log(group, severity, format, message, attributes) do
+    _log(group, severity, format, message, attributes)
   end
 
   if Mix.env() == :test do
@@ -488,7 +488,7 @@ defmodule Appsignal.Nif do
     {:ok, "{}"}
   end
 
-  def _log(_group, _severity, _message, _attributes) do
+  def _log(_group, _severity, _format, _message, _attributes) do
     :ok
   end
 

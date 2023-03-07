@@ -34,6 +34,6 @@ defmodule Appsignal.Logger.BackendTest do
       group: "phoenix"
     )
 
-    assert [{"phoenix", 3, "foo bar baz", _}] = Appsignal.Test.Nif.get!(:log)
+    assert [{"phoenix", 3, 0, "foo bar baz", _}] = Appsignal.Test.Nif.get!(:log)
   end
 end
