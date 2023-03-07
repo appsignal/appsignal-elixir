@@ -6,6 +6,7 @@ defmodule Appsignal.Logger do
     debug: 2,
     info: 3,
     notice: 4,
+    warn: 5,
     warning: 5,
     error: 6,
     critical: 7,

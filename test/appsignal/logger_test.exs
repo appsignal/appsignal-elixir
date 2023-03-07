@@ -14,6 +14,7 @@ defmodule Appsignal.LoggerTest do
     Logger.log(:info, "app", "This is an info", metadata)
     Logger.log(:notice, "app", "This is a notice", metadata)
     Logger.log(:warning, "app", "This is a warning", metadata)
+    Logger.log(:warn, "app", "This is a warn", metadata)
     Logger.log(:error, "app", "This is an error", metadata)
     Logger.log(:critical, "app", "This is a critical", metadata)
     Logger.log(:alert, "app", "This is an alert", metadata)
@@ -24,6 +25,7 @@ defmodule Appsignal.LoggerTest do
              {"app", 8, "This is an alert", _},
              {"app", 7, "This is a critical", _},
              {"app", 6, "This is an error", _},
+             {"app", 5, "This is a warn", _},
              {"app", 5, "This is a warning", _},
              {"app", 4, "This is a notice", _},
              {"app", 3, "This is an info", _},
