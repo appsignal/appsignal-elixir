@@ -1,6 +1,8 @@
 defmodule Appsignal.Utils do
   @moduledoc false
 
+  require Logger
+
   @doc """
   Converts module name atoms to strings.
 
@@ -29,5 +31,10 @@ defmodule Appsignal.Utils do
         Application.get_env(unquote(app), unquote(key), unquote(default))
       end
     end
+  end
+
+  case Version.compare(System.version(), "1.10.0") do
+    :lt -> defdelegate warning(message), to: Logger, as: :warn
+    _ -> defdelegate warning(message), to: Logger
   end
 end

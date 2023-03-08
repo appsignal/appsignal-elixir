@@ -3,6 +3,8 @@ unless Code.ensure_loaded?(Appsignal.Agent) do
 end
 
 defmodule Mix.Appsignal.Utils do
+  require Logger
+
   defmacro compile_env(app, key, default \\ nil) do
     if Version.match?(System.version(), ">= 1.10.0") do
       quote do
@@ -14,6 +16,11 @@ defmodule Mix.Appsignal.Utils do
       end
     end
   end
+
+  case Version.compare(System.version(), "1.10.0") do
+    :lt -> defdelegate warning(message), to: Logger, as: :warn
+    _ -> defdelegate warning(message), to: Logger
+  end
 end
 
 defmodule Mix.Appsignal.Helper do
@@ -22,6 +29,7 @@ defmodule Mix.Appsignal.Helper do
   """
 
   require Mix.Appsignal.Utils
+  require Logger
 
   @erlang Mix.Appsignal.Utils.compile_env(:appsignal, :erlang, :erlang)
   @os Mix.Appsignal.Utils.compile_env(:appsignal, :os, :os)
@@ -35,7 +43,7 @@ defmodule Mix.Appsignal.Helper do
     "HTTP_PROXY"
   ]
 
-  require Logger
+  import Mix.Appsignal.Utils, only: [warning: 1]
 
   def install do
     report = initial_report()
@@ -262,7 +270,7 @@ defmodule Mix.Appsignal.Helper do
           default_cacert_file_path
 
         {:error, message} ->
-          Logger.warn(
+          warning(
             "The cacert file path: #{default_cacert_file_path} is not accessible. " <>
               "Reason: #{inspect(message)}. " <>
               "Using system defaults instead."
