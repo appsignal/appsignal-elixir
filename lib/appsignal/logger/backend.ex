@@ -2,7 +2,7 @@ defmodule Appsignal.Logger.Backend do
   @behaviour :gen_event
 
   def init({__MODULE__, options}) do
-    {:ok, Keyword.merge([group: "app"], options)}
+    {:ok, Keyword.merge([group: "app", format: :plaintext], options)}
   end
 
   def handle_event({level, _gl, {Logger, message, _timestamp, metadata}}, options) do
@@ -10,7 +10,8 @@ defmodule Appsignal.Logger.Backend do
       level,
       options[:group],
       IO.chardata_to_string(message),
-      Enum.into(metadata, %{})
+      Enum.into(metadata, %{}),
+      options[:format]
     )
 
     {:ok, options}
