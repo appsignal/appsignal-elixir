@@ -46,11 +46,11 @@ defmodule Appsignal.Logger do
     log(:emergency, group, message, metadata)
   end
 
-  @spec log(log_level(), String.t(), String.t(), %{}) :: :ok
-  def log(log_level, group, message, metadata) do
+  @spec log(log_level(), String.t(), String.t(), %{}, atom()) :: :ok
+  def log(log_level, group, message, metadata, format \\ :plaintext) do
     encoded_metadata = Appsignal.Utils.DataEncoder.encode(metadata)
 
-    @nif.log(group, severity(log_level), message, encoded_metadata)
+    @nif.log(group, severity(log_level), format(format), message, encoded_metadata)
   end
 
   defp severity(:debug), do: 2
@@ -63,4 +63,7 @@ defmodule Appsignal.Logger do
   defp severity(:alert), do: 8
   defp severity(:emergency), do: 9
   defp severity(_), do: 3
+
+  defp format(:logfmt), do: 1
+  defp format(_), do: 0
 end

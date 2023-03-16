@@ -1267,9 +1267,10 @@ static ERL_NIF_TERM _span_to_json(ErlNifEnv* env, int argc, const ERL_NIF_TERM a
 static ERL_NIF_TERM _log(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
   ErlNifBinary group, message;
   int severity;
+  int format;
   data_ptr *data_ptr;
 
-  if (argc != 4) {
+  if (argc != 5) {
     return enif_make_badarg(env);
   }
   if(!enif_inspect_iolist_as_binary(env, argv[0], &group)) {
@@ -1278,17 +1279,20 @@ static ERL_NIF_TERM _log(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
   if(!enif_get_int(env, argv[1], &severity)) {
     return enif_make_badarg(env);
   }
-  if(!enif_inspect_iolist_as_binary(env, argv[2], &message)) {
+  if(!enif_get_int(env, argv[2], &format)) {
     return enif_make_badarg(env);
   }
-  if(!enif_get_resource(env, argv[3], appsignal_data_type, (void**) &data_ptr)) {
+  if(!enif_inspect_iolist_as_binary(env, argv[3], &message)) {
+    return enif_make_badarg(env);
+  }
+  if(!enif_get_resource(env, argv[4], appsignal_data_type, (void**) &data_ptr)) {
     return enif_make_badarg(env);
   }
 
   appsignal_log(
     make_appsignal_string(group),
     severity,
-    0,
+    format,
     make_appsignal_string(message),
     data_ptr->data
   );
@@ -1410,7 +1414,7 @@ static ErlNifFunc nif_funcs[] =
     {"_close_span", 1, _close_span, 0},
     {"_close_span_with_timestamp", 3, _close_span_with_timestamp, 0},
     {"_span_to_json", 1, _span_to_json, 0},
-    {"_log", 4, _log, 0}
+    {"_log", 5, _log, 0}
 };
 
 ERL_NIF_INIT(Elixir.Appsignal.Nif, nif_funcs, on_load, on_reload, on_upgrade, NULL)
