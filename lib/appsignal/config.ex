@@ -22,6 +22,7 @@ defmodule Appsignal.Config do
     ignore_actions: [],
     ignore_errors: [],
     ignore_namespaces: [],
+    instrument_absinthe: true,
     instrument_ecto: true,
     instrument_finch: true,
     instrument_oban: true,
@@ -238,6 +239,13 @@ defmodule Appsignal.Config do
 
       _ ->
         "all"
+    end
+  end
+
+  def instrument_absinthe? do
+    case Application.fetch_env(:appsignal, :config) do
+      {:ok, value} -> !!Map.get(value, :instrument_absinthe, true)
+      _ -> true
     end
   end
 
