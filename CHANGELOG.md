@@ -1,5 +1,21 @@
 # AppSignal for Elixir changelog
 
+## 2.6.0
+
+### Added
+
+- [6462f802](https://github.com/appsignal/appsignal-elixir/commit/6462f802ae1724e075b404e476272a11e0cbc0f3) minor - Add Logger backend to redirect Elixir logs to AppSignal.
+
+### Changed
+
+- [2d424448](https://github.com/appsignal/appsignal-elixir/commit/2d42444884f74b459a97a97d268cdc576c152705) patch - Bump agent to 8d042e2.
+  
+  - Support multiple log formats.
+- [a886a2b7](https://github.com/appsignal/appsignal-elixir/commit/a886a2b7788602cbe5b95d17a0259013e7e9630b) patch - Bump agent to dee4fcb.
+  
+  - Support cgroups v2. Used by newer Docker engines to report host metrics. Upgrade if you receive no host metrics for Docker containers.
+  - Remove trailing comments in SQL queries, ensuring queries are grouped consistently.
+
 ## 2.5.3
 
 ### Changed
