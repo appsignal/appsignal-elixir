@@ -42,7 +42,7 @@ defmodule Appsignal.Absinthe do
   end
 
   def absinthe_execute_operation_start(_event, _measurements, _metadata, _config) do
-    @tracer.create_span("absinthe")
+    @tracer.create_span("http_request")
     |> @span.set_name("graphql")
     |> @span.set_attribute("appsignal:category", "call.graphql")
   end
