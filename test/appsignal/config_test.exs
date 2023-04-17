@@ -1186,7 +1186,7 @@ defmodule Appsignal.ConfigTest do
           assert Nif.env_get("_APPSIGNAL_DEBUG_LOGGING") == ~c"true"
           assert Nif.env_get("_APPSIGNAL_DNS_SERVERS") == ~c"8.8.8.8,8.8.4.4"
           assert Nif.env_get("_APPSIGNAL_ENABLE_HOST_METRICS") == ~c"false"
-          assert Nif.env_get("_APPSIGNAL_ENVIRONMENT") == ~c"prod"
+          assert Nif.env_get("_APPSIGNAL_APP_ENV") == ~c"prod"
           assert Nif.env_get("_APPSIGNAL_HOSTNAME") == ~c"My hostname"
           assert Nif.env_get("_APPSIGNAL_HTTP_PROXY") == ~c"http://10.10.10.10:8888"
 
@@ -1262,7 +1262,7 @@ defmodule Appsignal.ConfigTest do
           assert Nif.env_get("_APPSIGNAL_ACTIVE") == ~c"true"
           assert Nif.env_get("_APPSIGNAL_DEBUG_LOGGING") == ~c"false"
           assert Nif.env_get("_APPSIGNAL_ENABLE_HOST_METRICS") == ~c"true"
-          assert Nif.env_get("_APPSIGNAL_ENVIRONMENT") == ~c"prod"
+          assert Nif.env_get("_APPSIGNAL_APP_ENV") == ~c"prod"
           assert Nif.env_get("_APPSIGNAL_RUNNING_IN_CONTAINER") == ~c"false"
           assert Nif.env_get("_APPSIGNAL_FILES_WORLD_ACCESSIBLE") == ~c"false"
           assert Nif.env_get("_APPSIGNAL_TRANSACTION_DEBUG_MODE") == ~c"false"

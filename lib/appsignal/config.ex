@@ -421,7 +421,7 @@ defmodule Appsignal.Config do
     Nif.env_put("_APPSIGNAL_ENABLE_HOST_METRICS", to_string(config[:enable_host_metrics]))
     Nif.env_put("_APPSIGNAL_ENABLE_STATSD", to_string(config[:enable_statsd]))
     Nif.env_put("_APPSIGNAL_ENABLE_NGINX_METRICS", to_string(config[:enable_nginx_metrics]))
-    Nif.env_put("_APPSIGNAL_ENVIRONMENT", to_string(config[:env]))
+    Nif.env_put("_APPSIGNAL_APP_ENV", to_string(config[:env]))
     Nif.env_put("_APPSIGNAL_HOSTNAME", to_string(config[:hostname]))
     Nif.env_put("_APPSIGNAL_HTTP_PROXY", to_string(config[:http_proxy]))
     Nif.env_put("_APPSIGNAL_IGNORE_ACTIONS", config[:ignore_actions] |> Enum.join(","))
