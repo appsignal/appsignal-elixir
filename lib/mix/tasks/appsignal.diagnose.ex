@@ -252,7 +252,9 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     # the config option. It's a private config option.
     filtered_options = Enum.reject(config[:options], fn {key, _} -> key == :diagnose_endpoint end)
 
-    Enum.each(filtered_options, fn {key, _} = option ->
+    filtered_options
+    |> Enum.sort
+    |> Enum.each(fn {key, _} = option ->
       config_label = configuration_option_label(option)
       option_sources = config[:sources]
       sources = sources_for_option(key, option_sources)
