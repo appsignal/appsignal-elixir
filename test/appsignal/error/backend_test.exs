@@ -207,6 +207,12 @@ defmodule Appsignal.Error.BackendTest do
     end
   end
 
+  describe "handle_event/2, with an unexpected event" do
+    test "replies with :ok" do
+      assert Backend.handle_event(:event, %{}) == {:ok, %{}}
+    end
+  end
+
   describe "handle_call/2" do
     test "replies with :ok" do
       assert Backend.handle_call(:call, %{}) == {:ok, :ok, %{}}
