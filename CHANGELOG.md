@@ -1,5 +1,11 @@
 # AppSignal for Elixir changelog
 
+## 2.6.1
+
+### Fixed
+
+- [2bc1346f](https://github.com/appsignal/appsignal-elixir/commit/2bc1346f2cf6657e60df5e173c02cdd979c51217) patch - Handle unexpected events in Logger backend
+
 ## 2.6.0
 
 ### Added
