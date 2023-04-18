@@ -17,6 +17,10 @@ defmodule Appsignal.Logger.Backend do
     {:ok, options}
   end
 
+  def handle_event(_event, options) do
+    {:ok, options}
+  end
+
   def handle_call(_messsage, options) do
     {:ok, nil, options}
   end
