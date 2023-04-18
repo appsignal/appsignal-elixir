@@ -1,5 +1,11 @@
 # AppSignal for Elixir Phoenix changelog
 
+## 2.3.2
+
+### Changed
+
+- [5496ad2](https://github.com/appsignal/appsignal-elixir-phoenix/commit/5496ad23398e12216f184c6e9913459c3a31f7f1) patch - Switch to router_dispatch events for root spans
+
 ## 2.3.1
 
 ### Fixed
