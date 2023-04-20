@@ -1,5 +1,11 @@
 # AppSignal for Elixir changelog
 
+## 2.7.0-beta.1
+
+### Added
+
+- [45deeedd](https://github.com/appsignal/appsignal-elixir/commit/45deeedd82273df88812fd96e25260dab9f71a00) minor - Add Absinthe instrumentation
+
 ## 2.6.1
 
 ### Fixed
