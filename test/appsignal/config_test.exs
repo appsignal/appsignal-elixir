@@ -259,6 +259,30 @@ defmodule Appsignal.ConfigTest do
     end
   end
 
+  describe "instrument_absinthe?" do
+    test "when true" do
+      assert with_config(
+               %{instrument_absinthe: true},
+               &Config.instrument_absinthe?/0
+             )
+    end
+
+    test "when false" do
+      refute with_config(
+               %{instrument_absinthe: false},
+               &Config.instrument_absinthe?/0
+             )
+    end
+
+    test "when unset" do
+      assert with_config(%{}, &Config.instrument_absinthe?/0)
+    end
+
+    test "without an appsignal config" do
+      assert without_config(&Config.instrument_absinthe?/0)
+    end
+  end
+
   describe "report_oban_errors" do
     test "when discard" do
       assert with_config(
@@ -1321,6 +1345,7 @@ defmodule Appsignal.ConfigTest do
       send_session_data: true,
       skip_session_data: false,
       transaction_debug_mode: false,
+      instrument_absinthe: true,
       instrument_ecto: true,
       instrument_finch: true,
       instrument_oban: true,
