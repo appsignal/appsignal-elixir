@@ -1,5 +1,17 @@
 # AppSignal for Elixir changelog
 
+## 2.7.0
+
+### Changed
+
+- [885c3618](https://github.com/appsignal/appsignal-elixir/commit/885c36183c76f39811b20fa14460c197d601848f) patch - Update agent to version 6f29190.
+  
+  - Log revision config in boot debug log.
+  - Update internal agent CLI start command.
+  - Rename internal `_APPSIGNAL_ENVIRONMENT` variable to `_APPSIGNAL_APP_ENV` to be consistent with the public version.
+- [87946896](https://github.com/appsignal/appsignal-elixir/commit/87946896499f19702136129fc1502332648fa3a9) patch - Update bundled trusted root certificates.
+- [704da7a9](https://github.com/appsignal/appsignal-elixir/commit/704da7a95ad98b2f3cce1f32eddb1cbf5ed0702f) patch - Bump agent to 4a0a036. Fix a transmission requeueing problem with queued payloads.
+
 ## 2.7.0-beta.1
 
 ### Added
