@@ -1,5 +1,11 @@
 # AppSignal for Elixir changelog
 
+## 2.7.1
+
+### Fixed
+
+- [8b8d06fa](https://github.com/appsignal/appsignal-elixir/commit/8b8d06fad959f9cc313844455434e0e8f483e77f) patch - Trim SQL attributes in spans. This fixes an issue where very big payloads are sent from the Elixir integration.
+
 ## 2.7.0
 
 ### Changed
