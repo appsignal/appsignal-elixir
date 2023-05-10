@@ -55,12 +55,10 @@ defmodule Appsignal.Finch do
     nil
   end
 
-  defp do_finch_request_start(nil, _name, _request), do: nil
-
   defp do_finch_request_start(parent, _name, request) do
     uri = %URI{scheme: Atom.to_string(request.scheme), host: request.host, port: request.port}
 
-    "http_request"
+    "finch"
     |> @tracer.create_span(parent)
     |> @span.set_name("#{request.method} #{URI.to_string(uri)}")
     |> @span.set_attribute("appsignal:category", "request.finch")
@@ -71,6 +69,8 @@ defmodule Appsignal.Finch do
   end
 
   def finch_request_stop(_event, _measurements, _metadata, _config) do
+    # See comment for `finch_request_start` above.
+
     nil
   end
 

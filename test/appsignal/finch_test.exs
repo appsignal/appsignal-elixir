@@ -47,8 +47,8 @@ defmodule Appsignal.FinchTest do
       )
     end
 
-    test "does not create a span" do
-      assert Test.Tracer.get(:create_span) == :error
+    test "creates a root span" do
+      assert {:ok, [{"finch", nil}]} = Test.Tracer.get(:create_span)
     end
   end
 
@@ -147,7 +147,7 @@ defmodule Appsignal.FinchTest do
     end
 
     test "creates a span with a parent" do
-      assert {:ok, [{"http_request", %Span{}}]} = Test.Tracer.get(:create_span)
+      assert {:ok, [{"finch", %Span{}}]} = Test.Tracer.get(:create_span)
     end
 
     test "sets the span's name" do
