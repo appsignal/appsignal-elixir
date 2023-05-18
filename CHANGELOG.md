@@ -1,5 +1,13 @@
 # AppSignal for Elixir changelog
 
+## 2.7.2
+
+### Changed
+
+- [49467767](https://github.com/appsignal/appsignal-elixir/commit/4946776794013bd8dc381e5dce2b665157fbb3cf) patch - Update agent to v-f9b0c15
+  
+  - Add more span API logging.
+
 ## 2.7.1
 
 ### Fixed
