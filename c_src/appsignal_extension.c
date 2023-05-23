@@ -14,6 +14,13 @@ static ErlNifResourceType *appsignal_transaction_type = NULL;
 static ErlNifResourceType *appsignal_data_type = NULL;
 static ErlNifResourceType *appsignal_span_type = NULL;
 
+ERL_NIF_TERM ok_atom;
+ERL_NIF_TERM error_atom;
+ERL_NIF_TERM sample_atom;
+ERL_NIF_TERM no_sample_atom;
+ERL_NIF_TERM true_atom;
+ERL_NIF_TERM false_atom;
+
 typedef struct {
   appsignal_transaction_t *transaction;
 } transaction_ptr;
@@ -29,13 +36,13 @@ typedef struct {
 static ERL_NIF_TERM
 make_ok_tuple(ErlNifEnv *env, ERL_NIF_TERM value)
 {
-    return enif_make_tuple2(env, enif_make_atom(env, "ok"), value);
+    return enif_make_tuple2(env, ok_atom, value);
 }
 
 static ERL_NIF_TERM
 make_error_tuple(ErlNifEnv *env, const char *reason)
 {
-    return enif_make_tuple2(env, enif_make_atom(env, "error"), enif_make_atom(env, reason));
+    return enif_make_tuple2(env, error_atom, enif_make_atom(env, reason));
 }
 
 static appsignal_string_t make_appsignal_string(ErlNifBinary binary)
@@ -69,7 +76,7 @@ static ERL_NIF_TERM _env_put(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]
     make_appsignal_string(value)
   );
 
-  return enif_make_atom(env, "ok");
+  return ok_atom;
 }
 
 static ERL_NIF_TERM _env_get(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
@@ -105,26 +112,26 @@ static ERL_NIF_TERM _env_delete(ErlNifEnv* env, int argc, const ERL_NIF_TERM arg
     make_appsignal_string(key)
   );
 
-  return enif_make_atom(env, "ok");
+  return ok_atom;
 }
 
 static ERL_NIF_TERM _env_clear(ErlNifEnv* env, int UNUSED(argc), const ERL_NIF_TERM UNUSED(argv[]))
 {
   appsignal_env_clear();
 
-  return enif_make_atom(env, "ok");
+  return ok_atom;
 }
 
 static ERL_NIF_TERM _start(ErlNifEnv* env, int UNUSED(arc), const ERL_NIF_TERM UNUSED(argv[]))
 {
     appsignal_start();
-    return enif_make_atom(env, "ok");
+    return ok_atom;
 }
 
 static ERL_NIF_TERM _stop(ErlNifEnv* env, int UNUSED(arc), const ERL_NIF_TERM UNUSED(argv[]))
 {
     appsignal_stop();
-    return enif_make_atom(env, "ok");
+    return ok_atom;
 }
 
 static ERL_NIF_TERM _diagnose(ErlNifEnv* env, int UNUSED(arc), const ERL_NIF_TERM UNUSED(argv[])) {
@@ -176,7 +183,7 @@ static ERL_NIF_TERM _start_event(ErlNifEnv* env, int argc, const ERL_NIF_TERM ar
 
     appsignal_start_event(ptr->transaction, 0);
 
-    return enif_make_atom(env, "ok");
+    return ok_atom;
 }
 
 static ERL_NIF_TERM _finish_event(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
@@ -213,7 +220,7 @@ static ERL_NIF_TERM _finish_event(ErlNifEnv* env, int argc, const ERL_NIF_TERM a
         0
     );
 
-    return enif_make_atom(env, "ok");
+    return ok_atom;
 }
 
 static ERL_NIF_TERM _finish_event_data(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
@@ -251,7 +258,7 @@ static ERL_NIF_TERM _finish_event_data(ErlNifEnv* env, int argc, const ERL_NIF_T
         0
     );
 
-    return enif_make_atom(env, "ok");
+    return ok_atom;
 }
 
 static ERL_NIF_TERM _record_event(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
@@ -293,7 +300,7 @@ static ERL_NIF_TERM _record_event(ErlNifEnv* env, int argc, const ERL_NIF_TERM a
         0
     );
 
-    return enif_make_atom(env, "ok");
+    return ok_atom;
 }
 
 static ERL_NIF_TERM _set_error(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
@@ -325,7 +332,7 @@ static ERL_NIF_TERM _set_error(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv
         data_ptr->data
     );
 
-    return enif_make_atom(env, "ok");
+    return ok_atom;
 }
 
 static ERL_NIF_TERM _set_sample_data(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
@@ -353,7 +360,7 @@ static ERL_NIF_TERM _set_sample_data(ErlNifEnv* env, int argc, const ERL_NIF_TER
         data_ptr->data
     );
 
-    return enif_make_atom(env, "ok");
+    return ok_atom;
 }
 
 static ERL_NIF_TERM _set_action(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
@@ -376,7 +383,7 @@ static ERL_NIF_TERM _set_action(ErlNifEnv* env, int argc, const ERL_NIF_TERM arg
         make_appsignal_string(action)
     );
 
-    return enif_make_atom(env, "ok");
+    return ok_atom;
 }
 
 static ERL_NIF_TERM _set_namespace(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
@@ -399,7 +406,7 @@ static ERL_NIF_TERM _set_namespace(ErlNifEnv* env, int argc, const ERL_NIF_TERM 
         make_appsignal_string(namespace)
     );
 
-    return enif_make_atom(env, "ok");
+    return ok_atom;
 }
 
 static ERL_NIF_TERM _set_queue_start(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
@@ -422,7 +429,7 @@ static ERL_NIF_TERM _set_queue_start(ErlNifEnv* env, int argc, const ERL_NIF_TER
         start
     );
 
-    return enif_make_atom(env, "ok");
+    return ok_atom;
 }
 
 static ERL_NIF_TERM _set_meta_data(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
@@ -449,7 +456,7 @@ static ERL_NIF_TERM _set_meta_data(ErlNifEnv* env, int argc, const ERL_NIF_TERM 
         make_appsignal_string(value)
     );
 
-    return enif_make_atom(env, "ok");
+    return ok_atom;
 }
 
 static ERL_NIF_TERM _finish(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
@@ -467,9 +474,9 @@ static ERL_NIF_TERM _finish(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     sample = appsignal_finish_transaction(ptr->transaction, 0);
 
     if (sample == 1) {
-      return enif_make_atom(env, "sample");
+      return sample_atom;
     } else {
-      return enif_make_atom(env, "no_sample");
+      return no_sample_atom;
     }
 }
 
@@ -486,7 +493,7 @@ static ERL_NIF_TERM _complete(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[
 
     appsignal_complete_transaction(ptr->transaction);
 
-    return enif_make_atom(env, "ok");
+    return ok_atom;
 }
 
 static void destruct_appsignal_transaction(ErlNifEnv *UNUSED(env), void *arg) {
@@ -525,7 +532,7 @@ static ERL_NIF_TERM _set_gauge(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv
 
     appsignal_set_gauge(make_appsignal_string(key), value, data_ptr->data);
 
-    return enif_make_atom(env, "ok");
+    return ok_atom;
 }
 
 static ERL_NIF_TERM _increment_counter(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
@@ -549,7 +556,7 @@ static ERL_NIF_TERM _increment_counter(ErlNifEnv* env, int argc, const ERL_NIF_T
 
     appsignal_increment_counter(make_appsignal_string(key), count, data_ptr->data);
 
-    return enif_make_atom(env, "ok");
+    return ok_atom;
 }
 
 static ERL_NIF_TERM _add_distribution_value(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
@@ -573,7 +580,7 @@ static ERL_NIF_TERM _add_distribution_value(ErlNifEnv* env, int argc, const ERL_
 
     appsignal_add_distribution_value(make_appsignal_string(key), value, data_ptr->data);
 
-    return enif_make_atom(env, "ok");
+    return ok_atom;
 }
 
 static ERL_NIF_TERM _data_map_new(ErlNifEnv* env, int UNUSED(argc), const ERL_NIF_TERM UNUSED(argv[])) {
@@ -624,7 +631,7 @@ static ERL_NIF_TERM _data_set_string(ErlNifEnv* env, int argc, const ERL_NIF_TER
       return enif_make_badarg(env);
   }
 
-  return enif_make_atom(env, "ok");
+  return ok_atom;
 }
 
 static ERL_NIF_TERM _data_set_integer(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
@@ -660,7 +667,7 @@ static ERL_NIF_TERM _data_set_integer(ErlNifEnv* env, int argc, const ERL_NIF_TE
       return enif_make_badarg(env);
   }
 
-  return enif_make_atom(env, "ok");
+  return ok_atom;
 }
 
 static ERL_NIF_TERM _data_set_float(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
@@ -696,7 +703,7 @@ static ERL_NIF_TERM _data_set_float(ErlNifEnv* env, int argc, const ERL_NIF_TERM
       return enif_make_badarg(env);
   }
 
-  return enif_make_atom(env, "ok");
+  return ok_atom;
 }
 
 static ERL_NIF_TERM _data_set_boolean(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
@@ -732,7 +739,7 @@ static ERL_NIF_TERM _data_set_boolean(ErlNifEnv* env, int argc, const ERL_NIF_TE
       return enif_make_badarg(env);
   }
 
-  return enif_make_atom(env, "ok");
+  return ok_atom;
 }
 
 static ERL_NIF_TERM _data_set_nil(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
@@ -760,7 +767,7 @@ static ERL_NIF_TERM _data_set_nil(ErlNifEnv* env, int argc, const ERL_NIF_TERM a
       return enif_make_badarg(env);
   }
 
-  return enif_make_atom(env, "ok");
+  return ok_atom;
 }
 
 static ERL_NIF_TERM _data_set_data(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
@@ -795,7 +802,7 @@ static ERL_NIF_TERM _data_set_data(ErlNifEnv* env, int argc, const ERL_NIF_TERM 
       return enif_make_badarg(env);
   }
 
-  return enif_make_atom(env, "ok");
+  return ok_atom;
 }
 
 static ERL_NIF_TERM _data_list_new(ErlNifEnv* env, int UNUSED(argc), const ERL_NIF_TERM UNUSED(argv[])) {
@@ -816,9 +823,9 @@ static ERL_NIF_TERM _data_list_new(ErlNifEnv* env, int UNUSED(argc), const ERL_N
 
 static ERL_NIF_TERM _running_in_container(ErlNifEnv* env, int UNUSED(argc), const ERL_NIF_TERM UNUSED(argv[])) {
   if(appsignal_running_in_container() == 1) {
-    return enif_make_atom(env, "true");
+    return true_atom;
   } else {
-    return enif_make_atom(env, "false");
+    return false_atom;
   }
 }
 
@@ -855,7 +862,7 @@ static ERL_NIF_TERM _transaction_to_json(ErlNifEnv* env, int argc, const ERL_NIF
 #endif
 
 static ERL_NIF_TERM _loaded(ErlNifEnv *env, int UNUSED(argc), const ERL_NIF_TERM UNUSED(argv[])) {
-  return enif_make_atom(env, "true");
+  return true_atom;
 }
 
 static ERL_NIF_TERM _create_root_span(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
@@ -987,7 +994,7 @@ static ERL_NIF_TERM _set_span_name(ErlNifEnv* env, int argc, const ERL_NIF_TERM 
 
     appsignal_set_span_name(ptr->span, make_appsignal_string(name));
 
-    return enif_make_atom(env, "ok");
+    return ok_atom;
 }
 
 static ERL_NIF_TERM _set_span_namespace(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
@@ -1007,7 +1014,7 @@ static ERL_NIF_TERM _set_span_namespace(ErlNifEnv* env, int argc, const ERL_NIF_
 
     appsignal_set_span_namespace(ptr->span, make_appsignal_string(namespace));
 
-    return enif_make_atom(env, "ok");
+    return ok_atom;
 }
 
 static ERL_NIF_TERM _set_span_attribute_string(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
@@ -1035,7 +1042,7 @@ static ERL_NIF_TERM _set_span_attribute_string(ErlNifEnv* env, int argc, const E
         make_appsignal_string(value)
     );
 
-    return enif_make_atom(env, "ok");
+    return ok_atom;
 }
 
 static ERL_NIF_TERM _set_span_attribute_int(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
@@ -1063,7 +1070,7 @@ static ERL_NIF_TERM _set_span_attribute_int(ErlNifEnv* env, int argc, const ERL_
         value
     );
 
-    return enif_make_atom(env, "ok");
+    return ok_atom;
 }
 
 static ERL_NIF_TERM _set_span_attribute_bool(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
@@ -1091,7 +1098,7 @@ static ERL_NIF_TERM _set_span_attribute_bool(ErlNifEnv* env, int argc, const ERL
         value
     );
 
-    return enif_make_atom(env, "ok");
+    return ok_atom;
 }
 
 static ERL_NIF_TERM _set_span_attribute_double(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
@@ -1119,7 +1126,7 @@ static ERL_NIF_TERM _set_span_attribute_double(ErlNifEnv* env, int argc, const E
         value
     );
 
-    return enif_make_atom(env, "ok");
+    return ok_atom;
 }
 
 static ERL_NIF_TERM _set_span_attribute_sql_string(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
@@ -1147,7 +1154,7 @@ static ERL_NIF_TERM _set_span_attribute_sql_string(ErlNifEnv* env, int argc, con
         make_appsignal_string(value)
     );
 
-    return enif_make_atom(env, "ok");
+    return ok_atom;
 }
 
 static ERL_NIF_TERM _set_span_sample_data(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
@@ -1175,7 +1182,7 @@ static ERL_NIF_TERM _set_span_sample_data(ErlNifEnv* env, int argc, const ERL_NI
         data_ptr->data
     );
 
-    return enif_make_atom(env, "ok");
+    return ok_atom;
 }
 
 static ERL_NIF_TERM _add_span_error(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
@@ -1206,7 +1213,7 @@ static ERL_NIF_TERM _add_span_error(ErlNifEnv* env, int argc, const ERL_NIF_TERM
         data_ptr->data
     );
 
-    return enif_make_atom(env, "ok");
+    return ok_atom;
 }
 
 static ERL_NIF_TERM _close_span(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
@@ -1222,7 +1229,7 @@ static ERL_NIF_TERM _close_span(ErlNifEnv* env, int argc, const ERL_NIF_TERM arg
 
     appsignal_close_span(ptr->span);
 
-    return enif_make_atom(env, "ok");
+    return ok_atom;
 }
 
 static ERL_NIF_TERM _close_span_with_timestamp(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
@@ -1246,7 +1253,7 @@ static ERL_NIF_TERM _close_span_with_timestamp(ErlNifEnv* env, int argc, const E
 
     appsignal_close_span_with_timestamp(ptr->span, sec, nsec);
 
-    return enif_make_atom(env, "ok");
+    return ok_atom;
 }
 
 static ERL_NIF_TERM _span_to_json(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
@@ -1297,7 +1304,7 @@ static ERL_NIF_TERM _log(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]) {
     data_ptr->data
   );
 
-  return enif_make_atom(env, "ok");
+  return ok_atom;
 }
 
 static int on_load(ErlNifEnv* env, void** UNUSED(priv), ERL_NIF_TERM UNUSED(info))
@@ -1339,6 +1346,13 @@ static int on_load(ErlNifEnv* env, void** UNUSED(priv), ERL_NIF_TERM UNUSED(info
     appsignal_transaction_type = transaction_resource_type;
     appsignal_data_type = data_resource_type;
     appsignal_span_type = span_resource_type;
+
+    ok_atom = enif_make_atom(env, "ok");
+    error_atom = enif_make_atom(env, "error");
+    sample_atom = enif_make_atom(env, "sample");
+    no_sample_atom = enif_make_atom(env, "no_sample");
+    true_atom = enif_make_atom(env, "true");
+    false_atom = enif_make_atom(env, "false");
 
     return 0;
 }
