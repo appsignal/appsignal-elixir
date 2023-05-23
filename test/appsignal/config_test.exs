@@ -259,6 +259,30 @@ defmodule Appsignal.ConfigTest do
     end
   end
 
+  describe "instrument_tesla?" do
+    test "when discard" do
+      assert with_config(
+               %{instrument_tesla: true},
+               &Config.instrument_tesla?/0
+             )
+    end
+
+    test "when false" do
+      refute with_config(
+               %{instrument_tesla: false},
+               &Config.instrument_tesla?/0
+             )
+    end
+
+    test "when unset" do
+      assert with_config(%{}, &Config.instrument_tesla?/0)
+    end
+
+    test "without an appsignal config" do
+      assert without_config(&Config.instrument_tesla?/0)
+    end
+  end
+
   describe "instrument_absinthe?" do
     test "when true" do
       assert with_config(
@@ -1349,6 +1373,7 @@ defmodule Appsignal.ConfigTest do
       instrument_ecto: true,
       instrument_finch: true,
       instrument_oban: true,
+      instrument_tesla: true,
       report_oban_errors: "all"
     }
   end

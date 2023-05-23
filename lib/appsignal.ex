@@ -38,6 +38,10 @@ defmodule Appsignal do
       Appsignal.Oban.attach()
     end
 
+    if Config.instrument_tesla?() do
+      Appsignal.Tesla.attach()
+    end
+
     if Config.instrument_absinthe?() do
       Appsignal.Absinthe.attach()
     end
