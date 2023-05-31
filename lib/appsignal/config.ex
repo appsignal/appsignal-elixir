@@ -321,6 +321,7 @@ defmodule Appsignal.Config do
     "APPSIGNAL_SEND_PARAMS" => :send_params,
     "APPSIGNAL_SEND_SESSION_DATA" => :send_session_data,
     "APPSIGNAL_SKIP_SESSION_DATA" => :skip_session_data,
+    "APPSIGNAL_STATSD_PORT" => :statsd_port,
     "APPSIGNAL_TRANSACTION_DEBUG_MODE" => :transaction_debug_mode,
     "APPSIGNAL_WORKING_DIRECTORY_PATH" => :working_directory_path,
     "APPSIGNAL_WORKING_DIR_PATH" => :working_dir_path,
@@ -331,7 +332,7 @@ defmodule Appsignal.Config do
     APPSIGNAL_APP_NAME APPSIGNAL_PUSH_API_KEY APPSIGNAL_PUSH_API_ENDPOINT APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH
     APPSIGNAL_HOSTNAME APPSIGNAL_HTTP_PROXY APPSIGNAL_LOG APPSIGNAL_LOG_LEVEL APPSIGNAL_LOG_PATH
     APPSIGNAL_LOGGING_ENDPOINT APPSIGNAL_WORKING_DIR_PATH APPSIGNAL_WORKING_DIRECTORY_PATH APPSIGNAL_CA_FILE_PATH
-    APPSIGNAL_DIAGNOSE_ENDPOINT APP_REVISION APPSIGNAL_REPORT_OBAN_ERRORS
+    APPSIGNAL_DIAGNOSE_ENDPOINT APP_REVISION APPSIGNAL_REPORT_OBAN_ERRORS APPSIGNAL_STATSD_PORT
   )
   @bool_keys ~w(
     APPSIGNAL_ACTIVE APPSIGNAL_DEBUG APPSIGNAL_INSTRUMENT_NET_HTTP APPSIGNAL_ENABLE_FRONTEND_ERROR_CATCHING
@@ -463,6 +464,7 @@ defmodule Appsignal.Config do
 
     Nif.env_put("_APPSIGNAL_SEND_PARAMS", to_string(config[:send_params]))
     Nif.env_put("_APPSIGNAL_SEND_SESSION_DATA", to_string(config[:send_session_data]))
+    Nif.env_put("_APPSIGNAL_STATSD_PORT", to_string(config[:statsd_port]))
     Nif.env_put("_APPSIGNAL_RUNNING_IN_CONTAINER", to_string(config[:running_in_container]))
     Nif.env_put("_APPSIGNAL_TRANSACTION_DEBUG_MODE", to_string(config[:transaction_debug_mode]))
     Nif.env_put("_APPSIGNAL_WORKING_DIRECTORY_PATH", to_string(config[:working_directory_path]))
