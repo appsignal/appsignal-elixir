@@ -612,6 +612,10 @@ defmodule Appsignal.ConfigTest do
       assert output =~ "Deprecation warning: The `skip_session_data` config option is deprecated."
     end
 
+    test "statsd_port" do
+      assert %{statsd_port: "3000"} = with_config(%{statsd_port: "3000"}, &init_config/0)
+    end
+
     test "transaction_debug_mode" do
       assert %{transaction_debug_mode: true} =
                with_config(%{transaction_debug_mode: true}, &init_config/0)
@@ -926,6 +930,13 @@ defmodule Appsignal.ConfigTest do
       assert output =~ "Deprecation warning: The `skip_session_data` config option is deprecated."
     end
 
+    test "statsd_port" do
+      assert with_env(
+               %{"APPSIGNAL_STATSD_PORT" => "3000"},
+               &init_config/0
+             ) == default_configuration() |> Map.put(:statsd_port, "3000")
+    end
+
     test "transaction_debug_mode" do
       assert with_env(
                %{"APPSIGNAL_TRANSACTION_DEBUG_MODE" => "true"},
@@ -1148,6 +1159,7 @@ defmodule Appsignal.ConfigTest do
       assert Nif.env_get("_APPSIGNAL_WORKING_DIR_PATH") == ~c""
       assert Nif.env_get("_APPSIGNAL_WORKING_DIRECTORY_PATH") == ~c""
       assert Nif.env_get("_APPSIGNAL_RUNNING_IN_CONTAINER") == ~c""
+      assert Nif.env_get("_APPSIGNAL_STATSD_PORT") == ~c""
       assert Nif.env_get("_APP_REVISION") == ~c""
     end
 
@@ -1198,7 +1210,8 @@ defmodule Appsignal.ConfigTest do
           revision: "03bd9e",
           transaction_debug_mode: true,
           filter_parameters: ["password", "confirm_password"],
-          filter_session_data: ["key1", "key2"]
+          filter_session_data: ["key1", "key2"],
+          statsd_port: "3000"
         },
         fn ->
           without_logger(&write_to_environment/0)
@@ -1240,6 +1253,7 @@ defmodule Appsignal.ConfigTest do
           assert Nif.env_get("_APPSIGNAL_FILTER_PARAMETERS") == ~c"password,confirm_password"
           assert Nif.env_get("_APPSIGNAL_FILTER_SESSION_DATA") == ~c"key1,key2"
           assert Nif.env_get("_APPSIGNAL_SEND_ENVIRONMENT_METADATA") == ~c"true"
+          assert Nif.env_get("_APPSIGNAL_STATSD_PORT") == ~c"3000"
           assert Nif.env_get("_APP_REVISION") == ~c"03bd9e"
         end
       )
