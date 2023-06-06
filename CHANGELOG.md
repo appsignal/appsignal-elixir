@@ -1,5 +1,20 @@
 # AppSignal for Elixir changelog
 
+## 2.7.3
+
+### Added
+
+- [37810e11](https://github.com/appsignal/appsignal-elixir/commit/37810e1179cf05b295dbba4c01aac3a0cb9ba80c) patch - Allow configuration of the agent's StatsD server port through the `statsd_port` option.
+- [0caf8330](https://github.com/appsignal/appsignal-elixir/commit/0caf833097f7d44a310d314083050634938ab583) patch - Add automatic instrumentation for Tesla.
+
+### Changed
+
+- [7e7c097d](https://github.com/appsignal/appsignal-elixir/commit/7e7c097d70b2c41466f64c1f531451a60652b087) patch - Bump agent to fd8ee9e.
+  
+  - Rely on APPSIGNAL_RUNNING_IN_CONTAINER config option value before other environment factors to determine if the app is running in a container.
+  - Fix container detection for hosts running Docker itself.
+  - Add APPSIGNAL_STATSD_PORT config option.
+
 ## 2.7.2
 
 ### Changed
