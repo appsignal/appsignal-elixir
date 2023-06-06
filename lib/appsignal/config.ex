@@ -26,6 +26,7 @@ defmodule Appsignal.Config do
     instrument_ecto: true,
     instrument_finch: true,
     instrument_oban: true,
+    instrument_tesla: true,
     log: "file",
     logging_endpoint: "https://appsignal-endpoint.net",
     request_headers: ~w(
@@ -213,6 +214,13 @@ defmodule Appsignal.Config do
     end
   end
 
+  def instrument_tesla? do
+    case Application.fetch_env(:appsignal, :config) do
+      {:ok, value} -> !!Map.get(value, :instrument_tesla, true)
+      _ -> true
+    end
+  end
+
   def report_oban_errors do
     case Application.fetch_env(:appsignal, :config) do
       {:ok, value} ->
@@ -307,6 +315,7 @@ defmodule Appsignal.Config do
     "APPSIGNAL_INSTRUMENT_ECTO" => :instrument_ecto,
     "APPSIGNAL_INSTRUMENT_FINCH" => :instrument_finch,
     "APPSIGNAL_INSTRUMENT_OBAN" => :instrument_oban,
+    "APPSIGNAL_INSTRUMENT_TESLA" => :instrument_tesla,
     "APPSIGNAL_LOG" => :log,
     "APPSIGNAL_LOG_LEVEL" => :log_level,
     "APPSIGNAL_LOG_PATH" => :log_path,
@@ -341,7 +350,7 @@ defmodule Appsignal.Config do
     APPSIGNAL_TRANSACTION_DEBUG_MODE APPSIGNAL_FILES_WORLD_ACCESSIBLE APPSIGNAL_SEND_PARAMS
     APPSIGNAL_ENABLE_MINUTELY_PROBES APPSIGNAL_ENABLE_STATSD APPSIGNAL_ENABLE_NGINX_METRICS
     APPSIGNAL_ENABLE_ERROR_BACKEND APPSIGNAL_SEND_ENVIRONMENT_METADATA
-    APPSIGNAL_INSTRUMENT_ECTO APPSIGNAL_INSTRUMENT_FINCH APPSIGNAL_INSTRUMENT_OBAN
+    APPSIGNAL_INSTRUMENT_ECTO APPSIGNAL_INSTRUMENT_FINCH APPSIGNAL_INSTRUMENT_OBAN APPSIGNAL_INSTRUMENT_TESLA
   )
   @atom_keys ~w(APPSIGNAL_APP_ENV APPSIGNAL_OTP_APP)
   @string_list_keys ~w(
