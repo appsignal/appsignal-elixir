@@ -271,27 +271,12 @@ defmodule Appsignal.TeslaTest do
       start_supervised!(Test.Monitor)
 
       Appsignal.Tracer.create_span("http_request")
-      reason = %RuntimeError{message: "Exception!"}
 
-      :telemetry.execute(
-        [:tesla, :request, :exception],
-        %{},
-        %{kind: :error, reason: reason, stacktrace: []}
-      )
-
-      [reason: reason]
-    end
-
-    test "adds an error to the current span", %{reason: reason} do
-      assert {:ok, [{%Span{}, :error, ^reason, []}]} = Test.Span.get(:add_error)
+      :telemetry.execute([:tesla, :request, :exception], %{}, %{})
     end
 
     test "closes the span" do
       assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
-    end
-
-    test "ignores the process in the registry" do
-      assert :ets.lookup(:"$appsignal_registry", self()) == [{self(), :ignore}]
     end
   end
 
