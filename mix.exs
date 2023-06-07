@@ -133,6 +133,7 @@ defmodule Appsignal.Mixfile do
       end
 
     [
+      {:ssl_verify_fun, "~> 1.1.0", manager: :rebar3, override: true},
       {:benchee, "~> 1.0", only: :bench},
       {:hackney, "~> 1.6"},
       {:jason, "~> 1.0", optional: true},
