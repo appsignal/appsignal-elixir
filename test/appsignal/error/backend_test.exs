@@ -29,6 +29,13 @@ defmodule Murphy do
     {:ok, chardata, metadata} = Logger.Translator.translate(min_level, level, kind, data)
     {:ok, chardata, metadata ++ [domain: [:cowboy]]}
   end
+
+  def with_conn_from_cowboy(min_level, level, kind, data) do
+    {:ok, chardata, metadata} = Logger.Translator.translate(min_level, level, kind, data)
+
+    {:ok, chardata,
+     metadata ++ [pid: "", conn: %{owner: Appsignal.Error.BackendTest.pid()}, domain: [:cowboy]]}
+  end
 end
 
 defmodule Appsignal.Error.BackendTest do
@@ -149,6 +156,22 @@ defmodule Appsignal.Error.BackendTest do
       end)
 
       Logger.remove_translator({Murphy, :from_cowboy})
+    end
+
+    test "does not create a span" do
+      assert Test.Tracer.get(:create_span) == :error
+    end
+  end
+
+  describe "handle_event/3 from the cowboy domain, with a conn" do
+    setup %{pid: pid} do
+      Logger.add_translator({Murphy, :with_conn_from_cowboy})
+
+      Murphy.call(pid, fn ->
+        raise "Exception"
+      end)
+
+      Logger.remove_translator({Murphy, :with_conn_from_cowboy})
     end
 
     test "does not create a span" do
