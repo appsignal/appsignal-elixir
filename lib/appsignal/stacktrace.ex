@@ -18,8 +18,12 @@ defmodule Appsignal.Stacktrace do
   @doc ~S"""
   Parses the given stacktrace into a backtrace list.
   """
-  def format(stacktrace) do
+  def format(stacktrace) when is_list(stacktrace) do
     Enum.map(stacktrace, &format_stacktrace_entry/1)
+  end
+
+  def format(_stacktrace) do
+    []
   end
 
   defp format_stacktrace_entry(entry) when is_binary(entry), do: entry

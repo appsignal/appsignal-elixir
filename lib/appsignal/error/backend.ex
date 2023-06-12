@@ -36,29 +36,26 @@ defmodule Appsignal.Error.Backend do
     {:ok, state}
   end
 
-  defp handle_report(%{crash_reason: {reason, stacktrace}, conn: %{owner: pid}}) do
-    pid
-    |> @tracer.lookup()
-    |> do_handle_report(pid, reason, stacktrace)
-  end
+  defp handle_report(%{crash_reason: {reason, stacktrace}} = report) do
+    pid = report_pid(report)
 
-  defp handle_report(%{crash_reason: {reason, stacktrace}, pid: pid, domain: domains}) do
-    unless :cowboy in domains do
+    unless :cowboy in report_domains(report) do
       pid
       |> @tracer.lookup()
       |> do_handle_report(pid, reason, stacktrace)
     end
   end
 
-  defp handle_report(%{crash_reason: {reason, stacktrace}, pid: pid}) do
-    pid
-    |> @tracer.lookup()
-    |> do_handle_report(pid, reason, stacktrace)
-  end
-
   defp handle_report(_) do
     :ok
   end
+
+  defp report_pid(%{conn: %{owner: pid}}), do: pid
+  defp report_pid(%{pid: pid}), do: pid
+  defp report_pid(_), do: nil
+
+  defp report_domains(%{domain: domains}), do: domains
+  defp report_domains(_), do: []
 
   defp do_handle_report([{_pid, :ignore}], _, _, _) do
     :ok

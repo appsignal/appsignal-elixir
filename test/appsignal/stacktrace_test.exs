@@ -58,4 +58,10 @@ defmodule Appsignal.StacktraceTest do
 
     assert Stacktrace.format(stacktrace) == stacktrace
   end
+
+  test "does not handle non-lists" do
+    assert Stacktrace.format(
+             {:gen_server, :call, [:image_magick_pool, {:checkout, self(), true}, 5000]}
+           ) == []
+  end
 end
