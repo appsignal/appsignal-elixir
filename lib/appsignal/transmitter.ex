@@ -1,6 +1,7 @@
 defmodule Appsignal.Transmitter do
   @moduledoc false
-  require Logger
+
+  import Appsignal.Utils, only: [warning: 1]
 
   def request(method, url, headers \\ [], body \\ "") do
     http_client = Application.get_env(:appsignal, :http_client, :hackney)
@@ -37,7 +38,7 @@ defmodule Appsignal.Transmitter do
 
       {:error, message} ->
         unless ca_file_path == packaged_ca_file_path() do
-          Logger.warn(
+          warning(
             "Ignoring non-existing or unreadable ca_file_path (#{ca_file_path}): #{inspect(message)}"
           )
         end

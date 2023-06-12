@@ -6,7 +6,7 @@ defmodule Appsignal.Finch do
 
   @moduledoc false
 
-  require Logger
+  import Appsignal.Utils, only: [warning: 1]
 
   def attach do
     handlers = %{
@@ -23,7 +23,7 @@ defmodule Appsignal.Finch do
           :ok
 
         {:error, _} = error ->
-          Logger.warn("Appsignal.Finch not attached to #{inspect(event)}: #{inspect(error)}")
+          warning("Appsignal.Finch not attached to #{inspect(event)}: #{inspect(error)}")
 
           error
       end
