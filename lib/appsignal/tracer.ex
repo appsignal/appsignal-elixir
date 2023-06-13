@@ -49,7 +49,7 @@ defmodule Appsignal.Tracer do
   def create_span(namespace, nil, options) do
     pid = Keyword.get(options, :pid, self())
 
-    if running?() && !ignored?(pid) do
+    unless ignored?(pid) do
       span =
         case Keyword.get(options, :start_time) do
           nil -> Span.create_root(namespace, pid)
@@ -63,7 +63,7 @@ defmodule Appsignal.Tracer do
   def create_span(_namespace, parent, options) do
     pid = Keyword.get(options, :pid, self())
 
-    if running?() && !ignored?(pid) do
+    unless ignored?(pid) do
       span =
         case Keyword.get(options, :start_time) do
           nil -> Span.create_child(parent, pid)
@@ -152,11 +152,9 @@ defmodule Appsignal.Tracer do
 
   """
   def close_span(%Span{} = span) do
-    if running?() do
-      span
-      |> Span.close()
-      |> deregister()
-    end
+    span
+    |> Span.close()
+    |> deregister()
 
     :ok
   end
@@ -176,11 +174,9 @@ defmodule Appsignal.Tracer do
   def close_span(span, options)
 
   def close_span(%Span{} = span, end_time: end_time) do
-    if running?() do
-      span
-      |> Span.close(end_time)
-      |> deregister()
-    end
+    span
+    |> Span.close(end_time)
+    |> deregister()
 
     :ok
   end
@@ -192,19 +188,15 @@ defmodule Appsignal.Tracer do
   """
   @spec ignore(pid()) :: :ok
   def ignore(pid) do
-    if running?() do
-      delete(pid)
-      :ets.insert(@table, {pid, :ignore})
-      @monitor.add()
-    end
-
+    delete(pid)
+    insert({pid, :ignore}) && @monitor.add()
     :ok
   end
 
   @doc """
   Ignores the current process.
   """
-  @spec ignore() :: :ok | nil
+  @spec ignore() :: :ok
   def ignore do
     self() |> ignore()
   end
@@ -214,20 +206,30 @@ defmodule Appsignal.Tracer do
   """
   @spec delete(pid()) :: :ok
   def delete(pid) do
-    if running?(), do: :ets.delete(@table, pid)
+    try do
+      :ets.delete(@table, pid)
+    rescue
+      ArgumentError -> :ok
+    end
+
     :ok
   end
 
   defp register(%Span{pid: pid} = span) do
-    :ets.insert(@table, {pid, span})
-    @monitor.add()
-    span
+    if insert({pid, span}) do
+      @monitor.add()
+      span
+    end
   end
 
   defp register(nil), do: nil
 
   defp deregister(%Span{pid: pid} = span) do
-    :ets.delete_object(@table, {pid, span})
+    try do
+      :ets.delete_object(@table, {pid, span})
+    rescue
+      ArgumentError -> false
+    end
   end
 
   defp ignored?(pid) when is_pid(pid) do
@@ -239,7 +241,11 @@ defmodule Appsignal.Tracer do
   defp ignored?([{_pid, :ignore}]), do: true
   defp ignored?(_), do: false
 
-  defp running? do
-    is_pid(Process.whereis(__MODULE__))
+  defp insert(span) do
+    try do
+      :ets.insert(@table, span)
+    rescue
+      ArgumentError -> nil
+    end
   end
 end
