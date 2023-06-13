@@ -1,5 +1,11 @@
 # AppSignal for Elixir changelog
 
+## 2.7.4
+
+### Fixed
+
+- [dcdac33e](https://github.com/appsignal/appsignal-elixir/commit/dcdac33e3ab25bf9e003507579201e3e34174dc4) patch - Add handling for cowboy error edge cases to prevent error backend crashes
+
 ## 2.7.3
 
 ### Added
