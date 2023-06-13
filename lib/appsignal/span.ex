@@ -98,10 +98,8 @@ defmodule Appsignal.Span do
   """
   def set_name(%Span{reference: reference} = span, name)
       when is_reference(reference) and is_binary(name) do
-    if Config.active?() do
-      :ok = @nif.set_span_name(reference, name)
-      span
-    end
+    :ok = @nif.set_span_name(reference, name)
+    span
   end
 
   def set_name(span, _name), do: span
@@ -268,17 +266,15 @@ defmodule Appsignal.Span do
 
   @doc false
   def do_add_error(%Span{reference: reference} = span, name, message, stacktrace) do
-    if Config.active?() do
-      :ok =
-        @nif.add_span_error(
-          reference,
-          name,
-          message,
-          Appsignal.Utils.DataEncoder.encode(stacktrace)
-        )
+    :ok =
+      @nif.add_span_error(
+        reference,
+        name,
+        message,
+        Appsignal.Utils.DataEncoder.encode(stacktrace)
+      )
 
-      span
-    end
+    span
   end
 
   def do_add_error(nil, _name, _message, _stacktrace), do: nil

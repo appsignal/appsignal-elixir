@@ -194,22 +194,6 @@ defmodule AppsignalSpanTest do
     end
   end
 
-  describe ".set_name/2, when disabled" do
-    setup [:create_root_span, :disable_appsignal]
-
-    setup %{span: span} do
-      [return: Span.set_name(span, "test")]
-    end
-
-    test "returns nil", %{return: return} do
-      assert return == nil
-    end
-
-    test "does not set the name through the Nif" do
-      assert Test.Nif.get(:set_span_name) == :error
-    end
-  end
-
   describe ".set_namespace/2" do
     setup :create_root_span
 
@@ -314,29 +298,6 @@ defmodule AppsignalSpanTest do
     end
   end
 
-  describe ".add_error/3, when disabled" do
-    setup [:create_root_span, :disable_appsignal]
-
-    setup %{span: span} do
-      return =
-        try do
-          raise "Exception!"
-        rescue
-          exception -> Span.add_error(span, exception, __STACKTRACE__)
-        end
-
-      [return: return]
-    end
-
-    test "returns nil", %{return: return} do
-      assert return == nil
-    end
-
-    test "does not set the error through the Nif" do
-      assert Test.Nif.get(:add_span_error) == :error
-    end
-  end
-
   describe ".add_error/4" do
     setup :create_root_span
 
@@ -391,29 +352,6 @@ defmodule AppsignalSpanTest do
           raise "Exception!"
         catch
           kind, reason -> Span.add_error(nil, kind, reason, __STACKTRACE__)
-        end
-
-      [return: return]
-    end
-
-    test "returns nil", %{return: return} do
-      assert return == nil
-    end
-
-    test "does not set the error through the Nif" do
-      assert Test.Nif.get(:add_span_error) == :error
-    end
-  end
-
-  describe ".add_error/4, when disabled" do
-    setup [:create_root_span, :disable_appsignal]
-
-    setup %{span: span} do
-      return =
-        try do
-          raise "Exception!"
-        catch
-          kind, reason -> Span.add_error(span, kind, reason, __STACKTRACE__)
         end
 
       [return: return]
