@@ -132,9 +132,14 @@ defmodule Appsignal.Mixfile do
         _ -> "~> 1.14"
       end
 
+    ssl_verify_fun =
+      case Mix.env() do
+        :test -> [{:ssl_verify_fun, "~> 1.1.0", manager: :rebar3, override: true}]
+        _ -> []
+      end
+
     [
       {:decimal, "~> 2.0"},
-      {:ssl_verify_fun, "~> 1.1.0", manager: :rebar3, override: true},
       {:benchee, "~> 1.0", only: :bench},
       {:hackney, "~> 1.6"},
       {:jason, "~> 1.0", optional: true},
@@ -147,6 +152,6 @@ defmodule Appsignal.Mixfile do
       {:credo, "~> 1.6", only: [:test, :dev], runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
       {:telemetry, telemetry_version}
-    ] ++ mime_dependency
+    ] ++ mime_dependency ++ ssl_verify_fun
   end
 end
