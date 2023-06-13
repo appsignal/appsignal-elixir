@@ -77,9 +77,13 @@ defmodule Appsignal.Tracer do
   @doc """
   Finds the span in the registry table.
   """
-  @spec lookup(pid()) :: list()
+  @spec lookup(pid()) :: list() | []
   def lookup(pid) do
-    if running?(), do: :ets.lookup(@table, pid)
+    try do
+      :ets.lookup(@table, pid)
+    rescue
+      ArgumentError -> []
+    end
   end
 
   @doc """
