@@ -22,15 +22,9 @@ defmodule Appsignal.Span do
       Appsignal.Span.create_root("http_request", self())
 
   """
-  def create_root(namespace, pid) do
-    if Config.active?() do
-      {:ok, reference} = @nif.create_root_span(namespace)
+  def create_root(namespace, pid), do: create_root(namespace, pid, nil)
 
-      %Span{reference: reference, pid: pid}
-    end
-  end
-
-  @spec create_root(String.t(), pid(), integer()) :: t() | nil
+  @spec create_root(String.t(), pid(), integer() | nil) :: t() | nil
   @doc """
   Create a root `Appsignal.Span` with a namespace, a pid and an explicit start time.
 
@@ -40,6 +34,14 @@ defmodule Appsignal.Span do
       Appsignal.Span.create_root("http_request", self(), :os.system_time())
 
   """
+  def create_root(namespace, pid, nil) do
+    if Config.active?() do
+      {:ok, reference} = @nif.create_root_span(namespace)
+
+      %Span{reference: reference, pid: pid}
+    end
+  end
+
   def create_root(namespace, pid, start_time) do
     if Config.active?() do
       sec = :erlang.convert_time_unit(start_time, :native, :second)
@@ -59,15 +61,9 @@ defmodule Appsignal.Span do
       |> Appsignal.Span.create_child(self())
 
   """
-  def create_child(%Span{reference: parent}, pid) do
-    if Config.active?() do
-      {:ok, reference} = @nif.create_child_span(parent)
+  def create_child(span, pid), do: create_child(span, pid, nil)
 
-      %Span{reference: reference, pid: pid}
-    end
-  end
-
-  @spec create_child(t() | nil, pid(), integer()) :: t() | nil
+  @spec create_child(t() | nil, pid(), integer() | nil) :: t() | nil
   @doc """
   Create a child `Appsignal.Span` with an explicit start time.
 
@@ -76,6 +72,14 @@ defmodule Appsignal.Span do
       |> Appsignal.Span.create_child(self(), :os.system_time())
 
   """
+  def create_child(%Span{reference: parent}, pid, nil) do
+    if Config.active?() do
+      {:ok, reference} = @nif.create_child_span(parent)
+
+      %Span{reference: reference, pid: pid}
+    end
+  end
+
   def create_child(%Span{reference: parent}, pid, start_time) do
     if Config.active?() do
       sec = :erlang.convert_time_unit(start_time, :native, :second)
