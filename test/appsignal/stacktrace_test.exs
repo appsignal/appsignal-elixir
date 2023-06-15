@@ -49,7 +49,9 @@ defmodule Appsignal.StacktraceTest do
 
     test "replaces sensitive arguments with types", %{stack: stack} do
       [line | _] = Stacktrace.format(stack)
-      assert line =~ ~r{\(elixir( [\w.-]+)?\) String.to_atom\(binary, atom, 123, #PID<0.0.0>\)}
+
+      assert line =~
+               ~r{\(elixir( [\w.-]+)?\) String.to_atom\("\.\.\.", :extra_argument, integer\(\), #PID<\.\.\.>\)}
     end
   end
 
