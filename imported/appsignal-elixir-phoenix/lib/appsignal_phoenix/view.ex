@@ -76,9 +76,7 @@ defmodule Appsignal.Phoenix.View do
           fun.()
         end
       else
-        require Logger
-
-        Logger.warn("""
+        Appsignal.Utils.warning("""
         AppSignal.Phoenix.View NOT attached to #{__MODULE__}
 
         Template rendering instrumentation is now set up automatically, so using

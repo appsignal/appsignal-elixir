@@ -4,8 +4,6 @@ defmodule Appsignal.Phoenix.EventHandler do
   @span Appsignal.Utils.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
   @moduledoc false
 
-  require Logger
-
   def attach do
     handlers = %{
       [:phoenix, :router_dispatch, :start] => &__MODULE__.phoenix_router_dispatch_start/4,
@@ -27,7 +25,7 @@ defmodule Appsignal.Phoenix.EventHandler do
           :ok
 
         {:error, _} = error ->
-          Logger.warn(
+          Appsignal.Utils.warning(
             "Appsignal.Phoenix.EventHandler not attached to #{inspect(event)}: #{inspect(error)}"
           )
 
