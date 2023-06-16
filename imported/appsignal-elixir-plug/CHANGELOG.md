@@ -1,5 +1,11 @@
 # AppSignal for Elixir Plug changelog
 
+## 2.0.14
+
+### Fixed
+
+- [1af0793](https://github.com/appsignal/appsignal-elixir-plug/commit/1af0793a9cf9e705b8bb6794ea8107ba8314b66b) patch - Fix Logger deprecation warnings on Elixir 1.15
+
 ## 2.0.13
 
 ### Added

@@ -4,7 +4,7 @@ defmodule Appsignal.Plug.MixProject do
   def project do
     [
       app: :appsignal_plug,
-      version: "2.0.13",
+      version: "2.0.14",
       description:
         "AppSignal's Plug instrumentation instruments calls to Plug applications to gain performance insights and error reporting",
       package: %{
