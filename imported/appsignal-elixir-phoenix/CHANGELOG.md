@@ -1,5 +1,11 @@
 # AppSignal for Elixir Phoenix changelog
 
+## 2.3.3
+
+### Fixed
+
+- [dcb0832](https://github.com/appsignal/appsignal-elixir-phoenix/commit/dcb08325f8bb7d170a910813db0282e040a04187) patch - Fix Logger deprecation warnings on Elixir 1.15
+
 ## 2.3.2
 
 ### Changed
