@@ -58,7 +58,7 @@ defmodule Appsignal.Plug.MixProject do
 
     [
       {:plug, plug_version},
-      {:appsignal, ">= 2.5.1 and < 3.0.0"},
+      {:appsignal, ">= 2.7.4 and < 3.0.0"},
       {:credo, "~> 1.2", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.21", only: :dev, runtime: false},

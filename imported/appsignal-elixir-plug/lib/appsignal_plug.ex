@@ -37,7 +37,7 @@ defmodule Appsignal.Plug do
       use Plug.ErrorHandler
 
       def call(%Plug.Conn{private: %{appsignal_plug_instrumented: true}} = conn, opts) do
-        Logger.warn(
+        Appsignal.Utils.warning(
           "Appsignal.Plug was included twice, disabling Appsignal.Plug. Please only `use Appsignal.Plug` once."
         )
 
