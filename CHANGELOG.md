@@ -1,5 +1,17 @@
 # AppSignal for Elixir changelog
 
+## 2.7.5
+
+### Changed
+
+- [5e5918f5](https://github.com/appsignal/appsignal-elixir/commit/5e5918f5938ce1a673659c26663f74becdb0425e) patch - Improve argument cleaning.
+  
+  The output should appear in a more familiar format for Elixir developers. Potentially personally identifiable data is removed and the output is truncated to make it easier to understand, while attempting to provide enough information to differentiate between different function clauses.
+
+### Fixed
+
+- [af402113](https://github.com/appsignal/appsignal-elixir/commit/af4021135602263d7285050a1f298c8a145b7401) patch - Improve Tracer performance by removing duplicate runtime configuration and storage checks
+
 ## 2.7.4
 
 ### Fixed
