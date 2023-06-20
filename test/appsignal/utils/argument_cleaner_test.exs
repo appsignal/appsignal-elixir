@@ -32,15 +32,15 @@ defmodule Appsignal.Utils.ArgumentCleanerTest do
   end
 
   test "cleaning PIDs omits their value" do
-    assert ArgumentCleaner.clean(:erlang.list_to_pid('<0.1.2>')) == "#PID<...>"
+    assert ArgumentCleaner.clean(:erlang.list_to_pid(~c"<0.1.2>")) == "#PID<...>"
   end
 
   test "cleaning ports omits their value" do
-    assert ArgumentCleaner.clean(:erlang.list_to_port('#Port<0.1>')) == "#Port<...>"
+    assert ArgumentCleaner.clean(:erlang.list_to_port(~c"#Port<0.1>")) == "#Port<...>"
   end
 
   test "cleaning references omits their value" do
-    assert ArgumentCleaner.clean(:erlang.list_to_ref('#Ref<0.1.2.3>')) == "#Reference<...>"
+    assert ArgumentCleaner.clean(:erlang.list_to_ref(~c"#Ref<0.1.2.3>")) == "#Reference<...>"
   end
 
   test "cleaning named functions shows their MFA" do
