@@ -137,14 +137,18 @@ defmodule Appsignal.Config do
   """
   @spec valid?() :: boolean
   def valid? do
-    do_valid?(Application.get_env(:appsignal, :config)[:push_api_key])
+    :appsignal
+    |> Application.get_env(:config)
+    |> valid?
   end
 
-  defp do_valid?(push_api_key) when is_binary(push_api_key) do
-    !empty?(String.trim(push_api_key))
+  defp valid?(%{push_api_key: key}) when is_binary(key) do
+    !(key
+      |> String.trim()
+      |> empty?())
   end
 
-  defp do_valid?(_push_api_key), do: false
+  defp valid?(_config), do: false
 
   @doc """
   Returns true if the configuration is valid and the AppSignal agent is
@@ -154,11 +158,14 @@ defmodule Appsignal.Config do
   def active? do
     :appsignal
     |> Application.get_env(:config, @default_config)
-    |> do_active?
+    |> active?
   end
 
-  defp do_active?(%{active: true}), do: valid?()
-  defp do_active?(_), do: false
+  defp active?(%{active: true} = config) do
+    valid?(config)
+  end
+
+  defp active?(_config), do: false
 
   @doc """
   Returns true if debug mode is turned on, false otherwise.
