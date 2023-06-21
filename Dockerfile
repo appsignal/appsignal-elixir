@@ -1,6 +1,6 @@
 FROM jkreeftmeijer/elixir-debug
 ENV ERL_TOP=/usr/src/otp_src_25.3.2
-Add . /src
+ADD . /src
 WORKDIR /src
 RUN mix local.hex --force
 RUN mix local.rebar --force
