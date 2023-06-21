@@ -83,6 +83,24 @@ This package uses benchee to benchmark code. To run the benchmarker:
 
     $ MIX_ENV=bench mix run bench/<file>.exs
 
+### AddressSanitizer
+
+A memory testing setup is included to detect memory errors in the NIF.
+It's set up in a Docker container to ensure reproducability.
+
+To run the tests, build the container, which will build a version of the NIF with AddressSanitizer enabled.
+Then, run it with an `APPSIGNAL_PUSH_API_KEY` and `APPSIGNAL_APP_NAME` set to ensure AppSignal is enabled, and to be able to verify that data appears in AppSignal after running the test:
+
+    docker build --platform linux/amd64 -t appsignal-elixir-asan .
+    docker run \
+      --env APPSIGNAL_PUSH_API_KEY=00000000-0000-0000-0000-000000000000 \
+      --env APPSIGNAL_APP_NAME="appsignal-elixir" \
+      --rm \
+      -- \
+      appsignal-elixir-asan
+
+This test runs `spans.exs`, which is a script that calls most functions in the NIF.
+
 ### Branches and versions
 
 The `main` branch corresponds to the current release of the
