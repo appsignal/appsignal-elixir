@@ -91,7 +91,7 @@ It's set up in a Docker container to ensure reproducability.
 To run the tests, build the container, which will build a version of the NIF with AddressSanitizer enabled.
 Then, run it with an =APPSIGNAL_PUSH_API_KEY= and =APPSIGNAL_APP_NAME= set to ensure AppSignal is enabled, and to be able to verify that data appears in AppSignal after running the test:
 
-    docker build -t appsignal-elixir-asan .
+    docker build --platform linux/amd64 -t appsignal-elixir-asan .
     docker run \
       --env APPSIGNAL_PUSH_API_KEY=00000000-0000-0000-0000-000000000000 \
       --env APPSIGNAL_APP_NAME="appsignal-elixir" \
