@@ -99,7 +99,7 @@ Then, run it with an =APPSIGNAL_PUSH_API_KEY= and =APPSIGNAL_APP_NAME= set to en
       -- \
       appsignal-elixir-asan
 
-This test runs =spans.exs=, which is a script that calls most functions in the NIF.
+This test runs `spans.exs`, which is a script that calls most functions in the NIF.
 
 ### Branches and versions
 
