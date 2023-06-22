@@ -107,11 +107,13 @@ defmodule AppsignalTest do
     with_env(%{"APPSIGNAL_APP_ENV" => "test"}, fn ->
       Appsignal.Config.initialize()
 
-      env = Appsignal.Config.get_system_env()
-      assert "test" = env["APPSIGNAL_APP_ENV"]
+      until(fn ->
+        env = Appsignal.Config.get_system_env()
+        assert "test" = env["APPSIGNAL_APP_ENV"]
 
-      config = Application.get_env(:appsignal, :config)
-      assert :test = config[:env]
+        config = Application.get_env(:appsignal, :config)
+        assert :test = config[:env]
+      end)
     end)
   end
 
