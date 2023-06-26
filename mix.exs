@@ -99,46 +99,20 @@ defmodule Appsignal.Mixfile do
   defp test?(_), do: false
 
   defp deps do
-    system_version = System.version()
-
-    poison_version =
-      case Version.compare(system_version, "1.6.0") do
-        :lt -> ">= 1.3.0 and < 4.0.0"
-        _ -> ">= 1.3.0"
-      end
-
-    decorator_version =
-      case Version.compare(system_version, "1.5.0") do
-        :lt -> "~> 1.2.3"
-        _ -> "~> 1.2.3 or ~> 1.3"
-      end
-
-    mime_dependency =
-      case Version.compare(system_version, "1.10.0") do
-        :lt -> [{:mime, "~> 1.0", only: [:test, :test_no_nif]}]
-        _ -> []
-      end
-
-    plug_version =
-      case Version.compare(system_version, "1.10.0") do
-        :lt -> "~> 1.13.6"
-        _ -> "~> 1.14"
-      end
-
     [
       {:decimal, "~> 2.0"},
       {:benchee, "~> 1.0", only: :bench},
       {:hackney, "~> 1.6"},
       {:jason, "~> 1.0", optional: true},
-      {:poison, poison_version, optional: true},
-      {:decorator, decorator_version},
-      {:plug, plug_version, only: [:test, :test_no_nif]},
+      {:poison, ">= 1.3.0", optional: true},
+      {:decorator, "~> 1.2.3 or ~> 1.3"},
+      {:plug, "~> 1.14", only: [:test, :test_no_nif]},
       {:plug_cowboy, "~> 1.0", only: [:test, :test_no_nif]},
       {:bypass, "~> 0.6.0", only: [:test, :test_no_nif]},
       {:ex_doc, "~> 0.12", only: :dev, runtime: false},
       {:credo, "~> 1.6", only: [:test, :dev], runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
       {:telemetry, "~> 0.4 or ~> 1.0"}
-    ] ++ mime_dependency
+    ]
   end
 end
