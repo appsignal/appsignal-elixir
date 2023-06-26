@@ -25,7 +25,7 @@ defmodule Appsignal.Mixfile do
       package: package(),
       homepage_url: "https://appsignal.com",
       test_paths: test_paths(Mix.env()),
-      elixir: "~> 1.9",
+      elixir: "~> 1.11",
       compilers: compilers(Mix.env()),
       elixirc_paths: elixirc_paths(Mix.env()),
       deps: deps(),
