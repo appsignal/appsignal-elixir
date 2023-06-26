@@ -1,12 +1,6 @@
 defmodule Appsignal.Stacktrace do
   @moduledoc false
 
-  defmacro get do
-    quote do
-      __STACKTRACE__
-    end
-  end
-
   @doc ~S"""
   Parses the given stacktrace into a backtrace list.
   """
