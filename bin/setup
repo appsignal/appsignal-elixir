@@ -14,9 +14,8 @@ rm -rf "$archives_path"/*
 EXPECTED_ERLANG_VERSION="26.0"
 if [[ "$ERLANG_VERSION" == "$EXPECTED_ERLANG_VERSION" && $(cache has_key "v2-erlang-$ERLANG_VERSION") ]]; then
   cache restore "v2-erlang-$ERLANG_VERSION"
-else
-  sem-version erlang "$ERLANG_VERSION"
 fi
+sem-version erlang "$ERLANG_VERSION"
 if [ "$ERLANG_VERSION" == "$EXPECTED_ERLANG_VERSION" ]; then
   cache store "v2-erlang-$ERLANG_VERSION" /home/semaphore/.kerl
 fi
