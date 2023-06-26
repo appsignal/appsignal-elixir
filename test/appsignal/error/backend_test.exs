@@ -261,18 +261,10 @@ defmodule Appsignal.Error.BackendTest do
   end
 
   def pid do
-    if System.otp_release() < "21" do
-      :erlang.list_to_pid(~c"<0.123.0>")
-    else
-      self()
-    end
+    self()
   end
 
   defp ignore_pid do
-    if System.otp_release() < "21" do
-      :ets.insert(:"$appsignal_registry", {pid(), :ignore})
-    else
-      Tracer.ignore()
-    end
+    Tracer.ignore()
   end
 end

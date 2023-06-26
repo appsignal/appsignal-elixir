@@ -68,22 +68,8 @@ defmodule Appsignal.Probes.ErlangProbe do
   end
 
   defp run_queue_lengths do
-    {otp_release, _} = Integer.parse(System.otp_release())
-
-    total =
-      if otp_release < 20 do
-        Enum.sum(:erlang.statistics(:run_queue_lengths))
-      else
-        :erlang.statistics(:total_run_queue_lengths_all)
-      end
-
-    cpu =
-      if otp_release < 20 do
-        # Before OTP 20.0 there were only normal run queues.
-        total
-      else
-        :erlang.statistics(:total_run_queue_lengths)
-      end
+    total = :erlang.statistics(:total_run_queue_lengths_all)
+    cpu = :erlang.statistics(:total_run_queue_lengths)
 
     [
       {"total_run_queue_lengths", total, %{type: "total"}},

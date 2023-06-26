@@ -28,28 +28,14 @@ defmodule Appsignal.TransmitterTest do
       refute Keyword.has_key?(ssl_options, :versions)
       assert ssl_options[:depth] == 4
       assert ssl_options[:honor_cipher_order] == :undefined
-
-      if System.otp_release() >= "20.3" do
-        assert ssl_options[:ciphers] == :ssl.cipher_suites(:default, :"tlsv1.2")
-      else
-        assert ssl_options[:ciphers] == :ssl.cipher_suites()
-      end
+      assert ssl_options[:ciphers] == :ssl.cipher_suites(:default, :"tlsv1.2")
     end
 
-    if System.otp_release() >= "21" do
-      assert ssl_options[:customize_hostname_check] == [
-               match_fun: :public_key.pkix_verify_hostname_match_fun(:https)
-             ]
+    assert ssl_options[:customize_hostname_check] == [
+             match_fun: :public_key.pkix_verify_hostname_match_fun(:https)
+           ]
 
-      refute Keyword.has_key?(ssl_options, :verify_fun)
-    else
-      assert match?(
-               {fun, pid} when is_function(fun, 3) and is_pid(pid),
-               ssl_options[:verify_fun]
-             )
-
-      refute Keyword.has_key?(ssl_options, :customize_hostname_check)
-    end
+    refute Keyword.has_key?(ssl_options, :verify_fun)
   end
 
   test "uses the configured CA certificate" do
