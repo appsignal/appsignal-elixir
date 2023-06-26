@@ -1,9 +1,9 @@
 defmodule Appsignal.Oban do
-  require Appsignal.Utils
+  require Application
 
-  @tracer Appsignal.Utils.compile_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
-  @span Appsignal.Utils.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
-  @appsignal Appsignal.Utils.compile_env(:appsignal, :appsignal, Appsignal)
+  @tracer Application.compile_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
+  @span Application.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
+  @appsignal Application.compile_env(:appsignal, :appsignal, Appsignal)
 
   @moduledoc false
 

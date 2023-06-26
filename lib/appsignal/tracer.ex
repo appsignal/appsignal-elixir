@@ -1,9 +1,9 @@
 defmodule Appsignal.Tracer do
   alias Appsignal.Span
 
-  require Appsignal.Utils
+  require Application
 
-  @monitor Appsignal.Utils.compile_env(:appsignal, :appsignal_monitor, Appsignal.Monitor)
+  @monitor Application.compile_env(:appsignal, :appsignal_monitor, Appsignal.Monitor)
   @table :"$appsignal_registry"
 
   @type option :: {:pid, pid} | {:start_time, integer}

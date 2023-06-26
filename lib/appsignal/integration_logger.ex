@@ -1,8 +1,8 @@
 defmodule Appsignal.IntegrationLogger do
-  require Appsignal.Utils
+  require Application
 
-  @io Appsignal.Utils.compile_env(:appsignal, :io, IO)
-  @file_module Appsignal.Utils.compile_env(:appsignal, :file, File)
+  @io Application.compile_env(:appsignal, :io, IO)
+  @file_module Application.compile_env(:appsignal, :file, File)
 
   @log_levels [:trace, :debug, :info, :warn, :error]
 

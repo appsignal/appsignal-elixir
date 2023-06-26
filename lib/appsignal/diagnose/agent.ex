@@ -1,9 +1,9 @@
 defmodule Appsignal.Diagnose.Agent do
   @moduledoc false
 
-  require Appsignal.Utils
+  require Application
 
-  @nif Appsignal.Utils.compile_env(:appsignal, :appsignal_nif, Appsignal.Nif)
+  @nif Application.compile_env(:appsignal, :appsignal_nif, Appsignal.Nif)
 
   def report do
     if @nif.loaded?() do

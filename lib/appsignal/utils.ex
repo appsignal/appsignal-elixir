@@ -23,10 +23,4 @@ defmodule Appsignal.Utils do
 
   defdelegate info(message), to: Logger
   defdelegate warning(message), to: Logger
-
-  defmacro compile_env(app, key, default \\ nil) do
-    quote do
-      Application.compile_env(unquote(app), unquote(key), unquote(default))
-    end
-  end
 end

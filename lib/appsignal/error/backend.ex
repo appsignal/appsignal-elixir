@@ -1,10 +1,10 @@
 defmodule Appsignal.Error.Backend do
   @moduledoc false
 
-  require Appsignal.Utils
+  require Application
 
-  @tracer Appsignal.Utils.compile_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
-  @span Appsignal.Utils.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
+  @tracer Application.compile_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
+  @span Application.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
 
   @behaviour :gen_event
 

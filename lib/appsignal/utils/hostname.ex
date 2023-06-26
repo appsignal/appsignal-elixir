@@ -1,9 +1,9 @@
 defmodule Appsignal.Utils.Hostname do
   @moduledoc false
 
-  require Appsignal.Utils
+  require Application
 
-  @inet Appsignal.Utils.compile_env(:appsignal, :inet, :inet)
+  @inet Application.compile_env(:appsignal, :inet, :inet)
 
   def hostname do
     case Application.fetch_env(:appsignal, :config) do

@@ -2,24 +2,16 @@ unless Code.ensure_loaded?(Appsignal.Agent) do
   {_, _} = Code.eval_file("agent.exs")
 end
 
-defmodule Mix.Appsignal.Utils do
-  defmacro compile_env(app, key, default \\ nil) do
-    quote do
-      Application.compile_env(unquote(app), unquote(key), unquote(default))
-    end
-  end
-end
-
 defmodule Mix.Appsignal.Helper do
   @moduledoc """
   Helper functions for downloading and compiling the AppSignal agent library.
   """
 
-  require Mix.Appsignal.Utils
+  require Application
 
-  @erlang Mix.Appsignal.Utils.compile_env(:appsignal, :erlang, :erlang)
-  @os Mix.Appsignal.Utils.compile_env(:appsignal, :os, :os)
-  @system Mix.Appsignal.Utils.compile_env(:appsignal, :mix_system, System)
+  @erlang Application.compile_env(:appsignal, :erlang, :erlang)
+  @os Application.compile_env(:appsignal, :os, :os)
+  @system Application.compile_env(:appsignal, :mix_system, System)
 
   @proxy_env_vars [
     "APPSIGNAL_HTTP_PROXY",
