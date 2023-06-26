@@ -11,12 +11,19 @@ archives_path=~/".kiex/mix/archives"
 rm -rf "$elixirs_path"/*
 rm -rf "$archives_path"/*
 
-sem-version erlang $ERLANG_VERSION
+EXPECTED_ERLANG_VERSION="26.0"
+if [[ "$ERLANG_VERSION" == "$EXPECTED_ERLANG_VERSION" && $(cache has_key "v2-erlang-$ERLANG_VERSION") ]]; then
+  cache restore "v2-erlang-$ERLANG_VERSION"
+fi
+sem-version erlang "$ERLANG_VERSION"
+if [ "$ERLANG_VERSION" == "$EXPECTED_ERLANG_VERSION" ]; then
+  cache store "v2-erlang-$ERLANG_VERSION" /home/semaphore/.kerl
+fi
 erl -eval '{ok, Version} = file:read_file(filename:join([code:root_dir(), "releases", erlang:system_info(otp_release), "OTP_VERSION"])), io:fwrite(Version), halt().' -noshell
 
 if [ $ELIXIR_VERSION != "main" ] && \
-   cache has_key "$elixirs_key" && \
-   cache has_key "$archives_key"
+  cache has_key "$elixirs_key" && \
+  cache has_key "$archives_key"
 then
   cache restore "$elixirs_key"
   cache restore "$archives_key"
