@@ -33,6 +33,11 @@ defmodule Appsignal.Test.Span do
     Span.set_sample_data(span, key, value)
   end
 
+  def set_sample_data_if_nil(span, key, value) do
+    add(:set_sample_data_if_nil, {span, key, value})
+    Span.set_sample_data_if_nil(span, key, value)
+  end
+
   def set_attribute(span, key, value) do
     add(:set_attribute, {span, key, value})
     Span.set_attribute(span, key, value)
