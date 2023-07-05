@@ -40,7 +40,7 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
     end
 
     test "sets the root span's parameters" do
-      {:ok, calls} = Test.Span.get(:set_sample_data)
+      {:ok, calls} = Test.Span.get(:set_sample_data_if_nil)
 
       [{%Span{}, "params", params}] =
         Enum.filter(calls, fn {_span, key, _value} -> key == "params" end)
@@ -49,7 +49,7 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
     end
 
     test "sets the root span's sample data" do
-      {:ok, calls} = Test.Span.get(:set_sample_data)
+      {:ok, calls} = Test.Span.get(:set_sample_data_if_nil)
 
       [{%Span{}, "environment", environment}] =
         Enum.filter(calls, fn {_span, key, _value} -> key == "environment" end)
@@ -111,7 +111,7 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
     end
 
     test "sets the root span's sample data" do
-      {:ok, calls} = Test.Span.get(:set_sample_data)
+      {:ok, calls} = Test.Span.get(:set_sample_data_if_nil)
 
       [{%Span{}, "environment", environment}] =
         Enum.filter(calls, fn {_span, key, _value} -> key == "environment" end)
