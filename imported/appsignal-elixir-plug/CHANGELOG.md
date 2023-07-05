@@ -1,5 +1,11 @@
 # AppSignal for Elixir Plug changelog
 
+## 2.0.15
+
+### Fixed
+
+- [6e922d5](https://github.com/appsignal/appsignal-elixir-plug/commit/6e922d56974e6b6cb9b1e43157dccf1e6dd3c54c) patch - Fix an issue in which sample data is overriden by Plug data when the span closes.
+
 ## 2.0.14
 
 ### Fixed
