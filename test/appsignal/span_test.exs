@@ -1,6 +1,7 @@
 defmodule AppsignalSpanTest do
   use ExUnit.Case
   alias Appsignal.{Span, Test}
+  import AppsignalTest.Utils, only: [with_config: 2]
 
   setup do
     start_supervised(Test.Nif)
@@ -439,14 +440,9 @@ defmodule AppsignalSpanTest do
     setup :create_root_span
 
     setup %{span: span} do
-      config = Application.get_env(:appsignal, :config)
-      Application.put_env(:appsignal, :config, %{config | send_params: false})
-
-      try do
+      with_config(%{send_params: false}, fn ->
         Span.set_sample_data(span, "key", %{foo: "bar"})
-      after
-        Application.put_env(:appsignal, :config, config)
-      end
+      end)
 
       :ok
     end
@@ -461,14 +457,9 @@ defmodule AppsignalSpanTest do
     setup :create_root_span
 
     setup %{span: span} do
-      config = Application.get_env(:appsignal, :config)
-      Application.put_env(:appsignal, :config, %{config | send_params: false})
-
-      try do
+      with_config(%{send_params: false}, fn ->
         Span.set_sample_data(span, "params", %{foo: "bar"})
-      after
-        Application.put_env(:appsignal, :config, config)
-      end
+      end)
 
       :ok
     end
@@ -483,14 +474,9 @@ defmodule AppsignalSpanTest do
     setup :create_root_span
 
     setup %{span: span} do
-      config = Application.get_env(:appsignal, :config)
-      Application.put_env(:appsignal, :config, %{config | send_session_data: false})
-
-      try do
+      with_config(%{send_session_data: false}, fn ->
         Span.set_sample_data(span, "key", %{foo: "bar"})
-      after
-        Application.put_env(:appsignal, :config, config)
-      end
+      end)
 
       :ok
     end
@@ -505,14 +491,9 @@ defmodule AppsignalSpanTest do
     setup :create_root_span
 
     setup %{span: span} do
-      config = Application.get_env(:appsignal, :config)
-      Application.put_env(:appsignal, :config, %{config | send_session_data: false})
-
-      try do
+      with_config(%{send_session_data: false}, fn ->
         Span.set_sample_data(span, "session_data", %{foo: "bar"})
-      after
-        Application.put_env(:appsignal, :config, config)
-      end
+      end)
 
       :ok
     end
@@ -610,14 +591,9 @@ defmodule AppsignalSpanTest do
     setup :create_root_span
 
     setup %{span: span} do
-      config = Application.get_env(:appsignal, :config)
-      Application.put_env(:appsignal, :config, %{config | send_params: false})
-
-      try do
+      with_config(%{send_params: false}, fn ->
         Span.set_sample_data_if_nil(span, "key", %{foo: "bar"})
-      after
-        Application.put_env(:appsignal, :config, config)
-      end
+      end)
 
       :ok
     end
@@ -632,14 +608,9 @@ defmodule AppsignalSpanTest do
     setup :create_root_span
 
     setup %{span: span} do
-      config = Application.get_env(:appsignal, :config)
-      Application.put_env(:appsignal, :config, %{config | send_params: false})
-
-      try do
+      with_config(%{send_params: false}, fn ->
         Span.set_sample_data_if_nil(span, "params", %{foo: "bar"})
-      after
-        Application.put_env(:appsignal, :config, config)
-      end
+      end)
 
       :ok
     end
@@ -654,14 +625,9 @@ defmodule AppsignalSpanTest do
     setup :create_root_span
 
     setup %{span: span} do
-      config = Application.get_env(:appsignal, :config)
-      Application.put_env(:appsignal, :config, %{config | send_session_data: false})
-
-      try do
+      with_config(%{send_session_data: false}, fn ->
         Span.set_sample_data_if_nil(span, "key", %{foo: "bar"})
-      after
-        Application.put_env(:appsignal, :config, config)
-      end
+      end)
 
       :ok
     end
@@ -676,14 +642,9 @@ defmodule AppsignalSpanTest do
     setup :create_root_span
 
     setup %{span: span} do
-      config = Application.get_env(:appsignal, :config)
-      Application.put_env(:appsignal, :config, %{config | send_session_data: false})
-
-      try do
+      with_config(%{send_session_data: false}, fn ->
         Span.set_sample_data_if_nil(span, "session_data", %{foo: "bar"})
-      after
-        Application.put_env(:appsignal, :config, config)
-      end
+      end)
 
       :ok
     end
