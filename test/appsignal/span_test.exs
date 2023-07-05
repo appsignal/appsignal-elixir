@@ -1,6 +1,7 @@
 defmodule AppsignalSpanTest do
   use ExUnit.Case
   alias Appsignal.{Span, Test}
+  import AppsignalTest.Utils, only: [with_config: 2]
 
   setup do
     start_supervised(Test.Nif)
@@ -383,6 +384,24 @@ defmodule AppsignalSpanTest do
     end
   end
 
+  describe ".set_sample_data/3, when sample data has already been set" do
+    setup :create_root_span
+
+    setup %{span: span} do
+      Span.set_sample_data(span, "key", %{foo: "bar"})
+      [return: Span.set_sample_data(span, "key", %{baz: "quux"})]
+    end
+
+    test "returns the span", %{span: span, return: return} do
+      assert return == span
+    end
+
+    @tag :skip_env_test_no_nif
+    test "overrides the sample data", %{span: span} do
+      assert %{"sample_data" => %{"key" => "{\"baz\":\"quux\"}"}} = Span.to_map(span)
+    end
+  end
+
   describe ".set_sample_data/3, setting params" do
     setup :create_root_span
 
@@ -421,14 +440,9 @@ defmodule AppsignalSpanTest do
     setup :create_root_span
 
     setup %{span: span} do
-      config = Application.get_env(:appsignal, :config)
-      Application.put_env(:appsignal, :config, %{config | send_params: false})
-
-      try do
+      with_config(%{send_params: false}, fn ->
         Span.set_sample_data(span, "key", %{foo: "bar"})
-      after
-        Application.put_env(:appsignal, :config, config)
-      end
+      end)
 
       :ok
     end
@@ -443,14 +457,9 @@ defmodule AppsignalSpanTest do
     setup :create_root_span
 
     setup %{span: span} do
-      config = Application.get_env(:appsignal, :config)
-      Application.put_env(:appsignal, :config, %{config | send_params: false})
-
-      try do
+      with_config(%{send_params: false}, fn ->
         Span.set_sample_data(span, "params", %{foo: "bar"})
-      after
-        Application.put_env(:appsignal, :config, config)
-      end
+      end)
 
       :ok
     end
@@ -465,14 +474,9 @@ defmodule AppsignalSpanTest do
     setup :create_root_span
 
     setup %{span: span} do
-      config = Application.get_env(:appsignal, :config)
-      Application.put_env(:appsignal, :config, %{config | send_session_data: false})
-
-      try do
+      with_config(%{send_session_data: false}, fn ->
         Span.set_sample_data(span, "key", %{foo: "bar"})
-      after
-        Application.put_env(:appsignal, :config, config)
-      end
+      end)
 
       :ok
     end
@@ -487,14 +491,9 @@ defmodule AppsignalSpanTest do
     setup :create_root_span
 
     setup %{span: span} do
-      config = Application.get_env(:appsignal, :config)
-      Application.put_env(:appsignal, :config, %{config | send_session_data: false})
-
-      try do
+      with_config(%{send_session_data: false}, fn ->
         Span.set_sample_data(span, "session_data", %{foo: "bar"})
-      after
-        Application.put_env(:appsignal, :config, config)
-      end
+      end)
 
       :ok
     end
@@ -516,6 +515,157 @@ defmodule AppsignalSpanTest do
   describe ".set_sample_data/3, when passing a nil-span" do
     test "returns nil" do
       assert Span.set_sample_data(nil, "key", %{param: "value"}) == nil
+    end
+  end
+
+  describe ".set_sample_data_if_nil/3" do
+    setup :create_root_span
+
+    setup %{span: span} do
+      [return: Span.set_sample_data_if_nil(span, "key", %{foo: "bar"})]
+    end
+
+    test "returns the span", %{span: span, return: return} do
+      assert return == span
+    end
+
+    @tag :skip_env_test_no_nif
+    test "sets the sample data", %{span: span} do
+      assert %{"sample_data" => %{"key" => "{\"foo\":\"bar\"}"}} = Span.to_map(span)
+    end
+  end
+
+  describe ".set_sample_data_if_nil/3, when sample data has already been set" do
+    setup :create_root_span
+
+    setup %{span: span} do
+      Span.set_sample_data_if_nil(span, "key", %{foo: "bar"})
+      [return: Span.set_sample_data_if_nil(span, "key", %{baz: "quux"})]
+    end
+
+    test "returns the span", %{span: span, return: return} do
+      assert return == span
+    end
+
+    @tag :skip_env_test_no_nif
+    test "does not override the sample data", %{span: span} do
+      assert %{"sample_data" => %{"key" => "{\"foo\":\"bar\"}"}} = Span.to_map(span)
+    end
+  end
+
+  describe ".set_sample_data_if_nil/3, setting params" do
+    setup :create_root_span
+
+    setup %{span: span} do
+      [return: Span.set_sample_data_if_nil(span, "params", %{foo: "bar"})]
+    end
+
+    test "returns the span", %{span: span, return: return} do
+      assert return == span
+    end
+
+    @tag :skip_env_test_no_nif
+    test "sets the sample data", %{span: span} do
+      assert %{"sample_data" => %{"params" => ~s({"foo":"bar"})}} = Span.to_map(span)
+    end
+  end
+
+  describe ".set_sample_data_if_nil/3, setting session_data" do
+    setup :create_root_span
+
+    setup %{span: span} do
+      [return: Span.set_sample_data_if_nil(span, "session_data", %{foo: "bar"})]
+    end
+
+    test "returns the span", %{span: span, return: return} do
+      assert return == span
+    end
+
+    @tag :skip_env_test_no_nif
+    test "sets the sample data", %{span: span} do
+      assert %{"sample_data" => %{"session_data" => ~s({"foo":"bar"})}} = Span.to_map(span)
+    end
+  end
+
+  describe ".set_sample_data_if_nil/3, if send_params is set to false" do
+    setup :create_root_span
+
+    setup %{span: span} do
+      with_config(%{send_params: false}, fn ->
+        Span.set_sample_data_if_nil(span, "key", %{foo: "bar"})
+      end)
+
+      :ok
+    end
+
+    @tag :skip_env_test_no_nif
+    test "sets the sample data", %{span: span} do
+      assert %{"sample_data" => %{"key" => "{\"foo\":\"bar\"}"}} = Span.to_map(span)
+    end
+  end
+
+  describe ".set_sample_data_if_nil/3, if send_params is set to false, when using 'params' as the key" do
+    setup :create_root_span
+
+    setup %{span: span} do
+      with_config(%{send_params: false}, fn ->
+        Span.set_sample_data_if_nil(span, "params", %{foo: "bar"})
+      end)
+
+      :ok
+    end
+
+    @tag :skip_env_test_no_nif
+    test "does not set the sample data", %{span: span} do
+      assert Span.to_map(span)["sample_data"] == %{}
+    end
+  end
+
+  describe ".set_sample_data_if_nil/3, if send_session_data is set to false" do
+    setup :create_root_span
+
+    setup %{span: span} do
+      with_config(%{send_session_data: false}, fn ->
+        Span.set_sample_data_if_nil(span, "key", %{foo: "bar"})
+      end)
+
+      :ok
+    end
+
+    @tag :skip_env_test_no_nif
+    test "sets the sample data", %{span: span} do
+      assert %{"sample_data" => %{"key" => "{\"foo\":\"bar\"}"}} = Span.to_map(span)
+    end
+  end
+
+  describe ".set_sample_data_if_nil/3, if send_session_data is set to false, when using 'session_data' as the key" do
+    setup :create_root_span
+
+    setup %{span: span} do
+      with_config(%{send_session_data: false}, fn ->
+        Span.set_sample_data_if_nil(span, "session_data", %{foo: "bar"})
+      end)
+
+      :ok
+    end
+
+    @tag :skip_env_test_no_nif
+    test "does not set the sample data", %{span: span} do
+      assert Span.to_map(span)["sample_data"] == %{}
+    end
+  end
+
+  describe ".set_sample_data_if_nil/3, when passing invalid data" do
+    setup :create_root_span
+
+    test "returns the span", %{span: span} do
+      assert Span.set_sample_data_if_nil(span, "key", "non-map value") == span
+    end
+  end
+
+  describe ".set_sample_data_if_nil/3, when passing a nil-span" do
+    test "returns nil" do
+      assert Span.set_sample_data_if_nil(nil, "key", %{param: "value"}) == nil
     end
   end
 

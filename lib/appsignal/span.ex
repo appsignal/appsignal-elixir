@@ -193,38 +193,63 @@ defmodule Appsignal.Span do
 
   """
   def set_sample_data(span, key, value) do
-    set_sample_data(span, Application.get_env(:appsignal, :config), key, value)
+    do_set_sample_data(
+      span,
+      Application.get_env(:appsignal, :config),
+      key,
+      value,
+      &Nif.set_span_sample_data/3
+    )
   end
 
-  defp set_sample_data(span, %{send_params: true}, "params", value) do
-    do_set_sample_data(span, "params", Appsignal.Utils.MapFilter.filter(value))
+  @spec set_sample_data_if_nil(t() | nil, String.t(), map()) :: t() | nil
+  @doc """
+  Sets sample data for an `Appsignal.Span`, unless it has already been set.
+
+  ## Example
+      Appsignal.Tracer.root_span()
+      |> Appsignal.Span.set_sample_data_if_nil("environment", %{"method" => "GET"})
+
+  """
+  def set_sample_data_if_nil(span, key, value) do
+    do_set_sample_data(
+      span,
+      Application.get_env(:appsignal, :config),
+      key,
+      value,
+      &Nif.set_span_sample_data_if_nil/3
+    )
   end
 
-  defp set_sample_data(span, %{send_session_data: true}, "session_data", value) do
-    do_set_sample_data(span, "session_data", value)
+  defp do_set_sample_data(span, %{send_params: true}, "params", value, setter) do
+    do_set_sample_data(span, "params", Appsignal.Utils.MapFilter.filter(value), setter)
   end
 
-  defp set_sample_data(span, _config, "params", _value) do
+  defp do_set_sample_data(span, %{send_session_data: true}, "session_data", value, setter) do
+    do_set_sample_data(span, "session_data", value, setter)
+  end
+
+  defp do_set_sample_data(span, _config, "params", _value, _setter) do
     span
   end
 
-  defp set_sample_data(span, _config, "session_data", _value) do
+  defp do_set_sample_data(span, _config, "session_data", _value, _setter) do
     span
   end
 
-  defp set_sample_data(span, _config, key, value) do
-    do_set_sample_data(span, key, value)
+  defp do_set_sample_data(span, _config, key, value, setter) do
+    do_set_sample_data(span, key, value, setter)
   end
 
-  defp do_set_sample_data(%Span{reference: reference} = span, key, value)
+  defp do_set_sample_data(%Span{reference: reference} = span, key, value, setter)
        when is_binary(key) and is_map(value) do
     data = Appsignal.Utils.DataEncoder.encode(value)
 
-    :ok = Nif.set_span_sample_data(reference, key, data)
+    :ok = setter.(reference, key, data)
     span
   end
 
-  defp do_set_sample_data(span, _key, _value), do: span
+  defp do_set_sample_data(span, _key, _value, _setter), do: span
 
   @spec add_error(t() | nil, Exception.kind(), any(), Exception.stacktrace()) :: t() | nil
   @doc """
