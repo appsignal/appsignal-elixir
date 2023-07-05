@@ -518,7 +518,7 @@ defmodule Appsignal.PlugTest do
   end
 
   defp sample_data(asserted_key, asserted_data) do
-    {:ok, sample_data} = Test.Span.get(:set_sample_data)
+    {:ok, sample_data} = Test.Span.get(:set_sample_data_if_nil)
 
     Enum.any?(sample_data, fn {%Span{}, key, data} ->
       key == asserted_key and data == asserted_data
