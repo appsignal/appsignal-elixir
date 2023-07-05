@@ -1,5 +1,11 @@
 # AppSignal for Elixir Phoenix changelog
 
+## 2.3.4
+
+### Fixed
+
+- [48d61a6](https://github.com/appsignal/appsignal-elixir-phoenix/commit/48d61a65f02c63d2f55ec80a98552fd3bf782bef) patch - Fix an issue in which sample data is overriden by Phoenix data when the span closes.
+
 ## 2.3.3
 
 ### Fixed
