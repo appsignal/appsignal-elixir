@@ -5,6 +5,7 @@
 ### Added
 
 - [be411435](https://github.com/appsignal/appsignal-elixir/commit/be41143553a8d6a37e2af12e688f5625cb1d3de8) patch - Add `set_sample_data_if_nil` function to `Appsignal.Span`, allowing for parameters to be set only if they would not override other parameters.
+- [be411435](https://github.com/appsignal/appsignal-elixir/commit/be41143553a8d6a37e2af12e688f5625cb1d3de8) patch - Use `RENDER_GIT_COMMIT` environment variable as revision if no revision is specified.
 
 ## 2.7.5
 
