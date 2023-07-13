@@ -107,6 +107,12 @@ defmodule Appsignal.Instrumentation.Decorators do
     instrument(body, context)
   end
 
+  def transaction_event(category, body, context) when is_atom(category) do
+    category
+    |> Atom.to_string()
+    |> transaction_event(body, context)
+  end
+
   def transaction_event(category, body, context) do
     do_instrument(body, Map.put(context, :category, category))
   end
