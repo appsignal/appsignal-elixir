@@ -443,6 +443,10 @@ defmodule Appsignal.ConfigTest do
       assert %{active: true} = with_config(%{active: true}, &init_config/0)
     end
 
+    test "bind_address" do
+      assert %{bind_address: "0.0.0.0"} = with_config(%{bind_address: "0.0.0.0"}, &init_config/0)
+    end
+
     test "ca_file_path" do
       assert %{ca_file_path: "/foo/bar/baz.ca"} =
                with_config(%{ca_file_path: "/foo/bar/baz.ca"}, &init_config/0)
@@ -693,6 +697,13 @@ defmodule Appsignal.ConfigTest do
                %{"APPSIGNAL_ACTIVE" => "true"},
                &init_config/0
              ) == default_configuration() |> Map.put(:active, true)
+    end
+
+    test "bind_address" do
+      assert with_env(
+               %{"APPSIGNAL_BIND_ADDRESS" => "0.0.0.0"},
+               &init_config/0
+             ) == default_configuration() |> Map.put(:bind_address, "0.0.0.0")
     end
 
     test "ca_file_path" do
@@ -1175,6 +1186,7 @@ defmodule Appsignal.ConfigTest do
     test "empty config options get written to the env" do
       write_to_environment()
       assert Nif.env_get("_APPSIGNAL_APP_NAME") == ~c""
+      assert Nif.env_get("_APPSIGNAL_BIND_ADDRESS") == ~c""
       assert Nif.env_get("_APPSIGNAL_HTTP_PROXY") == ~c""
       assert Nif.env_get("_APPSIGNAL_IGNORE_ACTIONS") == ~c""
       assert Nif.env_get("_APPSIGNAL_IGNORE_ERRORS") == ~c""
@@ -1207,6 +1219,7 @@ defmodule Appsignal.ConfigTest do
       with_config(
         %{
           active: true,
+          bind_address: "0.0.0.0",
           ca_file_path: "/foo/bar/zab.ca",
           debug: true,
           dns_servers: ["8.8.8.8", "8.8.4.4"],
@@ -1243,6 +1256,7 @@ defmodule Appsignal.ConfigTest do
           assert Nif.env_get("_APPSIGNAL_ACTIVE") == ~c"true"
           assert Nif.env_get("_APPSIGNAL_AGENT_PATH") == :code.priv_dir(:appsignal)
           assert Nif.env_get("_APPSIGNAL_APP_NAME") == ~c"AppSignal test suite app"
+          assert Nif.env_get("_APPSIGNAL_BIND_ADDRESS") == ~c"0.0.0.0"
           assert Nif.env_get("_APPSIGNAL_CA_FILE_PATH") == ~c"/foo/bar/zab.ca"
           assert Nif.env_get("_APPSIGNAL_DEBUG_LOGGING") == ~c"true"
           assert Nif.env_get("_APPSIGNAL_DNS_SERVERS") == ~c"8.8.8.8,8.8.4.4"

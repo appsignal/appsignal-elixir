@@ -300,6 +300,7 @@ defmodule Appsignal.Config do
     "APPSIGNAL_ACTIVE" => :active,
     "APPSIGNAL_APP_ENV" => :env,
     "APPSIGNAL_APP_NAME" => :name,
+    "APPSIGNAL_BIND_ADDRESS" => :bind_address,
     "APPSIGNAL_CA_FILE_PATH" => :ca_file_path,
     "APPSIGNAL_DEBUG" => :debug,
     "APPSIGNAL_DIAGNOSE_ENDPOINT" => :diagnose_endpoint,
@@ -349,6 +350,7 @@ defmodule Appsignal.Config do
     APPSIGNAL_HOSTNAME APPSIGNAL_HTTP_PROXY APPSIGNAL_LOG APPSIGNAL_LOG_LEVEL APPSIGNAL_LOG_PATH
     APPSIGNAL_LOGGING_ENDPOINT APPSIGNAL_WORKING_DIR_PATH APPSIGNAL_WORKING_DIRECTORY_PATH APPSIGNAL_CA_FILE_PATH
     APPSIGNAL_DIAGNOSE_ENDPOINT APP_REVISION APPSIGNAL_REPORT_OBAN_ERRORS APPSIGNAL_STATSD_PORT
+    APPSIGNAL_BIND_ADDRESS
   )
   @bool_keys ~w(
     APPSIGNAL_ACTIVE APPSIGNAL_DEBUG APPSIGNAL_INSTRUMENT_NET_HTTP APPSIGNAL_ENABLE_FRONTEND_ERROR_CATCHING
@@ -440,6 +442,7 @@ defmodule Appsignal.Config do
     Nif.env_put("_APPSIGNAL_AGENT_PATH", List.to_string(:code.priv_dir(:appsignal)))
     Nif.env_put("_APPSIGNAL_APP_NAME", to_string(config[:name]))
     Nif.env_put("_APPSIGNAL_APP_PATH", List.to_string(:code.priv_dir(:appsignal)))
+    Nif.env_put("_APPSIGNAL_BIND_ADDRESS", to_string(config[:bind_address]))
     Nif.env_put("_APPSIGNAL_CA_FILE_PATH", to_string(config[:ca_file_path]))
     Nif.env_put("_APPSIGNAL_DEBUG_LOGGING", to_string(config[:debug]))
     Nif.env_put("_APPSIGNAL_DNS_SERVERS", config[:dns_servers] |> Enum.join(","))
