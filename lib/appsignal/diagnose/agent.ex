@@ -7,17 +7,12 @@ defmodule Appsignal.Diagnose.Agent do
 
   def report do
     if @nif.loaded?() do
-      Appsignal.Nif.env_put("_APPSIGNAL_DIAGNOSE", "true")
       report_string = @nif.diagnose()
 
-      report =
-        case Appsignal.Json.decode(report_string) do
-          {:ok, report} -> {:ok, report}
-          {:error, _} -> {:error, report_string}
-        end
-
-      Appsignal.Nif.env_delete("_APPSIGNAL_DIAGNOSE")
-      report
+      case Appsignal.Json.decode(report_string) do
+        {:ok, report} -> {:ok, report}
+        {:error, _} -> {:error, report_string}
+      end
     else
       {:error, :nif_not_loaded}
     end
