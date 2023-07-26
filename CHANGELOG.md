@@ -1,5 +1,24 @@
 # AppSignal for Elixir changelog
 
+## 2.7.7
+
+### Added
+
+- [75e70db2](https://github.com/appsignal/appsignal-elixir/commit/75e70db27ec8f84faaf647522fb3027cc41b2f9c) patch - Use `RENDER_GIT_COMMIT` environment variable as revision if no revision is specified.
+- [7c3103ae](https://github.com/appsignal/appsignal-elixir/commit/7c3103aef9b3621f562ee7bccaf1f591ba5cb91c) patch - Allow JSON and Logfmt log messages
+- [2b3eab1d](https://github.com/appsignal/appsignal-elixir/commit/2b3eab1dd06bf212547f18f9732b7d091f2cd76a) patch - Allow configuration of the agent's TCP and UDP servers using the `bind_address` config option. This is by default set to `127.0.0.1`, which only makes it accessible from the same host. If you want it to be accessible from other machines, use `0.0.0.0` or a specific IP address.
+- [08aedeef](https://github.com/appsignal/appsignal-elixir/commit/08aedeefe8715b963587798bbacc4ab1d1f043dd) patch - Report total CPU usage host metric for VMs. This change adds another `state` tag value on the `cpu` metric called `total_usage`, which reports the VM's total CPU usage in percentages.
+
+### Changed
+
+- [ece48144](https://github.com/appsignal/appsignal-elixir/commit/ece481440c571ce792ee4bab86a297ce7eb3a1bf) patch - Bump agent to 32590eb.
+  
+  - Only ignore disk metrics that start with "loop", not all mounted disks that end with a number to report metrics for more disks.
+
+### Fixed
+
+- [b7089a8e](https://github.com/appsignal/appsignal-elixir/commit/b7089a8e1ea9340ed28692e75d7976e653edf891) patch - Handle atoms for categories in transaction_event decorator
+
 ## 2.7.6
 
 ### Added
