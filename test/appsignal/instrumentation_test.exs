@@ -6,13 +6,13 @@ defmodule InstrumentedModule do
     :ok
   end
 
-  @decorate instrument("background_job")
-  def background_job do
+  @decorate instrument("instrument")
+  def background_instrument do
     :ok
   end
 
-  @decorate instrument(:background_job)
-  def background_job_atom do
+  @decorate instrument(:instrument)
+  def background_instrument_atom do
     :ok
   end
 
@@ -21,12 +21,12 @@ defmodule InstrumentedModule do
     :ok
   end
 
-  @decorate transaction("background_job")
+  @decorate transaction("transaction")
   def background_transaction do
     :ok
   end
 
-  @decorate transaction(:background_job)
+  @decorate transaction(:transaction)
   def background_transaction_with_atom_namespace do
     :ok
   end
@@ -38,6 +38,11 @@ defmodule InstrumentedModule do
 
   @decorate transaction_event("call.event")
   def transaction_event_category do
+    :ok
+  end
+
+  @decorate transaction_event(:"call.event")
+  def transaction_event_with_atom_category do
     :ok
   end
 
@@ -84,7 +89,7 @@ defmodule Appsignal.InstrumentationTest do
 
   describe "instrument/3, with a decorator with a custom namespace" do
     setup do
-      %{return: InstrumentedModule.background_job()}
+      %{return: InstrumentedModule.background_instrument()}
     end
 
     test "calls the passed function, and returns its return", %{return: return} do
@@ -96,11 +101,12 @@ defmodule Appsignal.InstrumentationTest do
     end
 
     test "sets the span's name" do
-      assert {:ok, [{%Span{}, "InstrumentedModule.background_job_0"}]} = Test.Span.get(:set_name)
+      assert {:ok, [{%Span{}, "InstrumentedModule.background_instrument_0"}]} =
+               Test.Span.get(:set_name)
     end
 
     test "sets the span's namespace" do
-      assert {:ok, [{%Span{}, "background_job"}]} = Test.Span.get(:set_namespace)
+      assert {:ok, [{%Span{}, "instrument"}]} = Test.Span.get(:set_namespace)
     end
 
     test "closes the span" do
@@ -110,11 +116,11 @@ defmodule Appsignal.InstrumentationTest do
 
   describe "instrument/3, with a decorator with an atom as its custom namespace" do
     setup do
-      %{return: InstrumentedModule.background_job_atom()}
+      %{return: InstrumentedModule.background_instrument_atom()}
     end
 
     test "sets the span's namespace" do
-      assert {:ok, [{%Span{}, "background_job"}]} = Test.Span.get(:set_namespace)
+      assert {:ok, [{%Span{}, "instrument"}]} = Test.Span.get(:set_namespace)
     end
   end
 
@@ -174,7 +180,7 @@ defmodule Appsignal.InstrumentationTest do
     end
 
     test "creates a root span" do
-      assert Test.Tracer.get(:create_span) == {:ok, [{"background_job", nil}]}
+      assert Test.Tracer.get(:create_span) == {:ok, [{"transaction", nil}]}
     end
 
     test "sets the span's name" do
@@ -197,7 +203,7 @@ defmodule Appsignal.InstrumentationTest do
     end
 
     test "creates a root span" do
-      assert Test.Tracer.get(:create_span) == {:ok, [{"background_job", nil}]}
+      assert Test.Tracer.get(:create_span) == {:ok, [{"transaction", nil}]}
     end
 
     test "sets the span's name" do
@@ -248,6 +254,34 @@ defmodule Appsignal.InstrumentationTest do
 
     test "sets the span's name" do
       assert {:ok, [{%Span{}, "InstrumentedModule.transaction_event_category_0"}]} =
+               Test.Span.get(:set_name)
+    end
+
+    test "sets the span's category attribute" do
+      assert {:ok, [{%Span{}, "appsignal:category", "call.event"}]} =
+               Test.Span.get(:set_attribute)
+    end
+
+    test "closes the span" do
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    end
+  end
+
+  describe "transaction_event/3, when passing a category as an atom" do
+    setup do
+      %{return: InstrumentedModule.transaction_event_with_atom_category()}
+    end
+
+    test "calls the passed function, and returns its return", %{return: return} do
+      assert return == :ok
+    end
+
+    test "creates a root span" do
+      assert Test.Tracer.get(:create_span) == {:ok, [{"background_job", nil}]}
+    end
+
+    test "sets the span's name" do
+      assert {:ok, [{%Span{}, "InstrumentedModule.transaction_event_with_atom_category_0"}]} =
                Test.Span.get(:set_name)
     end
 
