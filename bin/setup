@@ -39,3 +39,6 @@ elixir -v
 mix local.rebar
 mix local.hex --force
 mix deps.get
+
+# Unset exit on error so the shell is usable after running this script
+set +e
