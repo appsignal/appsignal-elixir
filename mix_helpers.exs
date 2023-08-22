@@ -540,6 +540,10 @@ defmodule Mix.Appsignal.Helper do
 
   defp extract_ldd_version(_), do: nil
 
+  defp flags do
+    %{"APPSIGNAL_LD_FLAGS" => System.get_env("APPSIGNAL_LD_FLAGS", "")}
+  end
+
   defp initial_report do
     {_, os} = :os.type()
 
@@ -561,7 +565,7 @@ defmodule Mix.Appsignal.Helper do
         linux_arm_override: force_linux_arm_build?(),
         library_type: "static",
         dependencies: %{},
-        flags: %{}
+        flags: flags()
       },
       host: %{
         root_user: root?(),

@@ -42,6 +42,10 @@ ifeq ($(shell uname),Darwin)
 		-Wl,-U,_enif_release_resource
 endif
 
+ifdef APPSIGNAL_LD_FLAGS
+	LDFLAGS += "$(APPSIGNAL_LD_FLAGS)"
+endif
+
 all:
 	@$(CC) $(CFLAGS) $(CFLAGS_ADD) -shared $(LDFLAGS) -o $(OUTPUT) c_src/$(LIB).c
 
