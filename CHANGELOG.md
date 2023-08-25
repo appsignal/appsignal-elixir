@@ -1,5 +1,20 @@
 # AppSignal for Elixir changelog
 
+## 2.7.8
+
+### Added
+
+- [489615ae](https://github.com/appsignal/appsignal-elixir/commit/489615aee6f66da503ab57d0a5a6312111532602) patch - Add the `host_role` config option. This config option can be set per host to generate some metrics automatically per host and possibly do things like grouping in the future.
+
+### Changed
+
+- [7b3875b2](https://github.com/appsignal/appsignal-elixir/commit/7b3875b2c223114dd98dd9fbf55eb1e762d8984b) patch - Bump agent to 6bec691.
+  
+  - Upgrade `sql_lexer` to v0.9.5. It adds sanitization support for the `THEN` and `ELSE` logical operators.
+- [7781f405](https://github.com/appsignal/appsignal-elixir/commit/7781f40579750386525b301ae7c1a3c475ca8b54) patch - Bump agent to version d789895.
+  
+  - Increase short data truncation from 2000 to 10000 characters.
+
 ## 2.7.7
 
 ### Added
