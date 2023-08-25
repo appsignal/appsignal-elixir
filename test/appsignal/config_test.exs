@@ -547,6 +547,11 @@ defmodule Appsignal.ConfigTest do
                with_config(%{hostname: "Bobs-MBP.example.com"}, &init_config/0)
     end
 
+    test "host_role" do
+      assert %{host_role: "host role"} =
+               with_config(%{host_role: "host role"}, &init_config/0)
+    end
+
     test "http_proxy" do
       assert %{http_proxy: "http://10.10.10.10:8888"} =
                with_config(%{http_proxy: "http://10.10.10.10:8888"}, &init_config/0)
@@ -827,6 +832,13 @@ defmodule Appsignal.ConfigTest do
                %{"APPSIGNAL_HOSTNAME" => "Bobs-MBP.example.com"},
                &init_config/0
              ) == default_configuration() |> Map.put(:hostname, "Bobs-MBP.example.com")
+    end
+
+    test "host_role" do
+      assert with_env(
+               %{"APPSIGNAL_HOST_ROLE" => "host role"},
+               &init_config/0
+             ) == default_configuration() |> Map.put(:host_role, "host role")
     end
 
     test "http_proxy" do
@@ -1228,6 +1240,7 @@ defmodule Appsignal.ConfigTest do
           env: :prod,
           push_api_key: "00000000-0000-0000-0000-000000000000",
           hostname: "My hostname",
+          host_role: "host role",
           http_proxy: "http://10.10.10.10:8888",
           ignore_actions: ~w(
             ExampleApplication.PageController#ignored
@@ -1263,6 +1276,7 @@ defmodule Appsignal.ConfigTest do
           assert Nif.env_get("_APPSIGNAL_ENABLE_HOST_METRICS") == ~c"false"
           assert Nif.env_get("_APPSIGNAL_APP_ENV") == ~c"prod"
           assert Nif.env_get("_APPSIGNAL_HOSTNAME") == ~c"My hostname"
+          assert Nif.env_get("_APPSIGNAL_HOST_ROLE") == ~c"host role"
           assert Nif.env_get("_APPSIGNAL_HTTP_PROXY") == ~c"http://10.10.10.10:8888"
 
           assert Nif.env_get("_APPSIGNAL_IGNORE_ACTIONS") ==

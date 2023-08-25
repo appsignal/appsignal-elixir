@@ -316,6 +316,7 @@ defmodule Appsignal.Config do
     "APPSIGNAL_FILTER_SESSION_DATA" => :filter_session_data,
     "APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH" => :frontend_error_catching_path,
     "APPSIGNAL_HOSTNAME" => :hostname,
+    "APPSIGNAL_HOST_ROLE" => :host_role,
     "APPSIGNAL_HTTP_PROXY" => :http_proxy,
     "APPSIGNAL_IGNORE_ACTIONS" => :ignore_actions,
     "APPSIGNAL_IGNORE_ERRORS" => :ignore_errors,
@@ -347,7 +348,7 @@ defmodule Appsignal.Config do
 
   @string_keys ~w(
     APPSIGNAL_APP_NAME APPSIGNAL_PUSH_API_KEY APPSIGNAL_PUSH_API_ENDPOINT APPSIGNAL_FRONTEND_ERROR_CATCHING_PATH
-    APPSIGNAL_HOSTNAME APPSIGNAL_HTTP_PROXY APPSIGNAL_LOG APPSIGNAL_LOG_LEVEL APPSIGNAL_LOG_PATH
+    APPSIGNAL_HOSTNAME APPSIGNAL_HOST_ROLE APPSIGNAL_HTTP_PROXY APPSIGNAL_LOG APPSIGNAL_LOG_LEVEL APPSIGNAL_LOG_PATH
     APPSIGNAL_LOGGING_ENDPOINT APPSIGNAL_WORKING_DIR_PATH APPSIGNAL_WORKING_DIRECTORY_PATH APPSIGNAL_CA_FILE_PATH
     APPSIGNAL_DIAGNOSE_ENDPOINT APP_REVISION APPSIGNAL_REPORT_OBAN_ERRORS APPSIGNAL_STATSD_PORT
     APPSIGNAL_BIND_ADDRESS
@@ -451,6 +452,7 @@ defmodule Appsignal.Config do
     Nif.env_put("_APPSIGNAL_ENABLE_NGINX_METRICS", to_string(config[:enable_nginx_metrics]))
     Nif.env_put("_APPSIGNAL_APP_ENV", to_string(config[:env]))
     Nif.env_put("_APPSIGNAL_HOSTNAME", to_string(config[:hostname]))
+    Nif.env_put("_APPSIGNAL_HOST_ROLE", to_string(config[:host_role]))
     Nif.env_put("_APPSIGNAL_HTTP_PROXY", to_string(config[:http_proxy]))
     Nif.env_put("_APPSIGNAL_IGNORE_ACTIONS", config[:ignore_actions] |> Enum.join(","))
     Nif.env_put("_APPSIGNAL_IGNORE_ERRORS", config[:ignore_errors] |> Enum.join(","))
