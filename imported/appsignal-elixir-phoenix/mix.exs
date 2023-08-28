@@ -70,7 +70,7 @@ defmodule Appsignal.Phoenix.MixProject do
       {:phoenix_html, "~> 2.11 or ~> 3.0", optional: true},
       {:phoenix_live_view, phoenix_live_view_version, optional: true},
       {:ex_doc, "~> 0.21", only: :dev, runtime: false},
-      {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.3.0", only: [:dev, :test], runtime: false},
       {:credo, "~> 1.4", only: [:dev, :test], runtime: false},
       {:poison, "~> 5.0", only: [:dev, :test], runtime: false},
       {:telemetry, telemetry_version}
