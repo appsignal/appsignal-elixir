@@ -144,7 +144,7 @@ defmodule Appsignal.Mixfile do
       {:bypass, "~> 0.6.0", only: [:test, :test_no_nif]},
       {:ex_doc, "~> 0.12", only: :dev, runtime: false},
       {:credo, "~> 1.6", only: [:test, :dev], runtime: false},
-      {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.3.0", only: [:dev, :test], runtime: false},
       {:telemetry, telemetry_version}
     ] ++ mime_dependency
   end
