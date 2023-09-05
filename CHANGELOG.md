@@ -6,7 +6,7 @@
 
 - [ebd39c39](https://github.com/appsignal/appsignal-elixir/commit/ebd39c39553f55249cbb88e21e67c9c3a01fec85) patch - Bump agent to 6133900.
   
-  - Fix `disk_inodes_usage` metric name format to not be interpreted as a JSON object.
+  - Fix `disk_inode_usage` metric name format to not be interpreted as a JSON object.
 
 ## 2.7.8
 
