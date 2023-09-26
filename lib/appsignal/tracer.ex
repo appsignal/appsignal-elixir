@@ -207,6 +207,25 @@ defmodule Appsignal.Tracer do
     :ok
   end
 
+  @doc """
+  Registers a span as the parent span for any spans started by this process.
+
+  This is necessary when you want to instrument asynchronous work.
+
+      parent = Appsignal.Tracer.current_span()
+
+      list
+      |> Task.async_stream(fn item ->
+        Appsignal.Tracer.register_parent(parent)
+
+        ...
+      end)
+      |> Stream.run()
+  """
+  def register_parent(span) do
+    register(%{span | pid: self()})
+  end
+
   defp register(%Span{pid: pid} = span) do
     if insert({pid, span}) do
       @monitor.add()
