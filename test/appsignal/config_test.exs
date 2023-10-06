@@ -366,6 +366,10 @@ defmodule Appsignal.ConfigTest do
       assert with_config(%{log_level: "warn"}, &Config.log_level/0) == :warn
     end
 
+    test "when log level is set to a known warning log level" do
+      assert with_config(%{log_level: "warning"}, &Config.log_level/0) == :warn
+    end
+
     test "when log level is set to an invalid value" do
       assert with_config(%{log_level: "foobar"}, &Config.log_level/0) == :info
     end

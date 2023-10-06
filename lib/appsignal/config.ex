@@ -507,6 +507,7 @@ defmodule Appsignal.Config do
       "debug" -> :debug
       "info" -> :info
       "warn" -> :warn
+      "warning" -> :warn
       "error" -> :error
       _ -> deprecated_log_level(config)
     end
