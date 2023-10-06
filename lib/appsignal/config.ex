@@ -472,7 +472,7 @@ defmodule Appsignal.Config do
     )
 
     Nif.env_put("_APPSIGNAL_LOG", to_string(config[:log]))
-    Nif.env_put("_APPSIGNAL_LOG_LEVEL", to_string(config[:log_level] || ""))
+    Nif.env_put("_APPSIGNAL_LOG_LEVEL", to_string(log_level(config)))
     Nif.env_put("_APPSIGNAL_LOG_FILE_PATH", to_string(log_file_path()))
     Nif.env_put("_APPSIGNAL_LOGGING_ENDPOINT", config[:logging_endpoint] || "")
     Nif.env_put("_APPSIGNAL_PUSH_API_ENDPOINT", config[:endpoint] || "")

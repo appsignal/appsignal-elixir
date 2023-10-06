@@ -1335,6 +1335,33 @@ defmodule Appsignal.ConfigTest do
       end)
     end
 
+    @tag :skip_env_test_no_nif
+    test "log_level as warning" do
+      with_config(%{log_level: "warning"}, fn ->
+        write_to_environment()
+        assert Nif.env_get("_APPSIGNAL_LOG_LEVEL") == ~c"warn"
+      end)
+    end
+
+    @tag :skip_env_test_no_nif
+    test "deprecated log level configuration" do
+      with_config(%{transaction_debug_mode: true}, fn ->
+        write_to_environment()
+        assert Nif.env_get("_APPSIGNAL_LOG_LEVEL") == ~c"trace"
+      end)
+
+      with_config(%{debug: true}, fn ->
+        write_to_environment()
+        assert Nif.env_get("_APPSIGNAL_LOG_LEVEL") == ~c"debug"
+      end)
+
+      # Default fallback if nothing is configured
+      with_config(%{log_level: nil}, fn ->
+        write_to_environment()
+        assert Nif.env_get("_APPSIGNAL_LOG_LEVEL") == ~c"info"
+      end)
+    end
+
     test "writes dns_servers to env if empty" do
       with_config(%{dns_servers: []}, fn ->
         write_to_environment()
