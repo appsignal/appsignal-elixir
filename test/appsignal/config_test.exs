@@ -1249,7 +1249,7 @@ defmodule Appsignal.ConfigTest do
           ignore_errors: ~w(VerySpecificError AnotherError),
           ignore_namespaces: ~w(admin private_namespace),
           log: "stdout",
-          log_level: "warn",
+          log_level: "trace",
           log_path: "/tmp",
           logging_endpoint: "https://push.staging.lol",
           name: "AppSignal test suite app",
@@ -1289,7 +1289,7 @@ defmodule Appsignal.ConfigTest do
                    ~c"elixir-" ++ String.to_charlist(Mix.Project.config()[:version])
 
           assert Nif.env_get("_APPSIGNAL_LOG") == ~c"stdout"
-          assert Nif.env_get("_APPSIGNAL_LOG_LEVEL") == ~c"warn"
+          assert Nif.env_get("_APPSIGNAL_LOG_LEVEL") == ~c"trace"
           assert Nif.env_get("_APPSIGNAL_LOG_FILE_PATH") == ~c"/tmp/appsignal.log"
           assert Nif.env_get("_APPSIGNAL_LOGGING_ENDPOINT") == ~c"https://push.staging.lol"
           assert Nif.env_get("_APPSIGNAL_PUSH_API_ENDPOINT") == ~c"https://push.staging.lol"
@@ -1312,18 +1312,22 @@ defmodule Appsignal.ConfigTest do
     end
 
     @tag :skip_env_test_no_nif
-    test "name as atom" do
-      with_config(%{name: :appsignal_test_suite_app}, fn ->
+    test "option as atom" do
+      with_config(%{name: :appsignal_test_suite_app, log: :file, log_level: :trace}, fn ->
         write_to_environment()
         assert Nif.env_get("_APPSIGNAL_APP_NAME") == ~c"appsignal_test_suite_app"
+        assert Nif.env_get("_APPSIGNAL_LOG") == ~c"file"
+        assert Nif.env_get("_APPSIGNAL_LOG_LEVEL") == ~c"trace"
       end)
     end
 
     @tag :skip_env_test_no_nif
-    test "name as string" do
-      with_config(%{name: "AppSignal test suite app"}, fn ->
+    test "option as string" do
+      with_config(%{name: "AppSignal test suite app", log: "file", log_level: "trace"}, fn ->
         write_to_environment()
         assert Nif.env_get("_APPSIGNAL_APP_NAME") == ~c"AppSignal test suite app"
+        assert Nif.env_get("_APPSIGNAL_LOG") == ~c"file"
+        assert Nif.env_get("_APPSIGNAL_LOG_LEVEL") == ~c"trace"
       end)
     end
 

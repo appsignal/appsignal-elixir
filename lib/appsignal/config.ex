@@ -471,8 +471,8 @@ defmodule Appsignal.Config do
       "elixir-" <> @language_integration_version
     )
 
-    Nif.env_put("_APPSIGNAL_LOG", config[:log])
-    Nif.env_put("_APPSIGNAL_LOG_LEVEL", config[:log_level] || "")
+    Nif.env_put("_APPSIGNAL_LOG", to_string(config[:log]))
+    Nif.env_put("_APPSIGNAL_LOG_LEVEL", to_string(config[:log_level] || ""))
     Nif.env_put("_APPSIGNAL_LOG_FILE_PATH", to_string(log_file_path()))
     Nif.env_put("_APPSIGNAL_LOGGING_ENDPOINT", config[:logging_endpoint] || "")
     Nif.env_put("_APPSIGNAL_PUSH_API_ENDPOINT", config[:endpoint] || "")
@@ -502,7 +502,7 @@ defmodule Appsignal.Config do
   end
 
   defp log_level(config) do
-    case config[:log_level] do
+    case to_string(config[:log_level]) do
       "trace" -> :trace
       "debug" -> :debug
       "info" -> :info
