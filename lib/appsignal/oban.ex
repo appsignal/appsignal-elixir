@@ -160,7 +160,13 @@ defmodule Appsignal.Oban do
   end
 
   def oban_insert_job_start(_event, _measurements, metadata, _config) do
-    span = @tracer.create_span("oban", @tracer.current_span)
+    do_oban_insert_job_start(@tracer.current_span, metadata)
+  end
+
+  def do_oban_insert_job_start(nil, _metadata), do: nil
+
+  def do_oban_insert_job_start(current_span, metadata) do
+    span = @tracer.create_span("oban", current_span)
 
     @span.set_attribute(span, "appsignal:category", "insert_job.oban")
 
