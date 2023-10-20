@@ -207,6 +207,24 @@ defmodule Appsignal.Tracer do
     :ok
   end
 
+  @doc false
+  def register_current(span) do
+    # Registers a span as the current span for this process.
+    #
+    # This is necessary when you want to instrument asynchronous work.
+    #
+    #     parent = Appsignal.Tracer.current_span()
+    #
+    #     list
+    #     |> Task.async_stream(fn item ->
+    #       Appsignal.Tracer.register_current(parent)
+    #       # ...
+    #     end)
+    #     |> Stream.run()
+
+    register(%{span | pid: self()})
+  end
+
   defp register(%Span{pid: pid} = span) do
     if insert({pid, span}) do
       @monitor.add()

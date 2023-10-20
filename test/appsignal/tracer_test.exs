@@ -465,6 +465,23 @@ defmodule Appsignal.TracerTest do
     end
   end
 
+  describe "register_current/1" do
+    test "carries over the current span to a new PID" do
+      span = Tracer.create_span("http_request")
+
+      task =
+        Task.async(fn ->
+          Tracer.register_current(span)
+          Tracer.current_span()
+        end)
+
+      task_current_span = Task.await(task)
+
+      assert Map.fetch!(span, :pid) != Map.fetch!(task_current_span, :pid)
+      assert Map.fetch!(span, :reference) == Map.fetch!(task_current_span, :reference)
+    end
+  end
+
   defp create_root_span(_context) do
     [span: Tracer.create_span("http_request")]
   end
