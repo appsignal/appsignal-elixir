@@ -498,13 +498,29 @@ defmodule Appsignal.ObanTest do
     end
   end
 
-  describe "oban_insert_job_start/4" do
+  describe "oban_insert_job_start/4, without a root span" do
     setup do
       execute_insert_job(:start)
     end
 
+    test "does not create a child span" do
+      assert :error = Test.Tracer.get(:create_span)
+    end
+
+    test "does not detach the handler" do
+      assert attached?([:oban, :engine, :insert_job, :start])
+    end
+  end
+
+  describe "oban_insert_job_start/4" do
+    setup do
+      Appsignal.Tracer.create_span("http_request")
+
+      execute_insert_job(:start)
+    end
+
     test "creates a child span" do
-      assert {:ok, [{"oban", nil}]} = Test.Tracer.get(:create_span)
+      assert {:ok, [{"oban", %Span{}}]} = Test.Tracer.get(:create_span)
     end
 
     test "sets the span's name" do
@@ -522,6 +538,8 @@ defmodule Appsignal.ObanTest do
 
   describe "oban_insert_job_start/4, without a changeset" do
     setup do
+      Appsignal.Tracer.create_span("http_request")
+
       execute_insert_job(:start, %{})
     end
 
