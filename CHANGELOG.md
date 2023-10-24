@@ -1,5 +1,39 @@
 # AppSignal for Elixir changelog
 
+## 2.7.10
+
+### Added
+
+- [68ec699e](https://github.com/appsignal/appsignal-elixir/commit/68ec699ead0c82dff11c73dc2ec1cf1cd928d4d0) patch - Implement an Erlang :logger handler for sending logs from AppSignal, in
+  preparation for the eventual deprecation of Elixir logger backends.
+  
+  Add a convenience method to configure this logger handler automatically,
+  with the right settings for AppSignal:
+  
+  ```elixir
+  Appsignal.Logger.Handler.add("my_app", :plaintext)
+  ```
+  
+  To remove the logging handler, call the `.remove` method:
+  
+  ```elixir
+  Appsignal.Logger.Handler.remove()
+  ```
+
+### Changed
+
+- [cc526cb6](https://github.com/appsignal/appsignal-elixir/commit/cc526cb63bb4894cd1e6c2e67f9b0f0fee2b5271) patch - Bump agent to e8207c1.
+  
+  - Add `memory_in_percentages` and `swap_in_percentages` host metrics that represents metrics in percentages.
+  - Ignore `/snap/` disk mountpoints.
+  - Fix issue with the open span count in logs being logged as a negative number.
+  - Fix agent's TCP server getting stuck when two requests are made within the same fraction of a second.
+
+### Fixed
+
+- [bcbc1c6a](https://github.com/appsignal/appsignal-elixir/commit/bcbc1c6aa3f28c1bcba95866182964da9f10cc4b) patch - Fix configuration options set with atoms. The options `log` and `log_level` can now be set as an Atom, and we'll cast them to a string internally to avoid any `ArgumentError` from the Nif.
+- [92a7e886](https://github.com/appsignal/appsignal-elixir/commit/92a7e886449b6bdaa8e553585b1084e6d6b314d5) patch - Fix support for `warning` `log_level`. Only `warn` would work, now `warning` also works as documented.
+
 ## 2.7.9
 
 ### Fixed
