@@ -68,10 +68,6 @@ blocks:
           commands:
             - "ERLANG_VERSION=25.3 ELIXIR_VERSION=1.13.4 PHOENIX_VERSION=\"~> 1.7.0\" . bin/setup"
             - mix test
-        - name: Elixir main, OTP 24.3, Phoenix ~> 1.7.0
-          commands:
-            - "ERLANG_VERSION=24.3 ELIXIR_VERSION=main PHOENIX_VERSION=\"~> 1.7.0\" . bin/setup"
-            - mix test
         - name: Elixir 1.15.0, OTP 24.3, Phoenix ~> 1.7.0
           commands:
             - "ERLANG_VERSION=24.3 ELIXIR_VERSION=1.15.0 PHOENIX_VERSION=\"~> 1.7.0\" . bin/setup"
