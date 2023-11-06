@@ -1,5 +1,24 @@
 # AppSignal for Elixir changelog
 
+## 2.7.11
+
+### Changed
+
+- [dae88280](https://github.com/appsignal/appsignal-elixir/commit/dae8828059cf6fe18a3ff042c23988af56e86006) patch - Bump agent to b604345.
+  
+  - Add an exponential backoff to the retry sleep time to bind to the StatsD, NGINX and OpenTelemetry exporter ports. This gives the agent a longer time to connect to the ports if they become available within a 4 minute window.
+  - Changes to the agent logger:
+    - Logs from the agent and extension now use a more consistent format in logs for spans and transactions.
+    - Logs that are for more internal use are moved to the trace log level and logs that are useful for debugging most support issues are moved to the debug log level. It should not be necessary to use log level 'trace' as often anymore. The 'debug' log level should be enough.
+  - Add `running_in_container` to agent diagnose report, to be used primarily by the Python package as a way to detect if an app's host is a container or not.
+- [e6c4c79f](https://github.com/appsignal/appsignal-elixir/commit/e6c4c79f8096fe88c5d7cc3983e91096e3aa946f) patch - Bump agent to 1dd2a18.
+  
+  - When adding an SQL body attribute via the extension, instead of truncating the body first and sanitising it later, sanitise it first and truncate it later. This prevents an issue where queries containing very big values result in truncated sanitisations.
+
+### Fixed
+
+- [197e3610](https://github.com/appsignal/appsignal-elixir/commit/197e3610d0c4edfaaa61e3715d46b073f56e115e) patch - Avoid reporting an Oban insert job event as a new incident. This should fix an issue where "insert job" events with little information show up in AppSignal as their own incidents when Oban jobs are inserted from an uninstrumented context that has no parent spans.
+
 ## 2.7.10
 
 ### Added
