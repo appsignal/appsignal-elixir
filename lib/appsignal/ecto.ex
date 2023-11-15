@@ -61,8 +61,17 @@ defmodule Appsignal.Ecto do
   end
 
   @doc false
-  def handle_event(_event, _measurements, %{query: "begin"}, _config), do: :ok
-  def handle_event(_event, _measurements, %{query: "commit"}, _config), do: :ok
+  def handle_event(_event, %{total_time: total_time}, %{repo: repo, query: "begin"}, _config) do
+    handle_begin(@tracer.current_span(), total_time, repo)
+  end
+
+  def handle_event(_event, %{total_time: total_time}, %{repo: repo, query: "commit"}, _config) do
+    handle_commit(@tracer.current_span(), total_time, repo)
+  end
+
+  def handle_event(_event, %{total_time: total_time}, %{repo: repo, query: "rollback"}, _config) do
+    handle_rollback(@tracer.current_span(), total_time, repo)
+  end
 
   def handle_event(_event, %{total_time: total_time}, %{repo: repo, query: query}, _config) do
     handle_query(@tracer.current_span(), total_time, repo, query)
@@ -70,13 +79,56 @@ defmodule Appsignal.Ecto do
 
   def handle_event(_event, _measurements, _metadata, _config), do: :ok
 
-  defp handle_query(nil, _total_time, _repo, _query), do: nil
+  defp handle_begin(nil, _total_time, _repo), do: nil
 
-  defp handle_query(_current, total_time, repo, query) do
+  defp handle_begin(current_span, total_time, repo) do
+    time = :os.system_time()
+
+    # Intentionally leave span open to be closed
+    # by `handle_commit/3` or `handle_rollback/3`
+    "http_request"
+    |> @tracer.create_span(current_span, start_time: time - total_time)
+    |> @span.set_name("Transaction #{module_name(repo)}")
+    |> @span.set_attribute("appsignal:category", "transaction.ecto")
+  end
+
+  defp handle_commit(nil, _total_time, _repo), do: nil
+
+  defp handle_commit(current_span, total_time, repo) do
     time = :os.system_time()
 
     "http_request"
-    |> @tracer.create_span(@tracer.current_span(), start_time: time - total_time)
+    |> @tracer.create_span(current_span, start_time: time - total_time)
+    |> @span.set_name("Commit #{module_name(repo)}")
+    |> @span.set_attribute("appsignal:category", "commit.ecto")
+    |> @tracer.close_span(end_time: time)
+
+    # Close span created by `handle_begin/3`
+    @tracer.close_span(current_span, end_time: time)
+  end
+
+  defp handle_rollback(nil, _total_time, _repo), do: nil
+
+  defp handle_rollback(current_span, total_time, repo) do
+    time = :os.system_time()
+
+    "http_request"
+    |> @tracer.create_span(current_span, start_time: time - total_time)
+    |> @span.set_name("Rollback #{module_name(repo)}")
+    |> @span.set_attribute("appsignal:category", "rollback.ecto")
+    |> @tracer.close_span(end_time: time)
+
+    # Close span created by `handle_begin/3`
+    @tracer.close_span(current_span, end_time: time)
+  end
+
+  defp handle_query(nil, _total_time, _repo, _query), do: nil
+
+  defp handle_query(current_span, total_time, repo, query) do
+    time = :os.system_time()
+
+    "http_request"
+    |> @tracer.create_span(current_span, start_time: time - total_time)
     |> @span.set_name("Query #{module_name(repo)}")
     |> @span.set_attribute("appsignal:category", "query.ecto")
     |> @span.set_sql(query)
