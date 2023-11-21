@@ -191,7 +191,7 @@ defmodule Appsignal do
   defp fetch_installed_architecture_target do
     case File.read(Path.join([:code.priv_dir(:appsignal), "install.report"])) do
       {:ok, raw_report} ->
-        case Appsignal.Json.decode(raw_report) do
+        case Jason.decode(raw_report) do
           {:ok, report} ->
             %{"build" => %{"architecture" => arch, "target" => target}} = report
             {parse_architecture(arch), target}

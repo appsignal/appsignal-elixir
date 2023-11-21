@@ -343,6 +343,6 @@ defmodule Appsignal.Span do
   @doc false
   def to_map(%Span{reference: reference}) do
     {:ok, json} = Nif.span_to_json(reference)
-    Appsignal.Json.decode!(json)
+    Jason.decode!(json)
   end
 end
