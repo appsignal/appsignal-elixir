@@ -9,7 +9,7 @@ defmodule Appsignal.Diagnose.Agent do
     if @nif.loaded?() do
       report_string = to_string(@nif.diagnose)
 
-      case Appsignal.Json.decode(report_string) do
+      case Jason.decode(report_string) do
         {:ok, report} -> {:ok, report}
         {:error, _} -> {:error, report_string}
       end
