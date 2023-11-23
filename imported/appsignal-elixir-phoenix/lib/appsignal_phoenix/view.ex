@@ -52,7 +52,7 @@ defmodule Appsignal.Phoenix.View do
           {root, _pattern, _names} = __templates__()
           path = Path.join(root, template)
 
-          do_render(@tracer.current_span, path, fn ->
+          do_render(@tracer.current_span(), path, fn ->
             super(template, assigns)
           end)
         end
