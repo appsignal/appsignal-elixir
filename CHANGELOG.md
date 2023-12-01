@@ -1,5 +1,25 @@
 # AppSignal for Elixir changelog
 
+## 2.8.0
+
+### Changed
+
+- [8e8911f0](https://github.com/appsignal/appsignal-elixir/commit/8e8911f0091d5a74633235a5e4371fe0369e405f) minor - Always use Jason to encode JSON. This removes the need to install either Jason or Poison alongside AppSignal, simplifying our installation instructions.
+- [9dbf8d82](https://github.com/appsignal/appsignal-elixir/commit/9dbf8d829e5aa4cbb1c73a8c5594cb0b9ab9d31a) patch - Filter more disk mountpoints for disk usage and disk IO stats. This helps reduce noise in the host metrics by focussing on more important mountpoints.
+  
+  The following mountpoint are ignored. Any mountpoint containing:
+  
+  - `/etc/hostname`
+  - `/etc/hosts`
+  - `/etc/resolv.conf`
+  - `/snap/`
+  - `/proc/`
+
+### Fixed
+
+- [9dbf8d82](https://github.com/appsignal/appsignal-elixir/commit/9dbf8d829e5aa4cbb1c73a8c5594cb0b9ab9d31a) patch - - Support disk usage reporting (using `df`) on Alpine Linux. This host metric would report an error on Alpine Linux.
+  - When a disk mountpoint has no inodes usage percentage, skip the mountpoint, and report the inodes information successfully for the inodes that do have an inodes usage percentage.
+
 ## 2.7.13
 
 ### Changed
