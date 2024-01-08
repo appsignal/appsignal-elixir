@@ -1,5 +1,12 @@
 # AppSignal for Elixir Phoenix changelog
 
+## 2.3.5
+
+### Fixed
+
+- [a08fbf9](https://github.com/appsignal/appsignal-elixir-phoenix/commit/a08fbf94675be8088763fe4403ad7529523e2977) patch - Allow the `phoenix_html` dependency to use version 4.0 or above.
+- [a08fbf9](https://github.com/appsignal/appsignal-elixir-phoenix/commit/a08fbf94675be8088763fe4403ad7529523e2977) patch - Fix warning on Elixir 1.16 calling current_span() as a function
+
 ## 2.3.4
 
 ### Fixed
