@@ -482,6 +482,15 @@ defmodule Appsignal.TracerTest do
     end
   end
 
+  describe "on_create_span/2" do
+    test "setting custom data on the span with the custom_on_create_fun_test_span function" do
+      assert %{"sample_data" => %{"custom_data" => "{\"foo\":\"bar\"}"}} =
+               "http_request"
+               |> Tracer.create_span()
+               |> Span.to_map()
+    end
+  end
+
   defp create_root_span(_context) do
     [span: Tracer.create_span("http_request")]
   end
@@ -521,5 +530,9 @@ defmodule Appsignal.TracerTest do
     on_exit(fn ->
       {:ok, _} = Supervisor.restart_child(Appsignal.Supervisor, Tracer)
     end)
+  end
+
+  def custom_on_create_fun(span, _parent) do
+    Span.set_sample_data(span, "custom_data", %{foo: "bar"})
   end
 end
