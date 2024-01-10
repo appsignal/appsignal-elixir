@@ -482,6 +482,15 @@ defmodule Appsignal.TracerTest do
     end
   end
 
+  describe "on_create_span/2" do
+    test "custom data is set with Appsignal.Support.Tracer defined in config" do
+      assert %{"sample_data" => %{"custom_data" => "{\"foo\":\"bar\"}"}} =
+               "http_request"
+               |> Tracer.create_span()
+               |> Span.to_map()
+    end
+  end
+
   defp create_root_span(_context) do
     [span: Tracer.create_span("http_request")]
   end
