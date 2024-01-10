@@ -79,7 +79,7 @@ defmodule AppsignalTest.Utils do
     end)
   end
 
-  def is_reference_or_binary(term) do
+  def reference_or_binary?(term) do
     if System.otp_release() >= "20" do
       is_reference(term)
     else
