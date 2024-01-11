@@ -15,7 +15,6 @@ if Mix.env() in [:bench, :test, :test_no_nif] do
   config :appsignal, appsignal_span: Appsignal.Test.Span
   config :appsignal, appsignal_tracer: Appsignal.Test.Tracer
   config :appsignal, appsignal_tracer_nif: Appsignal.Test.Nif
-  config :appsignal, custom_on_create_fun: &Appsignal.Support.Tracer.custom_on_create_fun/2
   config :appsignal, deletion_delay: 100
 
   config :appsignal, :config,
