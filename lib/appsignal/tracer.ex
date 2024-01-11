@@ -4,11 +4,6 @@ defmodule Appsignal.Tracer do
   require Appsignal.Utils
 
   @monitor Appsignal.Utils.compile_env(:appsignal, :appsignal_monitor, Appsignal.Monitor)
-  @custom_on_create_fun Appsignal.Utils.compile_env(
-                          :appsignal,
-                          :custom_on_create_fun,
-                          &Appsignal.Tracer.custom_on_create_fun/2
-                        )
 
   @table :"$appsignal_registry"
 
@@ -269,7 +264,10 @@ defmodule Appsignal.Tracer do
 
   @spec on_create_span(Span.t() | nil, Span.t() | nil) :: Span.t() | nil
   defp on_create_span(span, parent) do
-    @custom_on_create_fun.(span, parent)
+    custom_on_create_fun =
+      Application.get_env(:appsignal, :custom_on_create_fun, &__MODULE__.custom_on_create_fun/2)
+
+    span = custom_on_create_fun.(span, parent)
     span
   end
 
