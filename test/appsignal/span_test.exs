@@ -504,6 +504,36 @@ defmodule AppsignalSpanTest do
     end
   end
 
+  describe ".set_sample_data/3, with a list" do
+    setup :create_root_span
+
+    setup %{span: span} do
+      Span.set_sample_data(span, "custom_data", ["abc", "def"])
+
+      :ok
+    end
+
+    @tag :skip_env_test_no_nif
+    test "sets the list as sample data", %{span: span} do
+      assert %{"sample_data" => %{"custom_data" => "[\"abc\",\"def\"]"}} = Span.to_map(span)
+    end
+  end
+
+  describe ".set_sample_data/3, with a keyword list" do
+    setup :create_root_span
+
+    setup %{span: span} do
+      Span.set_sample_data(span, "custom_data", abc: "def")
+
+      :ok
+    end
+
+    @tag :skip_env_test_no_nif
+    test "sets the keyword list as sample data", %{span: span} do
+      assert %{"sample_data" => %{"custom_data" => "[[\"abc\",\"def\"]]"}} = Span.to_map(span)
+    end
+  end
+
   describe ".set_sample_data/3, when passing invalid data" do
     setup :create_root_span
 
@@ -652,6 +682,36 @@ defmodule AppsignalSpanTest do
     @tag :skip_env_test_no_nif
     test "does not set the sample data", %{span: span} do
       assert Span.to_map(span)["sample_data"] == %{}
+    end
+  end
+
+  describe ".set_sample_data_if_nil/3, with a list" do
+    setup :create_root_span
+
+    setup %{span: span} do
+      Span.set_sample_data_if_nil(span, "custom_data", ["abc", "def"])
+
+      :ok
+    end
+
+    @tag :skip_env_test_no_nif
+    test "sets the list as sample data", %{span: span} do
+      assert %{"sample_data" => %{"custom_data" => "[\"abc\",\"def\"]"}} = Span.to_map(span)
+    end
+  end
+
+  describe ".set_sample_data_if_nil/3, with a keyword list" do
+    setup :create_root_span
+
+    setup %{span: span} do
+      Span.set_sample_data_if_nil(span, "custom_data", abc: "def")
+
+      :ok
+    end
+
+    @tag :skip_env_test_no_nif
+    test "sets the keyword list as sample data", %{span: span} do
+      assert %{"sample_data" => %{"custom_data" => "[[\"abc\",\"def\"]]"}} = Span.to_map(span)
     end
   end
 
