@@ -117,6 +117,20 @@ defmodule Appsignal.Utils.DataEncoderTest do
              Nif.data_to_json(resource)
   end
 
+  test "encode a keyword list of keyword lists" do
+    resource = DataEncoder.encode(foo: [bar: :bar], baz: [quux: :quux])
+
+    assert {:ok, ~c"[[\"foo\",[[\"bar\",\"bar\"]]],[\"baz\",[[\"quux\",\"quux\"]]]]"} ==
+             Nif.data_to_json(resource)
+  end
+
+  test "encode a map with a keyword list as a value" do
+    resource = DataEncoder.encode(%{foo: [bar: :baz]})
+
+    assert {:ok, ~c"{\"foo\":[[\"bar\",\"baz\"]]}"} ==
+             Nif.data_to_json(resource)
+  end
+
   test "encode a list with a keywords with maps as values" do
     resource = DataEncoder.encode(field: {"can't be blank", [validation: :required]})
 
