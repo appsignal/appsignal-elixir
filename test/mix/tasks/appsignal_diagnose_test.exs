@@ -872,11 +872,12 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     test "adds paths to report", %{fake_report: fake_report} do
       run()
 
-      assert Map.keys(received_report(fake_report)[:paths]) == [
-               :"appsignal.log",
-               :log_dir_path,
-               :working_dir
-             ]
+      assert MapSet.new(Map.keys(received_report(fake_report)[:paths])) ==
+               MapSet.new([
+                 :"appsignal.log",
+                 :log_dir_path,
+                 :working_dir
+               ])
     end
   end
 
