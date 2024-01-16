@@ -1,5 +1,40 @@
 # AppSignal for Elixir changelog
 
+## 2.8.1
+
+### Changed
+
+- [40dc85ef](https://github.com/appsignal/appsignal-elixir/commit/40dc85efb1a9ecb5803dc82c88cb37c1c8ccc72d) patch - Fix disk usage returning a Vec with no entries on Alpine Linux when the `df --local` command fails.
+- [92d948fa](https://github.com/appsignal/appsignal-elixir/commit/92d948fa1f8db9546a9074789d7e1ff7264aa720) patch - Add support for lists in the sample data as root values on spans, as shown below. Previously we only supported lists as nested objects in maps.
+  
+  ```elixir
+  Appsignal.Span.set_sample_data(
+    Appsignal.Tracer.root_span,
+    "custom_data",
+    [
+      "value 1",
+      "value 2"
+    ]
+  )
+  ```
+
+### Removed
+
+- [40dc85ef](https://github.com/appsignal/appsignal-elixir/commit/40dc85efb1a9ecb5803dc82c88cb37c1c8ccc72d) patch - Remove the `appsignal_set_host_guage` and `appsignal_set_process_gauge` extension functions. These functions were already deprecated and did not report any metrics.
+
+### Fixed
+
+- [9ec351a7](https://github.com/appsignal/appsignal-elixir/commit/9ec351a7e4fc77ac2ca1976191235793f625888d) patch - Fix missing error metrics for the error rate and error count graphs in some scenarios, like with Node.js Koa apps.
+- [a339fc1d](https://github.com/appsignal/appsignal-elixir/commit/a339fc1d9ef8f8c34c32c5415bd32dbd0cb6b754) patch - Add support for keywords lists in sample data on spans. These would previously be shown an empty list.
+  
+  ```elixir
+  Appsignal.Span.set_sample_data(
+    Appsignal.Tracer.root_span,
+    "custom_data",
+    %{"keyword_list": [foo: "some value", "bar": "other value"]}
+  )
+  ```
+
 ## 2.8.0
 
 ### Changed
