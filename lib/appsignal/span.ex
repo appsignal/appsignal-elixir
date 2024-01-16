@@ -242,7 +242,7 @@ defmodule Appsignal.Span do
   end
 
   defp do_set_sample_data(%Span{reference: reference} = span, key, value, setter)
-       when is_binary(key) and is_map(value) do
+       when is_binary(key) and (is_map(value) or is_list(value)) do
     data = Appsignal.Utils.DataEncoder.encode(value)
 
     :ok = setter.(reference, key, data)

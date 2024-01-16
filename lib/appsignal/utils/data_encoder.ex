@@ -19,7 +19,26 @@ defmodule Appsignal.Utils.DataEncoder do
 
   def encode(data) when is_list(data) do
     {:ok, resource} = Nif.data_list_new()
-    Enum.each(data, fn item -> encode(resource, item) end)
+
+    Enum.each(data, fn item ->
+      if is_map(item) or is_tuple(item) do
+        Nif.data_set_data(resource, encode(item))
+      else
+        if is_list(item) do
+          if proper_list?(item) do
+            Nif.data_set_data(resource, encode(item))
+          else
+            Nif.data_set_string(
+              resource,
+              "improper_list:#{inspect(item)}"
+            )
+          end
+        else
+          encode(resource, item)
+        end
+      end
+    end)
+
     resource
   end
 
