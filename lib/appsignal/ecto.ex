@@ -61,25 +61,31 @@ defmodule Appsignal.Ecto do
   end
 
   @doc false
-  def handle_event(_event, %{total_time: total_time}, %{repo: repo, query: "begin"}, _config) do
-    handle_begin(@tracer.current_span(), total_time, repo)
-  end
-
-  def handle_event(_event, %{total_time: total_time}, %{repo: repo, query: "commit"}, _config) do
-    handle_commit(@tracer.current_span(), total_time, repo)
-  end
-
-  def handle_event(_event, %{total_time: total_time}, %{repo: repo, query: "rollback"}, _config) do
-    handle_rollback(@tracer.current_span(), total_time, repo)
-  end
-
-  def handle_event(_event, %{total_time: total_time}, %{repo: repo, query: query}, _config) do
-    handle_query(@tracer.current_span(), total_time, repo, query)
+  def handle_event(
+        _event,
+        %{total_time: total_time},
+        %{repo: repo, query: query} = metadata,
+        _config
+      ) do
+    do_handle_event(current_span(metadata), total_time, repo, query)
   end
 
   def handle_event(_event, _measurements, _metadata, _config), do: :ok
 
-  defp handle_begin(nil, _total_time, _repo), do: nil
+  defp current_span(metadata) do
+    metadata[:options][:_appsignal_current_span] || @tracer.current_span()
+  end
+
+  defp do_handle_event(nil, _total_time, _repo, _query), do: nil
+
+  defp do_handle_event(current_span, total_time, repo, query) do
+    case query do
+      "begin" -> handle_begin(current_span, total_time, repo)
+      "commit" -> handle_commit(current_span, total_time, repo)
+      "rollback" -> handle_rollback(current_span, total_time, repo)
+      _ -> handle_query(current_span, total_time, repo, query)
+    end
+  end
 
   defp handle_begin(current_span, total_time, repo) do
     time = :os.system_time()
@@ -91,8 +97,6 @@ defmodule Appsignal.Ecto do
     |> @span.set_name("Transaction #{module_name(repo)}")
     |> @span.set_attribute("appsignal:category", "transaction.ecto")
   end
-
-  defp handle_commit(nil, _total_time, _repo), do: nil
 
   defp handle_commit(current_span, total_time, repo) do
     time = :os.system_time()
@@ -107,8 +111,6 @@ defmodule Appsignal.Ecto do
     @tracer.close_span(current_span, end_time: time)
   end
 
-  defp handle_rollback(nil, _total_time, _repo), do: nil
-
   defp handle_rollback(current_span, total_time, repo) do
     time = :os.system_time()
 
@@ -121,8 +123,6 @@ defmodule Appsignal.Ecto do
     # Close span created by `handle_begin/3`
     @tracer.close_span(current_span, end_time: time)
   end
-
-  defp handle_query(nil, _total_time, _repo, _query), do: nil
 
   defp handle_query(current_span, total_time, repo, query) do
     time = :os.system_time()
