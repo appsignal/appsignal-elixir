@@ -482,6 +482,43 @@ defmodule Appsignal.TracerTest do
     end
   end
 
+  describe "on_create_span/2" do
+    setup do
+      on_exit(fn ->
+        Application.put_env(:appsignal, :custom_on_create_fun, &Tracer.custom_on_create_fun/1)
+      end)
+    end
+
+    test "custom data is set with custom_on_create_fun_span" do
+      Application.put_env(
+        :appsignal,
+        :custom_on_create_fun,
+        &__MODULE__.custom_on_create_fun_span/1
+      )
+
+      assert %{"sample_data" => %{"custom_data" => "{\"foo\":\"bar\"}"}} =
+               "http_request"
+               |> Tracer.create_span()
+               |> Span.to_map()
+    end
+
+    test "custom data is set with custom_on_create_fun_parent updates the parent span" do
+      parent = "http_request" |> Tracer.create_span()
+
+      assert %{} == parent |> Span.to_map() |> Map.get("sample_data")
+
+      Application.put_env(
+        :appsignal,
+        :custom_on_create_fun,
+        &__MODULE__.custom_on_create_fun_parent/1
+      )
+
+      "http_request" |> Tracer.create_span(parent)
+
+      assert %{"sample_data" => %{"custom_data" => "{\"foo\":\"bar\"}"}} = Span.to_map(parent)
+    end
+  end
+
   defp create_root_span(_context) do
     [span: Tracer.create_span("http_request")]
   end
@@ -521,5 +558,14 @@ defmodule Appsignal.TracerTest do
     on_exit(fn ->
       {:ok, _} = Supervisor.restart_child(Appsignal.Supervisor, Tracer)
     end)
+  end
+
+  def custom_on_create_fun_span(span) do
+    Appsignal.Span.set_sample_data(span, "custom_data", %{foo: "bar"})
+  end
+
+  def custom_on_create_fun_parent(span) do
+    root = Tracer.root_span(span.pid)
+    Appsignal.Span.set_sample_data(root, "custom_data", %{foo: "bar"})
   end
 end
