@@ -54,7 +54,7 @@ defmodule Appsignal.Tracer do
       namespace
       |> Span.create_root(pid, options[:start_time])
       |> register()
-      |> on_create_span(nil)
+      |> on_create_span()
     end
   end
 
@@ -65,7 +65,7 @@ defmodule Appsignal.Tracer do
       parent
       |> Span.create_child(pid, options[:start_time])
       |> register()
-      |> on_create_span(parent)
+      |> on_create_span()
     end
   end
 
@@ -263,11 +263,11 @@ defmodule Appsignal.Tracer do
   end
 
   @spec on_create_span(Span.t() | nil, Span.t() | nil) :: Span.t() | nil
-  defp on_create_span(span, parent) do
+  defp on_create_span(span) do
     custom_on_create_fun =
-      Application.get_env(:appsignal, :custom_on_create_fun, &__MODULE__.custom_on_create_fun/2)
+      Application.get_env(:appsignal, :custom_on_create_fun, &__MODULE__.custom_on_create_fun/1)
 
-    span = custom_on_create_fun.(span, parent)
+    custom_on_create_fun.(span)
     span
   end
 
@@ -291,8 +291,8 @@ defmodule Appsignal.Tracer do
   ```
   """
 
-  @spec custom_on_create_fun(Span.t() | nil, Span.t() | nil) :: Span.t() | nil
-  def custom_on_create_fun(span, _parent) do
-    span
+  @spec custom_on_create_fun(Span.t() | nil) :: any()
+  def custom_on_create_fun(_span) do
+    nil
   end
 end
