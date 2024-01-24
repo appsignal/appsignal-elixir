@@ -9,6 +9,7 @@ if Mix.env() in [:bench, :test, :test_no_nif] do
   config :appsignal, io: FakeIO
   config :appsignal, file: FakeFile
   config :appsignal, os_internal: FakeOS
+  config :appsignal, ecto_repo: FakeEctoRepo
 
   config :appsignal, appsignal_tracer_nif: Appsignal.Test.Nif
   config :appsignal, appsignal_tracer: Appsignal.Test.Tracer
