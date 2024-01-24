@@ -3,7 +3,7 @@ bump: "patch"
 type: "add"
 ---
 
-Add `Appsignal.Ecto.Repo` to fix parallel preloads.
+Add `Appsignal.Ecto.Repo` to support parallel preloads.
 
 For AppSignal to be able to instrument parallel preloads, the current instrumentation context needs to be passed from the Elixir process that spawns the preload to the short-lived processes that run each of the parallel queries.
 
