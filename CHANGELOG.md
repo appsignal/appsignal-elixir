@@ -1,5 +1,24 @@
 # AppSignal for Elixir changelog
 
+## 2.8.2
+
+### Added
+
+- [47f4a8df](https://github.com/appsignal/appsignal-elixir/commit/47f4a8df24250b7985178372e59408b3feae0af8) patch - Add `Appsignal.Ecto.Repo` to support parallel preloads.
+  
+  For AppSignal to be able to instrument parallel preloads, the current instrumentation context needs to be passed from the Elixir process that spawns the preload to the short-lived processes that run each of the parallel queries.
+  
+  By replacing `use Ecto.Repo` with `use Appsignal.Ecto.Repo`, the appropriate telemetry context will be passed so that AppSignal can correctly instrument these queries:
+  
+  ```elixir
+  defmodule MyApp.Repo do
+    # replace `use Ecto.Repo` with `use Appsignal.Ecto.Repo`
+    use Appsignal.Ecto.Repo,
+      otp_app: :my_app,
+      adapter: Ecto.Adapters.Postgres
+  end
+  ```
+
 ## 2.8.1
 
 ### Changed
