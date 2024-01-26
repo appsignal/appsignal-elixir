@@ -489,6 +489,7 @@ defmodule Appsignal.TracerTest do
       end)
     end
 
+    @tag :skip_env_test_no_nif
     test "custom data is set with custom_on_create_fun_span" do
       Application.put_env(
         :appsignal,
@@ -502,6 +503,7 @@ defmodule Appsignal.TracerTest do
                |> Span.to_map()
     end
 
+    @tag :skip_env_test_no_nif
     test "custom data is set with custom_on_create_fun_parent updates the parent span" do
       parent = "http_request" |> Tracer.create_span()
 
