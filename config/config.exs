@@ -11,10 +11,10 @@ if Mix.env() in [:bench, :test, :test_no_nif] do
   config :appsignal, os_internal: FakeOS
   config :appsignal, ecto_repo: FakeEctoRepo
 
-  config :appsignal, appsignal_tracer_nif: Appsignal.Test.Nif
-  config :appsignal, appsignal_tracer: Appsignal.Test.Tracer
-  config :appsignal, appsignal_span: Appsignal.Test.Span
   config :appsignal, appsignal_monitor: Appsignal.Test.Monitor
+  config :appsignal, appsignal_span: Appsignal.Test.Span
+  config :appsignal, appsignal_tracer: Appsignal.Test.Tracer
+  config :appsignal, appsignal_tracer_nif: Appsignal.Test.Nif
   config :appsignal, deletion_delay: 100
 
   config :appsignal, :config,

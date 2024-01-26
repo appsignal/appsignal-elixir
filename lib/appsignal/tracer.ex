@@ -4,6 +4,7 @@ defmodule Appsignal.Tracer do
   require Appsignal.Utils
 
   @monitor Appsignal.Utils.compile_env(:appsignal, :appsignal_monitor, Appsignal.Monitor)
+
   @table :"$appsignal_registry"
 
   @type option :: {:pid, pid} | {:start_time, integer}
@@ -53,6 +54,7 @@ defmodule Appsignal.Tracer do
       namespace
       |> Span.create_root(pid, options[:start_time])
       |> register()
+      |> on_create_span()
     end
   end
 
@@ -63,6 +65,7 @@ defmodule Appsignal.Tracer do
       parent
       |> Span.create_child(pid, options[:start_time])
       |> register()
+      |> on_create_span()
     end
   end
 
@@ -257,5 +260,39 @@ defmodule Appsignal.Tracer do
     rescue
       ArgumentError -> nil
     end
+  end
+
+  @spec on_create_span(Span.t() | nil) :: Span.t() | nil
+  defp on_create_span(span) do
+    custom_on_create_fun =
+      Application.get_env(:appsignal, :custom_on_create_fun, &__MODULE__.custom_on_create_fun/1)
+
+    custom_on_create_fun.(span)
+    span
+  end
+
+  @doc """
+  This function can be defined by the user and will be executed on the
+  creation of the span after create_span/3 is executed. It can be used to add
+  custom_data to the span.
+
+  Example in your own application:
+  ```ex
+  defmodule MyApp.Appsignal do
+    def custom_on_create_fun(span) do
+      Appsignal.Span.set_sample_data(span, "custom_data", %{"foo": "bar"})
+    end
+  end
+  ```
+
+  This can be added to the config with:
+  ```ex
+  config :appsignal, custom_on_create_fun: &MyApp.Appsignal.custom_on_create_fun/1
+  ```
+  """
+
+  @spec custom_on_create_fun(Span.t() | nil) :: any()
+  def custom_on_create_fun(_span) do
+    nil
   end
 end
