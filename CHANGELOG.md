@@ -1,5 +1,33 @@
 # AppSignal for Elixir changelog
 
+## 2.8.3
+
+_Published on 2024-02-01._
+
+### Added
+
+- [e685b22f](https://github.com/appsignal/appsignal-elixir/commit/e685b22f1d56beeedd66587002b4e839896ce1c9) patch - Set data on spans with the `custom_on_create_fun` hook. This hook is called upon the creation of every span. This can be useful to add tags to internal traces and otherwise difficult to access traces.
+  
+  This won't be necessary for most scenarios. We recommend following [our tagging guide](https://docs.appsignal.com/guides/custom-data/tagging-request.html#elixir) instead.
+  
+  ```elixir
+  defmodule MyApp.Appsignal do
+    def custom_on_create_fun(_span) do
+      Appsignal.Span.set_sample_data(Appsignal.Tracer.root_span, "tags", %{"locale": "en"})
+    end
+  end
+  ```
+  
+  ```elixir
+  # config/config.exs
+  config :appsignal, custom_on_create_fun: &MyApp.Appsignal.custom_on_create_fun/1
+  ```
+
+### Changed
+
+- [924a3ffa](https://github.com/appsignal/appsignal-elixir/commit/924a3ffa3e0e456234df3c8a56c4a7cea875c214) patch - Make the debug log message for OpenTelemetry spans from libraries we don't automatically recognize more clear. Mention the span id and the instrumentation library.
+- [924a3ffa](https://github.com/appsignal/appsignal-elixir/commit/924a3ffa3e0e456234df3c8a56c4a7cea875c214) patch - Fix an issue where queries containing a MySQL leading type indicator would only be partially sanitised.
+
 ## 2.8.2
 
 ### Added
