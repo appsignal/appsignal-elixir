@@ -185,7 +185,7 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
 
       assert String.contains?(
                appsignal_config,
-               ~s(use Mix.Config\n\n) <>
+               ~s(import Config\n\n) <>
                  ~s(config :appsignal, :config,\n) <>
                  ~s(  otp_app: :appsignal,\n) <>
                  ~s(  name: "AppSignal test suite app",\n) <>
@@ -224,7 +224,7 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
 
       assert String.contains?(
                appsignal_config,
-               ~s(use Mix.Config\n\n) <>
+               ~s(import Config\n\n) <>
                  ~s(config :appsignal, :config,\n) <>
                  ~s(  active: true,\n) <>
                  ~s(  otp_app: :appsignal,\n) <>
@@ -262,7 +262,7 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
 
       assert String.contains?(
                File.read!(Path.join(@test_config_directory, "config.exs")),
-               ~s(use Mix.Config\n\nimport_config "appsignal.exs")
+               ~s(import Config\n\nimport_config "appsignal.exs")
              )
     end
 
@@ -271,7 +271,7 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
       @test_config_directory
       |> Path.join("config.exs")
       |> File.open!([:write])
-      |> IO.binwrite(~s(use Mix.Config\n# config\nimport_config "appsignal.exs"))
+      |> IO.binwrite(~s(import Config\n# config\nimport_config "appsignal.exs"))
       |> File.close()
 
       @test_config_directory
@@ -339,7 +339,7 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
     directory
     |> Path.join("#{env}.exs")
     |> File.open!([:write])
-    |> IO.binwrite("use Mix.Config\n# #{env}")
+    |> IO.binwrite("import Config\n# #{env}")
     |> File.close()
   end
 
@@ -348,7 +348,7 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
   defp config_active_for_env?(env) do
     case File.read(Path.join(@test_config_directory, "#{env}.exs")) do
       {:ok, env_config} ->
-        String.contains?(env_config, ~s(use Mix.Config\n# #{env}\n)) &&
+        String.contains?(env_config, ~s(import Config\n# #{env}\n)) &&
           String.contains?(env_config, ~s(\nconfig :appsignal, :config, active: true))
 
       {:error, _} ->
