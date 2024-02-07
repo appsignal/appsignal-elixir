@@ -207,7 +207,7 @@ defmodule Mix.Tasks.Appsignal.Install do
         end
 
       true ->
-        case File.write(config_file_path(), "use Mix.Config\n#{active_content}") do
+        case File.write(config_file_path(), "import Config\n#{active_content}") do
           :ok ->
             IO.puts("Success!")
 
@@ -246,7 +246,7 @@ defmodule Mix.Tasks.Appsignal.Install do
       end
 
     """
-    use Mix.Config
+    import Config
 
     config :appsignal, :config,
     #{options_with_active}
