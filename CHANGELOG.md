@@ -67,7 +67,7 @@ _Published on 2024-02-01._
 
 ### Removed
 
-- [40dc85ef](https://github.com/appsignal/appsignal-elixir/commit/40dc85efb1a9ecb5803dc82c88cb37c1c8ccc72d) patch - Remove the `appsignal_set_host_guage` and `appsignal_set_process_gauge` extension functions. These functions were already deprecated and did not report any metrics.
+- [40dc85ef](https://github.com/appsignal/appsignal-elixir/commit/40dc85efb1a9ecb5803dc82c88cb37c1c8ccc72d) patch - Remove the `appsignal_set_host_gauge` and `appsignal_set_process_gauge` extension functions. These functions were already deprecated and did not report any metrics.
 
 ### Fixed
 
