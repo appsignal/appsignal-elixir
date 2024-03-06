@@ -1,5 +1,24 @@
 # AppSignal for Elixir changelog
 
+## 2.9.0
+
+_Published on 2024-03-06._
+
+### Added
+
+- [be785ea9](https://github.com/appsignal/appsignal-elixir/commit/be785ea99d55d04f42639ed7a93b8c5b458240dc) patch - Add histogram support to the OpenTelemetry HTTP server. This allows OpenTelemetry-based instrumentations to report histogram data to AppSignal as distribution metrics.
+
+### Changed
+
+- [2d3130fd](https://github.com/appsignal/appsignal-elixir/commit/2d3130fd5d6bbdcdb91e35f581857e05c8ec292a) minor - **Breaking change**: Normalize CPU metrics for cgroups v1 systems. When we can detect how many CPUs are configured in the container's limits, we will normalize the CPU percentages to a maximum of 100%. This is a breaking change. Triggers for CPU percentages that are configured for a CPU percentage higher than 100% will no longer trigger after this update. Please configure triggers to a percentage with a maximum of 100% CPU percentage.
+- [1566a4a8](https://github.com/appsignal/appsignal-elixir/commit/1566a4a8cf0536203027438b01cf1054c4afbf01) patch - Update the Mix config import in the `config/appsignal.exs` file to use `import Config`, rather than the deprecated `use Mix.Config`.
+- [2d3130fd](https://github.com/appsignal/appsignal-elixir/commit/2d3130fd5d6bbdcdb91e35f581857e05c8ec292a) patch - Support fractional CPUs for cgroups v2 metrics. Previously a CPU count of 0.5 would be interpreted as 1 CPU. Now it will be correctly seen as half a CPU and calculate CPU percentages accordingly.
+- [fb7568ac](https://github.com/appsignal/appsignal-elixir/commit/fb7568aced9ddcf1eb055c590ff1554d603c81a7) patch - Update bundled trusted root certificates.
+
+### Fixed
+
+- [ad0fdb0c](https://github.com/appsignal/appsignal-elixir/commit/ad0fdb0c2142eaf53f0129568164ce4c96dd1337) patch - Fix (sub)traces not being reported in their entirety when the OpenTelemetry exporter sends one trace in multiple export requests. This would be an issue for long running traces, that are exported in several requests.
+
 ## 2.8.3
 
 _Published on 2024-02-01._
