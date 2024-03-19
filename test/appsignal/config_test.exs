@@ -456,6 +456,11 @@ defmodule Appsignal.ConfigTest do
                with_config(%{ca_file_path: "/foo/bar/baz.ca"}, &init_config/0)
     end
 
+    test "cpu_count" do
+      assert %{cpu_count: 1.5} =
+               with_config(%{cpu_count: 1.5}, &init_config/0)
+    end
+
     test "debug" do
       assert %{debug: true} = with_config(%{debug: true}, &init_config/0)
     end
@@ -720,6 +725,13 @@ defmodule Appsignal.ConfigTest do
                %{"APPSIGNAL_CA_FILE_PATH" => "/foo/bar/baz.ca"},
                &init_config/0
              ) == default_configuration() |> Map.put(:ca_file_path, "/foo/bar/baz.ca")
+    end
+
+    test "cpu_count" do
+      assert with_env(
+               %{"APPSIGNAL_CPU_COUNT" => "1.5"},
+               &init_config/0
+             ) == default_configuration() |> Map.put(:cpu_count, 1.5)
     end
 
     test "debug" do
@@ -1203,6 +1215,7 @@ defmodule Appsignal.ConfigTest do
       write_to_environment()
       assert Nif.env_get("_APPSIGNAL_APP_NAME") == ~c""
       assert Nif.env_get("_APPSIGNAL_BIND_ADDRESS") == ~c""
+      assert Nif.env_get("_APPSIGNAL_CPU_COUNT") == ~c""
       assert Nif.env_get("_APPSIGNAL_HTTP_PROXY") == ~c""
       assert Nif.env_get("_APPSIGNAL_IGNORE_ACTIONS") == ~c""
       assert Nif.env_get("_APPSIGNAL_IGNORE_ERRORS") == ~c""
@@ -1237,6 +1250,7 @@ defmodule Appsignal.ConfigTest do
           active: true,
           bind_address: "0.0.0.0",
           ca_file_path: "/foo/bar/zab.ca",
+          cpu_count: 1.5,
           debug: true,
           dns_servers: ["8.8.8.8", "8.8.4.4"],
           enable_host_metrics: false,
@@ -1275,6 +1289,7 @@ defmodule Appsignal.ConfigTest do
           assert Nif.env_get("_APPSIGNAL_APP_NAME") == ~c"AppSignal test suite app"
           assert Nif.env_get("_APPSIGNAL_BIND_ADDRESS") == ~c"0.0.0.0"
           assert Nif.env_get("_APPSIGNAL_CA_FILE_PATH") == ~c"/foo/bar/zab.ca"
+          assert Nif.env_get("_APPSIGNAL_CPU_COUNT") == ~c"1.5"
           assert Nif.env_get("_APPSIGNAL_DEBUG_LOGGING") == ~c"true"
           assert Nif.env_get("_APPSIGNAL_DNS_SERVERS") == ~c"8.8.8.8,8.8.4.4"
           assert Nif.env_get("_APPSIGNAL_ENABLE_HOST_METRICS") == ~c"false"
