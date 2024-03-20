@@ -302,6 +302,7 @@ defmodule Appsignal.Config do
     "APPSIGNAL_APP_NAME" => :name,
     "APPSIGNAL_BIND_ADDRESS" => :bind_address,
     "APPSIGNAL_CA_FILE_PATH" => :ca_file_path,
+    "APPSIGNAL_CPU_COUNT" => :cpu_count,
     "APPSIGNAL_DEBUG" => :debug,
     "APPSIGNAL_DIAGNOSE_ENDPOINT" => :diagnose_endpoint,
     "APPSIGNAL_DNS_SERVERS" => :dns_servers,
@@ -369,6 +370,7 @@ defmodule Appsignal.Config do
     APPSIGNAL_IGNORE_NAMESPACES APPSIGNAL_DNS_SERVERS
     APPSIGNAL_FILTER_SESSION_DATA APPSIGNAL_REQUEST_HEADERS
   )
+  @float_keys ~w(APPSIGNAL_CPU_COUNT)
 
   defp load_from_environment do
     %{}
@@ -376,6 +378,7 @@ defmodule Appsignal.Config do
     |> load_environment(@bool_keys, &true?(&1))
     |> load_environment(@atom_keys, &String.to_atom(&1))
     |> load_environment(@string_list_keys, &String.split(&1, ","))
+    |> load_environment(@float_keys, &String.to_float(&1))
   end
 
   defp load_environment(config, list, converter) do
@@ -445,6 +448,7 @@ defmodule Appsignal.Config do
     Nif.env_put("_APPSIGNAL_APP_PATH", List.to_string(:code.priv_dir(:appsignal)))
     Nif.env_put("_APPSIGNAL_BIND_ADDRESS", to_string(config[:bind_address]))
     Nif.env_put("_APPSIGNAL_CA_FILE_PATH", to_string(config[:ca_file_path]))
+    Nif.env_put("_APPSIGNAL_CPU_COUNT", to_string(config[:cpu_count]))
     Nif.env_put("_APPSIGNAL_DEBUG_LOGGING", to_string(config[:debug]))
     Nif.env_put("_APPSIGNAL_DNS_SERVERS", config[:dns_servers] |> Enum.join(","))
     Nif.env_put("_APPSIGNAL_ENABLE_HOST_METRICS", to_string(config[:enable_host_metrics]))
