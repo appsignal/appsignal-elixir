@@ -1,5 +1,15 @@
 # AppSignal for Elixir changelog
 
+## 2.9.1
+
+_Published on 2024-03-20._
+
+### Added
+
+- [c833c8a4](https://github.com/appsignal/appsignal-elixir/commit/c833c8a4bb82febb0a45b1fb8a5fdeff238444be) patch - Implement CPU count configuration option. Use it to override the auto-detected, cgroups-provided number of CPUs that is used to calculate CPU usage percentages.
+  
+  To set it, use the `cpu_count` configuration option, or the `APPSIGNAL_CPU_COUNT` environment variable.
+
 ## 2.9.0
 
 _Published on 2024-03-06._
