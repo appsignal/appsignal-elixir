@@ -1,3 +1,11 @@
+defmodule Test400Error do
+  defexception message: "400!", plug_status: 400
+end
+
+defmodule Test500Error do
+  defexception message: "500!", plug_status: 500
+end
+
 defmodule AppsignalSpanTest do
   use ExUnit.Case
   alias Appsignal.{Span, Test}
@@ -275,6 +283,52 @@ defmodule AppsignalSpanTest do
 
     test "sets the error through the Nif", %{span: %Span{reference: reference}} do
       assert [{^reference, "ArgumentError", _message, _}] = Test.Nif.get!(:add_span_error)
+    end
+  end
+
+  describe ".add_error/3, with a 500 plug_status" do
+    setup :create_root_span
+
+    setup %{span: span} do
+      return =
+        try do
+          raise Test500Error
+        rescue
+          exception -> Span.add_error(span, exception, __STACKTRACE__)
+        end
+
+      [return: return]
+    end
+
+    test "returns the span", %{span: span, return: return} do
+      assert return == span
+    end
+
+    test "sets the error through the Nif", %{span: %Span{reference: reference}} do
+      assert [{^reference, "Test500Error", _message, _}] = Test.Nif.get!(:add_span_error)
+    end
+  end
+
+  describe ".add_error/3, with a non-500 plug_status" do
+    setup :create_root_span
+
+    setup %{span: span} do
+      return =
+        try do
+          raise Test400Error
+        rescue
+          exception -> Span.add_error(span, exception, __STACKTRACE__)
+        end
+
+      [return: return]
+    end
+
+    test "returns the span", %{span: span, return: return} do
+      assert return == span
+    end
+
+    test "does not set the error through the Nif" do
+      assert Test.Nif.get(:add_span_error) == :error
     end
   end
 
