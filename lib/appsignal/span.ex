@@ -288,6 +288,11 @@ defmodule Appsignal.Span do
       end
 
   """
+  def add_error(span, %_{__exception__: true, plug_status: status}, _stacktrace)
+      when status < 500 do
+    span
+  end
+
   def add_error(span, %_{__exception__: true} = exception, stacktrace) do
     {name, message, formatted_stacktrace} = Appsignal.Error.metadata(exception, stacktrace)
     do_add_error(span, name, message, formatted_stacktrace)
