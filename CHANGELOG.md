@@ -1,5 +1,13 @@
 # AppSignal for Elixir changelog
 
+## 2.9.2
+
+_Published on 2024-03-22._
+
+### Fixed
+
+- [4567ce04](https://github.com/appsignal/appsignal-elixir/commit/4567ce04279ebd53570c84870a81bf7168a91091) patch - Drop non-500 Plug errors in add_error/3
+
 ## 2.9.1
 
 _Published on 2024-03-20._
