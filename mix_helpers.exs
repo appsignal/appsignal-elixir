@@ -46,12 +46,7 @@ defmodule Mix.Appsignal.Helper do
           {:ok, {arch_config, %{build: %{source: "remote"}} = report}} ->
             case download_and_compile(arch_config, report) do
               :ok ->
-                Logger.debug("""
-                AppSignal for Elixir #{Mix.Project.config()[:version]} successfully installed!
-                If you're upgrading from version 1.x, please review our upgrade guide:
-
-                https://docs.appsignal.com/elixir/installation/upgrading-from-1.x-to-2.x.html
-                """)
+                :ok
 
               {:error, {reason, report}} ->
                 abort_installation(reason, report)
