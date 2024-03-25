@@ -4,7 +4,7 @@
 # Modifications to this file will be overwritten with the next agent release.
 
 defmodule Appsignal.Agent do
-  def version, do: "0.34.1"
+  def version, do: "0.34.2"
 
   def mirrors do
     [
@@ -16,55 +16,55 @@ defmodule Appsignal.Agent do
   def triples do
     %{
       "x86_64-darwin" => %{
-        checksum: "351f3dae916d3e84177d8cc35eaeaca5345f4deca9e0925a29353915cc0530d2",
+        checksum: "5bf07d396b22fd414eac70c545c710ab60114b1a2fa28aa92f8a5379483fe8fc",
         filename: "appsignal-x86_64-darwin-all-static.tar.gz"
       },
       "universal-darwin" => %{
-        checksum: "351f3dae916d3e84177d8cc35eaeaca5345f4deca9e0925a29353915cc0530d2",
+        checksum: "5bf07d396b22fd414eac70c545c710ab60114b1a2fa28aa92f8a5379483fe8fc",
         filename: "appsignal-x86_64-darwin-all-static.tar.gz"
       },
       "aarch64-darwin" => %{
-        checksum: "fd7359232fbd65f10ee565fcf65f4afa6d7a2ba1a8dead200c34736ca942df16",
+        checksum: "6099dfa72394de9e19e8524c19e5292cacd2359a5ceac634c878c113b6f5e875",
         filename: "appsignal-aarch64-darwin-all-static.tar.gz"
       },
       "arm64-darwin" => %{
-        checksum: "fd7359232fbd65f10ee565fcf65f4afa6d7a2ba1a8dead200c34736ca942df16",
+        checksum: "6099dfa72394de9e19e8524c19e5292cacd2359a5ceac634c878c113b6f5e875",
         filename: "appsignal-aarch64-darwin-all-static.tar.gz"
       },
       "arm-darwin" => %{
-        checksum: "fd7359232fbd65f10ee565fcf65f4afa6d7a2ba1a8dead200c34736ca942df16",
+        checksum: "6099dfa72394de9e19e8524c19e5292cacd2359a5ceac634c878c113b6f5e875",
         filename: "appsignal-aarch64-darwin-all-static.tar.gz"
       },
       "aarch64-linux" => %{
-        checksum: "dfbab18b7faa24684bf0ab57666b6b493356a3da43ecdba2e992b2d6d513cf31",
+        checksum: "34061220065890545627b8988062950a20ab873f297c1e3ba1c1709038c23c96",
         filename: "appsignal-aarch64-linux-all-static.tar.gz"
       },
       "i686-linux" => %{
-        checksum: "ce4a819f3eaa4590795497915e4a20b3fe281a0821364b80d26ffd1391af67a8",
+        checksum: "f8285d87fa72717889e89059a64bba7e98c45ecc720e533c2b4fc92c60a30a04",
         filename: "appsignal-i686-linux-all-static.tar.gz"
       },
       "x86-linux" => %{
-        checksum: "ce4a819f3eaa4590795497915e4a20b3fe281a0821364b80d26ffd1391af67a8",
+        checksum: "f8285d87fa72717889e89059a64bba7e98c45ecc720e533c2b4fc92c60a30a04",
         filename: "appsignal-i686-linux-all-static.tar.gz"
       },
       "x86_64-linux" => %{
-        checksum: "e55f9ecb4e4b51e9232918216487712b63a7cfea9710763f61077e8d40d53dbe",
+        checksum: "fd6718fee5638986b77ebd777649f013b52f69f4b1886c41c85626c6f901bcb9",
         filename: "appsignal-x86_64-linux-all-static.tar.gz"
       },
       "x86_64-linux-musl" => %{
-        checksum: "8963ebc98405648205a6d8aa371bafa49cb33cd104e0c3e6cc1856ba41fe3d8c",
+        checksum: "561626ac2bf31c6a5af9d21994fe7ca55cc89619b0db0d1f575d311259e99bae",
         filename: "appsignal-x86_64-linux-musl-all-static.tar.gz"
       },
       "aarch64-linux-musl" => %{
-        checksum: "34bb72678b896a2a8289a97611a61a297b5a0e6110f5085a683ad93857cdf26c",
+        checksum: "03d8464040796f2d242ce66f12297f238d686794a0c2fe4090e0cde1b7bee272",
         filename: "appsignal-aarch64-linux-musl-all-static.tar.gz"
       },
       "x86_64-freebsd" => %{
-        checksum: "68e882ba3bc87328953d9bfbb676b00d4199756a7090d5cdc265a4b32d857cc5",
+        checksum: "422cbc821ac99087ca132aa1ac4290cdf08d6f5b8c24fed18e7d321b1ea8e460",
         filename: "appsignal-x86_64-freebsd-all-static.tar.gz"
       },
       "amd64-freebsd" => %{
-        checksum: "68e882ba3bc87328953d9bfbb676b00d4199756a7090d5cdc265a4b32d857cc5",
+        checksum: "422cbc821ac99087ca132aa1ac4290cdf08d6f5b8c24fed18e7d321b1ea8e460",
         filename: "appsignal-x86_64-freebsd-all-static.tar.gz"
       },
     }
