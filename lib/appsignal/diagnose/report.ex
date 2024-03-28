@@ -10,19 +10,7 @@ defmodule Appsignal.Diagnose.Report do
 
   @spec send(map(), map()) :: {:ok, String.t()} | {:error, map()}
   def send(config, report) do
-    params =
-      URI.encode_query(%{
-        api_key: config[:push_api_key],
-        name: config[:name],
-        environment: config[:environment],
-        hostname: config[:hostname]
-      })
-
-    url = "#{config[:diagnose_endpoint]}?#{params}"
-    body = Jason.encode!(%{diagnose: report})
-    headers = [{"Content-Type", "application/json; charset=UTF-8"}]
-
-    case Transmitter.request(:post, url, headers, body) do
+    case Transmitter.transmit(config[:diagnose_endpoint], %{diagnose: report}, config) do
       {:ok, 200, _, reference} ->
         {:ok, body} = :hackney.body(reference)
 
