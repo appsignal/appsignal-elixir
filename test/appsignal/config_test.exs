@@ -179,11 +179,11 @@ defmodule Appsignal.ConfigTest do
     end
 
     test "when unset" do
-      assert with_config(%{}, &Config.error_backend_enabled?/0)
+      refute with_config(%{}, &Config.error_backend_enabled?/0)
     end
 
     test "without an appsignal config" do
-      assert without_config(&Config.error_backend_enabled?/0)
+      refute without_config(&Config.error_backend_enabled?/0)
     end
   end
 
