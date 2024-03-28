@@ -10,6 +10,30 @@ defmodule Appsignal.Transmitter do
     http_client.request(method, url, headers, body, options())
   end
 
+  def transmit(url, payload \\ nil, config \\ nil) do
+    config = config || Appsignal.Config.config()
+
+    params =
+      URI.encode_query(%{
+        api_key: config[:push_api_key],
+        name: config[:name],
+        environment: config[:env],
+        hostname: config[:hostname]
+      })
+
+    url = "#{url}?#{params}"
+    headers = [{"Content-Type", "application/json; charset=UTF-8"}]
+
+    body =
+      if payload do
+        Jason.encode!(payload)
+      else
+        ""
+      end
+
+    request(:post, url, headers, body)
+  end
+
   defp options do
     ca_file_path = Appsignal.Config.ca_file_path()
 

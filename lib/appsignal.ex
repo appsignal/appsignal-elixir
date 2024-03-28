@@ -168,6 +168,9 @@ defmodule Appsignal do
   defdelegate send_error(kind, reason, stacktrace), to: Appsignal.Instrumentation
   defdelegate send_error(kind, reason, stacktrace, fun), to: Appsignal.Instrumentation
 
+  defdelegate heartbeat(name), to: Appsignal.Heartbeat
+  defdelegate heartbeat(name, fun), to: Appsignal.Heartbeat
+
   defp log_nif_loading_error do
     arch = parse_architecture(to_string(:erlang.system_info(:system_architecture)))
     {_, target_list} = @os.type()
