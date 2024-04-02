@@ -3,10 +3,24 @@ defmodule Appsignal.HeartbeatTest do
   alias Appsignal.FakeTransmitter
   alias Appsignal.Heartbeat
   alias Appsignal.Heartbeat.Event
+  import AppsignalTest.Utils, only: [with_config: 2]
 
   setup do
     start_supervised!(FakeTransmitter)
     :ok
+  end
+
+  describe "start/1 and finish/1, when AppSignal is not active" do
+    test "it does not transmit any events" do
+      heartbeat = Heartbeat.new("heartbeat-name")
+
+      with_config(%{active: false}, fn ->
+        Heartbeat.start(heartbeat)
+        Heartbeat.finish(heartbeat)
+      end)
+
+      assert [] = FakeTransmitter.transmitted_payloads()
+    end
   end
 
   describe "start/1" do

@@ -52,20 +52,26 @@ defmodule Appsignal.Heartbeat do
 
   @spec transmit(Event.t()) :: :ok
   defp transmit(event) do
-    config = Appsignal.Config.config()
-    endpoint = "#{config[:logging_endpoint]}/heartbeats/json"
+    if Appsignal.Config.active?() do
+      config = Appsignal.Config.config()
+      endpoint = "#{config[:logging_endpoint]}/heartbeats/json"
 
-    case @transmitter.transmit(endpoint, event, config) do
-      {:ok, 200, _, _} ->
-        nil
+      case @transmitter.transmit(endpoint, event, config) do
+        {:ok, status_code, _, _} when status_code in 200..299 ->
+          Appsignal.IntegrationLogger.trace(
+            "Transmitted heartbeat `#{event.name}` (#{event.id}) #{event.kind} event"
+          )
 
-      {:ok, status_code, _, _} ->
-        Appsignal.IntegrationLogger.warn(
-          "Failed to transmit heartbeat: status code was #{status_code}"
-        )
+        {:ok, status_code, _, _} ->
+          Appsignal.IntegrationLogger.error(
+            "Failed to transmit heartbeat event: status code was #{status_code}"
+          )
 
-      {:error, reason} ->
-        Appsignal.IntegrationLogger.warn("Failed to transmit heartbeat: #{reason}")
+        {:error, reason} ->
+          Appsignal.IntegrationLogger.error("Failed to transmit heartbeat event: #{reason}")
+      end
+    else
+      Appsignal.IntegrationLogger.debug("AppSignal not active, not transmitting heartbeat event")
     end
 
     :ok
