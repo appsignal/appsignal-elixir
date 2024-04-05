@@ -78,6 +78,34 @@ defmodule Appsignal.ErrorTest do
     end
   end
 
+  describe "metadata/3, with a function_clause" do
+    setup do
+      try do
+        _ = Keyword.get(:a, :b)
+      catch
+        kind, reason -> %{metadata: Appsignal.Error.metadata(kind, reason, __STACKTRACE__)}
+      end
+    end
+
+    test "extracts the error's name", %{metadata: metadata} do
+      assert {"FunctionClauseError", _message, _stack} = metadata
+    end
+
+    test "extracts the error's message", %{metadata: metadata} do
+      {_name, error_message, _stack} = metadata
+
+      assert error_message ==
+               "** (FunctionClauseError) no function clause matching in Keyword.get/3"
+    end
+
+    test "format's the error's stack trace", %{metadata: metadata} do
+      {_name, _message, stack} = metadata
+      assert is_list(stack)
+      assert length(stack) > 0
+      assert Enum.all?(stack, &is_binary(&1))
+    end
+  end
+
   describe "metadata/3, with an exit" do
     setup do
       try do
