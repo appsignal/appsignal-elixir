@@ -238,6 +238,17 @@ defmodule Appsignal.Phoenix.LiveViewTest do
           )
 
         :ok =
+          :telemetry.detach({Appsignal.Phoenix.LiveView, [:phoenix, :live_view, :render, :start]})
+
+        :ok =
+          :telemetry.detach({Appsignal.Phoenix.LiveView, [:phoenix, :live_view, :render, :stop]})
+
+        :ok =
+          :telemetry.detach(
+            {Appsignal.Phoenix.LiveView, [:phoenix, :live_view, :render, :exception]}
+          )
+
+        :ok =
           :telemetry.detach(
             {Appsignal.Phoenix.LiveView, [:phoenix, :live_component, :handle_event, :start]}
           )
@@ -264,6 +275,9 @@ defmodule Appsignal.Phoenix.LiveViewTest do
       assert attached?([:phoenix, :live_view, :handle_event, :start])
       assert attached?([:phoenix, :live_view, :handle_event, :stop])
       assert attached?([:phoenix, :live_view, :handle_event, :exception])
+      assert attached?([:phoenix, :live_view, :render, :start])
+      assert attached?([:phoenix, :live_view, :render, :stop])
+      assert attached?([:phoenix, :live_view, :render, :exception])
       assert attached?([:phoenix, :live_component, :handle_event, :start])
       assert attached?([:phoenix, :live_component, :handle_event, :stop])
       assert attached?([:phoenix, :live_component, :handle_event, :exception])
