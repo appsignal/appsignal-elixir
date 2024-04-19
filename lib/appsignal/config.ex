@@ -21,6 +21,7 @@ defmodule Appsignal.Config do
     filter_session_data: [],
     ignore_actions: [],
     ignore_errors: [],
+    ignore_logs: [],
     ignore_namespaces: [],
     instrument_absinthe: true,
     instrument_ecto: true,
@@ -321,6 +322,7 @@ defmodule Appsignal.Config do
     "APPSIGNAL_HTTP_PROXY" => :http_proxy,
     "APPSIGNAL_IGNORE_ACTIONS" => :ignore_actions,
     "APPSIGNAL_IGNORE_ERRORS" => :ignore_errors,
+    "APPSIGNAL_IGNORE_LOGS" => :ignore_logs,
     "APPSIGNAL_IGNORE_NAMESPACES" => :ignore_namespaces,
     "APPSIGNAL_INSTRUMENT_ECTO" => :instrument_ecto,
     "APPSIGNAL_INSTRUMENT_FINCH" => :instrument_finch,
@@ -366,7 +368,7 @@ defmodule Appsignal.Config do
   @atom_keys ~w(APPSIGNAL_APP_ENV APPSIGNAL_OTP_APP)
   @string_list_keys ~w(
     APPSIGNAL_FILTER_PARAMETERS APPSIGNAL_ECTO_REPOS
-    APPSIGNAL_IGNORE_ACTIONS APPSIGNAL_IGNORE_ERRORS
+    APPSIGNAL_IGNORE_ACTIONS APPSIGNAL_IGNORE_ERRORS APPSIGNAL_IGNORE_LOGS
     APPSIGNAL_IGNORE_NAMESPACES APPSIGNAL_DNS_SERVERS
     APPSIGNAL_FILTER_SESSION_DATA APPSIGNAL_REQUEST_HEADERS
   )
@@ -460,6 +462,7 @@ defmodule Appsignal.Config do
     Nif.env_put("_APPSIGNAL_HTTP_PROXY", to_string(config[:http_proxy]))
     Nif.env_put("_APPSIGNAL_IGNORE_ACTIONS", config[:ignore_actions] |> Enum.join(","))
     Nif.env_put("_APPSIGNAL_IGNORE_ERRORS", config[:ignore_errors] |> Enum.join(","))
+    Nif.env_put("_APPSIGNAL_IGNORE_LOGS", config[:ignore_logs] |> Enum.join(","))
     Nif.env_put("_APPSIGNAL_IGNORE_NAMESPACES", config[:ignore_namespaces] |> Enum.join(","))
 
     Nif.env_put(
