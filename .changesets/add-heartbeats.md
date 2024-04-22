@@ -1,6 +1,10 @@
 ---
-bump: "patch"
+bump: "minor"
 type: "add"
+---
+
+_Heartbeats are currently only available to beta testers. If you are interested in trying it out, [send an email to support@appsignal.com](mailto:support@appsignal.com?subject=Heartbeat%20beta)!_
+
 ---
 
 Add heartbeats support. You can send heartbeats directly from your code, to track the execution of certain processes:
