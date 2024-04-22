@@ -1,5 +1,47 @@
 # AppSignal for Elixir changelog
 
+## 2.10.0
+
+_Published on 2024-04-22._
+
+### Added
+
+- [840e6c0b](https://github.com/appsignal/appsignal-elixir/commit/840e6c0bd9934dba1614f7aae3d60350975f3be3) minor - _Heartbeats are currently only available to beta testers. If you are interested in trying it out, [send an email to support@appsignal.com](mailto:support@appsignal.com?subject=Heartbeat%20beta)!_
+  
+  ---
+  
+  Add heartbeats support. You can send heartbeats directly from your code, to track the execution of certain processes:
+  
+  ```elixir
+  def send_invoices do
+    # ... your code here ...
+    Appsignal.heartbeat("send_invoices")
+  end
+  ```
+  
+  You can pass a function to `Appsignal.heartbeat`, to report to AppSignal both when the process starts, and when it finishes, allowing you to see the duration of the process:
+  
+  ```elixir
+  def send_invoices do
+    Appsignal.heartbeat("send_invoices", fn ->
+      # ... your code here ...
+    end)
+  end
+  ```
+  
+  If an exception is thrown within the function, the finish event will not be reported to AppSignal, triggering a notification about the missing heartbeat. The exception will bubble outside of the heartbeat function.
+- [d56d3ebd](https://github.com/appsignal/appsignal-elixir/commit/d56d3ebd2286ee4e4aa75553aeaf49ec1c312bbe) patch - Implement the `ignore_logs` configuration option, which can also be configured as the `APPSIGNAL_IGNORE_LOGS` environment variable.
+  
+  The value of `ignore_logs` is a list (comma-separated, when using the environment variable) of log line messages that should be ignored. For example, the value `"start"` will cause any message containing the word "start" to be ignored. Any log line message containing a value in `ignore_logs` will not be reported to AppSignal.
+  
+  The values can use a small subset of regular expression syntax (specifically, `^`, `$` and `.*`) to narrow or expand the scope of lines that should be matched.
+  
+  For example, the value `"^start$"` can be used to ignore any message that is _exactly_ the word "start", but not messages that merely contain it, like "Process failed to start". The value `"Task .* succeeded"` can be used to ignore messages about task success regardless of the specific task name.
+
+### Fixed
+
+- [38511da4](https://github.com/appsignal/appsignal-elixir/commit/38511da476be461bbe2d4f97cf58e5d5ba5e828a) patch - Remove broken link about 1.x upgrade
+
 ## 2.9.2
 
 _Published on 2024-03-22._
