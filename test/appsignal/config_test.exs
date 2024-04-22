@@ -581,6 +581,12 @@ defmodule Appsignal.ConfigTest do
       assert %{ignore_errors: ^errors} = with_config(%{ignore_errors: errors}, &init_config/0)
     end
 
+    test "ignore_logs" do
+      logs = ["^start$", "^Completed 2.* in .*ms$"]
+
+      assert %{ignore_logs: ^logs} = with_config(%{ignore_logs: logs}, &init_config/0)
+    end
+
     test "ignore_namespaces" do
       namespaces = ~w(admin private_namespace)
 
@@ -884,6 +890,15 @@ defmodule Appsignal.ConfigTest do
              ) ==
                default_configuration()
                |> Map.put(:ignore_errors, ~w(VerySpecificError AnotherError))
+    end
+
+    test "ignore_logs" do
+      assert with_env(
+               %{"APPSIGNAL_IGNORE_LOGS" => "^start$,^Completed 2.* in .*ms$"},
+               &init_config/0
+             ) ==
+               default_configuration()
+               |> Map.put(:ignore_logs, ["^start$", "^Completed 2.* in .*ms$"])
     end
 
     test "ignore_namespaces" do
@@ -1219,6 +1234,7 @@ defmodule Appsignal.ConfigTest do
       assert Nif.env_get("_APPSIGNAL_HTTP_PROXY") == ~c""
       assert Nif.env_get("_APPSIGNAL_IGNORE_ACTIONS") == ~c""
       assert Nif.env_get("_APPSIGNAL_IGNORE_ERRORS") == ~c""
+      assert Nif.env_get("_APPSIGNAL_IGNORE_LOGS") == ~c""
       assert Nif.env_get("_APPSIGNAL_IGNORE_NAMESPACES") == ~c""
       assert Nif.env_get("_APPSIGNAL_LOG_FILE_PATH") == ~c"/tmp/appsignal.log"
       assert Nif.env_get("_APPSIGNAL_WORKING_DIR_PATH") == ~c""
@@ -1265,6 +1281,7 @@ defmodule Appsignal.ConfigTest do
             ExampleApplication.PageController#also_ignored
           ),
           ignore_errors: ~w(VerySpecificError AnotherError),
+          ignore_logs: ["^start$", "^Completed 2.* in .*ms$"],
           ignore_namespaces: ~w(admin private_namespace),
           log: "stdout",
           log_level: "trace",
@@ -1302,6 +1319,7 @@ defmodule Appsignal.ConfigTest do
                    ~c"ExampleApplication.PageController#ignored,ExampleApplication.PageController#also_ignored"
 
           assert Nif.env_get("_APPSIGNAL_IGNORE_ERRORS") == ~c"VerySpecificError,AnotherError"
+          assert Nif.env_get("_APPSIGNAL_IGNORE_LOGS") == ~c"^start$,^Completed 2.* in .*ms$"
           assert Nif.env_get("_APPSIGNAL_IGNORE_NAMESPACES") == ~c"admin,private_namespace"
 
           assert Nif.env_get("_APPSIGNAL_LANGUAGE_INTEGRATION_VERSION") ==
@@ -1449,6 +1467,7 @@ defmodule Appsignal.ConfigTest do
       filter_session_data: [],
       ignore_actions: [],
       ignore_errors: [],
+      ignore_logs: [],
       ignore_namespaces: [],
       log: "file",
       logging_endpoint: "https://appsignal-endpoint.net",
