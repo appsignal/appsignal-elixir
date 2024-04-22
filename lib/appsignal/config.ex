@@ -86,6 +86,10 @@ defmodule Appsignal.Config do
     end
   end
 
+  def config do
+    Application.get_env(:appsignal, :config, [])
+  end
+
   defp merge_filter_parameters(map, keys) when is_list(keys) do
     {_, new_map} = Map.get_and_update(map, :filter_parameters, &{&1, &1 ++ keys})
 
@@ -607,17 +611,5 @@ defmodule Appsignal.Config do
       _ -> false
     end)
     |> Enum.into(%{})
-  end
-
-  # When you use Appsignal.Config you get a handy config macro which
-  # can be used to read the application config.
-  defmacro __using__(_) do
-    quote do
-      defmacro config do
-        quote do
-          Application.get_env(:appsignal, :config, [])
-        end
-      end
-    end
   end
 end

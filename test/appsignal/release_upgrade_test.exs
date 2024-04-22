@@ -1,6 +1,6 @@
 defmodule Appsignal.ReleaseUpgradeTest do
   use ExUnit.Case, async: true
-  use Appsignal.Config
+  import Appsignal.Config, only: [config: 0]
   alias Appsignal.Nif
   import AppsignalTest.Utils
 

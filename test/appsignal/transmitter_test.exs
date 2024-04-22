@@ -12,6 +12,64 @@ defmodule Appsignal.TransmitterTest do
     end)
   end
 
+  describe "transmit/3" do
+    test "sends a request with the given configuration as query params" do
+      url = "https://example.com"
+      payload = %{foo: "bar"}
+
+      config = %{
+        push_api_key: "some_push_api_key",
+        name: "some_name",
+        env: "some_environment",
+        hostname: "some_hostname"
+      }
+
+      [method, url, headers, body, _options] = Transmitter.transmit(url, payload, config)
+
+      assert method == :post
+
+      # The order in which the query parameters are serialized is not
+      # stable across Elixir versions.
+      assert String.starts_with?(url, "https://example.com")
+      assert String.contains?(url, "name=some_name")
+      assert String.contains?(url, "hostname=some_hostname")
+      assert String.contains?(url, "api_key=some_push_api_key")
+      assert String.contains?(url, "environment=some_environment")
+
+      assert headers == [{"Content-Type", "application/json; charset=UTF-8"}]
+      assert body == "{\"foo\":\"bar\"}"
+    end
+
+    test "uses the stored configuration when none is given" do
+      with_config(
+        %{
+          push_api_key: "some_push_api_key",
+          name: "some_name",
+          env: "some_environment",
+          hostname: "some_hostname"
+        },
+        fn ->
+          [_method, url, _headers, _body, _options] =
+            Transmitter.transmit("https://example.com", %{foo: "bar"})
+
+          # The order in which the query parameters are serialized is not
+          # stable across Elixir versions.
+          assert String.starts_with?(url, "https://example.com")
+          assert String.contains?(url, "name=some_name")
+          assert String.contains?(url, "hostname=some_hostname")
+          assert String.contains?(url, "api_key=some_push_api_key")
+          assert String.contains?(url, "environment=some_environment")
+        end
+      )
+    end
+
+    test "uses an empty body when no payload is given" do
+      [_method, _url, _headers, body, _options] = Transmitter.transmit("https://example.com")
+
+      assert body == ""
+    end
+  end
+
   test "uses the default CA certificate" do
     [_method, _url, _headers, _body, [ssl_options: ssl_options]] =
       Transmitter.request(:get, "https://example.com")
