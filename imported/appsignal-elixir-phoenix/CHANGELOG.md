@@ -1,5 +1,13 @@
 # AppSignal for Elixir Phoenix changelog
 
+## 2.3.6
+
+_Published on 2024-04-25._
+
+### Changed
+
+- [745fc21](https://github.com/appsignal/appsignal-elixir-phoenix/commit/745fc2111ad81b1396f8ae3a5168a62a7148b230) patch - Set an action name for Phoenix.ActionClauseError errors. It will now group these errors per controller-action combination for more convenient grouping.
+
 ## 2.3.5
 
 ### Fixed
