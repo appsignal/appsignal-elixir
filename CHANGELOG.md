@@ -1,5 +1,13 @@
 # AppSignal for Elixir changelog
 
+## 2.10.1
+
+_Published on 2024-04-25._
+
+### Fixed
+
+- [5a7810c8](https://github.com/appsignal/appsignal-elixir/commit/5a7810c81a20961418285b6af8da47694c4b5b16) patch - Fix the Phoenix `filter_parameters` config option support for partial key matches. When configuring `config :phoenix, filter_parameters` with `["key"]` or `{:discard, ["key"]}`, it now also matches partial keys like `"my_key"`, just like Phoenix's logger does.
+
 ## 2.10.0
 
 _Published on 2024-04-22._
