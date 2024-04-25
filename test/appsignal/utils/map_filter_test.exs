@@ -28,6 +28,13 @@ defmodule Appsignal.Utils.MapFilterTest do
                %{"foo" => "bar", "password" => "[FILTERED]"}
     end
 
+    test "with :discard option" do
+      values = %{"foo" => "bar", "password" => "should_not_show"}
+
+      assert MapFilter.filter(values, {:discard, ["password"]}) ==
+               %{"foo" => "bar", "password" => "[FILTERED]"}
+    end
+
     test "discards keys with partial key match" do
       values = %{"password" => "should_not_show", "my_password" => "should_not_show"}
 
