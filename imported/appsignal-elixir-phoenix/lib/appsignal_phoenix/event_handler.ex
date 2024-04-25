@@ -66,7 +66,20 @@ defmodule Appsignal.Phoenix.EventHandler do
     add_error(@tracer.root_span(), conn, reason, stack)
   end
 
-  defp add_error(span, conn, reason, stack) do
+  defp add_error(
+         span,
+         conn,
+         %Phoenix.ActionClauseError{module: module, function: function} = reason,
+         stack
+       ) do
+    span
+    |> @span.set_name("#{reason.module}##{reason.function}")
+    |> do_add_error(conn, reason, stack)
+  end
+
+  defp add_error(span, conn, reason, stack), do: do_add_error(span, conn, reason, stack)
+
+  defp do_add_error(span, conn, reason, stack) do
     span
     |> @span.add_error(:error, reason, stack)
     |> set_span_data(%{conn: conn})

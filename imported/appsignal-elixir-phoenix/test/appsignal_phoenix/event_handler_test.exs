@@ -159,6 +159,45 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
     end
   end
 
+  describe "after receiving an router_dispatch-exception event with a Phoenix.ActionClauseError" do
+    setup [:create_root_span, :router_dispatch_start_event]
+
+    setup do
+      :telemetry.execute(
+        [:phoenix, :router_dispatch, :exception],
+        %{duration: 49_474_000},
+        %{
+          conn: conn_without_route_info(),
+          reason: %Phoenix.ActionClauseError{module: MyModule, function: :my_function},
+          stacktrace: [],
+          options: []
+        }
+      )
+    end
+
+    test "sets the root span's name" do
+      assert {:ok,
+              [
+                # First attempt to set the name will fail
+                {%Span{}, nil},
+                {%Span{}, "Elixir.MyModule#my_function"}
+              ]} =
+               Test.Span.get(:set_name)
+    end
+
+    test "sets the root span's error" do
+      assert {:ok,
+              [
+                {%Span{}, :error,
+                 %Phoenix.ActionClauseError{module: MyModule, function: :my_function}, []}
+              ]} = Test.Span.get(:add_error)
+    end
+
+    test "closes the root span" do
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    end
+  end
+
   describe "after receiving an render-start event" do
     setup [:create_root_span, :render_start_event]
 
@@ -247,6 +286,16 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
         phoenix_action: :index,
         phoenix_controller: AppsignalPhoenixExampleWeb.PageController
       },
+      port: 80,
+      request_path: "/",
+      status: 200
+    }
+  end
+
+  def conn_without_route_info do
+    %Plug.Conn{
+      params: %{"foo" => "bar"},
+      private: %{},
       port: 80,
       request_path: "/",
       status: 200
