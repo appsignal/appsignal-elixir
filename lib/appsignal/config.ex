@@ -63,10 +63,6 @@ defmodule Appsignal.Config do
     sources = Map.put(sources, :override, determine_overrides(config))
     config = Map.merge(config, sources[:override])
 
-    config =
-      config
-      |> merge_filter_parameters(Application.get_env(:phoenix, :filter_parameters, []))
-
     if !empty?(config[:working_dir_path]) do
       warning(fn ->
         "'working_dir_path' is deprecated, please use " <>
@@ -89,16 +85,6 @@ defmodule Appsignal.Config do
 
   def config do
     Application.get_env(:appsignal, :config, [])
-  end
-
-  defp merge_filter_parameters(map, keys) when is_list(keys) do
-    {_, new_map} = Map.get_and_update(map, :filter_parameters, &{&1, &1 ++ keys})
-
-    new_map
-  end
-
-  defp merge_filter_parameters(map, _keys) do
-    map
   end
 
   defp determine_overrides(config) do
