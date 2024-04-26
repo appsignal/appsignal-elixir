@@ -1,5 +1,13 @@
 # AppSignal for Elixir Phoenix changelog
 
+## 2.3.7
+
+_Published on 2024-04-26._
+
+### Fixed
+
+- [5e10a3d](https://github.com/appsignal/appsignal-elixir-phoenix/commit/5e10a3d24169acaeee63c894bf73bb563081c76a) patch - Fix unused variables warnings introduced in the previous release.
+
 ## 2.3.6
 
 _Published on 2024-04-25._
