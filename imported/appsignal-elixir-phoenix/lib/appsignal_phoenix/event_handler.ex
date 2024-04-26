@@ -73,7 +73,7 @@ defmodule Appsignal.Phoenix.EventHandler do
          stack
        ) do
     span
-    |> @span.set_name("#{reason.module}##{reason.function}")
+    |> @span.set_name("#{module}##{function}")
     |> do_add_error(conn, reason, stack)
   end
 
