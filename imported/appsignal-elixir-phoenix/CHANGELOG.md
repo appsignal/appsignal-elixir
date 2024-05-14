@@ -1,5 +1,11 @@
 # AppSignal for Elixir Phoenix changelog
 
+## 2.3.8
+
+### Added
+
+- [18d4840](https://github.com/appsignal/appsignal-elixir-phoenix/commit/18d484021ff3c5fe55c7fb2ed785db6ec5ec5d4f) patch - Handle live_view :render messages received through :telemetry.
+
 ## 2.3.7
 
 _Published on 2024-04-26._
