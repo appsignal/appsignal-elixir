@@ -1,5 +1,17 @@
 # AppSignal for Elixir changelog
 
+## 2.10.2
+
+_Published on 2024-05-14._
+
+### Added
+
+- [1a87c94a](https://github.com/appsignal/appsignal-elixir/commit/1a87c94a6f6c1b972aa68507e4a9f1243b9dd570) patch - Support Kamal-based deployments. Read the `KAMAL_VERSION` environment variable, which Kamal exposes within the deployed container, if present, and use it as the application revision if it is not set. This will automatically report deploy markers for applications using Kamal.
+
+### Changed
+
+- [a19671f6](https://github.com/appsignal/appsignal-elixir/commit/a19671f6f165a7957c39516f76a69f08e9e22ab5) patch - Log debug messages when metrics are received for easier debugging.
+
 ## 2.10.1
 
 _Published on 2024-04-25._
