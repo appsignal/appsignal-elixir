@@ -36,12 +36,12 @@ defmodule Appsignal.Probes.ProbesTest do
 
   describe "with a non-function probe" do
     setup do
-      {:error, "Probe is not a function"} = Probes.register(:test_probe, :error)
+      {:error, "Probe is not a function"} = Probes.register(:non_func_probe, :error)
       :ok
     end
 
     test "does not register a probe" do
-      refute Map.has_key?(Probes.probes(), :test_probe)
+      refute Map.has_key?(Probes.probes(), :non_func_probe)
     end
   end
 
