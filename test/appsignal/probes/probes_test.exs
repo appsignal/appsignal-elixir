@@ -86,12 +86,15 @@ defmodule Appsignal.Probes.ProbesTest do
 
   describe "with a failing probe" do
     setup %{fun: fun} do
-      :ok = Probes.register(:test_probe, fn -> raise "Probe exception!" end, 0)
+      :ok = Probes.register(:broken_probe, fn -> raise "Probe exception!" end, 0)
+      :ok = Probes.register(:not_broken_probe, fun, 1)
       [fun: fun]
     end
 
     test "calls the probe without crashing the probes" do
       run_probes()
+
+      until(fn -> assert Probes.states()[:not_broken_probe] > 1 end)
     end
   end
 end
