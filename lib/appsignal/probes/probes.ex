@@ -2,6 +2,13 @@ defmodule Appsignal.Probes do
   @moduledoc false
   use GenServer
   require Logger
+  require Appsignal.Utils
+
+  @integration_logger Appsignal.Utils.compile_env(
+                        :appsignal,
+                        :appsignal_integration_logger,
+                        Appsignal.IntegrationLogger
+                      )
 
   def start_link do
     GenServer.start_link(__MODULE__, [], name: __MODULE__)
@@ -73,17 +80,22 @@ defmodule Appsignal.Probes do
   def handle_info(:run_probes, {probes, states}) do
     states =
       if Appsignal.Config.minutely_probes_enabled?() do
+        @integration_logger.debug("Gathering minutely metrics with #{Enum.count(probes)} probes")
+
         stream =
           Task.async_stream(
             probes,
             fn {name, probe} ->
+              @integration_logger.debug("Gathering minutely metrics with '#{name}' probe")
               state = Map.get(states, name)
 
               try do
                 {name, call_probe(probe, state)}
               rescue
                 e ->
-                  Logger.error("Error while calling probe #{name}: #{inspect(e)}")
+                  "Error in minutely probe '#{name}': #{inspect(e)}"
+                  |> @integration_logger.error()
+
                   {name, state}
               end
             end,
@@ -94,8 +106,15 @@ defmodule Appsignal.Probes do
 
         Enum.reduce(stream, states, fn result, states ->
           case result do
-            {:ok, {name, state}} -> Map.put(states, name, state)
-            {:exit, :timeout} -> states
+            {:ok, {name, state}} ->
+              Map.put(states, name, state)
+
+            {:exit, :timeout} ->
+              @integration_logger.error(
+                "A minutely probe took more than 30 seconds and was timed out."
+              )
+
+              states
           end
         end)
       else
