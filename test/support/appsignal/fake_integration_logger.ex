@@ -36,18 +36,14 @@ defmodule Appsignal.FakeIntegrationLogger do
   end
 
   def clear do
-    if alive?() do
-      Agent.update(__MODULE__, fn state ->
-        Map.update!(state, :logs, fn _ -> [] end)
-      end)
-    end
+    Agent.cast(__MODULE__, fn state ->
+      Map.update!(state, :logs, fn _ -> [] end)
+    end)
   end
 
   defp add(key, event) do
-    if alive?() do
-      Agent.update(__MODULE__, fn state ->
-        Map.update!(state, key, fn current -> [event | current] end)
-      end)
-    end
+    Agent.cast(__MODULE__, fn state ->
+      Map.update!(state, key, fn current -> [event | current] end)
+    end)
   end
 end
