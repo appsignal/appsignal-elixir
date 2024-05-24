@@ -1,7 +1,7 @@
 defmodule Appsignal.Span do
   alias Appsignal.{Config, Nif, Span}
 
-  defstruct [:reference, :pid]
+  defstruct [:reference, :pid, :name]
 
   require Appsignal.Utils
 
@@ -103,10 +103,31 @@ defmodule Appsignal.Span do
   def set_name(%Span{reference: reference} = span, name)
       when is_reference(reference) and is_binary(name) do
     :ok = @nif.set_span_name(reference, name)
-    span
+    %{span | name: name}
   end
 
   def set_name(span, _name), do: span
+
+  @spec set_name_if_nil(t() | nil, String.t()) :: t() | nil
+  @doc """
+  Sets an `Appsignal.Span`'s name if it was not set before.
+
+  ## Example
+      Appsignal.Tracer.root_span()
+      |> Appsignal.Span.set_name_if_nil("PageController#index")
+
+  """
+  def set_name_if_nil(%Span{reference: reference, name: nil} = span, name)
+      when is_reference(reference) and is_binary(name) do
+    :ok = @nif.set_span_name(reference, name)
+    %{span | name: name}
+  end
+
+  def set_name_if_nil(%Span{reference: reference} = span, name)
+      when is_reference(reference) and is_binary(name),
+      do: span
+
+  def set_name_if_nil(span, _name), do: span
 
   @spec set_namespace(t() | nil, String.t()) :: t() | nil
   @doc """

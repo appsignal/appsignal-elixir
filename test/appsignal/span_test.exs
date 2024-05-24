@@ -174,13 +174,43 @@ defmodule AppsignalSpanTest do
       [return: Span.set_name(span, "test")]
     end
 
-    test "returns a span", %{span: span, return: return} do
-      assert return == span
+    test "returns a span with the name set", %{span: span, return: return} do
+      assert return == %{span | name: "test"}
     end
 
     @tag :skip_env_test_no_nif
     test "sets the name through the Nif", %{span: span} do
       assert %{"name" => "test"} = Span.to_map(span)
+    end
+
+    test "returns nil when passing a nil-span" do
+      assert Span.set_name(nil, "test") == nil
+    end
+  end
+
+  describe ".set_name_if_nil/2" do
+    setup :create_root_span
+
+    setup %{span: span} do
+      [return: Span.set_name_if_nil(span, "test")]
+    end
+
+    test "when no name is set it returns a span with the name set", %{span: span, return: return} do
+      assert return == %{span | name: "test"}
+    end
+
+    test "when a name is set it returns a span with the original name", %{
+      span: span,
+      return: return
+    } do
+      updated = Span.set_name_if_nil(return, "updated name")
+      assert updated == %{span | name: "test"}
+    end
+
+    @tag :skip_env_test_no_nif
+    test "sets the name through the Nif", %{span: span, return: return} do
+      updated = Span.set_name_if_nil(return, "updated name")
+      assert %{"name" => "test"} = Span.to_map(updated)
     end
 
     test "returns nil when passing a nil-span" do
