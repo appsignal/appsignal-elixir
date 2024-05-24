@@ -108,6 +108,23 @@ defmodule Appsignal.Span do
 
   def set_name(span, _name), do: span
 
+  @spec set_name_if_nil(t() | nil, String.t()) :: t() | nil
+  @doc """
+  Sets an `Appsignal.Span`'s name if it was not set before.
+
+  ## Example
+      Appsignal.Tracer.root_span()
+      |> Appsignal.Span.set_name_if_nil("PageController#index")
+
+  """
+  def set_name_if_nil(%Span{reference: reference} = span, name)
+      when is_reference(reference) and is_binary(name) do
+    :ok = @nif.set_span_name_if_nil(reference, name)
+    span
+  end
+
+  def set_name_if_nil(span, _name), do: span
+
   @spec set_namespace(t() | nil, String.t()) :: t() | nil
   @doc """
   Sets an `Appsignal.Span`'s namespace.  The namespace is `"http_request"` or
