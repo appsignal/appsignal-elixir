@@ -174,7 +174,7 @@ defmodule AppsignalSpanTest do
       [return: Span.set_name(span, "test")]
     end
 
-    test "returns a span", %{span: span, return: return} do
+    test "returns a span with the name set", %{span: span, return: return} do
       assert return == span
     end
 
@@ -200,6 +200,49 @@ defmodule AppsignalSpanTest do
 
     test "does not set the name through the Nif" do
       assert Test.Nif.get(:set_span_name) == :error
+    end
+  end
+
+  describe ".set_name_if_nil/2, with span that doesn't have a name yet" do
+    setup :create_root_span
+
+    setup %{span: span} do
+      [return: Span.set_name_if_nil(span, "original name")]
+    end
+
+    test "when no name is set it returns a span with the name set", %{span: span, return: return} do
+      assert return == span
+    end
+
+    @tag :skip_env_test_no_nif
+    test "sets the name through the Nif", %{return: return} do
+      assert %{"name" => "original name"} = Span.to_map(return)
+    end
+
+    test "returns nil when passing a nil-span" do
+      assert Span.set_name(nil, "test") == nil
+    end
+  end
+
+  describe ".set_name_if_nil/2, with span that does have a name already" do
+    setup :create_root_span
+
+    setup %{span: span} do
+      span = Span.set_name_if_nil(span, "original name")
+      [return: Span.set_name_if_nil(span, "updated name")]
+    end
+
+    test "whereturns a span with the name set", %{span: span, return: return} do
+      assert return == span
+    end
+
+    @tag :skip_env_test_no_nif
+    test "doesn't update the name through the Nif", %{return: return} do
+      assert %{"name" => "original name"} = Span.to_map(return)
+    end
+
+    test "returns nil when passing a nil-span" do
+      assert Span.set_name(nil, "test") == nil
     end
   end
 

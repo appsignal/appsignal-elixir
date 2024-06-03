@@ -23,6 +23,11 @@ defmodule Appsignal.Test.Span do
     Span.set_name(span, name)
   end
 
+  def set_name_if_nil(span, name) do
+    add(:set_name_if_nil, {span, name})
+    Span.set_name_if_nil(span, name)
+  end
+
   def set_namespace(span, name) do
     add(:set_namespace, {span, name})
     Span.set_namespace(span, name)

@@ -204,6 +204,10 @@ defmodule Appsignal.Nif do
     _set_span_name(reference, name)
   end
 
+  def set_span_name_if_nil(reference, name) do
+    _set_span_name_if_nil(reference, name)
+  end
+
   def set_span_namespace(reference, namespace) do
     _set_span_namespace(reference, namespace)
   end
@@ -445,6 +449,10 @@ defmodule Appsignal.Nif do
   end
 
   def _set_span_name(_reference, _name) do
+    :ok
+  end
+
+  def _set_span_name_if_nil(_reference, _name) do
     :ok
   end
 
