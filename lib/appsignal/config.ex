@@ -186,8 +186,8 @@ defmodule Appsignal.Config do
 
   def error_backend_enabled? do
     case Application.fetch_env(:appsignal, :config) do
-      {:ok, value} -> !!Map.get(value, :enable_error_backend, true)
-      _ -> true
+      {:ok, value} -> !!Map.get(value, :enable_error_backend, false)
+      _ -> false
     end
   end
 
