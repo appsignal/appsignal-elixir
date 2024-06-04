@@ -1,5 +1,18 @@
 # AppSignal for Elixir changelog
 
+## 2.11.0
+
+_Published on 2024-06-04._
+
+### Added
+
+- [4508bd10](https://github.com/appsignal/appsignal-elixir/commit/4508bd10f8480fa2a9eea077f0f2f5c3a8dec4eb) patch - Add `Appsignal.Span.set_name_if_nil` helper. This helper can be used to not overwrite previously set span names, and only set the span name if it wasn't set previously. This will used most commonly in AppSignal created integrations with other libraries to allow apps to set custom span names.
+
+### Changed
+
+- [cb7c2e9d](https://github.com/appsignal/appsignal-elixir/commit/cb7c2e9d607a0035a287db5b7e9485c834fde084) minor - Turn error backend off by default. This will prevent errors from being reported without much context. If you're missing errors after this change, set the `enable_error_backend` config option to `true`, and let us know what errors you're missing at [support@appsignal.com](mailto:support@appsignal.com).
+- [4b8bbf75](https://github.com/appsignal/appsignal-elixir/commit/4b8bbf75a3b2defc21d2be2fa401f11980c26c1a) patch - Add debug and error logs to probes to better track what it's doing. This is helpful when debugging issues with the minutely probes system.
+
 ## 2.10.2
 
 _Published on 2024-05-14._
