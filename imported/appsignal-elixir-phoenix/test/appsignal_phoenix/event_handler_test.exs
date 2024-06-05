@@ -27,7 +27,7 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
 
     test "sets the span's name" do
       assert {:ok, [{%Span{}, "AppsignalPhoenixExampleWeb.PageController#index"}]} =
-               Test.Span.get(:set_name)
+               Test.Span.get(:set_name_if_nil)
     end
 
     test "sets the root span's category" do
@@ -77,7 +77,7 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
     end
 
     test "sets the span's name" do
-      assert {:ok, [{%Span{}, "GET /foo/:bar"}]} = Test.Span.get(:set_name)
+      assert {:ok, [{%Span{}, "GET /foo/:bar"}]} = Test.Span.get(:set_name_if_nil)
     end
   end
 
@@ -99,7 +99,7 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
 
     test "sets the root span's name" do
       assert {:ok, [{%Span{}, "AppsignalPhoenixExampleWeb.PageController#index"}]} =
-               Test.Span.get(:set_name)
+               Test.Span.get(:set_name_if_nil)
     end
 
     test "sets the root span's error" do
@@ -147,7 +147,7 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
 
     test "sets the root span's name" do
       assert {:ok, [{%Span{}, "AppsignalPhoenixExampleWeb.PageController#index"}]} =
-               Test.Span.get(:set_name)
+               Test.Span.get(:set_name_if_nil)
     end
 
     test "sets the root span's error" do
@@ -182,7 +182,7 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
                 {%Span{}, nil},
                 {%Span{}, "Elixir.MyModule#my_function"}
               ]} =
-               Test.Span.get(:set_name)
+               Test.Span.get(:set_name_if_nil)
     end
 
     test "sets the root span's error" do

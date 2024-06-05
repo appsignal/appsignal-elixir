@@ -73,7 +73,7 @@ defmodule Appsignal.Phoenix.EventHandler do
          stack
        ) do
     span
-    |> @span.set_name("#{module}##{function}")
+    |> @span.set_name_if_nil("#{module}##{function}")
     |> do_add_error(conn, reason, stack)
   end
 
@@ -105,7 +105,7 @@ defmodule Appsignal.Phoenix.EventHandler do
 
   defp set_span_data(span, %{conn: conn} = metadata) do
     span
-    |> @span.set_name(name(metadata))
+    |> @span.set_name_if_nil(name(metadata))
     |> @span.set_sample_data_if_nil("params", Appsignal.Metadata.params(conn))
     |> @span.set_sample_data_if_nil("environment", Appsignal.Metadata.metadata(conn))
     |> @span.set_sample_data_if_nil("session_data", Appsignal.Metadata.session(conn))
