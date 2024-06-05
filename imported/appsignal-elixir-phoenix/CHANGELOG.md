@@ -1,5 +1,18 @@
 # AppSignal for Elixir Phoenix changelog
 
+## 2.3.9
+
+_Published on 2024-06-05._
+
+### Changed
+
+- [4bce402](https://github.com/appsignal/appsignal-elixir-phoenix/commit/4bce402d17de206b4a44d496f969b70a810d3088) patch - Allow custom action names to be set in Phoenix routes. For example, in a plug middleware or the controller:
+  
+  ```elixir
+  Appsignal.Tracer.root_span()
+  |> Appsignal.Span.set_name("CustomActionName")
+  ```
+
 ## 2.3.8
 
 ### Added
