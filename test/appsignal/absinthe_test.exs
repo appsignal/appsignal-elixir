@@ -36,23 +36,41 @@ defmodule Appsignal.AbsintheTest do
   end
 
   describe "absinthe_execute_operation_start/4" do
-    setup do
-      execute_operation_start()
-    end
-
     test "creates a span" do
-      assert {:ok, [{"http_request", nil}]} = Test.Tracer.get(:create_span)
+      execute_operation_start(%{options: [operation_name: "OperationName"]})
+      assert {:ok, [{"graphql", nil}]} = Test.Tracer.get(:create_span)
     end
 
-    test "sets the span's name" do
+    test "without operation name it sets the span's name to graphql" do
+      execute_operation_start(%{options: []})
       assert {:ok, [{%Span{}, "graphql"}]} = Test.Span.get(:set_name)
     end
 
+    test "without operation name it doesn't update the root span's name and namespace" do
+      execute_operation_start(%{options: []})
+      assert :error = Test.Span.get(:set_name_if_nil)
+      assert :error = Test.Span.get(:set_namespace)
+    end
+
+    test "with operation name it sets the span's name to the operation name" do
+      execute_operation_start(%{options: [operation_name: "OperationName"]})
+      assert {:ok, [{%Span{}, "OperationName"}]} = Test.Span.get(:set_name)
+    end
+
+    test "with operation name it updates the root span's name and namespace" do
+      execute_operation_start(%{options: [operation_name: "OperationName"]})
+      root_span = Appsignal.Tracer.root_span()
+      assert {:ok, [{^root_span, "OperationName"}]} = Test.Span.get(:set_name_if_nil)
+      assert {:ok, [{^root_span, "graphql"}]} = Test.Span.get(:set_namespace)
+    end
+
     test "sets the span's category" do
+      execute_operation_start(%{options: []})
       assert attribute?("appsignal:category", "call.graphql")
     end
 
     test "does not detach the handler" do
+      execute_operation_start(%{options: []})
       assert attached?([:absinthe, :execute, :operation, :start])
     end
   end
@@ -109,7 +127,7 @@ defmodule Appsignal.AbsintheTest do
     :telemetry.execute(
       [:absinthe, :execute, :operation, :start],
       %{},
-      %{}
+      additional_metadata
     )
   end
 
@@ -117,7 +135,7 @@ defmodule Appsignal.AbsintheTest do
     :telemetry.execute(
       [:absinthe, :execute, :operation, :stop],
       %{duration: 123 * 1_000_000},
-      %{}
+      additional_metadata
     )
   end
 end

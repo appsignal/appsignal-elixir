@@ -41,11 +41,19 @@ defmodule Appsignal.Absinthe do
     end
   end
 
-  def absinthe_execute_operation_start(_event, _measurements, _metadata, _config) do
-    "http_request"
+  def absinthe_execute_operation_start(_event, _measurements, metadata, _config) do
+    operation_name = metadata[:options][:operation_name]
+
+    "graphql"
     |> @tracer.create_span(@tracer.current_span())
-    |> @span.set_name("graphql")
+    |> @span.set_name(operation_name || "graphql")
     |> @span.set_attribute("appsignal:category", "call.graphql")
+
+    if operation_name do
+      @tracer.root_span()
+      |> @span.set_name_if_nil(operation_name)
+      |> @span.set_namespace("graphql")
+    end
   end
 
   def absinthe_execute_operation_stop(_event, _measurements, _metadata, _config) do
