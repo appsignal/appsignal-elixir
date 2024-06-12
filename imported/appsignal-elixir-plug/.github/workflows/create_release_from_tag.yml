@@ -48,7 +48,7 @@ jobs:
         run: |
           # Prepare JSON payload using jq to ensure proper escaping
           payload=$(jq -n \
-            --arg title "Add changelog entry for $PACKAGE_NAME ${{ env.TAG_NAME }}" \
+            --arg title "$PACKAGE_NAME ${{ env.TAG_NAME }}" \
             --arg category "$CHANGELOG_CATEGORY" \
             --arg version "$PACKAGE_VERSION_PREFIX $(echo "${{ env.TAG_NAME }}" | sed 's/^v//')" \
             --arg changelog "$(cat CHANGELOG_TEXT.txt)" \
