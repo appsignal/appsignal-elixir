@@ -51,7 +51,8 @@ jobs:
             --arg category "$CHANGELOG_CATEGORY" \
             --arg version "$(echo "${{ env.TAG_NAME }}" | sed 's/^v//')" \
             --arg changelog "$(cat CHANGELOG_TEXT.txt)" \
-            '{ref: "main", inputs: {title: $title, category: $category, version: $version, changelog: $changelog}}')
+            --arg assignee "${{ github.actor }}" \
+            '{ref: "main", inputs: {title: $title, category: $category, version: $version, changelog: $changelog, assignee: $assignee}}')
 
           curl -X POST \
             -H "Authorization: token ${{ secrets.INTEGRATIONS_CHANGELOG_TOKEN }}" \
