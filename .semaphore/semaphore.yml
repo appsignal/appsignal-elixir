@@ -37,6 +37,7 @@ blocks:
           commands:
             - ERLANG_VERSION=27.0 ELIXIR_VERSION=1.17.0 . bin/setup
             - cache restore dialyzer-plt
+            - apt-get install erlang-dialyzer
             - MIX_ENV=dev mix dialyzer --plt
             - cache store dialyzer-plt priv/plts/
             - MIX_ENV=dev mix dialyzer --format dialyzer

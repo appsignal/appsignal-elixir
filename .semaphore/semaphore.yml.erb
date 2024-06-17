@@ -42,6 +42,7 @@ blocks:
           commands:
             - ERLANG_VERSION=<%= NEWEST_OTP %> ELIXIR_VERSION=<%= NEWEST_ELIXIR %> . bin/setup
             - cache restore dialyzer-plt
+            - apt-get install erlang-dialyzer
             - MIX_ENV=dev mix dialyzer --plt
             - cache store dialyzer-plt priv/plts/
             - MIX_ENV=dev mix dialyzer --format dialyzer
