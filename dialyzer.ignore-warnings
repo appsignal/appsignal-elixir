@@ -2,3 +2,4 @@ lib/appsignal/json.ex:31: Unknown function 'Elixir.Jason':encode/1
 lib/appsignal/json.ex:32: Unknown function 'Elixir.Jason':'encode!'/1
 lib/appsignal/json.ex:33: Unknown function 'Elixir.Jason':decode/1
 lib/appsignal/json.ex:34: Unknown function 'Elixir.Jason':'decode!'/1
+lib/mix/tasks/appsignal.install.ex:175: The pattern {'error', _reason@1} can never match the type 'ok'
