@@ -69,6 +69,12 @@ defmodule Appsignal.Phoenix.MixProject do
         false -> "~> 0.4 or ~> 1.0"
       end
 
+    credo_version =
+      case Version.compare(system_version, "1.13.0") do
+        :lt -> "1.7.6"
+        _ -> "~> 1.7"
+      end
+
     [
       {:appsignal, ">= 2.11.0 and < 3.0.0"},
       {:appsignal_plug, ">= 2.0.15 and < 3.0.0"},
@@ -77,7 +83,7 @@ defmodule Appsignal.Phoenix.MixProject do
       {:phoenix_live_view, phoenix_live_view_version, optional: true},
       {:ex_doc, "~> 0.21", only: :dev, runtime: false},
       {:dialyxir, "~> 1.3.0", only: [:dev, :test], runtime: false},
-      {:credo, "~> 1.4", only: [:dev, :test], runtime: false},
+      {:credo, credo_version, only: [:dev, :test], runtime: false},
       {:poison, "~> 5.0", only: [:dev, :test], runtime: false},
       {:telemetry, telemetry_version},
       {:hackney, hackney_version}
