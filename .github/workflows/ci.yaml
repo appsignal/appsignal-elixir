@@ -1,0 +1,158 @@
+name: CI
+
+on:
+  push: {}
+  schedule:
+    - cron: "0 0 * * 1-5"
+
+jobs:
+  lint_git:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name != 'schedule' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: lintje/action@v0.11
+
+  lint_format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Erlang and Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          otp-version: master
+          elixir-version: main
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Check code formatting
+        run: mix format --check-formatted
+
+  lint_credo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Erlang and Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          otp-version: master
+          elixir-version: main
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Get dependencies
+        run: mix deps.get
+      - name: Analyze code with Credo
+        run: mix credo --strict
+
+  lint_compile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Erlang and Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          otp-version: master
+          elixir-version: main
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Get dependencies
+        run: mix deps.get
+      - name: Check for compilation errors
+        run: mix compile --warnings-as-errors
+
+  lint_dialyzer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Erlang and Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          otp-version: 27.x
+          elixir-version: 1.17.x
+      - name: PLT cache
+        uses: actions/cache@v4
+        id: plt_cache
+        with:
+          key: plt
+          path: priv/plts
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Get dependencies
+        run: mix deps.get
+      - name: Compile
+        run: mix compile
+      - name: Analyze code with Dialyzer
+        run: mix dialyzer --format github
+
+  test_diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Erlang and Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          otp-version: master
+          elixir-version: main
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.3.3
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Get dependencies
+        run: mix deps.get
+      - name: Run tests
+        run: LANGUAGE=elixir test/integration/diagnose/bin/test
+
+  test_no_nif:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up Erlang and Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          otp-version: master
+          elixir-version: main
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Get dependencies
+        run: mix deps.get
+      - name: Run tests
+        run: MIX_ENV=test_no_nif mix test
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        elixir:
+          - 1.17.x
+        otp:
+          - 27.x
+          - 26.x
+          - 25.x
+        include:
+          - elixir: main
+            otp: master
+          - elixir: 1.16.x
+            otp: 26.x
+          - elixir: 1.15.x
+            otp: 26.x
+          - elixir: 1.14.x
+            otp: 25.x
+          - elixir: 1.13.x
+            otp: 24.x
+          - elixir: 1.12.x
+            otp: 24.x
+          - elixir: 1.11.x
+            otp: 24.x
+
+    steps:
+      - name: Set up Erlang and Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          otp-version: ${{matrix.otp}}
+          elixir-version: ${{matrix.elixir}}
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Get dependencies
+        run: mix deps.get
+      - name: Run tests
+        run: mix test

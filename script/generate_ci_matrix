@@ -1,5 +1,0 @@
-#!/bin/bash
-
-set -eu
-
-erb -T- .semaphore/semaphore.yml.erb > .semaphore/semaphore.yml	
