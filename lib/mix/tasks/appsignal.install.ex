@@ -2,7 +2,22 @@ defmodule Mix.Tasks.Appsignal.Install do
   use Mix.Task
   @shortdoc "Installs AppSignal into the current application"
 
-  def run([]) do
+  def run(args) do
+    case :os.type() do
+      {:win32, _} ->
+        """
+        We've detected that you're running Windows. Unfortunately, AppSignal does not support Windows at this time.
+        """
+        |> IO.puts()
+
+        exit(:shutdown)
+
+      _ ->
+        do_run(args)
+    end
+  end
+
+  defp do_run([]) do
     header()
 
     """
@@ -17,7 +32,7 @@ defmodule Mix.Tasks.Appsignal.Install do
     |> IO.puts()
   end
 
-  def run([push_api_key]) do
+  defp do_run([push_api_key]) do
     config = %{otp_app: otp_app(), active: true, push_api_key: push_api_key, request_headers: []}
     Application.put_env(:appsignal, :config, config)
     Appsignal.Config.initialize()
