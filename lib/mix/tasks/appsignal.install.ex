@@ -192,8 +192,6 @@ defmodule Mix.Tasks.Appsignal.Install do
             exit(:shutdown)
         end
 
-        IO.binwrite(file, appsignal_config_file_contents(config))
-        IO.puts("Success!")
         File.close(file)
 
       {:error, reason} ->
