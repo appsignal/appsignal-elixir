@@ -15,7 +15,6 @@ defmodule Appsignal do
   use Application
   alias Appsignal.Config
   require Logger
-  import Appsignal.Utils, only: [info: 1, warning: 1]
 
   @doc false
   def start(_type, _args) do
@@ -87,7 +86,7 @@ defmodule Appsignal do
   def initialize do
     case {Config.initialize(), Config.configured_as_active?()} do
       {_, false} ->
-        info("AppSignal disabled.")
+        Logger.info("AppSignal disabled.")
 
       {:ok, true} ->
         Appsignal.IntegrationLogger.debug("AppSignal starting.")
@@ -101,7 +100,7 @@ defmodule Appsignal do
         end
 
       {{:error, :invalid_config}, true} ->
-        warning(
+        Logger.warning(
           "Warning: No valid AppSignal configuration found, continuing with " <>
             "AppSignal metrics disabled."
         )

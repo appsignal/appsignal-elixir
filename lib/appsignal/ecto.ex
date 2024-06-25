@@ -1,9 +1,10 @@
 defmodule Appsignal.Ecto do
   require Appsignal.Utils
+  require Logger
 
   @tracer Appsignal.Utils.compile_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
   @span Appsignal.Utils.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
-  import Appsignal.Utils, only: [module_name: 1, warning: 1]
+  import Appsignal.Utils, only: [module_name: 1]
 
   @doc """
   Attaches `Appsignal.Ecto` to the Ecto telemetry channel configured in the
@@ -34,7 +35,7 @@ defmodule Appsignal.Ecto do
         :ok
 
       {:error, _} = error ->
-        warning("Appsignal.Ecto not attached to #{inspect(event)}: #{inspect(error)}")
+        Logger.warning("Appsignal.Ecto not attached to #{inspect(event)}: #{inspect(error)}")
 
         error
     end

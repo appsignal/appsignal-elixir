@@ -1,13 +1,12 @@
 defmodule Appsignal.Oban do
   require Appsignal.Utils
+  require Logger
 
   @tracer Appsignal.Utils.compile_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
   @span Appsignal.Utils.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
   @appsignal Appsignal.Utils.compile_env(:appsignal, :appsignal, Appsignal)
 
   @moduledoc false
-
-  import Appsignal.Utils, only: [warning: 1]
 
   def attach do
     exception_handler =
@@ -42,7 +41,7 @@ defmodule Appsignal.Oban do
           :ok
 
         {_, {:error, _} = error} ->
-          warning("Appsignal.Oban not attached to #{inspect(event)}: #{inspect(error)}")
+          Logger.warning("Appsignal.Oban not attached to #{inspect(event)}: #{inspect(error)}")
 
           error
       end
