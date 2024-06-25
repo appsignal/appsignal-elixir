@@ -1,5 +1,13 @@
 # AppSignal for Elixir changelog
 
+## 2.12.1
+
+_Published on 2024-06-25._
+
+### Fixed
+
+- [990f3b26](https://github.com/appsignal/appsignal-elixir/commit/990f3b26817d579c6eb32b1f84a78db529f53181) patch - When running the installation script on Microsoft Windows, some components threw an error. AppSignal doesn't support Windows, so the installation script won't run on Windows anymore. Preventing errors from raising.
+
 ## 2.12.0
 
 _Published on 2024-06-05._
