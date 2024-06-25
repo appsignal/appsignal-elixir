@@ -6,8 +6,6 @@ defmodule Appsignal.Tesla do
 
   @moduledoc false
 
-  import Appsignal.Utils, only: [warning: 1]
-
   def attach do
     handlers = %{
       [:tesla, :request, :start] => &__MODULE__.tesla_request_start/4,
@@ -23,7 +21,7 @@ defmodule Appsignal.Tesla do
           :ok
 
         {:error, _} = error ->
-          warning("Appsignal.Tesla not attached to #{inspect(event)}: #{inspect(error)}")
+          Logger.warning("Appsignal.Tesla not attached to #{inspect(event)}: #{inspect(error)}")
 
           error
       end

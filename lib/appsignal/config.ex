@@ -2,7 +2,6 @@ defmodule Appsignal.Config do
   @moduledoc false
   alias Appsignal.Nif
   alias Appsignal.Utils.FileSystem
-  import Appsignal.Utils, only: [warning: 1]
 
   @default_config %{
     active: false,
@@ -64,7 +63,7 @@ defmodule Appsignal.Config do
     config = Map.merge(config, sources[:override])
 
     if !empty?(config[:working_dir_path]) do
-      warning(fn ->
+      Logger.warning(fn ->
         "'working_dir_path' is deprecated, please use " <>
           "'working_directory_path' instead and specify the " <>
           "full path to the working directory"
@@ -234,7 +233,7 @@ defmodule Appsignal.Config do
             "all"
 
           unknown ->
-            warning(
+            Logger.warning(
               "Unknown value #{inspect(unknown)} for report_oban_errors config " <>
                 ~s(option. Valid values are "discard", "none", "all". ) <>
                 ~s(Defaulting to "all".)

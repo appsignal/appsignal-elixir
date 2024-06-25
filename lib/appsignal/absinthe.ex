@@ -6,8 +6,6 @@ defmodule Appsignal.Absinthe do
 
   @moduledoc false
 
-  import Appsignal.Utils, only: [warning: 1]
-
   def attach do
     handlers = %{
       [:absinthe, :execute, :operation, :start] => &__MODULE__.absinthe_execute_operation_start/4,
@@ -34,7 +32,7 @@ defmodule Appsignal.Absinthe do
           :ok
 
         {_, {:error, _} = error} ->
-          warning("Appsignal.Absinthe not attached to #{inspect(event)}: #{inspect(error)}")
+          Logger.warning("Appsignal.Absinthe not attached to #{inspect(event)}: #{inspect(error)}")
 
           error
       end
