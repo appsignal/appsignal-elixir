@@ -183,6 +183,15 @@ defmodule Mix.Tasks.Appsignal.Install do
 
     case File.open(appsignal_config_file_path(), [:write]) do
       {:ok, file} ->
+        case binwrite_with_result(file, appsignal_config_file_contents(config)) do
+          :ok ->
+            IO.puts("Success!")
+
+          {:error, reason} ->
+            IO.puts("Failure! #{inspect(reason)}")
+            exit(:shutdown)
+        end
+
         IO.binwrite(file, appsignal_config_file_contents(config))
         IO.puts("Success!")
         File.close(file)
@@ -191,6 +200,18 @@ defmodule Mix.Tasks.Appsignal.Install do
         IO.puts("Failure! #{inspect(reason)}")
         exit(:shutdown)
     end
+  end
+
+  if Version.match?(System.version(), ">= 1.16.0") do
+    defp binwrite_with_result(path, contents) do
+      try do
+        IO.binwrite(path, contents)
+      catch
+        {:error, reason} -> {:error, reason}
+      end
+    end
+  else
+    defdelegate binwrite_with_result(path, contents), to: IO, as: :binwrite
   end
 
   # Link the config/appsignal.exs config file to the config/config.exs file.
