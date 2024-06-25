@@ -183,15 +183,8 @@ defmodule Mix.Tasks.Appsignal.Install do
 
     case File.open(appsignal_config_file_path(), [:write]) do
       {:ok, file} ->
-        case IO.binwrite(file, appsignal_config_file_contents(config)) do
-          :ok ->
-            IO.puts("Success!")
-
-          {:error, reason} ->
-            IO.puts("Failure! #{inspect(reason)}")
-            exit(:shutdown)
-        end
-
+        IO.binwrite(file, appsignal_config_file_contents(config))
+        IO.puts("Success!")
         File.close(file)
 
       {:error, reason} ->
