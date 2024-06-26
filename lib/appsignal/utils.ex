@@ -30,4 +30,11 @@ defmodule Appsignal.Utils do
     require Logger
     Logger.warning(message)
   end
+
+  @deprecated "Use Application.compile_env/3 instead."
+  defmacro compile_env(app, key, default \\ nil) do
+    quote do
+      Application.compile_env(unquote(app), unquote(key), unquote(default))
+    end
+  end
 end
