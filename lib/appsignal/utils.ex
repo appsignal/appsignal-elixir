@@ -19,6 +19,18 @@ defmodule Appsignal.Utils do
 
   def module_name(module), do: module |> to_string() |> module_name()
 
+  @deprecated "Use Logger.info/1 instead."
+  def info(message) do
+    require Logger
+    Logger.info(message)
+  end
+
+  @deprecated "Use Logger.warning/1 instead."
+  def warning(message) do
+    require Logger
+    Logger.warning(message)
+  end
+
   defmacro compile_env(app, key, default \\ nil) do
     if Version.match?(System.version(), ">= 1.10.0") do
       quote do
