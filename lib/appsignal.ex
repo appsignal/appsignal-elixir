@@ -8,9 +8,7 @@ defmodule Appsignal do
   helper functions for sending metrics to AppSignal.
   """
 
-  require Mix.Appsignal.Utils
-
-  @os Mix.Appsignal.Utils.compile_env(:appsignal, :os_internal, :os)
+  @os Application.compile_env(:appsignal, :os_internal, :os)
 
   use Application
   alias Appsignal.Config
