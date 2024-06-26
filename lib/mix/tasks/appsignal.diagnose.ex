@@ -3,10 +3,8 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
   alias Appsignal.Config
   alias Appsignal.Diagnose
 
-  require Appsignal.Utils
-
-  @system Appsignal.Utils.compile_env(:appsignal, :appsignal_system, Appsignal.System)
-  @report Appsignal.Utils.compile_env(
+  @system Application.compile_env(:appsignal, :appsignal_system, Appsignal.System)
+  @report Application.compile_env(
             :appsignal,
             :appsignal_diagnose_report,
             Appsignal.Diagnose.Report

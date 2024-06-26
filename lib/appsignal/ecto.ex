@@ -1,9 +1,8 @@
 defmodule Appsignal.Ecto do
-  require Appsignal.Utils
   require Logger
 
-  @tracer Appsignal.Utils.compile_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
-  @span Appsignal.Utils.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
+  @tracer Application.compile_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
+  @span Application.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
   import Appsignal.Utils, only: [module_name: 1]
 
   @doc """

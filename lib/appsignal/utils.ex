@@ -30,16 +30,4 @@ defmodule Appsignal.Utils do
     require Logger
     Logger.warning(message)
   end
-
-  defmacro compile_env(app, key, default \\ nil) do
-    if Version.match?(System.version(), ">= 1.10.0") do
-      quote do
-        Application.compile_env(unquote(app), unquote(key), unquote(default))
-      end
-    else
-      quote do
-        Application.get_env(unquote(app), unquote(key), unquote(default))
-      end
-    end
-  end
 end

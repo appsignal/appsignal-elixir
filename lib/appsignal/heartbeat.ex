@@ -1,9 +1,8 @@
 defmodule Appsignal.Heartbeat do
   alias __MODULE__
   alias Appsignal.Heartbeat.Event
-  require Appsignal.Utils
 
-  @transmitter Appsignal.Utils.compile_env(
+  @transmitter Application.compile_env(
                  :appsignal,
                  :appsignal_transmitter,
                  Appsignal.Transmitter
