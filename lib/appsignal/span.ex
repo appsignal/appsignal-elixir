@@ -3,9 +3,7 @@ defmodule Appsignal.Span do
 
   defstruct [:reference, :pid]
 
-  require Appsignal.Utils
-
-  @nif Appsignal.Utils.compile_env(:appsignal, :appsignal_tracer_nif, Appsignal.Nif)
+  @nif Application.compile_env(:appsignal, :appsignal_tracer_nif, Appsignal.Nif)
 
   @type t() :: %__MODULE__{
           reference: reference(),

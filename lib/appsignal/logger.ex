@@ -1,7 +1,5 @@
 defmodule Appsignal.Logger do
-  require Appsignal.Utils
-
-  @nif Appsignal.Utils.compile_env(:appsignal, :appsignal_tracer_nif, Appsignal.Nif)
+  @nif Application.compile_env(:appsignal, :appsignal_tracer_nif, Appsignal.Nif)
 
   @type log_level ::
           :debug | :info | :notice | :warning | :error | :critical | :alert | :emergency

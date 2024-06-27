@@ -1,10 +1,8 @@
 defmodule Appsignal.Diagnose.Host do
   @moduledoc false
 
-  require Appsignal.Utils
-
-  @system Appsignal.Utils.compile_env(:appsignal, :appsignal_system, Appsignal.System)
-  @nif Appsignal.Utils.compile_env(:appsignal, :appsignal_nif, Appsignal.Nif)
+  @system Application.compile_env(:appsignal, :appsignal_system, Appsignal.System)
+  @nif Application.compile_env(:appsignal, :appsignal_nif, Appsignal.Nif)
 
   def info do
     {_, os} = :os.type()

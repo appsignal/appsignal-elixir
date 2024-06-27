@@ -2,9 +2,8 @@ defmodule Appsignal.Probes do
   @moduledoc false
   use GenServer
   require Logger
-  require Appsignal.Utils
 
-  @integration_logger Appsignal.Utils.compile_env(
+  @integration_logger Application.compile_env(
                         :appsignal,
                         :appsignal_integration_logger,
                         Appsignal.IntegrationLogger
