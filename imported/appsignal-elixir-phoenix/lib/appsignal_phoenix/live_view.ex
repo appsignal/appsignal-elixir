@@ -1,8 +1,7 @@
 defmodule Appsignal.Phoenix.LiveView do
-  require Appsignal.Utils
-  @tracer Appsignal.Utils.compile_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
-  @span Appsignal.Utils.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
-  @os Appsignal.Utils.compile_env(:appsignal_plug, :os, :os)
+  @tracer Application.compile_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
+  @span Application.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
+  @os Application.compile_env(:appsignal_plug, :os, :os)
 
   def instrument(module, name, socket, fun) do
     instrument(module, name, %{}, socket, fun)

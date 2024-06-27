@@ -1,6 +1,5 @@
 defmodule Appsignal.Phoenix.Template do
-  require Appsignal.Utils
-  @span Appsignal.Utils.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
+  @span Application.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
   @moduledoc false
 
   def compile(fun, path) do

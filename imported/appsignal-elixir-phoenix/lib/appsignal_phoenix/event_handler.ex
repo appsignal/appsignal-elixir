@@ -1,8 +1,9 @@
 defmodule Appsignal.Phoenix.EventHandler do
-  require Appsignal.Utils
-  @tracer Appsignal.Utils.compile_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
-  @span Appsignal.Utils.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
+  @tracer Application.compile_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
+  @span Application.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
   @moduledoc false
+
+  require Logger
 
   def attach do
     handlers = %{
@@ -27,7 +28,7 @@ defmodule Appsignal.Phoenix.EventHandler do
           :ok
 
         {:error, _} = error ->
-          Appsignal.Utils.warning(
+          Logger.warning(
             "Appsignal.Phoenix.EventHandler not attached to #{inspect(event)}: #{inspect(error)}"
           )
 

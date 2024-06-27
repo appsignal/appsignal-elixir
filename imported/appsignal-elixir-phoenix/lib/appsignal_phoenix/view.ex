@@ -42,9 +42,8 @@ defmodule Appsignal.Phoenix.View do
     quote do
       if Module.defines?(__MODULE__, {:__templates__, 0}) &&
            Module.defines?(__MODULE__, {:render, 2}) do
-        require Appsignal.Utils
-        @span Appsignal.Utils.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
-        @tracer Appsignal.Utils.compile_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
+        @span Application.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
+        @tracer Application.compile_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
 
         defoverridable render: 2
 
@@ -76,7 +75,7 @@ defmodule Appsignal.Phoenix.View do
           fun.()
         end
       else
-        Appsignal.Utils.warning("""
+        Logger.warning("""
         AppSignal.Phoenix.View NOT attached to #{__MODULE__}
 
         Template rendering instrumentation is now set up automatically, so using
