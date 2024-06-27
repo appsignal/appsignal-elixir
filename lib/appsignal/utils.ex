@@ -19,19 +19,16 @@ defmodule Appsignal.Utils do
 
   def module_name(module), do: module |> to_string() |> module_name()
 
-  @deprecated "Use Logger.info/1 instead."
   def info(message) do
     require Logger
     Logger.info(message)
   end
 
-  @deprecated "Use Logger.warning/1 instead."
   def warning(message) do
     require Logger
     Logger.warning(message)
   end
 
-  @deprecated "Use Application.compile_env/3 instead."
   defmacro compile_env(app, key, default \\ nil) do
     quote do
       Application.compile_env(unquote(app), unquote(key), unquote(default))
