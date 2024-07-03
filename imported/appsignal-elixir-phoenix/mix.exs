@@ -38,35 +38,11 @@ defmodule Appsignal.Phoenix.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     system_version = System.version()
-    otp_version = System.otp_release()
-
-    hackney_version =
-      case otp_version >= "21" do
-        true -> "~> 1.6"
-        false -> "1.18.1"
-      end
-
-    mime_and_plug_dependencies =
-      if Mix.env() == :test || Mix.env() == :test_no_nif do
-        case Version.compare(system_version, "1.10.0") do
-          :lt -> [{:plug, "~> 1.13.0"}, {:mime, "~> 1.0"}]
-          _ -> []
-        end
-      else
-        []
-      end
 
     phoenix_live_view_version =
-      case {otp_version < "21", Version.compare(system_version, "1.12.0")} do
-        {true, _} -> ">= 0.9.0 and < 0.17.4"
-        {_, :lt} -> ">= 0.9.0 and < 0.18.0"
-        {_, _} -> "~> 0.9"
-      end
-
-    telemetry_version =
-      case otp_version < "21" do
-        true -> "~> 0.4"
-        false -> "~> 0.4 or ~> 1.0"
+      case Version.compare(system_version, "1.12.0") do
+        :lt -> ">= 0.9.0 and < 0.18.0"
+        _ -> "~> 0.9"
       end
 
     credo_version =
@@ -85,8 +61,8 @@ defmodule Appsignal.Phoenix.MixProject do
       {:dialyxir, "~> 1.3.0", only: [:dev, :test], runtime: false},
       {:credo, credo_version, only: [:dev, :test], runtime: false},
       {:poison, "~> 5.0", only: [:dev, :test], runtime: false},
-      {:telemetry, telemetry_version},
-      {:hackney, hackney_version}
-    ] ++ mime_and_plug_dependencies
+      {:telemetry, "~> 0.4 or ~> 1.0"},
+      {:hackney, "~> 1.6"}
+    ]
   end
 end
