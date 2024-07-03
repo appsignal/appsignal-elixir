@@ -129,8 +129,8 @@ jobs:
           - 26.x
           - 25.x
         include:
-          - elixir: main
-            otp: master
+          - elixir: latest
+            otp: latest
           - elixir: 1.16.x
             otp: 26.x
           - elixir: 1.15.x
