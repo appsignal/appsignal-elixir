@@ -1,5 +1,14 @@
 # AppSignal for Elixir Phoenix changelog
 
+## 2.4.0
+
+_Published on 2024-07-03._
+
+### Added
+
+- Add endpoint events to Phoenix request traces to instrument more events of the request lifetime. (minor [9e24eef](https://github.com/appsignal/appsignal-elixir-phoenix/commit/9e24eefe782dba6fdd423a82850c948e0c3de9d0))
+- Add LiveView 1.x in the allowed list of versions in the dependencies. (patch [e7f2b16](https://github.com/appsignal/appsignal-elixir-phoenix/commit/e7f2b169344569beb44d4ac0a4b99462effcc154))
+
 ## 2.3.9
 
 _Published on 2024-06-05._
