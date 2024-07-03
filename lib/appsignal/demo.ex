@@ -7,9 +7,7 @@ defmodule Appsignal.Demo do
   @moduledoc false
   import Appsignal.Instrumentation, only: [instrument: 2, instrument: 3]
 
-  require Appsignal.Utils
-
-  @span Appsignal.Utils.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
+  @span Application.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
 
   def send_performance_sample do
     instrument("DemoController#hello", "call.phoenix", fn span ->

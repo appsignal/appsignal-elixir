@@ -1,12 +1,10 @@
 defmodule Appsignal.Finch do
-  require Appsignal.Utils
+  require Logger
 
-  @tracer Appsignal.Utils.compile_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
-  @span Appsignal.Utils.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
+  @tracer Application.compile_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
+  @span Application.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
 
   @moduledoc false
-
-  import Appsignal.Utils, only: [warning: 1]
 
   def attach do
     handlers = %{
@@ -23,7 +21,7 @@ defmodule Appsignal.Finch do
           :ok
 
         {:error, _} = error ->
-          warning("Appsignal.Finch not attached to #{inspect(event)}: #{inspect(error)}")
+          Logger.warning("Appsignal.Finch not attached to #{inspect(event)}: #{inspect(error)}")
 
           error
       end

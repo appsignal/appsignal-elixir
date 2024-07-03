@@ -1,21 +1,19 @@
 defmodule Appsignal.Error.Backend do
   @moduledoc false
 
-  require Appsignal.Utils
+  require Logger
 
-  @tracer Appsignal.Utils.compile_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
-  @span Appsignal.Utils.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
+  @tracer Application.compile_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
+  @span Application.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
 
   @behaviour :gen_event
-
-  import Appsignal.Utils, only: [warning: 1]
 
   def init(opts), do: {:ok, opts}
 
   def attach do
     case Logger.add_backend(Appsignal.Error.Backend) do
       {:error, error} ->
-        warning("Appsignal.Error.Backend not attached to Logger: #{error}")
+        Logger.warning("Appsignal.Error.Backend not attached to Logger: #{error}")
         :error
 
       _ ->

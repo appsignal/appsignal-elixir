@@ -1,9 +1,7 @@
 defmodule Appsignal.Instrumentation.Decorators do
   @moduledoc false
 
-  require Appsignal.Utils
-
-  @span Appsignal.Utils.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
+  @span Application.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
 
   use Decorator.Define,
     instrument: 0,
