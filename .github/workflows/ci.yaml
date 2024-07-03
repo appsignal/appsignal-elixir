@@ -21,8 +21,8 @@ jobs:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
         with:
-          otp-version: master
-          elixir-version: main
+          otp-version: 27.x
+          elixir-version: 1.17.x
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Check code formatting
@@ -34,8 +34,8 @@ jobs:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
         with:
-          otp-version: master
-          elixir-version: main
+          otp-version: 27.x
+          elixir-version: 1.17.x
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Get dependencies
@@ -49,8 +49,8 @@ jobs:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
         with:
-          otp-version: master
-          elixir-version: main
+          otp-version: 27.x
+          elixir-version: 1.17.x
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Get dependencies
@@ -87,8 +87,8 @@ jobs:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
         with:
-          otp-version: master
-          elixir-version: main
+          otp-version: 27.x
+          elixir-version: 1.17.x
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
@@ -109,8 +109,8 @@ jobs:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
         with:
-          otp-version: master
-          elixir-version: main
+          otp-version: 27.x
+          elixir-version: 1.17.x
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Get dependencies
@@ -129,8 +129,6 @@ jobs:
           - 26.x
           - 25.x
         include:
-          - elixir: main
-            otp: master
           - elixir: 1.16.x
             otp: 26.x
           - elixir: 1.15.x
