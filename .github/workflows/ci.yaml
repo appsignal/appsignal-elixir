@@ -22,7 +22,7 @@ jobs:
         uses: erlef/setup-beam@v1
         with:
           otp-version: 27.x
-          elixir-version: 1.17.x
+          elixir-version: latest
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Check code formatting
@@ -35,7 +35,7 @@ jobs:
         uses: erlef/setup-beam@v1
         with:
           otp-version: 27.x
-          elixir-version: 1.17.x
+          elixir-version: latest
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Get dependencies
@@ -50,7 +50,7 @@ jobs:
         uses: erlef/setup-beam@v1
         with:
           otp-version: 27.x
-          elixir-version: 1.17.x
+          elixir-version: latest
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Get dependencies
@@ -65,7 +65,7 @@ jobs:
         uses: erlef/setup-beam@v1
         with:
           otp-version: 27.x
-          elixir-version: 1.17.x
+          elixir-version: latest
       - name: PLT cache
         uses: actions/cache@v4
         id: plt_cache
@@ -88,7 +88,7 @@ jobs:
         uses: erlef/setup-beam@v1
         with:
           otp-version: 27.x
-          elixir-version: 1.17.x
+          elixir-version: latest
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
@@ -110,7 +110,7 @@ jobs:
         uses: erlef/setup-beam@v1
         with:
           otp-version: 27.x
-          elixir-version: 1.17.x
+          elixir-version: latest
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Get dependencies
@@ -129,6 +129,8 @@ jobs:
           - 26.x
           - 25.x
         include:
+          - elixir: latest
+            otp: 27.x
           - elixir: 1.16.x
             otp: 26.x
           - elixir: 1.15.x
