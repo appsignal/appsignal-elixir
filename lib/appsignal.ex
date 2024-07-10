@@ -165,8 +165,13 @@ defmodule Appsignal do
   defdelegate send_error(kind, reason, stacktrace), to: Appsignal.Instrumentation
   defdelegate send_error(kind, reason, stacktrace, fun), to: Appsignal.Instrumentation
 
-  defdelegate heartbeat(name), to: Appsignal.Heartbeat
-  defdelegate heartbeat(name, fun), to: Appsignal.Heartbeat
+  @spec heartbeat(String.t()) :: :ok
+  @deprecated "Use `Appsignal.CheckIn.cron/1` instead."
+  defdelegate heartbeat(name), to: Appsignal.CheckIn, as: :cron
+
+  @spec heartbeat(String.t(), (-> out)) :: out when out: var
+  @deprecated "Use `Appsignal.CheckIn.cron/2` instead."
+  defdelegate heartbeat(name, fun), to: Appsignal.CheckIn, as: :cron
 
   defp log_nif_loading_error do
     arch = parse_architecture(to_string(:erlang.system_info(:system_architecture)))
