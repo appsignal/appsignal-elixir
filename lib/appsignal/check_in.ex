@@ -57,12 +57,12 @@ defmodule Appsignal.CheckIn.Cron do
   defp transmit(event) do
     if Appsignal.Config.active?() do
       config = Appsignal.Config.config()
-      endpoint = "#{config[:logging_endpoint]}/checkins/cron/json"
+      endpoint = "#{config[:logging_endpoint]}/check_ins/json"
 
       case @transmitter.transmit(endpoint, event, config) do
         {:ok, status_code, _, _} when status_code in 200..299 ->
           Appsignal.IntegrationLogger.trace(
-            "Transmitted cron check-in `#{event.name}` (#{event.id}) #{event.kind} event"
+            "Transmitted cron check-in `#{event.identifier}` (#{event.digest}) #{event.kind} event"
           )
 
         {:ok, status_code, _, _} ->
@@ -92,17 +92,24 @@ defmodule Appsignal.CheckIn.Cron.Event do
   @derive Jason.Encoder
 
   @type kind :: :start | :finish
-  @type t :: %Event{name: String.t(), id: String.t(), kind: kind, timestamp: integer}
+  @type t :: %Event{
+          identifier: String.t(),
+          digest: String.t(),
+          kind: kind,
+          timestamp: integer,
+          check_in_type: :cron
+        }
 
-  defstruct [:name, :id, :kind, :timestamp]
+  defstruct [:identifier, :digest, :kind, :timestamp, :check_in_type]
 
   @spec new(Cron.t(), kind) :: t
   def new(%Cron{name: name, id: id}, kind) do
     %Event{
-      name: name,
-      id: id,
+      identifier: name,
+      digest: id,
       kind: kind,
-      timestamp: System.system_time(:second)
+      timestamp: System.system_time(:second),
+      check_in_type: :cron
     }
   end
 end
