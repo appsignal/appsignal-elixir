@@ -2,13 +2,13 @@ defmodule Appsignal.CheckIn do
   alias Appsignal.CheckIn.Cron
 
   @spec cron(String.t()) :: :ok
-  def cron(name) do
-    Cron.finish(Cron.new(name))
+  def cron(identifier) do
+    Cron.finish(Cron.new(identifier))
   end
 
   @spec cron(String.t(), (-> out)) :: out when out: var
-  def cron(name, fun) do
-    cron = Cron.new(name)
+  def cron(identifier, fun) do
+    cron = Cron.new(identifier)
 
     Cron.start(cron)
     output = fun.()
@@ -27,19 +27,19 @@ defmodule Appsignal.CheckIn.Cron do
                  :appsignal_transmitter,
                  Appsignal.Transmitter
                )
-  @type t :: %Cron{name: String.t(), id: String.t()}
+  @type t :: %Cron{identifier: String.t(), digest: String.t()}
 
-  defstruct [:name, :id]
+  defstruct [:identifier, :digest]
 
   @spec new(String.t()) :: t
-  def new(name) do
+  def new(identifier) do
     %Cron{
-      name: name,
-      id: random_id()
+      identifier: identifier,
+      digest: random_digest()
     }
   end
 
-  defp random_id do
+  defp random_digest do
     Base.encode16(:crypto.strong_rand_bytes(8), case: :lower)
   end
 
@@ -103,10 +103,10 @@ defmodule Appsignal.CheckIn.Cron.Event do
   defstruct [:identifier, :digest, :kind, :timestamp, :check_in_type]
 
   @spec new(Cron.t(), kind) :: t
-  def new(%Cron{name: name, id: id}, kind) do
+  def new(%Cron{identifier: identifier, digest: digest}, kind) do
     %Event{
-      identifier: name,
-      digest: id,
+      identifier: identifier,
+      digest: digest,
       kind: kind,
       timestamp: System.system_time(:second),
       check_in_type: :cron
