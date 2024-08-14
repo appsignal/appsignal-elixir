@@ -1,5 +1,31 @@
 # AppSignal for Elixir changelog
 
+## 2.12.2
+
+_Published on 2024-08-14._
+
+### Changed
+
+- Rename heartbeats to cron check-ins. Calls to `Appsignal.heartbeat` and `Appsignal.Heartbeat` should be replaced with calls to `Appsignal.CheckIn.cron` and `Appsignal.CheckIn.Cron`, for example:
+
+  ```elixir
+  # Before
+  Appsignal.heartbeat("do_something", fn ->
+    do_something()
+  end)
+
+  # After
+  Appsignal.CheckIn.cron("do_something", fn ->
+    do_something
+  end)
+  ```
+
+  (patch [1c3b9c67](https://github.com/appsignal/appsignal-elixir/commit/1c3b9c671544816486b9b1cc69c3400a672c42fb))
+
+### Deprecated
+
+- Calls to `Appsignal.heartbeat` and to methods in `Appsignal.Heartbeat` will emit a deprecation warning at compile-time. (patch [1c3b9c67](https://github.com/appsignal/appsignal-elixir/commit/1c3b9c671544816486b9b1cc69c3400a672c42fb))
+
 ## 2.12.1
 
 _Published on 2024-06-25._
