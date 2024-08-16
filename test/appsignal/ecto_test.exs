@@ -100,7 +100,7 @@ defmodule Appsignal.EctoTest do
     end
 
     test "creates a span with a parent and a start time", %{parent: parent} do
-      {:ok, [{"http_request", parent, start_time: time}]} = Test.Tracer.get(:create_span)
+      {:ok, [{"http_request", ^parent, start_time: time}]} = Test.Tracer.get(:create_span)
       assert is_integer(time)
     end
 
@@ -165,7 +165,7 @@ defmodule Appsignal.EctoTest do
     end
 
     test "creates a span with a parent and a start time", %{parent: parent} do
-      {:ok, [{"http_request", parent, start_time: time}]} = Test.Tracer.get(:create_span)
+      {:ok, [{"http_request", ^parent, start_time: time}]} = Test.Tracer.get(:create_span)
       assert is_integer(time)
     end
 
@@ -223,7 +223,7 @@ defmodule Appsignal.EctoTest do
     end
 
     test "creates a span with a parent and a start time", %{parent: parent} do
-      {:ok, [{"http_request", %Span{}, start_time: time}]} = Test.Tracer.get(:create_span)
+      {:ok, [{"http_request", ^parent, start_time: time}]} = Test.Tracer.get(:create_span)
       assert is_integer(time)
     end
 
@@ -275,7 +275,7 @@ defmodule Appsignal.EctoTest do
     end
 
     test "creates a span with a parent and a start time", %{parent: parent} do
-      {:ok, [{"http_request", %Span{}, start_time: time}]} = Test.Tracer.get(:create_span)
+      {:ok, [{"http_request", ^parent, start_time: time}]} = Test.Tracer.get(:create_span)
       assert is_integer(time)
     end
 
@@ -294,7 +294,7 @@ defmodule Appsignal.EctoTest do
     test "closes the span and its parent with an end time", %{parent: parent} do
       {:ok, [{_, _, start_time: start_time}]} = Test.Tracer.get(:create_span)
 
-      {:ok, [{%Span{}, end_time: end_time}, {parent, end_time: end_time}]} =
+      {:ok, [{^parent, end_time: end_time}, {%Span{}, end_time: end_time}]} =
         Test.Tracer.get(:close_span)
 
       assert end_time - start_time == 8_829_000
@@ -332,7 +332,7 @@ defmodule Appsignal.EctoTest do
     end
 
     test "creates a span with a parent and a start time", %{parent: parent} do
-      {:ok, [{"http_request", parent, start_time: time}]} = Test.Tracer.get(:create_span)
+      {:ok, [{"http_request", ^parent, start_time: time}]} = Test.Tracer.get(:create_span)
       assert is_integer(time)
     end
 
@@ -351,7 +351,7 @@ defmodule Appsignal.EctoTest do
     test "closes the span and its parent with an end time", %{parent: parent} do
       {:ok, [{_, _, start_time: start_time}]} = Test.Tracer.get(:create_span)
 
-      {:ok, [{%Span{}, end_time: end_time}, {parent, end_time: end_time}]} =
+      {:ok, [{^parent, end_time: end_time}, {%Span{}, end_time: end_time}]} =
         Test.Tracer.get(:close_span)
 
       assert end_time - start_time == 8_829_000
@@ -393,7 +393,7 @@ defmodule Appsignal.EctoTest do
     end
 
     test "creates a span with a parent and a start time", %{parent: parent} do
-      {:ok, [{"http_request", parent, start_time: time}]} = Test.Tracer.get(:create_span)
+      {:ok, [{"http_request", ^parent, start_time: time}]} = Test.Tracer.get(:create_span)
       assert is_integer(time)
     end
 
