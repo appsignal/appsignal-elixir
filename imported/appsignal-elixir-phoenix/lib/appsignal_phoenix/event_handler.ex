@@ -45,11 +45,8 @@ defmodule Appsignal.Phoenix.EventHandler do
     |> @span.set_attribute("appsignal:category", "call.phoenix_endpoint")
   end
 
-  def phoenix_endpoint_stop(_event, _measurements, metadata, _config) do
-    _root_span = set_span_data(@tracer.root_span(), metadata)
-
-    @tracer.current_span()
-    |> @tracer.close_span()
+  def phoenix_endpoint_stop(_event, _measurements, _metadata, _config) do
+    @tracer.close_span(@tracer.current_span())
   end
 
   def phoenix_router_dispatch_start(_event, _measurements, _metadata, _config) do
@@ -60,9 +57,10 @@ defmodule Appsignal.Phoenix.EventHandler do
     |> @span.set_attribute("appsignal:category", "call.phoenix_router_dispatch")
   end
 
-  def phoenix_router_dispatch_stop(_event, _measurements, _metadata, _config) do
-    @tracer.current_span()
-    |> @tracer.close_span()
+  def phoenix_router_dispatch_stop(_event, _measurements, metadata, _config) do
+    _root_span = set_span_data(@tracer.root_span(), metadata)
+
+    @tracer.close_span(@tracer.current_span())
   end
 
   def phoenix_router_dispatch_exception(
