@@ -1,5 +1,13 @@
 # AppSignal for Elixir Phoenix changelog
 
+## 2.4.1
+
+_Published on 2024-08-22._
+
+### Fixed
+
+- Set request metadata in :router_dispatch events to support Phoenix apps that don't fire :endpoint events. (patch [53ffd75](https://github.com/appsignal/appsignal-elixir-phoenix/commit/53ffd75f516bcd82e35903a6be985292e0fcf17c))
+
 ## 2.4.0
 
 _Published on 2024-07-03._
