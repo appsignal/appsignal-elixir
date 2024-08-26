@@ -73,7 +73,13 @@ defmodule Appsignal.Ecto do
   def handle_event(_event, _measurements, _metadata, _config), do: :ok
 
   defp current_span(metadata) do
-    metadata[:options][:_appsignal_current_span] || @tracer.current_span()
+    # If a current span is already set in this process, use that instead
+    # of the current span passed as part of the Ecto metadata.
+    # This fixes an issue where, when a transaction takes place in a
+    # parallel preload process, `handle_commit/3` and `handle_rollback/3`
+    # would not close the span created by `handle_begin/3`, but the span's
+    # parent.
+    @tracer.current_span() || metadata[:options][:_appsignal_current_span]
   end
 
   defp do_handle_event(nil, _total_time, _repo, _query), do: nil

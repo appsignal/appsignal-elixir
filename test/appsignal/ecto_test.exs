@@ -68,7 +68,7 @@ defmodule Appsignal.EctoTest do
     end
   end
 
-  describe "handle_event/4 and handle_query/4, with a root span" do
+  describe "handle_event/4 and handle_query/4, with a root span from the tracer" do
     setup do
       start_supervised!(Test.Nif)
       start_supervised!(Test.Tracer)
@@ -100,7 +100,7 @@ defmodule Appsignal.EctoTest do
     end
 
     test "creates a span with a parent and a start time", %{parent: parent} do
-      {:ok, [{"http_request", parent, start_time: time}]} = Test.Tracer.get(:create_span)
+      {:ok, [{"http_request", ^parent, start_time: time}]} = Test.Tracer.get(:create_span)
       assert is_integer(time)
     end
 
@@ -165,7 +165,7 @@ defmodule Appsignal.EctoTest do
     end
 
     test "creates a span with a parent and a start time", %{parent: parent} do
-      {:ok, [{"http_request", parent, start_time: time}]} = Test.Tracer.get(:create_span)
+      {:ok, [{"http_request", ^parent, start_time: time}]} = Test.Tracer.get(:create_span)
       assert is_integer(time)
     end
 
@@ -188,6 +188,70 @@ defmodule Appsignal.EctoTest do
     test "closes the span with an end time" do
       {:ok, [{_, _, start_time: start_time}]} = Test.Tracer.get(:create_span)
       {:ok, [{%Span{}, end_time: end_time}]} = Test.Tracer.get(:close_span)
+      assert end_time - start_time == 8_829_000
+    end
+  end
+
+  describe "handle_event/4 and handle_commit/4, with a root span from the tracer and a root span passed via telemetry options" do
+    setup do
+      start_supervised!(Test.Nif)
+      start_supervised!(Test.Tracer)
+      start_supervised!(Test.Span)
+      start_supervised!(Test.Monitor)
+
+      telemetry_span =
+        fn -> Appsignal.Tracer.create_span("http_request") end
+        |> Task.async()
+        |> Task.await()
+
+      tracer_span = Appsignal.Tracer.create_span("http_request")
+
+      :telemetry.execute(
+        [:appsignal, :test, :repo, :query],
+        %{
+          decode_time: 2_204_000,
+          query_time: 5_386_000,
+          queue_time: 1_239_000,
+          total_time: 8_829_000
+        },
+        %{
+          params: [],
+          query: "commit",
+          repo: Appsignal.Test.Repo,
+          result: :ok,
+          source: "users",
+          type: :ecto_sql_query
+        }
+      )
+
+      %{telemetry_span: telemetry_span, tracer_span: tracer_span}
+    end
+
+    test "creates a span with the tracer span as the parent and a start time", %{
+      tracer_span: parent
+    } do
+      {:ok, [{"http_request", ^parent, start_time: time}]} = Test.Tracer.get(:create_span)
+      assert is_integer(time)
+    end
+
+    test "sets the span's name" do
+      assert {:ok, [{%Span{}, "Commit Appsignal.Test.Repo"}]} = Test.Span.get(:set_name)
+    end
+
+    test "sets the span's category" do
+      assert attribute("appsignal:category", "commit.ecto")
+    end
+
+    test "does not set the span's body" do
+      assert Test.Span.get(:set_sql) == :error
+    end
+
+    test "closes the span and the parent tracer span with an end time", %{tracer_span: parent} do
+      {:ok, [{_, _, start_time: start_time}]} = Test.Tracer.get(:create_span)
+
+      {:ok, [{^parent, end_time: end_time}, {%Span{}, end_time: end_time}]} =
+        Test.Tracer.get(:close_span)
+
       assert end_time - start_time == 8_829_000
     end
   end
@@ -223,7 +287,7 @@ defmodule Appsignal.EctoTest do
     end
 
     test "creates a span with a parent and a start time", %{parent: parent} do
-      {:ok, [{"http_request", %Span{}, start_time: time}]} = Test.Tracer.get(:create_span)
+      {:ok, [{"http_request", ^parent, start_time: time}]} = Test.Tracer.get(:create_span)
       assert is_integer(time)
     end
 
@@ -275,7 +339,7 @@ defmodule Appsignal.EctoTest do
     end
 
     test "creates a span with a parent and a start time", %{parent: parent} do
-      {:ok, [{"http_request", %Span{}, start_time: time}]} = Test.Tracer.get(:create_span)
+      {:ok, [{"http_request", ^parent, start_time: time}]} = Test.Tracer.get(:create_span)
       assert is_integer(time)
     end
 
@@ -294,7 +358,7 @@ defmodule Appsignal.EctoTest do
     test "closes the span and its parent with an end time", %{parent: parent} do
       {:ok, [{_, _, start_time: start_time}]} = Test.Tracer.get(:create_span)
 
-      {:ok, [{%Span{}, end_time: end_time}, {parent, end_time: end_time}]} =
+      {:ok, [{^parent, end_time: end_time}, {%Span{}, end_time: end_time}]} =
         Test.Tracer.get(:close_span)
 
       assert end_time - start_time == 8_829_000
@@ -332,7 +396,7 @@ defmodule Appsignal.EctoTest do
     end
 
     test "creates a span with a parent and a start time", %{parent: parent} do
-      {:ok, [{"http_request", parent, start_time: time}]} = Test.Tracer.get(:create_span)
+      {:ok, [{"http_request", ^parent, start_time: time}]} = Test.Tracer.get(:create_span)
       assert is_integer(time)
     end
 
@@ -351,7 +415,7 @@ defmodule Appsignal.EctoTest do
     test "closes the span and its parent with an end time", %{parent: parent} do
       {:ok, [{_, _, start_time: start_time}]} = Test.Tracer.get(:create_span)
 
-      {:ok, [{%Span{}, end_time: end_time}, {parent, end_time: end_time}]} =
+      {:ok, [{^parent, end_time: end_time}, {%Span{}, end_time: end_time}]} =
         Test.Tracer.get(:close_span)
 
       assert end_time - start_time == 8_829_000
@@ -393,7 +457,7 @@ defmodule Appsignal.EctoTest do
     end
 
     test "creates a span with a parent and a start time", %{parent: parent} do
-      {:ok, [{"http_request", parent, start_time: time}]} = Test.Tracer.get(:create_span)
+      {:ok, [{"http_request", ^parent, start_time: time}]} = Test.Tracer.get(:create_span)
       assert is_integer(time)
     end
 
