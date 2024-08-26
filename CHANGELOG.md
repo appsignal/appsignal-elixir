@@ -1,5 +1,28 @@
 # AppSignal for Elixir changelog
 
+## 2.12.3
+
+_Published on 2024-08-26._
+
+### Fixed
+
+- Make `Appsignal.Ecto.Repo`'s `default_options/1` function overridable. If your Ecto repo uses `Appsignal.Ecto.Repo` and implements its own `default_options/1`, it must call `super` to merge its default options with those of `Appsignal.Ecto.Repo`:
+
+  ```elixir
+  defmodule MyEctoRepo
+    use Appsignal.Ecto.Repo
+
+    def default_options(operation) do
+      super(operation) ++ [
+        # ... your default options here ...
+      ]
+    end
+  end
+  ```
+
+  (patch [3d9634c7](https://github.com/appsignal/appsignal-elixir/commit/3d9634c7a16999f45b8fcb64024f6b29cdaead4d))
+- Fix an issue where Ecto transactions in parallel preloads would not be instrumented correctly when using `Appsignal.Ecto.Repo`, causing the query in the Ecto transaction to not be instrumented and the sample to be incorrectly closed as an earlier time. (patch [d5e132e0](https://github.com/appsignal/appsignal-elixir/commit/d5e132e0bdba6ae0256d336ce0c087e29c9efb4e))
+
 ## 2.12.2
 
 _Published on 2024-08-14._
