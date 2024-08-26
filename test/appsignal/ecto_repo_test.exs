@@ -4,6 +4,17 @@ defmodule Appsignal.TestEctoRepo do
     adapter: Ecto.Adapters.Postgres
 end
 
+defmodule Appsignal.TestEctoRepoWithOverride do
+  use Appsignal.Ecto.Repo
+
+  def default_options(operation) do
+    super(operation) ++
+      [
+        foo: "bar"
+      ]
+  end
+end
+
 defmodule Appsignal.EctoRepoTest do
   use ExUnit.Case
   alias Appsignal.Ecto.Repo
@@ -21,6 +32,15 @@ defmodule Appsignal.EctoRepoTest do
       otp_app: :plug_example,
       adapter: Ecto.Adapters.Postgres
     ]
+  end
+
+  test "use Appsignal.Ecto.Repo can have overriden default options" do
+    assert Appsignal.TestEctoRepoWithOverride.default_options(:all) == [
+             telemetry_options: [
+               _appsignal_current_span: nil
+             ],
+             foo: "bar"
+           ]
   end
 
   describe "use Appsignal.Ecto.Repo, with a root span" do

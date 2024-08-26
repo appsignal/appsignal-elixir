@@ -5,13 +5,15 @@ defmodule Appsignal.Ecto.Repo do
     quote do
       use unquote(@ecto_repo), unquote(opts)
 
-      def default_options(atom) do
-        Appsignal.Ecto.Repo.default_options(atom)
+      def default_options(operation) do
+        super(operation) ++ Appsignal.Ecto.Repo.default_options()
       end
+
+      defoverridable default_options: 1
     end
   end
 
-  def default_options(_atom) do
+  def default_options(_operation \\ nil) do
     [
       telemetry_options: [
         _appsignal_current_span: Appsignal.Tracer.current_span()
