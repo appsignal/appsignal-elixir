@@ -10,7 +10,10 @@ defmodule Appsignal.Transmitter do
     http_client.request(method, url, headers, body, options())
   end
 
-  def transmit(url, payload \\ nil, config \\ nil) do
+  def transmit(url, payload_and_format \\ {nil, nil}, config \\ nil)
+  def transmit(url, nil, config), do: transmit(url, {nil, nil}, config)
+
+  def transmit(url, {payload, format}, config) do
     config = config || Appsignal.Config.config()
 
     params =
@@ -24,14 +27,18 @@ defmodule Appsignal.Transmitter do
     url = "#{url}?#{params}"
     headers = [{"Content-Type", "application/json; charset=UTF-8"}]
 
-    body =
-      if payload do
-        Jason.encode!(payload)
-      else
-        ""
-      end
+    body = encode_body(payload, format)
 
     request(:post, url, headers, body)
+  end
+
+  defp encode_body(nil, _), do: ""
+  defp encode_body(payload, :json), do: Jason.encode!(payload)
+
+  defp encode_body(payload, :ndjson) do
+    payload
+    |> Enum.map(&Jason.encode!/1)
+    |> Enum.join("\n")
   end
 
   defp options do

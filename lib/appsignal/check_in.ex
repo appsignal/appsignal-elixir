@@ -59,7 +59,7 @@ defmodule Appsignal.CheckIn.Cron do
       config = Appsignal.Config.config()
       endpoint = "#{config[:logging_endpoint]}/check_ins/json"
 
-      case @transmitter.transmit(endpoint, event, config) do
+      case @transmitter.transmit(endpoint, {event, :json}, config) do
         {:ok, status_code, _, _} when status_code in 200..299 ->
           Appsignal.IntegrationLogger.trace(
             "Transmitted cron check-in `#{event.identifier}` (#{event.digest}) #{event.kind} event"

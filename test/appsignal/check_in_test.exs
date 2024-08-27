@@ -30,7 +30,8 @@ defmodule Appsignal.CheckInTest do
       Cron.start(cron)
 
       assert [
-               %Event{identifier: "cron-checkin-name", kind: :start, check_in_type: :cron}
+               {%Event{identifier: "cron-checkin-name", kind: :start, check_in_type: :cron},
+                :json}
              ] = FakeTransmitter.transmitted_payloads()
     end
   end
@@ -41,7 +42,8 @@ defmodule Appsignal.CheckInTest do
       Cron.finish(cron)
 
       assert [
-               %Event{identifier: "cron-checkin-name", kind: :finish, check_in_type: :cron}
+               {%Event{identifier: "cron-checkin-name", kind: :finish, check_in_type: :cron},
+                :json}
              ] = FakeTransmitter.transmitted_payloads()
     end
   end
@@ -51,8 +53,10 @@ defmodule Appsignal.CheckInTest do
       output = CheckIn.cron("cron-checkin-name", fn -> "output" end)
 
       assert [
-               %Event{identifier: "cron-checkin-name", kind: :start, check_in_type: :cron},
-               %Event{identifier: "cron-checkin-name", kind: :finish, check_in_type: :cron}
+               {%Event{identifier: "cron-checkin-name", kind: :start, check_in_type: :cron},
+                :json},
+               {%Event{identifier: "cron-checkin-name", kind: :finish, check_in_type: :cron},
+                :json}
              ] = FakeTransmitter.transmitted_payloads()
 
       assert "output" == output
@@ -64,7 +68,8 @@ defmodule Appsignal.CheckInTest do
       end
 
       assert [
-               %Event{identifier: "cron-checkin-name", kind: :start, check_in_type: :cron}
+               {%Event{identifier: "cron-checkin-name", kind: :start, check_in_type: :cron},
+                :json}
              ] = FakeTransmitter.transmitted_payloads()
     end
   end
@@ -74,7 +79,8 @@ defmodule Appsignal.CheckInTest do
       CheckIn.cron("cron-checkin-name")
 
       assert [
-               %Event{identifier: "cron-checkin-name", kind: :finish, check_in_type: :cron}
+               {%Event{identifier: "cron-checkin-name", kind: :finish, check_in_type: :cron},
+                :json}
              ] = FakeTransmitter.transmitted_payloads()
     end
   end
@@ -84,7 +90,7 @@ defmodule Appsignal.CheckInTest do
       Appsignal.heartbeat("heartbeat-name")
 
       assert [
-               %Event{identifier: "heartbeat-name", kind: :finish, check_in_type: :cron}
+               {%Event{identifier: "heartbeat-name", kind: :finish, check_in_type: :cron}, :json}
              ] = FakeTransmitter.transmitted_payloads()
     end
 
@@ -92,8 +98,8 @@ defmodule Appsignal.CheckInTest do
       output = Appsignal.heartbeat("heartbeat-name", fn -> "output" end)
 
       assert [
-               %Event{identifier: "heartbeat-name", kind: :start, check_in_type: :cron},
-               %Event{identifier: "heartbeat-name", kind: :finish, check_in_type: :cron}
+               {%Event{identifier: "heartbeat-name", kind: :start, check_in_type: :cron}, :json},
+               {%Event{identifier: "heartbeat-name", kind: :finish, check_in_type: :cron}, :json}
              ] = FakeTransmitter.transmitted_payloads()
 
       assert "output" == output
@@ -105,8 +111,8 @@ defmodule Appsignal.CheckInTest do
       Appsignal.Heartbeat.finish(heartbeat)
 
       assert [
-               %Event{identifier: "heartbeat-name", kind: :start, check_in_type: :cron},
-               %Event{identifier: "heartbeat-name", kind: :finish, check_in_type: :cron}
+               {%Event{identifier: "heartbeat-name", kind: :start, check_in_type: :cron}, :json},
+               {%Event{identifier: "heartbeat-name", kind: :finish, check_in_type: :cron}, :json}
              ] = FakeTransmitter.transmitted_payloads()
     end
   end

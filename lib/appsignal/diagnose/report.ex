@@ -10,7 +10,7 @@ defmodule Appsignal.Diagnose.Report do
 
   @spec send(map(), map()) :: {:ok, String.t()} | {:error, map()}
   def send(config, report) do
-    case Transmitter.transmit(config[:diagnose_endpoint], %{diagnose: report}, config) do
+    case Transmitter.transmit(config[:diagnose_endpoint], {%{diagnose: report}, :json}, config) do
       {:ok, 200, _, reference} ->
         {:ok, body} = :hackney.body(reference)
 
