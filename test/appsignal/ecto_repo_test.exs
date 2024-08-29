@@ -28,9 +28,9 @@ defmodule Appsignal.EctoRepoTest do
 
   test "use Appsignal.Ecto.Repo passes through options to Ecto.Repo" do
     assert Appsignal.TestEctoRepo.get_received_opts() == [
-      otp_app: :plug_example,
-      adapter: Ecto.Adapters.Postgres
-    ]
+             otp_app: :plug_example,
+             adapter: Ecto.Adapters.Postgres
+           ]
   end
 
   test "use Appsignal.Ecto.Repo can have overriden default options" do

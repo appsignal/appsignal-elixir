@@ -1,7 +1,7 @@
 :code.delete(Mix.Appsignal.Helper)
 Application.put_env(:appsignal, :erlang, FakeErlang)
 Application.put_env(:appsignal, :os, FakeOS)
-Application.put_env(:appsignal, :mix_system, FakeSystem)
+Application.put_env(:appsignal, :system, FakeSystem)
 {_, _} = Code.eval_file("mix_helpers.exs")
 
 defmodule Mix.Appsignal.HelperTest do

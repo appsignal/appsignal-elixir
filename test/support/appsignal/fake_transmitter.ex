@@ -6,7 +6,7 @@ defmodule Appsignal.FakeTransmitter do
       fn ->
         %{
           transmitted: [],
-          response: {:ok, 200, :fake, :fake}
+          response: fn -> {:ok, 200, :fake, :fake} end
         }
       end,
       name: __MODULE__
@@ -28,7 +28,7 @@ defmodule Appsignal.FakeTransmitter do
       Map.update!(state, :transmitted, &[{url, payload, config} | &1])
     end)
 
-    Agent.get(__MODULE__, & &1[:response])
+    Agent.get(__MODULE__, & &1[:response]).()
   end
 
   def transmitted do
@@ -38,4 +38,12 @@ defmodule Appsignal.FakeTransmitter do
   def transmitted_payloads do
     Enum.map(transmitted(), fn {_url, payload, _config} -> payload end)
   end
+
+  def set_response(response) when is_function(response, 0) do
+    Agent.update(__MODULE__, fn state ->
+      %{state | response: response}
+    end)
+  end
+
+  def set_response(response), do: set_response(fn -> response end)
 end

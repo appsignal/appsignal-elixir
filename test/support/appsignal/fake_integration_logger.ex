@@ -23,13 +23,19 @@ defmodule Appsignal.FakeIntegrationLogger do
     add(:logs, [:error, message])
   end
 
-  def logged?(pid_or_module, type, message) do
-    Enum.any?(get(pid_or_module, :logs), fn element ->
-      match?([^type, ^message], element)
+  def logged?(pid_or_module \\ __MODULE__, type, message)
+
+  def logged?(pid_or_module, type, message) when is_binary(message) do
+    logged?(pid_or_module, type, &(&1 == message))
+  end
+
+  def logged?(pid_or_module, type, matcher) when is_function(matcher) do
+    Enum.any?(get(pid_or_module, :logs), fn [logged_type, logged_message] ->
+      type == logged_type && matcher.(logged_message)
     end)
   end
 
-  def get_logs(pid_or_module, type) do
+  def get_logs(pid_or_module \\ __MODULE__, type) do
     Enum.filter(get(pid_or_module, :logs), fn element ->
       match?([^type, _], element)
     end)
