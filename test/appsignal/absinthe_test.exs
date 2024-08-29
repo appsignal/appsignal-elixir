@@ -104,14 +104,6 @@ defmodule Appsignal.AbsintheTest do
     end)
   end
 
-  defp has_attribute?(asserted_key) do
-    {:ok, attributes} = Test.Span.get(:set_attribute)
-
-    Enum.any?(attributes, fn {%Span{}, key, _data} ->
-      key == asserted_key
-    end)
-  end
-
   defp attached?(event, function \\ nil) do
     event
     |> :telemetry.list_handlers()

@@ -17,7 +17,6 @@ end
 
 defmodule Appsignal.EctoRepoTest do
   use ExUnit.Case
-  alias Appsignal.Ecto.Repo
   alias Appsignal.Test
 
   setup do
@@ -28,7 +27,7 @@ defmodule Appsignal.EctoRepoTest do
   end
 
   test "use Appsignal.Ecto.Repo passes through options to Ecto.Repo" do
-    Appsignal.TestEctoRepo.get_received_opts() == [
+    assert Appsignal.TestEctoRepo.get_received_opts() == [
       otp_app: :plug_example,
       adapter: Ecto.Adapters.Postgres
     ]
