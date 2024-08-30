@@ -56,58 +56,6 @@ defmodule Appsignal.Nif do
     _diagnose()
   end
 
-  def start_transaction(transaction_id, namespace) do
-    _start_transaction(transaction_id, namespace)
-  end
-
-  def start_event(transaction_resource) do
-    _start_event(transaction_resource)
-  end
-
-  def finish_event(transaction_resource, name, title, body, body_format) do
-    _finish_event(transaction_resource, name, title, body, body_format)
-  end
-
-  def finish_event_data(transaction_resource, name, title, body, body_format) do
-    _finish_event_data(transaction_resource, name, title, body, body_format)
-  end
-
-  def record_event(transaction_resource, name, title, body, body_format, duration) do
-    _record_event(transaction_resource, name, title, body, body_format, duration)
-  end
-
-  def set_error(transaction_resource, error, message, backtrace) do
-    _set_error(transaction_resource, error, message, backtrace)
-  end
-
-  def set_sample_data(transaction_resource, key, payload) do
-    _set_sample_data(transaction_resource, key, payload)
-  end
-
-  def set_action(transaction_resource, action) do
-    _set_action(transaction_resource, action)
-  end
-
-  def set_namespace(transaction_resource, namespace) do
-    _set_namespace(transaction_resource, namespace)
-  end
-
-  def set_queue_start(transaction_resource, start) do
-    _set_queue_start(transaction_resource, start)
-  end
-
-  def set_meta_data(transaction_resource, key, value) do
-    _set_meta_data(transaction_resource, key, value)
-  end
-
-  def finish(transaction_resource) do
-    _finish(transaction_resource)
-  end
-
-  def complete(transaction_resource) do
-    _complete(transaction_resource)
-  end
-
   def set_gauge(key, value, tags) do
     _set_gauge(key, value, tags)
   end
@@ -264,10 +212,6 @@ defmodule Appsignal.Nif do
     def data_to_json(reference) do
       _data_to_json(reference)
     end
-
-    def transaction_to_json(resource) do
-      _transaction_to_json(resource)
-    end
   end
 
   def _env_put(_key, _value) do
@@ -296,64 +240,6 @@ defmodule Appsignal.Nif do
 
   def _diagnose do
     :error
-  end
-
-  def _start_transaction(_id, _namespace) do
-    if System.otp_release() >= "20" do
-      {:ok, make_ref()}
-    else
-      {:ok, <<>>}
-    end
-  end
-
-  def _start_event(_transaction_resource) do
-    :ok
-  end
-
-  def _finish_event(_transaction_resource, _name, _title, _body, _body_format) do
-    :ok
-  end
-
-  def _finish_event_data(_transaction_resource, _name, _title, _body, _body_format) do
-    :ok
-  end
-
-  def _record_event(_transaction_resource, _name, _title, _body, _body_format, _duration) do
-    :ok
-  end
-
-  def _set_error(_transaction_resource, _error, _message, _backtrace) do
-    :ok
-  end
-
-  def _set_sample_data(_transaction_resource, _key, _payload) do
-    :ok
-  end
-
-  def _set_action(_transaction_resource, _action) do
-    :ok
-  end
-
-  def _set_namespace(_transaction_resource, _action) do
-    :ok
-  end
-
-  def _set_queue_start(_transaction_resource, _start) do
-    :ok
-  end
-
-  def _set_meta_data(_transaction_resource, _key, _value) do
-    :ok
-  end
-
-  def _finish(_transaction_resource) do
-    # Using `String.to_atom("no_sample") instead of `:no_sample` to trick
-    # Dialyzer into thinking this value isn't hardcoded.
-    String.to_atom("no_sample")
-  end
-
-  def _complete(_transaction_resource) do
-    :ok
   end
 
   def _set_gauge(_key, _value, _tags) do
@@ -511,10 +397,6 @@ defmodule Appsignal.Nif do
   if Mix.env() in [:test, :test_no_nif] do
     def _data_to_json(resource) do
       resource
-    end
-
-    def _transaction_to_json(resource) do
-      {:ok, resource}
     end
   end
 end

@@ -5,7 +5,6 @@ end
 defmodule Appsignal.NifTest do
   alias Appsignal.Nif
   use ExUnit.Case, async: true
-  import AppsignalTest.Utils, only: [reference_or_binary?: 1]
 
   test "whether the agent starts" do
     assert :ok = Nif.start()
@@ -13,12 +12,6 @@ defmodule Appsignal.NifTest do
 
   test "whether the agent stops" do
     assert :ok = Nif.stop()
-  end
-
-  @tag :skip_env_test_no_nif
-  test "starting transaction returns a reference to the transaction resource" do
-    assert {:ok, reference} = Nif.start_transaction("transaction id", "http_request")
-    assert reference_or_binary?(reference)
   end
 
   if Mix.env() not in [:test_no_nif] do
