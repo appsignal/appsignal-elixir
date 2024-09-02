@@ -119,11 +119,19 @@ defmodule Appsignal.Phoenix.EventHandler do
   end
 
   defp set_span_data(span, %{conn: conn} = metadata) do
+    appsignal_metadata = Appsignal.Metadata.metadata(conn)
+
     span
     |> @span.set_name_if_nil(name(metadata))
     |> @span.set_sample_data_if_nil("params", Appsignal.Metadata.params(conn))
-    |> @span.set_sample_data_if_nil("environment", Appsignal.Metadata.metadata(conn))
+    |> @span.set_sample_data_if_nil("environment", appsignal_metadata)
     |> @span.set_sample_data_if_nil("session_data", Appsignal.Metadata.session(conn))
+    |> @span.set_sample_data("metadata", %{
+      "request_method" => appsignal_metadata["method"],
+      "request_path" => appsignal_metadata["request_path"],
+      "request_id" => appsignal_metadata["request_id"],
+      "response_status" => appsignal_metadata["status"]
+    })
   end
 
   defp name(%{conn: conn} = metadata) do

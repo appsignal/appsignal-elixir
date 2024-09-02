@@ -89,6 +89,20 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
                "status" => 200
              } == environment
     end
+
+    test "sets the root span's metadata" do
+      {:ok, calls} = Test.Span.get(:set_sample_data)
+
+      [{%Span{}, "metadata", metadata}] =
+        Enum.filter(calls, fn {_span, key, _value} -> key == "metadata" end)
+
+      assert %{
+               "request_method" => "GET",
+               "request_id" => nil,
+               "request_path" => "/",
+               "response_status" => 200
+             } == metadata
+    end
   end
 
   describe "after receiving an router_dispatch-start and an router_dispatch-stop event without an event name in the conn" do
