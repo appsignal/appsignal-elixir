@@ -1,5 +1,13 @@
 # AppSignal for Elixir Phoenix changelog
 
+## 2.5.0
+
+_Published on 2024-09-02._
+
+### Added
+
+- Record request information as metadata like the request path, request method and response status. (minor [6e7444a](https://github.com/appsignal/appsignal-elixir-phoenix/commit/6e7444a3ccffb4faf8eccf529596d1c0958e9757))
+
 ## 2.4.1
 
 _Published on 2024-08-22._
