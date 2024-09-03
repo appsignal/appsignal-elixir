@@ -7,7 +7,10 @@ if Mix.env() in [:bench, :test, :test_no_nif] do
   config :appsignal, appsignal: Appsignal.FakeAppsignal
   config :appsignal, appsignal_integration_logger: Appsignal.FakeIntegrationLogger
   config :appsignal, appsignal_transmitter: Appsignal.FakeTransmitter
+  config :appsignal, appsignal_checkin_scheduler: Appsignal.FakeScheduler
+  config :appsignal, appsignal_checkin_debounce: Appsignal.FakeDebounce
   config :appsignal, inet: FakeInet
+  config :appsignal, system: FakeSystem
   config :appsignal, io: FakeIO
   config :appsignal, file: FakeFile
   config :appsignal, os_internal: FakeOS

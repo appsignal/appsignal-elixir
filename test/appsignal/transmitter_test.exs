@@ -24,7 +24,7 @@ defmodule Appsignal.TransmitterTest do
         hostname: "some_hostname"
       }
 
-      [method, url, headers, body, _options] = Transmitter.transmit(url, payload, config)
+      [method, url, headers, body, _options] = Transmitter.transmit(url, {payload, :json}, config)
 
       assert method == :post
 
@@ -40,7 +40,7 @@ defmodule Appsignal.TransmitterTest do
       assert body == "{\"foo\":\"bar\"}"
     end
 
-    test "uses the stored configuration when none is given" do
+    test "uses the stored configuration when no config is given" do
       with_config(
         %{
           push_api_key: "some_push_api_key",
@@ -50,7 +50,7 @@ defmodule Appsignal.TransmitterTest do
         },
         fn ->
           [_method, url, _headers, _body, _options] =
-            Transmitter.transmit("https://example.com", %{foo: "bar"})
+            Transmitter.transmit("https://example.com", {%{foo: "bar"}, :json})
 
           # The order in which the query parameters are serialized is not
           # stable across Elixir versions.
@@ -61,6 +61,15 @@ defmodule Appsignal.TransmitterTest do
           assert String.contains?(url, "environment=some_environment")
         end
       )
+    end
+
+    test "uses NDJSON format when specified" do
+      payload = [%{foo: "bar"}, %{baz: "quux"}]
+
+      [_method, _url, _headers, body, _options] =
+        Transmitter.transmit("https://example.com", {payload, :ndjson})
+
+      assert body == "{\"foo\":\"bar\"}\n{\"baz\":\"quux\"}"
     end
 
     test "uses an empty body when no payload is given" do

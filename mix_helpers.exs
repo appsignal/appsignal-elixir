@@ -9,7 +9,7 @@ defmodule Mix.Appsignal.Helper do
 
   @erlang Application.compile_env(:appsignal, :erlang, :erlang)
   @os Application.compile_env(:appsignal, :os, :os)
-  @system Application.compile_env(:appsignal, :mix_system, System)
+  @system Application.compile_env(:appsignal, :system, System)
 
   @proxy_env_vars [
     "APPSIGNAL_HTTP_PROXY",

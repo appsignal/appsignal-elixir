@@ -1,4 +1,6 @@
 defmodule AppsignalTest.Utils do
+  require ExUnit.Assertions
+
   # Remove loaded from the app so the module is recompiled when called. Do this
   # if the module is already loaded before the test env, such as in `mix.exs`.
   def purge(mod) do
@@ -116,6 +118,20 @@ defmodule AppsignalTest.Utils do
         :timer.sleep(1)
         until(assertion, retries - 1)
     end
+  end
+
+  def until_all_messages_processed(name_or_pid) do
+    until_messages_queued(name_or_pid, 0)
+  end
+
+  def until_messages_queued(name, count) when is_atom(name) do
+    until_messages_queued(Process.whereis(name), count)
+  end
+
+  def until_messages_queued(pid, count) when is_pid(pid) do
+    until(fn ->
+      ExUnit.Assertions.assert({_, ^count} = :erlang.process_info(pid, :message_queue_len))
+    end)
   end
 
   def repeatedly(assertion) do
