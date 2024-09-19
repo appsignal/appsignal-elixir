@@ -1,0 +1,31 @@
+name: "Update agent release files"
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version"
+        required: true
+        type: string
+      user:
+        description: "User who triggered the release"
+        required: true
+        type: string
+      files:
+        description: "Files to update"
+        required: true
+        type: string
+
+jobs:
+  update:
+    name: "Update"
+    uses: "appsignal/integrations-shared/.github/workflows/agent_release.yml@main"
+    with:
+      version: "${{inputs.version}}"
+      user: "${{inputs.user}}"
+      files: "${{inputs.files}}"
+    secrets:
+      PUBLISH_INTEGRATION_DEPLOY_KEY: "${{secrets.AGENT_UPDATE_DEPLOY_KEY}}"
+      PUBLISH_GIT_SIGN_KEY: "${{secrets.PUBLISH_GIT_SIGN_KEY}}"
+      PUBLISH_GIT_SIGN_PUBLIC_KEY: "${{secrets.PUBLISH_GIT_SIGN_PUBLIC_KEY}}"
+      PUBLISH_AGENT_INTEGRATIONS_RELEASE_PAT: "${{secrets.PUBLISH_AGENT_INTEGRATIONS_RELEASE_PAT}}"
