@@ -1,6 +1,7 @@
 defmodule Appsignal.CheckInSchedulerTest do
   use ExUnit.Case
   alias Appsignal.CheckIn.Cron
+  alias Appsignal.CheckIn.Event
   alias Appsignal.CheckIn.Scheduler
   alias Appsignal.FakeDebounce
   alias Appsignal.FakeIntegrationLogger
@@ -72,7 +73,7 @@ defmodule Appsignal.CheckInSchedulerTest do
       until_all_messages_processed(Scheduler)
 
       assert [
-               %Cron.Event{identifier: "cron-checkin-name", kind: :start, check_in_type: :cron}
+               %Event{identifier: "cron-checkin-name", kind: :start, check_in_type: :cron}
              ] = scheduler_events()
 
       assert FakeIntegrationLogger.logged?(
@@ -93,7 +94,7 @@ defmodule Appsignal.CheckInSchedulerTest do
       until_all_messages_processed(Scheduler)
 
       assert [
-               %Cron.Event{identifier: "cron-checkin-name", kind: :start, check_in_type: :cron}
+               %Event{identifier: "cron-checkin-name", kind: :start, check_in_type: :cron}
              ] = scheduler_events()
 
       assert FakeIntegrationLogger.logged?(
@@ -123,7 +124,7 @@ defmodule Appsignal.CheckInSchedulerTest do
 
       assert [
                {[
-                  %Cron.Event{identifier: "cron-checkin-name", kind: :start, check_in_type: :cron}
+                  %Event{identifier: "cron-checkin-name", kind: :start, check_in_type: :cron}
                 ], :ndjson}
              ] = FakeTransmitter.transmitted_payloads()
 
@@ -147,12 +148,12 @@ defmodule Appsignal.CheckInSchedulerTest do
 
       assert [
                {[
-                  %Cron.Event{
+                  %Event{
                     identifier: "cron-checkin-name",
                     kind: :start,
                     check_in_type: :cron
                   },
-                  %Cron.Event{
+                  %Event{
                     identifier: "cron-checkin-name",
                     kind: :finish,
                     check_in_type: :cron
@@ -227,7 +228,7 @@ defmodule Appsignal.CheckInSchedulerTest do
 
       assert [
                {[
-                  %Cron.Event{identifier: "cron-checkin-name", kind: :start, check_in_type: :cron}
+                  %Event{identifier: "cron-checkin-name", kind: :start, check_in_type: :cron}
                 ], :ndjson}
              ] = FakeTransmitter.transmitted_payloads()
 
@@ -257,7 +258,7 @@ defmodule Appsignal.CheckInSchedulerTest do
 
       assert [
                {[
-                  %Cron.Event{identifier: "cron-checkin-name", kind: :start, check_in_type: :cron}
+                  %Event{identifier: "cron-checkin-name", kind: :start, check_in_type: :cron}
                 ], :ndjson}
              ] = FakeTransmitter.transmitted_payloads()
     end

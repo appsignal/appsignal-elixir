@@ -20,7 +20,9 @@ if Mix.env() in [:bench, :test, :test_no_nif] do
   config :appsignal, appsignal_span: Appsignal.Test.Span
   config :appsignal, appsignal_tracer: Appsignal.Test.Tracer
   config :appsignal, appsignal_tracer_nif: Appsignal.Test.Nif
+
   config :appsignal, deletion_delay: 100
+  config :appsignal, appsignal_checkin_heartbeat_interval_milliseconds: 10
 
   config :appsignal, :config,
     otp_app: :appsignal,

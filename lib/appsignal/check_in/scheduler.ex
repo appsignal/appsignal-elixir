@@ -26,7 +26,7 @@ end
 defmodule Appsignal.CheckIn.Scheduler do
   use GenServer
 
-  alias Appsignal.CheckIn.Cron
+  alias Appsignal.CheckIn.Event
 
   @debounce Application.compile_env(
               :appsignal,
@@ -68,9 +68,7 @@ defmodule Appsignal.CheckIn.Scheduler do
     if Appsignal.Config.active?() do
       GenServer.cast(__MODULE__, {:schedule, event})
     else
-      @integration_logger.debug(
-        "AppSignal not active, not scheduling #{describe_events([event])}"
-      )
+      @integration_logger.debug("AppSignal not active, not scheduling #{Event.describe([event])}")
     end
 
     :ok
@@ -78,7 +76,7 @@ defmodule Appsignal.CheckIn.Scheduler do
 
   @impl true
   def handle_cast({:schedule, event}, state) do
-    @integration_logger.trace("Scheduling #{describe_events([event])} to be transmitted")
+    @integration_logger.trace("Scheduling #{Event.describe([event])} to be transmitted")
 
     schedule_transmission(state)
 
@@ -95,7 +93,7 @@ defmodule Appsignal.CheckIn.Scheduler do
 
   @impl true
   def handle_continue({:transmit, events}, state) do
-    description = describe_events(events)
+    description = Event.describe(events)
 
     config = Appsignal.Config.config()
     endpoint = "#{config[:logging_endpoint]}/check_ins/json"
@@ -150,42 +148,17 @@ defmodule Appsignal.CheckIn.Scheduler do
   defp add_event(events, event) do
     # Remove redundant events, keeping the newly added one, which
     # should be the one with the most recent timestamp.
-    [event | Enum.reject(events, &redundant_event?(&1, event))]
-  end
+    [
+      event
+      | Enum.reject(events, fn existing_event ->
+          is_redundant = Event.redundant?(existing_event, event)
 
-  defp redundant_event?(%Cron.Event{} = event, %Cron.Event{} = new_event) do
-    # Consider any existing cron check-in event redundant if it has the
-    # same identifier, digest and kind as the one we're adding.
-    is_redundant =
-      event.identifier == new_event.identifier &&
-        event.kind == new_event.kind &&
-        event.digest == new_event.digest
+          if is_redundant do
+            @integration_logger.debug("Replacing previously scheduled #{Event.describe([event])}")
+          end
 
-    if is_redundant do
-      @integration_logger.debug("Replacing previously scheduled #{describe_events([event])}")
-    end
-
-    is_redundant
-  end
-
-  defp redundant_event?(_event, _new_event), do: false
-
-  defp describe_events([]) do
-    # This shouldn't happen.
-    "no check-in events"
-  end
-
-  defp describe_events(events) when length(events) > 1 do
-    "#{Enum.count(events)} check-in events"
-  end
-
-  defp describe_events([%Cron.Event{} = event]) do
-    "cron check-in `#{event.identifier || "unknown"}` " <>
-      "#{event.kind || "unknown"} event (digest #{event.digest || "unknown"})"
-  end
-
-  defp describe_events([_event]) do
-    # This shouldn't happen.
-    "unknown check-in event"
+          is_redundant
+        end)
+    ]
   end
 end

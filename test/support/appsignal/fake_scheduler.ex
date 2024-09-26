@@ -34,6 +34,12 @@ defmodule Appsignal.FakeScheduler do
     Agent.get(__MODULE__, &Enum.reverse(&1.scheduled))
   end
 
+  def identifier_count do
+    Agent.get(__MODULE__, fn %{scheduled: scheduled} ->
+      Enum.frequencies_by(scheduled, & &1.identifier)
+    end)
+  end
+
   defp proxy? do
     Agent.get(__MODULE__, & &1.is_proxy)
   end
