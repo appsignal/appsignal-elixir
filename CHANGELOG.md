@@ -1,5 +1,52 @@
 # AppSignal for Elixir changelog
 
+## 2.13.0
+
+_Published on 2024-09-26._
+
+### Added
+
+- Add support for heartbeat check-ins.
+
+  Use the `Appsignal.CheckIn.heartbeat` method to send a single heartbeat check-in event from your application. This can be used, for example, in a `GenServer`'s callback:
+
+  ```elixir
+  @impl true
+  def handle_cast({:process_job, job}, jobs) do
+    Appsignal.CheckIn.heartbeat("job_processor")
+    {:noreply, [job | jobs], {:continue, :process_job}}
+  end
+  ```
+
+  Heartbeats are deduplicated and sent asynchronously, without blocking the current thread. Regardless of how often the `.heartbeat` method is called, at most one heartbeat with the same identifier will be sent every ten seconds.
+
+  Pass `continuous: true` as the second argument to send heartbeats continuously during the entire lifetime of the current process. This can be used, for example, during a `GenServer`'s initialisation:
+
+  ```elixir
+  @impl true
+  def init(_arg) do
+    Appsignal.CheckIn.heartbeat("my_genserver", continuous: true)
+    {:ok, nil}
+  end
+  ```
+
+  You can also use `Appsignal.CheckIn.Heartbeat` as a supervisor's child process, in order for heartbeats to be sent continuously during the lifetime of the supervisor. This can be used, for example, during an `Application`'s start:
+
+  ```elixir
+  @impl true
+  def start(_type, _args) do
+    Supervisor.start_link([
+      {Appsignal.CheckIn.Heartbeat, "my_application"}
+    ], strategy: :one_for_one, name: MyApplication.Supervisor)
+  end
+  ```
+
+  (minor [7b2ff327](https://github.com/appsignal/appsignal-elixir/commit/7b2ff327b7f915a7245c4ad6f4dfd0f3c6b13ff5))
+
+### Changed
+
+- Send check-ins concurrently. When calling `Appsignal.CheckIn.cron`, instead of blocking the current process while the check-in events are sent, schedule them to be sent in a separate process. (patch [e7cead98](https://github.com/appsignal/appsignal-elixir/commit/e7cead9880d537f384e64f85330db819d1d66148))
+
 ## 2.12.3
 
 _Published on 2024-08-26._
