@@ -1,9 +1,17 @@
-name: CI
+name: Elixir package CI
 
 on:
-  push: {}
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
   schedule:
-    - cron: "0 0 * * 1-5"
+    - cron: 0 0 * * 1-5
 
 jobs:
   lint_git:
