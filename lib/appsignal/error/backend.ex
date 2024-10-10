@@ -90,6 +90,7 @@ defmodule Appsignal.Error.Backend do
   defp set_error_data(span, reason, stacktrace) do
     span
     |> @span.add_error(:error, reason, stacktrace)
+    |> @span.set_sample_data("tags", %{"reported_by" => "error_backend"})
     |> @tracer.close_span()
   end
 end
