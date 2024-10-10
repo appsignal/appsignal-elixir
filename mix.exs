@@ -3,6 +3,8 @@
 defmodule Mix.Tasks.Compile.Appsignal do
   use Mix.Task
 
+  @requirements "loadpaths"
+
   def run(_args) do
     {_, _} = Code.eval_file("mix_helpers.exs")
     Mix.Appsignal.Helper.install()
