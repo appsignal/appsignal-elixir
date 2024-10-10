@@ -225,6 +225,11 @@ defmodule Appsignal.Error.BackendTest do
       assert is_list(stack)
     end
 
+    test "adds a `reported_by` tag to the created span", %{pid: pid} do
+      assert {:ok, [{%Span{pid: ^pid}, "tags", %{"reported_by" => "error_backend"}} | _]} =
+               Test.Span.get(:set_sample_data)
+    end
+
     test "closes the created span", %{pid: pid} do
       assert {:ok, [{%Span{pid: ^pid}} | _]} = Test.Tracer.get(:close_span)
     end
