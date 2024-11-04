@@ -254,6 +254,18 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
       assert {:ok, [{%Span{}, "appsignal:category", "render.phoenix_template"}]} =
                Test.Span.get(:set_attribute)
     end
+
+    test "sets the root span's tags" do
+      assert {:ok,
+              [
+                {%Span{}, "tags",
+                 %{
+                   "phoenix_template" => "template",
+                   "phoenix_format" => "html",
+                   "phoenix_view" => "PhoenixWeb.View"
+                 }}
+              ]} = Test.Span.get(:set_sample_data_if_nil)
+    end
   end
 
   describe "after receiving an render-start and an render-stop event" do

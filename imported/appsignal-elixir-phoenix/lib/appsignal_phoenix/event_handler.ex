@@ -106,6 +106,13 @@ defmodule Appsignal.Phoenix.EventHandler do
   def phoenix_template_render_start(_event, _measurements, metadata, _config) do
     parent = @tracer.current_span()
 
+    _ =
+      @span.set_sample_data_if_nil(@tracer.root_span(), "tags", %{
+        "phoenix_template" => metadata.template,
+        "phoenix_format" => metadata.format,
+        "phoenix_view" => module_name(metadata.view)
+      })
+
     "http_request"
     |> @tracer.create_span(parent)
     |> @span.set_name(
