@@ -110,7 +110,7 @@ defmodule Appsignal.Tesla do
     module = Map.get(env, :__module__)
 
     if module != nil and function_exported?(module, :__middleware__, 0) do
-      module.__middleware__
+      module.__middleware__()
     end || []
   end
 
