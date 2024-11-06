@@ -41,6 +41,13 @@ defmodule Appsignal.Transmitter do
   end
 
   defp options do
+    ssl_options() ++
+      [
+        pool: :appsignal_transmitter
+      ]
+  end
+
+  defp ssl_options do
     ca_file_path = Appsignal.Config.ca_file_path()
 
     options =
