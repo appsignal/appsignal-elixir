@@ -31,6 +31,16 @@ defmodule Appsignal.FakeTransmitter do
     Agent.get(__MODULE__, & &1[:response]).()
   end
 
+  def transmit_and_close(url, payload, config) do
+    case transmit(url, payload, config) do
+      {:ok, status, headers, _reference} ->
+        {:ok, status, headers}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
   def transmitted do
     Agent.get(__MODULE__, &Enum.reverse(&1[:transmitted]))
   end

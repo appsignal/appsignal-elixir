@@ -13,6 +13,7 @@ defmodule Appsignal.Diagnose.Report do
     case Transmitter.transmit(config[:diagnose_endpoint], {%{diagnose: report}, :json}, config) do
       {:ok, 200, _, reference} ->
         {:ok, body} = :hackney.body(reference)
+        :hackney.close(reference)
 
         case Jason.decode(body) do
           {:ok, response} -> {:ok, response["token"]}
@@ -21,6 +22,7 @@ defmodule Appsignal.Diagnose.Report do
 
       {:ok, status_code, _, reference} ->
         {:ok, body} = :hackney.body(reference)
+        :hackney.close(reference)
         {:error, %{status_code: status_code, body: body}}
 
       {:error, reason} ->
