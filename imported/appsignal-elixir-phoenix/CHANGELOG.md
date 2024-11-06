@@ -1,5 +1,13 @@
 # AppSignal for Elixir Phoenix changelog
 
+## 2.5.1
+
+_Published on 2024-11-06._
+
+### Added
+
+- Set render metadata as tags on render error. When a template rendering error is reported, its backtrace is limited to the Elixir process that is spawned to render the template. Add information about the template and view being rendered as tags, to provide additional context about the error. (patch [8d27329](https://github.com/appsignal/appsignal-elixir-phoenix/commit/8d27329d4862630e5f213162ca5fbd58c7a47e2c))
+
 ## 2.5.0
 
 _Published on 2024-09-02._
