@@ -80,8 +80,10 @@ defmodule Appsignal.TransmitterTest do
   end
 
   test "uses the default CA certificate" do
-    [_method, _url, _headers, _body, [ssl_options: ssl_options]] =
+    [_method, _url, _headers, _body, options] =
       Transmitter.request(:get, "https://example.com")
+
+    ssl_options = Keyword.get(options, :ssl_options)
 
     assert ssl_options[:verify] == :verify_peer
     assert ssl_options[:cacertfile] == Config.ca_file_path()
@@ -123,9 +125,10 @@ defmodule Appsignal.TransmitterTest do
     path = "priv/cacert.pem"
 
     with_config(%{ca_file_path: path}, fn ->
-      [_method, _url, _headers, _body, [ssl_options: ssl_options]] =
+      [_method, _url, _headers, _body, options] =
         Transmitter.request(:get, "https://example.com")
 
+      ssl_options = Keyword.get(options, :ssl_options)
       assert ssl_options[:cacertfile] == path
     end)
   end
@@ -136,8 +139,10 @@ defmodule Appsignal.TransmitterTest do
     with_config(%{ca_file_path: path}, fn ->
       log =
         capture_log(fn ->
-          assert [_method, _url, _headers, _body, []] =
-                   Transmitter.request(:get, "https://example.com")
+          [_method, _url, _headers, _body, options] =
+            Transmitter.request(:get, "https://example.com")
+
+          refute Keyword.has_key?(options, :ssl_options)
         end)
 
       # credo:disable-for-lines:2 Credo.Check.Readability.MaxLineLength

@@ -13,6 +13,12 @@ defmodule Appsignal.Transmitter do
   def transmit(url, payload_and_format \\ {nil, nil}, config \\ nil)
   def transmit(url, nil, config), do: transmit(url, {nil, nil}, config)
 
+  # This function calls `:hackney.request/5` -- it is the
+  # caller's responsibility to ensure that `:hackney.close/1` is
+  # called afterwards.
+  #
+  # If you're not interested in the body, only in the status code
+  # and headers, use `transmit_and_close/3` instead.
   def transmit(url, {payload, format}, config) do
     config = config || Appsignal.Config.config()
 
@@ -32,6 +38,17 @@ defmodule Appsignal.Transmitter do
     request(:post, url, headers, body)
   end
 
+  def transmit_and_close(url, payload_and_format \\ {nil, nil}, config \\ nil) do
+    case transmit(url, payload_and_format, config) do
+      {:ok, status, headers, reference} ->
+        :hackney.close(reference)
+        {:ok, status, headers}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
   defp encode_body(nil, _), do: ""
   defp encode_body(payload, :json), do: Jason.encode!(payload)
 
@@ -41,6 +58,13 @@ defmodule Appsignal.Transmitter do
   end
 
   defp options do
+    ssl_options() ++
+      [
+        pool: :appsignal_transmitter
+      ]
+  end
+
+  defp ssl_options do
     ca_file_path = Appsignal.Config.ca_file_path()
 
     options =
