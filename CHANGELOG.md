@@ -1,5 +1,27 @@
 # AppSignal for Elixir changelog
 
+## 2.13.1
+
+_Published on 2024-11-06._
+
+### Added
+
+- Add `reported_by` tag to errors reported by the legacy error backend. This makes it easier to understand whether an error is being reported by the error backend. (patch [440e53dd](https://github.com/appsignal/appsignal-elixir/commit/440e53ddc57ad2b6e974f7cda3701b9ca44cf0d1))
+- Set the app revision config option for Scalingo deploys automatically. If the `CONTAINER_VERSION` system environment variable is present, it will use used to set the `revision` config option automatically. Overwrite it's value by configuring the `revision` config option for your application. (patch [dc86ad85](https://github.com/appsignal/appsignal-elixir/commit/dc86ad85c96ddab01a44300d9ed2131a68f4cc77))
+
+### Changed
+
+- Change the primary download mirror for integrations. (patch [f3d201c1](https://github.com/appsignal/appsignal-elixir/commit/f3d201c1b8e30fda35898780299509026d29a0af))
+
+### Fixed
+
+- Fix parentheses warning for Tesla on Elixir 1.17.x. (patch [6a62ea1a](https://github.com/appsignal/appsignal-elixir/commit/6a62ea1a86e9b203f13df78e1d1315b8d61f463e))
+- Fix an issue where, after a certain amount of time, check-ins would no longer be sent.
+
+  This issue also caused the default Hackney connection pool to be saturated, affecting other code that uses the default Hackney connection pool.
+
+  (patch [7233adfa](https://github.com/appsignal/appsignal-elixir/commit/7233adfa3b7a5fc16e523f00bbd85a42e8cbc148))
+
 ## 2.13.0
 
 _Published on 2024-09-26._
