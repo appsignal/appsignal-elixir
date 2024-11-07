@@ -1,5 +1,13 @@
 # AppSignal for Elixir changelog
 
+## 2.13.2
+
+_Published on 2024-11-07._
+
+### Fixed
+
+- Fix an issue where the extension fails to build on ARM64 Linux. (patch [c350f4cc](https://github.com/appsignal/appsignal-elixir/commit/c350f4cc6c7e37aefdd03db1ca3dc2bcc4ca2524))
+
 ## 2.13.1
 
 _Published on 2024-11-06._
