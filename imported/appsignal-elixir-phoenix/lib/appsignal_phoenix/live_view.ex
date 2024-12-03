@@ -55,7 +55,8 @@ defmodule Appsignal.Phoenix.LiveView do
       [:phoenix, :live_view, :handle_params],
       [:phoenix, :live_view, :handle_event],
       [:phoenix, :live_view, :render],
-      [:phoenix, :live_component, :handle_event]
+      [:phoenix, :live_component, :handle_event],
+      [:phoenix, :live_component, :update]
     ]
     |> Enum.each(fn event ->
       name = Enum.join(event, ".")

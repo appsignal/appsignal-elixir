@@ -262,6 +262,21 @@ defmodule Appsignal.Phoenix.LiveViewTest do
           :telemetry.detach(
             {Appsignal.Phoenix.LiveView, [:phoenix, :live_component, :handle_event, :exception]}
           )
+
+        :ok =
+          :telemetry.detach(
+            {Appsignal.Phoenix.LiveView, [:phoenix, :live_component, :update, :start]}
+          )
+
+        :ok =
+          :telemetry.detach(
+            {Appsignal.Phoenix.LiveView, [:phoenix, :live_component, :update, :stop]}
+          )
+
+        :ok =
+          :telemetry.detach(
+            {Appsignal.Phoenix.LiveView, [:phoenix, :live_component, :update, :exception]}
+          )
       end)
     end
 
@@ -281,6 +296,9 @@ defmodule Appsignal.Phoenix.LiveViewTest do
       assert attached?([:phoenix, :live_component, :handle_event, :start])
       assert attached?([:phoenix, :live_component, :handle_event, :stop])
       assert attached?([:phoenix, :live_component, :handle_event, :exception])
+      assert attached?([:phoenix, :live_component, :update, :start])
+      assert attached?([:phoenix, :live_component, :update, :stop])
+      assert attached?([:phoenix, :live_component, :update, :exception])
     end
   end
 
@@ -433,6 +451,54 @@ defmodule Appsignal.Phoenix.LiveViewTest do
 
       assert Enum.any?(attributes, fn {%Span{}, key, data} ->
                key == "appsignal:category" and data == "handle_event.live_view"
+             end)
+    end
+
+    test "sets the span's params" do
+      assert {:ok, attributes} = Test.Span.get(:set_sample_data)
+
+      assert Enum.any?(attributes, fn {%Span{}, key, data} ->
+               key == "params" and data == %{foo: "bar"}
+             end)
+    end
+  end
+
+  describe "handle_event_start/4, with a live_component update event" do
+    setup do
+      event = [:phoenix, :live_component, :update, :start]
+
+      :telemetry.attach(
+        {__MODULE__, event},
+        event,
+        &Appsignal.Phoenix.LiveView.handle_event_start/4,
+        :ok
+      )
+
+      :telemetry.execute(
+        [:phoenix, :live_component, :update, :start],
+        %{monotonic_time: -576_457_566_461_433_920, system_time: 1_653_474_764_790_125_080},
+        %{
+          params: %{foo: "bar"},
+          socket: %Phoenix.LiveView.Socket{view: __MODULE__}
+        }
+      )
+    end
+
+    test "creates a root span with a namespace and a start time" do
+      assert {:ok, [{"live_view", nil, [start_time: 1_653_474_764_790_125_080]}]} =
+               Test.Tracer.get(:create_span)
+    end
+
+    test "sets the span's name" do
+      assert {:ok, [{%Span{}, "Appsignal.Phoenix.LiveViewTest#update"}]} =
+               Test.Span.get(:set_name)
+    end
+
+    test "sets the span's category" do
+      assert {:ok, attributes} = Test.Span.get(:set_attribute)
+
+      assert Enum.any?(attributes, fn {%Span{}, key, data} ->
+               key == "appsignal:category" and data == "update.live_view"
              end)
     end
 
