@@ -1,5 +1,13 @@
 # AppSignal for Elixir Phoenix changelog
 
+## 2.6.0
+
+_Published on 2024-12-03._
+
+### Added
+
+- Handle live component update events (minor [24b9d94](https://github.com/appsignal/appsignal-elixir-phoenix/commit/24b9d949f2d0478d1c170f225bdb53ca3b3e5535))
+
 ## 2.5.1
 
 _Published on 2024-11-06._
