@@ -1,5 +1,13 @@
 # AppSignal for Elixir changelog
 
+## 2.13.3
+
+_Published on 2024-12-20._
+
+### Fixed
+
+- Fix a performance issue when sanitising `INSERT INTO ... VALUES` queries. (patch [4d0f1c03](https://github.com/appsignal/appsignal-elixir/commit/4d0f1c03bf6e680fbbeca8eb0fb170e19d180e53))
+
 ## 2.13.2
 
 _Published on 2024-11-07._
