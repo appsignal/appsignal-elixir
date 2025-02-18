@@ -436,6 +436,43 @@ defmodule Appsignal.InstrumentationTest do
     end
   end
 
+  describe "instrument/2, when an error is raised from the function" do
+    setup do
+      try do
+        Appsignal.Instrumentation.instrument("test", fn ->
+          raise "Exception!"
+        end)
+      rescue
+        e in RuntimeError ->
+          e
+
+          %{
+            error: e
+          }
+      end
+    end
+
+    test "creates a root span" do
+      assert Test.Tracer.get(:create_span) == {:ok, [{"background_job", nil}]}
+    end
+
+    test "sets the span's name" do
+      assert {:ok, [{%Span{}, "test"}]} = Test.Span.get(:set_name)
+    end
+
+    test "sets the span's category attribute" do
+      assert {:ok, [{%Span{}, "appsignal:category", "test"}]} = Test.Span.get(:set_attribute)
+    end
+
+    test "raises the error", %{error: error} do
+      assert %RuntimeError{message: "Exception!"} = error
+    end
+
+    test "closes the span" do
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    end
+  end
+
   describe "instrument/2, when passing a function that takes an argument" do
     setup do
       %{return: Appsignal.Instrumentation.instrument("test", fn span -> span end)}
@@ -509,6 +546,35 @@ defmodule Appsignal.InstrumentationTest do
 
     test "calls the passed function, and returns its return", %{return: return} do
       assert return == :ok
+    end
+
+    test "closes the span" do
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    end
+  end
+
+  describe "instrument_root/3, when an error is raised from the function" do
+    setup do
+      try do
+        Appsignal.Instrumentation.instrument_root("background_job", "name", fn ->
+          raise "Exception!"
+        end)
+      rescue
+        e in RuntimeError ->
+          e
+
+          %{
+            error: e
+          }
+      end
+    end
+
+    test "creates a root span" do
+      assert Test.Tracer.get(:create_span) == {:ok, [{"background_job", nil}]}
+    end
+
+    test "raises the error", %{error: error} do
+      assert %RuntimeError{message: "Exception!"} = error
     end
 
     test "closes the span" do

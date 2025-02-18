@@ -7,8 +7,12 @@ defmodule Appsignal.Instrumentation do
   def instrument(fun) do
     span = @tracer.create_span("background_job", @tracer.current_span)
 
-    result = call_with_optional_argument(fun, span)
-    @tracer.close_span(span)
+    result =
+      try do
+        call_with_optional_argument(fun, span)
+      after
+        @tracer.close_span(span)
+      end
 
     result
   end
@@ -68,9 +72,12 @@ defmodule Appsignal.Instrumentation do
     |> @span.set_name(name)
     |> @span.set_attribute("appsignal:category", name)
 
-    result = fun.()
-
-    @tracer.close_span(span)
+    result =
+      try do
+        call_with_optional_argument(fun, span)
+      after
+        @tracer.close_span(span)
+      end
 
     result
   end
