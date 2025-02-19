@@ -1,5 +1,23 @@
 # AppSignal for Elixir changelog
 
+## 2.13.4
+
+_Published on 2025-02-19._
+
+### Fixed
+
+- Close instrumentation spans when an error occurs inside the `Appsignal.instrument` helper's function argument. This prevents spans and traces from not being closed properly.
+
+  This will no longer fail to close spans:
+
+  ```elixir
+  Appsignal.instrument("event name", fn -> do
+    raise "Oh no!"
+  end)
+  ```
+
+  (patch [d218b405](https://github.com/appsignal/appsignal-elixir/commit/d218b4054f7c5accb94d07d215817ddc9d0b3a3c))
+
 ## 2.13.3
 
 _Published on 2024-12-20._
