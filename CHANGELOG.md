@@ -1,5 +1,21 @@
 # AppSignal for Elixir changelog
 
+## 2.14.0
+
+_Published on 2025-02-24._
+
+### Changed
+
+- [f36c0ad8](https://github.com/appsignal/appsignal-elixir/commit/f36c0ad80a837fa58478b579c11275cbdb6eba6a) patch - Update bundled trusted root certificates
+
+### Removed
+
+- [55cd2b2b](https://github.com/appsignal/appsignal-elixir/commit/55cd2b2bc1bfb79d42cb82f794c03a145200ebf8) minor - Remove the OpenTelemetry beta feature in favor of the new [AppSignal collector](https://docs.appsignal.com/collector). If you are using the AppSignal agent to send OpenTelemetry data in our public beta through the `/enriched` endpoint on the agent's HTTP server, please migrate to the collector to continue using the beta. The collector has a much better implementation of this feature for the beta.
+
+### Fixed
+
+- [7edecdf2](https://github.com/appsignal/appsignal-elixir/commit/7edecdf25ada7050b61e9d660c55482af8b317db) patch - Fix an issue where the AppSignal agent fails to download during installation, by restricting the Hackney dependency to version 1.21.0 or lower.
+
 ## 2.13.4
 
 _Published on 2025-02-19._
