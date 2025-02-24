@@ -105,7 +105,7 @@ defmodule Appsignal.Mixfile do
 
     hackney_version =
       case otp_version >= "21" do
-        true -> "~> 1.6"
+        true -> "~> 1.6 and <= 1.21.0"
         false -> "1.18.1"
       end
 
