@@ -5,7 +5,7 @@ defmodule Appsignal.TransmitterTest do
   import ExUnit.CaptureLog
 
   setup do
-    Application.put_env(:appsignal, :http_client, FakeHackney)
+    Application.put_env(:appsignal, :http_client, FakeFinch)
 
     on_exit(fn ->
       Application.delete_env(:appsignal, :http_client)

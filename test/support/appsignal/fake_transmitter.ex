@@ -34,7 +34,7 @@ defmodule Appsignal.FakeTransmitter do
   def transmit_and_close(url, payload, config) do
     case transmit(url, payload, config) do
       {:ok, status, headers, _reference} ->
-        {:ok, status, headers}
+        {:ok, %{status: status}, headers}
 
       {:error, reason} ->
         {:error, reason}

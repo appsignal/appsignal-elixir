@@ -5,11 +5,11 @@ defmodule Appsignal.Utils.PushApiKeyValidator do
   def validate(config) do
     url = "#{config[:endpoint]}/1/auth"
 
-    case Transmitter.transmit_and_close(url, nil, config) do
+    case Transmitter.transmit_and_close(url, nil, config, true) do
       {:ok, 200, _} -> :ok
       {:ok, 401, _} -> {:error, :invalid}
       {:ok, status_code, _} -> {:error, status_code}
-      {:error, reason} -> {:error, reason}
+      {:error, %{reason: reason}} -> {:error, reason}
     end
   end
 end

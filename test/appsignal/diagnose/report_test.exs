@@ -66,7 +66,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose.ReportTest do
     end
 
     test "sends the diagnostics report to AppSignal and returns an error" do
-      assert send() == {:error, %{body: "woops", status_code: 500}}
+      assert send() == {:error, %{status_code: 500, body: "woops"}}
     end
   end
 

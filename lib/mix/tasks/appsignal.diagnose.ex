@@ -22,6 +22,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
       end
 
     Application.load(:appsignal)
+    Application.ensure_started(:telemetry)
 
     report = %{process: %{uid: @system.uid()}}
 

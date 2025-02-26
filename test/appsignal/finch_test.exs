@@ -142,7 +142,7 @@ defmodule Appsignal.FinchTest do
       :telemetry.execute(
         [:finch, :request, :stop],
         %{},
-        %{request: %{}}
+        %{name: "", request: %{}}
       )
     end
 
@@ -175,7 +175,7 @@ defmodule Appsignal.FinchTest do
       :telemetry.execute(
         [:finch, :request, :exception],
         %{},
-        %{request: %{}}
+        %{name: "", request: %{}}
       )
     end
 
