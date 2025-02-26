@@ -4,19 +4,21 @@ defmodule Appsignal.Transmitter do
   require Logger
 
   def request(method, url, headers \\ [], body \\ "") do
-    http_client = Application.get_env(:appsignal, :http_client, :hackney)
-    :application.ensure_all_started(http_client)
+    http_client = Application.get_env(:appsignal, :http_client, Finch)
+    {:ok, pid} = Finch.start_link(name: AppsignalFinch)
 
-    http_client.request(method, url, headers, body, options())
+    try do
+      method
+      |> http_client.build(url, headers, body)
+      |> http_client.request(AppsignalFinch, options())
+    after
+      Process.exit(pid, :normal)
+    end
   end
 
   def transmit(url, payload_and_format \\ {nil, nil}, config \\ nil)
   def transmit(url, nil, config), do: transmit(url, {nil, nil}, config)
 
-  # This function calls `:hackney.request/5` -- it is the
-  # caller's responsibility to ensure that `:hackney.close/1` is
-  # called afterwards.
-  #
   # If you're not interested in the body, only in the status code
   # and headers, use `transmit_and_close/3` instead.
   def transmit(url, {payload, format}, config) do
@@ -40,8 +42,7 @@ defmodule Appsignal.Transmitter do
 
   def transmit_and_close(url, payload_and_format \\ {nil, nil}, config \\ nil) do
     case transmit(url, payload_and_format, config) do
-      {:ok, status, headers, reference} ->
-        :hackney.close(reference)
+      {:ok, %{status: status, headers: headers}} ->
         {:ok, status, headers}
 
       {:error, reason} ->
