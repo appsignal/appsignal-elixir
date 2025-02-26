@@ -9,7 +9,7 @@ defmodule Appsignal.Utils.PushApiKeyValidator do
       {:ok, 200, _} -> :ok
       {:ok, 401, _} -> {:error, :invalid}
       {:ok, status_code, _} -> {:error, status_code}
-      {:error, reason} -> {:error, reason}
+      {:error, %{reason: reason}} -> {:error, reason}
     end
   end
 end
