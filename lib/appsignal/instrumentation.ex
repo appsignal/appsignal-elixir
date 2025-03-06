@@ -11,7 +11,7 @@ defmodule Appsignal.Instrumentation do
       try do
         call_with_optional_argument(fun, span)
       after
-        @tracer.close_span(span)
+        @tracer.close_span(@tracer.current_span())
       end
 
     result
