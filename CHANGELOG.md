@@ -1,5 +1,21 @@
 # AppSignal for Elixir changelog
 
+## 2.14.1
+
+_Published on 2025-03-11._
+
+### Changed
+
+- Delay and eventually halt agent reboots by the extension.
+
+  The AppSignal extension is responsible for booting the AppSignal agent. If communication with the agent is lost, the extension is responsible for rebooting it.
+
+  In certain scenarios, such as when several processes with different AppSignal configurations are misconfigured to share the same working directory, the processes' extensions can enter a loop of rebooting and killing each others' agents. These short-lived agents may then attempt to repeatedly send pending payloads to AppSignal in quick succession.
+
+  This change causes the extension to delay each reboot of its agent by one additional second, and to no longer attempt to reboot the agent after the tenth reboot, slowing down and eventually breaking this loop.
+
+  (patch [4c7b8065](https://github.com/appsignal/appsignal-elixir/commit/4c7b8065393ac12565f5db85d226a307374a9f84))
+
 ## 2.14.0
 
 _Published on 2025-02-24._
