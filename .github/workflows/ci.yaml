@@ -138,7 +138,7 @@ jobs:
           - 26.x
           - 25.x
         include:
-          - elixir: 1.18.x
+          - elixir: v1.18.3-otp-28
             otp: 28.0-rc1
           - elixir: main
             otp: 27.x
