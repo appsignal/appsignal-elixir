@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - develop
+      - otp-28
   pull_request:
     types:
       - opened
