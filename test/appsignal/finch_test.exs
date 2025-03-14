@@ -114,6 +114,76 @@ defmodule Appsignal.FinchTest do
     end
   end
 
+  describe "finch_request_start/4, with an AppsignalFinch event" do
+    setup do
+      start_supervised!(Test.Nif)
+      start_supervised!(Test.Tracer)
+      start_supervised!(Test.Span)
+      start_supervised!(Test.Monitor)
+
+      Appsignal.Tracer.create_span("http_request")
+
+      :telemetry.execute(
+        [:finch, :request, :start],
+        %{},
+        %{
+          name: AppsignalFinch,
+          request: %{
+            method: "GET",
+            scheme: :https,
+            path: "/",
+            query: "foo=bar",
+            host: "example.com",
+            port: 443
+          }
+        }
+      )
+    end
+
+    test "does not create a span" do
+      assert Test.Tracer.get(:create_span) == :error
+    end
+
+    test "does not detach the handler" do
+      assert attached?([:finch, :request, :start])
+    end
+  end
+
+  describe "finch_request_stop/4, with an AppsignalFinch event" do
+    setup do
+      start_supervised!(Test.Nif)
+      start_supervised!(Test.Tracer)
+      start_supervised!(Test.Span)
+      start_supervised!(Test.Monitor)
+
+      Appsignal.Tracer.create_span("http_request")
+
+      :telemetry.execute(
+        [:finch, :request, :stop],
+        %{},
+        %{
+          name: AppsignalFinch,
+          request: %{
+            method: "GET",
+            scheme: :https,
+            path: "/",
+            query: "foo=bar",
+            host: "example.com",
+            port: 443
+          }
+        }
+      )
+    end
+
+    test "does not close a span" do
+      assert Test.Tracer.get(:close_span) == :error
+    end
+
+    test "does not detach the handler" do
+      assert attached?([:finch, :request, :stop])
+    end
+  end
+
   describe "finch_request_start/4, and finch_request_stop/4 with a root span" do
     setup do
       start_supervised!(Test.Nif)
@@ -142,7 +212,7 @@ defmodule Appsignal.FinchTest do
       :telemetry.execute(
         [:finch, :request, :stop],
         %{},
-        %{request: %{}}
+        %{name: "", request: %{}}
       )
     end
 
@@ -175,7 +245,7 @@ defmodule Appsignal.FinchTest do
       :telemetry.execute(
         [:finch, :request, :exception],
         %{},
-        %{request: %{}}
+        %{name: "", request: %{}}
       )
     end
 

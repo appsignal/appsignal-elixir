@@ -49,7 +49,7 @@ defmodule Appsignal do
       {Appsignal.Monitor, []},
       {Appsignal.Probes, []},
       {Appsignal.CheckIn.Scheduler, []},
-      :hackney_pool.child_spec(:appsignal_transmitter, [])
+      {Finch, name: AppsignalFinch}
     ]
 
     result = Supervisor.start_link(children, strategy: :one_for_one, name: Appsignal.Supervisor)

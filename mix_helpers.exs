@@ -144,15 +144,18 @@ defmodule Mix.Appsignal.Helper do
 
       false ->
         Mix.shell().info("Downloading agent release")
-        :application.unset_env(:hackney, :mod_metrics)
-        :application.ensure_all_started(:hackney)
+        {:ok, pid} = Finch.start_link(name: AppsignalFinchDownload)
 
-        case do_download_file!(filename, local_filename, Appsignal.Agent.mirrors()) do
-          {:ok, url} ->
-            {:ok, {local_filename, merge_report(report, %{download: %{download_url: url}})}}
+        try do
+          case do_download_file!(filename, local_filename, Appsignal.Agent.mirrors()) do
+            {:ok, url} ->
+              {:ok, {local_filename, merge_report(report, %{download: %{download_url: url}})}}
 
-          {error, url} ->
-            {:error, {error, merge_report(report, %{download: %{download_url: url}})}}
+            {error, url} ->
+              {:error, {error, merge_report(report, %{download: %{download_url: url}})}}
+          end
+        after
+          Process.exit(pid, :normal)
         end
     end
   end
@@ -210,17 +213,18 @@ defmodule Mix.Appsignal.Helper do
   end
 
   defp do_download_file!(url, local_filename) do
-    case :hackney.request(:get, url, [], "", download_options()) do
-      {:ok, 200, _, reference} ->
-        case :hackney.body(reference) do
-          {:ok, body} -> File.write(local_filename, body)
-          {:error, reason} -> {:error, reason}
-        end
+    request =
+      Finch.build(:get, url, [], "")
+      |> Finch.request(AppsignalFinchDownload, download_options())
+
+    case request do
+      {:ok, %{status: 200, body: body}} ->
+        File.write(local_filename, body)
 
       response ->
         message = """
         - URL: #{url}
-        - Error (hackney response):
+        - Error (Finch response):
         #{inspect(response)}
         """
 

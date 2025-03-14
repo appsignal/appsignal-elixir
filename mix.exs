@@ -103,12 +103,6 @@ defmodule Appsignal.Mixfile do
     system_version = System.version()
     otp_version = System.otp_release()
 
-    hackney_version =
-      case otp_version >= "21" do
-        true -> "~> 1.6 and <= 1.21.0"
-        false -> "1.18.1"
-      end
-
     decorator_version =
       case Version.compare(system_version, "1.5.0") do
         :lt -> "~> 1.2.3"
@@ -140,9 +134,11 @@ defmodule Appsignal.Mixfile do
       end
 
     [
+      {:castore, "~> 1.0"},
+      {:certifi, "~> 2.14"},
       {:decimal, "~> 2.0"},
       {:benchee, "~> 1.0", only: :bench},
-      {:hackney, hackney_version},
+      {:finch, "~> 0.19"},
       {:jason, "~> 1.0"},
       {:decorator, decorator_version},
       {:plug, plug_version, only: [:test, :test_no_nif]},
