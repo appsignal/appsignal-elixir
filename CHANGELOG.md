@@ -1,5 +1,13 @@
 # AppSignal for Elixir changelog
 
+## 2.15.1
+
+_Published on 2025-03-14._
+
+### Changed
+
+- Improve SQL sanitisation for functions and numbered placeholders. (patch [1a8251e0](https://github.com/appsignal/appsignal-elixir/commit/1a8251e083781b2741d6cbf7b188da008b6b5f74))
+
 ## 2.15.0
 
 _Published on 2025-03-14._
