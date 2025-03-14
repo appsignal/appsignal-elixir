@@ -1,5 +1,13 @@
 # AppSignal for Elixir changelog
 
+## 2.15.0
+
+_Published on 2025-03-14._
+
+### Changed
+
+- [a622d322](https://github.com/appsignal/appsignal-elixir/commit/a622d322c53ef6606a5bd89aedcb60443c1208df) minor - Switch Hackney to Finch as the bundled HTTP client to operate within the integration
+
 ## 2.14.1
 
 _Published on 2025-03-11._
