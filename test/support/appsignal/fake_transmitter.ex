@@ -6,7 +6,7 @@ defmodule Appsignal.FakeTransmitter do
       fn ->
         %{
           transmitted: [],
-          response: fn -> {:ok, 200, :fake, :fake} end
+          response: fn -> {:ok, %{status: 200, body: :fake, headers: :fake, trailers: :fake}} end
         }
       end,
       name: __MODULE__
@@ -29,16 +29,6 @@ defmodule Appsignal.FakeTransmitter do
     end)
 
     Agent.get(__MODULE__, & &1[:response]).()
-  end
-
-  def transmit_and_close(url, payload, config) do
-    case transmit(url, payload, config) do
-      {:ok, status, headers, _reference} ->
-        {:ok, %{status: status}, headers}
-
-      {:error, reason} ->
-        {:error, reason}
-    end
   end
 
   def transmitted do

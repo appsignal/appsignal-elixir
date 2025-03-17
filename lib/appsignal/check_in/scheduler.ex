@@ -98,11 +98,11 @@ defmodule Appsignal.CheckIn.Scheduler do
     config = Appsignal.Config.config()
     endpoint = "#{config[:logging_endpoint]}/check_ins/json"
 
-    case @transmitter.transmit_and_close(endpoint, {Enum.reverse(events), :ndjson}, config) do
-      {:ok, %{status: status_code}, _} when status_code in 200..299 ->
+    case @transmitter.transmit(endpoint, {Enum.reverse(events), :ndjson}, config) do
+      {:ok, %{status: status_code}} when status_code in 200..299 ->
         @integration_logger.trace("Transmitted #{description}")
 
-      {:ok, %{status: status_code}, _} ->
+      {:ok, %{status: status_code}} ->
         @integration_logger.error(
           "Failed to transmit #{description}: status code was #{status_code}"
         )
