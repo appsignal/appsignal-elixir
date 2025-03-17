@@ -4,6 +4,8 @@ defmodule Appsignal.Transmitter do
   require Logger
 
   def request_standalone(method, url, headers \\ [], body \\ "") do
+    :application.ensure_all_started(:telemetry)
+
     http_client = Application.get_env(:appsignal, :http_client, Finch)
     name = :"AppsignalFinch_#{:erlang.unique_integer([:positive])}"
     {:ok, pid} = Finch.start_link(name: name)
