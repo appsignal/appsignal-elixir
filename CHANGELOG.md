@@ -1,5 +1,13 @@
 # AppSignal for Elixir changelog
 
+## 2.15.2
+
+_Published on 2025-03-17._
+
+### Fixed
+
+- Fix an issue where the check-in scheduler crashes upon use. (patch [20abf347](https://github.com/appsignal/appsignal-elixir/commit/20abf347521f4480a49467dfca37894fb614e426))
+
 ## 2.15.1
 
 _Published on 2025-03-14._
