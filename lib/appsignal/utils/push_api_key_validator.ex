@@ -5,11 +5,15 @@ defmodule Appsignal.Utils.PushApiKeyValidator do
   def validate(config) do
     url = "#{config[:endpoint]}/1/auth"
 
-    case Transmitter.transmit_and_close(url, nil, config, true) do
-      {:ok, 200, _} -> :ok
-      {:ok, 401, _} -> {:error, :invalid}
-      {:ok, status_code, _} -> {:error, status_code}
+    case Transmitter.transmit(url, nil, config, true) do
+      {:ok, %{status: 200}} -> :ok
+      {:ok, %{status: 401}} -> {:error, :invalid}
+      {:ok, %{status: status_code}} -> {:error, status_code}
+      # If the error is a `Mint.TransportError`, extract the reason
+      # atom from the struct.
       {:error, %{reason: reason}} -> {:error, reason}
+      # Otherwise, return the error as is.
+      {:error, e} -> {:error, e}
     end
   end
 end

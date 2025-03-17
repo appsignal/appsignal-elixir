@@ -43,8 +43,6 @@ defmodule Appsignal.Transmitter do
     do_transmit(url, {payload, format}, config, standalone)
   end
 
-  # If you're not interested in the body, only in the status code
-  # and headers, use `transmit_and_close/4` instead.
   def do_transmit(url, {payload, format}, config, standalone) do
     config = config || Appsignal.Config.config()
 
@@ -63,21 +61,6 @@ defmodule Appsignal.Transmitter do
 
     request_fun = if standalone, do: &request_standalone/4, else: &request/4
     request_fun.(:post, url, headers, body)
-  end
-
-  def transmit_and_close(
-        url,
-        payload_and_format \\ {nil, nil},
-        config \\ nil,
-        standalone \\ false
-      ) do
-    case transmit(url, payload_and_format, config, standalone) do
-      {:ok, %{status: status, headers: headers}} ->
-        {:ok, status, headers}
-
-      {:error, reason} ->
-        {:error, reason}
-    end
   end
 
   defp encode_body(nil, _), do: ""
