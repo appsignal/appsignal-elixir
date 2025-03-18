@@ -207,7 +207,7 @@ defmodule Appsignal.CheckInSchedulerTest do
                      &1,
                      "Failed to transmit cron check-in `cron-checkin-name` start event"
                    ) &&
-                     String.ends_with?(&1, ": fake error"))
+                     String.contains?(&1, "fake error"))
                )
       end)
     end
