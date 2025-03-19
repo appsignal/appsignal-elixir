@@ -108,7 +108,7 @@ defmodule Appsignal.CheckIn.Scheduler do
         )
 
       {:error, reason} ->
-        @integration_logger.error("Failed to transmit #{description}: #{reason}")
+        @integration_logger.error("Failed to transmit #{description}: #{inspect(reason)}")
     end
 
     {

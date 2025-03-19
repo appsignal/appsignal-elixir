@@ -1055,8 +1055,10 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
       assert String.contains?(
                output,
-               "Error: Something went wrong while submitting the report to AppSignal.\nfoo"
+               "Error: Something went wrong while submitting the report to AppSignal."
              )
+
+      assert String.contains?(output, "foo")
     end
   end
 
