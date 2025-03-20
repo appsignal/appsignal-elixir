@@ -1,5 +1,21 @@
 # AppSignal for Elixir changelog
 
+## 2.15.3
+
+_Published on 2025-03-20._
+
+### Added
+
+- Add a mix task to check the extension install.
+
+  Run `mix appsignal.check_install` to see if the NIF and agent were successfully installed. If not, it will return with exit code 1. Use this in your CI or build step to check if AppSignal was installed correctly before deploying or starting your application.
+
+  (patch [bab913f7](https://github.com/appsignal/appsignal-elixir/commit/bab913f7dbfb0b93f8f49671e8d432192ece59f8))
+
+### Fixed
+
+- Fix an issue where the check-in scheduler would crash when failing to send a check-in due to a network error. (patch [fc55fb00](https://github.com/appsignal/appsignal-elixir/commit/fc55fb00eb352444d73c9443c53eca4543633f27))
+
 ## 2.15.2
 
 _Published on 2025-03-17._
