@@ -43,28 +43,28 @@ defmodule Appsignal.Plug do
       end
 
       def call(conn, opts) do
-        Appsignal.instrument(fn span ->
-          _ = @span.set_namespace(span, "http_request")
+        span = @tracer.create_span("http_request", @tracer.current_span)
 
-          try do
-            super(conn, opts)
-          catch
-            kind, reason ->
-              stack = __STACKTRACE__
+        try do
+          super(conn, opts)
+        catch
+          kind, reason ->
+            stack = __STACKTRACE__
 
-              _ =
-                span
-                |> Appsignal.Plug.handle_error(kind, reason, stack, conn)
-                |> @tracer.close_span()
+            _ =
+              span
+              |> Appsignal.Plug.handle_error(kind, reason, stack, conn)
+              |> @tracer.close_span()
 
-              @tracer.ignore()
-              :erlang.raise(kind, reason, stack)
-          else
-            conn ->
-              _ = Appsignal.Plug.set_conn_data(span, conn)
-              Plug.Conn.put_private(conn, :appsignal_plug_instrumented, true)
-          end
-        end)
+            @tracer.ignore()
+            :erlang.raise(kind, reason, stack)
+        else
+          conn ->
+            @tracer.close_span(span)
+
+            _ = Appsignal.Plug.set_conn_data(span, conn)
+            Plug.Conn.put_private(conn, :appsignal_plug_instrumented, true)
+        end
       end
 
       defoverridable call: 2
