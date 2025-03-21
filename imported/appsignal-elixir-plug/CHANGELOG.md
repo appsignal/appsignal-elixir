@@ -1,5 +1,17 @@
 # AppSignal for Elixir Plug changelog
 
+## 2.1.0
+
+_Published on 2025-03-21._
+
+### Changed
+
+- Remove Hackney dependency. The integration now uses Finch instead. (minor [a517cbe](https://github.com/appsignal/appsignal-elixir-plug/commit/a517cbede9d1c1f3f87a1fd75d5ab0f64c7a3f72))
+
+### Fixed
+
+- Ensure spans in requests with errors aren't double-closed (patch [34b5181](https://github.com/appsignal/appsignal-elixir-plug/commit/34b51817ed4473e70b71361b4295c8fc1133fc25))
+
 ## 2.0.15
 
 ### Fixed
