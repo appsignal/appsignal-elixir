@@ -60,7 +60,6 @@ defmodule Appsignal.Phoenix.MixProject do
       {:ex_doc, "~> 0.21", only: :dev, runtime: false},
       {:dialyxir, "~> 1.3.0", only: [:dev, :test], runtime: false},
       {:credo, credo_version, only: [:dev, :test], runtime: false},
-      {:poison, "~> 5.0", only: [:dev, :test], runtime: false},
       {:telemetry, "~> 0.4 or ~> 1.0"}
     ]
   end
