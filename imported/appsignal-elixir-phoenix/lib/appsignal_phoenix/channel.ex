@@ -52,7 +52,6 @@ defmodule Appsignal.Phoenix.Channel do
               |> @span.set_sample_data_if_nil("params", params)
               |> @span.set_sample_data_if_nil("environment", Appsignal.Metadata.metadata(socket))
               |> @span.add_error(kind, reason, stack)
-              |> @tracer.close_span()
 
             @tracer.ignore()
             :erlang.raise(kind, reason, stack)
