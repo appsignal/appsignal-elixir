@@ -1,7 +1,15 @@
-name: CI
+name: Elixir Phoenix package CI
 
 on:
-  push: {}
+  push:
+    branches:
+    - main
+    - develop
+  pull_request:
+    types:
+    - opened
+    - reopened
+    - synchronize
   schedule:
     - cron: "0 0 * * 1-5"
 
@@ -84,6 +92,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         elixir:
           - 1.17.x
