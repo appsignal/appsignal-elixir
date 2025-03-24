@@ -1,5 +1,17 @@
 # AppSignal for Elixir Phoenix changelog
 
+## 2.7.0
+
+_Published on 2025-03-24._
+
+### Changed
+
+- Remove the Hackney dependency. It is no longer used since AppSignal package 2.15.0. (minor [ca33981](https://github.com/appsignal/appsignal-elixir-phoenix/commit/ca33981694dec8aa76677f4ef401dc47d167bef4))
+
+### Fixed
+
+- Update `appsignal_plug` dependency requirement. This fixes an issue with spans being closed double, which led to inaccurate reporting. (patch [7516c42](https://github.com/appsignal/appsignal-elixir-phoenix/commit/7516c4275c67b7dc3c941e4a7e93a914d0588d98))
+
 ## 2.6.0
 
 _Published on 2024-12-03._
