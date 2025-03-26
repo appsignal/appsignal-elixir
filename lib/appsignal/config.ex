@@ -180,42 +180,42 @@ defmodule Appsignal.Config do
 
   def minutely_probes_enabled? do
     case Application.fetch_env(:appsignal, :config) do
-      {:ok, value} -> !!Map.get(value, :enable_minutely_probes, false)
+      {:ok, value} -> !!Access.get(value, :enable_minutely_probes, false)
       _ -> false
     end
   end
 
   def error_backend_enabled? do
     case Application.fetch_env(:appsignal, :config) do
-      {:ok, value} -> !!Map.get(value, :enable_error_backend, false)
+      {:ok, value} -> !!Access.get(value, :enable_error_backend, false)
       _ -> false
     end
   end
 
   def instrument_ecto? do
     case Application.fetch_env(:appsignal, :config) do
-      {:ok, value} -> !!Map.get(value, :instrument_ecto, true)
+      {:ok, value} -> !!Access.get(value, :instrument_ecto, true)
       _ -> true
     end
   end
 
   def instrument_finch? do
     case Application.fetch_env(:appsignal, :config) do
-      {:ok, value} -> !!Map.get(value, :instrument_finch, true)
+      {:ok, value} -> !!Access.get(value, :instrument_finch, true)
       _ -> true
     end
   end
 
   def instrument_oban? do
     case Application.fetch_env(:appsignal, :config) do
-      {:ok, value} -> !!Map.get(value, :instrument_oban, true)
+      {:ok, value} -> !!Access.get(value, :instrument_oban, true)
       _ -> true
     end
   end
 
   def instrument_tesla? do
     case Application.fetch_env(:appsignal, :config) do
-      {:ok, value} -> !!Map.get(value, :instrument_tesla, true)
+      {:ok, value} -> !!Access.get(value, :instrument_tesla, true)
       _ -> true
     end
   end
@@ -251,7 +251,7 @@ defmodule Appsignal.Config do
 
   def instrument_absinthe? do
     case Application.fetch_env(:appsignal, :config) do
-      {:ok, value} -> !!Map.get(value, :instrument_absinthe, true)
+      {:ok, value} -> !!Access.get(value, :instrument_absinthe, true)
       _ -> true
     end
   end
