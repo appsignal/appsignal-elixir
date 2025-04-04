@@ -22,6 +22,15 @@ defmodule Mix.Appsignal.Helper do
   require Logger
 
   def install do
+    if Enum.member?([:bench, :test, :test_no_nif], Mix.env()) do
+      Mix.shell().info("AppSignal: Skipping agent installation in test environment")
+      :ok
+    else
+      do_install()
+    end
+  end
+
+  def do_install do
     report = initial_report()
 
     case verify_system_architecture(report) do
