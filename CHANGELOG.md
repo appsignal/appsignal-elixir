@@ -1,5 +1,13 @@
 # AppSignal for Elixir changelog
 
+## 2.15.4
+
+_Published on 2025-04-04._
+
+### Added
+
+- Allow keyword list configurations (patch [6c938dc6](https://github.com/appsignal/appsignal-elixir/commit/6c938dc6510b9da0c84a7dddefcf430a68b8b25b))
+
 ## 2.15.3
 
 _Published on 2025-03-20._
