@@ -123,6 +123,22 @@ defmodule Appsignal.ObanTest do
     end
   end
 
+  describe "oban_job_start/4, with a :conf metadata key (v2.4.0)" do
+    setup do
+      fake_appsignal = start_supervised!(FakeAppsignal)
+
+      execute_job_start(%{
+        conf: sample_conf()
+      })
+
+      [fake_appsignal: fake_appsignal]
+    end
+
+    test "sets conf prefix as a span tag" do
+      assert has_attribute?("conf")
+    end
+  end
+
   describe "oban_job_stop/4" do
     setup do
       fake_appsignal = start_supervised!(FakeAppsignal)
@@ -657,6 +673,12 @@ defmodule Appsignal.ObanTest do
       id: 123,
       queue: :default,
       attempt: 1
+    }
+  end
+
+  defp sample_conf do
+    %{
+      prefix: "test"
     }
   end
 
