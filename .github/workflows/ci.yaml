@@ -30,7 +30,7 @@ jobs:
         uses: erlef/setup-beam@v1
         with:
           otp-version: 27.x
-          elixir-version: latest
+          elixir-version: 1.18.x
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Check code formatting
@@ -43,7 +43,7 @@ jobs:
         uses: erlef/setup-beam@v1
         with:
           otp-version: 27.x
-          elixir-version: latest
+          elixir-version: 1.18.x
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Get dependencies
@@ -58,7 +58,7 @@ jobs:
         uses: erlef/setup-beam@v1
         with:
           otp-version: 27.x
-          elixir-version: latest
+          elixir-version: 1.18.x
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Get dependencies
@@ -73,7 +73,7 @@ jobs:
         uses: erlef/setup-beam@v1
         with:
           otp-version: 27.x
-          elixir-version: latest
+          elixir-version: 1.18.x
       - name: PLT cache
         uses: actions/cache@v4
         id: plt_cache
@@ -96,7 +96,7 @@ jobs:
         uses: erlef/setup-beam@v1
         with:
           otp-version: 27.x
-          elixir-version: latest
+          elixir-version: 1.18.x
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
@@ -118,7 +118,7 @@ jobs:
         uses: erlef/setup-beam@v1
         with:
           otp-version: 27.x
-          elixir-version: latest
+          elixir-version: 1.18.x
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Get dependencies
@@ -132,7 +132,7 @@ jobs:
       fail-fast: false
       matrix:
         elixir:
-          - 1.18.x
+          - 1.18.4
         otp:
           - 27.x
           - 26.x
@@ -142,6 +142,15 @@ jobs:
             otp: 27.x
           - elixir: latest
             otp: 27.x
+
+          # There's no prebuilt 1.18.4-otp-28 yet, so we have to first
+          # download the OTP 27 version and then set the OTP version later
+          # https://github.com/erlef/setup-beam/issues/314#issuecomment-2926739375
+          # Try again in a while when a new otp-28 version would be ready, and
+          # add it to the `otp` matrix above.
+          - elixir: 1.18.4-otp-27
+            otp: 28.x
+
           - elixir: 1.17.x
             otp: 27.x
           - elixir: 1.16.x
