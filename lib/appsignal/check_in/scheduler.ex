@@ -93,6 +93,7 @@ defmodule Appsignal.CheckIn.Scheduler do
 
   @impl true
   def handle_continue({:transmit, events}, state) do
+    events = Event.deduplicate_cron(events)
     description = Event.describe(events)
 
     config = Appsignal.Config.config()

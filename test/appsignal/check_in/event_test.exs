@@ -102,6 +102,64 @@ defmodule Appsignal.CheckInEventTest do
     end
   end
 
+  describe "deduplicate_cron/1" do
+    test "removes redundant pairs of cron events" do
+      first_start = Event.cron(%Cron{identifier: "checkin-name", digest: "first"}, :start)
+      first_finish = Event.cron(%Cron{identifier: "checkin-name", digest: "first"}, :finish)
+      second_start = Event.cron(%Cron{identifier: "checkin-name", digest: "second"}, :start)
+      second_finish = Event.cron(%Cron{identifier: "checkin-name", digest: "second"}, :finish)
+
+      events = [first_start, first_finish, second_start, second_finish]
+
+      for perm <- permutations(events) do
+        result = Event.deduplicate_cron(perm)
+
+        assert length(result) == 2
+        [kept_finish, kept_start] = Enum.sort_by(result, & &1.kind)
+        assert kept_start.kind == :start
+        assert kept_finish.kind == :finish
+        assert kept_start.digest == kept_finish.digest
+      end
+    end
+
+    test "does not remove pairs with different identifiers" do
+      first_start = Event.cron(%Cron{identifier: "checkin-name", digest: "first"}, :start)
+      first_finish = Event.cron(%Cron{identifier: "checkin-name", digest: "first"}, :finish)
+      second_start = Event.cron(%Cron{identifier: "other-checkin", digest: "second"}, :start)
+      second_finish = Event.cron(%Cron{identifier: "other-checkin", digest: "second"}, :finish)
+
+      events = [first_start, first_finish, second_start, second_finish]
+
+      for perm <- permutations(events) do
+        result = Event.deduplicate_cron(perm)
+        assert MapSet.new(result) == MapSet.new(events)
+      end
+    end
+
+    test "does not remove unmatched pairs" do
+      first_start = Event.cron(%Cron{identifier: "checkin-name", digest: "first"}, :start)
+      second_start = Event.cron(%Cron{identifier: "checkin-name", digest: "second"}, :start)
+      second_finish = Event.cron(%Cron{identifier: "checkin-name", digest: "second"}, :finish)
+      third_finish = Event.cron(%Cron{identifier: "checkin-name", digest: "third"}, :finish)
+
+      events = [first_start, second_start, second_finish, third_finish]
+
+      for perm <- permutations(events) do
+        result = Event.deduplicate_cron(perm)
+        assert MapSet.new(result) == MapSet.new(events)
+      end
+    end
+
+    # Helper function to generate all permutations of a list
+    defp permutations([]), do: [[]]
+
+    defp permutations(list) do
+      for x <- list,
+          y <- permutations(list -- [x]),
+          do: [x | y]
+    end
+  end
+
   describe "impl Jason.Encoder" do
     test "encodes a cron check-in event" do
       event = Event.cron(%Cron{identifier: "cron-checkin-name", digest: "some-digest"}, :start)
