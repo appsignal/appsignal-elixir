@@ -80,6 +80,72 @@ defmodule Appsignal.CheckIn.Event do
   end
 
   def redundant?(_event, _new_event), do: false
+
+  @doc """
+  Removes redundant cron check-in events from the given list of events.
+  This is done by removing redundant *pairs* of events -- that is,
+  for each identifier, only keep one complete pair of start and finish events.
+  """
+  @spec deduplicate_cron(list(t)) :: list(t)
+  def deduplicate_cron(events) do
+    # Group the events by identifier
+    {start_digests, finish_digests} =
+      Enum.reduce(events, {%{}, %{}}, fn
+        %Event{check_in_type: :cron, kind: kind, identifier: id, digest: digest},
+        {starts, finishes}
+        when kind in [:start, :finish] ->
+          case kind do
+            :start ->
+              {Map.update(starts, id, MapSet.new([digest]), &MapSet.put(&1, digest)), finishes}
+
+            :finish ->
+              {starts, Map.update(finishes, id, MapSet.new([digest]), &MapSet.put(&1, digest))}
+          end
+
+        _event, acc ->
+          acc
+      end)
+
+    # Find complete pairs and keep only the latest one
+    complete_pairs =
+      Enum.reduce(Map.keys(start_digests), %{}, fn id, acc ->
+        starts = Map.fetch!(start_digests, id)
+
+        case Map.get(finish_digests, id) do
+          nil ->
+            acc
+
+          finishes ->
+            # Find all complete pairs for this identifier
+            complete = MapSet.intersection(starts, finishes)
+
+            if MapSet.size(complete) > 0 do
+              # Keep any digest as the one to keep (e.g., the first one)
+              keep = Enum.fetch!(complete, 0)
+              Map.put(acc, id, {complete, keep})
+            else
+              acc
+            end
+        end
+      end)
+
+    # Filter events, keeping non-complete pairs and the latest complete pair
+    Enum.reject(events, fn
+      %Event{check_in_type: :cron, identifier: id, digest: digest, kind: kind}
+      when kind in [:start, :finish] ->
+        case Map.get(complete_pairs, id) do
+          {complete, keep} ->
+            # Remove if it's part of a complete pair but not the one to keep
+            digest != keep and MapSet.member?(complete, digest)
+
+          _ ->
+            false
+        end
+
+      _ ->
+        false
+    end)
+  end
 end
 
 defimpl Jason.Encoder, for: Appsignal.CheckIn.Event do
