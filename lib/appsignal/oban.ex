@@ -70,6 +70,13 @@ defmodule Appsignal.Oban do
     |> @span.set_attribute("worker", to_string(worker))
     |> @span.set_attribute("appsignal:category", "job.oban")
 
+    # The `:conf` metadata key was added in Oban v2.4.0.
+    conf = metadata[:conf]
+
+    if conf && Map.get(conf, :prefix) do
+      @span.set_attribute(span, "prefix", Map.get(conf, :prefix))
+    end
+
     # The `:job` metadata key was added in Oban v2.3.1.
     job = metadata[:job]
 

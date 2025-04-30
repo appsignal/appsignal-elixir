@@ -123,6 +123,24 @@ defmodule Appsignal.ObanTest do
     end
   end
 
+  describe "oban_job_start/4, with a :conf metadata key (v2.4.0)" do
+    test "sets the prefix as a span tag if present" do
+      execute_job_start(%{
+        conf: sample_conf(prefix: "foo")
+      })
+
+      assert attribute?("prefix", "foo")
+    end
+
+    test "does not set the prefix as a span tag if not present" do
+      execute_job_start(%{
+        conf: sample_conf()
+      })
+
+      assert !has_attribute?("prefix")
+    end
+  end
+
   describe "oban_job_stop/4" do
     setup do
       fake_appsignal = start_supervised!(FakeAppsignal)
@@ -681,5 +699,28 @@ defmodule Appsignal.ObanTest do
         worker: :"Test.Worker"
       }
     }
+  end
+
+  defp sample_conf(opts \\ []) do
+    Appsignal.ObanTest.ObanConfig.new(opts)
+  end
+end
+
+# A struct that emulates the `Oban.Config` struct:
+# https://github.com/oban-bg/oban/blob/8b0aada8b2bdbe7a338c34c87a5f3c079e9800ad/lib/oban/config.ex#L32-L47
+defmodule Appsignal.ObanTest.ObanConfig do
+  @moduledoc false
+
+  defstruct prefix: false
+
+  # A subset of `Oban.Config`'s typing:
+  # https://hexdocs.pm/oban/Oban.Config.html#t:t/0
+  @type t :: %__MODULE__{
+          prefix: false | String.t()
+        }
+
+  @doc false
+  def new(opts) do
+    struct!(__MODULE__, opts)
   end
 end
