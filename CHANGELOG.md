@@ -1,5 +1,17 @@
 # AppSignal for Elixir changelog
 
+## 2.15.5
+
+_Published on 2025-05-05._
+
+### Added
+
+- Report Oban's configuration [prefix](https://hexdocs.pm/oban/Oban.Migration.html#module-isolation-with-prefixes) value, if present, as a tag in Oban job samples. Thanks to [@tfwright](https://github.com/tfwright) for suggesting and implementing this feature. (patch [9641fadf](https://github.com/appsignal/appsignal-elixir/commit/9641fadf82e87d61008158a09424ae3bbea258cc))
+
+### Changed
+
+- Remove redundant cron check-in pairs. When more than one pair of start and finish cron check-in events is reported for the same identifier in the same period, only one of them will be reported to AppSignal. (patch [e6cc5d29](https://github.com/appsignal/appsignal-elixir/commit/e6cc5d29f2beb706c92a321690cdec043809dcc6))
+
 ## 2.15.4
 
 _Published on 2025-04-04._
