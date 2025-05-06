@@ -32,8 +32,6 @@ defmodule Appsignal.Plug do
       @tracer Application.compile_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
       @span Application.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
 
-      use Plug.ErrorHandler
-
       def call(%Plug.Conn{private: %{appsignal_plug_instrumented: true}} = conn, opts) do
         Logger.warning(
           "Appsignal.Plug was included twice, disabling Appsignal.Plug. Please only `use Appsignal.Plug` once."
