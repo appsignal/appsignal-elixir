@@ -1,5 +1,13 @@
 # AppSignal for Elixir Plug changelog
 
+## 2.1.1
+
+_Published on 2025-05-06._
+
+### Fixed
+
+- Restore normal error reporting behavior by removing the default included `Plug.ErrorHandler` in the `Appsignal.Plug` module. It will now longer render a page with HTTP status 500 and the response body "Something went wrong". (patch [cc41da2](https://github.com/appsignal/appsignal-elixir-plug/commit/cc41da2f248b4d21580a47377695b98aec84d1c5))
+
 ## 2.1.0
 
 _Published on 2025-03-21._
