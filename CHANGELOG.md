@@ -1,5 +1,13 @@
 # AppSignal for Elixir changelog
 
+## 2.15.6
+
+_Published on 2025-05-08._
+
+### Changed
+
+- Log a debug message when the reported error is ignored by the `ignore_errors` config option. (patch [6f944f6b](https://github.com/appsignal/appsignal-elixir/commit/6f944f6b3d350939fdfe922d7a8c9155374361f5))
+
 ## 2.15.5
 
 _Published on 2025-05-05._
