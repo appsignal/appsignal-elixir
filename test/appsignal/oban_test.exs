@@ -234,17 +234,29 @@ defmodule Appsignal.ObanTest do
     end
   end
 
-  describe "oban_job_stop/4, with a :result metadata key (v2.5.0)" do
-    setup do
-      execute_job_start()
-
-      execute_job_stop(%{
-        result: {:ok, 42}
-      })
-    end
-
+  describe "oban_job_stop/4, with a :result metadata value (v2.5.0)" do
     test "sets the result attribute" do
-      assert attribute?("result", "{:ok, 42}")
+      [
+        {:ok, "ok", nil},
+        {:discard, "discard", nil},
+        {{:cancel, "cancel reason"}, "cancel", "cancel reason"},
+        {{:discard, "discard reason"}, "discard", "discard reason"},
+        {{:ok, "something"}, "ok", nil},
+        {{:error, "error reason"}, "error", "error reason"},
+        {{:snooze, 1_001}, "snooze", 1_001},
+        {"other value", "ok", nil}
+      ]
+      |> Enum.each(fn {return_value, expected_value, expected_reason} ->
+        execute_job_start()
+
+        execute_job_stop(%{result: return_value})
+
+        assert attribute?("result", expected_value)
+
+        if expected_reason do
+          assert attribute?("result_reason", expected_reason)
+        end
+      end)
     end
   end
 

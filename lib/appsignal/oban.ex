@@ -112,8 +112,16 @@ defmodule Appsignal.Oban do
       |> @span.set_attribute("state", to_string(state))
 
     # The `:result` metadata key was added in Oban v2.5.0.
+    # This refers to the Oban.Worker 'result' type that controls whether a job
+    # is treated as a success or a failure.
     if Map.has_key?(metadata, :result) do
-      @span.set_attribute(span, "result", inspect(metadata[:result]))
+      {result, reason} = oban_result_and_reason(metadata[:result])
+
+      @span.set_attribute(span, "result", result)
+
+      if reason do
+        @span.set_attribute(span, "result_reason", reason)
+      end
     end
 
     @tracer.close_span(span)
@@ -246,6 +254,21 @@ defmodule Appsignal.Oban do
       if value do
         @span.set_attribute(span, "job_meta_#{key}", value)
       end
+    end
+  end
+
+  defp oban_result_and_reason(result_value) do
+    case result_value do
+      :ok -> {"ok", nil}
+      :discard -> {"discard", nil}
+      {:cancel, reason} -> {"cancel", reason}
+      {:discard, reason} -> {"discard", reason}
+      {:ok, _} -> {:ok, nil}
+      {:error, reason} -> {"error", reason}
+      {:snooze, reason} -> {"snooze", reason}
+      # A job can technically return anything that's not a valid Oban.Worker 'result' type.
+      # Account for this here and consider it a success, like Oban does.
+      _ -> {"ok", nil}
     end
   end
 end
