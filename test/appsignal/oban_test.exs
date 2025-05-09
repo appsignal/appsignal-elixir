@@ -243,7 +243,15 @@ defmodule Appsignal.ObanTest do
         {{:discard, "discard reason"}, "discard", "discard reason"},
         {{:ok, "something"}, "ok", nil},
         {{:error, "error reason"}, "error", "error reason"},
-        {{:snooze, 1_001}, "snooze", 1_001},
+        {{:snooze, 1_001}, "snooze", "1001"},
+
+        # Testing some non-string values and their conversions into strings
+        {{:cancel, :my_reason}, "cancel", "my_reason"},
+        {{:cancel, true}, "cancel", "true"},
+        {{:cancel, false}, "cancel", "false"},
+        {{:cancel, -12.35}, "cancel", "-12.35"},
+        {{:cancel, [abc: :def]}, "cancel", "[abc: :def]"},
+        {{:cancel, 0..255}, "cancel", "0..255"},
         {"other value", "ok", nil}
       ]
       |> Enum.each(fn {return_value, expected_value, expected_reason} ->

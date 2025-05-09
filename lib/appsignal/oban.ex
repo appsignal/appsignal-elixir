@@ -261,14 +261,27 @@ defmodule Appsignal.Oban do
     case result_value do
       :ok -> {"ok", nil}
       :discard -> {"discard", nil}
-      {:cancel, reason} -> {"cancel", reason}
-      {:discard, reason} -> {"discard", reason}
+      {:cancel, reason} -> {"cancel", oban_map_reason(reason)}
+      {:discard, reason} -> {"discard", oban_map_reason(reason)}
       {:ok, _} -> {:ok, nil}
-      {:error, reason} -> {"error", reason}
-      {:snooze, reason} -> {"snooze", reason}
+      {:error, reason} -> {"error", oban_map_reason(reason)}
+      {:snooze, reason} -> {"snooze", oban_map_reason(reason)}
       # A job can technically return anything that's not a valid Oban.Worker 'result' type.
       # Account for this here and consider it a success, like Oban does.
       _ -> {"ok", nil}
+    end
+  end
+
+  defp oban_map_reason(value) do
+    case value do
+      v when is_binary(v) ->
+        v
+
+      v when is_integer(v) or is_float(v) or is_boolean(v) or is_atom(v) ->
+        to_string(v)
+
+      _ ->
+        inspect(value)
     end
   end
 end
