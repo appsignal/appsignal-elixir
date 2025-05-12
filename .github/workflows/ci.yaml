@@ -29,7 +29,7 @@ jobs:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
         with:
-          otp-version: 27.x
+          otp-version: latest
           elixir-version: latest
       - name: Checkout code
         uses: actions/checkout@v4
@@ -42,7 +42,7 @@ jobs:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
         with:
-          otp-version: 27.x
+          otp-version: latest
           elixir-version: latest
       - name: Checkout code
         uses: actions/checkout@v4
@@ -57,7 +57,7 @@ jobs:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
         with:
-          otp-version: 27.x
+          otp-version: latest
           elixir-version: latest
       - name: Checkout code
         uses: actions/checkout@v4
@@ -72,7 +72,7 @@ jobs:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
         with:
-          otp-version: 27.x
+          otp-version: latest
           elixir-version: latest
       - name: PLT cache
         uses: actions/cache@v4
@@ -95,7 +95,7 @@ jobs:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
         with:
-          otp-version: 27.x
+          otp-version: latest
           elixir-version: latest
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
@@ -117,7 +117,7 @@ jobs:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
         with:
-          otp-version: 27.x
+          otp-version: latest
           elixir-version: latest
       - name: Checkout code
         uses: actions/checkout@v4
@@ -133,14 +133,17 @@ jobs:
         elixir:
           - 1.18.x
         otp:
+          - latest
           - 27.x
           - 26.x
           - 25.x
         include:
           - elixir: main
-            otp: 27.x
+            otp: latest
           - elixir: latest
-            otp: 27.x
+            otp: latest
+          - elixir: 1.18.x
+            otp: latest
           - elixir: 1.17.x
             otp: 27.x
           - elixir: 1.16.x
