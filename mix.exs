@@ -16,7 +16,7 @@ defmodule Appsignal.Mixfile do
   use Mix.Project
 
   @source_url "https://github.com/appsignal/appsignal-elixir"
-  @version "2.15.6"
+  @version "2.15.7"
 
   def project do
     [

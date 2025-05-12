@@ -1,5 +1,17 @@
 # AppSignal for Elixir changelog
 
+## 2.15.7
+
+_Published on 2025-05-12._
+
+### Changed
+
+- Update the `result` attribute reported for Oban jobs. Instead of it including the job's whole return value, it only contains the Oban job control value: `:ok`/`:error`/`:discard`/`:cancel`/`:snooze`.
+  The reason for a discard, cancel, error or snooze result will be stored in the new `result_reason` attribute.
+  Any `:ok` result reasons and unexpected result values are ignored. This is to avoid storing sensitive data in the attributes and to make it easier to filter by job control value in the interface.
+
+  (patch [9bf7b20a](https://github.com/appsignal/appsignal-elixir/commit/9bf7b20acfb5f823f82136fc7a6ff5613c64a1ae))
+
 ## 2.15.6
 
 _Published on 2025-05-08._
