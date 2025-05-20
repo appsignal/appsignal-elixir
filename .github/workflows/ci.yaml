@@ -129,6 +129,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         elixir:
           - 1.18.x
