@@ -639,6 +639,10 @@ defmodule Appsignal.ConfigTest do
       assert %{statsd_port: "3000"} = with_config(%{statsd_port: "3000"}, &init_config/0)
     end
 
+    test "nginx_port" do
+      assert %{nginx_port: "4321"} = with_config(%{nginx_port: "4321"}, &init_config/0)
+    end
+
     test "transaction_debug_mode" do
       assert %{transaction_debug_mode: true} =
                with_config(%{transaction_debug_mode: true}, &init_config/0)
@@ -1052,6 +1056,13 @@ defmodule Appsignal.ConfigTest do
                &init_config/0
              ) == default_configuration() |> Map.put(:revision, "03bd9e")
     end
+
+    test "nginx_port" do
+      assert with_env(
+               %{"APPSIGNAL_NGINX_PORT" => "4321"},
+               &init_config/0
+             ) == default_configuration() |> Map.put(:nginx_port, "4321")
+    end
   end
 
   describe "config based on system" do
@@ -1216,6 +1227,7 @@ defmodule Appsignal.ConfigTest do
       assert Nif.env_get("_APPSIGNAL_WORKING_DIRECTORY_PATH") == ~c""
       assert Nif.env_get("_APPSIGNAL_RUNNING_IN_CONTAINER") == ~c""
       assert Nif.env_get("_APPSIGNAL_STATSD_PORT") == ~c""
+      assert Nif.env_get("_APPSIGNAL_NGINX_PORT") == ~c""
       assert Nif.env_get("_APP_REVISION") == ~c""
     end
 
@@ -1271,7 +1283,8 @@ defmodule Appsignal.ConfigTest do
           transaction_debug_mode: true,
           filter_parameters: ["password", "confirm_password"],
           filter_session_data: ["key1", "key2"],
-          statsd_port: "3000"
+          statsd_port: "3000",
+          nginx_port: "1234"
         },
         fn ->
           without_logger(&write_to_environment/0)
@@ -1318,6 +1331,7 @@ defmodule Appsignal.ConfigTest do
           assert Nif.env_get("_APPSIGNAL_FILTER_SESSION_DATA") == ~c"key1,key2"
           assert Nif.env_get("_APPSIGNAL_SEND_ENVIRONMENT_METADATA") == ~c"true"
           assert Nif.env_get("_APPSIGNAL_STATSD_PORT") == ~c"3000"
+          assert Nif.env_get("_APPSIGNAL_NGINX_PORT") == ~c"1234"
           assert Nif.env_get("_APP_REVISION") == ~c"03bd9e"
         end
       )
