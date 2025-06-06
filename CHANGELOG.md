@@ -1,5 +1,13 @@
 # AppSignal for Elixir changelog
 
+## 2.15.8
+
+_Published on 2025-06-06._
+
+### Added
+
+- Add `nginx_port` configuration option. This configuration option can be used to customize the port on which the AppSignal integration exposes [the NGINX metrics server](https://docs.appsignal.com/metrics/nginx.html). (patch [f5c3f2c7](https://github.com/appsignal/appsignal-elixir/commit/f5c3f2c7f5f23990cfb18d6a1b54460c9f12165e))
+
 ## 2.15.7
 
 _Published on 2025-05-12._
