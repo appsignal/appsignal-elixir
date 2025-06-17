@@ -135,12 +135,31 @@ defmodule Appsignal.Span do
       |> Appsignal.Span.set_namespace("http_request")
 
   """
-  def set_namespace(%Span{reference: reference} = span, namespace) when is_binary(namespace) do
-    :ok = @nif.set_span_namespace(reference, namespace)
+  def set_namespace(span, namespace) when is_binary(namespace) do
+    set_attribute(span, "appsignal.namespace", namespace)
     span
   end
 
   def set_namespace(span, _name), do: span
+
+  @spec set_namespace_if_nil(t() | nil, String.t()) :: t() | nil
+  @doc """
+  Sets an `Appsignal.Span`'s namespace.  The namespace is `"http_request"` or
+  `"background_job'` to add the span to the "web" and "background" namespaces
+  respectively. Passing another string creates a custom namespace to store the
+  `Appsignal.Span`'s samples in.
+
+  ## Example
+      Appsignal.Tracer.root_span()
+      |> Appsignal.Span.set_namespace("http_request")
+
+  """
+  def set_namespace_if_nil(span, namespace) when is_binary(namespace) do
+    set_attribute(span, "appsignal.namespace_if_nil", namespace)
+    span
+  end
+
+  def set_namespace_if_nil(span, _name), do: span
 
   @spec set_attribute(t() | nil, String.t(), String.t() | integer() | boolean() | float()) ::
           t() | nil
