@@ -153,30 +153,30 @@ defmodule Appsignal.Span do
 
   """
   def set_attribute(%Span{reference: reference} = span, key, true) when is_binary(key) do
-    :ok = Nif.set_span_attribute_bool(reference, key, 1)
+    :ok = @nif.set_span_attribute_bool(reference, key, 1)
     span
   end
 
   def set_attribute(%Span{reference: reference} = span, key, false) when is_binary(key) do
-    :ok = Nif.set_span_attribute_bool(reference, key, 0)
+    :ok = @nif.set_span_attribute_bool(reference, key, 0)
     span
   end
 
   def set_attribute(%Span{reference: reference} = span, key, value)
       when is_binary(key) and is_binary(value) do
-    :ok = Nif.set_span_attribute_string(reference, key, value)
+    :ok = @nif.set_span_attribute_string(reference, key, value)
     span
   end
 
   def set_attribute(%Span{reference: reference} = span, key, value)
       when is_binary(key) and is_integer(value) do
-    :ok = Nif.set_span_attribute_int(reference, key, value)
+    :ok = @nif.set_span_attribute_int(reference, key, value)
     span
   end
 
   def set_attribute(%Span{reference: reference} = span, key, value)
       when is_binary(key) and is_float(value) do
-    :ok = Nif.set_span_attribute_double(reference, key, value)
+    :ok = @nif.set_span_attribute_double(reference, key, value)
     span
   end
 
@@ -192,7 +192,7 @@ defmodule Appsignal.Span do
 
   """
   def set_sql(%Span{reference: reference} = span, body) when is_binary(body) do
-    :ok = Nif.set_span_attribute_sql_string(reference, "appsignal:body", body)
+    :ok = @nif.set_span_attribute_sql_string(reference, "appsignal:body", body)
     span
   end
 
@@ -213,7 +213,7 @@ defmodule Appsignal.Span do
       Application.get_env(:appsignal, :config),
       key,
       value,
-      &Nif.set_span_sample_data/3
+      &@nif.set_span_sample_data/3
     )
   end
 
@@ -232,7 +232,7 @@ defmodule Appsignal.Span do
       Application.get_env(:appsignal, :config),
       key,
       value,
-      &Nif.set_span_sample_data_if_nil/3
+      &@nif.set_span_sample_data_if_nil/3
     )
   end
 
