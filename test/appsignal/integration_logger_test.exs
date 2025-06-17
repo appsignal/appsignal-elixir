@@ -164,12 +164,12 @@ defmodule Appsignal.IntegrationLoggerTest do
   end
 
   defp match_file_format(output) do
-    regex = ~r/^\[[\d-:T]{19} \(process\) #\d+\]\[(?<level>\w+)\] (?<message>.*)\n$/
+    regex = ~r/^\[[\d\-:T]{19} \(process\) #\d+\]\[(?<level>\w+)\] (?<message>.*)\n$/
     match_format(output, regex)
   end
 
   defp match_stdout_format(output) do
-    regex = ~r/^\n\[[\d-:T]{19} \(process\) #\d+\]\[appsignal\]\[(?<level>\w+)\] (?<message>.*)$/
+    regex = ~r/^\n\[[\d\-:T]{19} \(process\) #\d+\]\[appsignal\]\[(?<level>\w+)\] (?<message>.*)$/
     match_format(output, regex)
   end
 
