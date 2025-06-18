@@ -49,10 +49,14 @@ defmodule Appsignal.Absinthe do
     |> @span.set_name(operation_name || "graphql")
     |> @span.set_attribute("appsignal:category", "call.graphql")
 
+    root_span = @tracer.root_span()
+
+    root_span
+    |> @span.set_namespace_if_nil("graphql")
+
     if operation_name do
-      @tracer.root_span()
+      root_span
       |> @span.set_name_if_nil(operation_name)
-      |> @span.set_namespace("graphql")
     end
   end
 

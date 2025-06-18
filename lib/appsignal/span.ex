@@ -135,12 +135,27 @@ defmodule Appsignal.Span do
       |> Appsignal.Span.set_namespace("http_request")
 
   """
-  def set_namespace(%Span{reference: reference} = span, namespace) when is_binary(namespace) do
-    :ok = @nif.set_span_namespace(reference, namespace)
-    span
-  end
+  def set_namespace(span, namespace) when is_binary(namespace),
+    do: set_attribute(span, "appsignal.namespace", namespace)
 
   def set_namespace(span, _name), do: span
+
+  @spec set_namespace_if_nil(t() | nil, String.t()) :: t() | nil
+  @doc """
+  Sets an `Appsignal.Span`'s namespace.  The namespace is `"http_request"` or
+  `"background_job'` to add the span to the "web" and "background" namespaces
+  respectively. Passing another string creates a custom namespace to store the
+  `Appsignal.Span`'s samples in.
+
+  ## Example
+      Appsignal.Tracer.root_span()
+      |> Appsignal.Span.set_namespace("http_request")
+
+  """
+  def set_namespace_if_nil(span, namespace) when is_binary(namespace),
+    do: set_attribute(span, "appsignal.namespace_if_nil", namespace)
+
+  def set_namespace_if_nil(span, _name), do: span
 
   @spec set_attribute(t() | nil, String.t(), String.t() | integer() | boolean() | float()) ::
           t() | nil
@@ -153,30 +168,30 @@ defmodule Appsignal.Span do
 
   """
   def set_attribute(%Span{reference: reference} = span, key, true) when is_binary(key) do
-    :ok = Nif.set_span_attribute_bool(reference, key, 1)
+    :ok = @nif.set_span_attribute_bool(reference, key, 1)
     span
   end
 
   def set_attribute(%Span{reference: reference} = span, key, false) when is_binary(key) do
-    :ok = Nif.set_span_attribute_bool(reference, key, 0)
+    :ok = @nif.set_span_attribute_bool(reference, key, 0)
     span
   end
 
   def set_attribute(%Span{reference: reference} = span, key, value)
       when is_binary(key) and is_binary(value) do
-    :ok = Nif.set_span_attribute_string(reference, key, value)
+    :ok = @nif.set_span_attribute_string(reference, key, value)
     span
   end
 
   def set_attribute(%Span{reference: reference} = span, key, value)
       when is_binary(key) and is_integer(value) do
-    :ok = Nif.set_span_attribute_int(reference, key, value)
+    :ok = @nif.set_span_attribute_int(reference, key, value)
     span
   end
 
   def set_attribute(%Span{reference: reference} = span, key, value)
       when is_binary(key) and is_float(value) do
-    :ok = Nif.set_span_attribute_double(reference, key, value)
+    :ok = @nif.set_span_attribute_double(reference, key, value)
     span
   end
 
@@ -192,7 +207,7 @@ defmodule Appsignal.Span do
 
   """
   def set_sql(%Span{reference: reference} = span, body) when is_binary(body) do
-    :ok = Nif.set_span_attribute_sql_string(reference, "appsignal:body", body)
+    :ok = @nif.set_span_attribute_sql_string(reference, "appsignal:body", body)
     span
   end
 
@@ -213,7 +228,7 @@ defmodule Appsignal.Span do
       Application.get_env(:appsignal, :config),
       key,
       value,
-      &Nif.set_span_sample_data/3
+      &@nif.set_span_sample_data/3
     )
   end
 
@@ -232,7 +247,7 @@ defmodule Appsignal.Span do
       Application.get_env(:appsignal, :config),
       key,
       value,
-      &Nif.set_span_sample_data_if_nil/3
+      &@nif.set_span_sample_data_if_nil/3
     )
   end
 

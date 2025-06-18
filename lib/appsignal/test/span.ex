@@ -33,6 +33,11 @@ defmodule Appsignal.Test.Span do
     Span.set_namespace(span, name)
   end
 
+  def set_namespace_if_nil(span, name) do
+    add(:set_namespace_if_nil, {span, name})
+    Span.set_namespace_if_nil(span, name)
+  end
+
   def set_sample_data(span, key, value) do
     add(:set_sample_data, {span, key, value})
     Span.set_sample_data(span, key, value)

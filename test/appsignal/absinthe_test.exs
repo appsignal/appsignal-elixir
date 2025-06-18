@@ -41,6 +41,14 @@ defmodule Appsignal.AbsintheTest do
       assert {:ok, [{"graphql", nil}]} = Test.Tracer.get(:create_span)
     end
 
+    test "it updates the root span's namespace" do
+      execute_operation_start()
+      root_span = Appsignal.Tracer.root_span()
+
+      assert {:ok, [{^root_span, "graphql"}]} =
+               Test.Span.get(:set_namespace_if_nil)
+    end
+
     test "without operation name it sets the span's name to graphql" do
       execute_operation_start(%{options: []})
       assert {:ok, [{%Span{}, "graphql"}]} = Test.Span.get(:set_name)
@@ -57,11 +65,10 @@ defmodule Appsignal.AbsintheTest do
       assert {:ok, [{%Span{}, "OperationName"}]} = Test.Span.get(:set_name)
     end
 
-    test "with operation name it updates the root span's name and namespace" do
+    test "it updates the root span's name" do
       execute_operation_start(%{options: [operation_name: "OperationName"]})
       root_span = Appsignal.Tracer.root_span()
       assert {:ok, [{^root_span, "OperationName"}]} = Test.Span.get(:set_name_if_nil)
-      assert {:ok, [{^root_span, "graphql"}]} = Test.Span.get(:set_namespace)
     end
 
     test "sets the span's category" do

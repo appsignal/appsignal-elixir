@@ -42,6 +42,41 @@ defmodule Appsignal.Test.Nif do
     Nif.add_span_error(reference, name, message, stacktrace)
   end
 
+  def set_span_attribute_string(span, key, value) do
+    add(:set_span_attribute_string, {span, key, value})
+    Nif.set_span_attribute_string(span, key, value)
+  end
+
+  def set_span_attribute_int(span, key, value) do
+    add(:set_span_attribute_int, {span, key, value})
+    Nif.set_span_attribute_int(span, key, value)
+  end
+
+  def set_span_attribute_bool(span, key, value) do
+    add(:set_span_attribute_bool, {span, key, value})
+    Nif.set_span_attribute_bool(span, key, value)
+  end
+
+  def set_span_attribute_double(span, key, value) do
+    add(:set_span_attribute_double, {span, key, value})
+    Nif.set_span_attribute_double(span, key, value)
+  end
+
+  def set_span_attribute_sql_string(span, key, value) do
+    add(:set_span_attribute_sql_string, {span, key, value})
+    Nif.set_span_attribute_sql_string(span, key, value)
+  end
+
+  def set_span_sample_data(span, key, value) do
+    add(:set_span_sample_data, {span, key, value})
+    Nif.set_span_sample_data(span, key, value)
+  end
+
+  def set_span_sample_data_if_nil(span, key, value) do
+    add(:set_span_sample_data_if_nil, {span, key, value})
+    Nif.set_span_sample_data_if_nil(span, key, value)
+  end
+
   def close_span(reference) do
     add(:close_span, {reference})
     Nif.close_span(reference)

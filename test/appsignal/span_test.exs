@@ -257,8 +257,11 @@ defmodule AppsignalSpanTest do
       assert return == span
     end
 
-    test "sets the namespace through the Nif", %{span: %Span{reference: reference}} do
-      assert [{^reference, "test"}] = Test.Nif.get!(:set_span_namespace)
+    test "sets the namespace as an attribute through the Nif", %{
+      span: %Span{reference: reference}
+    } do
+      assert [{^reference, "appsignal.namespace", "test"}] =
+               Test.Nif.get!(:set_span_attribute_string)
     end
 
     test "returns nil when passing a nil-span" do
@@ -278,7 +281,46 @@ defmodule AppsignalSpanTest do
     end
 
     test "does not set the namespace" do
-      assert :error = Test.Nif.get(:set_span_namespace)
+      assert :error = Test.Nif.get(:set_span_attribute_string)
+    end
+  end
+
+  describe ".set_namespace_if_nil/2" do
+    setup :create_root_span
+
+    setup %{span: span} do
+      %{return: Span.set_namespace_if_nil(span, "test")}
+    end
+
+    test "returns the span", %{return: return, span: span} do
+      assert return == span
+    end
+
+    test "sets the namespace as an attribute through the Nif", %{
+      span: %Span{reference: reference}
+    } do
+      assert [{^reference, "appsignal.namespace_if_nil", "test"}] =
+               Test.Nif.get!(:set_span_attribute_string)
+    end
+
+    test "returns nil when passing a nil-span" do
+      assert Span.set_namespace_if_nil(nil, "test") == nil
+    end
+  end
+
+  describe ".set_namespace_if_nil/2, when passing a non-string namespace" do
+    setup :create_root_span
+
+    setup %{span: span} do
+      %{return: Span.set_namespace_if_nil(span, :non_string)}
+    end
+
+    test "returns the span", %{return: return, span: span} do
+      assert return == span
+    end
+
+    test "does not set the namespace" do
+      assert :error = Test.Nif.get(:set_span_attribute_string)
     end
   end
 
