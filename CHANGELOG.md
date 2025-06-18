@@ -1,5 +1,17 @@
 # AppSignal for Elixir changelog
 
+## 2.15.9
+
+_Published on 2025-06-18._
+
+### Changed
+
+- Allow for more customization of trace namespaces during the trace's lifetime.
+  Previously, it was not possible to customize the namespace of Absinthe traces before the Absinthe instrumentation had run.
+  This is now possible, as the Absinthe instrumentation will only set the namespace if it has not been set already.
+
+  (patch [62915710](https://github.com/appsignal/appsignal-elixir/commit/629157103edff72af0cb87382cd8f1cc6a848cda))
+
 ## 2.15.8
 
 _Published on 2025-06-06._
