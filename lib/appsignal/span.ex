@@ -135,10 +135,8 @@ defmodule Appsignal.Span do
       |> Appsignal.Span.set_namespace("http_request")
 
   """
-  def set_namespace(span, namespace) when is_binary(namespace) do
-    set_attribute(span, "appsignal.namespace", namespace)
-    span
-  end
+  def set_namespace(span, namespace) when is_binary(namespace),
+    do: set_attribute(span, "appsignal.namespace", namespace)
 
   def set_namespace(span, _name), do: span
 
@@ -154,10 +152,8 @@ defmodule Appsignal.Span do
       |> Appsignal.Span.set_namespace("http_request")
 
   """
-  def set_namespace_if_nil(span, namespace) when is_binary(namespace) do
-    set_attribute(span, "appsignal.namespace_if_nil", namespace)
-    span
-  end
+  def set_namespace_if_nil(span, namespace) when is_binary(namespace),
+    do: set_attribute(span, "appsignal.namespace_if_nil", namespace)
 
   def set_namespace_if_nil(span, _name), do: span
 
