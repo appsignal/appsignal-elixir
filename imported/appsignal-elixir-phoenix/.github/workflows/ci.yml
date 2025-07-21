@@ -26,6 +26,8 @@ jobs:
 
   lint_format:
     runs-on: ubuntu-latest
+    env:
+      PHOENIX_VERSION: "~> 1.7.0"
     steps:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
@@ -39,6 +41,8 @@ jobs:
 
   lint_credo:
     runs-on: ubuntu-latest
+    env:
+      PHOENIX_VERSION: "~> 1.7.0"
     steps:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
@@ -54,6 +58,8 @@ jobs:
 
   lint_compile:
     runs-on: ubuntu-latest
+    env:
+      PHOENIX_VERSION: "~> 1.7.0"
     steps:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
@@ -69,6 +75,8 @@ jobs:
 
   lint_dialyzer:
     runs-on: ubuntu-latest
+    env:
+      PHOENIX_VERSION: "~> 1.7.0"
     steps:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
@@ -101,23 +109,34 @@ jobs:
           - 27.x
           - 26.x
           - 25.x
+        phoenix:
+          - "~> 1.6.0"
+          - "~> 1.7.0"
         include:
           - elixir: main
             otp: 27.x
+            phoenix: "~> 1.7.0"
           - elixir: latest
             otp: 27.x
+            phoenix: "~> 1.7.0"
           - elixir: 1.16.x
             otp: 26.x
+            phoenix: "~> 1.7.0"
           - elixir: 1.15.x
             otp: 26.x
+            phoenix: "~> 1.7.0"
           - elixir: 1.14.x
             otp: 25.x
+            phoenix: "~> 1.6.0"
           - elixir: 1.13.x
             otp: 24.x
+            phoenix: "~> 1.6.0"
           - elixir: 1.12.x
             otp: 24.x
+            phoenix: "~> 1.6.0"
           - elixir: 1.11.x
             otp: 24.x
+            phoenix: "~> 1.6.0"
 
     steps:
       - name: Set up Erlang and Elixir
@@ -129,5 +148,9 @@ jobs:
         uses: actions/checkout@v4
       - name: Get dependencies
         run: mix deps.get
+        env:
+          PHOENIX_VERSION: ${{matrix.phoenix}}
       - name: Run tests
         run: mix test
+        env:
+          PHOENIX_VERSION: ${{matrix.phoenix}}

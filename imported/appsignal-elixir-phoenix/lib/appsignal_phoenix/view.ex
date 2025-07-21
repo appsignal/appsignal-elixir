@@ -1,4 +1,6 @@
 defmodule Appsignal.Phoenix.View do
+  require Logger
+
   @moduledoc """
   AppSignal.Phoenix.View instruments template rendering.
 
@@ -40,6 +42,8 @@ defmodule Appsignal.Phoenix.View do
 
   defmacro __before_compile__(_env) do
     quote do
+      require Logger
+
       if Module.defines?(__MODULE__, {:__templates__, 0}) &&
            Module.defines?(__MODULE__, {:render, 2}) do
         @span Application.compile_env(:appsignal, :appsignal_span, Appsignal.Span)

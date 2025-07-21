@@ -51,10 +51,19 @@ defmodule Appsignal.Phoenix.MixProject do
         _ -> "~> 1.7"
       end
 
+    phoenix_version =
+      case {System.get_env("CI"), System.get_env("PHOENIX_VERSION")} do
+        {"true", nil} ->
+          raise "PHOENIX_VERSION environment variable must be set on CI"
+
+        {_, version} ->
+          version || "~> 1.7"
+      end
+
     [
       {:appsignal, ">= 2.15.0 and < 3.0.0"},
       {:appsignal_plug, ">= 2.1.0 and < 3.0.0"},
-      {:phoenix, System.get_env("PHOENIX_VERSION", "~> 1.4")},
+      {:phoenix, phoenix_version},
       {:phoenix_html, "~> 2.11 or ~> 3.0 or ~> 4.0", optional: true},
       {:phoenix_live_view, phoenix_live_view_version, optional: true},
       {:ex_doc, "~> 0.21", only: :dev, runtime: false},
