@@ -7,7 +7,6 @@ end
 
 defmodule PhoenixWeb.Endpoint do
   use Phoenix.Endpoint, otp_app: :phoenix_web
-  use Appsignal.Phoenix
 
   plug(PhoenixWeb.Router)
 end
