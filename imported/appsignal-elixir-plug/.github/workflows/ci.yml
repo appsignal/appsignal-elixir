@@ -25,6 +25,8 @@ jobs:
 
   lint_format:
     runs-on: ubuntu-latest
+    env:
+      PLUG_VERSION: "~> 1.18"
     steps:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
@@ -38,6 +40,8 @@ jobs:
 
   lint_credo:
     runs-on: ubuntu-latest
+    env:
+      PLUG_VERSION: "~> 1.18"
     steps:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
@@ -53,6 +57,8 @@ jobs:
 
   lint_compile:
     runs-on: ubuntu-latest
+    env:
+      PLUG_VERSION: "~> 1.18"
     steps:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
@@ -68,6 +74,8 @@ jobs:
 
   lint_dialyzer:
     runs-on: ubuntu-latest
+    env:
+      PLUG_VERSION: "~> 1.18"
     steps:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
@@ -100,24 +108,37 @@ jobs:
           - 27.x
           - 26.x
           - 25.x
+        plug:
+          - "~> 1.18"
+          - "~> 1.17"
         include:
           - elixir: main
             otp: 27.x
+            plug: "~> 1.18"
           - elixir: latest
             otp: 27.x
+            plug: "~> 1.18"
           - elixir: 1.16.x
             otp: 26.x
+            plug: "~> 1.17"
           - elixir: 1.15.x
             otp: 26.x
+            plug: "~> 1.17"
           - elixir: 1.14.x
             otp: 25.x
+            plug: "~> 1.17"
           - elixir: 1.13.x
             otp: 24.x
+            plug: "~> 1.17"
           - elixir: 1.12.x
             otp: 24.x
+            plug: "~> 1.17"
           - elixir: 1.11.x
             otp: 24.x
+            plug: "~> 1.17"
 
+    env:
+      PLUG_VERSION: ${{matrix.plug}}
     steps:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
