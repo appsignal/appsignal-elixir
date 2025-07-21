@@ -1,7 +1,7 @@
 import Config
 
 if Mix.env() == :test do
-  config :logger, level: :warn
+  config :logger, level: :warning
 
   config :appsignal, appsignal_tracer: Appsignal.Test.Tracer
   config :appsignal, appsignal_span: Appsignal.Test.Span
