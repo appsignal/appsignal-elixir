@@ -2,6 +2,8 @@ defmodule Appsignal.Phoenix.LiveViewTest do
   use ExUnit.Case
   alias Appsignal.{Span, Test}
 
+  def __live__, do: %{log: :info}
+
   setup do
     start_supervised!(Test.Tracer)
     start_supervised!(Test.Span)
@@ -319,7 +321,8 @@ defmodule Appsignal.Phoenix.LiveViewTest do
         %{
           params: %{foo: "bar"},
           session: %{bar: "baz"},
-          socket: %Phoenix.LiveView.Socket{view: __MODULE__}
+          socket: %Phoenix.LiveView.Socket{view: __MODULE__},
+          uri: "http://localhost/"
         }
       )
     end
@@ -431,7 +434,9 @@ defmodule Appsignal.Phoenix.LiveViewTest do
         %{monotonic_time: -576_457_566_461_433_920, system_time: 1_653_474_764_790_125_080},
         %{
           params: %{foo: "bar"},
-          socket: %Phoenix.LiveView.Socket{view: __MODULE__}
+          socket: %Phoenix.LiveView.Socket{view: __MODULE__},
+          component: __MODULE__,
+          event: "handle_event"
         }
       )
     end
@@ -479,7 +484,9 @@ defmodule Appsignal.Phoenix.LiveViewTest do
         %{monotonic_time: -576_457_566_461_433_920, system_time: 1_653_474_764_790_125_080},
         %{
           params: %{foo: "bar"},
-          socket: %Phoenix.LiveView.Socket{view: __MODULE__}
+          socket: %Phoenix.LiveView.Socket{view: __MODULE__},
+          component: __MODULE__,
+          assigns_sockets: [{{}, %Phoenix.LiveView.Socket{view: __MODULE__}}]
         }
       )
     end
@@ -526,8 +533,13 @@ defmodule Appsignal.Phoenix.LiveViewTest do
 
       :telemetry.execute(
         [:phoenix, :live_view, :mount, :stop],
-        %{},
-        %{}
+        %{duration: 100_000},
+        %{
+          socket: %Phoenix.LiveView.Socket{view: __MODULE__},
+          params: %{foo: "bar"},
+          session: %{bar: "baz"},
+          uri: "http://localhost/"
+        }
       )
     end
 
@@ -553,8 +565,16 @@ defmodule Appsignal.Phoenix.LiveViewTest do
 
       :telemetry.execute(
         [:phoenix, :live_view, :mount, :exception],
-        %{},
-        %{kind: :error, reason: reason, stacktrace: []}
+        %{duration: 100_000},
+        %{
+          socket: %Phoenix.LiveView.Socket{view: __MODULE__},
+          params: %{foo: "bar"},
+          session: %{bar: "baz"},
+          uri: "http://localhost/",
+          kind: :error,
+          reason: reason,
+          stacktrace: []
+        }
       )
 
       [reason: reason]
