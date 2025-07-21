@@ -12,7 +12,7 @@ defmodule PhoenixWeb.Endpoint do
 end
 
 defmodule PhoenixWeb.Controller do
-  use Phoenix.Controller, namespace: PhoenixWeb
+  use Phoenix.Controller, formats: [:html]
   import Plug.Conn
 
   def index(conn, _params) do
