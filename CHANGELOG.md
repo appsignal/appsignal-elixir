@@ -6,7 +6,7 @@ _Published on 2025-07-22._
 
 ### Fixed
 
-- Fix compatibility with Phoenix 1.18's parameter filtering compiled patterns. This will errors on boot about the AppSignal handlers not attaching. (patch [1449b9e9](https://github.com/appsignal/appsignal-elixir/commit/1449b9e9e61beea9dd249b29b86e539ebdf6303a))
+- Fix compatibility with Phoenix 1.8's parameter filtering compiled patterns. This will errors on boot about the AppSignal handlers not attaching. (patch [1449b9e9](https://github.com/appsignal/appsignal-elixir/commit/1449b9e9e61beea9dd249b29b86e539ebdf6303a))
 
 ## 2.15.9
 
