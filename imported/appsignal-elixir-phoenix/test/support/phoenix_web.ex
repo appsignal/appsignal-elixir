@@ -7,13 +7,12 @@ end
 
 defmodule PhoenixWeb.Endpoint do
   use Phoenix.Endpoint, otp_app: :phoenix_web
-  use Appsignal.Phoenix
 
   plug(PhoenixWeb.Router)
 end
 
 defmodule PhoenixWeb.Controller do
-  use Phoenix.Controller, namespace: PhoenixWeb
+  use Phoenix.Controller, formats: [:html]
   import Plug.Conn
 
   def index(conn, _params) do

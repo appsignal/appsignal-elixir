@@ -313,7 +313,12 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
       %{time: -576_460_736_044_040_000},
       %{
         conn: %Plug.Conn{private: %{phoenix_endpoint: PhoenixWeb.Endpoint}},
-        options: []
+        plug: AppsignalPhoenixExampleWeb.PageController,
+        plug_opts: :index,
+        route: "/",
+        path_params: %{},
+        pipe_through: [:browser],
+        log: :info
       }
     )
   end
@@ -322,7 +327,15 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
     :telemetry.execute(
       [:phoenix, :router_dispatch, :stop],
       %{duration: 49_474_000},
-      %{conn: conn(), route: "/foo/:bar", options: []}
+      %{
+        conn: conn(),
+        plug: AppsignalPhoenixExampleWeb.PageController,
+        plug_opts: :index,
+        route: "/foo/:bar",
+        path_params: %{},
+        pipe_through: [:browser],
+        log: :info
+      }
     )
   end
 
