@@ -41,8 +41,14 @@ defmodule Appsignal.Phoenix.MixProject do
 
     phoenix_live_view_version =
       case Version.compare(system_version, "1.12.0") do
-        :lt -> ">= 0.9.0 and < 0.18.0"
-        _ -> "~> 0.9 or ~> 1.0"
+        :lt ->
+          ">= 0.9.0 and < 0.18.0"
+
+        _ ->
+          case Version.compare(system_version, "1.14.0") do
+            :lt -> "~> 0.9 or ~> 1.0.0"
+            _ -> "~> 0.9 or ~> 1.0"
+          end
       end
 
     credo_version =
