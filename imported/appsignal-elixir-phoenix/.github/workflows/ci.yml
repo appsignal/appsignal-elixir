@@ -112,6 +112,7 @@ jobs:
         phoenix:
           - "~> 1.6.0"
           - "~> 1.7.0"
+          - "~> 1.8.0"
         include:
           - elixir: main
             otp: 27.x
@@ -119,9 +120,6 @@ jobs:
           - elixir: latest
             otp: 27.x
             phoenix: "~> 1.7.0"
-          - elixir: 1.17.x
-            otp: 27.x
-            phoenix: "~> 1.8.0-rc"
           - elixir: 1.16.x
             otp: 26.x
             phoenix: "~> 1.7.0"
