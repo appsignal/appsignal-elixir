@@ -14,9 +14,7 @@ defmodule Murphy do
 
   def call(pid, fun) do
     ExUnit.CaptureLog.capture_log(fn ->
-      catch_exit do
-        GenServer.call(pid, fun)
-      end
+      catch_exit(GenServer.call(pid, fun))
     end)
   end
 
