@@ -112,8 +112,9 @@ defmodule Appsignal.Logger do
   defp severity(:emergency), do: 9
   defp severity(_), do: 3
 
+  defp format(:autodetect), do: 3
   defp format(:json), do: 2
   defp format(:logfmt), do: 1
   defp format(:plaintext), do: 0
-  defp format(_), do: 0
+  defp format(_), do: 3
 end
