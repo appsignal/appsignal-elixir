@@ -4,7 +4,7 @@ defmodule Appsignal.Logger do
   @type log_level ::
           :debug | :info | :notice | :warning | :error | :critical | :alert | :emergency
 
-  @type format :: :json | :logfmt | :plaintext
+  @type format :: :json | :logfmt | :plaintext | :autodetect
 
   @spec debug(String.t(), String.t(), %{} | format()) :: :ok
   def debug(group, message, metadata_or_format \\ %{})
@@ -95,7 +95,7 @@ defmodule Appsignal.Logger do
   end
 
   @spec log(log_level(), String.t(), String.t(), %{}, format()) :: :ok
-  def log(log_level, group, message, metadata, format \\ :plaintext) do
+  def log(log_level, group, message, metadata, format \\ :autodetect) do
     encoded_metadata = Appsignal.Utils.DataEncoder.encode(metadata)
 
     @nif.log(group, severity(log_level), format(format), message, encoded_metadata)
@@ -112,8 +112,9 @@ defmodule Appsignal.Logger do
   defp severity(:emergency), do: 9
   defp severity(_), do: 3
 
+  defp format(:autodetect), do: 3
   defp format(:json), do: 2
   defp format(:logfmt), do: 1
   defp format(:plaintext), do: 0
-  defp format(_), do: 0
+  defp format(_), do: 3
 end

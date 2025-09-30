@@ -18,7 +18,7 @@ defmodule Appsignal.Logger.HandlerTest do
         Logger.error("A bad thing happened!")
 
         assert [
-                 {"some_group", 6, 0, "A bad thing happened!", _}
+                 {"some_group", 6, 3, "A bad thing happened!", _}
                ] = Appsignal.Test.Nif.get!(:log)
       end
 

@@ -34,7 +34,7 @@ defmodule Appsignal.Logger.BackendTest do
       group: "phoenix"
     )
 
-    assert [{"phoenix", 3, 0, "foo bar baz", _}] = Appsignal.Test.Nif.get!(:log)
+    assert [{"phoenix", 3, 3, "foo bar baz", _}] = Appsignal.Test.Nif.get!(:log)
   end
 
   test "handle_event/2 sends logfmt logs to the extension" do
