@@ -21,7 +21,7 @@ defmodule Appsignal.Logger.Handler do
     )
   end
 
-  def add(group, format \\ :plaintext) do
+  def add(group, format \\ :autodetect) do
     :logger.add_handler(:appsignal_log, __MODULE__, %{
       config: %{
         group: group,
