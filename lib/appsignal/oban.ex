@@ -147,13 +147,15 @@ defmodule Appsignal.Oban do
     # If not present, assume the job failed.
     state = Map.get(metadata, :state, "failure")
 
-    span =
-      @tracer.current_span()
-      |> @span.set_attribute("state", to_string(state))
+    span = case @tracer.current_span() do
+      %Appsignal.Span{} = span -> span
+      _ -> @tracer.create_span("oban")
+    end
 
-    @span.add_error(span, kind, reason, stacktrace)
-
-    @tracer.close_span(span)
+    span
+    |> @span.set_attribute("state", to_string(state))
+    |> @span.add_error(kind, reason, stacktrace)
+    |> @tracer.close_span()
 
     increment_job_stop_counter(worker, queue, state)
 
