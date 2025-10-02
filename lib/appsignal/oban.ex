@@ -135,8 +135,11 @@ defmodule Appsignal.Oban do
         _event,
         %{duration: duration},
         %{
-          worker: worker,
+          id: id,
+          args: args,
           queue: queue,
+          worker: worker,
+          attempt: attempt,
           kind: kind,
           error: reason,
           stacktrace: stacktrace
@@ -149,7 +152,15 @@ defmodule Appsignal.Oban do
 
     span = case @tracer.current_span() do
       %Appsignal.Span{} = span -> span
-      _ -> @tracer.create_span("oban")
+      _ ->
+	@tracer.create_span("oban")
+	|> @span.set_name("#{to_string(worker)}#perform")
+	|> @span.set_sample_data("params", args)
+	|> @span.set_attribute("id", id)
+	|> @span.set_attribute("queue", to_string(queue))
+	|> @span.set_attribute("attempt", attempt)
+	|> @span.set_attribute("worker", to_string(worker))
+	|> @span.set_attribute("appsignal:category", "job.oban")
     end
 
     span
