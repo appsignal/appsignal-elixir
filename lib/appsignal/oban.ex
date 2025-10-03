@@ -50,15 +50,21 @@ defmodule Appsignal.Oban do
   def oban_job_start(
         _event,
         _measurements,
-        %{
-          id: id,
-          args: args,
-          queue: queue,
-          worker: worker,
-          attempt: attempt
-        } = metadata,
+        metadata,
         _config
       ) do
+    do_oban_job_start(metadata)
+  end
+
+  defp do_oban_job_start(
+         %{
+           id: id,
+           args: args,
+           queue: queue,
+           worker: worker,
+           attempt: attempt
+         } = metadata
+       ) do
     span = @tracer.create_span("oban")
 
     span
@@ -92,6 +98,8 @@ defmodule Appsignal.Oban do
     for tag <- Map.get(metadata, :tags, []) do
       @span.set_attribute(span, "job_tag_#{tag}", true)
     end
+
+    span
   end
 
   def oban_job_stop(
@@ -135,11 +143,8 @@ defmodule Appsignal.Oban do
         _event,
         %{duration: duration},
         %{
-          id: id,
-          args: args,
           queue: queue,
           worker: worker,
-          attempt: attempt,
           kind: kind,
           error: reason,
           stacktrace: stacktrace
@@ -150,20 +155,7 @@ defmodule Appsignal.Oban do
     # If not present, assume the job failed.
     state = Map.get(metadata, :state, "failure")
 
-    span = case @tracer.current_span() do
-      %Appsignal.Span{} = span -> span
-      _ ->
-	@tracer.create_span("oban")
-	|> @span.set_name("#{to_string(worker)}#perform")
-	|> @span.set_sample_data("params", args)
-	|> @span.set_attribute("id", id)
-	|> @span.set_attribute("queue", to_string(queue))
-	|> @span.set_attribute("attempt", attempt)
-	|> @span.set_attribute("worker", to_string(worker))
-	|> @span.set_attribute("appsignal:category", "job.oban")
-    end
-
-    span
+    (@tracer.current_span() || do_oban_job_start(metadata))
     |> @span.set_attribute("state", to_string(state))
     |> @span.add_error(kind, reason, stacktrace)
     |> @tracer.close_span()
