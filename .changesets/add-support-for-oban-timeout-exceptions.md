@@ -1,5 +1,5 @@
 ---
-bump: minor
+bump: patch
 type: add
 ---
 
