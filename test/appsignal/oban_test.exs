@@ -332,6 +332,90 @@ defmodule Appsignal.ObanTest do
     end
   end
 
+  describe "oban_job_exception/4, when no span exists" do
+    setup do
+      fake_appsignal = start_supervised!(FakeAppsignal)
+
+      with_config(%{}, &Appsignal.Oban.attach/0)
+
+      execute_job_exception()
+
+      [fake_appsignal: fake_appsignal]
+    end
+
+    test "creates a span" do
+      assert {:ok, [{"oban"}]} = Test.Tracer.get(:create_span)
+    end
+
+    test "closes the span" do
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+    end
+
+    test "sets the span's name" do
+      assert {:ok, [{%Span{}, "Test.Worker#perform"}]} = Test.Span.get(:set_name)
+    end
+
+    test "sets the span's category" do
+      assert attribute?("appsignal:category", "job.oban")
+    end
+
+    test "sets job arguments as span params" do
+      assert {:ok, [{%Span{}, "params", %{foo: "bar"}}]} = Test.Span.get(:set_sample_data)
+    end
+
+    test "sets job attributes as span tags" do
+      assert attribute?("id", 123)
+      assert attribute?("worker", "Test.Worker")
+      assert attribute?("queue", "default")
+      assert attribute?("attempt", 1)
+    end
+
+    test "sets the state attribute to failure" do
+      assert attribute?("state", "failure")
+    end
+
+    test "adds the error to the span" do
+      assert {:ok,
+              [
+                {
+                  %Span{},
+                  :error,
+                  %RuntimeError{message: "Exception!"},
+                  [{Appsignal.ObanTest, :execute_job_exception, _, _} | _]
+                }
+              ]} = Test.Span.get(:add_error)
+    end
+
+    test "increments job stop counter", %{fake_appsignal: fake_appsignal} do
+      assert [
+               %{key: _, value: 1, tags: %{state: "failure"}},
+               %{key: _, value: 1, tags: %{state: "failure", queue: "default"}},
+               %{key: _, value: 1, tags: %{state: "failure", worker: "Test.Worker"}},
+               %{
+                 key: _,
+                 value: 1,
+                 tags: %{state: "failure", worker: "Test.Worker", queue: "default"}
+               }
+             ] = FakeAppsignal.get_counters(fake_appsignal, "oban_job_count")
+    end
+
+    test "adds job duration distribution value", %{fake_appsignal: fake_appsignal} do
+      assert [
+               %{key: _, value: 123, tags: %{worker: "Test.Worker"}},
+               %{
+                 key: _,
+                 value: 123,
+                 tags: %{hostname: "Bobs-MBP.example.com", worker: "Test.Worker"}
+               },
+               %{key: _, value: 123, tags: %{state: "failure", worker: "Test.Worker"}}
+             ] = FakeAppsignal.get_distribution_values(fake_appsignal, "oban_job_duration")
+    end
+
+    test "does not detach the handler" do
+      assert attached?([:oban, :job, :exception])
+    end
+  end
+
   describe "oban_job_exception/4, with a :state metadata key (v2.4.0)" do
     setup do
       fake_appsignal = start_supervised!(FakeAppsignal)
