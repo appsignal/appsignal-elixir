@@ -1,5 +1,23 @@
 # AppSignal for Elixir changelog
 
+## 2.15.11
+
+_Published on 2025-10-09._
+
+### Added
+
+- Add support for Oban timeout exceptions (patch [465a3858](https://github.com/appsignal/appsignal-elixir/commit/465a385806c7edddfe1188d40a52bb92cce365eb), [ac4effed](https://github.com/appsignal/appsignal-elixir/commit/ac4effed4e11096727dbb3740014b4672dd23f10))
+
+### Changed
+
+- Detect the log format automatically. We now detect if a log line is in the JSON, Logfmt or plaintext formats. No further config needed when calling our logger, like so:
+
+  ```elixir
+  Appsignal.Logger.info("group", "message")
+  ```
+
+  (patch [756dac39](https://github.com/appsignal/appsignal-elixir/commit/756dac39396a6f07d159747471bf663e7146d003))
+
 ## 2.15.10
 
 _Published on 2025-07-22._
