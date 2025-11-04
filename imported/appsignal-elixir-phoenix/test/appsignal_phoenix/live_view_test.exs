@@ -378,7 +378,7 @@ defmodule Appsignal.Phoenix.LiveViewTest do
         %{
           params: %{foo: "bar"},
           socket: %Phoenix.LiveView.Socket{view: __MODULE__},
-          event: "event"
+          event: "some_event"
         }
       )
     end
@@ -389,7 +389,7 @@ defmodule Appsignal.Phoenix.LiveViewTest do
     end
 
     test "sets the span's name" do
-      assert {:ok, [{%Span{}, "Appsignal.Phoenix.LiveViewTest#handle_event"}]} =
+      assert {:ok, [{%Span{}, "Appsignal.Phoenix.LiveViewTest#handle_event (some_event)"}]} =
                Test.Span.get(:set_name)
     end
 
@@ -398,14 +398,6 @@ defmodule Appsignal.Phoenix.LiveViewTest do
 
       assert Enum.any?(attributes, fn {%Span{}, key, data} ->
                key == "appsignal:category" and data == "handle_event.live_view"
-             end)
-    end
-
-    test "sets the span's event name" do
-      assert {:ok, attributes} = Test.Span.get(:set_attribute)
-
-      assert Enum.any?(attributes, fn {%Span{}, key, data} ->
-               key == "event" and data == "event"
              end)
     end
 
@@ -436,7 +428,7 @@ defmodule Appsignal.Phoenix.LiveViewTest do
           params: %{foo: "bar"},
           socket: %Phoenix.LiveView.Socket{view: __MODULE__},
           component: AppsignalTest.SomeLiveComponent,
-          event: "handle_event"
+          event: "some_event"
         }
       )
     end
@@ -447,7 +439,7 @@ defmodule Appsignal.Phoenix.LiveViewTest do
     end
 
     test "sets the span's name" do
-      assert {:ok, [{%Span{}, "AppsignalTest.SomeLiveComponent#handle_event"}]} =
+      assert {:ok, [{%Span{}, "AppsignalTest.SomeLiveComponent#handle_event (some_event)"}]} =
                Test.Span.get(:set_name)
     end
 

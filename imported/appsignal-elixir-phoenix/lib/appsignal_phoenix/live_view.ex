@@ -114,7 +114,7 @@ defmodule Appsignal.Phoenix.LiveView do
       ) do
     "live_view"
     |> @tracer.create_span(nil, start_time: system_time)
-    |> @span.set_name("#{Appsignal.Utils.module_name(metadata[:socket].view)}##{name}")
+    |> @span.set_name(span_name(metadata[:socket].view, name, metadata[:event]))
     |> @span.set_attribute("appsignal:category", "#{name}.live_view")
     |> @span.set_attribute("event", metadata[:event])
     |> @span.set_sample_data("params", metadata[:params])
@@ -130,7 +130,7 @@ defmodule Appsignal.Phoenix.LiveView do
     span =
       "live_view"
       |> @tracer.create_span(nil, start_time: system_time)
-      |> @span.set_name("#{Appsignal.Utils.module_name(metadata[:component])}##{name}")
+      |> @span.set_name(span_name(metadata[:component], name, metadata[:event]))
       |> @span.set_attribute("appsignal:category", "#{name}.live_component")
       |> @span.set_attribute("event", metadata[:event])
       |> @span.set_sample_data("params", metadata[:params])
@@ -150,5 +150,13 @@ defmodule Appsignal.Phoenix.LiveView do
     |> @tracer.close_span(end_time: @os.system_time())
 
     @tracer.ignore()
+  end
+
+  defp span_name(module, method, nil) do
+    "#{Appsignal.Utils.module_name(module)}##{method}"
+  end
+
+  defp span_name(module, method, event) do
+    "#{Appsignal.Utils.module_name(module)}##{method} (#{event})"
   end
 end
