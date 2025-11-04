@@ -282,7 +282,7 @@ defmodule Appsignal.Phoenix.LiveViewTest do
       end)
     end
 
-    test "attach/0 attaches to LiveView events" do
+    test "attach/0 attaches to LiveView and LiveComponent events" do
       assert attached?([:phoenix, :live_view, :mount, :start])
       assert attached?([:phoenix, :live_view, :mount, :stop])
       assert attached?([:phoenix, :live_view, :mount, :exception])
@@ -304,14 +304,14 @@ defmodule Appsignal.Phoenix.LiveViewTest do
     end
   end
 
-  describe "handle_event_start/4, with a mount event" do
+  describe "handle_live_view_event_start/4, with a mount event" do
     setup do
       event = [:phoenix, :live_view, :mount, :start]
 
       :telemetry.attach(
         {__MODULE__, event},
         event,
-        &Appsignal.Phoenix.LiveView.handle_event_start/4,
+        &Appsignal.Phoenix.LiveView.handle_live_view_event_start/4,
         :ok
       )
 
@@ -361,14 +361,14 @@ defmodule Appsignal.Phoenix.LiveViewTest do
     end
   end
 
-  describe "handle_event_start/4, with a handle_event event" do
+  describe "handle_live_view_event_start/4, with a handle_event event" do
     setup do
       event = [:phoenix, :live_view, :handle_event, :start]
 
       :telemetry.attach(
         {__MODULE__, event},
         event,
-        &Appsignal.Phoenix.LiveView.handle_event_start/4,
+        &Appsignal.Phoenix.LiveView.handle_live_view_event_start/4,
         :ok
       )
 
@@ -418,14 +418,14 @@ defmodule Appsignal.Phoenix.LiveViewTest do
     end
   end
 
-  describe "handle_event_start/4, with a live_component handle_event event" do
+  describe "handle_live_component_event_start/4, with a handle_event event" do
     setup do
       event = [:phoenix, :live_component, :handle_event, :start]
 
       :telemetry.attach(
         {__MODULE__, event},
         event,
-        &Appsignal.Phoenix.LiveView.handle_event_start/4,
+        &Appsignal.Phoenix.LiveView.handle_live_component_event_start/4,
         :ok
       )
 
@@ -447,7 +447,7 @@ defmodule Appsignal.Phoenix.LiveViewTest do
     end
 
     test "sets the span's name" do
-      assert {:ok, [{%Span{}, "Appsignal.Phoenix.LiveViewTest#handle_event"}]} =
+      assert {:ok, [{%Span{}, "AppsignalTest.SomeLiveComponent#handle_event"}]} =
                Test.Span.get(:set_name)
     end
 
@@ -455,15 +455,15 @@ defmodule Appsignal.Phoenix.LiveViewTest do
       assert {:ok, attributes} = Test.Span.get(:set_attribute)
 
       assert Enum.any?(attributes, fn {%Span{}, key, data} ->
-               key == "appsignal:category" and data == "handle_event.live_view"
+               key == "appsignal:category" and data == "handle_event.live_component"
              end)
     end
 
-    test "sets the span's component tag" do
+    test "sets the span's view tag" do
       assert {:ok, attributes} = Test.Span.get(:set_attribute)
 
       assert Enum.any?(attributes, fn {%Span{}, key, data} ->
-               key == "component" and data == "AppsignalTest.SomeLiveComponent"
+               key == "view" and data == "Appsignal.Phoenix.LiveViewTest"
              end)
     end
 
@@ -476,14 +476,14 @@ defmodule Appsignal.Phoenix.LiveViewTest do
     end
   end
 
-  describe "handle_event_start/4, with a live_component update event" do
+  describe "handle_live_component_event_start/4, with an update event" do
     setup do
       event = [:phoenix, :live_component, :update, :start]
 
       :telemetry.attach(
         {__MODULE__, event},
         event,
-        &Appsignal.Phoenix.LiveView.handle_event_start/4,
+        &Appsignal.Phoenix.LiveView.handle_live_component_event_start/4,
         :ok
       )
 
@@ -505,7 +505,7 @@ defmodule Appsignal.Phoenix.LiveViewTest do
     end
 
     test "sets the span's name" do
-      assert {:ok, [{%Span{}, "Appsignal.Phoenix.LiveViewTest#update"}]} =
+      assert {:ok, [{%Span{}, "AppsignalTest.SomeLiveComponent#update"}]} =
                Test.Span.get(:set_name)
     end
 
@@ -513,15 +513,15 @@ defmodule Appsignal.Phoenix.LiveViewTest do
       assert {:ok, attributes} = Test.Span.get(:set_attribute)
 
       assert Enum.any?(attributes, fn {%Span{}, key, data} ->
-               key == "appsignal:category" and data == "update.live_view"
+               key == "appsignal:category" and data == "update.live_component"
              end)
     end
 
-    test "sets the span's component tag" do
+    test "sets the span's view tag" do
       assert {:ok, attributes} = Test.Span.get(:set_attribute)
 
       assert Enum.any?(attributes, fn {%Span{}, key, data} ->
-               key == "component" and data == "AppsignalTest.SomeLiveComponent"
+               key == "view" and data == "Appsignal.Phoenix.LiveViewTest"
              end)
     end
 
