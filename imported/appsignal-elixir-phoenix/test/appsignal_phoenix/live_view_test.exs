@@ -435,7 +435,7 @@ defmodule Appsignal.Phoenix.LiveViewTest do
         %{
           params: %{foo: "bar"},
           socket: %Phoenix.LiveView.Socket{view: __MODULE__},
-          component: __MODULE__,
+          component: AppsignalTest.SomeLiveComponent,
           event: "handle_event"
         }
       )
@@ -456,6 +456,14 @@ defmodule Appsignal.Phoenix.LiveViewTest do
 
       assert Enum.any?(attributes, fn {%Span{}, key, data} ->
                key == "appsignal:category" and data == "handle_event.live_view"
+             end)
+    end
+
+    test "sets the span's component tag" do
+      assert {:ok, attributes} = Test.Span.get(:set_attribute)
+
+      assert Enum.any?(attributes, fn {%Span{}, key, data} ->
+               key == "component" and data == "AppsignalTest.SomeLiveComponent"
              end)
     end
 
@@ -485,7 +493,7 @@ defmodule Appsignal.Phoenix.LiveViewTest do
         %{
           params: %{foo: "bar"},
           socket: %Phoenix.LiveView.Socket{view: __MODULE__},
-          component: __MODULE__,
+          component: AppsignalTest.SomeLiveComponent,
           assigns_sockets: [{{}, %Phoenix.LiveView.Socket{view: __MODULE__}}]
         }
       )
@@ -506,6 +514,14 @@ defmodule Appsignal.Phoenix.LiveViewTest do
 
       assert Enum.any?(attributes, fn {%Span{}, key, data} ->
                key == "appsignal:category" and data == "update.live_view"
+             end)
+    end
+
+    test "sets the span's component tag" do
+      assert {:ok, attributes} = Test.Span.get(:set_attribute)
+
+      assert Enum.any?(attributes, fn {%Span{}, key, data} ->
+               key == "component" and data == "AppsignalTest.SomeLiveComponent"
              end)
     end
 
