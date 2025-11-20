@@ -49,24 +49,44 @@ defmodule Appsignal.Phoenix.LiveView do
   end
 
   def attach do
-    [
+    live_view_events = [
       [:phoenix, :live_view, :mount],
       [:phoenix, :live_view, :handle_params],
       [:phoenix, :live_view, :handle_event],
-      [:phoenix, :live_view, :render],
+      [:phoenix, :live_view, :render]
+    ]
+
+    live_component_events = [
       [:phoenix, :live_component, :handle_event],
       [:phoenix, :live_component, :update]
     ]
-    |> Enum.each(fn event ->
+
+    Enum.each(live_view_events, fn event ->
       name = Enum.join(event, ".")
 
       _ =
         :telemetry.attach(
           {__MODULE__, event ++ [:start]},
           event ++ [:start],
-          &__MODULE__.handle_event_start/4,
+          &__MODULE__.handle_live_view_event_start/4,
           name
         )
+    end)
+
+    Enum.each(live_component_events, fn event ->
+      name = Enum.join(event, ".")
+
+      _ =
+        :telemetry.attach(
+          {__MODULE__, event ++ [:start]},
+          event ++ [:start],
+          &__MODULE__.handle_live_component_event_start/4,
+          name
+        )
+    end)
+
+    Enum.each(live_view_events ++ live_component_events, fn event ->
+      name = Enum.join(event, ".")
 
       _ =
         :telemetry.attach(
@@ -86,19 +106,38 @@ defmodule Appsignal.Phoenix.LiveView do
     end)
   end
 
-  def handle_event_start(
-        [:phoenix, _type, name, :start],
+  def handle_live_view_event_start(
+        [:phoenix, :live_view, name, :start],
         %{system_time: system_time},
         metadata,
         _event_name
       ) do
     "live_view"
     |> @tracer.create_span(nil, start_time: system_time)
-    |> @span.set_name("#{Appsignal.Utils.module_name(metadata[:socket].view)}##{name}")
+    |> @span.set_name(span_name(metadata[:socket].view, name, metadata[:event]))
     |> @span.set_attribute("appsignal:category", "#{name}.live_view")
     |> @span.set_attribute("event", metadata[:event])
     |> @span.set_sample_data("params", metadata[:params])
     |> @span.set_sample_data("session_data", metadata[:session])
+  end
+
+  def handle_live_component_event_start(
+        [:phoenix, :live_component, name, :start],
+        %{system_time: system_time},
+        metadata,
+        _event_name
+      ) do
+    span =
+      "live_view"
+      |> @tracer.create_span(nil, start_time: system_time)
+      |> @span.set_name(span_name(metadata[:component], name, metadata[:event]))
+      |> @span.set_attribute("appsignal:category", "#{name}.live_component")
+      |> @span.set_attribute("event", metadata[:event])
+      |> @span.set_sample_data("params", metadata[:params])
+
+    if metadata[:socket] && metadata[:socket].view do
+      @span.set_attribute(span, "view", Appsignal.Utils.module_name(metadata[:socket].view))
+    end
   end
 
   def handle_event_stop(_event, _params, _metadata, _event_name) do
@@ -111,5 +150,13 @@ defmodule Appsignal.Phoenix.LiveView do
     |> @tracer.close_span(end_time: @os.system_time())
 
     @tracer.ignore()
+  end
+
+  defp span_name(module, method, nil) do
+    "#{Appsignal.Utils.module_name(module)}##{method}"
+  end
+
+  defp span_name(module, method, event) do
+    "#{Appsignal.Utils.module_name(module)}##{method} (#{event})"
   end
 end
