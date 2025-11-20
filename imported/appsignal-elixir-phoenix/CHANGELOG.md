@@ -1,5 +1,20 @@
 # AppSignal for Elixir Phoenix changelog
 
+## 2.8.0
+
+_Published on 2025-11-20._
+
+### Added
+
+- Report LiveComponent traces and events separately from LiveView traces and events.
+
+  Traces in AppSignal representing updates and event handlers in components will no longer be represented as calls to the view in which the component is mounted, and their events will be part of the `live_component` group.
+
+  This makes it possible to obtain performance measurements for each component individually, instead of grouped by the view that mounts the component.
+
+  (minor [1146f7f](https://github.com/appsignal/appsignal-elixir-phoenix/commit/1146f7f342cae99ead03e69c329c7e4d35d434b1))
+- Group samples for calls to `handle_event/3` in LiveView and LiveComponent by the event that is being handled. (patch [0c376b2](https://github.com/appsignal/appsignal-elixir-phoenix/commit/0c376b290dd8e8d6b8780fb30e57bc2e8c2a1c0b))
+
 ## 2.7.0
 
 _Published on 2025-03-24._
