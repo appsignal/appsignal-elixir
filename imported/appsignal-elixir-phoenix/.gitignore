@@ -24,3 +24,6 @@ appsignal_phoenix-*.tar
 
 # Ignore lock file to use latest versions of dependencies.
 mix.lock
+
+# The directory where Dialyzer stores its PLT files.
+/priv/
