@@ -1,5 +1,13 @@
 # AppSignal for Elixir Phoenix changelog
 
+## 2.8.1
+
+_Published on 2025-11-21._
+
+### Fixed
+
+- Fix issue when running AppSignal for Phoenix in CI (patch [de10616](https://github.com/appsignal/appsignal-elixir-phoenix/commit/de10616f25a9eaa6c121c42e4530911f8aa8fe58))
+
 ## 2.8.0
 
 _Published on 2025-11-20._
