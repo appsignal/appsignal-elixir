@@ -57,14 +57,7 @@ defmodule Appsignal.Phoenix.MixProject do
         _ -> "~> 1.7"
       end
 
-    phoenix_version =
-      case {System.get_env("CI"), System.get_env("PHOENIX_VERSION")} do
-        {"true", nil} ->
-          raise "PHOENIX_VERSION environment variable must be set on CI"
-
-        {_, version} ->
-          version || "~> 1.7"
-      end
+    phoenix_version = System.get_env("_APPSIGNAL_CI_PHOENIX_VERSION") || "~> 1.7"
 
     [
       {:appsignal, ">= 2.15.0 and < 3.0.0"},

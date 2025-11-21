@@ -26,8 +26,6 @@ jobs:
 
   lint_format:
     runs-on: ubuntu-latest
-    env:
-      PHOENIX_VERSION: "~> 1.7.0"
     steps:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
@@ -41,8 +39,6 @@ jobs:
 
   lint_credo:
     runs-on: ubuntu-latest
-    env:
-      PHOENIX_VERSION: "~> 1.7.0"
     steps:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
@@ -58,8 +54,6 @@ jobs:
 
   lint_compile:
     runs-on: ubuntu-latest
-    env:
-      PHOENIX_VERSION: "~> 1.7.0"
     steps:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
@@ -75,8 +69,6 @@ jobs:
 
   lint_dialyzer:
     runs-on: ubuntu-latest
-    env:
-      PHOENIX_VERSION: "~> 1.7.0"
     steps:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
@@ -150,8 +142,8 @@ jobs:
       - name: Get dependencies
         run: mix deps.get
         env:
-          PHOENIX_VERSION: ${{matrix.phoenix}}
+          _APPSIGNAL_CI_PHOENIX_VERSION: ${{matrix.phoenix}}
       - name: Run tests
         run: mix test
         env:
-          PHOENIX_VERSION: ${{matrix.phoenix}}
+          _APPSIGNAL_CI_PHOENIX_VERSION: ${{matrix.phoenix}}
