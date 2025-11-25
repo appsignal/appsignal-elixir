@@ -14,7 +14,7 @@ defmodule Appsignal.Config do
     enable_minutely_probes: true,
     enable_statsd: false,
     enable_nginx_metrics: false,
-    enable_error_backend: true,
+    enable_error_backend: false,
     endpoint: "https://push.appsignal.com",
     env: :dev,
     files_world_accessible: true,
