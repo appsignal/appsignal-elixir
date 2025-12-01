@@ -42,6 +42,8 @@ defmodule Appsignal.Error.BackendTest do
   import AppsignalTest.Utils
 
   setup do
+    Appsignal.Error.Backend.attach()
+
     {:ok, _pid} = start_supervised(Test.Nif)
     {:ok, _pid} = start_supervised(Test.Tracer)
     {:ok, _pid} = start_supervised(Test.Span)
