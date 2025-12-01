@@ -1,5 +1,18 @@
 # AppSignal for Elixir changelog
 
+## 2.16.0
+
+_Published on 2025-12-01._
+
+### Changed
+
+- Disable the error backend by default
+
+  With new ways of instrumenting errors added, the error backend is unneeded in most setups.
+  Disable it by default to make it opt-in.
+
+  (minor [5efd9179](https://github.com/appsignal/appsignal-elixir/commit/5efd91792477d778f06a40da01392f7915b5fd7c))
+
 ## 2.15.11
 
 _Published on 2025-10-09._
