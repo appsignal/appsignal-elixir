@@ -14,7 +14,7 @@ defmodule Appsignal.StacktraceTest do
     end
 
     test "does not return an empty list", %{stack: stack} do
-      assert length(stack) > 0
+      refute Enum.empty?(stack)
     end
 
     test "returns a stacktrace containing the error", %{
