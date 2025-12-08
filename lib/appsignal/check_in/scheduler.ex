@@ -120,7 +120,7 @@ defmodule Appsignal.CheckIn.Scheduler do
   end
 
   @impl true
-  def terminate(_reason, %{events: events}) when length(events) > 0 do
+  def terminate(_reason, %{events: [_ | _] = events}) do
     # If any events are stored, attempt to transmit them before the
     # process is terminated.
     handle_continue({:transmit, events}, initial_state())

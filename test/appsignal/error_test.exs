@@ -21,7 +21,7 @@ defmodule Appsignal.ErrorTest do
     test "format's the error's stack trace", %{metadata: metadata} do
       {_name, _message, stack} = metadata
       assert is_list(stack)
-      assert length(stack) > 0
+      refute Enum.empty?(stack)
       assert Enum.all?(stack, &is_binary(&1))
     end
   end
@@ -46,7 +46,7 @@ defmodule Appsignal.ErrorTest do
     test "format's the error's stack trace", %{metadata: metadata} do
       {_name, _message, stack} = metadata
       assert is_list(stack)
-      assert length(stack) > 0
+      refute Enum.empty?(stack)
       assert Enum.all?(stack, &is_binary(&1))
     end
   end
@@ -73,7 +73,7 @@ defmodule Appsignal.ErrorTest do
     test "format's the error's stack trace", %{metadata: metadata} do
       {_name, _message, stack} = metadata
       assert is_list(stack)
-      assert length(stack) > 0
+      refute Enum.empty?(stack)
       assert Enum.all?(stack, &is_binary(&1))
     end
   end
@@ -101,7 +101,7 @@ defmodule Appsignal.ErrorTest do
     test "format's the error's stack trace", %{metadata: metadata} do
       {_name, _message, stack} = metadata
       assert is_list(stack)
-      assert length(stack) > 0
+      refute Enum.empty?(stack)
       assert Enum.all?(stack, &is_binary(&1))
     end
   end
@@ -126,7 +126,7 @@ defmodule Appsignal.ErrorTest do
     test "format's the error's stack trace", %{metadata: metadata} do
       {_name, _message, stack} = metadata
       assert is_list(stack)
-      assert length(stack) > 0
+      refute Enum.empty?(stack)
       assert Enum.all?(stack, &is_binary(&1))
     end
   end
