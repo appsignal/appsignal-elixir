@@ -45,7 +45,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose.PathsTest do
   test "has label definitions for all path reports" do
     path_keys =
       Paths.info()
-      |> Map.keys()
+      |> Enum.map(fn {key, _value} -> key end)
       |> MapSet.new()
 
     label_keys =
