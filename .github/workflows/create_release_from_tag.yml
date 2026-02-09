@@ -58,5 +58,5 @@ jobs:
             -H "Authorization: token ${{ secrets.INTEGRATIONS_CHANGELOG_TOKEN }}" \
             -H "Accept: application/vnd.github+json" \
             --fail-with-body \
-            https://api.github.com/repos/appsignal/appsignal.com/actions/workflows/102125282/dispatches \
+            https://api.github.com/repos/appsignal/appsignal-web/actions/workflows/create_integrations_changelog_entry.yml/dispatches \
             -d "$payload"
