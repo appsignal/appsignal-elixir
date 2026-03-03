@@ -62,7 +62,7 @@ defmodule Appsignal.Finch do
 
     "http_request"
     |> @tracer.create_span(parent)
-    |> @span.set_name("#{request.method} #{URI.to_string(uri)}")
+    |> @span.set_name("#{request.method} #{uri}")
     |> @span.set_attribute("appsignal:category", "request.finch")
   end
 
