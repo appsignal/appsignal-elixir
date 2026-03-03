@@ -96,7 +96,7 @@ defmodule Appsignal.Tesla do
   end
 
   defp do_sanitise_url(%URI{scheme: scheme, host: host, port: port}, path) do
-    URI.to_string(%URI{scheme: scheme, host: host, port: port, path: path})
+    to_string(%URI{scheme: scheme, host: host, port: port, path: path})
   end
 
   def env_middlewares(env) do
