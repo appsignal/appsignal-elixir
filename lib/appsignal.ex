@@ -9,6 +9,11 @@ defmodule Appsignal do
   """
 
   @os Application.compile_env(:appsignal, :os_internal, :os)
+  @installation_report Application.compile_env(
+                          :appsignal,
+                          :appsignal_diagnose_installation_report,
+                          Appsignal.Diagnose.InstallationReport
+                        )
 
   use Application
   alias Appsignal.Config
@@ -196,7 +201,7 @@ defmodule Appsignal do
 
   # Parse install report and fetch the architecture and target
   defp fetch_installed_architecture_target do
-    case File.read(Path.join([:code.priv_dir(:appsignal), "install.report"])) do
+    case @installation_report.read_install() do
       {:ok, raw_report} ->
         case Jason.decode(raw_report) do
           {:ok, report} ->

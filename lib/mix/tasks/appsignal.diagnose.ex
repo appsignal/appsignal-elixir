@@ -10,6 +10,12 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
             Appsignal.Diagnose.Report
           )
 
+  @installation_report Application.compile_env(
+                          :appsignal,
+                          :appsignal_diagnose_installation_report,
+                          Appsignal.Diagnose.InstallationReport
+                        )
+
   @shortdoc "Starts and tests AppSignal while validating the configuration"
 
   def run(args) do
@@ -102,7 +108,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
 
   defp fetch_installation_report do
     download_report =
-      case do_fetch_installation_report("download") do
+      case do_fetch_installation_report(&@installation_report.read_download/0) do
         {:ok, report} ->
           report
 
@@ -111,7 +117,7 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
       end
 
     install_report =
-      case do_fetch_installation_report("install") do
+      case do_fetch_installation_report(&@installation_report.read_install/0) do
         {:ok, report} ->
           report
 
@@ -122,8 +128,8 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
     Map.merge(install_report, download_report)
   end
 
-  defp do_fetch_installation_report(file) do
-    case File.read(Path.join([:code.priv_dir(:appsignal), "#{file}.report"])) do
+  defp do_fetch_installation_report(read_fn) do
+    case read_fn.() do
       {:ok, raw_report} ->
         case Jason.decode(raw_report) do
           {:ok, report} ->

@@ -22,6 +22,7 @@ defmodule Mix.Appsignal.Helper do
   require Logger
 
   def install do
+    if Mix.env() == :test_no_nif, do: clean_up_extension_files()
     report = initial_report()
 
     case verify_system_architecture(report) do
