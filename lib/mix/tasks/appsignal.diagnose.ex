@@ -11,10 +11,10 @@ defmodule Mix.Tasks.Appsignal.Diagnose do
           )
 
   @installation_report Application.compile_env(
-                          :appsignal,
-                          :appsignal_diagnose_installation_report,
-                          Appsignal.Diagnose.InstallationReport
-                        )
+                         :appsignal,
+                         :appsignal_diagnose_installation_report,
+                         Appsignal.Diagnose.InstallationReport
+                       )
 
   @shortdoc "Starts and tests AppSignal while validating the configuration"
 

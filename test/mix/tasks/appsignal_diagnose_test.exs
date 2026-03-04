@@ -2,7 +2,7 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   use ExUnit.Case
   import ExUnit.CaptureIO
   import AppsignalTest.Utils
-  alias Appsignal.{Diagnose.FakeReport, Diagnose.FakeInstallationReport, FakeNif, FakeSystem}
+  alias Appsignal.{Diagnose.FakeInstallationReport, Diagnose.FakeReport, FakeNif, FakeSystem}
 
   @appsignal_version Mix.Project.config()[:version]
   @agent_version Appsignal.Agent.version()
@@ -117,7 +117,12 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
           "host" => @valid_host_report
         })
 
-      FakeInstallationReport.update(fake_ir, :download, {:ok, Jason.encode!(@valid_download_report)})
+      FakeInstallationReport.update(
+        fake_ir,
+        :download,
+        {:ok, Jason.encode!(@valid_download_report)}
+      )
+
       FakeInstallationReport.update(fake_ir, :install, {:ok, install_json})
       :ok
     end
@@ -143,7 +148,12 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       assert String.contains?(output, "  OTP version: \"27\"")
       assert String.contains?(output, "  Download details")
       assert String.contains?(output, "  Download time: \"2024-01-01T00:00:00Z\"")
-      assert String.contains?(output, "  Download URL: \"https://example.com/appsignal-agent.tar.gz\"")
+
+      assert String.contains?(
+               output,
+               "  Download URL: \"https://example.com/appsignal-agent.tar.gz\""
+             )
+
       assert String.contains?(output, "  Architecture: \"x86_64\"")
       assert String.contains?(output, "  Checksum: \"verified\"")
       assert String.contains?(output, "  Build details")
@@ -168,7 +178,12 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
           "host" => @valid_host_report
         })
 
-      FakeInstallationReport.update(fake_ir, :download, {:ok, Jason.encode!(@valid_download_report)})
+      FakeInstallationReport.update(
+        fake_ir,
+        :download,
+        {:ok, Jason.encode!(@valid_download_report)}
+      )
+
       FakeInstallationReport.update(fake_ir, :install, {:ok, install_json})
       :ok
     end
@@ -187,7 +202,11 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
       assert String.contains?(output, "Extension installation report")
       assert String.contains?(output, "  Installation result")
       assert String.contains?(output, "    Status: failed")
-      assert String.contains?(output, "    Message: \"Unknown target platform x86_64-apple-darwin - darwin\"")
+
+      assert String.contains?(
+               output,
+               "    Message: \"Unknown target platform x86_64-apple-darwin - darwin\""
+             )
     end
   end
 
@@ -282,7 +301,11 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     setup %{fake_installation_report: fake_ir} do
       FakeInstallationReport.update(fake_ir, :install, {:error, :eacces})
 
-      FakeInstallationReport.update(fake_ir, :download, {:ok, Jason.encode!(@valid_download_report)})
+      FakeInstallationReport.update(
+        fake_ir,
+        :download,
+        {:ok, Jason.encode!(@valid_download_report)}
+      )
 
       :ok
     end
@@ -1169,5 +1192,4 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
         nil
     end
   end
-
 end

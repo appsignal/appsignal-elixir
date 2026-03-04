@@ -10,10 +10,10 @@ defmodule Appsignal do
 
   @os Application.compile_env(:appsignal, :os_internal, :os)
   @installation_report Application.compile_env(
-                          :appsignal,
-                          :appsignal_diagnose_installation_report,
-                          Appsignal.Diagnose.InstallationReport
-                        )
+                         :appsignal,
+                         :appsignal_diagnose_installation_report,
+                         Appsignal.Diagnose.InstallationReport
+                       )
 
   use Application
   alias Appsignal.Config

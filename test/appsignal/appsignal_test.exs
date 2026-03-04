@@ -17,7 +17,11 @@ defmodule AppsignalTest do
 
   # Build a minimal install report JSON whose arch/target matches FakeOS's default {unix, linux}
   defp matching_install_json do
-    arch = List.first(String.split(to_string(:erlang.system_info(:system_architecture)), "-", parts: 2))
+    arch =
+      List.first(
+        String.split(to_string(:erlang.system_info(:system_architecture)), "-", parts: 2)
+      )
+
     Jason.encode!(%{"build" => %{"architecture" => "#{arch}-linux", "target" => "linux"}})
   end
 

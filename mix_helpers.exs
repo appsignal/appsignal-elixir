@@ -9,7 +9,37 @@ defmodule Mix.Appsignal.Helper do
 
   @erlang Application.compile_env(:appsignal, :erlang, :erlang)
   @os Application.compile_env(:appsignal, :os, :os)
-  @system Application.compile_env(:appsignal, :system, System)
+  @finch Application.compile_env(:appsignal, :finch, Finch)
+  @agent Application.compile_env(:appsignal, :agent, Appsignal.Agent)
+  @extractor Application.compile_env(:appsignal, :extractor, Mix.Appsignal.Helper.Extractor)
+  @make Application.compile_env(:appsignal, :make, Mix.Appsignal.Helper.Make)
+  @ldd Application.compile_env(:appsignal, :ldd, Mix.Appsignal.Helper.Ldd)
+  @root_checker Application.compile_env(:appsignal, :root_checker, Mix.Appsignal.Helper.Root)
+  @cached_build Application.compile_env(
+                  :appsignal,
+                  :cached_build,
+                  Mix.Appsignal.Helper.CachedBuild
+                )
+  @report_writer Application.compile_env(
+                   :appsignal,
+                   :report_writer,
+                   Mix.Appsignal.Helper.ReportWriter
+                 )
+  @installed_version Application.compile_env(
+                       :appsignal,
+                       :installed_version,
+                       Mix.Appsignal.Helper.InstalledVersion
+                     )
+  @download_cache Application.compile_env(
+                    :appsignal,
+                    :download_cache,
+                    Mix.Appsignal.Helper.DownloadCache
+                  )
+  @extension_dir Application.compile_env(
+                   :appsignal,
+                   :extension_dir,
+                   Mix.Appsignal.Helper.ExtensionDir
+                 )
 
   @proxy_env_vars [
     "APPSIGNAL_HTTP_PROXY",
@@ -22,7 +52,7 @@ defmodule Mix.Appsignal.Helper do
   require Logger
 
   def install do
-    if Mix.env() == :test_no_nif, do: clean_up_extension_files()
+    if Mix.env() == :test_no_nif, do: @extension_dir.prepare!(priv_dir())
     report = initial_report()
 
     case verify_system_architecture(report) do
@@ -75,14 +105,13 @@ defmodule Mix.Appsignal.Helper do
 
   defp find_package_source(arch, report) do
     architecture_key = arch_key(arch)
-    arch_config = Appsignal.Agent.triples()[architecture_key]
+    arch_config = @agent.triples()[architecture_key]
     System.put_env("LIB_DIR", priv_dir())
 
     cond do
       has_local_release_files?() ->
         Mix.shell().info("AppSignal: Using local agent release.")
-        File.mkdir_p!(priv_dir())
-        clean_up_extension_files()
+        @extension_dir.prepare!(priv_dir())
 
         Enum.each(
           ["appsignal.h", "appsignal-agent", "appsignal.version", "libappsignal.a"],
@@ -93,7 +122,7 @@ defmodule Mix.Appsignal.Helper do
 
         {:ok, merge_report(report, %{build: %{source: "local"}})}
 
-      has_files?() and has_correct_agent_version?() ->
+      @cached_build.installed?(priv_dir(), @agent.version()) ->
         {:ok, merge_report(report, %{build: %{source: "cached_in_priv_dir"}})}
 
       is_nil(arch_config) ->
@@ -131,24 +160,23 @@ defmodule Mix.Appsignal.Helper do
   end
 
   defp download_package(arch_config, report) do
-    version = Appsignal.Agent.version()
+    version = @agent.version()
     filename = arch_config[:filename]
 
-    File.mkdir_p!(priv_dir())
-    clean_up_extension_files()
+    @extension_dir.prepare!(priv_dir())
 
     local_filename = Path.join(tmp_dir(), "appsignal-agent-#{version}.tar.gz")
 
-    case File.exists?(local_filename) do
+    case @download_cache.exists?(local_filename) do
       true ->
         {:ok, {local_filename, merge_report(report, %{build: %{source: "cached_in_tmp_dir"}})}}
 
       false ->
         Mix.shell().info("Downloading agent release")
-        {:ok, pid} = Finch.start_link(name: AppsignalFinchDownload)
+        {:ok, pid} = @finch.start_link(name: AppsignalFinchDownload)
 
         try do
-          case do_download_file!(filename, local_filename, Appsignal.Agent.mirrors()) do
+          case do_download_file!(filename, local_filename, @agent.mirrors()) do
             {:ok, url} ->
               {:ok, {local_filename, merge_report(report, %{download: %{download_url: url}})}}
 
@@ -162,7 +190,7 @@ defmodule Mix.Appsignal.Helper do
   end
 
   defp verify_download_package(filename, expected_checksum, report) do
-    data = File.read!(filename)
+    data = @download_cache.read!(filename)
     calculated_checksum = :crypto.hash(:sha256, data) |> Base.encode16(case: :lower)
 
     if calculated_checksum == expected_checksum do
@@ -182,7 +210,7 @@ defmodule Mix.Appsignal.Helper do
 
   defp do_download_file!(filename, local_filename, mirrors) do
     Enum.reduce_while(mirrors, {1, []}, fn mirror, {acc, errors} ->
-      version = Appsignal.Agent.version()
+      version = @agent.version()
       url = build_download_url(mirror, version, filename)
       result = do_download_file!(url, local_filename)
 
@@ -215,12 +243,12 @@ defmodule Mix.Appsignal.Helper do
 
   defp do_download_file!(url, local_filename) do
     request =
-      Finch.build(:get, url, [], "")
-      |> Finch.request(AppsignalFinchDownload, download_options())
+      @finch.build(:get, url, [], "")
+      |> @finch.request(AppsignalFinchDownload, download_options())
 
     case request do
       {:ok, %{status: 200, body: body}} ->
-        File.write(local_filename, body)
+        @download_cache.write(local_filename, body)
 
       response ->
         message = """
@@ -287,21 +315,16 @@ defmodule Mix.Appsignal.Helper do
   end
 
   defp extract_package(filename) do
-    case System.cmd("tar", ["zxf", filename, "--no-same-owner"],
-           stderr_to_stdout: true,
-           cd: priv_dir()
-         ) do
-      {_, 0} ->
-        :ok
-
-      {result, _exitcode} ->
-        IO.binwrite(result)
-        {:error, "Extracting of #{filename} failed!"}
-    end
+    @extractor.extract(filename, priv_dir())
   end
 
   defp compile(report) do
-    report = merge_report(report, %{build: %{agent_version: agent_version()}})
+    report =
+      case agent_version() do
+        {:ok, version} -> merge_report(report, %{build: %{agent_version: version}})
+        {:error, _} -> report
+      end
+
     {output, exit_code} = run_make()
 
     if exit_code == 0 do
@@ -320,16 +343,8 @@ defmodule Mix.Appsignal.Helper do
   end
 
   defp run_make do
-    try do
-      System.cmd(make(), make_args(to_string(Mix.env())), stderr_to_stdout: true)
-    rescue
-      reason ->
-        {serialize_report_value(reason), 1}
-    end
+    @make.run(to_string(Mix.env()))
   end
-
-  defp make_args("test" <> _), do: ["-e", "CFLAGS_ADD=-DTEST"]
-  defp make_args(_), do: []
 
   def verify_system_architecture(report) do
     input_arch =
@@ -381,7 +396,7 @@ defmodule Mix.Appsignal.Helper do
   defp build_for(bit, platform) do
     arch = {bit, platform}
 
-    case Map.has_key?(Appsignal.Agent.triples(), arch_key(arch)) do
+    case Map.has_key?(@agent.triples(), arch_key(arch)) do
       true -> {:ok, arch}
       false -> {:error, {:unsupported, arch}}
     end
@@ -392,13 +407,12 @@ defmodule Mix.Appsignal.Helper do
   end
 
   defp tmp_dir do
-    default_tmp_dir = "/tmp"
-
-    case {File.dir?(default_tmp_dir), File.stat(default_tmp_dir)} do
-      {true, {:ok, %{access: :write}}} -> default_tmp_dir
-      {true, {:ok, %{access: :read_write}}} -> default_tmp_dir
-      _ -> System.tmp_dir!()
-    end
+    Application.get_env(:appsignal, :tmp_dir) ||
+      case {File.dir?("/tmp"), File.stat("/tmp")} do
+        {true, {:ok, %{access: :write}}} -> "/tmp"
+        {true, {:ok, %{access: :read_write}}} -> "/tmp"
+        _ -> System.tmp_dir!()
+      end
   end
 
   defp priv_path(filename) do
@@ -409,16 +423,8 @@ defmodule Mix.Appsignal.Helper do
     Path.join([__DIR__, "c_src", filename])
   end
 
-  defp has_file(filename) do
-    filename |> priv_path |> File.exists?()
-  end
-
   defp has_local_ext_file(filename) do
     filename |> project_ext_path |> File.exists?()
-  end
-
-  defp has_files? do
-    has_file("appsignal-agent") and has_file("appsignal.h") and has_file("appsignal_extension.so")
   end
 
   defp has_local_release_files? do
@@ -426,21 +432,8 @@ defmodule Mix.Appsignal.Helper do
       has_local_ext_file("libappsignal.a")
   end
 
-  defp has_correct_agent_version? do
-    agent_version() == Appsignal.Agent.version()
-  end
-
   defp agent_version do
-    path = priv_path("appsignal.version")
-    {:ok, agent_version} = File.read(path)
-    String.trim(agent_version)
-  end
-
-  defp clean_up_extension_files do
-    priv_dir()
-    |> Path.join("*appsignal*")
-    |> Path.wildcard()
-    |> Enum.each(&File.rm_rf!/1)
+    @installed_version.read(priv_dir())
   end
 
   defp library_dependencies do
@@ -506,13 +499,7 @@ defmodule Mix.Appsignal.Helper do
   # Fetches the libc version number from the `ldd` command
   # If `ldd` is not found it returns `nil`
   defp ldd_version_output do
-    case @system.cmd("ldd", ["--version"], stderr_to_stdout: true) do
-      {output, _} ->
-        {:ok, output}
-    end
-  rescue
-    exception ->
-      {:error, exception}
+    @ldd.version_output()
   end
 
   defp extract_ldd_version(ldd_output) when is_binary(ldd_output) do
@@ -525,7 +512,7 @@ defmodule Mix.Appsignal.Helper do
   defp extract_ldd_version(_), do: nil
 
   defp initial_report do
-    {_, os} = :os.type()
+    {_, os} = @os.type()
 
     %{
       result: %{
@@ -556,7 +543,7 @@ defmodule Mix.Appsignal.Helper do
 
   defp write_report(report) do
     write_download_report(report)
-    write_report_file("install", report)
+    @report_writer.write_install_report(report)
   end
 
   defp write_download_report(%{download: %{}} = report) do
@@ -589,45 +576,11 @@ defmodule Mix.Appsignal.Helper do
       }
     }
 
-    write_report_file("download", download_report)
+    @report_writer.write_download_report(download_report)
   end
 
   defp write_download_report(_) do
     # Write nothing if no download details are recorded in the report
-  end
-
-  defp write_report_file(file, report) do
-    case Jason.encode(report) do
-      {:ok, body} ->
-        File.mkdir_p!(priv_dir())
-
-        filename = "#{file}.report"
-
-        case File.open(priv_path(filename), [:write]) do
-          {:ok, file} ->
-            result = IO.binwrite(file, body)
-            File.close(file)
-            result
-
-          {:error, reason} ->
-            Mix.Shell.IO.error("""
-            Error: Could not write AppSignal installation report file (#{filename}).
-
-            #{serialize_report_value(reason)}
-            """)
-
-            {:error, reason}
-        end
-
-      {:error, reason} ->
-        Mix.Shell.IO.error("""
-        Error: Could not encode AppSignal installation report.
-
-        #{serialize_report_value(reason)}
-        """)
-
-        {:error, reason}
-    end
   end
 
   defp merge_report(report, %{download: _download_report} = sub_report) do
@@ -661,20 +614,21 @@ defmodule Mix.Appsignal.Helper do
     Mix.Shell.IO.error("AppSignal installation failed: #{serialize_report_value(reason)}")
   end
 
-  defp priv_dir do
-    case :code.priv_dir(:appsignal) do
-      {:error, :bad_name} ->
-        # This happens on initial compilation
-        Mix.Tasks.Compile.Erlang.manifests()
-        |> List.first()
-        |> Path.dirname()
-        |> String.trim_trailing(".mix")
-        |> Path.join("priv")
+  def priv_dir do
+    Application.get_env(:appsignal, :priv_dir) ||
+      case :code.priv_dir(:appsignal) do
+        {:error, :bad_name} ->
+          # This happens on initial compilation
+          Mix.Tasks.Compile.Erlang.manifests()
+          |> List.first()
+          |> Path.dirname()
+          |> String.trim_trailing(".mix")
+          |> Path.join("priv")
 
-      path ->
-        path
-        |> List.to_string()
-    end
+        path ->
+          path
+          |> List.to_string()
+      end
   end
 
   defp force_musl_build? do
@@ -685,10 +639,6 @@ defmodule Mix.Appsignal.Helper do
   defp force_linux_arm_build? do
     env = System.get_env("APPSIGNAL_BUILD_FOR_LINUX_ARM")
     env == "1" || env == "true"
-  end
-
-  defp make do
-    if System.find_executable("gmake"), do: "gmake", else: "make"
   end
 
   if System.otp_release() >= "23" do
@@ -732,27 +682,149 @@ defmodule Mix.Appsignal.Helper do
   end
 
   def root? do
-    uid() == 0
-  end
-
-  def uid do
-    try do
-      case @system.cmd("id", ["-u"]) do
-        {id, 0} ->
-          case Integer.parse(List.first(String.split(id, "\n"))) do
-            {int, _} -> int
-            :error -> nil
-          end
-
-        {_, _} ->
-          nil
-      end
-    catch
-      :error, _ ->
-        nil
-    end
+    @root_checker.root?()
   end
 
   defp serialize_report_value(value) when is_binary(value), do: value
   defp serialize_report_value(value), do: inspect(value)
+end
+
+defmodule Mix.Appsignal.Helper.DownloadCache do
+  def exists?(path), do: File.exists?(path)
+  def write(path, body), do: File.write(path, body)
+  def read!(path), do: File.read!(path)
+end
+
+defmodule Mix.Appsignal.Helper.ExtensionDir do
+  def prepare!(dir) do
+    File.mkdir_p!(dir)
+    dir |> Path.join("*appsignal*") |> Path.wildcard() |> Enum.each(&File.rm_rf!/1)
+  end
+end
+
+defmodule Mix.Appsignal.Helper.ReportWriter do
+  def write_install_report(report), do: write("install", report)
+  def write_download_report(report), do: write("download", report)
+
+  defp write(file, report) do
+    dir = Mix.Appsignal.Helper.priv_dir()
+
+    case Jason.encode(report) do
+      {:ok, body} ->
+        File.mkdir_p!(dir)
+        filename = "#{file}.report"
+        path = Path.join(dir, filename)
+
+        case File.open(path, [:write]) do
+          {:ok, io} ->
+            result = IO.binwrite(io, body)
+            File.close(io)
+            result
+
+          {:error, reason} ->
+            Mix.Shell.IO.error("""
+            Error: Could not write AppSignal installation report file (#{filename}).
+
+            #{serialize(reason)}
+            """)
+
+            {:error, reason}
+        end
+
+      {:error, reason} ->
+        Mix.Shell.IO.error("""
+        Error: Could not encode AppSignal installation report.
+
+        #{serialize(reason)}
+        """)
+
+        {:error, reason}
+    end
+  end
+
+  defp serialize(value) when is_binary(value), do: value
+  defp serialize(value), do: inspect(value)
+end
+
+defmodule Mix.Appsignal.Helper.CachedBuild do
+  def installed?(priv_dir, expected_version) do
+    Enum.all?(["appsignal-agent", "appsignal.h", "appsignal_extension.so"], fn file ->
+      priv_dir |> Path.join(file) |> File.exists?()
+    end) and version_matches?(priv_dir, expected_version)
+  end
+
+  defp version_matches?(priv_dir, expected_version) do
+    case File.read(Path.join(priv_dir, "appsignal.version")) do
+      {:ok, version} -> String.trim(version) == expected_version
+      {:error, _} -> false
+    end
+  end
+end
+
+defmodule Mix.Appsignal.Helper.Extractor do
+  def extract(filename, dir) do
+    case System.cmd("tar", ["zxf", filename, "--no-same-owner"],
+           stderr_to_stdout: true,
+           cd: dir
+         ) do
+      {_, 0} ->
+        :ok
+
+      {result, _code} ->
+        IO.binwrite(result)
+        {:error, "Extracting of #{filename} failed!"}
+    end
+  end
+end
+
+defmodule Mix.Appsignal.Helper.Make do
+  def run(env) do
+    try do
+      System.cmd(executable(), args(env), stderr_to_stdout: true)
+    rescue
+      reason -> {inspect(reason), 1}
+    end
+  end
+
+  defp executable, do: if(System.find_executable("gmake"), do: "gmake", else: "make")
+  defp args("test" <> _), do: ["-e", "CFLAGS_ADD=-DTEST"]
+  defp args(_), do: []
+end
+
+defmodule Mix.Appsignal.Helper.InstalledVersion do
+  def read(priv_dir) do
+    case File.read(Path.join(priv_dir, "appsignal.version")) do
+      {:ok, version} -> {:ok, String.trim(version)}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+end
+
+defmodule Mix.Appsignal.Helper.Ldd do
+  def version_output do
+    case System.cmd("ldd", ["--version"], stderr_to_stdout: true) do
+      {output, _} -> {:ok, output}
+    end
+  rescue
+    exception -> {:error, exception}
+  end
+end
+
+defmodule Mix.Appsignal.Helper.Root do
+  def root? do
+    try do
+      case System.cmd("id", ["-u"]) do
+        {id, 0} ->
+          case Integer.parse(List.first(String.split(id, "\n"))) do
+            {0, _} -> true
+            _ -> false
+          end
+
+        _ ->
+          false
+      end
+    catch
+      :error, _ -> false
+    end
+  end
 end
