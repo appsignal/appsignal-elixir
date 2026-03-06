@@ -1,6 +1,7 @@
 defmodule AppsignalTest do
   use ExUnit.Case, async: true
   import AppsignalTest.Utils
+  alias Appsignal.Diagnose.FakeInstallationReport
 
   setup do
     {:ok, _} = start_supervised(Appsignal.Test.Tracer)
@@ -9,10 +10,27 @@ defmodule AppsignalTest do
     {:ok, _} = start_supervised(Appsignal.Test.Monitor)
     {:ok, _} = start_supervised(FakeIO)
 
-    [fake_os: start_supervised!(FakeOS)]
+    fake_installation_report = start_supervised!(FakeInstallationReport)
+
+    [fake_os: start_supervised!(FakeOS), fake_installation_report: fake_installation_report]
+  end
+
+  # Build a minimal install report JSON whose arch/target matches FakeOS's default {unix, linux}
+  defp matching_install_json do
+    arch =
+      List.first(
+        String.split(to_string(:erlang.system_info(:system_architecture)), "-", parts: 2)
+      )
+
+    Jason.encode!(%{"build" => %{"architecture" => "#{arch}-linux", "target" => "linux"}})
   end
 
   describe "initialize" do
+    setup %{fake_installation_report: fake_ir} do
+      FakeInstallationReport.update(fake_ir, :install, {:ok, matching_install_json()})
+      :ok
+    end
+
     @tag :skip_env_test
     test "prints warning about extension not being loaded" do
       Appsignal.initialize()
@@ -24,10 +42,7 @@ defmodule AppsignalTest do
     end
 
     @tag :skip_env_test
-    test "prints warning about mismatch extension architecture", %{
-      fake_os: fake_os
-    } do
-      # Make current OS "unknown" value so it will always fail
+    test "prints warning about mismatch extension architecture", %{fake_os: fake_os} do
       FakeOS.update(fake_os, :type, {:unknown, :unknown})
       Appsignal.initialize()
       [{:stderr, device_output}] = FakeIO.all()
@@ -38,46 +53,35 @@ defmodule AppsignalTest do
     end
   end
 
-  describe "initialize when the JSON file not valid" do
-    setup do
-      install_report = Path.join([:code.priv_dir(:appsignal), "install.report"])
-      install_contents = File.read!(install_report)
-      File.write(install_report, "invalid install report JSON")
-
-      on_exit(:reset, fn ->
-        File.write!(install_report, install_contents)
-      end)
+  describe "initialize when the install report JSON is invalid" do
+    setup %{fake_installation_report: fake_ir} do
+      FakeInstallationReport.update(fake_ir, :install, {:ok, "invalid install report JSON"})
+      :ok
     end
 
     @tag :skip_env_test
-    test "logs an error that the report file is invalid" do
+    test "logs a parse error and an architecture mismatch" do
       Appsignal.initialize()
 
       [{:stderr, _architecture_mismatch_error}, {:stderr, report_error}] = FakeIO.all()
 
-      assert report_error =~
-               ~r{Failed to parse the AppSignal 'install.report' file:}
+      assert report_error =~ ~r{Failed to parse the AppSignal 'install.report' file:}
     end
   end
 
-  describe "initialize when the report file is not readable" do
-    setup do
-      install_report = Path.join([:code.priv_dir(:appsignal), "install.report"])
-      File.chmod(install_report, 0o000)
-
-      on_exit(:reset, fn ->
-        File.chmod(install_report, 0o644)
-      end)
+  describe "initialize when the install report cannot be read" do
+    setup %{fake_installation_report: fake_ir} do
+      FakeInstallationReport.update(fake_ir, :install, {:error, :eacces})
+      :ok
     end
 
     @tag :skip_env_test
-    test "logs an error when the report file is not found" do
+    test "logs a read error and an architecture mismatch" do
       Appsignal.initialize()
 
       [{:stderr, _architecture_mismatch_error}, {:stderr, report_error}] = FakeIO.all()
 
-      assert report_error =~
-               ~r{Failed to read the AppSignal 'install.report' file:}
+      assert report_error =~ ~r{Failed to read the AppSignal 'install.report' file:}
     end
   end
 

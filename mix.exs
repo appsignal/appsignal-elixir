@@ -6,8 +6,22 @@ defmodule Mix.Tasks.Compile.Appsignal do
   @requirements "loadpaths"
 
   def run(_args) do
+    # Remove all :appsignal environment overrides before evaluating mix_helpers.exs
+    # so that Application.compile_env/3 resolves to production defaults (real modules).
+    # This prevents fake test modules from being injected into the extension install task.
+    # The :config key is excluded as it holds user-facing AppSignal configuration.
+    saved = Application.get_all_env(:appsignal)
+
+    Enum.each(saved, fn
+      {:config, _} -> :ok
+      {key, _} -> Application.delete_env(:appsignal, key)
+    end)
+
     {_, _} = Code.eval_file("mix_helpers.exs")
     Mix.Appsignal.Helper.install()
+
+    Enum.each(saved, fn {key, val} -> Application.put_env(:appsignal, key, val) end)
+
     {:ok, []}
   end
 end
