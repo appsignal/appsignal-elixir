@@ -167,7 +167,8 @@ defmodule Appsignal.Mixfile do
       {:ex_doc, "~> 0.12", only: :dev, runtime: false},
       {:credo, credo_version, only: [:test, :dev], runtime: false},
       {:dialyxir, "~> 1.3.0", only: [:dev, :test], runtime: false},
-      {:telemetry, telemetry_version}
+      {:telemetry, telemetry_version},
+      {:httpoison, "~> 2.0", optional: true}
     ] ++ mime_dependency
   end
 end
