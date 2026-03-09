@@ -15,5 +15,6 @@ mix.lock
 /priv/*appsignal*
 /priv/*.report
 priv/plts
+/.elixir_ls
 /.envrc
 /.direnv/
