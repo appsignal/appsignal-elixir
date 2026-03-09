@@ -1,5 +1,21 @@
 # AppSignal for Elixir changelog
 
+## 2.17.0
+
+_Published on 2026-03-09._
+
+### Added
+
+- Add HTTPoison instrumentation. HTTP requests made with HTTPoison will appear as `request.httpoison` events on your performance samples' event timeline.
+
+  HTTPoison does not emit telemetry events, so the instrumentation is opt-in. Use `Appsignal.HTTPoison` in place of `HTTPoison` when making requests, or replace `use HTTPoison.Base` with `use Appsignal.HTTPoison.Base` for custom client modules. Response types (`%HTTPoison.Response{}`, `%HTTPoison.Error{}`, etc.) are unchanged.
+
+  (minor [f667373a](https://github.com/appsignal/appsignal-elixir/commit/f667373ae7e02ae68f45547bf5a179fc9e0121c0))
+
+### Changed
+
+- Bundled certificates have been updated. (patch [16dbdc27](https://github.com/appsignal/appsignal-elixir/commit/16dbdc2718e6618a9fae67db78b2c8482712907d))
+
 ## 2.16.0
 
 _Published on 2025-12-01._
