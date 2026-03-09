@@ -22,7 +22,7 @@ defmodule Appsignal.HTTPoison.Base do
         span =
           if parent do
             %URI{scheme: scheme, host: host, port: port} = URI.parse(url)
-            sanitized_url = URI.to_string(%URI{scheme: scheme, host: host, port: port})
+            sanitized_url = to_string(%URI{scheme: scheme, host: host, port: port})
             method_string = method |> to_string() |> String.upcase()
 
             "http_request"
