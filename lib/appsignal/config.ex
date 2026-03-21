@@ -91,6 +91,18 @@ defmodule Appsignal.Config do
   defp determine_overrides(config) do
     %{}
     |> Map.merge(skip_session_data_backwards_compatibility(config, config[:skip_session_data]))
+    |> Map.merge(default_working_directory_path(config))
+  end
+
+  defp default_working_directory_path(config) do
+    if empty?(config[:working_directory_path]) && empty?(config[:working_dir_path]) &&
+         present?(config[:otp_app]) do
+      path = Path.join(FileSystem.system_tmp_dir(), "appsignal-#{config[:otp_app]}")
+
+      %{working_directory_path: path}
+    else
+      %{}
+    end
   end
 
   defp skip_session_data_backwards_compatibility(config, nil) do
@@ -404,6 +416,8 @@ defmodule Appsignal.Config do
   defp empty?(""), do: true
   defp empty?([]), do: true
   defp empty?(_), do: false
+
+  defp present?(value), do: !empty?(value)
 
   defp true?("true"), do: true
   defp true?(true), do: true

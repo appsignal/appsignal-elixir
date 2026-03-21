@@ -7,6 +7,7 @@ defmodule Appsignal.ConfigTest do
   import AppsignalTest.Utils
   import ExUnit.CaptureIO
   alias Appsignal.{Config, Nif}
+  alias Appsignal.Utils.FileSystem
 
   setup do
     environment = freeze_environment()
@@ -665,6 +666,32 @@ defmodule Appsignal.ConfigTest do
                with_config(%{working_directory_path: "/tmp/appsignal"}, &init_config/0)
     end
 
+    test "working_directory_path defaults to <tmp>/appsignal-<otp_app> when otp_app is set" do
+      tmp = FileSystem.system_tmp_dir()
+      assert %{working_directory_path: path} = with_config(%{otp_app: :my_app}, &init_config/0)
+      assert path == Path.join(tmp, "appsignal-my_app")
+    end
+
+    test "working_directory_path is not defaulted when otp_app is nil" do
+      config = with_config(%{otp_app: nil}, &init_config/0)
+      refute Map.has_key?(config, :working_directory_path)
+    end
+
+    test "explicit working_directory_path takes precedence over otp_app default" do
+      assert %{working_directory_path: "/tmp/custom"} =
+               with_config(
+                 %{otp_app: :my_app, working_directory_path: "/tmp/custom"},
+                 &init_config/0
+               )
+    end
+
+    test "explicit working_dir_path takes precedence over otp_app default" do
+      without_logger(fn ->
+        config = with_config(%{otp_app: :my_app, working_dir_path: "/tmp/custom"}, &init_config/0)
+        refute Map.has_key?(config, :working_directory_path)
+      end)
+    end
+
     test "send_environment_metadata" do
       assert %{send_environment_metadata: false} =
                with_config(%{send_environment_metadata: false}, &init_config/0)
@@ -920,10 +947,18 @@ defmodule Appsignal.ConfigTest do
     end
 
     test "otp_app" do
+      tmp = FileSystem.system_tmp_dir()
+
       assert with_env(
                %{"APPSIGNAL_OTP_APP" => "appsignal_phoenix_example"},
                &init_config/0
-             ) == default_configuration() |> Map.put(:otp_app, :appsignal_phoenix_example)
+             ) ==
+               default_configuration()
+               |> Map.put(:otp_app, :appsignal_phoenix_example)
+               |> Map.put(
+                 :working_directory_path,
+                 Path.join(tmp, "appsignal-appsignal_phoenix_example")
+               )
     end
 
     test "name" do
