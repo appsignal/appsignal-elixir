@@ -127,6 +127,12 @@ defmodule MyModule do
 end
 ```
 
+### Concerns
+
+Although the decorators provide a quick way to instrument functions for customers, we generally prefer the use of the instrumentation helpers because they're opaque, easier to understand, and easier to debug when something goes wrong. 
+
+That said, removing the decorators would require users to instrument their functions separately, as there's no other solution for that yet. One way we could resolve part of this issue is taking ownership of the monkey patching that currently happens in the decorator library and building on that, but there might be other ways too.
+
 ### Available Decorators
 
 **1. `@decorate instrument()`**
