@@ -96,40 +96,88 @@ jobs:
       fail-fast: false
       matrix:
         elixir:
-          - 1.17.x
+          - 1.19.x
         otp:
+          - 28.x
           - 27.x
           - 26.x
-          - 25.x
         phoenix:
           - "~> 1.6.0"
           - "~> 1.7.0"
-          - "~> 1.8.0"
+          - "~> 1.8"
         include:
           - elixir: main
+            otp: 28.x
+            phoenix: "~> 1.8"
+          - elixir: latest
+            otp: 28.x
+            phoenix: "~> 1.8"
+          - elixir: 1.18.x
+            otp: 27.x
+            phoenix: "~> 1.8"
+          - elixir: 1.18.x
             otp: 27.x
             phoenix: "~> 1.7.0"
-          - elixir: latest
+          - elixir: 1.18.x
             otp: 27.x
+            phoenix: "~> 1.6.0"
+          - elixir: 1.17.x
+            otp: 27.x
+            phoenix: "~> 1.8"
+          - elixir: 1.17.x
+            otp: 27.x
+            phoenix: "~> 1.7.0"
+          - elixir: 1.17.x
+            otp: 27.x
+            phoenix: "~> 1.6.0"
+          - elixir: 1.16.x
+            otp: 26.x
+            phoenix: "~> 1.8"
+          - elixir: 1.16.x
+            otp: 26.x
             phoenix: "~> 1.7.0"
           - elixir: 1.16.x
+            otp: 26.x
+            phoenix: "~> 1.6.0"
+          - elixir: 1.15.x
+            otp: 26.x
+            phoenix: "~> 1.8"
+          - elixir: 1.15.x
             otp: 26.x
             phoenix: "~> 1.7.0"
           - elixir: 1.15.x
             otp: 26.x
+            phoenix: "~> 1.6.0"
+          - elixir: 1.14.x
+            otp: 25.x
             phoenix: "~> 1.7.0"
           - elixir: 1.14.x
             otp: 25.x
             phoenix: "~> 1.6.0"
           - elixir: 1.13.x
             otp: 24.x
+            phoenix: "~> 1.7.0"
+            plug: "~> 1.18.0"
+          - elixir: 1.13.x
+            otp: 24.x
             phoenix: "~> 1.6.0"
+            plug: "~> 1.18.0"
+          - elixir: 1.12.x
+            otp: 24.x
+            phoenix: "~> 1.7.0"
+            plug: "~> 1.18.0"
           - elixir: 1.12.x
             otp: 24.x
             phoenix: "~> 1.6.0"
+            plug: "~> 1.18.0"
+          - elixir: 1.11.x
+            otp: 24.x
+            phoenix: "~> 1.7.0"
+            plug: "~> 1.18.0"
           - elixir: 1.11.x
             otp: 24.x
             phoenix: "~> 1.6.0"
+            plug: "~> 1.18.0"
 
     steps:
       - name: Set up Erlang and Elixir
@@ -143,7 +191,9 @@ jobs:
         run: mix deps.get
         env:
           _APPSIGNAL_CI_PHOENIX_VERSION: ${{matrix.phoenix}}
+          _APPSIGNAL_CI_PLUG_VERSION: ${{matrix.plug}}
       - name: Run tests
         run: mix test
         env:
           _APPSIGNAL_CI_PHOENIX_VERSION: ${{matrix.phoenix}}
+          _APPSIGNAL_CI_PLUG_VERSION: ${{matrix.plug}}

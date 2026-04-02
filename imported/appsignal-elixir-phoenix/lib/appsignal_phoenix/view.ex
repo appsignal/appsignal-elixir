@@ -1,6 +1,4 @@
 defmodule Appsignal.Phoenix.View do
-  require Logger
-
   @moduledoc """
   AppSignal.Phoenix.View instruments template rendering.
 
