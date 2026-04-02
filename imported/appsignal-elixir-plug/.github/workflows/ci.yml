@@ -32,7 +32,7 @@ jobs:
         uses: erlef/setup-beam@v1
         with:
           otp-version: 27.x
-          elixir-version: latest
+          elixir-version: 1.19.x
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Check code formatting
@@ -47,7 +47,7 @@ jobs:
         uses: erlef/setup-beam@v1
         with:
           otp-version: 27.x
-          elixir-version: latest
+          elixir-version: 1.19.x
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Get dependencies
@@ -64,7 +64,7 @@ jobs:
         uses: erlef/setup-beam@v1
         with:
           otp-version: 27.x
-          elixir-version: latest
+          elixir-version: 1.19.x
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Get dependencies
@@ -109,33 +109,61 @@ jobs:
           - 26.x
           - 25.x
         plug:
-          - "~> 1.18"
-          - "~> 1.17"
+          - "~> 1.19"
+          - "~> 1.18.0"
+          - "~> 1.17.0"
         include:
           - elixir: main
             otp: 27.x
-            plug: "~> 1.18"
+            plug: "~> 1.19"
           - elixir: latest
             otp: 27.x
-            plug: "~> 1.18"
+            plug: "~> 1.19"
           - elixir: 1.16.x
             otp: 26.x
-            plug: "~> 1.17"
+            plug: "~> 1.19"
+          - elixir: 1.16.x
+            otp: 26.x
+            plug: "~> 1.18.0"
+          - elixir: 1.16.x
+            otp: 26.x
+            plug: "~> 1.17.0"
           - elixir: 1.15.x
             otp: 26.x
-            plug: "~> 1.17"
+            plug: "~> 1.19"
+          - elixir: 1.15.x
+            otp: 26.x
+            plug: "~> 1.18.0"
+          - elixir: 1.15.x
+            otp: 26.x
+            plug: "~> 1.17.0"
           - elixir: 1.14.x
             otp: 25.x
-            plug: "~> 1.17"
+            plug: "~> 1.19"
+          - elixir: 1.14.x
+            otp: 25.x
+            plug: "~> 1.18.0"
+          - elixir: 1.14.x
+            otp: 25.x
+            plug: "~> 1.17.0"
           - elixir: 1.13.x
+            otp: 24.x
+            plug: "~> 1.18.0"
+          - elixir: 1.13.x
+            otp: 24.x
+            plug: "~> 1.17.0"
+          - elixir: 1.12.x
             otp: 24.x
             plug: "~> 1.18.0"
           - elixir: 1.12.x
             otp: 24.x
-            plug: "~> 1.18.0"
+            plug: "~> 1.17.0"
           - elixir: 1.11.x
             otp: 24.x
             plug: "~> 1.18.0"
+          - elixir: 1.11.x
+            otp: 24.x
+            plug: "~> 1.17.0"
 
     env:
       PLUG_VERSION: ${{matrix.plug}}
