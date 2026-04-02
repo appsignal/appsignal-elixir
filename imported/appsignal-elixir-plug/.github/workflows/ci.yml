@@ -129,13 +129,13 @@ jobs:
             plug: "~> 1.17"
           - elixir: 1.13.x
             otp: 24.x
-            plug: "~> 1.17"
+            plug: "~> 1.18.0"
           - elixir: 1.12.x
             otp: 24.x
-            plug: "~> 1.17"
+            plug: "~> 1.18.0"
           - elixir: 1.11.x
             otp: 24.x
-            plug: "~> 1.17"
+            plug: "~> 1.18.0"
 
     env:
       PLUG_VERSION: ${{matrix.plug}}
