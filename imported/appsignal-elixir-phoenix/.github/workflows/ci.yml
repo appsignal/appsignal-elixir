@@ -15,6 +15,9 @@ on:
   workflow_dispatch:
 
 jobs:
+  validate-changesets:
+    uses: ./.github/workflows/validate_changesets.yml
+
   lint_git:
     runs-on: ubuntu-latest
     if: ${{ github.event_name != 'schedule' }}
