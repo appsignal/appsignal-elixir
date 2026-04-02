@@ -103,22 +103,40 @@ jobs:
       fail-fast: false
       matrix:
         elixir:
-          - 1.17.x
+          - 1.19.x
         otp:
+          - 28.x
           - 27.x
           - 26.x
-          - 25.x
         plug:
           - "~> 1.19"
           - "~> 1.18.0"
           - "~> 1.17.0"
         include:
           - elixir: main
-            otp: 27.x
+            otp: 28.x
             plug: "~> 1.19"
           - elixir: latest
+            otp: 28.x
+            plug: "~> 1.19"
+          - elixir: 1.18.x
             otp: 27.x
             plug: "~> 1.19"
+          - elixir: 1.18.x
+            otp: 27.x
+            plug: "~> 1.18.0"
+          - elixir: 1.18.x
+            otp: 27.x
+            plug: "~> 1.17.0"
+          - elixir: 1.17.x
+            otp: 27.x
+            plug: "~> 1.19"
+          - elixir: 1.17.x
+            otp: 27.x
+            plug: "~> 1.18.0"
+          - elixir: 1.17.x
+            otp: 27.x
+            plug: "~> 1.17.0"
           - elixir: 1.16.x
             otp: 26.x
             plug: "~> 1.19"
