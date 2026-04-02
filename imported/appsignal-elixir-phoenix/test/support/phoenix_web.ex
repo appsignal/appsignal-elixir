@@ -12,6 +12,7 @@ defmodule PhoenixWeb.Endpoint do
 end
 
 defmodule PhoenixWeb.Controller do
+  @moduledoc false
   use Phoenix.Controller, formats: [:html]
   import Plug.Conn
 
@@ -28,6 +29,7 @@ end
 
 if function_exported?(Phoenix.View, :__info__, 1) do
   defmodule PhoenixWeb.View do
+    @moduledoc false
     use Phoenix.View,
       root: "test/support",
       namespace: AppsignalPhoenixExampleWeb
@@ -37,6 +39,7 @@ if function_exported?(Phoenix.View, :__info__, 1) do
 end
 
 defmodule PhoenixWeb.Channel do
+  @moduledoc false
   use Phoenix.Channel
   require Appsignal.Phoenix.Channel
 

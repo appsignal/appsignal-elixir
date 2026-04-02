@@ -59,6 +59,13 @@ defmodule Appsignal.Phoenix.MixProject do
 
     phoenix_version = System.get_env("_APPSIGNAL_CI_PHOENIX_VERSION") || "~> 1.7"
 
+    plug_override =
+      case System.get_env("_APPSIGNAL_CI_PLUG_VERSION") do
+        nil -> []
+        "" -> []
+        version -> [{:plug, version, override: true}]
+      end
+
     [
       {:appsignal, ">= 2.15.0 and < 3.0.0"},
       {:appsignal_plug, ">= 2.1.0 and < 3.0.0"},
@@ -69,6 +76,6 @@ defmodule Appsignal.Phoenix.MixProject do
       {:dialyxir, "~> 1.3.0", only: [:dev, :test], runtime: false},
       {:credo, credo_version, only: [:dev, :test], runtime: false},
       {:telemetry, "~> 0.4 or ~> 1.0"}
-    ]
+    ] ++ plug_override
   end
 end
