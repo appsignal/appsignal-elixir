@@ -1,7 +1,7 @@
 defmodule Appsignal.FakeDebounce do
   use Agent
 
-  def start_link(opts \\ nil) do
+  def start_link(_opts \\ nil) do
     Agent.start_link(
       # Since `nil` is a valid value for `last_transmission_milliseconds`,
       # we use `:never_called` to differentiate when the function has

@@ -1490,8 +1490,8 @@ defmodule Appsignal.ConfigTest do
   end
 
   defp without_logger(fun) do
-    Logger.disable(self())
+    Logger.put_process_level(self(), :none)
     fun.()
-    Logger.enable(self())
+    Logger.delete_process_level(self())
   end
 end

@@ -939,8 +939,9 @@ defmodule AppsignalSpanTest do
     end
   end
 
-  @tag :skip_env_test_no_nif
   describe ".to_map/1" do
+    @describetag :skip_env_test_no_nif
+
     setup :create_root_span
 
     test "returns a map with span metadata", %{span: span} do

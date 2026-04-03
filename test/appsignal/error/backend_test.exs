@@ -54,11 +54,11 @@ defmodule Appsignal.Error.BackendTest do
   end
 
   test "is added as a Logger backend" do
-    assert {:error, :already_present} = Logger.add_backend(Backend)
+    assert {:error, :already_present} = Appsignal.Utils.LoggerHandler.add_backend(Backend)
   end
 
   test "is not added as a Logger backend when disabled" do
-    Logger.remove_backend(Appsignal.Error.Backend)
+    Appsignal.Utils.LoggerHandler.remove_backend(Appsignal.Error.Backend)
     with_config(%{enable_error_backend: false}, fn -> Appsignal.start([], []) end)
 
     assert :ok = Appsignal.Error.Backend.attach()
