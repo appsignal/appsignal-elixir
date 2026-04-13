@@ -1490,8 +1490,27 @@ defmodule Appsignal.ConfigTest do
   end
 
   defp without_logger(fun) do
-    Logger.disable(self())
+    put_process_level(self(), :none)
     fun.()
-    Logger.enable(self())
+    delete_process_level(self())
+  end
+
+  # Logger process-level APIs differ between Elixir versions.
+  # Newer versions expose put/delete process-level calls, while older
+  # versions still rely on disable/enable.
+  # Use dispatch by exported function so OTP 24 CI and newer versions
+  # both compile and run these tests.
+  if function_exported?(Logger, :put_process_level, 2) do
+    defp put_process_level(pid, level), do: Logger.put_process_level(pid, level)
+    defp delete_process_level(pid), do: Logger.delete_process_level(pid)
+  else
+    if function_exported?(Logger, :put_process_level, 1) do
+      defp put_process_level(_pid, level), do: Logger.put_process_level(level)
+      defp delete_process_level(_pid), do: Logger.delete_process_level()
+    else
+      # Elixir 1.11 does not expose put/delete process-level calls.
+      defp put_process_level(pid, _level), do: Logger.disable(pid)
+      defp delete_process_level(pid), do: Logger.enable(pid)
+    end
   end
 end

@@ -1,6 +1,5 @@
 defmodule Appsignal.Utils.MapFilter do
   @moduledoc false
-  require Logger
 
   # Phoenix parameter filtering adapted from the Phoenix Framework.
   # Copyright (c) 2014 Chris McCord - Licensed under MIT

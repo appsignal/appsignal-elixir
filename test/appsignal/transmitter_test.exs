@@ -97,12 +97,7 @@ defmodule Appsignal.TransmitterTest do
       refute Keyword.has_key?(ssl_options, :versions)
       assert ssl_options[:depth] == 4
       assert ssl_options[:honor_cipher_order] == :undefined
-
-      if System.otp_release() >= "20.3" do
-        assert ssl_options[:ciphers] == :ssl.cipher_suites(:default, :"tlsv1.2")
-      else
-        assert ssl_options[:ciphers] == :ssl.cipher_suites()
-      end
+      assert ssl_options[:ciphers] == :ssl.cipher_suites(:default, :"tlsv1.2")
     end
 
     if System.otp_release() >= "21" do

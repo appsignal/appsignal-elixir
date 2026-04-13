@@ -153,6 +153,12 @@ defmodule Appsignal.Mixfile do
         _ -> "~> 1.7"
       end
 
+    logger_backends_dependency =
+      case Version.compare(system_version, "1.15.0") do
+        :lt -> []
+        _ -> [{:logger_backends, "~> 1.0"}]
+      end
+
     [
       {:castore, "~> 1.0"},
       {:certifi, "~> 2.14"},
@@ -169,6 +175,6 @@ defmodule Appsignal.Mixfile do
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:telemetry, telemetry_version},
       {:httpoison, "~> 2.0", optional: true}
-    ] ++ mime_dependency
+    ] ++ mime_dependency ++ logger_backends_dependency
   end
 end

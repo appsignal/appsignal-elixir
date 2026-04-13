@@ -394,8 +394,9 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
     assert report[:process] == %{uid: FakeSystem.get(fake_system, :uid)}
   end
 
-  @tag :skip_env_test_no_nif
   describe "when Nif is loaded" do
+    @describetag :skip_env_test_no_nif
+
     setup %{fake_nif: fake_nif} do
       FakeNif.update(fake_nif, :loaded?, true)
     end

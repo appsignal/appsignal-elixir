@@ -128,11 +128,8 @@ defmodule Appsignal.Transmitter do
       ]
     end
 
-    if System.otp_release() >= "20.3" do
-      defp ciphers, do: :ssl.cipher_suites(:default, :"tlsv1.2")
-    else
-      defp ciphers, do: :ssl.cipher_suites()
-    end
+    # OTP 21+ is required for Elixir 1.11+, so we always use the new API
+    defp ciphers, do: :ssl.cipher_suites(:default, :"tlsv1.2")
   end
 
   if System.otp_release() >= "21" do
