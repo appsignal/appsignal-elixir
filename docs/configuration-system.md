@@ -34,7 +34,7 @@ If `APPSIGNAL_PUSH_API_KEY` is set, AppSignal is automatically activated.
 
 ### 3. Application Configuration
 
-Configuration from `config/config.exs` or environment-specific config files:287-289):
+Configuration from `config/config.exs` or environment-specific config files:
 Can be a keyword list or a map.
 
 ### 4. Environment Variables
@@ -81,7 +81,7 @@ There's an important distinction between **configured as active** and **actually
 
 ### `configured_as_active?/0`
 
-Returns `true` if the `active` config option is set to `true` (lib/appsignal/config.ex:122-124):
+Returns `true` if the `active` config option is set to `true`:
 
 ### `active?/0`
 
@@ -148,7 +148,7 @@ Defaulting to enabled provides the best out-of-box experience.
 
 ## Special Configuration: Oban Error Reporting
 
-The `report_oban_errors` option has three possible values (lib/appsignal/config.ex:223-249):
+The `report_oban_errors` option has three possible values:
 
 - `"all"` (default) - Report all Oban errors
 - `"discard"` - Only report errors for discarded jobs

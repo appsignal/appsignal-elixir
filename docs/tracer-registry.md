@@ -1,6 +1,6 @@
 # Tracer Registry (ETS Table)
 
-The Appsignal Elixir integration uses an ETS table as a registry to track spans across processes.
+The AppSignal Elixir integration uses an ETS table as a registry to track spans across processes.
 This document explains the design decisions and implementation details.
 
 ## Overview
