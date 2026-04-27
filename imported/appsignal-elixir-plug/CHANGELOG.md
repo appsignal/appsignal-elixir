@@ -1,5 +1,13 @@
 # AppSignal for Elixir Plug changelog
 
+## 2.1.2
+
+_Published on 2026-04-27._
+
+### Fixed
+
+- Fix successful request traces being dropped by the extension. (patch [ae7d54a](https://github.com/appsignal/appsignal-elixir-plug/commit/ae7d54ad2511ba27959c38041bb806ddc4815ef2))
+
 ## 2.1.1
 
 _Published on 2025-05-06._
