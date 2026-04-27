@@ -58,9 +58,8 @@ defmodule Appsignal.Plug do
             :erlang.raise(kind, reason, stack)
         else
           conn ->
-            @tracer.close_span(span)
-
             _ = Appsignal.Plug.set_conn_data(span, conn)
+            @tracer.close_span(span)
             Plug.Conn.put_private(conn, :appsignal_plug_instrumented, true)
         end
       end
