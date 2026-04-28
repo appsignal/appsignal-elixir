@@ -1,5 +1,16 @@
 # AppSignal for Elixir Plug changelog
 
+## 2.1.3
+
+_Published on 2026-04-28._
+
+### Fixed
+
+- Fix an issue where the package fails to build in customer's CI environments
+  due to a required `PLUG_VERSION` environment flag on CI.
+
+  (patch [bdd9c25](https://github.com/appsignal/appsignal-elixir-plug/commit/bdd9c252cd664be9d452318f7bb3c03be0d1f13d))
+
 ## 2.1.2
 
 _Published on 2026-04-27._
