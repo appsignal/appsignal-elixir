@@ -29,7 +29,7 @@ jobs:
   lint_format:
     runs-on: ubuntu-latest
     env:
-      PLUG_VERSION: "~> 1.18"
+      _APPSIGNAL_CI_PLUG_VERSION: "~> 1.18"
     steps:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
@@ -44,7 +44,7 @@ jobs:
   lint_credo:
     runs-on: ubuntu-latest
     env:
-      PLUG_VERSION: "~> 1.18"
+      _APPSIGNAL_CI_PLUG_VERSION: "~> 1.18"
     steps:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
@@ -61,7 +61,7 @@ jobs:
   lint_compile:
     runs-on: ubuntu-latest
     env:
-      PLUG_VERSION: "~> 1.18"
+      _APPSIGNAL_CI_PLUG_VERSION: "~> 1.18"
     steps:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
@@ -78,7 +78,7 @@ jobs:
   lint_dialyzer:
     runs-on: ubuntu-latest
     env:
-      PLUG_VERSION: "~> 1.18"
+      _APPSIGNAL_CI_PLUG_VERSION: "~> 1.18"
     steps:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
@@ -187,7 +187,7 @@ jobs:
             plug: "~> 1.17.0"
 
     env:
-      PLUG_VERSION: ${{matrix.plug}}
+      _APPSIGNAL_CI_PLUG_VERSION: ${{matrix.plug}}
     steps:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1

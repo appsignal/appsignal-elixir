@@ -51,17 +51,11 @@ defmodule Appsignal.Plug.MixProject do
       end
 
     plug_version =
-      case {System.get_env("CI"), System.get_env("PLUG_VERSION")} do
-        {"true", nil} ->
-          raise "PLUG_VERSION environment variable must be set on CI"
-
-        {_, version} ->
-          version ||
-            case Version.compare(system_version, "1.10.0") do
-              :lt -> ">= 1.1.0 and < 1.14.0"
-              _ -> ">= 1.18.0"
-            end
-      end
+      System.get_env("_APPSIGNAL_CI_PLUG_VERSION") ||
+        case Version.compare(system_version, "1.10.0") do
+          :lt -> ">= 1.1.0 and < 1.14.0"
+          _ -> ">= 1.18.0"
+        end
 
     credo_version =
       case Version.compare(system_version, "1.13.0") do
