@@ -13,7 +13,7 @@ defmodule Appsignal.Transmitter do
     try do
       method
       |> http_client.build(url, headers, body)
-      |> http_client.request(name, [])
+      |> http_client.request(name)
     after
       Process.exit(pid, :normal)
     end
@@ -24,7 +24,7 @@ defmodule Appsignal.Transmitter do
 
     method
     |> http_client.build(url, headers, body)
-    |> http_client.request(AppsignalFinch, [])
+    |> http_client.request(AppsignalFinch)
   end
 
   @doc false

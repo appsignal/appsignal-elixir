@@ -50,7 +50,7 @@ defmodule FakeFinchDownload do
     {:fake_request, method, url, headers, body}
   end
 
-  def request({:fake_request, method, url, headers, body}, _name, opts) do
+  def request({:fake_request, method, url, headers, body}, _name, opts \\ []) do
     if alive?() do
       update(__MODULE__, :last_request, {method, url, headers, body, opts})
       next_response()
