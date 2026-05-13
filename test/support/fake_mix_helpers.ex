@@ -38,7 +38,7 @@ defmodule FakeFinchDownload do
 
   # Spawn a throwaway process so Process.exit(pid, :normal) in the after
   # block of download_package/2 doesn't kill the test process
-  def start_link(name: _name) do
+  def start_link(opts) when is_list(opts) do
     pid = spawn(fn -> :ok end)
     {:ok, pid}
   end

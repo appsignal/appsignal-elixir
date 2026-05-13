@@ -79,70 +79,64 @@ defmodule Appsignal.TransmitterTest do
     end
   end
 
-  test "uses the default CA certificate" do
-    [_method, _url, _headers, _body, options] =
-      Transmitter.request(:get, "https://example.com")
+  describe "pool_options/0" do
+    test "uses the default CA certificate" do
+      ssl_options = Transmitter.pool_options() |> get_in([:conn_opts, :transport_opts])
 
-    ssl_options = Keyword.get(options, :ssl_options)
+      assert ssl_options[:verify] == :verify_peer
+      assert ssl_options[:cacertfile] == Config.ca_file_path()
 
-    assert ssl_options[:verify] == :verify_peer
-    assert ssl_options[:cacertfile] == Config.ca_file_path()
+      if System.otp_release() >= "23" do
+        assert ssl_options[:versions] == [:"tlsv1.3", :"tlsv1.2"]
+        refute Keyword.has_key?(ssl_options, :depth)
+        refute Keyword.has_key?(ssl_options, :ciphers)
+        refute Keyword.has_key?(ssl_options, :honor_cipher_order)
+      else
+        refute Keyword.has_key?(ssl_options, :versions)
+        assert ssl_options[:depth] == 4
+        assert ssl_options[:honor_cipher_order] == :undefined
+        assert ssl_options[:ciphers] == :ssl.cipher_suites(:default, :"tlsv1.2")
+      end
 
-    if System.otp_release() >= "23" do
-      assert ssl_options[:versions] == [:"tlsv1.3", :"tlsv1.2"]
-      refute Keyword.has_key?(ssl_options, :depth)
-      refute Keyword.has_key?(ssl_options, :ciphers)
-      refute Keyword.has_key?(ssl_options, :honor_cipher_order)
-    else
-      refute Keyword.has_key?(ssl_options, :versions)
-      assert ssl_options[:depth] == 4
-      assert ssl_options[:honor_cipher_order] == :undefined
-      assert ssl_options[:ciphers] == :ssl.cipher_suites(:default, :"tlsv1.2")
+      if System.otp_release() >= "21" do
+        assert ssl_options[:customize_hostname_check] == [
+                 match_fun: :public_key.pkix_verify_hostname_match_fun(:https)
+               ]
+
+        refute Keyword.has_key?(ssl_options, :verify_fun)
+      else
+        assert match?(
+                 {fun, pid} when is_function(fun, 3) and is_pid(pid),
+                 ssl_options[:verify_fun]
+               )
+
+        refute Keyword.has_key?(ssl_options, :customize_hostname_check)
+      end
     end
 
-    if System.otp_release() >= "21" do
-      assert ssl_options[:customize_hostname_check] == [
-               match_fun: :public_key.pkix_verify_hostname_match_fun(:https)
-             ]
+    test "uses the configured CA certificate" do
+      path = "priv/cacert.pem"
 
-      refute Keyword.has_key?(ssl_options, :verify_fun)
-    else
-      assert match?(
-               {fun, pid} when is_function(fun, 3) and is_pid(pid),
-               ssl_options[:verify_fun]
-             )
+      with_config(%{ca_file_path: path}, fn ->
+        ssl_options = Transmitter.pool_options() |> get_in([:conn_opts, :transport_opts])
 
-      refute Keyword.has_key?(ssl_options, :customize_hostname_check)
+        assert ssl_options[:cacertfile] == path
+      end)
     end
-  end
 
-  test "uses the configured CA certificate" do
-    path = "priv/cacert.pem"
+    test "logs a warning when the CA certificate file does not exist" do
+      path = "test/fixtures/does_not_exist.pem"
 
-    with_config(%{ca_file_path: path}, fn ->
-      [_method, _url, _headers, _body, options] =
-        Transmitter.request(:get, "https://example.com")
+      with_config(%{ca_file_path: path}, fn ->
+        log =
+          capture_log(fn ->
+            assert Transmitter.pool_options() == []
+          end)
 
-      ssl_options = Keyword.get(options, :ssl_options)
-      assert ssl_options[:cacertfile] == path
-    end)
-  end
-
-  test "logs a warning when the CA certificate file does not exist" do
-    path = "test/fixtures/does_not_exist.pem"
-
-    with_config(%{ca_file_path: path}, fn ->
-      log =
-        capture_log(fn ->
-          [_method, _url, _headers, _body, options] =
-            Transmitter.request(:get, "https://example.com")
-
-          refute Keyword.has_key?(options, :ssl_options)
-        end)
-
-      # credo:disable-for-lines:2 Credo.Check.Readability.MaxLineLength
-      assert log =~
-               ~r/\[warn(ing)?\](\s{1,2})Ignoring non-existing or unreadable ca_file_path \(test\/fixtures\/does_not_exist\.pem\): :enoent/
-    end)
+        # credo:disable-for-lines:2 Credo.Check.Readability.MaxLineLength
+        assert log =~
+                 ~r/\[warn(ing)?\](\s{1,2})Ignoring non-existing or unreadable ca_file_path \(test\/fixtures\/does_not_exist\.pem\): :enoent/
+      end)
+    end
   end
 end
