@@ -162,7 +162,7 @@ defmodule Appsignal.Mixfile do
     [
       {:castore, "~> 1.0"},
       {:certifi, "~> 2.14"},
-      {:decimal, "~> 3.0"},
+      {:decimal, "3.1.0"},
       {:benchee, "~> 1.0", only: :bench},
       {:finch, "~> 0.19"},
       {:jason, "~> 1.0"},
