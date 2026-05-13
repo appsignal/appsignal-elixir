@@ -24,9 +24,10 @@ defmodule Appsignal.TransmitterTest do
         hostname: "some_hostname"
       }
 
-      [method, url, headers, body, _options] = Transmitter.transmit(url, {payload, :json}, config)
+      [method, url, headers, body, options] = Transmitter.transmit(url, {payload, :json}, config)
 
       assert method == :post
+      assert options == []
 
       # The order in which the query parameters are serialized is not
       # stable across Elixir versions.

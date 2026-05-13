@@ -33,12 +33,15 @@ defmodule FakeFinchDownload do
   use TestAgent, %{
     response: {:ok, %{status: 200, body: ""}},
     response_queue: [],
-    last_request: nil
+    last_request: nil,
+    last_start_opts: nil
   }
 
   # Spawn a throwaway process so Process.exit(pid, :normal) in the after
   # block of download_package/2 doesn't kill the test process
   def start_link(opts) when is_list(opts) do
+    if alive?(), do: update(__MODULE__, :last_start_opts, opts)
+
     pid = spawn(fn -> :ok end)
     {:ok, pid}
   end
@@ -47,9 +50,9 @@ defmodule FakeFinchDownload do
     {:fake_request, method, url, headers, body}
   end
 
-  def request({:fake_request, method, url, headers, body}, _name, _opts) do
+  def request({:fake_request, method, url, headers, body}, _name, opts) do
     if alive?() do
-      update(__MODULE__, :last_request, {method, url, headers, body})
+      update(__MODULE__, :last_request, {method, url, headers, body, opts})
       next_response()
     else
       {:error, :not_started}
