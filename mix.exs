@@ -123,6 +123,12 @@ defmodule Appsignal.Mixfile do
         _ -> "~> 1.2.3 or ~> 1.3"
       end
 
+    finch_version =
+      case Version.compare(system_version, "1.15.0") do
+        :lt -> ">= 0.19.0 and < 0.22.0"
+        _ -> "~> 0.19"
+      end
+
     telemetry_version =
       case otp_version < "21" do
         true -> "~> 0.4"
@@ -164,7 +170,7 @@ defmodule Appsignal.Mixfile do
       {:certifi, "~> 2.14"},
       {:decimal, "~> 2.0 or ~> 3.1"},
       {:benchee, "~> 1.0", only: :bench},
-      {:finch, "~> 0.19"},
+      {:finch, finch_version},
       {:jason, "~> 1.0"},
       {:decorator, decorator_version},
       {:plug, plug_version, only: [:test, :test_no_nif]},
