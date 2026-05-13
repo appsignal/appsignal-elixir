@@ -54,7 +54,7 @@ defmodule Appsignal do
       {Appsignal.Monitor, []},
       {Appsignal.Probes, []},
       {Appsignal.CheckIn.Scheduler, []},
-      {Finch, name: AppsignalFinch}
+      {Finch, name: AppsignalFinch, pools: %{default: Appsignal.Transmitter.pool_options()}}
     ]
 
     result = Supervisor.start_link(children, strategy: :one_for_one, name: Appsignal.Supervisor)
