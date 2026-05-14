@@ -211,7 +211,8 @@ defmodule Mix.Appsignal.HelperTest do
     } do
       Mix.Appsignal.Helper.install()
 
-      {_method, requested_url, _headers, _body} = FakeFinchDownload.get(fake_finch, :last_request)
+      {_method, requested_url, _headers, _body, _opts} =
+        FakeFinchDownload.get(fake_finch, :last_request)
 
       assert requested_url ==
                "http://fake-mirror/0.0.1-test/appsignal-x86_64-linux-all-static.tar.gz"
@@ -226,6 +227,28 @@ defmodule Mix.Appsignal.HelperTest do
       assert report[:download][:target] == "linux"
       assert report[:download][:library_type] == "static"
       assert is_binary(report[:download][:time])
+    end
+
+    @tag :skip_env_test_no_nif
+    test "configures connection options on the Finch pool and not on the request", %{
+      fake_finch: fake_finch
+    } do
+      Mix.Appsignal.Helper.install()
+
+      start_opts = FakeFinchDownload.get(fake_finch, :last_start_opts)
+
+      {_method, _url, _headers, _body, request_opts} =
+        FakeFinchDownload.get(fake_finch, :last_request)
+
+      assert request_opts == []
+      assert start_opts[:name] == AppsignalFinchDownload
+      assert %{default: [conn_opts: conn_opts]} = start_opts[:pools]
+
+      transport_opts = conn_opts[:transport_opts]
+
+      assert transport_opts[:verify] == :verify_peer
+      assert is_binary(transport_opts[:cacertfile])
+      refute Keyword.has_key?(conn_opts, :ssl_options)
     end
   end
 

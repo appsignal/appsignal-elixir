@@ -173,7 +173,12 @@ defmodule Mix.Appsignal.Helper do
 
       false ->
         Mix.shell().info("Downloading agent release")
-        {:ok, pid} = @finch.start_link(name: AppsignalFinchDownload)
+
+        {:ok, pid} =
+          @finch.start_link(
+            name: AppsignalFinchDownload,
+            pools: %{default: [conn_opts: download_conn_opts()]}
+          )
 
         try do
           case do_download_file!(filename, local_filename, @agent.mirrors()) do
@@ -244,7 +249,7 @@ defmodule Mix.Appsignal.Helper do
   defp do_download_file!(url, local_filename) do
     request =
       @finch.build(:get, url, [], "")
-      |> @finch.request(AppsignalFinchDownload, download_options())
+      |> @finch.request(AppsignalFinchDownload, [])
 
     case request do
       {:ok, %{status: 200, body: body}} ->
@@ -265,7 +270,7 @@ defmodule Mix.Appsignal.Helper do
     Enum.join([mirror, version, filename], "/")
   end
 
-  defp download_options do
+  defp download_conn_opts do
     default_cacert_file_path = priv_path("cacert.pem")
 
     cacert_file =
@@ -283,22 +288,29 @@ defmodule Mix.Appsignal.Helper do
           :certifi.cacertfile()
       end
 
-    options = [
-      ssl_options:
-        [
-          verify: :verify_peer,
-          cacertfile: cacert_file
-        ] ++ tls_options() ++ customize_hostname_check_or_verify_fun()
-    ]
+    transport_opts =
+      [
+        verify: :verify_peer,
+        cacertfile: cacert_file
+      ] ++ tls_options() ++ customize_hostname_check_or_verify_fun()
+
+    conn_opts = [transport_opts: transport_opts]
 
     case check_proxy() do
       nil ->
-        options
+        conn_opts
 
       {var, url} ->
         Mix.shell().info("- using proxy from #{var} (#{url})")
-        options ++ [proxy: url]
+        conn_opts ++ [proxy: parse_proxy(url)]
     end
+  end
+
+  defp parse_proxy(url) do
+    uri = URI.parse(url)
+    scheme = if uri.scheme == "https", do: :https, else: :http
+    port = uri.port || if scheme == :https, do: 443, else: 80
+    {scheme, uri.host, port, []}
   end
 
   defp check_cacert_access(cacert_path) do
