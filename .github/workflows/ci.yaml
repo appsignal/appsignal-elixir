@@ -160,8 +160,6 @@ jobs:
             otp: "24"
           - elixir: "1.12"
             otp: "24"
-          - elixir: "1.11"
-            otp: "24"
 
     steps:
       - name: Set up Erlang and Elixir
