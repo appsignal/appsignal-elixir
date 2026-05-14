@@ -1,5 +1,18 @@
 # AppSignal for Elixir changelog
 
+## 2.17.1
+
+_Published on 2026-05-14._
+
+### Fixed
+
+- Continue reporting non-disk host metrics when a mount is frozen. (patch [433b4ac9](https://github.com/appsignal/appsignal-elixir/commit/433b4ac912953b61ea977c70ba4bdbd6df3bc87a))
+- Fix compatibility with Finch 0.22+. This change moves SSL and proxy options to pool-level `conn_opts` in `Finch.start_link`. (patch [c0d6c23d](https://github.com/appsignal/appsignal-elixir/commit/c0d6c23d9460f084e037df402f860970aa501700))
+
+### Security
+
+- [CVE-2026-32686](https://cna.erlef.org/cves/CVE-2026-32686.html) describes an unauthenticated remote Denial of Service vulnerability in `decmimal` before `3.0.0`.  Loosen `decimal` requirement to allow `~> 3.0` and fix compatibility with `ecto`. (patch [c0d6c23d](https://github.com/appsignal/appsignal-elixir/commit/c0d6c23d9460f084e037df402f860970aa501700))
+
 ## 2.17.0
 
 _Published on 2026-03-09._
