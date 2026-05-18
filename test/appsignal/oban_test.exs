@@ -118,7 +118,7 @@ defmodule Appsignal.ObanTest do
 
     test "adds job queue time distribution value", %{fake_appsignal: fake_appsignal} do
       assert [
-               %{key: _, value: 3000, tags: %{queue: "default"}}
+               %{key: _, value: 3456.789, tags: %{queue: "default"}}
              ] = FakeAppsignal.get_distribution_values(fake_appsignal, "oban_job_queue_time")
     end
   end
@@ -176,13 +176,13 @@ defmodule Appsignal.ObanTest do
 
     test "adds job duration distribution value", %{fake_appsignal: fake_appsignal} do
       assert [
-               %{key: _, value: 123, tags: %{worker: "Test.Worker"}},
+               %{key: _, value: 123.456, tags: %{worker: "Test.Worker"}},
                %{
                  key: _,
-                 value: 123,
+                 value: 123.456,
                  tags: %{hostname: "Bobs-MBP.example.com", worker: "Test.Worker"}
                },
-               %{key: _, value: 123, tags: %{state: "success", worker: "Test.Worker"}}
+               %{key: _, value: 123.456, tags: %{state: "success", worker: "Test.Worker"}}
              ] = FakeAppsignal.get_distribution_values(fake_appsignal, "oban_job_duration")
     end
 
@@ -223,13 +223,13 @@ defmodule Appsignal.ObanTest do
 
     test "adds job duration distribution value", %{fake_appsignal: fake_appsignal} do
       assert [
-               %{key: _, value: 123, tags: %{worker: "Test.Worker"}},
+               %{key: _, value: 123.456, tags: %{worker: "Test.Worker"}},
                %{
                  key: _,
-                 value: 123,
+                 value: 123.456,
                  tags: %{hostname: "Bobs-MBP.example.com", worker: "Test.Worker"}
                },
-               %{key: _, value: 123, tags: %{state: "snoozed", worker: "Test.Worker"}}
+               %{key: _, value: 123.456, tags: %{state: "snoozed", worker: "Test.Worker"}}
              ] = FakeAppsignal.get_distribution_values(fake_appsignal, "oban_job_duration")
     end
   end
@@ -317,13 +317,13 @@ defmodule Appsignal.ObanTest do
 
     test "adds job duration distribution value", %{fake_appsignal: fake_appsignal} do
       assert [
-               %{key: _, value: 123, tags: %{worker: "Test.Worker"}},
+               %{key: _, value: 123.456, tags: %{worker: "Test.Worker"}},
                %{
                  key: _,
-                 value: 123,
+                 value: 123.456,
                  tags: %{hostname: "Bobs-MBP.example.com", worker: "Test.Worker"}
                },
-               %{key: _, value: 123, tags: %{state: "failure", worker: "Test.Worker"}}
+               %{key: _, value: 123.456, tags: %{state: "failure", worker: "Test.Worker"}}
              ] = FakeAppsignal.get_distribution_values(fake_appsignal, "oban_job_duration")
     end
 
@@ -401,13 +401,13 @@ defmodule Appsignal.ObanTest do
 
     test "adds job duration distribution value", %{fake_appsignal: fake_appsignal} do
       assert [
-               %{key: _, value: 123, tags: %{worker: "Test.Worker"}},
+               %{key: _, value: 123.456, tags: %{worker: "Test.Worker"}},
                %{
                  key: _,
-                 value: 123,
+                 value: 123.456,
                  tags: %{hostname: "Bobs-MBP.example.com", worker: "Test.Worker"}
                },
-               %{key: _, value: 123, tags: %{state: "failure", worker: "Test.Worker"}}
+               %{key: _, value: 123.456, tags: %{state: "failure", worker: "Test.Worker"}}
              ] = FakeAppsignal.get_distribution_values(fake_appsignal, "oban_job_duration")
     end
 
@@ -450,13 +450,13 @@ defmodule Appsignal.ObanTest do
 
     test "adds job duration distribution value", %{fake_appsignal: fake_appsignal} do
       assert [
-               %{key: _, value: 123, tags: %{worker: "Test.Worker"}},
+               %{key: _, value: 123.456, tags: %{worker: "Test.Worker"}},
                %{
                  key: _,
-                 value: 123,
+                 value: 123.456,
                  tags: %{hostname: "Bobs-MBP.example.com", worker: "Test.Worker"}
                },
-               %{key: _, value: 123, tags: %{state: "discard", worker: "Test.Worker"}}
+               %{key: _, value: 123.456, tags: %{state: "discard", worker: "Test.Worker"}}
              ] = FakeAppsignal.get_distribution_values(fake_appsignal, "oban_job_duration")
     end
   end
@@ -737,7 +737,7 @@ defmodule Appsignal.ObanTest do
   defp execute_job_stop(additional_metadata \\ %{}) do
     :telemetry.execute(
       [:oban, :job, :stop],
-      %{duration: 123 * 1_000_000},
+      %{duration: 123_456_000},
       Map.merge(sample_metadata(), additional_metadata)
     )
   end
@@ -756,7 +756,7 @@ defmodule Appsignal.ObanTest do
 
         :telemetry.execute(
           [:oban, :job, :exception],
-          %{duration: 123 * 1_000_000},
+          %{duration: 123_456_000},
           Map.merge(metadata, additional_metadata)
         )
     end
@@ -785,8 +785,8 @@ defmodule Appsignal.ObanTest do
   defp sample_job do
     %{
       priority: 0,
-      scheduled_at: DateTime.from_unix!(1_234_000_000),
-      attempted_at: DateTime.from_unix!(1_234_000_003),
+      scheduled_at: DateTime.from_unix!(1_234_000_000_000_000, :microsecond),
+      attempted_at: DateTime.from_unix!(1_234_000_003_456_789, :microsecond),
       meta: %{
         number: 123,
         string: "foo",

@@ -5,6 +5,8 @@ defmodule Appsignal.Oban do
   @span Application.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
   @appsignal Application.compile_env(:appsignal, :appsignal, Appsignal)
 
+  import Appsignal.Utils, only: [native_to_milliseconds: 1]
+
   @moduledoc false
 
   def attach do
@@ -232,14 +234,14 @@ defmodule Appsignal.Oban do
     Enum.each(tag_combinations, fn tags ->
       @appsignal.add_distribution_value(
         "oban_job_duration",
-        System.convert_time_unit(duration, :native, :millisecond),
+        native_to_milliseconds(duration),
         tags
       )
     end)
   end
 
   defp add_job_queue_time_value(job, queue) do
-    delay = DateTime.diff(job.attempted_at, job.scheduled_at, :millisecond)
+    delay = DateTime.diff(job.attempted_at, job.scheduled_at, :microsecond) / 1000
 
     @appsignal.add_distribution_value("oban_job_queue_time", delay, %{
       queue: to_string(queue)

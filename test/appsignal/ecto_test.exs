@@ -82,7 +82,7 @@ defmodule Appsignal.EctoTest do
           decode_time: 2_204_000,
           query_time: 5_386_000,
           queue_time: 1_239_000,
-          idle_time: 12_000_000,
+          idle_time: 12_017_000,
           total_time: 8_829_000
         },
         %{
@@ -100,58 +100,48 @@ defmodule Appsignal.EctoTest do
     end
 
     test "adds query_time with both hostname and source tags", %{fake_appsignal: f} do
-      expected = System.convert_time_unit(5_386_000, :native, :millisecond)
-
       assert [
-               %{value: ^expected, tags: %{repo: "Appsignal.Test.Repo", source: "users"}},
+               %{value: 5.386, tags: %{repo: "Appsignal.Test.Repo", source: "users"}},
                %{
-                 value: ^expected,
+                 value: 5.386,
                  tags: %{repo: "Appsignal.Test.Repo", hostname: "Bobs-MBP.example.com"}
                }
              ] = FakeAppsignal.get_distribution_values(f, "ecto_query_time")
     end
 
     test "adds decode_time with both hostname and source tags", %{fake_appsignal: f} do
-      expected = System.convert_time_unit(2_204_000, :native, :millisecond)
-
       assert [
-               %{value: ^expected, tags: %{repo: "Appsignal.Test.Repo", source: "users"}},
+               %{value: 2.204, tags: %{repo: "Appsignal.Test.Repo", source: "users"}},
                %{
-                 value: ^expected,
+                 value: 2.204,
                  tags: %{repo: "Appsignal.Test.Repo", hostname: "Bobs-MBP.example.com"}
                }
              ] = FakeAppsignal.get_distribution_values(f, "ecto_decode_time")
     end
 
     test "adds total_time with both hostname and source tags", %{fake_appsignal: f} do
-      expected = System.convert_time_unit(8_829_000, :native, :millisecond)
-
       assert [
-               %{value: ^expected, tags: %{repo: "Appsignal.Test.Repo", source: "users"}},
+               %{value: 8.829, tags: %{repo: "Appsignal.Test.Repo", source: "users"}},
                %{
-                 value: ^expected,
+                 value: 8.829,
                  tags: %{repo: "Appsignal.Test.Repo", hostname: "Bobs-MBP.example.com"}
                }
              ] = FakeAppsignal.get_distribution_values(f, "ecto_total_time")
     end
 
     test "adds queue_time with hostname tags only", %{fake_appsignal: f} do
-      expected = System.convert_time_unit(1_239_000, :native, :millisecond)
-
       assert [
                %{
-                 value: ^expected,
+                 value: 1.239,
                  tags: %{repo: "Appsignal.Test.Repo", hostname: "Bobs-MBP.example.com"}
                }
              ] = FakeAppsignal.get_distribution_values(f, "ecto_queue_time")
     end
 
     test "adds idle_time with hostname tags only", %{fake_appsignal: f} do
-      expected = System.convert_time_unit(12_000_000, :native, :millisecond)
-
       assert [
                %{
-                 value: ^expected,
+                 value: 12.017,
                  tags: %{repo: "Appsignal.Test.Repo", hostname: "Bobs-MBP.example.com"}
                }
              ] = FakeAppsignal.get_distribution_values(f, "ecto_idle_time")
@@ -172,7 +162,7 @@ defmodule Appsignal.EctoTest do
           decode_time: 2_204_000,
           query_time: 5_386_000,
           queue_time: 1_239_000,
-          idle_time: 12_000_000,
+          idle_time: 12_017_000,
           total_time: 8_829_000
         },
         %{

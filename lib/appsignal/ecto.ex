@@ -4,7 +4,7 @@ defmodule Appsignal.Ecto do
   @tracer Application.compile_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
   @span Application.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
   @appsignal Application.compile_env(:appsignal, :appsignal, Appsignal)
-  import Appsignal.Utils, only: [module_name: 1]
+  import Appsignal.Utils, only: [module_name: 1, native_to_milliseconds: 1]
 
   # For each measurement Ecto emits, the tag combinations we want to fan out to.
   # `:hostname` -> tagged by repo + hostname (BEAM-side dimension).
@@ -95,7 +95,7 @@ defmodule Appsignal.Ecto do
       value = Map.get(measurements, key)
 
       if is_integer(value) do
-        ms = System.convert_time_unit(value, :native, :millisecond)
+        ms = native_to_milliseconds(value)
         metric = "ecto_#{key}"
 
         if :hostname in modes do
