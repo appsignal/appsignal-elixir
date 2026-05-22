@@ -1,6 +1,6 @@
 defmodule Appsignal.EctoTest do
   use ExUnit.Case
-  alias Appsignal.{Ecto, Span, Test}
+  alias Appsignal.{Ecto, FakeAppsignal, Span, Test}
   import AppsignalTest.Utils, only: [with_config: 2]
 
   test "is attached to the repo query event automatically" do
@@ -65,6 +65,222 @@ defmodule Appsignal.EctoTest do
 
     test "does not create a span" do
       assert Test.Tracer.get(:create_span) == :error
+    end
+  end
+
+  describe "handle_event/4, emitted metrics with a source" do
+    setup do
+      start_supervised!(Test.Nif)
+      start_supervised!(Test.Tracer)
+      start_supervised!(Test.Span)
+      start_supervised!(Test.Monitor)
+      fake_appsignal = start_supervised!(FakeAppsignal)
+
+      :telemetry.execute(
+        [:appsignal, :test, :repo, :query],
+        %{
+          decode_time: 2_204_000,
+          query_time: 5_386_000,
+          queue_time: 1_239_000,
+          idle_time: 12_017_000,
+          total_time: 8_829_000
+        },
+        %{
+          params: [],
+          query:
+            "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0",
+          repo: Appsignal.Test.Repo,
+          result: :ok,
+          source: "users",
+          type: :ecto_sql_query
+        }
+      )
+
+      [fake_appsignal: fake_appsignal]
+    end
+
+    test "adds query_time with both hostname and source tags", %{fake_appsignal: f} do
+      assert [
+               %{value: 5.386, tags: %{repo: "Appsignal.Test.Repo", source: "users"}},
+               %{
+                 value: 5.386,
+                 tags: %{repo: "Appsignal.Test.Repo", hostname: "Bobs-MBP.example.com"}
+               }
+             ] = FakeAppsignal.get_distribution_values(f, "ecto_query_time")
+    end
+
+    test "adds decode_time with both hostname and source tags", %{fake_appsignal: f} do
+      assert [
+               %{value: 2.204, tags: %{repo: "Appsignal.Test.Repo", source: "users"}},
+               %{
+                 value: 2.204,
+                 tags: %{repo: "Appsignal.Test.Repo", hostname: "Bobs-MBP.example.com"}
+               }
+             ] = FakeAppsignal.get_distribution_values(f, "ecto_decode_time")
+    end
+
+    test "adds total_time with both hostname and source tags", %{fake_appsignal: f} do
+      assert [
+               %{value: 8.829, tags: %{repo: "Appsignal.Test.Repo", source: "users"}},
+               %{
+                 value: 8.829,
+                 tags: %{repo: "Appsignal.Test.Repo", hostname: "Bobs-MBP.example.com"}
+               }
+             ] = FakeAppsignal.get_distribution_values(f, "ecto_total_time")
+    end
+
+    test "adds queue_time with hostname tags only", %{fake_appsignal: f} do
+      assert [
+               %{
+                 value: 1.239,
+                 tags: %{repo: "Appsignal.Test.Repo", hostname: "Bobs-MBP.example.com"}
+               }
+             ] = FakeAppsignal.get_distribution_values(f, "ecto_queue_time")
+    end
+
+    test "adds idle_time with hostname tags only", %{fake_appsignal: f} do
+      assert [
+               %{
+                 value: 12.017,
+                 tags: %{repo: "Appsignal.Test.Repo", hostname: "Bobs-MBP.example.com"}
+               }
+             ] = FakeAppsignal.get_distribution_values(f, "ecto_idle_time")
+    end
+  end
+
+  describe "handle_event/4, when the source is nil" do
+    setup do
+      start_supervised!(Test.Nif)
+      start_supervised!(Test.Tracer)
+      start_supervised!(Test.Span)
+      start_supervised!(Test.Monitor)
+      fake_appsignal = start_supervised!(FakeAppsignal)
+
+      :telemetry.execute(
+        [:appsignal, :test, :repo, :query],
+        %{
+          decode_time: 2_204_000,
+          query_time: 5_386_000,
+          queue_time: 1_239_000,
+          idle_time: 12_017_000,
+          total_time: 8_829_000
+        },
+        %{
+          params: [],
+          query: "begin",
+          repo: Appsignal.Test.Repo,
+          result: :ok,
+          source: nil,
+          type: :ecto_sql_query
+        }
+      )
+
+      [fake_appsignal: fake_appsignal]
+    end
+
+    test "skips source-tagged distributions", %{fake_appsignal: f} do
+      for metric <- ~w(ecto_query_time ecto_decode_time ecto_total_time) do
+        values = FakeAppsignal.get_distribution_values(f, metric)
+        assert length(values) == 1
+        assert hd(values).tags |> Map.has_key?(:source) |> Kernel.!()
+      end
+    end
+
+    test "still emits hostname-tagged distributions", %{fake_appsignal: f} do
+      for metric <- ~w(ecto_query_time ecto_queue_time ecto_decode_time
+                       ecto_idle_time ecto_total_time) do
+        assert [
+                 %{tags: %{repo: "Appsignal.Test.Repo", hostname: "Bobs-MBP.example.com"}}
+               ] = FakeAppsignal.get_distribution_values(f, metric)
+      end
+    end
+  end
+
+  describe "handle_event/4, when the source key is missing from metadata" do
+    setup do
+      start_supervised!(Test.Nif)
+      start_supervised!(Test.Tracer)
+      start_supervised!(Test.Span)
+      start_supervised!(Test.Monitor)
+      fake_appsignal = start_supervised!(FakeAppsignal)
+
+      :telemetry.execute(
+        [:appsignal, :test, :repo, :query],
+        %{
+          query_time: 5_386_000,
+          total_time: 5_386_000
+        },
+        %{
+          query: "SELECT 1",
+          repo: Appsignal.Test.Repo,
+          result: :ok,
+          type: :ecto_sql_query
+        }
+      )
+
+      [fake_appsignal: fake_appsignal]
+    end
+
+    test "does not crash and still emits hostname-tagged distributions", %{fake_appsignal: f} do
+      assert [
+               %{tags: %{repo: "Appsignal.Test.Repo", hostname: "Bobs-MBP.example.com"}}
+             ] = FakeAppsignal.get_distribution_values(f, "ecto_query_time")
+
+      assert [
+               %{tags: %{repo: "Appsignal.Test.Repo", hostname: "Bobs-MBP.example.com"}}
+             ] = FakeAppsignal.get_distribution_values(f, "ecto_total_time")
+    end
+
+    test "does not emit metrics whose measurements are missing", %{fake_appsignal: f} do
+      for metric <- ~w(ecto_queue_time ecto_decode_time ecto_idle_time) do
+        assert FakeAppsignal.get_distribution_values(f, metric) == []
+      end
+    end
+  end
+
+  describe "handle_event/4, when individual measurements are nil or missing" do
+    setup do
+      start_supervised!(Test.Nif)
+      start_supervised!(Test.Tracer)
+      start_supervised!(Test.Span)
+      start_supervised!(Test.Monitor)
+      fake_appsignal = start_supervised!(FakeAppsignal)
+
+      :telemetry.execute(
+        [:appsignal, :test, :repo, :query],
+        %{
+          # decode_time missing entirely
+          query_time: 5_386_000,
+          queue_time: 1_239_000,
+          idle_time: nil,
+          total_time: 8_829_000
+        },
+        %{
+          params: [],
+          query:
+            "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0",
+          repo: Appsignal.Test.Repo,
+          result: :ok,
+          source: "users",
+          type: :ecto_sql_query
+        }
+      )
+
+      [fake_appsignal: fake_appsignal]
+    end
+
+    test "skips the nil measurement", %{fake_appsignal: f} do
+      assert FakeAppsignal.get_distribution_values(f, "ecto_idle_time") == []
+    end
+
+    test "skips the missing measurement", %{fake_appsignal: f} do
+      assert FakeAppsignal.get_distribution_values(f, "ecto_decode_time") == []
+    end
+
+    test "still emits the present measurements", %{fake_appsignal: f} do
+      assert [_, _] = FakeAppsignal.get_distribution_values(f, "ecto_query_time")
+      assert [_] = FakeAppsignal.get_distribution_values(f, "ecto_queue_time")
+      assert [_, _] = FakeAppsignal.get_distribution_values(f, "ecto_total_time")
     end
   end
 

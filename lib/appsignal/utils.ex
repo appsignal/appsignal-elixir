@@ -19,6 +19,22 @@ defmodule Appsignal.Utils do
 
   def module_name(module), do: module |> to_string() |> module_name()
 
+  @doc """
+  Converts a native-unit duration to fractional milliseconds, preserving
+  sub-millisecond precision. Use this when reporting timings as distribution
+  metric values.
+
+  ## Examples
+
+      iex> Appsignal.Utils.native_to_milliseconds(System.convert_time_unit(1500, :microsecond, :native))
+      1.5
+
+  """
+  @spec native_to_milliseconds(integer()) :: float()
+  def native_to_milliseconds(native) when is_integer(native) do
+    System.convert_time_unit(native, :native, :microsecond) / 1000
+  end
+
   def info(message) do
     require Logger
     Logger.info(message)

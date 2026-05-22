@@ -3,7 +3,20 @@ defmodule Appsignal.Ecto do
 
   @tracer Application.compile_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
   @span Application.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
-  import Appsignal.Utils, only: [module_name: 1]
+  @appsignal Application.compile_env(:appsignal, :appsignal, Appsignal)
+  import Appsignal.Utils, only: [module_name: 1, native_to_milliseconds: 1]
+
+  # For each measurement Ecto emits, the tag combinations we want to fan out to.
+  # `:hostname` -> tagged by repo + hostname (BEAM-side dimension).
+  # `:source` -> tagged by repo + source (table-side dimension), only relevant
+  # for measurements that vary with the query shape.
+  @measurement_tag_modes [
+    query_time: [:hostname, :source],
+    queue_time: [:hostname],
+    decode_time: [:hostname, :source],
+    idle_time: [:hostname],
+    total_time: [:hostname, :source]
+  ]
 
   @doc """
   Attaches `Appsignal.Ecto` to the Ecto telemetry channel configured in the
@@ -63,14 +76,44 @@ defmodule Appsignal.Ecto do
   @doc false
   def handle_event(
         _event,
-        %{total_time: total_time},
+        %{total_time: total_time} = measurements,
         %{repo: repo, query: query} = metadata,
         _config
       ) do
+    add_measurement_distributions(repo, measurements, metadata)
     do_handle_event(current_span(metadata), total_time, repo, query)
   end
 
   def handle_event(_event, _measurements, _metadata, _config), do: :ok
+
+  defp add_measurement_distributions(repo, measurements, metadata) do
+    repo_name = module_name(repo)
+    hostname_tags = %{repo: repo_name, hostname: Appsignal.Utils.Hostname.hostname()}
+    source_tags = source_tags(repo_name, metadata)
+
+    Enum.each(@measurement_tag_modes, fn {key, modes} ->
+      value = Map.get(measurements, key)
+
+      if is_integer(value) do
+        ms = native_to_milliseconds(value)
+        metric = "ecto_#{key}"
+
+        if :hostname in modes do
+          @appsignal.add_distribution_value(metric, ms, hostname_tags)
+        end
+
+        if :source in modes and source_tags do
+          @appsignal.add_distribution_value(metric, ms, source_tags)
+        end
+      end
+    end)
+  end
+
+  defp source_tags(repo_name, %{source: source}) when is_binary(source) do
+    %{repo: repo_name, source: source}
+  end
+
+  defp source_tags(_repo_name, _metadata), do: nil
 
   defp current_span(metadata) do
     # If a current span is already set in this process, use that instead
