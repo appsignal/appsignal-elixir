@@ -1,5 +1,29 @@
 # AppSignal for Elixir changelog
 
+## 2.17.2
+
+_Published on 2026-05-26._
+
+### Added
+
+- Emit distribution metrics from the Ecto integration.
+
+  Each Ecto query telemetry event now also reports its timing values as `ecto_query_time`, `ecto_queue_time`, `ecto_decode_time`, `ecto_idle_time` and `ecto_total_time` distribution metrics.
+
+  All five metrics are tagged by `repo` and `hostname`. The `ecto_query_time`, `ecto_decode_time` and `ecto_total_time` metrics are additionally tagged by `repo` and `source` (the Ecto table).
+
+  This surfaces pool waits, decode time, idle connection time and per-table latency as standalone metrics in addition to the existing query span.
+
+  (patch [7440fb76](https://github.com/appsignal/appsignal-elixir/commit/7440fb769af74fca362dd5a2b04f9c5bfe420583))
+
+### Fixed
+
+- Preserve sub-millisecond precision when reporting timing distribution metrics.
+
+  The Ecto (`ecto_query_time`, `ecto_queue_time`, `ecto_decode_time`, `ecto_idle_time`, `ecto_total_time`) and Oban (`oban_job_duration`, `oban_job_queue_time`) distribution metrics now report fractional milliseconds, instead of being truncated to whole milliseconds. Sub-millisecond measurements were previously rounded down to zero.
+
+  (patch [262fef55](https://github.com/appsignal/appsignal-elixir/commit/262fef550c5df4897fb70a2a49e6ac3eb4d155c2))
+
 ## 2.17.1
 
 _Published on 2026-05-14._
