@@ -1,5 +1,17 @@
 # AppSignal for Elixir changelog
 
+## 2.17.3
+
+_Published on 2026-06-04._
+
+### Fixed
+
+- Fix host-metrics leaking zombie `[timeout]` processes in Alpine linux containers.
+
+  Before this release AppSignal agent relied on a proper init process that reaps child processes killed by system `timeout`. Now the agent terminates and reaps unresponsive child processes in host-metrics collection and a subreaper is no longer required.
+
+  (patch [85804b5d](https://github.com/appsignal/appsignal-elixir/commit/85804b5d1499a9ac12e83ea0f851da18b325b44b))
+
 ## 2.17.2
 
 _Published on 2026-05-26._
