@@ -179,12 +179,14 @@ jobs:
           - elixir: 1.12.x
             otp: 24.x
             plug: "~> 1.17.0"
+          # Plug 1.18.2 and 1.17.1 use `then/2`, which requires Elixir 1.12+.
+          # Cap Plug below those on Elixir 1.11.
           - elixir: 1.11.x
             otp: 24.x
-            plug: "~> 1.18.0"
+            plug: "~> 1.18.0 and < 1.18.2"
           - elixir: 1.11.x
             otp: 24.x
-            plug: "~> 1.17.0"
+            plug: "~> 1.17.0 and < 1.17.1"
 
     env:
       _APPSIGNAL_CI_PLUG_VERSION: ${{matrix.plug}}
