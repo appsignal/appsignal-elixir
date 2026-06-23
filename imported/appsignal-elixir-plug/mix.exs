@@ -63,6 +63,16 @@ defmodule Appsignal.Plug.MixProject do
         _ -> "~> 1.7"
       end
 
+    # Finch 0.22+ requires Elixir 1.15+. On older Elixir versions, cap the
+    # version of Finch that's pulled in transitively through the AppSignal
+    # package so it can still compile. On newer Elixir versions Finch is left
+    # out of the dependency list entirely, so it stays a transitive dependency.
+    finch_dependency =
+      case Version.compare(system_version, "1.15.0") do
+        :lt -> [{:finch, ">= 0.19.0 and < 0.22.0"}]
+        _ -> []
+      end
+
     [
       {:plug, plug_version},
       {:appsignal, ">= 2.15.0 and < 3.0.0"},
@@ -70,6 +80,6 @@ defmodule Appsignal.Plug.MixProject do
       {:dialyxir, "~> 1.3.0", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.21", only: :dev, runtime: false},
       {:telemetry, telemetry_version}
-    ] ++ mime_dependency
+    ] ++ mime_dependency ++ finch_dependency
   end
 end
