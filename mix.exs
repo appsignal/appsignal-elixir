@@ -148,8 +148,15 @@ defmodule Appsignal.Mixfile do
 
         _ ->
           case Version.compare(system_version, "1.14.0") do
-            :lt -> "~> 1.14 and < 1.19.0"
-            _ -> "~> 1.14"
+            :lt ->
+              "~> 1.14 and < 1.19.0"
+
+            _ ->
+              # plug 1.20.0 requires Elixir ~> 1.15, so cap it on 1.14.
+              case Version.compare(system_version, "1.15.0") do
+                :lt -> "~> 1.14 and < 1.20.0"
+                _ -> "~> 1.14"
+              end
           end
       end
 
