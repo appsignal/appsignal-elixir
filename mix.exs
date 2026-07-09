@@ -195,7 +195,7 @@ defmodule Appsignal.Mixfile do
       {:credo, credo_version, only: [:test, :dev], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:telemetry, telemetry_version},
-      {:httpoison, "~> 2.0", optional: true}
+      {:httpoison, "~> 2.0 or ~> 3.0", optional: true}
     ] ++ mime_dependency ++ logger_backends_dependency ++ hpax_dependency
   end
 end
