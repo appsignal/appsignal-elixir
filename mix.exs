@@ -54,7 +54,8 @@ defmodule Appsignal.Mixfile do
       ],
       dialyzer: [
         plt_file: {:no_warn, "priv/plts/dialyzer.plt"},
-        plt_add_apps: [:mix]
+        plt_add_apps: [:mix],
+        ignore_warnings: ".dialyzer_ignore.exs"
       ]
     ]
   end
@@ -135,6 +136,14 @@ defmodule Appsignal.Mixfile do
         false -> "~> 0.4 or ~> 1.0"
       end
 
+    # httpoison 3.0 depends on hackney 4.0, which pulls in quic and requires
+    # OTP 26 or later. Cap httpoison at 2.x on older OTP releases.
+    httpoison_version =
+      case otp_version < "26" do
+        true -> "~> 2.0"
+        false -> "~> 2.0 or ~> 3.0"
+      end
+
     mime_dependency =
       case Version.compare(system_version, "1.10.0") do
         :lt -> [{:mime, "~> 1.0", only: [:test, :test_no_nif]}]
@@ -195,7 +204,7 @@ defmodule Appsignal.Mixfile do
       {:credo, credo_version, only: [:test, :dev], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:telemetry, telemetry_version},
-      {:httpoison, "~> 2.0 or ~> 3.0", optional: true}
+      {:httpoison, httpoison_version, optional: true}
     ] ++ mime_dependency ++ logger_backends_dependency ++ hpax_dependency
   end
 end
