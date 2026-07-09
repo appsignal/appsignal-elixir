@@ -1,5 +1,17 @@
 # AppSignal for Elixir changelog
 
+## 2.17.4
+
+_Published on 2026-07-09._
+
+### Changed
+
+- Allow HTTPoison 3.0 to be used as an optional dependency. Applications
+  on HTTPoison 3.0 can now use AppSignal's HTTPoison instrumentation
+  without a version conflict.
+
+  (patch [f697a54d](https://github.com/appsignal/appsignal-elixir/commit/f697a54db8780bde36430e074142bbb250c50844))
+
 ## 2.17.3
 
 _Published on 2026-06-04._
