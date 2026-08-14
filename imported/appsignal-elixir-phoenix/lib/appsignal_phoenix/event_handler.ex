@@ -5,6 +5,19 @@ defmodule Appsignal.Phoenix.EventHandler do
 
   require Logger
 
+  # Each start handler remembers the span it created, so that its stop handler
+  # closes that span rather than whichever span happens to be the current one.
+  # Anything else opening a span in between, such as a call to
+  # `Appsignal.instrument/2`, would otherwise shift which span gets closed.
+  #
+  # These are stacks because `Phoenix.Router.forward` re-enters the router, so
+  # the router dispatch events nest.
+  @endpoint_key {__MODULE__, :endpoint_spans}
+  @dispatch_key {__MODULE__, :router_dispatch_spans}
+  @render_key {__MODULE__, :render_spans}
+  @route_key {__MODULE__, :route}
+  @root_span_data_key {__MODULE__, :root_span_data_set}
+
   def attach do
     handlers = %{
       [:phoenix, :endpoint, :start] => &__MODULE__.phoenix_endpoint_start/4,
@@ -38,29 +51,57 @@ defmodule Appsignal.Phoenix.EventHandler do
   end
 
   def phoenix_endpoint_start(_event, _measurements, _metadata, _config) do
+    start_request()
+
     parent = @tracer.current_span()
 
     "http_request"
     |> @tracer.create_span(parent)
     |> @span.set_attribute("appsignal:category", "call.phoenix_endpoint")
+    |> push(@endpoint_key)
   end
 
-  def phoenix_endpoint_stop(_event, _measurements, _metadata, _config) do
-    @tracer.close_span(@tracer.current_span())
+  def phoenix_endpoint_stop(_event, _measurements, metadata, _config) do
+    span = pop(@endpoint_key)
+
+    # This event fires from a `register_before_send` callback, so it arrives
+    # before the router dispatch stop event does. The root span has to be
+    # described here, because it is closed below and cannot be described
+    # afterwards.
+    _ = Process.put(@root_span_data_key, true)
+    _root_span = set_span_data(@tracer.root_span(), with_route(metadata))
+
+    @tracer.close_span(span)
   end
 
-  def phoenix_router_dispatch_start(_event, _measurements, _metadata, _config) do
+  def phoenix_router_dispatch_start(_event, _measurements, metadata, _config) do
+    # A Phoenix router can be dispatched to without a Phoenix endpoint, for
+    # example when a Plug application forwards to one. There is no endpoint
+    # start event to begin the request then, so this handler begins it instead.
+    start_request()
+
+    # The endpoint stop event does not carry the route, and it arrives before
+    # the router dispatch stop event that does. Remember the route so that the
+    # endpoint stop handler can still fall back to naming the span after it.
+    _ = put_route(metadata)
+
     parent = @tracer.current_span()
 
     "http_request"
     |> @tracer.create_span(parent)
     |> @span.set_attribute("appsignal:category", "call.phoenix_router_dispatch")
+    |> push(@dispatch_key)
   end
 
   def phoenix_router_dispatch_stop(_event, _measurements, metadata, _config) do
-    _root_span = set_span_data(@tracer.root_span(), metadata)
+    span = pop(@dispatch_key)
 
-    @tracer.close_span(@tracer.current_span())
+    # A Phoenix router can be dispatched to without a Phoenix endpoint, for
+    # example when a Plug application forwards to one. There is no endpoint stop
+    # event to describe the root span then, so this handler does it instead.
+    _root_span = set_root_span_data_unless_set(metadata)
+
+    @tracer.close_span(span)
   end
 
   def phoenix_router_dispatch_exception(
@@ -100,6 +141,11 @@ defmodule Appsignal.Phoenix.EventHandler do
     |> set_span_data(%{conn: conn})
     |> @tracer.close_span()
 
+    # No stop event arrives for the spans this request opened, so nothing else
+    # will take them off the stacks. On a web server that serves more than one
+    # request per process, such as Bandit, they would pile up.
+    forget()
+
     @tracer.ignore()
   end
 
@@ -119,10 +165,11 @@ defmodule Appsignal.Phoenix.EventHandler do
       "Render #{inspect(metadata.template)} (#{metadata.format}) template from #{module_name(metadata.view)}"
     )
     |> @span.set_attribute("appsignal:category", "render.phoenix_template")
+    |> push(@render_key)
   end
 
   def phoenix_template_render_stop(_event, _measurements, _metadata, _config) do
-    @tracer.close_span(@tracer.current_span())
+    @tracer.close_span(pop(@render_key))
   end
 
   defp set_span_data(span, %{conn: conn} = metadata) do
@@ -156,4 +203,66 @@ defmodule Appsignal.Phoenix.EventHandler do
   defp module_name("Elixir." <> module), do: module
   defp module_name(module) when is_binary(module), do: module
   defp module_name(module), do: module |> to_string() |> module_name()
+
+  # A request starting in this process takes over from whatever request ran in
+  # it before. On a web server that serves more than one request per process,
+  # such as Bandit, what the previous request left behind is still here, and
+  # using any of it would describe this request with the last one's data.
+  defp start_request do
+    _ = Process.delete(@root_span_data_key)
+    _ = Process.delete(@route_key)
+
+    :ok
+  end
+
+  defp set_root_span_data_unless_set(metadata) do
+    case Process.get(@root_span_data_key) do
+      true ->
+        nil
+
+      _ ->
+        _ = Process.put(@root_span_data_key, true)
+        set_span_data(@tracer.root_span(), metadata)
+    end
+  end
+
+  defp put_route(%{route: route}) when is_binary(route) do
+    _ = Process.put(@route_key, route)
+  end
+
+  defp put_route(_metadata), do: nil
+
+  defp with_route(metadata) do
+    case Process.get(@route_key) do
+      nil -> metadata
+      route -> Map.put_new(metadata, :route, route)
+    end
+  end
+
+  defp push(span, key) do
+    _ = Process.put(key, [span | Process.get(key, [])])
+    span
+  end
+
+  # Returns `nil` when no span was pushed, which happens when AppSignal starts
+  # in the middle of a request, or when the process is ignored. Deliberately
+  # does not fall back to the current span: closing a span that this handler did
+  # not open is the bug this bookkeeping exists to prevent.
+  defp pop(key) do
+    case Process.get(key, []) do
+      [span | rest] ->
+        _ = Process.put(key, rest)
+        span
+
+      [] ->
+        nil
+    end
+  end
+
+  defp forget do
+    Enum.each(
+      [@endpoint_key, @dispatch_key, @render_key, @route_key, @root_span_data_key],
+      &Process.delete/1
+    )
+  end
 end
