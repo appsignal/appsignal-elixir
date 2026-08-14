@@ -160,7 +160,7 @@ jobs:
             plug: "~> 1.17.0"
           - elixir: 1.14.x
             otp: 25.x
-            plug: "~> 1.19"
+            plug: "~> 1.19.0"
           - elixir: 1.14.x
             otp: 25.x
             plug: "~> 1.18.0"

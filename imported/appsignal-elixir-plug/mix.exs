@@ -73,6 +73,14 @@ defmodule Appsignal.Plug.MixProject do
         _ -> []
       end
 
+    # hpax is a transitive dependency (via finch/mint). Version 1.0.4 requires
+    # Elixir ~> 1.15, so pin to the last compatible version on older Elixirs.
+    hpax_dependency =
+      case Version.compare(system_version, "1.15.0") do
+        :lt -> [{:hpax, ">= 1.0.0 and < 1.0.4", override: true}]
+        _ -> []
+      end
+
     [
       {:plug, plug_version},
       {:appsignal, ">= 2.15.0 and < 3.0.0"},
@@ -80,6 +88,6 @@ defmodule Appsignal.Plug.MixProject do
       {:dialyxir, "~> 1.3.0", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.21", only: :dev, runtime: false},
       {:telemetry, telemetry_version}
-    ] ++ mime_dependency ++ finch_dependency
+    ] ++ mime_dependency ++ finch_dependency ++ hpax_dependency
   end
 end
