@@ -154,9 +154,11 @@ jobs:
           - elixir: 1.14.x
             otp: 25.x
             phoenix: "~> 1.7.0"
+            plug: "~> 1.19.0"
           - elixir: 1.14.x
             otp: 25.x
             phoenix: "~> 1.6.0"
+            plug: "~> 1.19.0"
           - elixir: 1.13.x
             otp: 24.x
             phoenix: "~> 1.7.0"
@@ -176,11 +178,11 @@ jobs:
           - elixir: 1.11.x
             otp: 24.x
             phoenix: "~> 1.7.0"
-            plug: "~> 1.18.0"
+            plug: "~> 1.18.0 and < 1.18.2"
           - elixir: 1.11.x
             otp: 24.x
             phoenix: "~> 1.6.0"
-            plug: "~> 1.18.0"
+            plug: "~> 1.18.0 and < 1.18.2"
 
     steps:
       - name: Set up Erlang and Elixir
