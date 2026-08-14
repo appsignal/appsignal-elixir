@@ -66,6 +66,26 @@ defmodule Appsignal.Phoenix.MixProject do
         version -> [{:plug, version, override: true}]
       end
 
+    # Finch 0.22 requires Elixir 1.15 or newer, and so does HPAX 1.0.4, which
+    # Finch pulls in through Mint. The lock file is not checked in, so every
+    # build resolves the newest version of both, and neither compiles on older
+    # Elixir versions. Cap them there.
+    #
+    # Both are transitive dependencies through the AppSignal package. On newer
+    # Elixir versions they are left out of the dependency list entirely, so
+    # these caps are never imposed on the published package.
+    finch_dependencies =
+      case Version.compare(system_version, "1.15.0") do
+        :lt ->
+          [
+            {:finch, ">= 0.19.0 and < 0.22.0"},
+            {:hpax, ">= 1.0.0 and < 1.0.4", override: true}
+          ]
+
+        _ ->
+          []
+      end
+
     [
       {:appsignal, ">= 2.15.0 and < 3.0.0"},
       {:appsignal_plug, ">= 2.1.0 and < 3.0.0"},
@@ -76,6 +96,6 @@ defmodule Appsignal.Phoenix.MixProject do
       {:dialyxir, "~> 1.3.0", only: [:dev, :test], runtime: false},
       {:credo, credo_version, only: [:dev, :test], runtime: false},
       {:telemetry, "~> 0.4 or ~> 1.0"}
-    ] ++ plug_override
+    ] ++ plug_override ++ finch_dependencies
   end
 end
