@@ -1,5 +1,17 @@
 # AppSignal for Elixir Phoenix changelog
 
+## 2.8.2
+
+_Published on 2026-08-20._
+
+### Fixed
+
+- Fix traces going missing when a Phoenix response is sent from inside an instrumented block. This happens when `Appsignal.instrument/2`, or a function decorated with `transaction_event()`, wraps a call that sends the response, such as `render/2` or `redirect/2`.
+
+  On web servers that serve more than one request per process, such as Bandit, this also affected the requests that followed on the same connection. Those requests were not reported at all, and an error reported by one of them could show the action, parameters, environment and session data of an earlier request. On Cowboy, where each request gets its own process, only the request that sent its response inside an instrumented block was affected.
+
+  (patch [88658db](https://github.com/appsignal/appsignal-elixir-phoenix/commit/88658db18fe5ccba9a132ef6d9d21ae4633705c7))
+
 ## 2.8.1
 
 _Published on 2025-11-21._
