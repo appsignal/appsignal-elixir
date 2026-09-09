@@ -86,6 +86,15 @@ defmodule Appsignal.Phoenix.MixProject do
           []
       end
 
+    # mint is a transitive dependency (via finch). Version 1.10.0 uses a
+    # bitstring pattern that older Elixirs cannot compile, so pin to the last
+    # version that does compile there.
+    mint_dependency =
+      case Version.compare(system_version, "1.15.0") do
+        :lt -> [{:mint, "1.9.2"}]
+        _ -> []
+      end
+
     [
       {:appsignal, ">= 2.15.0 and < 3.0.0"},
       {:appsignal_plug, ">= 2.1.0 and < 3.0.0"},
@@ -96,6 +105,6 @@ defmodule Appsignal.Phoenix.MixProject do
       {:dialyxir, "~> 1.3.0", only: [:dev, :test], runtime: false},
       {:credo, credo_version, only: [:dev, :test], runtime: false},
       {:telemetry, "~> 0.4 or ~> 1.0"}
-    ] ++ plug_override ++ finch_dependencies
+    ] ++ plug_override ++ finch_dependencies ++ mint_dependency
   end
 end
