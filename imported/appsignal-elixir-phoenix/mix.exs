@@ -36,31 +36,56 @@ defmodule Appsignal.Phoenix.MixProject do
   defp elixirc_paths(_), do: ["lib"]
 
   # Run "mix help deps" to learn about dependencies.
-  defp deps do
-    system_version = System.version()
+  #
+  # Hex freezes the dependency requirements in this file into the package
+  # metadata when the package is published. Applications that install this
+  # package resolve their dependencies against those frozen requirements.
+  # Some of the requirements below are narrowed on older Elixir releases, so
+  # that this package keeps building on every version in our CI matrix. Two of
+  # them can also be overridden through environment variables, which CI uses
+  # to test against specific versions of Phoenix and Plug. Publishing with any
+  # of those in effect would impose them on every application that installs
+  # the package. To catch that, the requirements are computed from a map of
+  # versions. That makes it possible to compare the requirements this machine
+  # produces with the ones the newest Elixir release produces, with no
+  # overrides set.
+  @publish_versions %{elixir: "999.0.0", phoenix: nil, plug: nil}
 
+  defp deps do
+    versions = %{
+      elixir: System.version(),
+      phoenix: System.get_env("_APPSIGNAL_CI_PHOENIX_VERSION"),
+      plug: System.get_env("_APPSIGNAL_CI_PLUG_VERSION")
+    }
+
+    deps = deps(versions)
+    verify_publishable!(deps)
+    deps
+  end
+
+  defp deps(versions) do
     phoenix_live_view_version =
-      case Version.compare(system_version, "1.12.0") do
+      case Version.compare(versions.elixir, "1.12.0") do
         :lt ->
           ">= 0.9.0 and < 0.18.0"
 
         _ ->
-          case Version.compare(system_version, "1.14.0") do
+          case Version.compare(versions.elixir, "1.14.0") do
             :lt -> "~> 0.9 or ~> 1.0.0"
             _ -> "~> 0.9 or ~> 1.0"
           end
       end
 
     credo_version =
-      case Version.compare(system_version, "1.13.0") do
+      case Version.compare(versions.elixir, "1.13.0") do
         :lt -> "1.7.6"
         _ -> "~> 1.7"
       end
 
-    phoenix_version = System.get_env("_APPSIGNAL_CI_PHOENIX_VERSION") || "~> 1.7"
+    phoenix_version = versions.phoenix || "~> 1.7"
 
     plug_override =
-      case System.get_env("_APPSIGNAL_CI_PLUG_VERSION") do
+      case versions.plug do
         nil -> []
         "" -> []
         version -> [{:plug, version, override: true}]
@@ -75,7 +100,7 @@ defmodule Appsignal.Phoenix.MixProject do
     # Elixir versions they are left out of the dependency list entirely, so
     # these caps are never imposed on the published package.
     finch_dependencies =
-      case Version.compare(system_version, "1.15.0") do
+      case Version.compare(versions.elixir, "1.15.0") do
         :lt ->
           [
             {:finch, ">= 0.19.0 and < 0.22.0"},
@@ -90,7 +115,7 @@ defmodule Appsignal.Phoenix.MixProject do
     # bitstring pattern that older Elixirs cannot compile, so pin to the last
     # version that does compile there.
     mint_dependency =
-      case Version.compare(system_version, "1.15.0") do
+      case Version.compare(versions.elixir, "1.15.0") do
         :lt -> [{:mint, "1.9.2"}]
         _ -> []
       end
@@ -107,4 +132,45 @@ defmodule Appsignal.Phoenix.MixProject do
       {:telemetry, "~> 0.4 or ~> 1.0"}
     ] ++ plug_override ++ finch_dependencies ++ mint_dependency
   end
+
+  defp verify_publishable!(deps) do
+    publishable_deps = deps(@publish_versions)
+
+    if publishing?() and deps != publishable_deps do
+      Mix.raise("""
+      This package is being built for Hex, but the dependencies on this \
+      machine are not the ones that should be published.
+
+      Some dependency requirements are narrowed on older Elixir releases, so \
+      that this package keeps building there, and two of them can be \
+      overridden through environment variables. Hex freezes the requirements \
+      into the package when it is published. Publishing these would impose \
+      them on every application that installs the package.
+
+      This machine runs Elixir #{System.version()}, and produces:
+
+      #{format_deps(deps -- publishable_deps)}
+
+      The published package must have:
+
+      #{format_deps(publishable_deps -- deps)}
+
+      Publish from the newest Elixir release, without \
+      _APPSIGNAL_CI_PHOENIX_VERSION or _APPSIGNAL_CI_PLUG_VERSION set.
+      """)
+    end
+  end
+
+  # Mix passes the name of the task it runs and that task's arguments as the
+  # command line arguments of the Elixir process. That makes it possible to
+  # tell, while this file is being evaluated, that it is being evaluated to
+  # build a package for Hex. The task name is not always the first argument,
+  # because `mix do` runs more than one task in a single invocation, so look
+  # for it anywhere in the arguments.
+  defp publishing? do
+    Enum.any?(["hex.build", "hex.publish"], &(&1 in System.argv()))
+  end
+
+  defp format_deps([]), do: "  (none)"
+  defp format_deps(deps), do: Enum.map_join(deps, "\n", &"  #{inspect(&1)}")
 end
