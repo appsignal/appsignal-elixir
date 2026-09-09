@@ -81,6 +81,15 @@ defmodule Appsignal.Plug.MixProject do
         _ -> []
       end
 
+    # mint is a transitive dependency (via finch). Version 1.10.0 uses a
+    # bitstring pattern that older Elixirs cannot compile, so pin to the last
+    # version that does compile there.
+    mint_dependency =
+      case Version.compare(system_version, "1.15.0") do
+        :lt -> [{:mint, "1.9.2"}]
+        _ -> []
+      end
+
     [
       {:plug, plug_version},
       {:appsignal, ">= 2.15.0 and < 3.0.0"},
@@ -88,6 +97,6 @@ defmodule Appsignal.Plug.MixProject do
       {:dialyxir, "~> 1.3.0", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.21", only: :dev, runtime: false},
       {:telemetry, telemetry_version}
-    ] ++ mime_dependency ++ finch_dependency ++ hpax_dependency
+    ] ++ mime_dependency ++ finch_dependency ++ hpax_dependency ++ mint_dependency
   end
 end
