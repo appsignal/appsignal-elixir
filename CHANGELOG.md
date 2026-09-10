@@ -1,5 +1,21 @@
 # AppSignal for Elixir changelog
 
+## 2.17.5
+
+_Published on 2026-09-10._
+
+### Changed
+
+- Update the agent to handle high traffic apps. On high-traffic apps that would exceed the maximum accepted internal payload size, send data to the Push API more frequently. (patch [dac002ad](https://github.com/appsignal/appsignal-elixir/commit/dac002add54dfa51a83b4ee95cdd5fadea2feea8))
+
+### Fixed
+
+- Fix the sanitization of function arguments in SQL statements.
+
+  Before this release, SQL sanitization of function arguments stripped out parts of the SQL statement after the function argument list.
+
+  (patch [c2b487b6](https://github.com/appsignal/appsignal-elixir/commit/c2b487b667a3d58b729fee0aba8589505eeb2ada))
+
 ## 2.17.4
 
 _Published on 2026-07-09._
