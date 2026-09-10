@@ -150,6 +150,15 @@ defmodule Appsignal.Mixfile do
         _ -> []
       end
 
+    mint_dependency =
+      case Version.compare(system_version, "1.15.0") do
+        :lt ->
+          [{:mint, "1.9.2"}]
+
+        _ ->
+          []
+      end
+
     plug_version =
       case Version.compare(system_version, "1.10.0") do
         :lt ->
@@ -205,6 +214,6 @@ defmodule Appsignal.Mixfile do
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:telemetry, telemetry_version},
       {:httpoison, httpoison_version, optional: true}
-    ] ++ mime_dependency ++ logger_backends_dependency ++ hpax_dependency
+    ] ++ mime_dependency ++ logger_backends_dependency ++ hpax_dependency ++ mint_dependency
   end
 end
