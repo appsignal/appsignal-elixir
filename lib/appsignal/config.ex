@@ -25,6 +25,7 @@ defmodule Appsignal.Config do
     ignore_logs: [],
     ignore_namespaces: [],
     instrument_absinthe: true,
+    instrument_broadway: true,
     instrument_ecto: true,
     instrument_finch: true,
     instrument_oban: true,
@@ -192,6 +193,13 @@ defmodule Appsignal.Config do
     end
   end
 
+  def instrument_broadway? do
+    case Application.fetch_env(:appsignal, :config) do
+      {:ok, value} -> !!Access.get(value, :instrument_broadway, true)
+      _ -> true
+    end
+  end
+
   def instrument_ecto? do
     case Application.fetch_env(:appsignal, :config) do
       {:ok, value} -> !!Access.get(value, :instrument_ecto, true)
@@ -315,6 +323,7 @@ defmodule Appsignal.Config do
     "APPSIGNAL_IGNORE_ERRORS" => :ignore_errors,
     "APPSIGNAL_IGNORE_LOGS" => :ignore_logs,
     "APPSIGNAL_IGNORE_NAMESPACES" => :ignore_namespaces,
+    "APPSIGNAL_INSTRUMENT_BROADWAY" => :instrument_broadway,
     "APPSIGNAL_INSTRUMENT_ECTO" => :instrument_ecto,
     "APPSIGNAL_INSTRUMENT_FINCH" => :instrument_finch,
     "APPSIGNAL_INSTRUMENT_OBAN" => :instrument_oban,
@@ -355,7 +364,8 @@ defmodule Appsignal.Config do
     APPSIGNAL_TRANSACTION_DEBUG_MODE APPSIGNAL_FILES_WORLD_ACCESSIBLE APPSIGNAL_SEND_PARAMS
     APPSIGNAL_ENABLE_MINUTELY_PROBES APPSIGNAL_ENABLE_STATSD APPSIGNAL_ENABLE_NGINX_METRICS
     APPSIGNAL_ENABLE_ERROR_BACKEND APPSIGNAL_SEND_ENVIRONMENT_METADATA
-    APPSIGNAL_INSTRUMENT_ECTO APPSIGNAL_INSTRUMENT_FINCH APPSIGNAL_INSTRUMENT_OBAN APPSIGNAL_INSTRUMENT_TESLA
+    APPSIGNAL_INSTRUMENT_BROADWAY APPSIGNAL_INSTRUMENT_ECTO APPSIGNAL_INSTRUMENT_FINCH
+    APPSIGNAL_INSTRUMENT_OBAN APPSIGNAL_INSTRUMENT_TESLA
   )
   @atom_keys ~w(APPSIGNAL_APP_ENV APPSIGNAL_OTP_APP)
   @string_list_keys ~w(

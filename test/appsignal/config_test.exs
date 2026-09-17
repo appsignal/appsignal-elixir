@@ -211,6 +211,30 @@ defmodule Appsignal.ConfigTest do
     end
   end
 
+  describe "instrument_broadway?" do
+    test "when true" do
+      assert with_config(
+               %{instrument_broadway: true},
+               &Config.instrument_broadway?/0
+             )
+    end
+
+    test "when false" do
+      refute with_config(
+               %{instrument_broadway: false},
+               &Config.instrument_broadway?/0
+             )
+    end
+
+    test "when unset" do
+      assert with_config(%{}, &Config.instrument_broadway?/0)
+    end
+
+    test "without an appsignal config" do
+      assert without_config(&Config.instrument_broadway?/0)
+    end
+  end
+
   describe "instrument_ecto?" do
     test "when true" do
       assert with_config(
@@ -1470,6 +1494,7 @@ defmodule Appsignal.ConfigTest do
       skip_session_data: false,
       transaction_debug_mode: false,
       instrument_absinthe: true,
+      instrument_broadway: true,
       instrument_ecto: true,
       instrument_finch: true,
       instrument_oban: true,
