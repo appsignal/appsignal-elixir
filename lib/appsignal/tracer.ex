@@ -48,7 +48,7 @@ defmodule Appsignal.Tracer do
     unless ignored?(pid) do
       namespace
       |> Span.create_root(pid, options[:start_time])
-      |> register()
+      |> register(:own, nil)
       |> on_create_span()
     end
   end
@@ -59,7 +59,7 @@ defmodule Appsignal.Tracer do
     unless ignored?(pid) do
       parent
       |> Span.create_child(pid, options[:start_time])
-      |> register()
+      |> register(:own, Registry.trace_root(parent))
       |> on_create_span()
     end
   end
@@ -118,10 +118,7 @@ defmodule Appsignal.Tracer do
 
   """
   def close_span(%Span{} = span) do
-    span
-    |> Span.close()
-    |> Registry.remove()
-
+    Span.close(span)
     :ok
   end
 
@@ -140,10 +137,7 @@ defmodule Appsignal.Tracer do
   def close_span(span, options)
 
   def close_span(%Span{} = span, end_time: end_time) do
-    span
-    |> Span.close(end_time)
-    |> Registry.remove()
-
+    Span.close(span, end_time)
     :ok
   end
 
@@ -189,19 +183,21 @@ defmodule Appsignal.Tracer do
     #     end)
     #     |> Stream.run()
 
-    register(%{span | pid: self()})
+    register(%{span | pid: self()}, :attached, Registry.trace_root(span))
   end
 
-  defp register(%Span{} = span) do
-    if Registry.insert(span) do
+  defp register(%Span{} = span, origin, trace_root) do
+    if Registry.insert(span, origin, trace_root) do
       @monitor.add()
       span
     end
   end
 
-  defp register(nil), do: nil
+  defp register(nil, _origin, _trace_root), do: nil
 
-  defp ignored?(pid) when is_pid(pid), do: Registry.ignored?(pid)
+  defp ignored?(pid) when is_pid(pid) do
+    Registry.ignored?(pid)
+  end
 
   @spec on_create_span(Span.t() | nil) :: Span.t() | nil
   defp on_create_span(span) do

@@ -299,14 +299,26 @@ defmodule Appsignal.TracerContractTest do
       assert closed_references() == [span.reference]
     end
 
-    test "leaves the span registered, current and root" do
+    test "deregisters the span" do
+      root = Tracer.create_span("http_request")
+      child = Tracer.create_span("http_request", root)
+
+      Span.close(child)
+
+      assert Tracer.current_span() == root
+      assert Tracer.lookup(self()) == [{self(), root}]
+    end
+
+    test "passes the end time to the extension and deregisters the span" do
       span = Tracer.create_span("http_request")
 
-      Span.close(span)
+      Span.close(span, 1_588_936_027_128_939_000)
 
-      assert Tracer.current_span() == span
-      assert Tracer.root_span() == span
-      assert Tracer.lookup(self()) == [{self(), span}]
+      assert [{reference, 1_588_936_027, 128_939_000}] =
+               Test.Nif.get!(:close_span_with_timestamp)
+
+      assert reference == span.reference
+      assert Tracer.lookup(self()) == []
     end
   end
 
