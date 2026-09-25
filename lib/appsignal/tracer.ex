@@ -1,18 +1,15 @@
 defmodule Appsignal.Tracer do
   alias Appsignal.Span
+  alias Appsignal.Tracer.Registry
 
   @monitor Application.compile_env(:appsignal, :appsignal_monitor, Appsignal.Monitor)
-
-  @table :"$appsignal_registry"
 
   @type option :: {:pid, pid} | {:start_time, integer}
   @type options :: [option]
 
   @doc false
   def start_link do
-    Agent.start_link(fn -> :ets.new(@table, [:named_table, :public, :duplicate_bag]) end,
-      name: __MODULE__
-    )
+    Agent.start_link(&Registry.new/0, name: __MODULE__)
   end
 
   @doc """
@@ -51,7 +48,7 @@ defmodule Appsignal.Tracer do
     unless ignored?(pid) do
       namespace
       |> Span.create_root(pid, options[:start_time])
-      |> register()
+      |> register(:own, nil)
       |> on_create_span()
     end
   end
@@ -62,7 +59,7 @@ defmodule Appsignal.Tracer do
     unless ignored?(pid) do
       parent
       |> Span.create_child(pid, options[:start_time])
-      |> register()
+      |> register(:own, Registry.trace_root(parent))
       |> on_create_span()
     end
   end
@@ -72,11 +69,7 @@ defmodule Appsignal.Tracer do
   """
   @spec lookup(pid()) :: list() | []
   def lookup(pid) do
-    try do
-      :ets.lookup(@table, pid)
-    rescue
-      ArgumentError -> []
-    end
+    Registry.lookup(pid)
   end
 
   @doc """
@@ -90,9 +83,7 @@ defmodule Appsignal.Tracer do
   """
   @spec current_span(pid()) :: Span.t() | nil
   def current_span(pid) do
-    pid
-    |> lookup()
-    |> current()
+    Registry.current(pid)
   end
 
   @doc """
@@ -106,9 +97,7 @@ defmodule Appsignal.Tracer do
   """
   @spec root_span(pid()) :: Span.t() | nil
   def root_span(pid) do
-    pid
-    |> lookup()
-    |> root()
+    Registry.root(pid)
   end
 
   @doc false
@@ -118,22 +107,6 @@ defmodule Appsignal.Tracer do
       start: {Appsignal.Tracer, :start_link, []}
     }
   end
-
-  defp current({_pid, :ignore}), do: nil
-
-  defp current({_pid, span}), do: span
-
-  defp current(spans) when is_list(spans) do
-    spans
-    |> List.last()
-    |> current()
-  end
-
-  defp current(_), do: nil
-
-  defp root([{_pid, %Span{} = root} | _]), do: root
-
-  defp root(_), do: nil
 
   @spec close_span(Span.t() | nil) :: :ok | nil
   @doc """
@@ -145,10 +118,7 @@ defmodule Appsignal.Tracer do
 
   """
   def close_span(%Span{} = span) do
-    span
-    |> Span.close()
-    |> deregister()
-
+    Span.close(span)
     :ok
   end
 
@@ -167,10 +137,7 @@ defmodule Appsignal.Tracer do
   def close_span(span, options)
 
   def close_span(%Span{} = span, end_time: end_time) do
-    span
-    |> Span.close(end_time)
-    |> deregister()
-
+    Span.close(span, end_time)
     :ok
   end
 
@@ -181,8 +148,7 @@ defmodule Appsignal.Tracer do
   """
   @spec ignore(pid()) :: :ok
   def ignore(pid) do
-    delete(pid)
-    insert({pid, :ignore}) && @monitor.add()
+    Registry.ignore(pid) && @monitor.add()
     :ok
   end
 
@@ -199,13 +165,7 @@ defmodule Appsignal.Tracer do
   """
   @spec delete(pid()) :: :ok
   def delete(pid) do
-    try do
-      :ets.delete(@table, pid)
-    rescue
-      ArgumentError -> :ok
-    end
-
-    :ok
+    Registry.delete(pid)
   end
 
   @doc false
@@ -223,41 +183,20 @@ defmodule Appsignal.Tracer do
     #     end)
     #     |> Stream.run()
 
-    register(%{span | pid: self()})
+    register(%{span | pid: self()}, :attached, Registry.trace_root(span))
   end
 
-  defp register(%Span{pid: pid} = span) do
-    if insert({pid, span}) do
+  defp register(%Span{} = span, origin, trace_root) do
+    if Registry.insert(span, origin, trace_root) do
       @monitor.add()
       span
     end
   end
 
-  defp register(nil), do: nil
-
-  defp deregister(%Span{pid: pid} = span) do
-    try do
-      :ets.delete_object(@table, {pid, span})
-    rescue
-      ArgumentError -> false
-    end
-  end
+  defp register(nil, _origin, _trace_root), do: nil
 
   defp ignored?(pid) when is_pid(pid) do
-    pid
-    |> lookup()
-    |> ignored?()
-  end
-
-  defp ignored?([{_pid, :ignore}]), do: true
-  defp ignored?(_), do: false
-
-  defp insert(span) do
-    try do
-      :ets.insert(@table, span)
-    rescue
-      ArgumentError -> nil
-    end
+    Registry.ignored?(pid)
   end
 
   @spec on_create_span(Span.t() | nil) :: Span.t() | nil

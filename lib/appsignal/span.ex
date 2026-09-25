@@ -1,5 +1,6 @@
 defmodule Appsignal.Span do
   alias Appsignal.{Config, Nif, Span}
+  alias Appsignal.Tracer.Registry
 
   defstruct [:reference, :pid]
 
@@ -353,6 +354,7 @@ defmodule Appsignal.Span do
   """
   def close(%Span{reference: reference} = span) do
     :ok = @nif.close_span(reference)
+    Registry.remove(span)
     span
   end
 
@@ -370,6 +372,7 @@ defmodule Appsignal.Span do
     sec = :erlang.convert_time_unit(end_time, :native, :second)
     nsec = :erlang.convert_time_unit(end_time, :native, :nanosecond) - sec * 1_000_000_000
     :ok = @nif.close_span_with_timestamp(reference, sec, nsec)
+    Registry.remove(span)
     span
   end
 
