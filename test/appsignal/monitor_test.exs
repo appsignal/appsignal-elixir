@@ -1,10 +1,11 @@
 defmodule Appsignal.MonitorTest do
   use ExUnit.Case
   import AppsignalTest.Utils
-  alias Appsignal.{Monitor, Test}
+  alias Appsignal.{Monitor, Test, Tracer}
 
   setup do
     start_supervised!(Test.Nif)
+    start_supervised!(Test.Monitor)
     :ok
   end
 
@@ -38,18 +39,21 @@ defmodule Appsignal.MonitorTest do
   end
 
   test "removes entries from the registry when their processes exit" do
+    test_pid = self()
+
     pid =
       spawn(fn ->
-        :ets.insert(:"$appsignal_registry", {self(), "span"})
-        Monitor.add()
+        send(test_pid, {:span, Tracer.create_span("http_request")})
       end)
 
+    assert_receive {:span, span}
+
     until(fn ->
-      assert lookup(pid) == [{pid, "span"}]
+      assert Tracer.lookup(pid) == [{pid, span}]
     end)
 
     until(fn ->
-      assert lookup(pid) == []
+      assert Tracer.lookup(pid) == []
     end)
   end
 
@@ -66,10 +70,6 @@ defmodule Appsignal.MonitorTest do
     until(fn ->
       assert MapSet.member?(:sys.get_state(Appsignal.Monitor), self())
     end)
-  end
-
-  defp lookup(pid) do
-    :ets.lookup(:"$appsignal_registry", pid)
   end
 
   defp monitor_pid do

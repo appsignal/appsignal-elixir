@@ -274,10 +274,6 @@ defmodule Appsignal.Error.BackendTest do
   end
 
   defp ignore_pid do
-    if System.otp_release() < "21" do
-      :ets.insert(:"$appsignal_registry", {pid(), :ignore})
-    else
-      Tracer.ignore()
-    end
+    Tracer.ignore(pid())
   end
 end

@@ -16,7 +16,7 @@ defmodule Appsignal.TracerTest do
     end
 
     test "registers the span", %{span: span} do
-      assert :ets.lookup(:"$appsignal_registry", self()) == [{self(), span}]
+      assert Tracer.lookup(self()) == [{self(), span}]
     end
 
     test "creates a process monitor" do
@@ -32,7 +32,7 @@ defmodule Appsignal.TracerTest do
     end
 
     test "does not register a span" do
-      assert :ets.lookup(:"$appsignal_registry", self()) == []
+      assert Tracer.lookup(self()) == []
     end
   end
 
@@ -44,7 +44,7 @@ defmodule Appsignal.TracerTest do
     end
 
     test "does not register a span" do
-      assert :ets.lookup(:"$appsignal_registry", self()) == [{self(), :ignore}]
+      assert Tracer.lookup(self()) == [{self(), :ignore}]
     end
   end
 
@@ -56,7 +56,7 @@ defmodule Appsignal.TracerTest do
     end
 
     test "does not register a span", %{pid: pid} do
-      assert :ets.lookup(:"$appsignal_registry", pid) == [{pid, :ignore}]
+      assert Tracer.lookup(pid) == [{pid, :ignore}]
     end
   end
 
@@ -76,7 +76,7 @@ defmodule Appsignal.TracerTest do
     end
 
     test "registers the span without overwriting its parent", %{span: span, parent: parent} do
-      assert :ets.lookup(:"$appsignal_registry", self()) == [{self(), parent}, {self(), span}]
+      assert Tracer.lookup(self()) == [{self(), parent}, {self(), span}]
     end
   end
 
@@ -92,7 +92,7 @@ defmodule Appsignal.TracerTest do
     end
 
     test "registers the span without overwriting its parent", %{span: span, parent: parent} do
-      assert :ets.lookup(:"$appsignal_registry", self()) == [{self(), parent}, {self(), span}]
+      assert Tracer.lookup(self()) == [{self(), parent}, {self(), span}]
     end
   end
 
@@ -104,7 +104,7 @@ defmodule Appsignal.TracerTest do
     end
 
     test "does not register a span" do
-      assert :ets.lookup(:"$appsignal_registry", self()) == [{self(), :ignore}]
+      assert Tracer.lookup(self()) == [{self(), :ignore}]
     end
   end
 
@@ -128,7 +128,7 @@ defmodule Appsignal.TracerTest do
     end
 
     test "registers the span", %{span: span, pid: pid} do
-      assert :ets.lookup(:"$appsignal_registry", pid) == [{pid, span}]
+      assert Tracer.lookup(pid) == [{pid, span}]
     end
   end
 
@@ -277,7 +277,7 @@ defmodule Appsignal.TracerTest do
 
     test "deregisters the span", %{span: span} do
       Tracer.close_span(span)
-      assert :ets.lookup(:"$appsignal_registry", self()) == []
+      assert Tracer.lookup(self()) == []
     end
 
     test "closes the span through the Nif", %{span: %Span{reference: reference} = span} do
@@ -291,7 +291,7 @@ defmodule Appsignal.TracerTest do
 
     test "deregisters the span, but leaves its parent span", %{span: span, parent: parent} do
       Tracer.close_span(span)
-      assert :ets.lookup(:"$appsignal_registry", self()) == [{self(), parent}]
+      assert Tracer.lookup(self()) == [{self(), parent}]
     end
   end
 
@@ -304,7 +304,7 @@ defmodule Appsignal.TracerTest do
 
     test "deregisters the span", %{span: span, pid: pid} do
       Tracer.close_span(span)
-      assert :ets.lookup(:"$appsignal_registry", pid) == []
+      assert Tracer.lookup(pid) == []
     end
   end
 
@@ -350,7 +350,7 @@ defmodule Appsignal.TracerTest do
     end
 
     test "deletes the span" do
-      assert :ets.lookup(:"$appsignal_registry", self()) == []
+      assert Tracer.lookup(self()) == []
     end
   end
 
@@ -366,7 +366,7 @@ defmodule Appsignal.TracerTest do
     end
 
     test "deletes the span" do
-      assert :ets.lookup(:"$appsignal_registry", self()) == []
+      assert Tracer.lookup(self()) == []
     end
   end
 
@@ -378,7 +378,7 @@ defmodule Appsignal.TracerTest do
     end
 
     test "marks a pid as ignored" do
-      assert :ets.lookup(:"$appsignal_registry", self()) == [{self(), :ignore}]
+      assert Tracer.lookup(self()) == [{self(), :ignore}]
     end
 
     test "creates a process monitor" do
@@ -394,7 +394,7 @@ defmodule Appsignal.TracerTest do
     end
 
     test "removes existing spans" do
-      assert :ets.lookup(:"$appsignal_registry", self()) == [{self(), :ignore}]
+      assert Tracer.lookup(self()) == [{self(), :ignore}]
     end
   end
 
@@ -414,7 +414,7 @@ defmodule Appsignal.TracerTest do
     end
 
     test "marks a pid as ignored", %{pid: pid} do
-      assert :ets.lookup(:"$appsignal_registry", pid) == [{pid, :ignore}]
+      assert Tracer.lookup(pid) == [{pid, :ignore}]
     end
 
     test "creates a process monitor" do
@@ -430,7 +430,7 @@ defmodule Appsignal.TracerTest do
     end
 
     test "removes existing spans", %{pid: pid} do
-      assert :ets.lookup(:"$appsignal_registry", pid) == [{pid, :ignore}]
+      assert Tracer.lookup(pid) == [{pid, :ignore}]
     end
   end
 
