@@ -1,5 +1,14 @@
 # AppSignal for Elixir changelog
 
+## 2.17.6
+
+_Published on 2026-09-28._
+
+### Fixed
+
+- Improve handling of the extension internal queue when full. (patch [399c18f5](https://github.com/appsignal/appsignal-elixir/commit/399c18f5b52263c16b54f17fd2b5e849c79b48a9))
+- Fix issues in the extension that lead to gaps in data reporting. (patch [8503d575](https://github.com/appsignal/appsignal-elixir/commit/8503d575e34e21906e70525f8857ab4eccfe39ca))
+
 ## 2.17.5
 
 _Published on 2026-09-10._
