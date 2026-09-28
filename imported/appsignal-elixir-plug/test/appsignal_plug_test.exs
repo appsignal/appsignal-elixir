@@ -261,7 +261,7 @@ defmodule Appsignal.PlugTest do
     end
 
     test "ignores the process in the registry" do
-      assert :ets.lookup(:"$appsignal_registry", self()) == [{self(), :ignore}]
+      assert Appsignal.Tracer.lookup(self()) == [{self(), :ignore}]
     end
   end
 
@@ -366,7 +366,7 @@ defmodule Appsignal.PlugTest do
     end
 
     test "ignores the process in the registry" do
-      assert :ets.lookup(:"$appsignal_registry", self()) == [{self(), :ignore}]
+      assert Appsignal.Tracer.lookup(self()) == [{self(), :ignore}]
     end
   end
 
