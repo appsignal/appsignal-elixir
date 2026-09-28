@@ -120,6 +120,15 @@ defmodule Appsignal.Phoenix.MixProject do
         _ -> []
       end
 
+    # phoenix_template is a transitive dependency. Version 1.1.0 requires
+    # Elixir 1.16 and uses a bitstring pattern that older Elixirs cannot
+    # compile, so pin to the last version that does compile there.
+    phoenix_template_dependency =
+      case Version.compare(versions.elixir, "1.15.0") do
+        :lt -> [{:phoenix_template, ">= 1.0.0 and < 1.1.0"}]
+        _ -> []
+      end
+
     [
       {:appsignal, ">= 2.15.0 and < 3.0.0"},
       {:appsignal_plug, ">= 2.1.0 and < 3.0.0"},
@@ -130,7 +139,7 @@ defmodule Appsignal.Phoenix.MixProject do
       {:dialyxir, "~> 1.3.0", only: [:dev, :test], runtime: false},
       {:credo, credo_version, only: [:dev, :test], runtime: false},
       {:telemetry, "~> 0.4 or ~> 1.0"}
-    ] ++ plug_override ++ finch_dependencies ++ mint_dependency
+    ] ++ plug_override ++ finch_dependencies ++ mint_dependency ++ phoenix_template_dependency
   end
 
   defp verify_publishable!(deps) do
