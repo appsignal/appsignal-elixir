@@ -1,5 +1,13 @@
 # AppSignal for Elixir changelog
 
+## 2.17.7
+
+_Published on 2026-09-29._
+
+### Fixed
+
+- Fix an extension crash when the same span is used from multiple threads at the same time. (patch [fbda9042](https://github.com/appsignal/appsignal-elixir/commit/fbda90421e3a1e691af38ef0f4749a3fde2c53d1))
+
 ## 2.17.6
 
 _Published on 2026-09-28._
