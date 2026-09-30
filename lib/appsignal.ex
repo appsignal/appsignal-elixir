@@ -49,6 +49,10 @@ defmodule Appsignal do
       Appsignal.Absinthe.attach()
     end
 
+    if Config.instrument_broadway?() do
+      Appsignal.Broadway.attach()
+    end
+
     children = [
       {Appsignal.Tracer, []},
       {Appsignal.Monitor, []},
