@@ -1,5 +1,25 @@
 # AppSignal for Elixir changelog
 
+## 2.18.0
+
+_Published on 2026-09-30._
+
+### Added
+
+- Automatically instrument Broadway library.
+
+  [Broadway](https://elixir-broadway.org/) is an Elixir library for building
+  concurrent and multi-stage data ingestion and data processing pipelines.
+
+  When Broadway processes one or more messages, a trace is created to represent
+  the processing of these messages.  Independent root spans encompass the call to
+  `prepare_messages/2` and `handle_message/3`.
+
+  This instrumentation is enable by default and only available for Broadway
+  versions higher than 1.0.0.
+
+  (minor [f58f5e72](https://github.com/appsignal/appsignal-elixir/commit/f58f5e725681cdf9824138a21e6a9acbd84aa7bf))
+
 ## 2.17.7
 
 _Published on 2026-09-29._
