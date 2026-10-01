@@ -135,11 +135,9 @@ mono changeset add
 -  Run [`mono publish`](https://github.com/appsignal/mono/#publish) and follow
    the instructions.
 
-### Updating the CI build matrix
+### Updating the CI build
 
-1. Update `.semaphore/versions.rb` to add or remove Elixir/OTP versions, or
-   `.semaphore/semaphore.yml.erb`.
-2. Run `script/generate_ci_matrix`.
+Update `.github/workflows/ci.yaml` to add or remove Elixir/OTP versions.
 
 ## Contributing
 
