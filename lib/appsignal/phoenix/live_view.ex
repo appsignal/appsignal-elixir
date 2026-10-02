@@ -2,7 +2,7 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
   defmodule Appsignal.Phoenix.LiveView do
     @tracer Application.compile_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
     @span Application.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
-    @os Application.compile_env(:appsignal_plug, :os, :os)
+    @os Application.compile_env(:appsignal, :os_internal, :os)
 
     def instrument(module, name, socket, fun) do
       instrument(module, name, %{}, socket, fun)
