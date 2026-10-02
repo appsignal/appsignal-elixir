@@ -75,7 +75,7 @@ defmodule Appsignal do
   end
 
   defp attach_phoenix do
-    if Code.ensure_loaded?(Appsignal.Phoenix.EventHandler) do
+    if Config.instrument_phoenix?() and Code.ensure_loaded?(Appsignal.Phoenix.EventHandler) do
       Appsignal.Phoenix.EventHandler.attach()
     end
   end

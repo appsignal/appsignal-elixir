@@ -1,6 +1,18 @@
 defmodule Appsignal.Phoenix.EventHandlerTest do
   use ExUnit.Case
   alias Appsignal.{Span, Test, Tracer}
+  import AppsignalTest.Utils, only: [with_config: 2]
+
+  @events [
+    [:phoenix, :endpoint, :start],
+    [:phoenix, :endpoint, :stop],
+    [:phoenix, :router_dispatch, :start],
+    [:phoenix, :router_dispatch, :stop],
+    [:phoenix, :router_dispatch, :exception],
+    [:phoenix, :controller, :render, :start],
+    [:phoenix, :controller, :render, :stop],
+    [:phoenix, :controller, :render, :exception]
+  ]
 
   setup do
     start_supervised!(Test.Nif)
@@ -9,6 +21,32 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
     start_supervised!(Test.Monitor)
 
     :ok
+  end
+
+  test "attaches to Phoenix events automatically" do
+    for event <- @events do
+      assert attached?(event)
+    end
+  end
+
+  describe "when :instrument_phoenix is set to false" do
+    setup do
+      for event <- @events do
+        :telemetry.detach({Appsignal.Phoenix.EventHandler, event})
+      end
+
+      with_config(%{instrument_phoenix: false}, fn -> Appsignal.start([], []) end)
+
+      on_exit(fn ->
+        Appsignal.Phoenix.EventHandler.attach()
+      end)
+    end
+
+    test "does not attach to Phoenix events" do
+      for event <- @events do
+        refute attached?(event)
+      end
+    end
   end
 
   describe "after receiving an endpoint-start event" do
@@ -386,5 +424,11 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
       request_path: "/",
       status: 200
     }
+  end
+
+  defp attached?(event) do
+    event
+    |> :telemetry.list_handlers()
+    |> Enum.any?(fn %{id: id} -> id == {Appsignal.Phoenix.EventHandler, event} end)
   end
 end

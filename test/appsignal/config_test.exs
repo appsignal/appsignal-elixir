@@ -283,6 +283,30 @@ defmodule Appsignal.ConfigTest do
     end
   end
 
+  describe "instrument_phoenix?" do
+    test "when true" do
+      assert with_config(
+               %{instrument_phoenix: true},
+               &Config.instrument_phoenix?/0
+             )
+    end
+
+    test "when false" do
+      refute with_config(
+               %{instrument_phoenix: false},
+               &Config.instrument_phoenix?/0
+             )
+    end
+
+    test "when unset" do
+      assert with_config(%{}, &Config.instrument_phoenix?/0)
+    end
+
+    test "without an appsignal config" do
+      assert without_config(&Config.instrument_phoenix?/0)
+    end
+  end
+
   describe "instrument_tesla?" do
     test "when discard" do
       assert with_config(
@@ -912,6 +936,13 @@ defmodule Appsignal.ConfigTest do
                default_configuration() |> Map.put(:ignore_namespaces, ~w(admin private_namespace))
     end
 
+    test "instrument_phoenix" do
+      assert with_env(
+               %{"APPSIGNAL_INSTRUMENT_PHOENIX" => "false"},
+               &init_config/0
+             ) == default_configuration() |> Map.put(:instrument_phoenix, false)
+    end
+
     test "log" do
       assert with_env(
                %{"APPSIGNAL_LOG" => "stdout"},
@@ -1498,6 +1529,7 @@ defmodule Appsignal.ConfigTest do
       instrument_ecto: true,
       instrument_finch: true,
       instrument_oban: true,
+      instrument_phoenix: true,
       instrument_tesla: true,
       report_oban_errors: "all"
     }
