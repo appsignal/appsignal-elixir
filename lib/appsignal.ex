@@ -17,6 +17,7 @@ defmodule Appsignal do
 
   use Application
   alias Appsignal.Config
+  @compile {:no_warn_undefined, Appsignal.Phoenix.EventHandler}
   require Logger
 
   @doc false
@@ -53,6 +54,8 @@ defmodule Appsignal do
       Appsignal.Broadway.attach()
     end
 
+    attach_phoenix()
+
     children = [
       {Appsignal.Tracer, []},
       {Appsignal.Monitor, []},
@@ -69,6 +72,12 @@ defmodule Appsignal do
     add_default_probes()
 
     result
+  end
+
+  defp attach_phoenix do
+    if Code.ensure_loaded?(Appsignal.Phoenix.EventHandler) do
+      Appsignal.Phoenix.EventHandler.attach()
+    end
   end
 
   @doc false
