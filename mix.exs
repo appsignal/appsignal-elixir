@@ -41,7 +41,7 @@ defmodule Appsignal.Mixfile do
       package: package(),
       homepage_url: "https://appsignal.com",
       test_paths: test_paths(Mix.env()),
-      elixir: "~> 1.9",
+      elixir: "~> 1.12",
       compilers: compilers(Mix.env()),
       elixirc_paths: elixirc_paths(Mix.env()),
       deps: deps(),
@@ -138,12 +138,6 @@ defmodule Appsignal.Mixfile do
   end
 
   defp deps(versions) do
-    decorator_version =
-      case Version.compare(versions.elixir, "1.5.0") do
-        :lt -> "~> 1.2.3"
-        _ -> "~> 1.2.3 or ~> 1.3"
-      end
-
     finch_version =
       case Version.compare(versions.elixir, "1.15.0") do
         :lt -> ">= 0.19.0 and < 0.22.0"
@@ -164,12 +158,6 @@ defmodule Appsignal.Mixfile do
         false -> "~> 2.0 or ~> 3.0"
       end
 
-    mime_dependency =
-      case Version.compare(versions.elixir, "1.10.0") do
-        :lt -> [{:mime, "~> 1.0", only: [:test, :test_no_nif]}]
-        _ -> []
-      end
-
     mint_dependency =
       case Version.compare(versions.elixir, "1.15.0") do
         :lt ->
@@ -180,21 +168,15 @@ defmodule Appsignal.Mixfile do
       end
 
     plug_version =
-      case Version.compare(versions.elixir, "1.10.0") do
+      case Version.compare(versions.elixir, "1.14.0") do
         :lt ->
-          "~> 1.13.6"
+          "~> 1.14 and < 1.19.0"
 
         _ ->
-          case Version.compare(versions.elixir, "1.14.0") do
-            :lt ->
-              "~> 1.14 and < 1.19.0"
-
-            _ ->
-              # plug 1.20.0 requires Elixir ~> 1.15, so cap it on 1.14.
-              case Version.compare(versions.elixir, "1.15.0") do
-                :lt -> "~> 1.14 and < 1.20.0"
-                _ -> "~> 1.14"
-              end
+          # plug 1.20.0 requires Elixir ~> 1.15, so cap it on 1.14.
+          case Version.compare(versions.elixir, "1.15.0") do
+            :lt -> "~> 1.14 and < 1.20.0"
+            _ -> "~> 1.14"
           end
       end
 
@@ -225,7 +207,7 @@ defmodule Appsignal.Mixfile do
       {:benchee, "~> 1.0", only: :bench},
       {:finch, finch_version},
       {:jason, "~> 1.0"},
-      {:decorator, decorator_version},
+      {:decorator, "~> 1.2.3 or ~> 1.3"},
       {:plug, plug_version, only: [:test, :test_no_nif]},
       {:plug_cowboy, "~> 1.0", only: [:test, :test_no_nif]},
       {:bypass, "~> 0.6.0", only: [:test, :test_no_nif]},
@@ -234,7 +216,7 @@ defmodule Appsignal.Mixfile do
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:telemetry, telemetry_version},
       {:httpoison, httpoison_version, optional: true}
-    ] ++ mime_dependency ++ logger_backends_dependency ++ hpax_dependency ++ mint_dependency
+    ] ++ logger_backends_dependency ++ hpax_dependency ++ mint_dependency
   end
 
   defp verify_publishable!(deps) do
