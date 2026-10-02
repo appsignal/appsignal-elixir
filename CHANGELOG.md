@@ -1,5 +1,13 @@
 # AppSignal for Elixir changelog
 
+## 2.18.1
+
+_Published on 2026-10-02._
+
+### Fixed
+
+- Report Broadway messages as parameters instead of as a `message` tag. (patch [fe7299c8](https://github.com/appsignal/appsignal-elixir/commit/fe7299c89dc6a89bd8f0d48b72e27d923d2df2f3))
+
 ## 2.18.0
 
 _Published on 2026-09-30._
