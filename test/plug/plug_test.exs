@@ -95,8 +95,10 @@ defmodule Appsignal.PlugTest do
   doctest Appsignal.Plug
 
   setup do
+    start_supervised!(Test.Nif)
     start_supervised!(Test.Tracer)
     start_supervised!(Test.Span)
+    start_supervised!(Test.Monitor)
     :ok
   end
 
@@ -442,6 +444,7 @@ defmodule Appsignal.PlugTest do
                Test.Span.get(:set_attribute)
     end
 
+    @tag :skip_env_test_no_nif
     test "sets the span's parameters", %{span: span} do
       assert Appsignal.Plug.set_conn_data(span, %Plug.Conn{method: "GET", params: %{"id" => "4"}}) ==
                span
@@ -449,6 +452,7 @@ defmodule Appsignal.PlugTest do
       assert %{"sample_data" => %{"params" => ~s({"id":"4"})}} = Appsignal.Span.to_map(span)
     end
 
+    @tag :skip_env_test_no_nif
     test "does not set params when send_params is set to false", %{span: span} do
       config = Application.get_env(:appsignal, :config)
       Application.put_env(:appsignal, :config, %{config | send_params: false})
@@ -463,6 +467,7 @@ defmodule Appsignal.PlugTest do
       refute Map.has_key?(sample_data, "params")
     end
 
+    @tag :skip_env_test_no_nif
     test "sets the span's session data", %{span: span} do
       assert Appsignal.Plug.set_conn_data(span, %Plug.Conn{
                method: "GET",

@@ -31,7 +31,7 @@ if function_exported?(Phoenix.View, :__info__, 1) do
   defmodule PhoenixWeb.View do
     @moduledoc false
     use Phoenix.View,
-      root: "test/support",
+      root: "test/phoenix/support",
       namespace: AppsignalPhoenixExampleWeb
 
     use Appsignal.Phoenix.View

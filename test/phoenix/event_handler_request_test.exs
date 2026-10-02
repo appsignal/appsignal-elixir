@@ -10,8 +10,10 @@ defmodule Appsignal.Phoenix.EventHandlerRequestTest do
   alias Appsignal.{Span, Test, Tracer}
 
   setup do
+    start_supervised!(Test.Nif)
     start_supervised!(Test.Tracer)
     start_supervised!(Test.Span)
+    start_supervised!(Test.Monitor)
 
     # No root span is created here on purpose. In a Phoenix application that
     # does not `use Appsignal.Plug`, the endpoint span is the root span.

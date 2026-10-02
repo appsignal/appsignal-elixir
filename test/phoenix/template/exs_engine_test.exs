@@ -3,11 +3,13 @@ defmodule Appsignal.Phoenix.Template.ExsEngineTest do
   alias Appsignal.{Phoenix.Template.ExsEngine, Span, Test}
 
   setup do
+    start_supervised!(Test.Nif)
     start_supervised!(Test.Tracer)
     start_supervised!(Test.Span)
+    start_supervised!(Test.Monitor)
 
     return =
-      "test/support/index.html.exs"
+      "test/phoenix/support/index.html.exs"
       |> ExsEngine.compile("name")
       |> Code.eval_quoted()
 
@@ -19,7 +21,8 @@ defmodule Appsignal.Phoenix.Template.ExsEngineTest do
   end
 
   test "sets the span's name" do
-    assert {:ok, [{%Span{}, "Render test/support/index.html.exs"}]} = Test.Span.get(:set_name)
+    assert {:ok, [{%Span{}, "Render test/phoenix/support/index.html.exs"}]} =
+             Test.Span.get(:set_name)
   end
 
   test "sets the span's category" do
@@ -27,7 +30,7 @@ defmodule Appsignal.Phoenix.Template.ExsEngineTest do
   end
 
   test "sets the span's title attribute" do
-    assert attribute("title", "test/support/index.html.exs")
+    assert attribute("title", "test/phoenix/support/index.html.exs")
   end
 
   test "renders the template", %{return: return} do

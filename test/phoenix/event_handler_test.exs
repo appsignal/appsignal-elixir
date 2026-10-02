@@ -3,8 +3,10 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
   alias Appsignal.{Span, Test, Tracer}
 
   setup do
+    start_supervised!(Test.Nif)
     start_supervised!(Test.Tracer)
     start_supervised!(Test.Span)
+    start_supervised!(Test.Monitor)
 
     :ok
   end

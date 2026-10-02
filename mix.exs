@@ -100,11 +100,11 @@ defmodule Appsignal.Mixfile do
 
   defp compilers(_), do: [:appsignal] ++ Mix.compilers()
 
-  defp test_paths(_), do: ["test/appsignal", "test/mix"]
+  defp test_paths(_), do: ["test/appsignal", "test/mix", "test/plug", "test/phoenix"]
 
   defp elixirc_paths(env) do
     case test?(env) do
-      true -> ["lib", "test/support"]
+      true -> ["lib", "test/support", "test/phoenix/support"]
       false -> ["lib"]
     end
   end

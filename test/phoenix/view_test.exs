@@ -4,8 +4,10 @@ if Code.ensure_loaded?(PhoenixWeb.View) do
     alias Appsignal.{Span, Test}
 
     setup do
+      start_supervised!(Test.Nif)
       start_supervised!(Test.Tracer)
       start_supervised!(Test.Span)
+      start_supervised!(Test.Monitor)
 
       :ok
     end
@@ -37,7 +39,8 @@ if Code.ensure_loaded?(PhoenixWeb.View) do
       end
 
       test "sets the span's name" do
-        assert {:ok, [{%Span{}, "Render test/support/index.html"}]} = Test.Span.get(:set_name)
+        assert {:ok, [{%Span{}, "Render test/phoenix/support/index.html"}]} =
+                 Test.Span.get(:set_name)
       end
 
       test "sets the span's category" do
@@ -45,7 +48,7 @@ if Code.ensure_loaded?(PhoenixWeb.View) do
       end
 
       test "sets the span's title attribute" do
-        assert attribute("title", "test/support/index.html")
+        assert attribute("title", "test/phoenix/support/index.html")
       end
 
       test "renders the template", %{return: return} do
@@ -70,7 +73,8 @@ if Code.ensure_loaded?(PhoenixWeb.View) do
       end
 
       test "sets the span's name" do
-        assert {:ok, [{%Span{}, "Render test/support/index.html"}]} = Test.Span.get(:set_name)
+        assert {:ok, [{%Span{}, "Render test/phoenix/support/index.html"}]} =
+                 Test.Span.get(:set_name)
       end
 
       test "sets the span's category" do
@@ -78,7 +82,7 @@ if Code.ensure_loaded?(PhoenixWeb.View) do
       end
 
       test "sets the span's title attribute" do
-        assert attribute("title", "test/support/index.html")
+        assert attribute("title", "test/phoenix/support/index.html")
       end
 
       test "renders the template", %{return: return} do
