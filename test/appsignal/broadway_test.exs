@@ -1,3 +1,34 @@
+# A struct that emulates the `Broadway.Message` struct:
+# https://github.com/dashbitco/broadway/blob/v1.3.0/lib/broadway/message.ex
+defmodule Appsignal.BroadwayTest.BroadwayMessage do
+  @moduledoc false
+
+  defstruct acknowledger: nil,
+            batch_key: :default,
+            batch_mode: :bulk,
+            batcher: :default,
+            data: nil,
+            metadata: %{},
+            status: :ok
+
+  # A subset of `Broadway.Message`'s typing:
+  # https://hexdocs.pm/broadway/Broadway.Message.html#t:t/0
+  @type t :: %__MODULE__{
+          acknowledger: term(),
+          batch_key: term(),
+          batch_mode: :bulk | :flush,
+          batcher: atom(),
+          data: term(),
+          metadata: map(),
+          status: :ok | {:failed, binary()} | {atom(), term(), Exception.stacktrace()}
+        }
+
+  @doc false
+  def new(opts) do
+    struct!(__MODULE__, opts)
+  end
+end
+
 defmodule Appsignal.BroadwayTest do
   use ExUnit.Case
   alias Appsignal.{Span, Test, Tracer}
@@ -440,36 +471,5 @@ defmodule Appsignal.BroadwayTest do
 
   defp sample_messages(count) do
     Enum.map(1..count, fn _ -> sample_message() end)
-  end
-end
-
-# A struct that emulates the `Broadway.Message` struct:
-# https://github.com/dashbitco/broadway/blob/v1.3.0/lib/broadway/message.ex
-defmodule Appsignal.BroadwayTest.BroadwayMessage do
-  @moduledoc false
-
-  defstruct acknowledger: nil,
-            batch_key: :default,
-            batch_mode: :bulk,
-            batcher: :default,
-            data: nil,
-            metadata: %{},
-            status: :ok
-
-  # A subset of `Broadway.Message`'s typing:
-  # https://hexdocs.pm/broadway/Broadway.Message.html#t:t/0
-  @type t :: %__MODULE__{
-          acknowledger: term(),
-          batch_key: term(),
-          batch_mode: :bulk | :flush,
-          batcher: atom(),
-          data: term(),
-          metadata: map(),
-          status: :ok | {:failed, binary()} | {atom(), term(), Exception.stacktrace()}
-        }
-
-  @doc false
-  def new(opts) do
-    struct!(__MODULE__, opts)
   end
 end
