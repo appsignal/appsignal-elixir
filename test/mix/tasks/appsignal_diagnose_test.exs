@@ -32,27 +32,22 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
 
     start_supervised!(FakeOS)
 
-    # By default, Push API key is valid
-    auth_bypass = Bypass.open()
+    start_supervised!(Appsignal.FakeTransmitter)
 
     setup_with_config(%{
       active: true,
       name: "AppSignal test suite app v0",
       env: "test",
       push_api_key: "foo",
-      endpoint: "http://localhost:#{auth_bypass.port}"
+      endpoint: "http://localhost:4005"
     })
 
-    Bypass.expect(auth_bypass, fn conn ->
-      assert "/1/auth" == conn.request_path
-      assert "POST" == conn.method
-      Plug.Conn.resp(conn, 200, "")
-    end)
+    # By default, Push API key is valid
+    Appsignal.FakeTransmitter.set_response({:ok, %{status: 200, body: ""}})
 
     {
       :ok,
       %{
-        auth_bypass: auth_bypass,
         fake_report: fake_report,
         fake_system: fake_system,
         fake_nif: fake_nif,
@@ -892,14 +887,9 @@ defmodule Mix.Tasks.Appsignal.DiagnoseTest do
   end
 
   describe "with invalid Push API key" do
-    setup %{auth_bypass: auth_bypass} do
+    setup do
       setup_with_config(%{push_api_key: ""})
-
-      Bypass.expect(auth_bypass, fn conn ->
-        assert "/1/auth" == conn.request_path
-        assert "POST" == conn.method
-        Plug.Conn.resp(conn, 401, "")
-      end)
+      Appsignal.FakeTransmitter.set_response({:ok, %{status: 401, body: ""}})
     end
 
     test "outputs invalid API key warning" do

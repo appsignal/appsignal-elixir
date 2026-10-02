@@ -1,6 +1,7 @@
 defmodule Mix.Tasks.Appsignal.Diagnose.ReportTest do
   use ExUnit.Case
   import AppsignalTest.Utils
+  alias Appsignal.FakeTransmitter
 
   defp send do
     Appsignal.Diagnose.Report.send(
@@ -10,43 +11,34 @@ defmodule Mix.Tasks.Appsignal.Diagnose.ReportTest do
   end
 
   setup do
-    diagnose_bypass = Bypass.open()
+    start_supervised!(FakeTransmitter)
 
     setup_with_config(%{
       api_key: "foo",
       name: "AppSignal test suite app",
       env: "prod",
-      diagnose_endpoint: "http://localhost:#{diagnose_bypass.port}/diag"
+      diagnose_endpoint: "http://localhost:4005/diag"
     })
 
-    {:ok, diagnose_bypass: diagnose_bypass}
+    :ok
   end
 
   describe "with valid response" do
-    setup %{diagnose_bypass: diagnose_bypass} do
-      Bypass.expect(diagnose_bypass, fn conn ->
-        assert "/diag" == conn.request_path
-        assert "POST" == conn.method
-        Plug.Conn.resp(conn, 200, ~s({"token": "support token"}))
-      end)
-
-      :ok
+    setup do
+      FakeTransmitter.set_response({:ok, %{status: 200, body: ~s({"token": "support token"})}})
     end
 
     test "sends the diagnostics report to AppSignal and returns support token" do
       assert send() == {:ok, "support token"}
+
+      assert [{"http://localhost:4005/diag", {%{diagnose: %{}}, :json}, _config}] =
+               FakeTransmitter.transmitted()
     end
   end
 
   describe "with invalid response" do
-    setup %{diagnose_bypass: diagnose_bypass} do
-      Bypass.expect(diagnose_bypass, fn conn ->
-        assert "/diag" == conn.request_path
-        assert "POST" == conn.method
-        Plug.Conn.resp(conn, 200, ~s({"foo": bar}))
-      end)
-
-      :ok
+    setup do
+      FakeTransmitter.set_response({:ok, %{status: 200, body: ~s({"foo": bar})}})
     end
 
     test "sends the diagnostics report to AppSignal and returns an error" do
@@ -55,14 +47,8 @@ defmodule Mix.Tasks.Appsignal.Diagnose.ReportTest do
   end
 
   describe "with error response" do
-    setup %{diagnose_bypass: diagnose_bypass} do
-      Bypass.expect(diagnose_bypass, fn conn ->
-        assert "/diag" == conn.request_path
-        assert "POST" == conn.method
-        Plug.Conn.resp(conn, 500, ~s(woops))
-      end)
-
-      :ok
+    setup do
+      FakeTransmitter.set_response({:ok, %{status: 500, body: ~s(woops)}})
     end
 
     test "sends the diagnostics report to AppSignal and returns an error" do
@@ -71,9 +57,8 @@ defmodule Mix.Tasks.Appsignal.Diagnose.ReportTest do
   end
 
   describe "with no server response" do
-    setup %{diagnose_bypass: diagnose_bypass} do
-      Bypass.down(diagnose_bypass)
-      :ok
+    setup do
+      FakeTransmitter.set_response({:error, %Mint.TransportError{reason: :econnrefused}})
     end
 
     test "sends the diagnostics report to AppSignal and returns an error" do

@@ -209,8 +209,6 @@ defmodule Appsignal.Mixfile do
       {:jason, "~> 1.0"},
       {:decorator, "~> 1.2.3 or ~> 1.3"},
       {:plug, plug_version, only: [:test, :test_no_nif]},
-      {:plug_cowboy, "~> 1.0", only: [:test, :test_no_nif]},
-      {:bypass, "~> 0.6.0", only: [:test, :test_no_nif]},
       {:ex_doc, "~> 0.12", only: :dev, runtime: false},
       {:credo, credo_version, only: [:test, :dev], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},

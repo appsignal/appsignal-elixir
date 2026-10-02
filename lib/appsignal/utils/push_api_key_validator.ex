@@ -1,11 +1,15 @@
 defmodule Appsignal.Utils.PushApiKeyValidator do
   @moduledoc false
-  alias Appsignal.Transmitter
+  @transmitter Application.compile_env(
+                 :appsignal,
+                 :appsignal_transmitter,
+                 Appsignal.Transmitter
+               )
 
   def validate(config) do
     url = "#{config[:endpoint]}/1/auth"
 
-    case Transmitter.transmit(url, nil, config, true) do
+    case @transmitter.transmit(url, nil, config, true) do
       {:ok, %{status: 200}} -> :ok
       {:ok, %{status: 401}} -> {:error, :invalid}
       {:ok, %{status: status_code}} -> {:error, status_code}
