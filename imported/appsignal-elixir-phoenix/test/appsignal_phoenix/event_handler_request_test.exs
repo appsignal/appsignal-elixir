@@ -201,6 +201,114 @@ defmodule Appsignal.Phoenix.EventHandlerRequestTest do
     end
   end
 
+  describe "after a request that renders and responds inside a nested root span" do
+    # The shape of a controller that calls a function decorated with
+    # `transaction()`, which renders and sends the response.
+    setup do
+      endpoint_start()
+      endpoint_span = Tracer.current_span()
+
+      router_dispatch_start()
+
+      Appsignal.Instrumentation.instrument_root("background_job", "Worker.run", fn ->
+        render_start()
+        render_stop()
+        endpoint_stop()
+      end)
+
+      router_dispatch_stop()
+
+      [endpoint_span: endpoint_span]
+    end
+
+    test "names the request's root span", %{endpoint_span: endpoint_span} do
+      assert {:ok, [{^endpoint_span, "AppsignalPhoenixExampleWeb.PageController#index"}]} =
+               Test.Span.get(:set_name_if_nil)
+    end
+
+    test "sets the request's parameters on its root span", %{endpoint_span: endpoint_span} do
+      {:ok, calls} = Test.Span.get(:set_sample_data_if_nil)
+
+      assert [{^endpoint_span, "params", %{"foo" => "bar"}}] =
+               Enum.filter(calls, fn {_span, key, _value} -> key == "params" end)
+    end
+
+    test "sets the template tags on the request's root span", %{endpoint_span: endpoint_span} do
+      {:ok, calls} = Test.Span.get(:set_sample_data_if_nil)
+
+      assert [{^endpoint_span, "tags", %{"phoenix_template" => "template"}}] =
+               Enum.filter(calls, fn {_span, key, _value} -> key == "tags" end)
+    end
+
+    test "leaves no spans behind" do
+      assert [] == Tracer.lookup(self())
+    end
+  end
+
+  describe "after a request that is dispatched to the router inside a nested root span" do
+    # The shape of an endpoint plug that calls the router from a function
+    # decorated with `transaction()`.
+    setup do
+      endpoint_start()
+      endpoint_span = Tracer.current_span()
+
+      Appsignal.Instrumentation.instrument_root("background_job", "Worker.run", fn ->
+        router_dispatch_start()
+        endpoint_stop()
+        router_dispatch_stop()
+      end)
+
+      [endpoint_span: endpoint_span]
+    end
+
+    test "names the request's root span", %{endpoint_span: endpoint_span} do
+      assert {:ok, [{^endpoint_span, "AppsignalPhoenixExampleWeb.PageController#index"}]} =
+               Test.Span.get(:set_name_if_nil)
+    end
+  end
+
+  describe "after a router dispatch without an endpoint that renders inside a nested root span" do
+    setup do
+      router_dispatch_start()
+      dispatch_span = Tracer.current_span()
+
+      Appsignal.Instrumentation.instrument_root("background_job", "Worker.run", fn ->
+        render_start()
+        render_stop()
+      end)
+
+      router_dispatch_stop()
+
+      [dispatch_span: dispatch_span]
+    end
+
+    test "sets the template tags on the request's root span", %{dispatch_span: dispatch_span} do
+      {:ok, calls} = Test.Span.get(:set_sample_data_if_nil)
+
+      assert [{^dispatch_span, "tags", %{"phoenix_template" => "template"}}] =
+               Enum.filter(calls, fn {_span, key, _value} -> key == "tags" end)
+    end
+  end
+
+  describe "after a request in a process that is ignored partway through" do
+    setup do
+      endpoint_start()
+      router_dispatch_start()
+      Tracer.ignore()
+      render_start()
+      render_stop()
+      endpoint_stop()
+      router_dispatch_stop()
+    end
+
+    test "describes no span" do
+      {:ok, names} = Test.Span.get(:set_name_if_nil)
+      {:ok, data} = Test.Span.get(:set_sample_data_if_nil)
+
+      assert Enum.all?(names ++ data, &(elem(&1, 0) == nil))
+    end
+  end
+
   defp endpoint_start do
     :telemetry.execute(
       [:phoenix, :endpoint, :start],
