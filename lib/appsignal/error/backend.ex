@@ -3,6 +3,7 @@ defmodule Appsignal.Error.Backend do
 
   require Logger
 
+  alias Appsignal.Tracer.Registry
   alias Appsignal.Utils.LoggerHandler
 
   @tracer Application.compile_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
@@ -40,9 +41,7 @@ defmodule Appsignal.Error.Backend do
     pid = report_pid(report)
 
     unless :cowboy in report_domains(report) do
-      pid
-      |> @tracer.lookup()
-      |> do_handle_report(pid, reason, stacktrace)
+      do_handle_report(pid, reason, stacktrace)
     end
   end
 
@@ -57,20 +56,19 @@ defmodule Appsignal.Error.Backend do
   defp report_domains(%{domain: domains}), do: domains
   defp report_domains(_), do: []
 
-  defp do_handle_report([{_pid, :ignore}], _, _, _) do
-    :ok
-  end
+  defp do_handle_report(pid, reason, stacktrace) do
+    cond do
+      Registry.ignored?(pid) ->
+        :ok
 
-  defp do_handle_report([], pid, reason, stacktrace) do
-    "background_job"
-    |> @tracer.create_span(nil, pid: pid)
-    |> set_error_data(reason, stacktrace)
-  end
+      span = Registry.last_own(pid) ->
+        set_error_data(span, reason, stacktrace)
 
-  defp do_handle_report(spans, _, reason, stacktrace) when is_list(spans) do
-    {_pid, span} = List.last(spans)
-
-    set_error_data(span, reason, stacktrace)
+      true ->
+        "background_job"
+        |> @tracer.create_span(nil, pid: pid)
+        |> set_error_data(reason, stacktrace)
+    end
   end
 
   def handle_call(_event, state) do

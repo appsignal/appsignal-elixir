@@ -72,6 +72,13 @@ defmodule Appsignal.Tracer.Registry do
     ignored_flag?(pid) and span_rows(pid) == []
   end
 
+  def last_own(pid) do
+    case pid |> span_rows() |> Enum.filter(&match?({_, _, :own, _, _}, &1)) |> List.last() do
+      {_pid, _sequence, :own, span, _root} -> span
+      nil -> nil
+    end
+  end
+
   def delete(pid) do
     try do
       :ets.select_delete(@spans, [{{{pid, :_}, :_, :_, :_}, [], [true]}])

@@ -116,6 +116,89 @@ defmodule Appsignal.Error.BackendTest do
     end
   end
 
+  describe "handle_event/3, with a child span open" do
+    setup %{pid: pid} do
+      test_pid = self()
+
+      Murphy.call(pid, fn ->
+        root = Tracer.create_span("background_job")
+        child = Tracer.create_span("background_job", root)
+        send(test_pid, child)
+        raise "Exception"
+      end)
+
+      child =
+        receive do
+          child -> child
+        end
+
+      [child: child]
+    end
+
+    test "adds the error to the child span", %{child: child} do
+      assert {:ok, [{^child, :error, %RuntimeError{}, _stack}]} = Test.Span.get(:add_error)
+    end
+  end
+
+  describe "handle_event/3, with only a span attached from another process" do
+    setup %{pid: pid} do
+      parent = Tracer.create_span("http_request")
+
+      Murphy.call(pid, fn ->
+        Tracer.register_current(parent)
+        raise "Exception"
+      end)
+
+      [parent: parent]
+    end
+
+    test "creates a span", %{pid: pid} do
+      assert {:ok, [{"background_job", nil, [pid: ^pid]} | _]} = Test.Tracer.get(:create_span)
+    end
+
+    test "adds the error to the created span", %{pid: pid} do
+      assert {:ok, [{%Span{pid: ^pid} = span, :error, %RuntimeError{}, _stack}]} =
+               Test.Span.get(:add_error)
+
+      assert {:ok, [{^span}]} = Test.Tracer.get(:close_span)
+    end
+
+    test "leaves the attached span open", %{parent: parent} do
+      {:ok, closed} = Test.Tracer.get(:close_span)
+
+      refute Enum.any?(closed, fn {span} -> span.reference == parent.reference end)
+    end
+  end
+
+  describe "handle_event/3, with a span of its own and a span attached from another process" do
+    setup %{pid: pid} do
+      parent = Tracer.create_span("http_request")
+      test_pid = self()
+
+      Murphy.call(pid, fn ->
+        span = Tracer.create_span("background_job")
+        Tracer.register_current(parent)
+        send(test_pid, span)
+        raise "Exception"
+      end)
+
+      span =
+        receive do
+          span -> span
+        end
+
+      [span: span]
+    end
+
+    test "adds the error to its own span", %{span: span} do
+      assert {:ok, [{^span, :error, %RuntimeError{}, _stack}]} = Test.Span.get(:add_error)
+    end
+
+    test "closes its own span", %{span: span} do
+      assert {:ok, [{^span}]} = Test.Tracer.get(:close_span)
+    end
+  end
+
   describe "handle_event/3, with an ignored process" do
     setup %{pid: pid} do
       Murphy.call(pid, fn ->
