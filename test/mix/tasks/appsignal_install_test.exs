@@ -289,7 +289,7 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
 
         refute String.contains?(
                  output,
-                 "http://docs.appsignal.com/elixir/integrations/phoenix.html"
+                 "https://docs.appsignal.com/elixir/integrations/phoenix.html"
                )
       end
     end
@@ -301,7 +301,7 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
 
         assert String.contains?(
                  output,
-                 "http://docs.appsignal.com/elixir/integrations/phoenix.html"
+                 "https://docs.appsignal.com/elixir/integrations/phoenix.html"
                )
       end
     end

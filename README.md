@@ -17,12 +17,11 @@ Please follow the [installation
 guide](https://docs.appsignal.com/elixir/installation.html) on how to install
 and use this library.
 
-Then, add custom instrumentation or use one of the framework integrations to
-automatically gain performance insights and error notifications. Currently,
-AppSignal has framework integrations for
-[Plug](https://github.com/appsignal/appsignal-elixir-plug) and
-[Phoenix](https://github.com/appsignal/appsignal-elixir-phoenix) and
-applications.
+Then, add custom instrumentation or use one of the integrations to
+automatically gain performance insights and error notifications. The
+[Plug](https://docs.appsignal.com/elixir/integrations/plug.html) and
+[Phoenix](https://docs.appsignal.com/elixir/integrations/phoenix.html)
+integrations are part of this package.
 
 ## Usage
 
@@ -87,6 +86,20 @@ MIX_ENV=test mix test
 # because the NIF is not active, but should run without failures.
 MIX_ENV=test_no_nif mix test
 ```
+
+The test suites leave out Plug and Phoenix, to show that this package works in
+applications without them. To include the Plug or Phoenix integration and its
+tests, set the version of Plug or Phoenix to test against. Phoenix includes
+Plug.
+
+```shell
+_APPSIGNAL_CI_PLUG_VERSION="~> 1.19" mix test
+_APPSIGNAL_CI_PHOENIX_VERSION="~> 1.8" mix test
+```
+
+When switching between these, remove `mix.lock` and run `mix deps.get`, then
+run `mix compile --force`. Mix does not recompile this package when its
+optional dependencies change.
 
 ### Benchmarking
 
