@@ -188,13 +188,13 @@ defmodule Appsignal.Mixfile do
       versions.plug ||
         case Version.compare(versions.elixir, "1.14.0") do
           :lt ->
-            "~> 1.14 and < 1.19.0"
+            "~> 1.18 and < 1.19.0"
 
           _ ->
             # plug 1.20.0 requires Elixir ~> 1.15, so cap it on 1.14.
             case Version.compare(versions.elixir, "1.15.0") do
-              :lt -> "~> 1.14 and < 1.20.0"
-              _ -> "~> 1.14"
+              :lt -> "~> 1.18 and < 1.20.0"
+              _ -> "~> 1.18"
             end
         end
 
@@ -212,14 +212,14 @@ defmodule Appsignal.Mixfile do
     phoenix_version =
       versions.phoenix ||
         case Version.compare(versions.elixir, "1.15.0") do
-          :lt -> "~> 1.6 and < 1.8.0"
-          _ -> "~> 1.6"
+          :lt -> "~> 1.7 and < 1.8.0"
+          _ -> "~> 1.7"
         end
 
     phoenix_live_view_version =
       case Version.compare(versions.elixir, "1.14.0") do
-        :lt -> "~> 0.9 or ~> 1.0.0"
-        _ -> "~> 0.9 or ~> 1.0"
+        :lt -> ">= 0.17.12 and < 1.1.0"
+        _ -> ">= 0.17.12 and < 2.0.0"
       end
 
     # phoenix_template is a transitive dependency. Version 1.1.0 requires
