@@ -16,12 +16,11 @@ defmodule Appsignal.Tracer.RegistryTest do
     test "stores one row with a sequence, the origin, the span and its trace root" do
       span = Tracer.create_span("http_request")
 
-      assert [%{pid: pid, sequence: sequence, origin: :own, span: ^span, root: reference}] =
+      assert [%{pid: pid, sequence: sequence, origin: :own, span: ^span, root: ^span}] =
                rows(self())
 
       assert pid == self()
       assert is_integer(sequence)
-      assert reference == span.reference
     end
 
     test "records the trace root of the parent for a child span" do
@@ -29,15 +28,15 @@ defmodule Appsignal.Tracer.RegistryTest do
       child = Tracer.create_span("http_request", root)
       grandchild = Tracer.create_span("http_request", child)
 
-      assert Registry.trace_root(child) == root.reference
-      assert Registry.trace_root(grandchild) == root.reference
+      assert Registry.trace_root(child) == root
+      assert Registry.trace_root(grandchild) == root
     end
 
     test "records the parent itself as the trace root when the parent is not registered" do
       parent = Span.create_root("http_request", self())
       child = Tracer.create_span("http_request", parent)
 
-      assert Registry.trace_root(child) == parent.reference
+      assert Registry.trace_root(child) == parent
     end
 
     test "records a span registered from another process as attached, with its trace root" do
@@ -53,7 +52,7 @@ defmodule Appsignal.Tracer.RegistryTest do
 
       assert [%{origin: :attached, span: attached, root: trace_root}] = rows
       assert attached.reference == child.reference
-      assert trace_root == root.reference
+      assert trace_root == root
     end
   end
 

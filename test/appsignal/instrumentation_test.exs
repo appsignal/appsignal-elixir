@@ -613,7 +613,7 @@ defmodule Appsignal.InstrumentationTest do
   describe ".set_error/2, with a child span" do
     setup do
       root = Tracer.create_span("http_request")
-      Tracer.create_span("http_request")
+      Tracer.create_span("http_request", root)
 
       {exception, stack} =
         try do
@@ -671,7 +671,7 @@ defmodule Appsignal.InstrumentationTest do
   describe ".set_error/3, with a child span" do
     setup do
       root = Tracer.create_span("http_request")
-      Tracer.create_span("http_request")
+      Tracer.create_span("http_request", root)
 
       {kind, reason, stack} =
         try do

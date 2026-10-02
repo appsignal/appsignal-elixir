@@ -11,8 +11,8 @@ defmodule Appsignal.Tracer.Registry do
     :ets.new(@ignored, [:named_table, :public, :set])
   end
 
-  def insert(%Span{pid: pid, reference: reference} = span, origin, trace_root) do
-    row = {{pid, :erlang.unique_integer([:monotonic])}, origin, span, trace_root || reference}
+  def insert(%Span{pid: pid} = span, origin, trace_root) do
+    row = {{pid, :erlang.unique_integer([:monotonic])}, origin, span, trace_root || span}
 
     try do
       :ets.insert(@spans, row)
@@ -31,9 +31,9 @@ defmodule Appsignal.Tracer.Registry do
 
   def remove(nil), do: false
 
-  def trace_root(%Span{reference: reference} = span) do
+  def trace_root(%Span{} = span) do
     case last_registration(span) do
-      nil -> reference
+      nil -> span
       {_pid, _sequence, _origin, _span, root} -> root
     end
   end
@@ -52,8 +52,8 @@ defmodule Appsignal.Tracer.Registry do
   end
 
   def root(pid) do
-    case {ignored_flag?(pid), span_rows(pid)} do
-      {false, [{_pid, _sequence, _origin, span, _root} | _]} -> span
+    case {ignored_flag?(pid), pid |> span_rows() |> List.last()} do
+      {false, {_pid, _sequence, _origin, _span, root}} -> root
       _ -> nil
     end
   end

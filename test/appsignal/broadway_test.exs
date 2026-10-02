@@ -368,6 +368,47 @@ defmodule Appsignal.BroadwayTest do
     end
   end
 
+  describe "while a message is processed by a processor" do
+    # Each message gets a root span of its own, in the same process as the
+    # processor's root span.
+    setup do
+      execute_processor_start()
+      processor_span = Tracer.current_span()
+
+      execute_message_start()
+      message_span = Tracer.current_span()
+      root_during_message = Tracer.root_span()
+
+      execute_message_stop()
+      root_after_message = Tracer.root_span()
+
+      execute_processor_stop()
+
+      [
+        processor_span: processor_span,
+        message_span: message_span,
+        root_during_message: root_during_message,
+        root_after_message: root_after_message
+      ]
+    end
+
+    test "uses the message's span as the root span", context do
+      assert context.root_during_message == context.message_span
+    end
+
+    test "uses the processor's span as the root span again afterwards", context do
+      assert context.root_after_message == context.processor_span
+    end
+
+    test "closes both spans", %{processor_span: processor_span, message_span: message_span} do
+      assert {:ok, [{^processor_span}, {^message_span}]} = Test.Tracer.get(:close_span)
+    end
+
+    test "leaves no spans behind" do
+      assert Tracer.lookup(self()) == []
+    end
+  end
+
   defp attribute?(asserted_key, asserted_data) do
     {:ok, attributes} = Test.Span.get(:set_attribute)
 
