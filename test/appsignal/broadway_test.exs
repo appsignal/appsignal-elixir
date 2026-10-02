@@ -53,6 +53,13 @@ if Appsignal.Dependencies.present?(:broadway) do
           Process.sleep(20)
           message
 
+        "tag root" ->
+          Appsignal.Span.set_sample_data(Appsignal.Tracer.root_span(), "tags", %{
+            "set_on" => "root"
+          })
+
+          message
+
         _ ->
           message
       end
@@ -311,6 +318,16 @@ if Appsignal.Dependencies.present?(:broadway) do
         [message] = named(spans, "#{@pipeline}#handle_message")
         assert [%{"name" => "Handle message"} = child] = children(spans, message)
         assert category(child) == "handle.message"
+      end
+
+      test "is the root span in handle_message/3" do
+        process("tag root")
+        spans = closed_spans(2)
+
+        [message] = named(spans, "#{@pipeline}#handle_message")
+        [processor] = named(spans, "#{@pipeline}#prepare_messages")
+        assert message["sample_data"]["tags"] == %{"set_on" => "root"}
+        refute processor["sample_data"]["tags"]
       end
 
       @tag :capture_log
