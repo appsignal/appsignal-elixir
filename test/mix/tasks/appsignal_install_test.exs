@@ -282,26 +282,28 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
       assert String.contains?(output, "AppSignal installed!")
     end
 
-    test "without Phoenix it prints no link to Phoenix integration documentation" do
-      output = run_with_environment_config()
-      refute String.contains?(output, "AppSignal detected a Phoenix app")
+    unless Code.ensure_loaded?(Phoenix) do
+      test "without Phoenix it prints no link to Phoenix integration documentation" do
+        output = run_with_environment_config()
+        refute String.contains?(output, "AppSignal detected a Phoenix app")
 
-      refute String.contains?(
-               output,
-               "http://docs.appsignal.com/elixir/integrations/phoenix.html"
-             )
+        refute String.contains?(
+                 output,
+                 "http://docs.appsignal.com/elixir/integrations/phoenix.html"
+               )
+      end
     end
 
-    @tag :skip_env_test_no_nif
-    @tag :skip_env_test
-    test "with Phoenix it prints link to Phoenix integration documentation" do
-      output = run_with_environment_config()
-      assert String.contains?(output, "AppSignal detected a Phoenix app")
+    if Code.ensure_loaded?(Phoenix) do
+      test "with Phoenix it prints link to Phoenix integration documentation" do
+        output = run_with_environment_config()
+        assert String.contains?(output, "AppSignal detected a Phoenix app")
 
-      assert String.contains?(
-               output,
-               "http://docs.appsignal.com/elixir/integrations/phoenix.html"
-             )
+        assert String.contains?(
+                 output,
+                 "http://docs.appsignal.com/elixir/integrations/phoenix.html"
+               )
+      end
     end
 
     test "sends a demo sample with six spans to AppSignal" do

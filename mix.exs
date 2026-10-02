@@ -100,12 +100,22 @@ defmodule Appsignal.Mixfile do
 
   defp compilers(_), do: [:appsignal] ++ Mix.compilers()
 
-  defp test_paths(_), do: ["test/appsignal", "test/mix", "test/plug", "test/phoenix"]
+  defp test_paths(_) do
+    integrations = integrations(versions())
+
+    ["test/appsignal", "test/mix"] ++
+      if(:plug in integrations, do: ["test/plug"], else: []) ++
+      if(:phoenix in integrations, do: ["test/phoenix"], else: [])
+  end
 
   defp elixirc_paths(env) do
     case test?(env) do
-      true -> ["lib", "test/support", "test/phoenix/support"]
-      false -> ["lib"]
+      true ->
+        ["lib", "test/support"] ++
+          if :phoenix in integrations(versions()), do: ["test/phoenix/support"], else: []
+
+      false ->
+        ["lib"]
     end
   end
 
@@ -126,17 +136,20 @@ defmodule Appsignal.Mixfile do
   # computed from a map of versions. That makes it possible to compare the
   # requirements this machine produces with the ones the newest Elixir and OTP
   # releases produce, with no overrides set.
-  @publish_versions %{elixir: "999.0.0", otp: 999, phoenix: nil, plug: nil}
+  @publish_versions %{env: :prod, elixir: "999.0.0", otp: 999, phoenix: nil, plug: nil}
 
-  defp deps do
-    versions = %{
+  defp versions do
+    %{
+      env: Mix.env(),
       elixir: System.version(),
       otp: String.to_integer(System.otp_release()),
       phoenix: ci_version("_APPSIGNAL_CI_PHOENIX_VERSION"),
       plug: ci_version("_APPSIGNAL_CI_PLUG_VERSION")
     }
+  end
 
-    deps = deps(versions)
+  defp deps do
+    deps = deps(versions())
     verify_publishable!(deps)
     deps
   end
@@ -218,6 +231,28 @@ defmodule Appsignal.Mixfile do
         _ -> []
       end
 
+    integrations = integrations(versions)
+
+    plug_dependencies =
+      case :plug in integrations do
+        true -> [plug_dependency]
+        false -> []
+      end
+
+    phoenix_dependencies =
+      case :phoenix in integrations do
+        true ->
+          [
+            {:phoenix, phoenix_version, optional: true},
+            {:phoenix_live_view, phoenix_live_view_version, optional: true}
+          ] ++ phoenix_template_dependency
+
+        false ->
+          []
+      end
+
+    integration_dependencies = plug_dependencies ++ phoenix_dependencies
+
     credo_version =
       case Version.compare(versions.elixir, "1.13.0") do
         :lt -> "1.7.6"
@@ -246,9 +281,6 @@ defmodule Appsignal.Mixfile do
       {:finch, finch_version},
       {:jason, "~> 1.0"},
       {:decorator, "~> 1.2.3 or ~> 1.3"},
-      plug_dependency,
-      {:phoenix, phoenix_version, optional: true},
-      {:phoenix_live_view, phoenix_live_view_version, optional: true},
       {:ex_doc, "~> 0.12", only: :dev, runtime: false},
       {:credo, credo_version, only: [:test, :dev], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
@@ -256,7 +288,7 @@ defmodule Appsignal.Mixfile do
       {:httpoison, httpoison_version, optional: true}
     ] ++
       logger_backends_dependency ++
-      hpax_dependency ++ mint_dependency ++ phoenix_template_dependency
+      hpax_dependency ++ mint_dependency ++ integration_dependencies
   end
 
   defp verify_publishable!(deps) do
@@ -287,6 +319,19 @@ defmodule Appsignal.Mixfile do
       """)
     end
   end
+
+  # The test environments only include Plug and Phoenix when CI asks for a
+  # version of them. Phoenix depends on Plug, so asking for Phoenix also
+  # includes Plug.
+  defp integrations(%{env: env} = versions) when env in [:test, :test_no_nif] do
+    cond do
+      versions.phoenix -> [:plug, :phoenix]
+      versions.plug -> [:plug]
+      true -> []
+    end
+  end
+
+  defp integrations(_versions), do: [:plug, :phoenix]
 
   # GitHub Actions sets a matrix variable that a job does not define to an
   # empty string.
