@@ -138,7 +138,7 @@ defmodule Appsignal.Broadway do
     |> @tracer.create_span()
     |> @span.set_name("#{topology_name}#handle_message")
     |> @span.set_attribute("appsignal:category", "processor_message.broadway")
-    |> set_attribute("message", metadata[:message], &inspect/1)
+    |> @span.set_sample_data("params", metadata[:message])
     |> set_attribute("processor", metadata[:name], &processor_name/1)
     |> set_attribute("producer", metadata[:producer], &producer_name/1)
     |> set_attribute("topology_name", topology_name)

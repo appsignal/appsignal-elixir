@@ -182,16 +182,27 @@ defmodule Appsignal.BroadwayTest do
                Test.Span.get(:set_name)
     end
 
+    test "sets job arguments as span params" do
+      assert {:ok,
+              [
+                {%Span{}, "params",
+                 %Appsignal.BroadwayTest.BroadwayMessage{
+                   acknowledger: nil,
+                   batch_key: :default,
+                   batch_mode: :bulk,
+                   batcher: :default,
+                   data: nil,
+                   metadata: %{},
+                   status: :ok
+                 }}
+              ]} = Test.Span.get(:set_sample_data)
+    end
+
     test "sets the span's category" do
       assert attribute?("appsignal:category", "processor_message.broadway")
       assert attribute?("topology_name", "MyApp.Pipeline")
       assert attribute?("producer", "MyApp.Producer")
       assert attribute?("processor", "MyApp.Pipeline.Broadway.Processor_default_0")
-
-      assert attribute?(
-               "message",
-               "%Appsignal.BroadwayTest.BroadwayMessage{acknowledger: nil, batch_key: :default, batch_mode: :bulk, batcher: :default, data: nil, metadata: %{}, status: :ok}"
-             )
     end
   end
 
