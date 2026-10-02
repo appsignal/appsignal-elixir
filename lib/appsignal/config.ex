@@ -161,6 +161,11 @@ defmodule Appsignal.Config do
 
   defp active?(_config), do: false
 
+  @doc false
+  def deactivate do
+    Application.put_env(:appsignal, :config, Map.put(config(), :active, false))
+  end
+
   @doc """
   Returns true if debug mode is turned on, false otherwise.
   """

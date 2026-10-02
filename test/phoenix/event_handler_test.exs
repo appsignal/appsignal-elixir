@@ -1,7 +1,7 @@
 defmodule Appsignal.Phoenix.EventHandlerTest do
   use ExUnit.Case
   alias Appsignal.{Span, Test, Tracer}
-  import AppsignalTest.Utils, only: [with_config: 2]
+  import AppsignalTest.Utils, only: [with_config: 2, with_frozen_environment: 1]
 
   @events [
     [:phoenix, :endpoint, :start],
@@ -38,6 +38,35 @@ defmodule Appsignal.Phoenix.EventHandlerTest do
       with_config(%{instrument_phoenix: false}, fn -> Appsignal.start([], []) end)
 
       on_exit(fn ->
+        Appsignal.Phoenix.EventHandler.attach()
+      end)
+    end
+
+    test "does not attach to Phoenix events" do
+      for event <- @events do
+        refute attached?(event)
+      end
+    end
+  end
+
+  describe "when appsignal_phoenix 2.x is installed" do
+    setup do
+      for event <- @events do
+        :telemetry.detach({Appsignal.Phoenix.EventHandler, event})
+      end
+
+      :ok =
+        :application.load(
+          {:application, :appsignal_phoenix,
+           [vsn: ~c"2.8.2", modules: [], registered: [], applications: []]}
+        )
+
+      with_frozen_environment(fn ->
+        ExUnit.CaptureLog.capture_log(fn -> Appsignal.start([], []) end)
+      end)
+
+      on_exit(fn ->
+        Application.unload(:appsignal_phoenix)
         Appsignal.Phoenix.EventHandler.attach()
       end)
     end

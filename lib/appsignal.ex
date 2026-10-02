@@ -25,6 +25,7 @@ defmodule Appsignal do
     import Supervisor.Spec, warn: false
 
     initialize()
+    Appsignal.Integrations.log_missing(Appsignal.Integrations.missing())
 
     if Config.error_backend_enabled?() do
       Appsignal.Error.Backend.attach()
@@ -75,7 +76,8 @@ defmodule Appsignal do
   end
 
   defp attach_phoenix do
-    if Config.instrument_phoenix?() and Code.ensure_loaded?(Appsignal.Phoenix.EventHandler) do
+    if Config.instrument_phoenix?() and Appsignal.Integrations.conflicts() == :ok and
+         Code.ensure_loaded?(Appsignal.Phoenix.EventHandler) do
       Appsignal.Phoenix.EventHandler.attach()
     end
   end
@@ -102,6 +104,20 @@ defmodule Appsignal do
   @doc false
   @spec initialize() :: :ok
   def initialize do
+    case Appsignal.Integrations.conflicts() do
+      :ok ->
+        initialize_extension()
+
+      {:error, conflicts} ->
+        _ = Config.initialize()
+        Config.deactivate()
+        Appsignal.Integrations.log_conflicts(conflicts)
+    end
+
+    :ok
+  end
+
+  defp initialize_extension do
     case {Config.initialize(), Config.configured_as_active?()} do
       {_, false} ->
         Logger.info("AppSignal disabled.")
