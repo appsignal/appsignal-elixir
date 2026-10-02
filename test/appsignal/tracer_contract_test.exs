@@ -114,7 +114,7 @@ defmodule Appsignal.TracerContractTest do
       assert child.pid != self()
       assert Test.Nif.get!(:create_child_span) == [{parent.reference}]
       assert task_current == child
-      assert task_root == child
+      assert task_root == parent
       assert task_lookup_after_close == []
       assert Tracer.current_span() == parent
       assert Tracer.lookup(self()) == [{self(), parent}]
@@ -190,33 +190,122 @@ defmodule Appsignal.TracerContractTest do
       assert Tracer.root_span() == root
     end
 
-    test "is the oldest span still open once the root has closed" do
+    test "is the trace's root even once it has closed" do
       root = Tracer.create_span("http_request")
-      child = Tracer.create_span("http_request", root)
+      Tracer.create_span("http_request", root)
 
       Tracer.close_span(root)
 
-      assert Tracer.root_span() == child
+      assert Tracer.root_span() == root
     end
 
-    test "is the outer root while a second root is open in the same process" do
+    test "is the nested root while a second root is open in the same process" do
+      Tracer.create_span("http_request")
+      nested = Tracer.create_span("live_view", nil)
+
+      assert Tracer.root_span() == nested
+    end
+
+    test "is the nested root from a child of the nested root" do
+      outer = Tracer.create_span("http_request")
+      Tracer.create_span("http_request", outer)
+      nested = Tracer.create_span("live_view", nil)
+      Tracer.create_span("live_view", nested)
+
+      assert Tracer.root_span() == nested
+    end
+
+    test "is the outer root again once the nested root has closed" do
+      outer = Tracer.create_span("http_request")
+      child = Tracer.create_span("http_request", outer)
+      nested = Tracer.create_span("live_view", nil)
+
+      Tracer.close_span(nested)
+
+      assert Tracer.current_span() == child
+      assert Tracer.root_span() == outer
+    end
+
+    test "is the outer root from a child of the outer root opened after a nested root" do
       outer = Tracer.create_span("http_request")
       Tracer.create_span("live_view", nil)
+      Tracer.create_span("http_request", outer)
 
       assert Tracer.root_span() == outer
     end
 
-    test "is the first span registered in a task" do
+    test "is the trace's root from a grandchild once the root has closed" do
+      root = Tracer.create_span("http_request")
+      child = Tracer.create_span("http_request", root)
+      grandchild = Tracer.create_span("http_request", child)
+
+      Tracer.close_span(root)
+
+      assert Tracer.current_span() == grandchild
+      assert Tracer.root_span() == root
+    end
+
+    test "is the trace's root in the parent process, from a task's grandchild" do
       parent = Tracer.create_span("http_request")
 
-      {child, task_root} =
+      task_root =
         Task.async(fn ->
           child = Tracer.create_span("http_request", parent)
-          {child, Tracer.root_span()}
+          Tracer.create_span("http_request", child)
+          Tracer.root_span()
         end)
         |> Task.await()
 
-      assert task_root == child
+      assert task_root == parent
+    end
+
+    test "is the trace's root in the parent process, from a task that attached a span" do
+      root = Tracer.create_span("http_request")
+      child = Tracer.create_span("http_request", root)
+
+      task_root =
+        Task.async(fn ->
+          Tracer.register_current(child)
+          Appsignal.instrument("task", fn -> Tracer.root_span() end)
+        end)
+        |> Task.await()
+
+      assert task_root == root
+    end
+
+    test "is the nested root for another process" do
+      pid = spawn_idle()
+      Tracer.create_span("http_request", nil, pid: pid)
+      nested = Tracer.create_span("live_view", nil, pid: pid)
+
+      assert Tracer.root_span(pid) == nested
+    end
+
+    test "is nil while the process is ignored, even with an attached span" do
+      parent = Tracer.create_span("http_request")
+
+      task_root =
+        Task.async(fn ->
+          Tracer.ignore()
+          Tracer.register_current(parent)
+          Tracer.root_span()
+        end)
+        |> Task.await()
+
+      assert task_root == nil
+    end
+
+    test "is the trace's root in the parent process, from a task" do
+      parent = Tracer.create_span("http_request")
+
+      task_root =
+        Task.async(fn ->
+          Tracer.create_span("http_request", parent)
+          Tracer.root_span()
+        end)
+        |> Task.await()
+
+      assert task_root == parent
     end
   end
 
