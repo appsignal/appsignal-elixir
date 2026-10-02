@@ -1,13 +1,15 @@
-defmodule Appsignal.Phoenix.Template.ExsEngine do
-  alias Appsignal.Phoenix.Template
-  alias Phoenix.Template.ExsEngine
+if Code.ensure_loaded?(Phoenix.Template.ExsEngine) do
+  defmodule Appsignal.Phoenix.Template.ExsEngine do
+    alias Appsignal.Phoenix.Template
+    alias Phoenix.Template.ExsEngine
 
-  @behaviour Phoenix.Template.Engine
-  @moduledoc false
+    @behaviour Phoenix.Template.Engine
+    @moduledoc false
 
-  def compile(path, name) do
-    path
-    |> ExsEngine.compile(name)
-    |> Template.compile(path)
+    def compile(path, name) do
+      path
+      |> ExsEngine.compile(name)
+      |> Template.compile(path)
+    end
   end
 end

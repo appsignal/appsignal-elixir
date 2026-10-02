@@ -1,20 +1,22 @@
-defimpl Appsignal.Metadata, for: Phoenix.Socket do
-  def metadata(%Phoenix.Socket{} = socket) do
-    %{
-      "channel" => Map.get(socket, :channel),
-      "endpoint" => Map.get(socket, :endpoint),
-      "handler" => Map.get(socket, :handler),
-      "id" => Map.get(socket, :id),
-      "ref" => Map.get(socket, :ref),
-      "topic" => Map.get(socket, :topic),
-      "transport" => Map.get(socket, :transport)
-    }
-  end
+if Code.ensure_loaded?(Phoenix.Socket) do
+  defimpl Appsignal.Metadata, for: Phoenix.Socket do
+    def metadata(%Phoenix.Socket{} = socket) do
+      %{
+        "channel" => Map.get(socket, :channel),
+        "endpoint" => Map.get(socket, :endpoint),
+        "handler" => Map.get(socket, :handler),
+        "id" => Map.get(socket, :id),
+        "ref" => Map.get(socket, :ref),
+        "topic" => Map.get(socket, :topic),
+        "transport" => Map.get(socket, :transport)
+      }
+    end
 
-  defdelegate name(socket), to: Appsignal.Metadata.Any
-  defdelegate category(socket), to: Appsignal.Metadata.Any
-  defdelegate params(socket), to: Appsignal.Metadata.Any
-  defdelegate session(socket), to: Appsignal.Metadata.Any
+    defdelegate name(socket), to: Appsignal.Metadata.Any
+    defdelegate category(socket), to: Appsignal.Metadata.Any
+    defdelegate params(socket), to: Appsignal.Metadata.Any
+    defdelegate session(socket), to: Appsignal.Metadata.Any
+  end
 end
 
 if Code.ensure_loaded?(Phoenix.LiveView) do
