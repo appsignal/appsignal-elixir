@@ -17,6 +17,7 @@ defmodule Appsignal.Phoenix.EventHandler do
   @render_key {__MODULE__, :render_spans}
   @route_key {__MODULE__, :route}
   @root_span_data_key {__MODULE__, :root_span_data_set}
+  @request_root_key {__MODULE__, :request_root_span}
 
   def attach do
     handlers = %{
@@ -55,10 +56,14 @@ defmodule Appsignal.Phoenix.EventHandler do
 
     parent = @tracer.current_span()
 
-    "http_request"
-    |> @tracer.create_span(parent)
-    |> @span.set_attribute("appsignal:category", "call.phoenix_endpoint")
-    |> push(@endpoint_key)
+    span =
+      "http_request"
+      |> @tracer.create_span(parent)
+      |> @span.set_attribute("appsignal:category", "call.phoenix_endpoint")
+      |> push(@endpoint_key)
+
+    _ = put_request_root()
+    span
   end
 
   def phoenix_endpoint_stop(_event, _measurements, metadata, _config) do
@@ -69,7 +74,7 @@ defmodule Appsignal.Phoenix.EventHandler do
     # described here, because it is closed below and cannot be described
     # afterwards.
     _ = Process.put(@root_span_data_key, true)
-    _root_span = set_span_data(@tracer.root_span(), with_route(metadata))
+    _root_span = set_span_data(request_root(), with_route(metadata))
 
     @tracer.close_span(span)
   end
@@ -87,10 +92,14 @@ defmodule Appsignal.Phoenix.EventHandler do
 
     parent = @tracer.current_span()
 
-    "http_request"
-    |> @tracer.create_span(parent)
-    |> @span.set_attribute("appsignal:category", "call.phoenix_router_dispatch")
-    |> push(@dispatch_key)
+    span =
+      "http_request"
+      |> @tracer.create_span(parent)
+      |> @span.set_attribute("appsignal:category", "call.phoenix_router_dispatch")
+      |> push(@dispatch_key)
+
+    _ = if Process.get(@endpoint_key, []) == [], do: put_request_root()
+    span
   end
 
   def phoenix_router_dispatch_stop(_event, _measurements, metadata, _config) do
@@ -153,7 +162,7 @@ defmodule Appsignal.Phoenix.EventHandler do
     parent = @tracer.current_span()
 
     _ =
-      @span.set_sample_data_if_nil(@tracer.root_span(), "tags", %{
+      @span.set_sample_data_if_nil(request_root(), "tags", %{
         "phoenix_template" => metadata.template,
         "phoenix_format" => metadata.format,
         "phoenix_view" => module_name(metadata.view)
@@ -226,6 +235,22 @@ defmodule Appsignal.Phoenix.EventHandler do
     end
   end
 
+  # The endpoint stop event fires from a `register_before_send` callback, and
+  # templates render from the controller, so both can run inside a root span
+  # that the application opened within the request.
+  defp put_request_root do
+    Process.put(@request_root_key, @tracer.root_span())
+  end
+
+  defp request_root do
+    pid = self()
+    span = Process.get(@request_root_key)
+
+    if span && {pid, span} in @tracer.lookup(pid),
+      do: span,
+      else: @tracer.root_span()
+  end
+
   defp put_route(%{route: route}) when is_binary(route) do
     _ = Process.put(@route_key, route)
   end
@@ -261,7 +286,14 @@ defmodule Appsignal.Phoenix.EventHandler do
 
   defp forget do
     Enum.each(
-      [@endpoint_key, @dispatch_key, @render_key, @route_key, @root_span_data_key],
+      [
+        @endpoint_key,
+        @dispatch_key,
+        @render_key,
+        @route_key,
+        @root_span_data_key,
+        @request_root_key
+      ],
       &Process.delete/1
     )
   end
