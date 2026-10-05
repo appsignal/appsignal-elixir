@@ -1,5 +1,5 @@
 defmodule AppsignalTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case
   import AppsignalTest.Utils
   alias Appsignal.Diagnose.FakeInstallationReport
 

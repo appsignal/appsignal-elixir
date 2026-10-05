@@ -1,13 +1,11 @@
 defmodule Appsignal.ReleaseUpgradeTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case
   import Appsignal.Config, only: [config: 0]
   alias Appsignal.Nif
   import AppsignalTest.Utils
 
   @tag :skip_env_test_no_nif
   test "config_change/3" do
-    assert Nif.env_get("_APPSIGNAL_APP_NAME") == ~c"AppSignal test suite app v0"
-
     with_config(valid_configuration(), fn ->
       # First start
       # Basically the contents of `Appsignal.initialize`
@@ -15,6 +13,7 @@ defmodule Appsignal.ReleaseUpgradeTest do
 
       # Sets config to Application environment
       assert config()[:name] == "AppSignal test suite app v1"
+      assert Nif.env_get("_APPSIGNAL_APP_NAME") == ~c"AppSignal test suite app v1"
 
       # The system reloads the application config (set in Mix) during the upgrade.
       new_config =
@@ -27,6 +26,7 @@ defmodule Appsignal.ReleaseUpgradeTest do
 
         until(fn ->
           assert config()[:name] == "AppSignal test suite app v2"
+          assert Nif.env_get("_APPSIGNAL_APP_NAME") == ~c"AppSignal test suite app v2"
         end)
       end)
     end)
