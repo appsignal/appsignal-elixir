@@ -1,0 +1,24 @@
+name: Validate changesets
+
+on:
+  workflow_call:
+
+jobs:
+  validate-changesets:
+    name: Validate changesets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+      - name: Checkout Mono
+        uses: actions/checkout@v4
+        with:
+          repository: appsignal/mono
+          path: tmp/mono
+      - name: Install Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+      - name: Validate changesets
+        run: tmp/mono/bin/mono changeset validate
+
