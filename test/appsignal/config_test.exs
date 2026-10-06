@@ -728,6 +728,25 @@ defmodule Appsignal.ConfigTest do
     end
   end
 
+  describe "environment variables" do
+    setup do
+      keys = Config.env_keys_by_type() |> Keyword.values() |> List.flatten()
+      %{keys: keys, mapping: Config.env_to_key_mapping()}
+    end
+
+    test "each has one type", %{keys: keys} do
+      assert keys -- Enum.uniq(keys) == []
+    end
+
+    test "each with a type maps to an option", %{keys: keys, mapping: mapping} do
+      assert Enum.reject(keys, &Map.has_key?(mapping, &1)) == []
+    end
+
+    test "each that maps to an option has a type", %{keys: keys, mapping: mapping} do
+      assert Map.keys(mapping) -- keys == []
+    end
+  end
+
   describe "using the system environment" do
     test "stores system env source in Application" do
       assert with_env(

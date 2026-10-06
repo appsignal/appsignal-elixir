@@ -372,8 +372,7 @@ defmodule Appsignal.Config do
     APPSIGNAL_BIND_ADDRESS
   )
   @bool_keys ~w(
-    APPSIGNAL_ACTIVE APPSIGNAL_DEBUG APPSIGNAL_INSTRUMENT_NET_HTTP APPSIGNAL_ENABLE_FRONTEND_ERROR_CATCHING
-    APPSIGNAL_RUNNING_IN_CONTAINER
+    APPSIGNAL_ACTIVE APPSIGNAL_DEBUG APPSIGNAL_RUNNING_IN_CONTAINER
     APPSIGNAL_ENABLE_HOST_METRICS APPSIGNAL_SEND_SESSION_DATA APPSIGNAL_SKIP_SESSION_DATA
     APPSIGNAL_TRANSACTION_DEBUG_MODE APPSIGNAL_FILES_WORLD_ACCESSIBLE APPSIGNAL_SEND_PARAMS
     APPSIGNAL_ENABLE_MINUTELY_PROBES APPSIGNAL_ENABLE_STATSD APPSIGNAL_ENABLE_NGINX_METRICS
@@ -389,6 +388,20 @@ defmodule Appsignal.Config do
     APPSIGNAL_FILTER_SESSION_DATA APPSIGNAL_REQUEST_HEADERS
   )
   @float_keys ~w(APPSIGNAL_CPU_COUNT)
+
+  @doc false
+  def env_keys_by_type do
+    [
+      string: @string_keys,
+      bool: @bool_keys,
+      atom: @atom_keys,
+      string_list: @string_list_keys,
+      float: @float_keys
+    ]
+  end
+
+  @doc false
+  def env_to_key_mapping, do: @env_to_key_mapping
 
   defp load_from_environment do
     %{}
