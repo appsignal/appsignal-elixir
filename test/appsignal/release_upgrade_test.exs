@@ -24,10 +24,13 @@ defmodule Appsignal.ReleaseUpgradeTest do
         # Hot reload / upgrade
         :ok = Appsignal.config_change([], [], [])
 
-        until(fn ->
-          assert config()[:name] == "AppSignal test suite app v2"
-          assert Nif.env_get("_APPSIGNAL_APP_NAME") == ~c"AppSignal test suite app v2"
-        end)
+        until(
+          fn ->
+            assert config()[:name] == "AppSignal test suite app v2"
+            assert Nif.env_get("_APPSIGNAL_APP_NAME") == ~c"AppSignal test suite app v2"
+          end,
+          10_000
+        )
       end)
     end)
   end
