@@ -161,11 +161,7 @@ defmodule Appsignal.Mixfile do
         _ -> "~> 0.19"
       end
 
-    telemetry_version =
-      case versions.otp < 21 do
-        true -> "~> 0.4"
-        false -> "~> 0.4 or ~> 1.0"
-      end
+    telemetry_version = "~> 0.4.3 or ~> 1.0"
 
     # httpoison 3.0 depends on hackney 4.0, which pulls in quic and requires
     # OTP 26 or later. Cap httpoison at 2.x on older OTP releases.
