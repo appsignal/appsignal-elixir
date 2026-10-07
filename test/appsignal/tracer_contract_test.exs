@@ -641,21 +641,154 @@ defmodule Appsignal.TracerContractTest do
   end
 
   describe "a process that exits with open spans" do
-    test "has its spans removed without ending them" do
+    test "has its spans ended, children first, and removed" do
+      {pid, root, child} = spawn_with_spans(fn -> :ok end)
+
+      until(fn -> assert Tracer.lookup(pid) == [] end)
+
+      assert timestamp_closed_references([root, child]) == [root.reference, child.reference]
+    end
+
+    test "has its spans ended at the time it went down, not after the deletion delay" do
+      before = :os.system_time(:nanosecond)
+      {pid, root, _child} = spawn_with_spans(fn -> :ok end)
+
+      until(fn -> assert Tracer.lookup(pid) == [] end)
+      removed = :os.system_time(:nanosecond)
+
+      delay = Application.fetch_env!(:appsignal, :deletion_delay) * 1_000_000
+      ended_at = timestamp_closed_at(root.reference)
+      assert ended_at >= before
+      assert ended_at <= removed - div(delay, 2)
+    end
+
+    test "names an unnamed child as unfinished, and leaves the root's name alone" do
+      {pid, root, child} = spawn_with_spans(fn -> :ok end)
+
+      until(fn -> assert Tracer.lookup(pid) == [] end)
+
+      names = Test.Nif.get(:set_span_name_if_nil) |> elem(1)
+      assert {child.reference, "[unfinished transaction event]"} in names
+      refute Enum.any?(names, fn {reference, _name} -> reference == root.reference end)
+    end
+
+    test "has its spans ended when it crashes" do
+      ExUnit.CaptureLog.capture_log(fn ->
+        {pid, root, child} = spawn_with_spans(fn -> raise "Exception" end)
+
+        until(fn -> assert Tracer.lookup(pid) == [] end)
+
+        # With the error backend attached, it ends the span it reports on.
+        ended = timestamp_closed_references([root, child]) ++ closed_references()
+        assert root.reference in ended
+        assert child.reference in ended
+      end)
+    end
+
+    test "has its spans ended when it is killed" do
+      {pid, root, child} = spawn_with_spans(fn -> Process.sleep(:infinity) end)
+
+      Process.exit(pid, :kill)
+
+      until(fn -> assert Tracer.lookup(pid) == [] end)
+
+      assert timestamp_closed_references([root, child]) == [root.reference, child.reference]
+    end
+
+    test "leaves open a span it attached from another process" do
+      parent = Tracer.create_span("http_request")
       test_pid = self()
 
       pid =
         spawn(fn ->
-          span = Tracer.create_span("http_request")
-          send(test_pid, {:span, span})
+          Tracer.register_current(parent)
+          send(test_pid, :attached)
         end)
 
-      assert_receive {:span, span}
+      assert_receive :attached
 
       until(fn -> assert Tracer.lookup(pid) == [] end)
 
-      refute span.reference in closed_references()
+      assert timestamp_closed_references([parent]) == []
+      assert Tracer.lookup(self()) == [{self(), parent}]
     end
+  end
+
+  describe "the monitor" do
+    test "keeps running, and removes the rows, when ending the spans fails" do
+      monitor = Process.whereis(Appsignal.Monitor)
+      {pid, _root, _child} = spawn_with_spans(fn -> Process.sleep(:infinity) end)
+
+      stop_supervised!(Test.Nif)
+      Process.exit(pid, :kill)
+
+      until(fn -> assert Tracer.lookup(pid) == [] end)
+
+      assert Process.whereis(Appsignal.Monitor) == monitor
+    end
+  end
+
+  describe "a span registered for another process" do
+    test "is ended and removed when that process exits" do
+      pid = spawn(fn -> Process.sleep(:infinity) end)
+      span = Tracer.create_span("http_request", nil, pid: pid)
+
+      Process.exit(pid, :kill)
+
+      until(fn -> assert Tracer.lookup(pid) == [] end)
+
+      assert timestamp_closed_references([span]) == [span.reference]
+    end
+  end
+
+  describe "a process ignored from another process" do
+    test "has its flag removed when it exits" do
+      pid = spawn(fn -> Process.sleep(:infinity) end)
+      Tracer.ignore(pid)
+
+      Process.exit(pid, :kill)
+
+      until(fn -> assert Tracer.lookup(pid) == [] end)
+    end
+  end
+
+  defp spawn_with_spans(fun) do
+    test_pid = self()
+
+    pid =
+      spawn(fn ->
+        root = Tracer.create_span("http_request")
+        child = Tracer.create_span("http_request", root)
+        send(test_pid, {:spans, root, child})
+
+        receive do
+          :go -> fun.()
+        end
+      end)
+
+    assert_receive {:spans, root, child}
+    send(pid, :go)
+    {pid, root, child}
+  end
+
+  # The monitor is shared by every test, so it can end spans that processes
+  # from earlier tests left open. Only look at the given spans.
+  defp timestamp_closed_references(spans) do
+    references = Enum.map(spans, & &1.reference)
+
+    case Test.Nif.get(:close_span_with_timestamp) do
+      {:ok, calls} ->
+        for {reference, _sec, _nsec} <- calls, reference in references, do: reference
+
+      :error ->
+        []
+    end
+  end
+
+  defp timestamp_closed_at(reference) do
+    {:ok, calls} = Test.Nif.get(:close_span_with_timestamp)
+    {^reference, sec, nsec} = List.keyfind(calls, reference, 0)
+    sec * 1_000_000_000 + nsec
   end
 
   defp closed_references do

@@ -148,7 +148,7 @@ defmodule Appsignal.Tracer do
   """
   @spec ignore(pid()) :: :ok
   def ignore(pid) do
-    Registry.ignore(pid) && @monitor.add()
+    Registry.ignore(pid) && @monitor.add(pid)
     :ok
   end
 
@@ -167,6 +167,27 @@ defmodule Appsignal.Tracer do
   def delete(pid) do
     Registry.delete(pid)
   end
+
+  @doc false
+  def close_all(pid, options \\ []) when is_pid(pid) do
+    spans = pid |> Registry.own_spans() |> Enum.reverse()
+
+    Enum.each(spans, fn {span, root?} ->
+      unless root?, do: Span.set_name_if_nil(span, "[unfinished transaction event]")
+      close_with(span, options[:end_time])
+    end)
+
+    if spans != [] do
+      Appsignal.IntegrationLogger.debug(
+        "Appsignal.Tracer closed #{length(spans)} spans left open in #{inspect(pid)}"
+      )
+    end
+
+    :ok
+  end
+
+  defp close_with(span, nil), do: Span.close(span)
+  defp close_with(span, end_time), do: Span.close(span, end_time)
 
   @doc false
   def register_current(span) do
@@ -188,7 +209,7 @@ defmodule Appsignal.Tracer do
 
   defp register(%Span{} = span, origin, trace_root) do
     if Registry.insert(span, origin, trace_root) do
-      @monitor.add()
+      @monitor.add(span.pid)
       span
     end
   end
