@@ -5,7 +5,8 @@ defmodule AppsignalTest.IntegrationCase do
 
   After each test, it fails the test when:
 
-    * a span the test created is still open. Tag a test with
+    * a span the test created was left open: it is still open, or AppSignal's
+      monitor had to end it once the process holding it exited. Tag a test with
       `leaves_spans_open: "why"` when an open span is the behaviour it pins.
       A tagged test fails when it leaves no span open, so the tag goes once
       that behaviour is fixed.
@@ -55,7 +56,7 @@ defmodule AppsignalTest.IntegrationCase do
       handler_failures = Agent.get(failures, & &1)
       Agent.stop(failures)
 
-      open = open_spans_after()
+      open = spans_left_open()
       detached = handlers -- appsignal_handlers()
       Enum.each(detached, &reattach/1)
 
@@ -79,10 +80,11 @@ defmodule AppsignalTest.IntegrationCase do
     Agent.update(failures, &[metadata | &1])
   end
 
-  defp open_spans_after do
+  defp spans_left_open do
     # Spans in other processes can close shortly after the test's last call.
     deadline = System.monotonic_time(:millisecond) + 1_000
     wait_for_open_spans(deadline)
+    Enum.filter(AppsignalTest.Spans.spans(), &AppsignalTest.Spans.left_open?/1)
   end
 
   defp wait_for_open_spans(deadline) do

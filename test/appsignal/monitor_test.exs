@@ -14,7 +14,7 @@ defmodule Appsignal.MonitorTest do
   end
 
   test "monitors a process" do
-    Monitor.add()
+    Monitor.add(self())
 
     until(fn ->
       {:monitors, monitors} = Process.info(monitor_pid(), :monitors)
@@ -26,8 +26,8 @@ defmodule Appsignal.MonitorTest do
   end
 
   test "does not monitor a process more than once" do
-    Monitor.add()
-    Monitor.add()
+    Monitor.add(self())
+    Monitor.add(self())
 
     until(fn ->
       {:monitors, monitors} = Process.info(monitor_pid(), :monitors)
@@ -58,7 +58,7 @@ defmodule Appsignal.MonitorTest do
   end
 
   test "syncs the monitors list" do
-    Monitor.add()
+    Monitor.add(self())
     :sys.replace_state(Appsignal.Monitor, fn _ -> MapSet.new() end)
 
     until(fn ->

@@ -148,7 +148,7 @@ defmodule Appsignal.Tracer do
   """
   @spec ignore(pid()) :: :ok
   def ignore(pid) do
-    Registry.ignore(pid) && @monitor.add()
+    Registry.ignore(pid) && @monitor.add(pid)
     :ok
   end
 
@@ -167,6 +167,36 @@ defmodule Appsignal.Tracer do
   def delete(pid) do
     Registry.delete(pid)
   end
+
+  @doc false
+  def close_abandoned(pid, options \\ []) when is_pid(pid) do
+    spans = pid |> Registry.own_spans() |> Enum.reverse()
+
+    Enum.each(spans, fn {span, root?} ->
+      unless root?, do: name_unfinished(span)
+      close_with(span, options[:end_time])
+    end)
+
+    if spans != [] do
+      Appsignal.IntegrationLogger.debug(
+        "Appsignal.Tracer closed #{length(spans)} spans left open in #{inspect(pid)}"
+      )
+    end
+
+    :ok
+  end
+
+  # The processor labels a child span with its category, and its name if it has
+  # one. Name only a span that would otherwise have no label.
+  defp name_unfinished(span) do
+    case Span.to_map(span) do
+      %{"attributes" => %{"appsignal:category" => _}} -> span
+      _ -> Span.set_name_if_nil(span, "[unfinished span]")
+    end
+  end
+
+  defp close_with(span, nil), do: Span.close(span)
+  defp close_with(span, end_time), do: Span.close(span, end_time)
 
   @doc false
   def register_current(span) do
@@ -188,7 +218,7 @@ defmodule Appsignal.Tracer do
 
   defp register(%Span{} = span, origin, trace_root) do
     if Registry.insert(span, origin, trace_root) do
-      @monitor.add()
+      @monitor.add(span.pid)
       span
     end
   end

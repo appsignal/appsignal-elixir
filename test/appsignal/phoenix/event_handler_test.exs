@@ -603,24 +603,26 @@ if Appsignal.Dependencies.present?(:phoenix) do
               await_spans(&match?([_, _, _, %{"closed" => true}, %{"closed" => true}], &1))
 
             assert leaked["parent_span_id"] == dispatch["span_id"]
-            refute leaked["closed"]
+            assert left_open?(leaked)
             assert next_root["parent_span_id"] == leaked["span_id"]
             assert next_root["name"] == ""
           end
         else
           # Pins current behaviour, not intended behaviour: when a task the
-          # action awaits raises, Cowboy stops the request's process, which
-          # leaves its spans open without the error. See
+          # action awaits raises, Cowboy stops the request's process, so its
+          # spans are only ended by AppSignal's monitor, without the request's
+          # name or the error. See
           # https://github.com/appsignal/appsignal-elixir/issues/1088.
           @tag leaves_spans_open: "the spans of a request whose process Cowboy stops"
-          test "leaves the spans of a request whose awaited task raises open, without the error",
+          test "leaves the spans of a request whose awaited task raises to the monitor, without the error",
                %{endpoint: endpoint} do
             http_get(endpoint, "/task_exception")
 
-            assert [root, dispatch] = await_spans(&match?([_, _], &1))
-            refute root["closed"]
+            assert [root, _dispatch] =
+                     await_spans(&match?([%{"abandoned" => true}, %{"abandoned" => true}], &1))
+
+            assert root["name"] == ""
             assert root["error"] == nil
-            refute dispatch["closed"]
           end
 
           test "records a request after an ignored one on the same connection", %{
@@ -644,7 +646,7 @@ if Appsignal.Dependencies.present?(:phoenix) do
               await_spans(&match?([_, _, _, %{"closed" => true}, %{"closed" => true}], &1))
 
             assert leaked["parent_span_id"] == dispatch["span_id"]
-            refute leaked["closed"]
+            assert left_open?(leaked)
             assert next_root["parent_span_id"] == ""
             assert next_root["name"] == "AppsignalTest.Phoenix.PageController#index"
           end

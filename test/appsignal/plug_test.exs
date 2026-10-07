@@ -414,7 +414,7 @@ if Appsignal.Dependencies.present?(:plug) do
             await_spans(&match?([%{"closed" => true}, _, %{"closed" => true}], &1))
 
           assert leaked["parent_span_id"] == leaking["span_id"]
-          refute leaked["closed"]
+          assert left_open?(leaked)
           assert_after_leak_span(unquote(server), leaked, next)
         end
       end
@@ -422,7 +422,8 @@ if Appsignal.Dependencies.present?(:plug) do
 
     # Pins current behaviour, not intended behaviour: when a task the request
     # awaits raises, Bandit records the exit on a span without the request's
-    # name, and Cowboy records nothing. See
+    # name. Cowboy stops the request's process, so its span is only ended by
+    # AppSignal's monitor, without the request's name or the error. See
     # https://github.com/appsignal/appsignal-elixir/issues/1086 and
     # https://github.com/appsignal/appsignal-elixir/issues/1088.
     defp assert_task_exception_span(:bandit) do
@@ -433,13 +434,14 @@ if Appsignal.Dependencies.present?(:plug) do
     end
 
     defp assert_task_exception_span(:plug_cowboy) do
-      assert [span] = await_spans(&match?([_], &1))
-      refute span["closed"]
+      assert [span] = await_spans(&match?([%{"abandoned" => true}], &1))
+      assert span["name"] == ""
       assert span["error"] == nil
     end
 
     # Pins current behaviour, not intended behaviour: Cowboy stops the request's
-    # process when its client disconnects, so its span is never closed. See
+    # process when its client disconnects, so its span is only ended by
+    # AppSignal's monitor, without the request's name. See
     # https://github.com/appsignal/appsignal-elixir/issues/1088.
     defp assert_after_disconnect_span(:bandit) do
       assert [%{"name" => "GET /work_after_response"}] =
@@ -447,8 +449,7 @@ if Appsignal.Dependencies.present?(:plug) do
     end
 
     defp assert_after_disconnect_span(:plug_cowboy) do
-      Process.sleep(400)
-      assert [%{"name" => "", "closed" => false}] = spans()
+      assert [%{"name" => ""}] = await_spans(&match?([%{"abandoned" => true}], &1))
     end
 
     # Pins current behaviour, not intended behaviour: on Bandit, which serves a

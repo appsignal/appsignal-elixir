@@ -417,8 +417,8 @@ defmodule Appsignal.TracerTest do
       assert Tracer.lookup(pid) == [{pid, :ignore}]
     end
 
-    test "creates a process monitor" do
-      assert Test.Monitor.get!(:add) == [{self()}]
+    test "monitors the ignored process", %{pid: pid} do
+      assert Test.Monitor.get!(:add) == [{pid}]
     end
   end
 
