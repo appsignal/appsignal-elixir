@@ -259,21 +259,19 @@ if Appsignal.Dependencies.present?(:phoenix) do
         assert helper["parent_span_id"] == automatic["span_id"]
       end
 
-      # Pins current behaviour, not intended behaviour: with the instrument/5
-      # helpers and attach/0 both instrumenting a callback, the automatic event
-      # span stays open when the helper's block raises. See
-      # https://github.com/appsignal/appsignal-elixir/issues/1082.
-      @tag leaves_spans_open: "the automatic event span when the helper's block raises"
-      test "leave the automatic event span open when the helper's block raises", %{view: view} do
+      test "close both with the error when the helper's block raises", %{view: view} do
         Process.flag(:trap_exit, true)
         catch_exit(render_click(view, "raise"))
 
         [automatic, helper] =
-          raise_event_spans(await_spans(&match?([_, %{"closed" => true}], raise_event_spans(&1))))
+          await_spans(fn spans ->
+            match?([%{"closed" => true}, %{"closed" => true}], raise_event_spans(spans))
+          end)
+          |> raise_event_spans()
 
-        refute automatic["closed"]
-        assert automatic["error"] == nil
+        assert automatic["error"]["name"] == "RuntimeError"
         assert helper["error"]["name"] == "RuntimeError"
+        assert helper["parent_span_id"] == automatic["span_id"]
       end
     end
 
