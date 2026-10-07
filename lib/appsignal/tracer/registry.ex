@@ -30,6 +30,10 @@ defmodule Appsignal.Tracer.Registry do
 
   def remove(nil), do: false
 
+  def own_spans(pid) do
+    for {_key, :own, span, _root} <- span_rows(pid), do: span
+  end
+
   def trace_root(%Span{} = span) do
     case last_registration(span) do
       nil -> span
