@@ -85,6 +85,17 @@ defmodule AppsignalTest.Spans do
     Enum.filter(spans, &(&1["trace_id"] == id and &1 != root))
   end
 
+  @doc """
+  Whether a span in the trace of `root`, or `root` itself, marks the trace to
+  be dropped, as `Appsignal.Tracer.ignore/0` does.
+  """
+  def trace_ignored?(spans, root) do
+    Enum.any?(
+      [root | in_trace(spans, root)],
+      &(&1["attributes"]["appsignal.ignore_trace"] == true)
+    )
+  end
+
   def category(span), do: span["attributes"]["appsignal:category"]
 
   def named(spans, name), do: Enum.filter(spans, &(&1["name"] == name))

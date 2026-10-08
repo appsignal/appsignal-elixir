@@ -28,7 +28,6 @@ defmodule Appsignal.Phoenix.Channel do
 
   """
 
-  @tracer Application.compile_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
   @span Application.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
 
   def instrument(module, name, socket, fun) do
@@ -56,7 +55,6 @@ defmodule Appsignal.Phoenix.Channel do
               )
               |> @span.add_error(kind, reason, stack)
 
-            @tracer.ignore()
             :erlang.raise(kind, reason, stack)
         else
           result ->

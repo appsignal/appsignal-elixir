@@ -152,14 +152,14 @@ if Appsignal.Dependencies.present?(:phoenix) do
         assert second["sample_data"]["tags"] == nil
       end
 
-      # Pins current behaviour, not intended behaviour: a request that calls
-      # Tracer.ignore/0 is still reported, without its name. See
-      # https://github.com/appsignal/appsignal-elixir/issues/1089.
-      test "is still recorded, without its name, when the action calls Tracer.ignore/0" do
+      test "is marked as ignored when the action calls Tracer.ignore/0" do
         assert get(build_conn(), "/ignored").resp_body =~ "Hello, ignored!"
 
-        assert [%{"name" => "", "closed" => true}, %{"closed" => true}] = spans()
-        assert Appsignal.Tracer.lookup(self()) == [{self(), :ignore}]
+        spans = spans()
+        assert [root | _] = root_spans(spans)
+        assert root["name"] == "AppsignalTest.Phoenix.PageController#ignored"
+        assert trace_ignored?(spans, root)
+        assert Appsignal.Tracer.lookup(self()) == []
       end
 
       # Pins current behaviour, not intended behaviour: the endpoint span stays
@@ -287,8 +287,8 @@ if Appsignal.Dependencies.present?(:phoenix) do
         assert category(dispatch) == "call.phoenix_router_dispatch"
       end
 
-      test "ignores the rest of the process's trace" do
-        assert Appsignal.Tracer.lookup(self()) == [{self(), :ignore}]
+      test "leaves no spans registered in the process" do
+        assert Appsignal.Tracer.lookup(self()) == []
       end
     end
 
@@ -513,6 +513,18 @@ if Appsignal.Dependencies.present?(:phoenix) do
                  ] = root_spans(spans)
         end
 
+        test "records a request after an ignored one on the same connection", %{
+          endpoint: endpoint
+        } do
+          assert [200, 200] = keep_alive_get(endpoint, ["/ignored", "/users/4"])
+
+          spans = await_spans(&(length(&1) == 5 and all_closed?(&1)))
+          assert [ignored, next] = root_spans(spans)
+          assert trace_ignored?(spans, ignored)
+          assert next["name"] == "AppsignalTest.Phoenix.PageController#index"
+          refute trace_ignored?(spans, next)
+        end
+
         test "records a request after one that leaves a span open on the same connection", %{
           endpoint: endpoint
         } do
@@ -548,25 +560,12 @@ if Appsignal.Dependencies.present?(:phoenix) do
             http_get(endpoint, "/task_exception")
 
             [root, dispatch] =
-              await_spans(fn spans -> match?([%{"closed" => true}, _], spans) end)
+              await_spans(&match?([%{"closed" => true}, %{"closed" => true}], &1))
 
             assert root["name"] == ""
             assert root["error"]["name"] == "ErlangError"
             assert root["error"]["message"] =~ "Exception in a task!"
             assert dispatch["closed"]
-          end
-
-          # Pins current behaviour, not intended behaviour: Bandit serves a
-          # connection's requests from one process, so Tracer.ignore/0 carries
-          # over to the next request. See
-          # https://github.com/appsignal/appsignal-elixir/issues/1089.
-          test "records no request after an ignored one on the same connection", %{
-            endpoint: endpoint
-          } do
-            assert [200, 200] = keep_alive_get(endpoint, ["/ignored", "/users/4"])
-
-            assert [%{"name" => ""}, _dispatch] =
-                     await_spans(&match?([%{"closed" => true}, %{"closed" => true}], &1))
           end
         else
           # Pins current behaviour, not intended behaviour: when a task the
@@ -584,17 +583,6 @@ if Appsignal.Dependencies.present?(:phoenix) do
 
             assert root["name"] == ""
             assert root["error"] == nil
-          end
-
-          test "records a request after an ignored one on the same connection", %{
-            endpoint: endpoint
-          } do
-            assert [200, 200] = keep_alive_get(endpoint, ["/ignored", "/users/4"])
-
-            spans = await_spans(&(length(&1) == 4 and all_closed?(&1)))
-
-            assert ["", "AppsignalTest.Phoenix.PageController#index"] =
-                     Enum.map(root_spans(spans), & &1["name"])
           end
         end
       end

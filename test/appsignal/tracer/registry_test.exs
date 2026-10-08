@@ -4,7 +4,6 @@ defmodule Appsignal.Tracer.RegistryTest do
   alias Appsignal.Tracer.Registry
 
   @spans Appsignal.Tracer.Registry.Spans
-  @ignored Appsignal.Tracer.Registry.Ignored
 
   setup do
     start_supervised!(Test.Nif)
@@ -150,53 +149,24 @@ defmodule Appsignal.Tracer.RegistryTest do
     end
   end
 
-  describe "ignoring a process" do
-    test "removes its span rows and stores the flag separately" do
-      Tracer.create_span("http_request")
-
-      Tracer.ignore()
-
-      assert rows(self()) == []
-      assert :ets.lookup(@ignored, self()) == [{self()}]
-    end
-
-    test "keeps the flag when a span is registered from another process afterwards" do
-      parent = Tracer.create_span("http_request")
-
-      {spans, flags} =
-        Task.async(fn ->
-          Tracer.ignore()
-          Tracer.register_current(parent)
-          {rows(self()), :ets.lookup(@ignored, self())}
-        end)
-        |> Task.await()
-
-      assert [%{origin: :attached, anchor: nil}] = spans
-      assert [{_pid}] = flags
-    end
-  end
-
   describe "deleting a process' entries" do
-    test "removes its span rows and its flag" do
+    test "removes its span rows" do
       Tracer.create_span("http_request")
-      Tracer.ignore()
       Tracer.register_current(Span.create_root("http_request", self()))
 
       Tracer.delete(self())
 
       assert rows(self()) == []
-      assert :ets.lookup(@ignored, self()) == []
     end
   end
 
   describe "a process that exits" do
-    test "has its span rows and flag removed by the monitor" do
+    test "has its span rows removed by the monitor" do
       test_pid = self()
 
       pid =
         spawn(fn ->
           Tracer.create_span("http_request")
-          Tracer.ignore(self())
           Tracer.register_current(Span.create_root("http_request", self()))
           send(test_pid, :done)
         end)
@@ -205,7 +175,6 @@ defmodule Appsignal.Tracer.RegistryTest do
 
       AppsignalTest.Utils.until(fn ->
         assert rows(pid) == []
-        assert :ets.lookup(@ignored, pid) == []
       end)
     end
   end

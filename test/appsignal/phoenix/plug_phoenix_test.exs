@@ -94,8 +94,8 @@ if Appsignal.Dependencies.present?(:phoenix) do
         assert root["error"] == nil
       end
 
-      test "ignores the rest of the process's trace" do
-        assert Appsignal.Tracer.lookup(self()) == [{self(), :ignore}]
+      test "leaves no span registered in the process" do
+        assert Appsignal.Tracer.lookup(self()) == []
       end
     end
   end
