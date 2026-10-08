@@ -50,17 +50,12 @@ if Appsignal.Dependencies.present?(:phoenix) do
       end
     end
 
-    # Pins current behaviour, not intended behaviour: with Appsignal.Plug in the
-    # endpoint, the root span has no category and the Phoenix spans stay open
-    # after an error. See
-    # https://github.com/appsignal/appsignal-elixir/issues/1083.
     describe "a request that raises in its action" do
       setup do
         assert_raise RuntimeError, fn -> get(build_conn(), "/exception") end
         :ok
       end
 
-      @tag leaves_spans_open: "the endpoint and router dispatch spans after an error"
       test "records the error once, on the closed root span" do
         assert [root, _endpoint, _dispatch] = spans()
         assert root["closed"]
@@ -68,17 +63,18 @@ if Appsignal.Dependencies.present?(:phoenix) do
         assert root["name"] == "AppsignalTest.Phoenix.PageController#exception"
       end
 
-      @tag leaves_spans_open: "the endpoint and router dispatch spans after an error"
+      # Pins current behaviour, not intended behaviour: with Appsignal.Plug in
+      # the endpoint, the root span has no category. See
+      # https://github.com/appsignal/appsignal-elixir/issues/1083.
       test "records the root span without a category" do
         assert [root, _endpoint, _dispatch] = spans()
         assert category(root) == nil
       end
 
-      @tag leaves_spans_open: "the endpoint and router dispatch spans after an error"
-      test "leaves the endpoint and router dispatch spans open" do
+      test "closes the endpoint and router dispatch spans" do
         assert [_root, endpoint, dispatch] = spans()
-        refute endpoint["closed"]
-        refute dispatch["closed"]
+        assert %{"closed" => true, "name" => ""} = endpoint
+        assert %{"closed" => true, "name" => ""} = dispatch
       end
     end
 

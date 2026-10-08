@@ -124,8 +124,9 @@ if Appsignal.Dependencies.present?(:absinthe) do
     end
 
     # Pins current behaviour, not intended behaviour: a resolver that raises
-    # leaves the operation's span open, without the error, as the process's
-    # current span. The skipped test below is the intended behaviour. See
+    # leaves the operation's span without the error, and open as the process's
+    # current span unless a parent span closes it. The skipped test below is the
+    # intended behaviour. See
     # https://github.com/appsignal/appsignal-elixir/issues/1080.
     describe "a resolver that raises" do
       @tag leaves_spans_open: "Absinthe emits no stop event when a resolver raises"
@@ -142,14 +143,15 @@ if Appsignal.Dependencies.present?(:absinthe) do
         assert [%{"name" => "GetUser", "closed" => true}] = children(spans(), span)
       end
 
-      @tag leaves_spans_open: "Absinthe emits no stop event when a resolver raises"
-      test "leaves the operation's span open under the closed span it ran in" do
+      test "closes the operation's span with the span it ran in, without the error" do
         assert_raise RuntimeError, fn ->
           Appsignal.instrument("parent", fn -> run("{ raising }") end)
         end
 
         assert [%{"closed" => true, "error" => nil} = parent] = root_spans()
-        assert [%{"name" => "graphql", "closed" => false}] = children(spans(), parent)
+        assert [operation] = children(spans(), parent)
+        assert %{"name" => "graphql", "closed" => true, "error" => nil} = operation
+        refute operation["abandoned"]
       end
 
       @tag skip: "Absinthe emits no event when a resolver raises; needs a design decision"
