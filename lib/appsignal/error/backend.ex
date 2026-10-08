@@ -58,17 +58,14 @@ defmodule Appsignal.Error.Backend do
   defp report_domains(_), do: []
 
   defp do_handle_report(pid, reason, stacktrace) do
-    cond do
-      Registry.ignored?(pid) ->
-        :ok
-
-      span = Registry.last_own(pid) ->
-        set_error_data(span, reason, stacktrace)
-
-      true ->
+    case Registry.last_own(pid) do
+      nil ->
         "background_job"
         |> @tracer.create_span(nil, pid: pid)
         |> set_error_data(reason, stacktrace)
+
+      span ->
+        set_error_data(span, reason, stacktrace)
     end
   end
 

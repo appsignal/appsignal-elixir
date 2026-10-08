@@ -301,12 +301,10 @@ if Appsignal.Dependencies.present?(:plug) do
         refute Map.has_key?(span["sample_data"], "environment")
       end
 
-      # Pins current behaviour, not intended behaviour: a request that calls
-      # Tracer.ignore/0 is still reported. See
-      # https://github.com/appsignal/appsignal-elixir/issues/1089.
-      test "is still recorded for a request that calls Tracer.ignore/0" do
+      test "is marked as ignored for a request that calls Tracer.ignore/0" do
         %{conn: %Plug.Conn{status: 200}} = request(:get, "/ignored")
-        assert [%{"name" => "GET /ignored", "closed" => true}] = spans()
+        assert [%{"name" => "GET /ignored", "closed" => true} = span] = spans()
+        assert trace_ignored?([span], span)
       end
 
       test "is recorded for a request with nil request headers" do
@@ -315,15 +313,15 @@ if Appsignal.Dependencies.present?(:plug) do
       end
     end
 
-    describe "the rest of the process's trace" do
-      test "is ignored after the request raises" do
+    describe "the process's registered spans" do
+      test "are gone after the request raises" do
         request(:get, "/exception")
-        assert Appsignal.Tracer.lookup(self()) == [{self(), :ignore}]
+        assert Appsignal.Tracer.lookup(self()) == []
       end
 
-      test "is ignored after an error with a status below 500" do
+      test "are gone after an error with a status below 500" do
         request(:get, "/bad_request")
-        assert Appsignal.Tracer.lookup(self()) == [{self(), :ignore}]
+        assert Appsignal.Tracer.lookup(self()) == []
       end
     end
 
@@ -401,7 +399,11 @@ if Appsignal.Dependencies.present?(:plug) do
 
         test "records a request after an ignored one on the same connection", %{port: port} do
           assert [200, 200] = AppsignalTest.KeepAliveClient.get(port, ["/ignored", "/"])
-          assert_after_ignored_spans(unquote(server))
+
+          assert [ignored, next] = await_spans(&(length(&1) == 2 and all_closed?(&1)))
+          assert trace_ignored?([ignored], ignored)
+          assert next["name"] == "GET /"
+          refute trace_ignored?([next], next)
         end
 
         test "records a request after one that leaves a span open on the same connection", %{
@@ -449,19 +451,6 @@ if Appsignal.Dependencies.present?(:plug) do
 
     defp assert_after_disconnect_span(:plug_cowboy) do
       assert [%{"name" => ""}] = await_spans(&match?([%{"abandoned" => true}], &1))
-    end
-
-    # Pins current behaviour, not intended behaviour: on Bandit, which serves a
-    # connection's requests from one process, Tracer.ignore/0 carries over to
-    # the next request. See
-    # https://github.com/appsignal/appsignal-elixir/issues/1089.
-    defp assert_after_ignored_spans(:bandit) do
-      assert [%{"name" => "GET /ignored"}] = await_spans(&match?([%{"closed" => true}], &1))
-    end
-
-    defp assert_after_ignored_spans(:plug_cowboy) do
-      assert [%{"name" => "GET /ignored"}, %{"name" => "GET /"}] =
-               await_spans(&match?([%{"closed" => true}, %{"closed" => true}], &1))
     end
 
     defp start_server(:bandit) do

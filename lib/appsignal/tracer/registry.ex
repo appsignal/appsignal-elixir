@@ -4,11 +4,9 @@ defmodule Appsignal.Tracer.Registry do
   alias Appsignal.Span
 
   @spans __MODULE__.Spans
-  @ignored __MODULE__.Ignored
 
   def new do
     :ets.new(@spans, [:named_table, :public, :ordered_set])
-    :ets.new(@ignored, [:named_table, :public, :set])
   end
 
   def insert(%Span{pid: pid} = span, origin, trace_root, anchor) do
@@ -64,10 +62,7 @@ defmodule Appsignal.Tracer.Registry do
   end
 
   def lookup(pid) do
-    spans =
-      pid |> span_rows() |> Enum.map(fn {{pid, _sequence}, _, span, _, _} -> {pid, span} end)
-
-    if ignored_flag?(pid), do: [{pid, :ignore} | spans], else: spans
+    pid |> span_rows() |> Enum.map(fn {{pid, _sequence}, _, span, _, _} -> {pid, span} end)
   end
 
   def current(pid) do
@@ -78,24 +73,10 @@ defmodule Appsignal.Tracer.Registry do
   end
 
   def root(pid) do
-    case {ignored_flag?(pid), last_row(pid)} do
-      {false, {_key, _origin, _span, root, _anchor}} -> root
-      _ -> nil
+    case last_row(pid) do
+      {_key, _origin, _span, root, _anchor} -> root
+      nil -> nil
     end
-  end
-
-  def ignore(pid) do
-    delete(pid)
-
-    try do
-      :ets.insert(@ignored, {pid})
-    rescue
-      ArgumentError -> nil
-    end
-  end
-
-  def ignored?(pid) do
-    ignored_flag?(pid) and span_rows(pid) == []
   end
 
   def last_own(pid) do
@@ -108,7 +89,6 @@ defmodule Appsignal.Tracer.Registry do
   def delete(pid) do
     try do
       :ets.select_delete(@spans, [{{{pid, :_}, :_, :_, :_, :_}, [], [true]}])
-      :ets.delete(@ignored, pid)
     rescue
       ArgumentError -> :ok
     end
@@ -158,14 +138,6 @@ defmodule Appsignal.Tracer.Registry do
     end
   rescue
     ArgumentError -> nil
-  end
-
-  defp ignored_flag?(pid) do
-    try do
-      :ets.member(@ignored, pid)
-    rescue
-      ArgumentError -> false
-    end
   end
 
   defp delete_row({key, _origin, _span, _root, _anchor}) do
