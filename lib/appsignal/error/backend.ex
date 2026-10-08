@@ -3,6 +3,7 @@ defmodule Appsignal.Error.Backend do
 
   require Logger
 
+  alias Appsignal.Error.Reported
   alias Appsignal.Tracer.Registry
   alias Appsignal.Utils.LoggerHandler
 
@@ -40,7 +41,7 @@ defmodule Appsignal.Error.Backend do
   defp handle_report(%{crash_reason: {reason, stacktrace}} = report) do
     pid = report_pid(report)
 
-    unless :cowboy in report_domains(report) do
+    unless :cowboy in report_domains(report) or Reported.reported?(pid, stacktrace) do
       do_handle_report(pid, reason, stacktrace)
     end
   end
@@ -49,7 +50,7 @@ defmodule Appsignal.Error.Backend do
     :ok
   end
 
-  defp report_pid(%{conn: %{owner: pid}}), do: pid
+  defp report_pid(%{conn: %{owner: pid}}) when is_pid(pid), do: pid
   defp report_pid(%{pid: pid}), do: pid
   defp report_pid(_), do: nil
 
@@ -89,7 +90,7 @@ defmodule Appsignal.Error.Backend do
 
   defp set_error_data(span, reason, stacktrace) do
     span
-    |> @span.add_error(:error, reason, stacktrace)
+    |> @span.add_error(:error, reason, stacktrace, record: false)
     |> @span.set_sample_data("tags", %{"reported_by" => "error_backend"})
     |> @tracer.close_span()
   end
