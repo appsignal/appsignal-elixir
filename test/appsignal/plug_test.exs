@@ -404,18 +404,17 @@ if Appsignal.Dependencies.present?(:plug) do
           assert_after_ignored_spans(unquote(server))
         end
 
-        @tag leaves_spans_open: "the span the first request leaves open"
         test "records a request after one that leaves a span open on the same connection", %{
           port: port
         } do
           assert [200, 200] = AppsignalTest.KeepAliveClient.get(port, ["/leak", "/"])
 
-          [leaking, leaked, next] =
-            await_spans(&match?([%{"closed" => true}, _, %{"closed" => true}], &1))
+          [leaking, leaked, next] = await_spans(&(length(&1) == 3 and all_closed?(&1)))
 
           assert leaked["parent_span_id"] == leaking["span_id"]
-          assert left_open?(leaked)
-          assert_after_leak_span(unquote(server), leaked, next)
+          refute leaked["abandoned"]
+          assert next["parent_span_id"] == ""
+          assert next["name"] == "GET /"
         end
       end
     end
@@ -453,8 +452,8 @@ if Appsignal.Dependencies.present?(:plug) do
     end
 
     # Pins current behaviour, not intended behaviour: on Bandit, which serves a
-    # connection's requests from one process, Tracer.ignore/0 and a span left
-    # open carry over to the next request. See
+    # connection's requests from one process, Tracer.ignore/0 carries over to
+    # the next request. See
     # https://github.com/appsignal/appsignal-elixir/issues/1089.
     defp assert_after_ignored_spans(:bandit) do
       assert [%{"name" => "GET /ignored"}] = await_spans(&match?([%{"closed" => true}], &1))
@@ -463,14 +462,6 @@ if Appsignal.Dependencies.present?(:plug) do
     defp assert_after_ignored_spans(:plug_cowboy) do
       assert [%{"name" => "GET /ignored"}, %{"name" => "GET /"}] =
                await_spans(&match?([%{"closed" => true}, %{"closed" => true}], &1))
-    end
-
-    defp assert_after_leak_span(:bandit, leaked, next) do
-      assert next["parent_span_id"] == leaked["span_id"]
-    end
-
-    defp assert_after_leak_span(:plug_cowboy, _leaked, next) do
-      assert next["parent_span_id"] == ""
     end
 
     defp start_server(:bandit) do

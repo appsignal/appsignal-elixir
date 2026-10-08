@@ -36,6 +36,16 @@ defmodule Appsignal.Test.Tracer do
     Tracer.close_span(span, timestamp)
   end
 
+  def close_all(span) do
+    add(:close_span, {span})
+    Tracer.close_all(span)
+  end
+
+  def close_all(span, options) do
+    add(:close_span, {span, options})
+    Tracer.close_all(span, options)
+  end
+
   # Called by the monitor, whenever a process it watches goes down, including
   # outside the tests that record calls.
   def close_abandoned(pid, options) do
