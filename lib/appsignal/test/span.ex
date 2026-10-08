@@ -18,6 +18,11 @@ defmodule Appsignal.Test.Span do
     Span.add_error(span, kind, reason, stacktrace)
   end
 
+  def add_error(span, kind, reason, stacktrace, options) do
+    add(:add_error, {span, kind, reason, stacktrace})
+    Span.add_error(span, kind, reason, stacktrace, options)
+  end
+
   def set_name(span, name) do
     add(:set_name, {span, name})
     Span.set_name(span, name)

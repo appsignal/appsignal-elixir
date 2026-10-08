@@ -1,5 +1,6 @@
 defmodule Appsignal.Span do
   alias Appsignal.{Config, Nif, Span}
+  alias Appsignal.Error.Reported
   alias Appsignal.Tracer.Registry
 
   defstruct [:reference, :pid]
@@ -299,6 +300,12 @@ defmodule Appsignal.Span do
 
   """
   def add_error(span, kind, reason, stacktrace) do
+    add_error(span, kind, reason, stacktrace, record: true)
+  end
+
+  @doc false
+  def add_error(span, kind, reason, stacktrace, options) do
+    if Keyword.get(options, :record, true), do: Reported.record(span, stacktrace)
     {name, message, formatted_stacktrace} = Appsignal.Error.metadata(kind, reason, stacktrace)
     do_add_error(span, name, message, formatted_stacktrace)
   end
@@ -319,12 +326,14 @@ defmodule Appsignal.Span do
       end
 
   """
-  def add_error(span, %_{__exception__: true, plug_status: status}, _stacktrace)
+  def add_error(span, %_{__exception__: true, plug_status: status}, stacktrace)
       when status < 500 do
+    Reported.record(span, stacktrace)
     span
   end
 
   def add_error(span, %_{__exception__: true} = exception, stacktrace) do
+    Reported.record(span, stacktrace)
     {name, message, formatted_stacktrace} = Appsignal.Error.metadata(exception, stacktrace)
     do_add_error(span, name, message, formatted_stacktrace)
   end
