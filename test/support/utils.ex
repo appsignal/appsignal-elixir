@@ -106,11 +106,11 @@ defmodule AppsignalTest.Utils do
     until(assertion, 500)
   end
 
-  defp until(assertion, retries) when retries < 1 do
+  def until(assertion, retries) when retries < 1 do
     assertion.()
   end
 
-  defp until(assertion, retries) do
+  def until(assertion, retries) do
     try do
       assertion.()
     rescue

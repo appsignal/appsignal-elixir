@@ -23,7 +23,7 @@ defmodule Appsignal.FakeTransmitter do
     }
   end
 
-  def transmit(url, payload, config) do
+  def transmit(url, payload, config, _standalone \\ false) do
     Agent.update(__MODULE__, fn state ->
       Map.update!(state, :transmitted, &[{url, payload, config} | &1])
     end)

@@ -67,7 +67,7 @@ jobs:
       - name: Get dependencies
         run: mix deps.get
       - name: Check for compilation errors
-        run: mix compile --warnings-as-errors
+        run: MIX_ENV=test mix compile --warnings-as-errors
 
   lint_dialyzer:
     runs-on: ubuntu-latest

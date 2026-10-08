@@ -341,9 +341,9 @@ defmodule Mix.Tasks.Appsignal.Install do
     """
 
     AppSignal detected a Phoenix app
-      Please follow the following guide to integrate AppSignal in your
-      Phoenix application.
-      http://docs.appsignal.com/elixir/integrations/phoenix.html
+      Phoenix requests and template rendering are instrumented automatically.
+      To also instrument LiveView and channels, follow this guide:
+      https://docs.appsignal.com/elixir/integrations/phoenix.html
     """
     |> IO.puts()
   end

@@ -85,10 +85,10 @@ defmodule Appsignal.Utils.MapFilterTest do
     end
 
     test "does not filter structs" do
-      values = %{"foo" => "bar", "file" => %Plug.Upload{}}
+      values = %{"foo" => "bar", "file" => %NonEmptyStruct{}}
 
       assert MapFilter.filter(values, ["password"]) ==
-               %{"foo" => "bar", "file" => %Plug.Upload{}}
+               %{"foo" => "bar", "file" => %NonEmptyStruct{}}
 
       values = %{"foo" => "bar", "file" => %{__struct__: "s"}}
 
@@ -155,11 +155,11 @@ defmodule Appsignal.Utils.MapFilterTest do
     end
 
     test "does not filter structs" do
-      values = %{"foo" => "bar", "file" => %Plug.Upload{}}
+      values = %{"foo" => "bar", "file" => %NonEmptyStruct{}}
       compiled_filter = compile_filter(["password", "secret"])
 
       assert MapFilter.filter(values, compiled_filter) ==
-               %{"foo" => "bar", "file" => %Plug.Upload{}}
+               %{"foo" => "bar", "file" => %NonEmptyStruct{}}
     end
 
     test "handles atomic keys" do
@@ -199,7 +199,7 @@ defmodule Appsignal.Utils.MapFilterTest do
 
   describe "filter/2 with keep strategy" do
     test "discards values not specified in params" do
-      values = %{"foo" => "bar", "password" => "abc123", "file" => %Plug.Upload{}}
+      values = %{"foo" => "bar", "password" => "abc123", "file" => %NonEmptyStruct{}}
 
       assert MapFilter.filter(values, {:keep, []}) ==
                %{"foo" => "[FILTERED]", "password" => "[FILTERED]", "file" => "[FILTERED]"}
@@ -209,10 +209,10 @@ defmodule Appsignal.Utils.MapFilterTest do
     end
 
     test "keeps values that are specified in params" do
-      values = %{"foo" => "bar", "password" => "abc123", "file" => %Plug.Upload{}}
+      values = %{"foo" => "bar", "password" => "abc123", "file" => %NonEmptyStruct{}}
 
       assert MapFilter.filter(values, {:keep, ["foo", "file"]}) ==
-               %{"foo" => "bar", "password" => "[FILTERED]", "file" => %Plug.Upload{}}
+               %{"foo" => "bar", "password" => "[FILTERED]", "file" => %NonEmptyStruct{}}
     end
 
     test "keeps all values under keys that are kept" do

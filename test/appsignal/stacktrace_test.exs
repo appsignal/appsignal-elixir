@@ -1,37 +1,15 @@
 defmodule Appsignal.StacktraceTest do
   use ExUnit.Case
   alias Appsignal.Stacktrace
-  require Appsignal.Stacktrace
 
-  describe "get/0" do
+  describe "format/1, with a raised exception" do
     setup do
       raise "Exception!"
     catch
       :error, _ ->
         %{
-          stack: Stacktrace.get()
+          stack: __STACKTRACE__
         }
-    end
-
-    test "does not return an empty list", %{stack: stack} do
-      refute Enum.empty?(stack)
-    end
-
-    test "returns a stacktrace containing the error", %{
-      stack: stack
-    } do
-      [{Appsignal.StacktraceTest, _, _, location} | _] = stack
-
-      expected_location = [
-        file: ~c"test/appsignal/stacktrace_test.exs",
-        line: 8
-      ]
-
-      assert Enum.all?(expected_location, &Enum.member?(location, &1))
-
-      # On some versions, `error_info` may not be present
-      all_location = expected_location ++ [error_info: %{module: Exception}]
-      assert Enum.all?(location, &Enum.member?(all_location, &1))
     end
 
     test "formats stacktrace lines", %{stack: stack} do
@@ -40,11 +18,11 @@ defmodule Appsignal.StacktraceTest do
     end
   end
 
-  describe "get/0, with an exception with included arguments" do
+  describe "format/1, with an exception with included arguments" do
     setup do
       String.to_atom("string", :extra_argument, 123, :erlang.list_to_pid(~c"<0.0.0>"))
     catch
-      :error, _ -> %{stack: Stacktrace.get()}
+      :error, _ -> %{stack: __STACKTRACE__}
     end
 
     test "replaces sensitive arguments with types", %{stack: stack} do

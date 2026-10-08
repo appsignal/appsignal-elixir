@@ -1,66 +1,51 @@
 defmodule Appsignal.Utils.PushApiKeyValidatorTest do
   use ExUnit.Case
+  alias Appsignal.FakeTransmitter
   alias Appsignal.Utils.PushApiKeyValidator
 
   setup do
-    bypass = Bypass.open()
-    config = %{endpoint: "http://localhost:#{bypass.port}", push_api_key: "foo"}
+    start_supervised!(FakeTransmitter)
+    config = %{endpoint: "http://localhost:4005", push_api_key: "foo"}
 
-    {:ok, %{bypass: bypass, config: config}}
+    {:ok, %{config: config}}
   end
 
   describe "with valid push api key" do
-    setup %{bypass: bypass, config: config} do
-      Bypass.expect(bypass, fn conn ->
-        assert "/1/auth" == conn.request_path
-        assert "POST" == conn.method
-        Plug.Conn.resp(conn, 200, "")
-      end)
-
-      {:ok, %{config: config}}
+    setup do
+      FakeTransmitter.set_response({:ok, %{status: 200, body: ""}})
     end
 
     test "returns :ok", %{config: config} do
       assert PushApiKeyValidator.validate(config) == :ok
+      assert [{"http://localhost:4005/1/auth", nil, ^config}] = FakeTransmitter.transmitted()
     end
   end
 
   describe "with invalid push api key" do
-    setup %{bypass: bypass, config: config} do
-      Bypass.expect(bypass, fn conn ->
-        assert "/1/auth" == conn.request_path
-        assert "POST" == conn.method
-        Plug.Conn.resp(conn, 401, "")
-      end)
-
-      {:ok, %{config: config}}
+    setup do
+      FakeTransmitter.set_response({:ok, %{status: 401, body: ""}})
     end
 
     test "returns :invalid", %{config: config} do
       assert PushApiKeyValidator.validate(config) == {:error, :invalid}
+      assert [{"http://localhost:4005/1/auth", nil, ^config}] = FakeTransmitter.transmitted()
     end
   end
 
   describe "with a server side error" do
-    setup %{bypass: bypass, config: config} do
-      Bypass.expect(bypass, fn conn ->
-        assert "/1/auth" == conn.request_path
-        assert "POST" == conn.method
-        Plug.Conn.resp(conn, 500, "")
-      end)
-
-      {:ok, %{config: config}}
+    setup do
+      FakeTransmitter.set_response({:ok, %{status: 500, body: ""}})
     end
 
     test "returns an error", %{config: config} do
       assert PushApiKeyValidator.validate(config) == {:error, 500}
+      assert [{"http://localhost:4005/1/auth", nil, ^config}] = FakeTransmitter.transmitted()
     end
   end
 
   describe "with a connection error" do
-    setup %{bypass: bypass, config: config} do
-      Bypass.down(bypass)
-      {:ok, %{config: config}}
+    setup do
+      FakeTransmitter.set_response({:error, %Mint.TransportError{reason: :econnrefused}})
     end
 
     test "returns an error", %{config: config} do

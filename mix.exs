@@ -41,7 +41,7 @@ defmodule Appsignal.Mixfile do
       package: package(),
       homepage_url: "https://appsignal.com",
       test_paths: test_paths(Mix.env()),
-      elixir: "~> 1.9",
+      elixir: "~> 1.12",
       compilers: compilers(Mix.env()),
       elixirc_paths: elixirc_paths(Mix.env()),
       deps: deps(),
@@ -100,12 +100,22 @@ defmodule Appsignal.Mixfile do
 
   defp compilers(_), do: [:appsignal] ++ Mix.compilers()
 
-  defp test_paths(_), do: ["test/appsignal", "test/mix"]
+  defp test_paths(_) do
+    integrations = integrations(versions())
+
+    ["test/appsignal", "test/mix"] ++
+      if(:plug in integrations, do: ["test/plug"], else: []) ++
+      if(:phoenix in integrations, do: ["test/phoenix"], else: [])
+  end
 
   defp elixirc_paths(env) do
     case test?(env) do
-      true -> ["lib", "test/support"]
-      false -> ["lib"]
+      true ->
+        ["lib", "test/support"] ++
+          if :phoenix in integrations(versions()), do: ["test/phoenix/support"], else: []
+
+      false ->
+        ["lib"]
     end
   end
 
@@ -119,31 +129,32 @@ defmodule Appsignal.Mixfile do
   # package resolve their dependencies against those frozen requirements.
   # Some of the requirements below are narrowed on older Elixir and OTP
   # releases, so that this package keeps building on every version in our CI
-  # matrix. Publishing from one of those releases would impose the narrower
-  # requirements on every application that installs the package. To catch
-  # that, the requirements are computed from a map of versions. That makes it
-  # possible to compare the requirements this machine produces with the ones
-  # the newest Elixir and OTP releases produce.
-  @publish_versions %{elixir: "999.0.0", otp: 999}
+  # matrix. Two of them can also be overridden through environment variables,
+  # which CI uses to test against specific versions of Plug and Phoenix.
+  # Publishing with any of those in effect would impose them on every
+  # application that installs the package. To catch that, the requirements are
+  # computed from a map of versions. That makes it possible to compare the
+  # requirements this machine produces with the ones the newest Elixir and OTP
+  # releases produce, with no overrides set.
+  @publish_versions %{env: :prod, elixir: "999.0.0", otp: 999, phoenix: nil, plug: nil}
+
+  defp versions do
+    %{
+      env: Mix.env(),
+      elixir: System.version(),
+      otp: String.to_integer(System.otp_release()),
+      phoenix: ci_version("_APPSIGNAL_CI_PHOENIX_VERSION"),
+      plug: ci_version("_APPSIGNAL_CI_PLUG_VERSION")
+    }
+  end
 
   defp deps do
-    versions = %{
-      elixir: System.version(),
-      otp: String.to_integer(System.otp_release())
-    }
-
-    deps = deps(versions)
+    deps = deps(versions())
     verify_publishable!(deps)
     deps
   end
 
   defp deps(versions) do
-    decorator_version =
-      case Version.compare(versions.elixir, "1.5.0") do
-        :lt -> "~> 1.2.3"
-        _ -> "~> 1.2.3 or ~> 1.3"
-      end
-
     finch_version =
       case Version.compare(versions.elixir, "1.15.0") do
         :lt -> ">= 0.19.0 and < 0.22.0"
@@ -164,12 +175,6 @@ defmodule Appsignal.Mixfile do
         false -> "~> 2.0 or ~> 3.0"
       end
 
-    mime_dependency =
-      case Version.compare(versions.elixir, "1.10.0") do
-        :lt -> [{:mime, "~> 1.0", only: [:test, :test_no_nif]}]
-        _ -> []
-      end
-
     mint_dependency =
       case Version.compare(versions.elixir, "1.15.0") do
         :lt ->
@@ -180,23 +185,73 @@ defmodule Appsignal.Mixfile do
       end
 
     plug_version =
-      case Version.compare(versions.elixir, "1.10.0") do
-        :lt ->
-          "~> 1.13.6"
+      versions.plug ||
+        case Version.compare(versions.elixir, "1.14.0") do
+          :lt ->
+            "~> 1.18 and < 1.19.0"
 
-        _ ->
-          case Version.compare(versions.elixir, "1.14.0") do
-            :lt ->
-              "~> 1.14 and < 1.19.0"
+          _ ->
+            # plug 1.20.0 requires Elixir ~> 1.15, so cap it on 1.14.
+            case Version.compare(versions.elixir, "1.15.0") do
+              :lt -> "~> 1.18 and < 1.20.0"
+              _ -> "~> 1.18"
+            end
+        end
 
-            _ ->
-              # plug 1.20.0 requires Elixir ~> 1.15, so cap it on 1.14.
-              case Version.compare(versions.elixir, "1.15.0") do
-                :lt -> "~> 1.14 and < 1.20.0"
-                _ -> "~> 1.14"
-              end
-          end
+    # A requirement set through an environment variable has to win over the
+    # ones Phoenix and its dependencies have on Plug.
+    plug_dependency =
+      case versions.plug do
+        nil -> {:plug, plug_version, optional: true}
+        _ -> {:plug, plug_version, optional: true, override: true}
       end
+
+    # Phoenix 1.8 requires Elixir 1.15. Hex does not take the Elixir version
+    # into account when it resolves dependencies, so cap Phoenix below 1.8 on
+    # older Elixir versions.
+    phoenix_version =
+      versions.phoenix ||
+        case Version.compare(versions.elixir, "1.15.0") do
+          :lt -> "~> 1.7 and < 1.8.0"
+          _ -> "~> 1.7"
+        end
+
+    phoenix_live_view_version =
+      case Version.compare(versions.elixir, "1.14.0") do
+        :lt -> ">= 0.17.12 and < 1.1.0"
+        _ -> ">= 0.17.12 and < 2.0.0"
+      end
+
+    # phoenix_template is a transitive dependency. Version 1.1.0 requires
+    # Elixir 1.16 and uses a bitstring pattern that older Elixirs cannot
+    # compile, so pin to the last version that does compile there.
+    phoenix_template_dependency =
+      case Version.compare(versions.elixir, "1.15.0") do
+        :lt -> [{:phoenix_template, ">= 1.0.0 and < 1.1.0", optional: true}]
+        _ -> []
+      end
+
+    integrations = integrations(versions)
+
+    plug_dependencies =
+      case :plug in integrations do
+        true -> [plug_dependency]
+        false -> []
+      end
+
+    phoenix_dependencies =
+      case :phoenix in integrations do
+        true ->
+          [
+            {:phoenix, phoenix_version, optional: true},
+            {:phoenix_live_view, phoenix_live_view_version, optional: true}
+          ] ++ phoenix_template_dependency
+
+        false ->
+          []
+      end
+
+    integration_dependencies = plug_dependencies ++ phoenix_dependencies
 
     credo_version =
       case Version.compare(versions.elixir, "1.13.0") do
@@ -225,16 +280,15 @@ defmodule Appsignal.Mixfile do
       {:benchee, "~> 1.0", only: :bench},
       {:finch, finch_version},
       {:jason, "~> 1.0"},
-      {:decorator, decorator_version},
-      {:plug, plug_version, only: [:test, :test_no_nif]},
-      {:plug_cowboy, "~> 1.0", only: [:test, :test_no_nif]},
-      {:bypass, "~> 0.6.0", only: [:test, :test_no_nif]},
+      {:decorator, "~> 1.2.3 or ~> 1.3"},
       {:ex_doc, "~> 0.12", only: :dev, runtime: false},
       {:credo, credo_version, only: [:test, :dev], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:telemetry, telemetry_version},
       {:httpoison, httpoison_version, optional: true}
-    ] ++ mime_dependency ++ logger_backends_dependency ++ hpax_dependency ++ mint_dependency
+    ] ++
+      logger_backends_dependency ++
+      hpax_dependency ++ mint_dependency ++ integration_dependencies
   end
 
   defp verify_publishable!(deps) do
@@ -246,10 +300,10 @@ defmodule Appsignal.Mixfile do
       machine are not the ones that should be published.
 
       Some dependency requirements are narrowed on older Elixir and OTP \
-      releases, so that this package keeps building there. Hex freezes the \
+      releases, so that this package keeps building there, and two of them \
+      can be overridden through environment variables. Hex freezes the \
       requirements into the package when it is published. Publishing these \
-      would impose the narrower requirements on every application that \
-      installs the package.
+      would impose them on every application that installs the package.
 
       This machine runs Elixir #{System.version()} on OTP \
       #{System.otp_release()}, and produces:
@@ -260,8 +314,32 @@ defmodule Appsignal.Mixfile do
 
       #{format_deps(publishable_deps -- deps)}
 
-      Publish from the newest Elixir and OTP release instead.
+      Publish from the newest Elixir and OTP release, without \
+      _APPSIGNAL_CI_PHOENIX_VERSION or _APPSIGNAL_CI_PLUG_VERSION set.
       """)
+    end
+  end
+
+  # The test environments only include Plug and Phoenix when CI asks for a
+  # version of them. Phoenix depends on Plug, so asking for Phoenix also
+  # includes Plug.
+  defp integrations(%{env: env} = versions) when env in [:test, :test_no_nif] do
+    cond do
+      versions.phoenix -> [:plug, :phoenix]
+      versions.plug -> [:plug]
+      true -> []
+    end
+  end
+
+  defp integrations(_versions), do: [:plug, :phoenix]
+
+  # GitHub Actions sets a matrix variable that a job does not define to an
+  # empty string.
+  defp ci_version(name) do
+    case System.get_env(name) do
+      nil -> nil
+      "" -> nil
+      version -> version
     end
   end
 

@@ -2,21 +2,18 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
   use ExUnit.Case
   import ExUnit.CaptureIO
   import AppsignalTest.Utils
-  alias Appsignal.Test
+  alias Appsignal.{FakeTransmitter, Test}
 
   setup do
     start_supervised(Test.Tracer)
     start_supervised(Test.Span)
     start_supervised(Test.Nif)
     start_supervised(Test.Monitor)
-
-    bypass = Bypass.open()
+    start_supervised!(FakeTransmitter)
 
     setup_with_env(%{
-      "APPSIGNAL_PUSH_API_ENDPOINT" => "http://localhost:#{bypass.port}"
+      "APPSIGNAL_PUSH_API_ENDPOINT" => "http://localhost:4005"
     })
-
-    %{bypass: bypass}
   end
 
   describe "without push api key" do
@@ -46,14 +43,8 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
   end
 
   describe "with invalid push api key" do
-    setup %{bypass: bypass} do
-      Bypass.expect(bypass, fn conn ->
-        assert "/1/auth" == conn.request_path
-        assert "POST" == conn.method
-        Plug.Conn.resp(conn, 401, "")
-      end)
-
-      {:ok, %{bypass: bypass}}
+    setup do
+      FakeTransmitter.set_response({:ok, %{status: 401, body: ""}})
     end
 
     defp run_with_invalid_push_api_key do
@@ -82,11 +73,7 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
     @test_config_directory Path.join(@test_directory, "config")
 
     setup context do
-      Bypass.expect(context[:bypass], fn conn ->
-        assert "/1/auth" == conn.request_path
-        assert "POST" == conn.method
-        Plug.Conn.resp(conn, 200, "")
-      end)
+      FakeTransmitter.set_response({:ok, %{status: 200, body: ""}})
 
       if context[:file_config] do
         File.mkdir_p!(@test_config_directory)
@@ -295,26 +282,28 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
       assert String.contains?(output, "AppSignal installed!")
     end
 
-    test "without Phoenix it prints no link to Phoenix integration documentation" do
-      output = run_with_environment_config()
-      refute String.contains?(output, "AppSignal detected a Phoenix app")
+    unless Code.ensure_loaded?(Phoenix) do
+      test "without Phoenix it prints no link to Phoenix integration documentation" do
+        output = run_with_environment_config()
+        refute String.contains?(output, "AppSignal detected a Phoenix app")
 
-      refute String.contains?(
-               output,
-               "http://docs.appsignal.com/elixir/integrations/phoenix.html"
-             )
+        refute String.contains?(
+                 output,
+                 "https://docs.appsignal.com/elixir/integrations/phoenix.html"
+               )
+      end
     end
 
-    @tag :skip_env_test_no_nif
-    @tag :skip_env_test
-    test "with Phoenix it prints link to Phoenix integration documentation" do
-      output = run_with_environment_config()
-      assert String.contains?(output, "AppSignal detected a Phoenix app")
+    if Code.ensure_loaded?(Phoenix) do
+      test "with Phoenix it prints link to Phoenix integration documentation" do
+        output = run_with_environment_config()
+        assert String.contains?(output, "AppSignal detected a Phoenix app")
 
-      assert String.contains?(
-               output,
-               "http://docs.appsignal.com/elixir/integrations/phoenix.html"
-             )
+        assert String.contains?(
+                 output,
+                 "https://docs.appsignal.com/elixir/integrations/phoenix.html"
+               )
+      end
     end
 
     test "sends a demo sample with six spans to AppSignal" do

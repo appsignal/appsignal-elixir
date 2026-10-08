@@ -283,6 +283,30 @@ defmodule Appsignal.ConfigTest do
     end
   end
 
+  describe "instrument_phoenix?" do
+    test "when true" do
+      assert with_config(
+               %{instrument_phoenix: true},
+               &Config.instrument_phoenix?/0
+             )
+    end
+
+    test "when false" do
+      refute with_config(
+               %{instrument_phoenix: false},
+               &Config.instrument_phoenix?/0
+             )
+    end
+
+    test "when unset" do
+      assert with_config(%{}, &Config.instrument_phoenix?/0)
+    end
+
+    test "without an appsignal config" do
+      assert without_config(&Config.instrument_phoenix?/0)
+    end
+  end
+
   describe "instrument_tesla?" do
     test "when discard" do
       assert with_config(
@@ -704,6 +728,25 @@ defmodule Appsignal.ConfigTest do
     end
   end
 
+  describe "environment variables" do
+    setup do
+      keys = Config.env_keys_by_type() |> Keyword.values() |> List.flatten()
+      %{keys: keys, mapping: Config.env_to_key_mapping()}
+    end
+
+    test "each has one type", %{keys: keys} do
+      assert keys -- Enum.uniq(keys) == []
+    end
+
+    test "each with a type maps to an option", %{keys: keys, mapping: mapping} do
+      assert Enum.reject(keys, &Map.has_key?(mapping, &1)) == []
+    end
+
+    test "each that maps to an option has a type", %{keys: keys, mapping: mapping} do
+      assert Map.keys(mapping) -- keys == []
+    end
+  end
+
   describe "using the system environment" do
     test "stores system env source in Application" do
       assert with_env(
@@ -910,6 +953,13 @@ defmodule Appsignal.ConfigTest do
                &init_config/0
              ) ==
                default_configuration() |> Map.put(:ignore_namespaces, ~w(admin private_namespace))
+    end
+
+    test "instrument_phoenix" do
+      assert with_env(
+               %{"APPSIGNAL_INSTRUMENT_PHOENIX" => "false"},
+               &init_config/0
+             ) == default_configuration() |> Map.put(:instrument_phoenix, false)
     end
 
     test "log" do
@@ -1498,6 +1548,7 @@ defmodule Appsignal.ConfigTest do
       instrument_ecto: true,
       instrument_finch: true,
       instrument_oban: true,
+      instrument_phoenix: true,
       instrument_tesla: true,
       report_oban_errors: "all"
     }

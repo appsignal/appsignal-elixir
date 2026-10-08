@@ -29,6 +29,7 @@ defmodule Appsignal.Config do
     instrument_ecto: true,
     instrument_finch: true,
     instrument_oban: true,
+    instrument_phoenix: true,
     instrument_tesla: true,
     log: "file",
     logging_endpoint: "https://appsignal-endpoint.net",
@@ -160,6 +161,11 @@ defmodule Appsignal.Config do
 
   defp active?(_config), do: false
 
+  @doc false
+  def deactivate do
+    Application.put_env(:appsignal, :config, Map.put(config(), :active, false))
+  end
+
   @doc """
   Returns true if debug mode is turned on, false otherwise.
   """
@@ -217,6 +223,13 @@ defmodule Appsignal.Config do
   def instrument_oban? do
     case Application.fetch_env(:appsignal, :config) do
       {:ok, value} -> !!Access.get(value, :instrument_oban, true)
+      _ -> true
+    end
+  end
+
+  def instrument_phoenix? do
+    case Application.fetch_env(:appsignal, :config) do
+      {:ok, value} -> !!Access.get(value, :instrument_phoenix, true)
       _ -> true
     end
   end
@@ -327,6 +340,7 @@ defmodule Appsignal.Config do
     "APPSIGNAL_INSTRUMENT_ECTO" => :instrument_ecto,
     "APPSIGNAL_INSTRUMENT_FINCH" => :instrument_finch,
     "APPSIGNAL_INSTRUMENT_OBAN" => :instrument_oban,
+    "APPSIGNAL_INSTRUMENT_PHOENIX" => :instrument_phoenix,
     "APPSIGNAL_INSTRUMENT_TESLA" => :instrument_tesla,
     "APPSIGNAL_LOG" => :log,
     "APPSIGNAL_LOG_LEVEL" => :log_level,
@@ -358,14 +372,13 @@ defmodule Appsignal.Config do
     APPSIGNAL_BIND_ADDRESS
   )
   @bool_keys ~w(
-    APPSIGNAL_ACTIVE APPSIGNAL_DEBUG APPSIGNAL_INSTRUMENT_NET_HTTP APPSIGNAL_ENABLE_FRONTEND_ERROR_CATCHING
-    APPSIGNAL_RUNNING_IN_CONTAINER
+    APPSIGNAL_ACTIVE APPSIGNAL_DEBUG APPSIGNAL_RUNNING_IN_CONTAINER
     APPSIGNAL_ENABLE_HOST_METRICS APPSIGNAL_SEND_SESSION_DATA APPSIGNAL_SKIP_SESSION_DATA
     APPSIGNAL_TRANSACTION_DEBUG_MODE APPSIGNAL_FILES_WORLD_ACCESSIBLE APPSIGNAL_SEND_PARAMS
     APPSIGNAL_ENABLE_MINUTELY_PROBES APPSIGNAL_ENABLE_STATSD APPSIGNAL_ENABLE_NGINX_METRICS
     APPSIGNAL_ENABLE_ERROR_BACKEND APPSIGNAL_SEND_ENVIRONMENT_METADATA
     APPSIGNAL_INSTRUMENT_BROADWAY APPSIGNAL_INSTRUMENT_ECTO APPSIGNAL_INSTRUMENT_FINCH
-    APPSIGNAL_INSTRUMENT_OBAN APPSIGNAL_INSTRUMENT_TESLA
+    APPSIGNAL_INSTRUMENT_OBAN APPSIGNAL_INSTRUMENT_PHOENIX APPSIGNAL_INSTRUMENT_TESLA
   )
   @atom_keys ~w(APPSIGNAL_APP_ENV APPSIGNAL_OTP_APP)
   @string_list_keys ~w(
@@ -375,6 +388,20 @@ defmodule Appsignal.Config do
     APPSIGNAL_FILTER_SESSION_DATA APPSIGNAL_REQUEST_HEADERS
   )
   @float_keys ~w(APPSIGNAL_CPU_COUNT)
+
+  @doc false
+  def env_keys_by_type do
+    [
+      string: @string_keys,
+      bool: @bool_keys,
+      atom: @atom_keys,
+      string_list: @string_list_keys,
+      float: @float_keys
+    ]
+  end
+
+  @doc false
+  def env_to_key_mapping, do: @env_to_key_mapping
 
   defp load_from_environment do
     %{}

@@ -6,11 +6,15 @@ end
 defmodule Appsignal.Diagnose.Report do
   @moduledoc false
   @behaviour Appsignal.Diagnose.ReportBehaviour
-  alias Appsignal.Transmitter
+  @transmitter Application.compile_env(
+                 :appsignal,
+                 :appsignal_transmitter,
+                 Appsignal.Transmitter
+               )
 
   @spec send(map(), map()) :: {:ok, String.t()} | {:error, map()}
   def send(config, report) do
-    case Transmitter.transmit(
+    case @transmitter.transmit(
            config[:diagnose_endpoint],
            {%{diagnose: report}, :json},
            config,
