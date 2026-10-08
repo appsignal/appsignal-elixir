@@ -43,6 +43,7 @@ defmodule Appsignal.Error.BackendTest do
 
   setup do
     Appsignal.Error.Backend.attach()
+    on_exit(fn -> Appsignal.Utils.LoggerHandler.remove_backend(Backend) end)
 
     {:ok, _pid} = start_supervised(Test.Nif)
     {:ok, _pid} = start_supervised(Test.Tracer)

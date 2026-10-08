@@ -4,13 +4,17 @@ defmodule Mix.Tasks.Appsignal.Diagnose.PathsTest do
   alias Appsignal.Diagnose.Paths
 
   setup do
-    dir = System.tmp_dir()
+    dir =
+      Path.join(System.tmp_dir!(), "appsignal_paths_test_#{System.unique_integer([:positive])}")
+
+    File.mkdir_p!(dir)
     path = Path.join(dir, "appsignal.log")
 
     Application.delete_env(:appsignal, :"$log_file_path")
 
     on_exit(fn ->
-      File.rm(path)
+      Application.delete_env(:appsignal, :"$log_file_path")
+      File.rm_rf(dir)
     end)
 
     [dir: dir, path: path]
