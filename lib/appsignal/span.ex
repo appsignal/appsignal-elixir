@@ -349,8 +349,9 @@ defmodule Appsignal.Span do
   Close an `Appsignal.Span`.
 
   ## Example
-      Appsignal.Tracer.root_span()
-      |> Span.close()
+      span = Appsignal.Tracer.create_span("http_request")
+      # ...
+      Appsignal.Span.close(span)
   """
   def close(%Span{reference: reference} = span) do
     :ok = @nif.close_span(reference)
@@ -365,8 +366,9 @@ defmodule Appsignal.Span do
   Close an `Appsignal.Span` with an explicit end time.
 
   ## Example
-      Appsignal.Tracer.root_span()
-      |> Span.close(span, :os.system_time())
+      span = Appsignal.Tracer.create_span("http_request")
+      # ...
+      Appsignal.Span.close(span, :os.system_time())
   """
   def close(%Span{reference: reference} = span, end_time) do
     sec = :erlang.convert_time_unit(end_time, :native, :second)

@@ -377,6 +377,23 @@ defmodule Appsignal.TracerContractTest do
       assert Tracer.lookup(self()) == []
     end
 
+    test "ends the span without an end time when the options have none" do
+      span = Tracer.create_span("http_request")
+
+      assert Tracer.close_span(span, []) == :ok
+      assert closed_references() == [span.reference]
+      assert Tracer.lookup(self()) == []
+    end
+
+    test "passes the end time to the extension alongside other options" do
+      span = Tracer.create_span("http_request")
+
+      assert Tracer.close_span(span, end_time: 1_588_936_027_128_939_000, reason: :other) == :ok
+
+      assert [{span.reference, 1_588_936_027, 128_939_000}] ==
+               Test.Nif.get!(:close_span_with_timestamp)
+    end
+
     test "ends the span even when the process was ignored after it opened" do
       span = Tracer.create_span("http_request")
       Tracer.ignore()
