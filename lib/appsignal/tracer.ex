@@ -113,8 +113,9 @@ defmodule Appsignal.Tracer do
   Closes a span and deregisters it.
 
   ## Example
-      Appsignal.Tracer.current_span()
-      |> Appsignal.Tracer.close_span()
+      span = Appsignal.Tracer.create_span("http_request")
+      # ...
+      Appsignal.Tracer.close_span(span)
 
   """
   def close_span(%Span{} = span) do
@@ -126,18 +127,19 @@ defmodule Appsignal.Tracer do
 
   @spec close_span(Span.t() | nil, list()) :: :ok | nil
   @doc """
-  Closes a span and deregisters it. Takes an options list, which currently only
-  accepts a `List` with an `:end_time` integer.
+  Closes a span and deregisters it. Takes a keyword list of options, of which
+  only `:end_time` is used.
 
   ## Example
-      Appsignal.Tracer.current_span()
-      |> Appsignal.Tracer.close_span(end_time: :os.system_time())
+      span = Appsignal.Tracer.create_span("http_request")
+      # ...
+      Appsignal.Tracer.close_span(span, end_time: :os.system_time())
 
   """
   def close_span(span, options)
 
-  def close_span(%Span{} = span, end_time: end_time) do
-    Span.close(span, end_time)
+  def close_span(%Span{} = span, options) when is_list(options) do
+    close_with(span, options[:end_time])
     :ok
   end
 
