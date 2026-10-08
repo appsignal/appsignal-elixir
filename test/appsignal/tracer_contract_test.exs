@@ -309,6 +309,47 @@ defmodule Appsignal.TracerContractTest do
     end
   end
 
+  describe "the current span, when an earlier span's ancestor closes" do
+    test "stays the newest span registered" do
+      root = Tracer.create_span("http_request")
+      child = Tracer.create_span("http_request", root)
+      nested = Tracer.create_span("background_job", nil)
+
+      Tracer.close_span(root)
+
+      assert Tracer.current_span() == nested
+      assert Tracer.root_span() == nested
+      assert Tracer.lookup(self()) == [{self(), child}, {self(), nested}]
+    end
+  end
+
+  describe "spans in many processes at once" do
+    test "are registered, current and removed per process" do
+      results =
+        1..50
+        |> Task.async_stream(
+          fn _index ->
+            root = Tracer.create_span("http_request")
+            child = Tracer.create_span("http_request", root)
+            grandchild = Tracer.create_span("http_request", child)
+            Tracer.close_span(child)
+            current = Tracer.current_span()
+            lookup = Tracer.lookup(self())
+            Tracer.close_all(root)
+            {grandchild, root, current, lookup, Tracer.lookup(self())}
+          end,
+          max_concurrency: 50
+        )
+        |> Enum.map(fn {:ok, result} -> result end)
+
+      for {grandchild, root, current, lookup, after_close} <- results do
+        assert current == grandchild
+        assert lookup == [{root.pid, root}, {root.pid, grandchild}]
+        assert after_close == []
+      end
+    end
+  end
+
   describe "closing a span with Tracer.close_span" do
     test "returns nil for nil" do
       assert Tracer.close_span(nil) == nil
@@ -714,6 +755,120 @@ defmodule Appsignal.TracerContractTest do
     end
   end
 
+  describe "closing a span and everything under it" do
+    test "closes its open descendants, deepest first, then the span" do
+      root = Tracer.create_span("http_request")
+      sibling = Tracer.create_span("http_request", root)
+      scope = Tracer.create_span("http_request", root)
+      child = Tracer.create_span("http_request", scope)
+      grandchild = Tracer.create_span("http_request", child)
+
+      assert Tracer.close_all(scope) == :ok
+
+      assert closed_references() == [scope.reference, child.reference, grandchild.reference]
+      assert Tracer.lookup(self()) == [{self(), root}, {self(), sibling}]
+    end
+
+    test "names its open descendants as unfinished, and leaves its own name alone" do
+      scope = Tracer.create_span("http_request")
+      child = Tracer.create_span("http_request", scope)
+
+      Tracer.close_all(scope)
+
+      assert {:ok, names} = Test.Nif.get(:set_span_name_if_nil)
+      assert {child.reference, "[unfinished transaction event]"} in names
+      refute Enum.any?(names, fn {reference, _name} -> reference == scope.reference end)
+    end
+
+    test "closes a descendant whose own parent closed before it" do
+      scope = Tracer.create_span("http_request")
+      child = Tracer.create_span("http_request", scope)
+      grandchild = Tracer.create_span("http_request", child)
+      Tracer.close_span(child)
+
+      Tracer.close_all(scope)
+
+      assert grandchild.reference in closed_references()
+      assert Tracer.lookup(self()) == []
+    end
+
+    test "closes descendants newest first, also after an ancestor between them closed" do
+      scope = Tracer.create_span("http_request")
+      child = Tracer.create_span("http_request", scope)
+      grandchild = Tracer.create_span("http_request", child)
+      sibling = Tracer.create_span("http_request", scope)
+      Tracer.close_span(child)
+
+      Tracer.close_all(scope)
+
+      assert Enum.take(closed_references(), 3) == [
+               scope.reference,
+               grandchild.reference,
+               sibling.reference
+             ]
+    end
+
+    test "leaves a root opened under it open" do
+      scope = Tracer.create_span("http_request")
+      nested = Tracer.create_span("background_job", nil)
+
+      Tracer.close_all(scope)
+
+      refute nested.reference in closed_references()
+      assert Tracer.lookup(self()) == [{self(), nested}]
+    end
+
+    test "leaves a span attached from another process open" do
+      parent = spawn_idle_with_span()
+      scope = Tracer.create_span("http_request")
+      attached = Tracer.register_current(parent)
+
+      Tracer.close_all(scope)
+
+      refute parent.reference in closed_references()
+      assert Tracer.lookup(self()) == [{self(), attached}]
+    end
+
+    test "leaves another process's children of it open" do
+      scope = Tracer.create_span("http_request")
+      test_pid = self()
+
+      task =
+        Task.async(fn ->
+          child = Tracer.create_span("http_request", scope)
+          send(test_pid, {:child, child})
+
+          receive do
+            :closed -> Tracer.lookup(self())
+          end
+        end)
+
+      assert_receive {:child, child}
+      Tracer.close_all(scope)
+      send(task.pid, :closed)
+
+      assert Task.await(task) == [{task.pid, child}]
+      refute child.reference in closed_references()
+    end
+
+    test "passes the end time to the extension" do
+      scope = Tracer.create_span("http_request")
+      child = Tracer.create_span("http_request", scope)
+
+      Tracer.close_all(scope, end_time: 1_588_936_027_128_939_000)
+
+      assert [
+               {scope.reference, 1_588_936_027, 128_939_000},
+               {child.reference, 1_588_936_027, 128_939_000}
+             ] == Test.Nif.get!(:close_span_with_timestamp)
+    end
+
+    test "returns nil for nil" do
+      assert Tracer.close_all(nil) == nil
+      assert Tracer.close_all(nil, end_time: 1) == nil
+    end
+  end
+
   describe "the monitor" do
     test "keeps running, and removes the rows, when ending the spans fails" do
       monitor = Process.whereis(Appsignal.Monitor)
@@ -795,6 +950,22 @@ defmodule Appsignal.TracerContractTest do
     case Test.Nif.get(:close_span) do
       {:ok, calls} -> Enum.map(calls, fn {reference} -> reference end)
       :error -> []
+    end
+  end
+
+  defp spawn_idle_with_span do
+    test_pid = self()
+
+    pid =
+      spawn(fn ->
+        send(test_pid, {:span, Tracer.create_span("http_request")})
+        Process.sleep(:infinity)
+      end)
+
+    on_exit(fn -> Process.exit(pid, :kill) end)
+
+    receive do
+      {:span, span} -> span
     end
   end
 

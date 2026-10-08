@@ -30,7 +30,9 @@ if Code.ensure_loaded?(Phoenix) do
           &__MODULE__.phoenix_router_dispatch_exception/4,
         [:phoenix, :controller, :render, :start] => &__MODULE__.phoenix_template_render_start/4,
         [:phoenix, :controller, :render, :stop] => &__MODULE__.phoenix_template_render_stop/4,
-        [:phoenix, :controller, :render, :exception] => &__MODULE__.phoenix_template_render_stop/4
+        [:phoenix, :controller, :render, :exception] =>
+          &__MODULE__.phoenix_template_render_stop/4,
+        [:phoenix, :error_rendered] => &__MODULE__.phoenix_error_rendered/4
       }
 
       for {event, fun} <- handlers do
@@ -112,7 +114,7 @@ if Code.ensure_loaded?(Phoenix) do
       # event to describe the root span then, so this handler does it instead.
       _root_span = set_root_span_data_unless_set(metadata)
 
-      @tracer.close_span(span)
+      @tracer.close_all(span)
     end
 
     def phoenix_router_dispatch_exception(
@@ -150,7 +152,7 @@ if Code.ensure_loaded?(Phoenix) do
       span
       |> @span.add_error(:error, reason, stack)
       |> set_span_data(%{conn: conn})
-      |> @tracer.close_span()
+      |> @tracer.close_all()
 
       # No stop event arrives for the spans this request opened, so nothing else
       # will take them off the stacks. On a web server that serves more than one
@@ -182,6 +184,19 @@ if Code.ensure_loaded?(Phoenix) do
     def phoenix_template_render_stop(_event, _measurements, _metadata, _config) do
       @tracer.close_span(pop(@render_key))
     end
+
+    # `Phoenix.Endpoint.RenderErrors` emits this after the endpoint's plug
+    # pipeline has unwound. A raise in a router pipeline, such as
+    # `Plug.CSRFProtection`'s, emits no router dispatch stop or exception event,
+    # and sending the error page can close the endpoint span first. Nested
+    # endpoints and forwarded routers each push a span, so close the outermost one
+    # still open.
+    def phoenix_error_rendered(_event, _measurements, _metadata, _config) do
+      _ = @tracer.close_all(outermost(@endpoint_key) || outermost(@dispatch_key))
+      forget()
+    end
+
+    defp outermost(key), do: key |> Process.get([]) |> List.last()
 
     defp set_span_data(span, %{conn: conn} = metadata) do
       appsignal_metadata = Appsignal.Metadata.metadata(conn)

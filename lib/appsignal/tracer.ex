@@ -48,7 +48,7 @@ defmodule Appsignal.Tracer do
     unless ignored?(pid) do
       namespace
       |> Span.create_root(pid, options[:start_time])
-      |> register(:own, nil)
+      |> register(:own, nil, nil)
       |> on_create_span()
     end
   end
@@ -59,7 +59,7 @@ defmodule Appsignal.Tracer do
     unless ignored?(pid) do
       parent
       |> Span.create_child(pid, options[:start_time])
-      |> register(:own, Registry.trace_root(parent))
+      |> register(:own, Registry.trace_root(parent), Registry.anchor(parent, pid))
       |> on_create_span()
     end
   end
@@ -169,7 +169,30 @@ defmodule Appsignal.Tracer do
   end
 
   @doc false
-  def close_all(pid, options \\ []) when is_pid(pid) do
+  def close_all(span_or_pid, options \\ [])
+
+  def close_all(%Span{} = span, options) do
+    descendants = Registry.descendants(span)
+
+    Enum.each(descendants, fn descendant ->
+      Span.set_name_if_nil(descendant, "[unfinished transaction event]")
+      close_with(descendant, options[:end_time])
+    end)
+
+    close_with(span, options[:end_time])
+
+    if descendants != [] do
+      Appsignal.IntegrationLogger.debug(
+        "Appsignal.Tracer closed #{length(descendants)} spans left open under a span in #{inspect(span.pid)}"
+      )
+    end
+
+    :ok
+  end
+
+  def close_all(nil, _options), do: nil
+
+  def close_all(pid, options) when is_pid(pid) do
     spans = pid |> Registry.own_spans() |> Enum.reverse()
 
     Enum.each(spans, fn {span, root?} ->
@@ -204,17 +227,17 @@ defmodule Appsignal.Tracer do
     #     end)
     #     |> Stream.run()
 
-    register(%{span | pid: self()}, :attached, Registry.trace_root(span))
+    register(%{span | pid: self()}, :attached, Registry.trace_root(span), nil)
   end
 
-  defp register(%Span{} = span, origin, trace_root) do
-    if Registry.insert(span, origin, trace_root) do
+  defp register(%Span{} = span, origin, trace_root, anchor) do
+    if Registry.insert(span, origin, trace_root, anchor) do
       @monitor.add(span.pid)
       span
     end
   end
 
-  defp register(nil, _origin, _trace_root), do: nil
+  defp register(nil, _origin, _trace_root, _anchor), do: nil
 
   defp ignored?(pid) when is_pid(pid) do
     Registry.ignored?(pid)

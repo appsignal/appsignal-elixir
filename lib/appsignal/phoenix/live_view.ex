@@ -151,14 +151,14 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
     end
 
     def handle_event_stop(_event, _params, metadata, _event_name) do
-      @tracer.close_span(take_span(metadata), end_time: @os.system_time())
+      @tracer.close_all(take_span(metadata), end_time: @os.system_time())
     end
 
     def handle_event_exception(_event, _params, metadata, _event_name) do
       metadata
       |> take_span()
       |> @span.add_error(metadata[:kind], metadata[:reason], metadata[:stacktrace])
-      |> @tracer.close_span(end_time: @os.system_time())
+      |> @tracer.close_all(end_time: @os.system_time())
 
       @tracer.ignore()
     end

@@ -61,6 +61,16 @@ defmodule PlugWithAppsignal do
     send_resp(conn, 200, "Exit!")
   end
 
+  get "/leak" do
+    _ = Appsignal.Tracer.create_span("http_request", Appsignal.Tracer.current_span())
+    send_resp(conn, 200, "Leak!")
+  end
+
+  get "/leak_exception" do
+    _ = Appsignal.Tracer.create_span("http_request", Appsignal.Tracer.current_span())
+    raise "Exception!"
+  end
+
   get "/custom_name" do
     conn
     |> Appsignal.Plug.put_name("PlugWithAppsignal#custom_name")
@@ -368,6 +378,34 @@ defmodule Appsignal.PlugTest do
     end
 
     test "ignores the process in the registry" do
+      assert Appsignal.Tracer.lookup(self()) == [{self(), :ignore}]
+    end
+  end
+
+  describe "GET /leak" do
+    setup do
+      get("/leak")
+    end
+
+    test "closes the span left open" do
+      assert length(Test.Nif.get!(:close_span)) == 2
+    end
+
+    test "leaves no spans behind" do
+      assert Appsignal.Tracer.lookup(self()) == []
+    end
+  end
+
+  describe "GET /leak_exception" do
+    setup do
+      get("/leak_exception")
+    end
+
+    test "closes the span left open" do
+      assert length(Test.Nif.get!(:close_span)) == 2
+    end
+
+    test "leaves no spans behind but the ignore flag" do
       assert Appsignal.Tracer.lookup(self()) == [{self(), :ignore}]
     end
   end

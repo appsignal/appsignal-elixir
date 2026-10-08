@@ -709,6 +709,50 @@ defmodule Appsignal.Phoenix.LiveViewTest do
     end
   end
 
+  describe "handle_event_stop/4, with a span left open during the event" do
+    setup do
+      attach_mount_handlers()
+
+      :telemetry.execute(
+        [:phoenix, :live_view, :mount, :start],
+        %{system_time: 1_653_474_764_790_125_080},
+        %{
+          socket: %Phoenix.LiveView.Socket{view: __MODULE__},
+          params: %{foo: "bar"},
+          session: %{bar: "baz"},
+          uri: "http://localhost/",
+          telemetry_span_context: :mount
+        }
+      )
+
+      leaked =
+        Appsignal.Tracer.create_span("live_view", Appsignal.Tracer.current_span())
+
+      :telemetry.execute(
+        [:phoenix, :live_view, :mount, :stop],
+        %{duration: 100_000},
+        %{
+          socket: %Phoenix.LiveView.Socket{view: __MODULE__},
+          params: %{foo: "bar"},
+          session: %{bar: "baz"},
+          uri: "http://localhost/",
+          telemetry_span_context: :mount
+        }
+      )
+
+      [leaked: leaked]
+    end
+
+    test "closes the span left open", %{leaked: leaked} do
+      closed = Test.Nif.get!(:close_span_with_timestamp) |> Enum.map(&elem(&1, 0))
+      assert leaked.reference in closed
+    end
+
+    test "leaves no spans behind" do
+      assert Appsignal.Tracer.lookup(self()) == []
+    end
+  end
+
   defp attach_mount_handlers do
     for {suffix, handler} <- [
           start: &Appsignal.Phoenix.LiveView.handle_live_view_event_start/4,

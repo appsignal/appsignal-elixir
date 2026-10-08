@@ -311,6 +311,173 @@ defmodule Appsignal.Phoenix.EventHandlerRequestTest do
     end
   end
 
+  describe "after a request that raises before the router, with a span left open" do
+    # `Phoenix.Endpoint.RenderErrors` renders the error page with the endpoint's
+    # own conn, so no endpoint stop event arrives.
+    setup do
+      endpoint_start()
+      endpoint_span = Tracer.current_span()
+      router_dispatch_start()
+      leaked = Tracer.create_span("http_request", Tracer.current_span())
+      error_rendered()
+
+      [endpoint_span: endpoint_span, leaked: leaked]
+    end
+
+    test "keeps none of the request's spans in the handler's bookkeeping" do
+      assert Process.get({Appsignal.Phoenix.EventHandler, :endpoint_spans}) == nil
+      assert Process.get({Appsignal.Phoenix.EventHandler, :router_dispatch_spans}) == nil
+    end
+
+    test "closes the endpoint span and the span left open", %{
+      endpoint_span: endpoint_span,
+      leaked: leaked
+    } do
+      closed = Test.Nif.get!(:close_span) |> Enum.map(&elem(&1, 0))
+      assert endpoint_span.reference in closed
+      assert leaked.reference in closed
+    end
+
+    test "leaves no spans behind" do
+      assert [] == Tracer.lookup(self())
+    end
+  end
+
+  describe "after a request through nested endpoints that raises before the router" do
+    setup do
+      endpoint_start()
+      outer = Tracer.current_span()
+      endpoint_start()
+      inner = Tracer.current_span()
+      error_rendered()
+
+      [outer: outer, inner: inner]
+    end
+
+    test "closes both endpoint spans", %{outer: outer, inner: inner} do
+      closed = Test.Nif.get!(:close_span) |> Enum.map(&elem(&1, 0))
+      assert outer.reference in closed
+      assert inner.reference in closed
+    end
+
+    test "leaves no spans behind" do
+      assert [] == Tracer.lookup(self())
+    end
+  end
+
+  describe "after a request that raises before the router, then another request" do
+    setup do
+      endpoint_start()
+      router_dispatch_start()
+      error_rendered()
+
+      endpoint_start()
+      router_dispatch_start()
+      router_dispatch_stop()
+    end
+
+    test "starts a root span for the second request" do
+      # `Appsignal.Test.Tracer` records calls with the most recent one first.
+      {:ok, calls} = Test.Tracer.get(:create_span)
+      assert {"http_request", nil} = Enum.at(calls, 1)
+    end
+  end
+
+  describe "after a request with a span left open in the controller" do
+    # The router dispatch stop event fires after the controller has returned.
+    setup do
+      endpoint_start()
+      router_dispatch_start()
+      leaked = Tracer.create_span("http_request", Tracer.current_span())
+      endpoint_stop()
+      router_dispatch_stop()
+
+      [leaked: leaked]
+    end
+
+    test "closes the span left open", %{leaked: leaked} do
+      closed = Test.Nif.get!(:close_span) |> Enum.map(&elem(&1, 0))
+      assert leaked.reference in closed
+    end
+
+    test "leaves no spans behind" do
+      assert [] == Tracer.lookup(self())
+    end
+  end
+
+  describe "after a request rejected in a router pipeline" do
+    # A plug in a router pipeline, such as `Plug.CSRFProtection`, raises before
+    # the controller. No router dispatch stop or exception event follows, and
+    # sending the error page fires the endpoint stop event first.
+    setup do
+      endpoint_start()
+      router_dispatch_start()
+      dispatch_span = Tracer.current_span()
+      endpoint_stop()
+      error_rendered()
+
+      [dispatch_span: dispatch_span]
+    end
+
+    test "closes the router dispatch span", %{dispatch_span: dispatch_span} do
+      closed = Test.Nif.get!(:close_span) |> Enum.map(&elem(&1, 0))
+      assert dispatch_span.reference in closed
+    end
+
+    test "leaves no spans behind" do
+      assert [] == Tracer.lookup(self())
+    end
+  end
+
+  describe "after a request whose controller raises while rendering" do
+    setup do
+      endpoint_start()
+      router_dispatch_start()
+      dispatch_span = Tracer.current_span()
+      render_start()
+      render_span = Tracer.current_span()
+      router_dispatch_exception()
+
+      [dispatch_span: dispatch_span, render_span: render_span]
+    end
+
+    test "closes the dispatch and render spans", %{
+      dispatch_span: dispatch_span,
+      render_span: render_span
+    } do
+      closed = Test.Nif.get!(:close_span) |> Enum.map(&elem(&1, 0))
+      assert dispatch_span.reference in closed
+      assert render_span.reference in closed
+    end
+
+    test "leaves no spans behind but the ignore flag" do
+      assert [{self(), :ignore}] == Tracer.lookup(self())
+    end
+  end
+
+  defp router_dispatch_exception do
+    :telemetry.execute(
+      [:phoenix, :router_dispatch, :exception],
+      %{duration: 49_474_000},
+      %{conn: conn(), reason: %RuntimeError{message: "Exception!"}, stacktrace: []}
+    )
+  end
+
+  defp error_rendered do
+    :telemetry.execute(
+      [:phoenix, :error_rendered],
+      %{duration: 49_474_000},
+      %{
+        conn: conn(),
+        status: 500,
+        kind: :error,
+        reason: %RuntimeError{message: "Exception!"},
+        stacktrace: [],
+        log: :error
+      }
+    )
+  end
+
   defp endpoint_start do
     :telemetry.execute(
       [:phoenix, :endpoint, :start],

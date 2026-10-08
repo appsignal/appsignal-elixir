@@ -34,4 +34,14 @@ defmodule Appsignal.Test.Tracer do
     add(:close_span, {span, timestamp})
     Tracer.close_span(span, timestamp)
   end
+
+  def close_all(span) do
+    add(:close_span, {span})
+    Tracer.close_all(span)
+  end
+
+  def close_all(span, options) do
+    add(:close_span, {span, options})
+    Tracer.close_all(span, options)
+  end
 end

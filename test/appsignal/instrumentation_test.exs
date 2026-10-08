@@ -65,6 +65,46 @@ defmodule Appsignal.InstrumentationTest do
     :ok
   end
 
+  describe "instrument/2, with a span left open inside it" do
+    setup do
+      Appsignal.instrument("instrument", fn ->
+        send(self(), {:leaked, Tracer.create_span("http_request", Tracer.current_span())})
+      end)
+
+      receive do
+        {:leaked, leaked} -> [leaked: leaked]
+      end
+    end
+
+    test "closes the span left open", %{leaked: leaked} do
+      assert leaked.reference in Enum.map(Test.Nif.get!(:close_span), &elem(&1, 0))
+    end
+
+    test "leaves no spans behind" do
+      assert Tracer.lookup(self()) == []
+    end
+  end
+
+  describe "instrument_root/3, with a span left open inside it" do
+    setup do
+      Appsignal.Instrumentation.instrument_root("background_job", "instrument", fn ->
+        send(self(), {:leaked, Tracer.create_span("http_request", Tracer.current_span())})
+      end)
+
+      receive do
+        {:leaked, leaked} -> [leaked: leaked]
+      end
+    end
+
+    test "closes the span left open", %{leaked: leaked} do
+      assert leaked.reference in Enum.map(Test.Nif.get!(:close_span), &elem(&1, 0))
+    end
+
+    test "leaves no spans behind" do
+      assert Tracer.lookup(self()) == []
+    end
+  end
+
   describe "instrument/2, with a decorator" do
     setup do
       %{return: InstrumentedModule.instrument()}

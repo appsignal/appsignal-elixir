@@ -13,10 +13,19 @@ defmodule Appsignal.Tracer.RegistryTest do
   end
 
   describe "registering a span" do
-    test "stores one row with a sequence, the origin, the span and its trace root" do
+    test "stores one row with a sequence, the origin, the span, its trace root and ancestor" do
       span = Tracer.create_span("http_request")
 
-      assert [%{pid: pid, sequence: sequence, origin: :own, span: ^span, root: ^span}] =
+      assert [
+               %{
+                 pid: pid,
+                 sequence: sequence,
+                 origin: :own,
+                 span: ^span,
+                 root: ^span,
+                 anchor: nil
+               }
+             ] =
                rows(self())
 
       assert pid == self()
@@ -50,9 +59,44 @@ defmodule Appsignal.Tracer.RegistryTest do
         end)
         |> Task.await()
 
-      assert [%{origin: :attached, span: attached, root: trace_root}] = rows
+      assert [%{origin: :attached, span: attached, root: trace_root, anchor: nil}] = rows
       assert attached.reference == child.reference
       assert trace_root == root
+    end
+  end
+
+  describe "the nearest open ancestor" do
+    test "is the parent for a child of a span of this process" do
+      root = Tracer.create_span("http_request")
+      child = Tracer.create_span("http_request", root)
+
+      assert anchor(child) == root.reference
+    end
+
+    test "is nil for a root, an attached span, and a child of another process's span" do
+      root = Tracer.create_span("http_request")
+
+      {attached, child} =
+        Task.async(fn ->
+          attached = Tracer.register_current(root)
+          child = Tracer.create_span("http_request", root)
+          {anchor(attached), anchor(child)}
+        end)
+        |> Task.await()
+
+      assert anchor(root) == nil
+      assert attached == nil
+      assert child == nil
+    end
+
+    test "becomes the closed span's own ancestor when that span closes" do
+      root = Tracer.create_span("http_request")
+      child = Tracer.create_span("http_request", root)
+      grandchild = Tracer.create_span("http_request", child)
+
+      Tracer.close_span(child)
+
+      assert anchor(grandchild) == root.reference
     end
   end
 
@@ -94,7 +138,7 @@ defmodule Appsignal.Tracer.RegistryTest do
       Tracer.close_span(span)
       send(task.pid, :closed)
 
-      assert [%{origin: :attached}] = Task.await(task)
+      assert [%{origin: :attached, anchor: nil}] = Task.await(task)
     end
 
     test "removes nothing for a span that is not registered" do
@@ -127,7 +171,7 @@ defmodule Appsignal.Tracer.RegistryTest do
         end)
         |> Task.await()
 
-      assert [%{origin: :attached}] = spans
+      assert [%{origin: :attached, anchor: nil}] = spans
       assert [{_pid}] = flags
     end
   end
@@ -184,18 +228,50 @@ defmodule Appsignal.Tracer.RegistryTest do
       assert rows(first) == []
       assert Tracer.lookup(second) == [{second, second_root}, {second, second_child}]
     end
+
+    test "stay in registration order when a span's ancestor closes before it" do
+      root = Tracer.create_span("http_request")
+      child = Tracer.create_span("http_request", root)
+      nested = Tracer.create_span("background_job", nil)
+
+      Tracer.close_span(root)
+
+      assert Tracer.lookup(self()) == [{self(), child}, {self(), nested}]
+      assert anchor(child) == nil
+    end
+
+    test "stay in registration order over many rows" do
+      root = Tracer.create_span("http_request")
+
+      spans =
+        Enum.scan(1..100, root, fn _index, parent ->
+          Tracer.create_span("http_request", parent)
+        end)
+
+      Tracer.close_span(Enum.at(spans, 49))
+
+      expected = [root | List.delete_at(spans, 49)]
+      assert Enum.map(Tracer.lookup(self()), &elem(&1, 1)) == expected
+      assert anchor(Enum.at(spans, 50)) == Enum.at(spans, 48).reference
+    end
   end
 
   # Reads the registry's table, so these tests see what `lookup/1` does not
-  # show: origins and trace roots. Order is checked through
+  # show: origins, trace roots and ancestors. Order is checked through
   # `lookup/1`, since this sorts the rows itself.
   defp rows(pid) do
     @spans
-    |> :ets.select([{{{pid, :_}, :_, :_, :_}, [], [:"$_"]}])
-    |> Enum.map(fn {{pid, sequence}, origin, span, root} ->
-      %{pid: pid, sequence: sequence, origin: origin, span: span, root: root}
+    |> :ets.select([{{{pid, :_}, :_, :_, :_, :_}, [], [:"$_"]}])
+    |> Enum.map(fn {{pid, sequence}, origin, span, root, anchor} ->
+      %{pid: pid, sequence: sequence, origin: origin, span: span, root: root, anchor: anchor}
     end)
     |> Enum.sort_by(& &1.sequence)
+  end
+
+  defp anchor(%Span{pid: pid, reference: reference}) do
+    pid
+    |> rows()
+    |> Enum.find_value(fn row -> if row.span.reference == reference, do: row.anchor end)
   end
 
   defp spawn_idle do
