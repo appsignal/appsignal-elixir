@@ -9,7 +9,13 @@ defmodule Appsignal.Tracer do
 
   @doc false
   def start_link do
-    Agent.start_link(&Registry.new/0, name: __MODULE__)
+    Agent.start_link(
+      fn ->
+        Registry.new()
+        Appsignal.Error.Reported.new()
+      end,
+      name: __MODULE__
+    )
   end
 
   @doc """

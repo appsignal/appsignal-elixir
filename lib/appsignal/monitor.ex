@@ -43,6 +43,7 @@ defmodule Appsignal.Monitor do
 
   def handle_info(:sync, _monitors) do
     schedule_sync()
+    Appsignal.Error.Reported.sweep()
 
     pids = MapSet.new(monitored_pids())
 

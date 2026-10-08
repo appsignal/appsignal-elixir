@@ -199,6 +199,160 @@ defmodule Appsignal.Error.BackendTest do
     end
   end
 
+  describe "handle_event/3, with an error the instrumentation already reported" do
+    setup %{pid: pid} do
+      setup_with_config(%{enable_error_backend: true})
+
+      Murphy.call(pid, fn ->
+        span = Tracer.create_span("background_job")
+
+        try do
+          raise "Exception"
+        catch
+          kind, reason ->
+            Span.add_error(span, kind, reason, __STACKTRACE__)
+            Tracer.close_span(span)
+            :erlang.raise(kind, reason, __STACKTRACE__)
+        end
+      end)
+
+      :ok
+    end
+
+    test "does not report it again" do
+      assert Test.Tracer.get(:create_span) == :error
+      assert Test.Span.get(:add_error) == :error
+    end
+  end
+
+  describe "handle_event/3, with an error the instrumentation reported, re-raised wrapped" do
+    # Plug and Phoenix re-raise the error wrapped in `Plug.Conn.WrapperError`,
+    # with the original stack trace.
+    setup %{pid: pid} do
+      setup_with_config(%{enable_error_backend: true})
+
+      Murphy.call(pid, fn ->
+        span = Tracer.create_span("background_job")
+
+        try do
+          raise "Exception"
+        catch
+          kind, reason ->
+            Span.add_error(span, kind, reason, __STACKTRACE__)
+            Tracer.close_span(span)
+            :erlang.raise(:error, %ArgumentError{message: "Wrapped"}, __STACKTRACE__)
+        end
+      end)
+
+      :ok
+    end
+
+    test "does not report it again" do
+      assert Test.Tracer.get(:create_span) == :error
+    end
+  end
+
+  describe "handle_event/3, with an error the instrumentation reported a while ago" do
+    setup %{pid: pid} do
+      setup_with_config(%{enable_error_backend: true})
+      delay = Application.fetch_env!(:appsignal, :deletion_delay)
+
+      Murphy.call(pid, fn ->
+        span = Tracer.create_span("background_job")
+
+        try do
+          raise "Exception"
+        catch
+          kind, reason ->
+            Span.add_error(span, kind, reason, __STACKTRACE__)
+            Tracer.close_span(span)
+            Process.sleep(delay + 50)
+            :erlang.raise(kind, reason, __STACKTRACE__)
+        end
+      end)
+
+      :ok
+    end
+
+    test "reports it", %{pid: pid} do
+      assert {:ok, [{"background_job", nil, [pid: ^pid]}]} = Test.Tracer.get(:create_span)
+    end
+  end
+
+  describe "handle_event/3, with another error the instrumentation reported" do
+    setup %{pid: pid} do
+      setup_with_config(%{enable_error_backend: true})
+
+      Murphy.call(pid, fn ->
+        span = Tracer.create_span("background_job")
+        Span.add_error(span, :error, %RuntimeError{message: "Other"}, [{Murphy, :other, 0, []}])
+        Tracer.close_span(span)
+        raise "Exception"
+      end)
+
+      :ok
+    end
+
+    test "reports it", %{pid: pid} do
+      assert {:ok, [{"background_job", nil, [pid: ^pid]}]} = Test.Tracer.get(:create_span)
+    end
+  end
+
+  describe "handle_event/3, with a reported error logged with a conn that has no owner" do
+    # Bandit logs a crashed request's conn with its `owner` unset.
+    setup do
+      setup_with_config(%{enable_error_backend: true})
+      span = Tracer.create_span("background_job")
+
+      {reason, stacktrace} =
+        try do
+          raise "Exception"
+        rescue
+          exception -> {exception, __STACKTRACE__}
+        end
+
+      Span.add_error(span, :error, reason, stacktrace)
+      Tracer.close_span(span)
+      metadata = [crash_reason: {reason, stacktrace}, conn: %{owner: nil}]
+
+      ExUnit.CaptureLog.capture_log(fn ->
+        require Logger
+        Logger.error("Exception", metadata)
+      end)
+
+      :ok
+    end
+
+    test "does not report it again" do
+      Process.sleep(100)
+      assert Test.Tracer.get(:create_span) == :error
+    end
+  end
+
+  describe "handle_event/3, with the same error logged twice by a live process" do
+    setup do
+      setup_with_config(%{enable_error_backend: true})
+      stacktrace = [{__MODULE__, :report, 0, []}]
+      metadata = [crash_reason: {%RuntimeError{message: "Exception"}, stacktrace}]
+
+      ExUnit.CaptureLog.capture_log(fn ->
+        require Logger
+        Logger.error("Exception", metadata)
+        Logger.error("Exception", metadata)
+      end)
+
+      :ok
+    end
+
+    test "reports it both times, without suppressing its own reports" do
+      AppsignalTest.Utils.until(fn ->
+        assert {:ok, [_, _]} = Test.Tracer.get(:close_span)
+      end)
+
+      assert {:ok, [_, _]} = Test.Span.get(:add_error)
+    end
+  end
+
   describe "handle_event/3, with an ignored process" do
     setup %{pid: pid} do
       Murphy.call(pid, fn ->
