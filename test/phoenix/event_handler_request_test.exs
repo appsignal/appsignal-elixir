@@ -292,25 +292,6 @@ defmodule Appsignal.Phoenix.EventHandlerRequestTest do
     end
   end
 
-  describe "after a request in a process that is ignored partway through" do
-    setup do
-      endpoint_start()
-      router_dispatch_start()
-      Tracer.ignore()
-      render_start()
-      render_stop()
-      endpoint_stop()
-      router_dispatch_stop()
-    end
-
-    test "describes no span" do
-      {:ok, names} = Test.Span.get(:set_name_if_nil)
-      {:ok, data} = Test.Span.get(:set_sample_data_if_nil)
-
-      assert Enum.all?(names ++ data, &(elem(&1, 0) == nil))
-    end
-  end
-
   describe "after a request that raises before the router, with a span left open" do
     # `Phoenix.Endpoint.RenderErrors` renders the error page with the endpoint's
     # own conn, so no endpoint stop event arrives.
@@ -383,6 +364,28 @@ defmodule Appsignal.Phoenix.EventHandlerRequestTest do
     end
   end
 
+  describe "after a request whose controller raises, with the error page rendered" do
+    # `Phoenix.Endpoint.RenderErrors` renders the error page after the router
+    # dispatch exception event, in the same process.
+    setup do
+      endpoint_start()
+      router_dispatch_start()
+      router_dispatch_exception()
+      render_start()
+      render_stop()
+      error_rendered()
+    end
+
+    test "creates no span for the error page" do
+      {:ok, calls} = Test.Tracer.get(:create_span)
+      assert length(calls) == 2
+    end
+
+    test "leaves no spans behind" do
+      assert [] == Tracer.lookup(self())
+    end
+  end
+
   describe "after a request with a span left open in the controller" do
     # The router dispatch stop event fires after the controller has returned.
     setup do
@@ -441,6 +444,13 @@ defmodule Appsignal.Phoenix.EventHandlerRequestTest do
       [dispatch_span: dispatch_span, render_span: render_span]
     end
 
+    test "does not ignore the trace" do
+      refute Enum.any?(
+               Appsignal.Test.Nif.get(:set_span_attribute_bool) |> elem_or_empty(),
+               &match?({_, "appsignal.ignore_trace", _}, &1)
+             )
+    end
+
     test "closes the dispatch and render spans", %{
       dispatch_span: dispatch_span,
       render_span: render_span
@@ -450,8 +460,8 @@ defmodule Appsignal.Phoenix.EventHandlerRequestTest do
       assert render_span.reference in closed
     end
 
-    test "leaves no spans behind but the ignore flag" do
-      assert [{self(), :ignore}] == Tracer.lookup(self())
+    test "leaves no spans behind" do
+      assert [] == Tracer.lookup(self())
     end
   end
 
@@ -562,4 +572,7 @@ defmodule Appsignal.Phoenix.EventHandlerRequestTest do
       status: 200
     }
   end
+
+  defp elem_or_empty({:ok, list}), do: list
+  defp elem_or_empty(:error), do: []
 end

@@ -151,6 +151,13 @@ defmodule Appsignal.Phoenix.LiveViewTest do
       end
     end
 
+    test "does not ignore the trace" do
+      refute Enum.any?(
+               Appsignal.Test.Nif.get(:set_span_attribute_bool) |> elem_or_empty(),
+               &match?({_, "appsignal.ignore_trace", _}, &1)
+             )
+    end
+
     test "creates a root span" do
       assert {:ok, [{_, nil}]} = Test.Tracer.get(:create_span)
     end
@@ -190,8 +197,8 @@ defmodule Appsignal.Phoenix.LiveViewTest do
       assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
     end
 
-    test "ignores the process in the registry" do
-      assert Appsignal.Tracer.lookup(self()) == [{self(), :ignore}]
+    test "leaves no spans behind" do
+      assert Appsignal.Tracer.lookup(self()) == []
     end
   end
 
@@ -598,6 +605,13 @@ defmodule Appsignal.Phoenix.LiveViewTest do
       [reason: reason]
     end
 
+    test "does not ignore the trace" do
+      refute Enum.any?(
+               Appsignal.Test.Nif.get(:set_span_attribute_bool) |> elem_or_empty(),
+               &match?({_, "appsignal.ignore_trace", _}, &1)
+             )
+    end
+
     test "adds an error to the current span", %{reason: reason} do
       assert {:ok, [{%Span{}, :error, ^reason, []}]} = Test.Span.get(:add_error)
     end
@@ -607,8 +621,8 @@ defmodule Appsignal.Phoenix.LiveViewTest do
                Test.Tracer.get(:close_span)
     end
 
-    test "ignores the process in the registry" do
-      assert Appsignal.Tracer.lookup(self()) == [{self(), :ignore}]
+    test "leaves no spans behind" do
+      assert Appsignal.Tracer.lookup(self()) == []
     end
   end
 
@@ -782,4 +796,7 @@ defmodule Appsignal.Phoenix.LiveViewTest do
     end)
     |> length() == 1
   end
+
+  defp elem_or_empty({:ok, list}), do: list
+  defp elem_or_empty(:error), do: []
 end

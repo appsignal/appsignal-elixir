@@ -235,6 +235,13 @@ defmodule Appsignal.PlugTest do
       get("/exception", %{id: "4"})
     end
 
+    test "does not ignore the trace" do
+      refute Enum.any?(
+               Appsignal.Test.Nif.get(:set_span_attribute_bool) |> elem_or_empty(),
+               &match?({_, "appsignal.ignore_trace", _}, &1)
+             )
+    end
+
     test "creates a root span" do
       assert {:ok, [{_, nil}]} = Test.Tracer.get(:create_span)
     end
@@ -272,8 +279,8 @@ defmodule Appsignal.PlugTest do
       assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
     end
 
-    test "ignores the process in the registry" do
-      assert Appsignal.Tracer.lookup(self()) == [{self(), :ignore}]
+    test "leaves no spans behind" do
+      assert Appsignal.Tracer.lookup(self()) == []
     end
   end
 
@@ -377,8 +384,8 @@ defmodule Appsignal.PlugTest do
       assert :error = Test.Span.get(:add_error)
     end
 
-    test "ignores the process in the registry" do
-      assert Appsignal.Tracer.lookup(self()) == [{self(), :ignore}]
+    test "leaves no spans behind" do
+      assert Appsignal.Tracer.lookup(self()) == []
     end
   end
 
@@ -405,8 +412,32 @@ defmodule Appsignal.PlugTest do
       assert length(Test.Nif.get!(:close_span)) == 2
     end
 
-    test "leaves no spans behind but the ignore flag" do
-      assert Appsignal.Tracer.lookup(self()) == [{self(), :ignore}]
+    test "leaves no spans behind" do
+      assert Appsignal.Tracer.lookup(self()) == []
+    end
+  end
+
+  describe "GET /bad_request, with the error backend enabled" do
+    setup do
+      AppsignalTest.Utils.setup_with_config(%{enable_error_backend: true})
+      get("/bad_request")
+    end
+
+    test "records the error it does not report, so the error backend skips it", %{
+      stack: stack
+    } do
+      assert Appsignal.Error.Reported.reported?(self(), stack)
+    end
+  end
+
+  describe "GET /exception, then another span" do
+    setup do
+      get("/exception")
+      [span: Appsignal.Tracer.create_span("http_request")]
+    end
+
+    test "keeps the process instrumented", %{span: span} do
+      assert %Span{} = span
     end
   end
 
@@ -563,4 +594,7 @@ defmodule Appsignal.PlugTest do
       key == asserted_key and data == asserted_data
     end)
   end
+
+  defp elem_or_empty({:ok, list}), do: list
+  defp elem_or_empty(:error), do: []
 end

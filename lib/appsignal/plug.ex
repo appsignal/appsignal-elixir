@@ -55,7 +55,6 @@ if Code.ensure_loaded?(Plug.Conn) do
                 |> Appsignal.Plug.handle_error(kind, reason, stack, conn)
                 |> @tracer.close_all()
 
-              @tracer.ignore()
               :erlang.raise(kind, reason, stack)
           else
             conn ->
@@ -121,7 +120,8 @@ if Code.ensure_loaded?(Plug.Conn) do
     end
 
     @doc false
-    def handle_error(span, _kind, %{plug_status: status}, _stack, _conn) when status < 500 do
+    def handle_error(span, _kind, %{plug_status: status}, stack, _conn) when status < 500 do
+      _ = Appsignal.Error.Reported.record(span, stack)
       span
     end
 

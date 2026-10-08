@@ -41,13 +41,6 @@ defmodule Appsignal.TracerContractTest do
       assert Tracer.lookup(self()) == []
     end
 
-    test "returns nil when the process is ignored" do
-      Tracer.ignore()
-
-      assert Tracer.create_span("http_request") == nil
-      assert Tracer.create_span("http_request", nil, []) == nil
-    end
-
     test "returns nil when the registry is not running" do
       stop_registry()
 
@@ -91,13 +84,6 @@ defmodule Appsignal.TracerContractTest do
       assert reference == parent.reference
     end
 
-    test "returns nil when the process is ignored" do
-      parent = Tracer.create_span("http_request")
-      Tracer.ignore()
-
-      assert Tracer.create_span("http_request", parent) == nil
-    end
-
     test "accepts a parent from another process, and registers the child in the calling process" do
       parent = Tracer.create_span("http_request")
 
@@ -130,13 +116,6 @@ defmodule Appsignal.TracerContractTest do
       assert Tracer.current_span(pid) == span
       assert Tracer.root_span(pid) == span
       assert Tracer.current_span() == nil
-    end
-
-    test "returns nil when the given pid is ignored" do
-      pid = spawn_idle()
-      Tracer.ignore(pid)
-
-      assert Tracer.create_span("http_request", nil, pid: pid) == nil
     end
   end
 
@@ -279,20 +258,6 @@ defmodule Appsignal.TracerContractTest do
       nested = Tracer.create_span("live_view", nil, pid: pid)
 
       assert Tracer.root_span(pid) == nested
-    end
-
-    test "is nil while the process is ignored, even with an attached span" do
-      parent = Tracer.create_span("http_request")
-
-      task_root =
-        Task.async(fn ->
-          Tracer.ignore()
-          Tracer.register_current(parent)
-          Tracer.root_span()
-        end)
-        |> Task.await()
-
-      assert task_root == nil
     end
 
     test "is the trace's root in the parent process, from a task" do
@@ -480,12 +445,6 @@ defmodule Appsignal.TracerContractTest do
       assert Tracer.lookup(self()) == []
     end
 
-    test "are created even when the process is ignored" do
-      Tracer.ignore()
-
-      assert %Span{} = Span.create_root("http_request", self())
-    end
-
     test "do not change the current span of a process that has one" do
       span = Tracer.create_span("http_request")
       Span.create_root("http_request", self())
@@ -505,26 +464,32 @@ defmodule Appsignal.TracerContractTest do
     end
   end
 
-  describe "ignoring a process" do
-    test "removes its spans without ending them" do
-      span = Tracer.create_span("http_request")
-      Tracer.create_span("http_request", span)
+  describe "ignoring the current trace" do
+    test "marks the current span with appsignal.ignore_trace" do
+      root = Tracer.create_span("http_request")
+      child = Tracer.create_span("http_request", root)
 
       assert Tracer.ignore() == :ok
-      assert closed_references() == []
-      assert Tracer.current_span() == nil
-      assert Tracer.root_span() == nil
-      assert Tracer.lookup(self()) == [{self(), :ignore}]
+
+      assert {:ok, attributes} = Test.Nif.get(:set_span_attribute_bool)
+      assert {child.reference, "appsignal.ignore_trace", 1} in attributes
     end
 
-    test "works for another process" do
-      pid = spawn_idle()
-      Tracer.create_span("http_request", nil, pid: pid)
+    @tag :skip_env_test_no_nif
+    test "stores appsignal.ignore_trace as a boolean, which the agent checks for" do
+      span = Tracer.create_span("http_request")
 
-      assert Tracer.ignore(pid) == :ok
-      assert Tracer.current_span(pid) == nil
-      assert Tracer.root_span(pid) == nil
-      assert Tracer.lookup(pid) == [{pid, :ignore}]
+      Tracer.ignore()
+
+      assert %{"attributes" => %{"appsignal.ignore_trace" => true}} = Span.to_map(span)
+    end
+
+    test "keeps the process instrumented" do
+      Tracer.create_span("http_request")
+      Tracer.ignore()
+
+      assert %Span{} = Tracer.create_span("background_job")
+      refute Enum.any?(Tracer.lookup(self()), &match?({_, :ignore}, &1))
     end
 
     test "returns :ok when the registry is not running" do
@@ -533,27 +498,25 @@ defmodule Appsignal.TracerContractTest do
       assert Tracer.ignore() == :ok
     end
 
-    test "is lifted by deleting the process' entries" do
-      Tracer.ignore()
+    test "does nothing without a current span" do
+      assert Tracer.ignore() == :ok
 
-      assert Tracer.delete(self()) == :ok
+      assert Test.Nif.get(:set_span_attribute_bool) == :error
+      assert Tracer.lookup(self()) == []
       assert %Span{} = Tracer.create_span("http_request")
     end
+  end
 
-    test "is lifted by registering a span from another process" do
-      parent = Tracer.create_span("http_request")
+  describe "ignoring another process" do
+    test "does nothing, and logs that it does nothing" do
+      pid = spawn_idle()
+      span = Tracer.create_span("http_request", nil, pid: pid)
 
-      {registered, current, created} =
-        Task.async(fn ->
-          Tracer.ignore()
-          registered = Tracer.register_current(parent)
-          {registered, Tracer.current_span(), Tracer.create_span("http_request", nil)}
-        end)
-        |> Task.await()
+      log = ExUnit.CaptureLog.capture_log(fn -> assert Tracer.ignore(pid) == :ok end)
 
-      assert %Span{} = registered
-      assert current == registered
-      assert %Span{} = created
+      assert log =~ "Appsignal.Tracer.ignore/1"
+      assert Tracer.lookup(pid) == [{pid, span}]
+      assert Test.Nif.get(:set_span_attribute_bool) == :error
     end
   end
 
@@ -910,17 +873,6 @@ defmodule Appsignal.TracerContractTest do
       until(fn -> assert Tracer.lookup(pid) == [] end)
 
       assert timestamp_closed_references([span]) == [span.reference]
-    end
-  end
-
-  describe "a process ignored from another process" do
-    test "has its flag removed when it exits" do
-      pid = spawn(fn -> Process.sleep(:infinity) end)
-      Tracer.ignore(pid)
-
-      Process.exit(pid, :kill)
-
-      until(fn -> assert Tracer.lookup(pid) == [] end)
     end
   end
 

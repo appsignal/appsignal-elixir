@@ -29,7 +29,6 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
                 )
                 |> @span.add_error(kind, reason, stack)
 
-              @tracer.ignore()
               :erlang.raise(kind, reason, stack)
           else
             result ->
@@ -159,8 +158,6 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
       |> take_span()
       |> @span.add_error(metadata[:kind], metadata[:reason], metadata[:stacktrace])
       |> @tracer.close_all(end_time: @os.system_time())
-
-      @tracer.ignore()
     end
 
     # LiveView emits these events with `:telemetry.span/3`, which runs the

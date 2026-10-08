@@ -1,4 +1,6 @@
 defmodule Appsignal.Tracer do
+  require Logger
+
   alias Appsignal.Span
   alias Appsignal.Tracer.Registry
 
@@ -51,23 +53,19 @@ defmodule Appsignal.Tracer do
   def create_span(namespace, nil, options) do
     pid = Keyword.get(options, :pid, self())
 
-    unless ignored?(pid) do
-      namespace
-      |> Span.create_root(pid, options[:start_time])
-      |> register(:own, nil, nil)
-      |> on_create_span()
-    end
+    namespace
+    |> Span.create_root(pid, options[:start_time])
+    |> register(:own, nil, nil)
+    |> on_create_span()
   end
 
   def create_span(_namespace, parent, options) do
     pid = Keyword.get(options, :pid, self())
 
-    unless ignored?(pid) do
-      parent
-      |> Span.create_child(pid, options[:start_time])
-      |> register(:own, Registry.trace_root(parent), Registry.anchor(parent, pid))
-      |> on_create_span()
-    end
+    parent
+    |> Span.create_child(pid, options[:start_time])
+    |> register(:own, Registry.trace_root(parent), Registry.anchor(parent, pid))
+    |> on_create_span()
   end
 
   @doc """
@@ -152,20 +150,31 @@ defmodule Appsignal.Tracer do
   def close_span(nil, _options), do: nil
 
   @doc """
-  Ignores the given process.
+  Does nothing. It used to stop the given process from creating spans.
   """
+  @deprecated "Use Appsignal.Tracer.ignore/0 in the process whose trace to ignore."
   @spec ignore(pid()) :: :ok
-  def ignore(pid) do
-    Registry.ignore(pid) && @monitor.add(pid)
+  def ignore(_pid) do
+    Logger.warning(
+      "Appsignal.Tracer.ignore/1 no longer does anything. " <>
+        "Call Appsignal.Tracer.ignore/0 in the process whose trace to ignore."
+    )
+
     :ok
   end
 
   @doc """
-  Ignores the current process.
+  Ignores the current trace: the trace the current span belongs to is not
+  reported. Does nothing when there is no current span.
   """
   @spec ignore() :: :ok
   def ignore do
-    self() |> ignore()
+    case current_span() do
+      nil -> :ok
+      span -> Span.set_attribute(span, "appsignal.ignore_trace", true)
+    end
+
+    :ok
   end
 
   @doc """
@@ -246,10 +255,6 @@ defmodule Appsignal.Tracer do
   end
 
   defp register(nil, _origin, _trace_root, _anchor), do: nil
-
-  defp ignored?(pid) when is_pid(pid) do
-    Registry.ignored?(pid)
-  end
 
   @spec on_create_span(Span.t() | nil) :: Span.t() | nil
   defp on_create_span(span) do

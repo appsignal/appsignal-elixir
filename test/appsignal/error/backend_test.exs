@@ -353,38 +353,6 @@ defmodule Appsignal.Error.BackendTest do
     end
   end
 
-  describe "handle_event/3, with an ignored process" do
-    setup %{pid: pid} do
-      Murphy.call(pid, fn ->
-        Tracer.ignore()
-        raise "Exception"
-      end)
-
-      :ok
-    end
-
-    test "does not create a span" do
-      assert Test.Tracer.get(:create_span) == :error
-    end
-  end
-
-  describe "handle_event/3 with a conn, with an ignored process" do
-    setup %{pid: pid} do
-      Logger.add_translator({Murphy, :with_conn})
-
-      Murphy.call(pid, fn ->
-        ignore_pid()
-        raise "Exception"
-      end)
-
-      Logger.remove_translator({Murphy, :with_conn})
-    end
-
-    test "does not create a span" do
-      assert Test.Tracer.get(:create_span) == :error
-    end
-  end
-
   describe "handle_event/3 from the cowboy domain, without a conn" do
     setup %{pid: pid} do
       Logger.add_translator({Murphy, :from_cowboy})
@@ -509,9 +477,5 @@ defmodule Appsignal.Error.BackendTest do
     else
       self()
     end
-  end
-
-  defp ignore_pid do
-    Tracer.ignore(pid())
   end
 end

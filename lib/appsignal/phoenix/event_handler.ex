@@ -158,8 +158,6 @@ if Code.ensure_loaded?(Phoenix) do
       # will take them off the stacks. On a web server that serves more than one
       # request per process, such as Bandit, they would pile up.
       forget()
-
-      @tracer.ignore()
     end
 
     def phoenix_template_render_start(_event, _measurements, metadata, _config) do
@@ -172,13 +170,22 @@ if Code.ensure_loaded?(Phoenix) do
           "phoenix_view" => module_name(metadata.view)
         })
 
+      parent
+      |> create_render_span(metadata)
+      |> push(@render_key)
+    end
+
+    # `Phoenix.Endpoint.RenderErrors` renders the error page after the request's
+    # spans have been closed.
+    defp create_render_span(nil, _metadata), do: nil
+
+    defp create_render_span(parent, metadata) do
       "http_request"
       |> @tracer.create_span(parent)
       |> @span.set_name(
         "Render #{inspect(metadata.template)} (#{metadata.format}) template from #{module_name(metadata.view)}"
       )
       |> @span.set_attribute("appsignal:category", "render.phoenix_template")
-      |> push(@render_key)
     end
 
     def phoenix_template_render_stop(_event, _measurements, _metadata, _config) do
@@ -260,12 +267,7 @@ if Code.ensure_loaded?(Phoenix) do
     end
 
     defp request_root do
-      pid = self()
-      span = Process.get(@request_root_key)
-
-      if span && {pid, span} in @tracer.lookup(pid),
-        do: span,
-        else: @tracer.root_span()
+      Process.get(@request_root_key) || @tracer.root_span()
     end
 
     defp put_route(%{route: route}) when is_binary(route) do
@@ -287,7 +289,7 @@ if Code.ensure_loaded?(Phoenix) do
     end
 
     # Returns `nil` when no span was pushed, which happens when AppSignal starts
-    # in the middle of a request, or when the process is ignored. Deliberately
+    # in the middle of a request. Deliberately
     # does not fall back to the current span: closing a span that this handler did
     # not open is the bug this bookkeeping exists to prevent.
     defp pop(key) do
