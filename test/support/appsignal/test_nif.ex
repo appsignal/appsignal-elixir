@@ -4,22 +4,22 @@ defmodule Appsignal.Test.Nif do
 
   def create_root_span(namespace) do
     add(:create_root_span, {namespace})
-    Nif.create_root_span(namespace)
+    created(Nif.create_root_span(namespace))
   end
 
   def create_root_span_with_timestamp(namespace, sec, nsec) do
     add(:create_root_span_with_timestamp, {namespace, sec, nsec})
-    Nif.create_root_span_with_timestamp(namespace, sec, nsec)
+    created(Nif.create_root_span_with_timestamp(namespace, sec, nsec))
   end
 
   def create_child_span(parent) do
     add(:create_child_span, {parent})
-    Nif.create_child_span(parent)
+    created(Nif.create_child_span(parent))
   end
 
   def create_child_span_with_timestamp(parent, sec, nsec) do
     add(:create_child_span_with_timestamp, {parent, sec, nsec})
-    Nif.create_child_span_with_timestamp(parent, sec, nsec)
+    created(Nif.create_child_span_with_timestamp(parent, sec, nsec))
   end
 
   def set_span_name(reference, name) do
@@ -79,12 +79,26 @@ defmodule Appsignal.Test.Nif do
 
   def close_span(reference) do
     add(:close_span, {reference})
+    closing(reference)
     Nif.close_span(reference)
   end
 
   def close_span_with_timestamp(reference, sec, nsec) do
     add(:close_span_with_timestamp, {reference, sec, nsec})
+    closing(reference)
     Nif.close_span_with_timestamp(reference, sec, nsec)
+  end
+
+  # The extension sends a span away when it closes, after which it can no
+  # longer be read, so its data is kept from just before.
+  defp closing(reference) do
+    {:ok, json} = Nif.span_to_json(reference)
+    add(:closed_span, {reference, json})
+  end
+
+  defp created({:ok, reference} = result) do
+    add(:span, reference)
+    result
   end
 
   def log(group, severity, format, message, metadata) do
