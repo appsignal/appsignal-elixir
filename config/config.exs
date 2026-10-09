@@ -48,6 +48,7 @@ if Mix.env() in [:bench, :test, :test_no_nif] do
       ] do
     config :appsignal, endpoint,
       secret_key_base: String.duplicate("appsignal", 8),
+      live_view: [signing_salt: "appsignal"],
       pubsub_server: AppsignalTest.Phoenix.PubSub,
       render_errors: [formats: [html: AppsignalTest.Phoenix.ErrorHTML], layout: false],
       server: false

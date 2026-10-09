@@ -2,12 +2,14 @@ if Appsignal.Dependencies.present?(:phoenix) do
   defmodule AppsignalTest.Phoenix.Router do
     @moduledoc false
     use Phoenix.Router
+    import Phoenix.LiveView.Router
 
     @dialyzer {:nowarn_function, raising: 2}
 
     pipeline :browser do
       plug(:accepts, ["html"])
       plug(:fetch_session)
+      plug(:fetch_live_flash)
     end
 
     pipeline :halting do
@@ -46,6 +48,10 @@ if Appsignal.Dependencies.present?(:phoenix) do
       get("/bad_request", PageController, :bad_request)
       get("/leak", PageController, :leak)
       get("/users/:id", PageController, :index)
+
+      live("/live", CounterLive)
+      live("/live/manual", ManualLive)
+      live("/live/uninstrumented", UninstrumentedLive)
     end
 
     scope "/halted", AppsignalTest.Phoenix do

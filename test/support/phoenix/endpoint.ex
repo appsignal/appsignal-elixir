@@ -7,6 +7,10 @@ if Appsignal.Dependencies.present?(:phoenix) do
       quote do
         @session_options [store: :cookie, key: "_appsignal_key", signing_salt: "appsignal"]
 
+        socket("/live", Phoenix.LiveView.Socket,
+          websocket: [connect_info: [session: @session_options]]
+        )
+
         plug(:halt_before_router)
         plug(Plug.RequestId)
         plug(Plug.Telemetry, event_prefix: [:phoenix, :endpoint])
