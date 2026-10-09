@@ -17,8 +17,8 @@ defmodule Appsignal.Monitor do
     {:ok, MapSet.new()}
   end
 
-  def add do
-    GenServer.cast(__MODULE__, {:monitor, self()})
+  def add(pid) do
+    GenServer.cast(__MODULE__, {:monitor, pid})
   end
 
   def handle_cast({:monitor, pid}, monitors) do
@@ -31,17 +31,19 @@ defmodule Appsignal.Monitor do
   end
 
   def handle_info({:DOWN, _ref, :process, pid, _}, monitors) do
-    Process.send_after(self(), {:delete, pid}, @deletion_delay)
+    Process.send_after(self(), {:delete, pid, :os.system_time()}, @deletion_delay)
     {:noreply, monitors}
   end
 
-  def handle_info({:delete, pid}, monitors) do
+  def handle_info({:delete, pid, down_at}, monitors) do
+    close_all(pid, down_at)
     Tracer.delete(pid)
     {:noreply, MapSet.delete(monitors, pid)}
   end
 
   def handle_info(:sync, _monitors) do
     schedule_sync()
+    Appsignal.Error.Reported.sweep()
 
     pids = MapSet.new(monitored_pids())
 
@@ -57,6 +59,18 @@ defmodule Appsignal.Monitor do
       id: Appsignal.Monitor,
       start: {Appsignal.Monitor, :start_link, []}
     }
+  end
+
+  # Ending spans calls into the extension. Repeated crashes here would exceed
+  # the supervisor's restart limit and take the span registry down with it.
+  defp close_all(pid, down_at) do
+    Tracer.close_all(pid, end_time: down_at)
+  catch
+    kind, reason ->
+      Appsignal.IntegrationLogger.debug(
+        "Appsignal.Monitor could not close the spans of #{inspect(pid)}: " <>
+          Exception.format(kind, reason, __STACKTRACE__)
+      )
   end
 
   defp monitored_pids do

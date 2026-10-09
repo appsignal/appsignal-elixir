@@ -30,7 +30,9 @@ if Code.ensure_loaded?(Phoenix) do
           &__MODULE__.phoenix_router_dispatch_exception/4,
         [:phoenix, :controller, :render, :start] => &__MODULE__.phoenix_template_render_start/4,
         [:phoenix, :controller, :render, :stop] => &__MODULE__.phoenix_template_render_stop/4,
-        [:phoenix, :controller, :render, :exception] => &__MODULE__.phoenix_template_render_stop/4
+        [:phoenix, :controller, :render, :exception] =>
+          &__MODULE__.phoenix_template_render_stop/4,
+        [:phoenix, :error_rendered] => &__MODULE__.phoenix_error_rendered/4
       }
 
       for {event, fun} <- handlers do
@@ -112,7 +114,7 @@ if Code.ensure_loaded?(Phoenix) do
       # event to describe the root span then, so this handler does it instead.
       _root_span = set_root_span_data_unless_set(metadata)
 
-      @tracer.close_span(span)
+      @tracer.close_all(span)
     end
 
     def phoenix_router_dispatch_exception(
@@ -150,14 +152,12 @@ if Code.ensure_loaded?(Phoenix) do
       span
       |> @span.add_error(:error, reason, stack)
       |> set_span_data(%{conn: conn})
-      |> @tracer.close_span()
+      |> @tracer.close_all()
 
       # No stop event arrives for the spans this request opened, so nothing else
       # will take them off the stacks. On a web server that serves more than one
       # request per process, such as Bandit, they would pile up.
       forget()
-
-      @tracer.ignore()
     end
 
     def phoenix_template_render_start(_event, _measurements, metadata, _config) do
@@ -170,18 +170,40 @@ if Code.ensure_loaded?(Phoenix) do
           "phoenix_view" => module_name(metadata.view)
         })
 
+      parent
+      |> create_render_span(metadata)
+      |> push(@render_key)
+    end
+
+    # `Phoenix.Endpoint.RenderErrors` renders the error page after the request's
+    # spans have been closed.
+    defp create_render_span(nil, _metadata), do: nil
+
+    defp create_render_span(parent, metadata) do
       "http_request"
       |> @tracer.create_span(parent)
       |> @span.set_name(
         "Render #{inspect(metadata.template)} (#{metadata.format}) template from #{module_name(metadata.view)}"
       )
       |> @span.set_attribute("appsignal:category", "render.phoenix_template")
-      |> push(@render_key)
     end
 
     def phoenix_template_render_stop(_event, _measurements, _metadata, _config) do
       @tracer.close_span(pop(@render_key))
     end
+
+    # `Phoenix.Endpoint.RenderErrors` emits this after the endpoint's plug
+    # pipeline has unwound. A raise in a router pipeline, such as
+    # `Plug.CSRFProtection`'s, emits no router dispatch stop or exception event,
+    # and sending the error page can close the endpoint span first. Nested
+    # endpoints and forwarded routers each push a span, so close the outermost one
+    # still open.
+    def phoenix_error_rendered(_event, _measurements, _metadata, _config) do
+      _ = @tracer.close_all(outermost(@endpoint_key) || outermost(@dispatch_key))
+      forget()
+    end
+
+    defp outermost(key), do: key |> Process.get([]) |> List.last()
 
     defp set_span_data(span, %{conn: conn} = metadata) do
       appsignal_metadata = Appsignal.Metadata.metadata(conn)
@@ -245,12 +267,7 @@ if Code.ensure_loaded?(Phoenix) do
     end
 
     defp request_root do
-      pid = self()
-      span = Process.get(@request_root_key)
-
-      if span && {pid, span} in @tracer.lookup(pid),
-        do: span,
-        else: @tracer.root_span()
+      Process.get(@request_root_key) || @tracer.root_span()
     end
 
     defp put_route(%{route: route}) when is_binary(route) do
@@ -272,7 +289,7 @@ if Code.ensure_loaded?(Phoenix) do
     end
 
     # Returns `nil` when no span was pushed, which happens when AppSignal starts
-    # in the middle of a request, or when the process is ignored. Deliberately
+    # in the middle of a request. Deliberately
     # does not fall back to the current span: closing a span that this handler did
     # not open is the bug this bookkeeping exists to prevent.
     defp pop(key) do

@@ -1,5 +1,7 @@
 defmodule Appsignal.Span do
   alias Appsignal.{Config, Nif, Span}
+  alias Appsignal.Error.Reported
+  alias Appsignal.Tracer.Registry
 
   defstruct [:reference, :pid]
 
@@ -298,6 +300,12 @@ defmodule Appsignal.Span do
 
   """
   def add_error(span, kind, reason, stacktrace) do
+    add_error(span, kind, reason, stacktrace, record: true)
+  end
+
+  @doc false
+  def add_error(span, kind, reason, stacktrace, options) do
+    if Keyword.get(options, :record, true), do: Reported.record(span, stacktrace)
     {name, message, formatted_stacktrace} = Appsignal.Error.metadata(kind, reason, stacktrace)
     do_add_error(span, name, message, formatted_stacktrace)
   end
@@ -318,12 +326,14 @@ defmodule Appsignal.Span do
       end
 
   """
-  def add_error(span, %_{__exception__: true, plug_status: status}, _stacktrace)
+  def add_error(span, %_{__exception__: true, plug_status: status}, stacktrace)
       when status < 500 do
+    Reported.record(span, stacktrace)
     span
   end
 
   def add_error(span, %_{__exception__: true} = exception, stacktrace) do
+    Reported.record(span, stacktrace)
     {name, message, formatted_stacktrace} = Appsignal.Error.metadata(exception, stacktrace)
     do_add_error(span, name, message, formatted_stacktrace)
   end
@@ -348,11 +358,13 @@ defmodule Appsignal.Span do
   Close an `Appsignal.Span`.
 
   ## Example
-      Appsignal.Tracer.root_span()
-      |> Span.close()
+      span = Appsignal.Tracer.create_span("http_request")
+      # ...
+      Appsignal.Span.close(span)
   """
   def close(%Span{reference: reference} = span) do
     :ok = @nif.close_span(reference)
+    Registry.remove(span)
     span
   end
 
@@ -363,13 +375,15 @@ defmodule Appsignal.Span do
   Close an `Appsignal.Span` with an explicit end time.
 
   ## Example
-      Appsignal.Tracer.root_span()
-      |> Span.close(span, :os.system_time())
+      span = Appsignal.Tracer.create_span("http_request")
+      # ...
+      Appsignal.Span.close(span, :os.system_time())
   """
   def close(%Span{reference: reference} = span, end_time) do
     sec = :erlang.convert_time_unit(end_time, :native, :second)
     nsec = :erlang.convert_time_unit(end_time, :native, :nanosecond) - sec * 1_000_000_000
     :ok = @nif.close_span_with_timestamp(reference, sec, nsec)
+    Registry.remove(span)
     span
   end
 

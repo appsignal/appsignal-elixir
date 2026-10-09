@@ -116,35 +116,240 @@ defmodule Appsignal.Error.BackendTest do
     end
   end
 
-  describe "handle_event/3, with an ignored process" do
+  describe "handle_event/3, with a child span open" do
     setup %{pid: pid} do
+      test_pid = self()
+
       Murphy.call(pid, fn ->
-        Tracer.ignore()
+        root = Tracer.create_span("background_job")
+        child = Tracer.create_span("background_job", root)
+        send(test_pid, child)
+        raise "Exception"
+      end)
+
+      child =
+        receive do
+          child -> child
+        end
+
+      [child: child]
+    end
+
+    test "adds the error to the child span", %{child: child} do
+      assert {:ok, [{^child, :error, %RuntimeError{}, _stack}]} = Test.Span.get(:add_error)
+    end
+  end
+
+  describe "handle_event/3, with only a span attached from another process" do
+    setup %{pid: pid} do
+      parent = Tracer.create_span("http_request")
+
+      Murphy.call(pid, fn ->
+        Tracer.register_current(parent)
+        raise "Exception"
+      end)
+
+      [parent: parent]
+    end
+
+    test "creates a span", %{pid: pid} do
+      assert {:ok, [{"background_job", nil, [pid: ^pid]} | _]} = Test.Tracer.get(:create_span)
+    end
+
+    test "adds the error to the created span", %{pid: pid} do
+      assert {:ok, [{%Span{pid: ^pid} = span, :error, %RuntimeError{}, _stack}]} =
+               Test.Span.get(:add_error)
+
+      assert {:ok, [{^span}]} = Test.Tracer.get(:close_span)
+    end
+
+    test "leaves the attached span open", %{parent: parent} do
+      {:ok, closed} = Test.Tracer.get(:close_span)
+
+      refute Enum.any?(closed, fn {span} -> span.reference == parent.reference end)
+    end
+  end
+
+  describe "handle_event/3, with a span of its own and a span attached from another process" do
+    setup %{pid: pid} do
+      parent = Tracer.create_span("http_request")
+      test_pid = self()
+
+      Murphy.call(pid, fn ->
+        span = Tracer.create_span("background_job")
+        Tracer.register_current(parent)
+        send(test_pid, span)
+        raise "Exception"
+      end)
+
+      span =
+        receive do
+          span -> span
+        end
+
+      [span: span]
+    end
+
+    test "adds the error to its own span", %{span: span} do
+      assert {:ok, [{^span, :error, %RuntimeError{}, _stack}]} = Test.Span.get(:add_error)
+    end
+
+    test "closes its own span", %{span: span} do
+      assert {:ok, [{^span}]} = Test.Tracer.get(:close_span)
+    end
+  end
+
+  describe "handle_event/3, with an error the instrumentation already reported" do
+    setup %{pid: pid} do
+      setup_with_config(%{enable_error_backend: true})
+
+      Murphy.call(pid, fn ->
+        span = Tracer.create_span("background_job")
+
+        try do
+          raise "Exception"
+        catch
+          kind, reason ->
+            Span.add_error(span, kind, reason, __STACKTRACE__)
+            Tracer.close_span(span)
+            :erlang.raise(kind, reason, __STACKTRACE__)
+        end
+      end)
+
+      :ok
+    end
+
+    test "does not report it again" do
+      assert Test.Tracer.get(:create_span) == :error
+      assert Test.Span.get(:add_error) == :error
+    end
+  end
+
+  describe "handle_event/3, with an error the instrumentation reported, re-raised wrapped" do
+    # Plug and Phoenix re-raise the error wrapped in `Plug.Conn.WrapperError`,
+    # with the original stack trace.
+    setup %{pid: pid} do
+      setup_with_config(%{enable_error_backend: true})
+
+      Murphy.call(pid, fn ->
+        span = Tracer.create_span("background_job")
+
+        try do
+          raise "Exception"
+        catch
+          kind, reason ->
+            Span.add_error(span, kind, reason, __STACKTRACE__)
+            Tracer.close_span(span)
+            :erlang.raise(:error, %ArgumentError{message: "Wrapped"}, __STACKTRACE__)
+        end
+      end)
+
+      :ok
+    end
+
+    test "does not report it again" do
+      assert Test.Tracer.get(:create_span) == :error
+    end
+  end
+
+  describe "handle_event/3, with an error the instrumentation reported a while ago" do
+    setup %{pid: pid} do
+      setup_with_config(%{enable_error_backend: true})
+      delay = Application.fetch_env!(:appsignal, :deletion_delay)
+
+      Murphy.call(pid, fn ->
+        span = Tracer.create_span("background_job")
+
+        try do
+          raise "Exception"
+        catch
+          kind, reason ->
+            Span.add_error(span, kind, reason, __STACKTRACE__)
+            Tracer.close_span(span)
+            Process.sleep(delay + 50)
+            :erlang.raise(kind, reason, __STACKTRACE__)
+        end
+      end)
+
+      :ok
+    end
+
+    test "reports it", %{pid: pid} do
+      assert {:ok, [{"background_job", nil, [pid: ^pid]}]} = Test.Tracer.get(:create_span)
+    end
+  end
+
+  describe "handle_event/3, with another error the instrumentation reported" do
+    setup %{pid: pid} do
+      setup_with_config(%{enable_error_backend: true})
+
+      Murphy.call(pid, fn ->
+        span = Tracer.create_span("background_job")
+        Span.add_error(span, :error, %RuntimeError{message: "Other"}, [{Murphy, :other, 0, []}])
+        Tracer.close_span(span)
         raise "Exception"
       end)
 
       :ok
     end
 
-    test "does not create a span" do
+    test "reports it", %{pid: pid} do
+      assert {:ok, [{"background_job", nil, [pid: ^pid]}]} = Test.Tracer.get(:create_span)
+    end
+  end
+
+  describe "handle_event/3, with a reported error logged with a conn that has no owner" do
+    # Bandit logs a crashed request's conn with its `owner` unset.
+    setup do
+      setup_with_config(%{enable_error_backend: true})
+      span = Tracer.create_span("background_job")
+
+      {reason, stacktrace} =
+        try do
+          raise "Exception"
+        rescue
+          exception -> {exception, __STACKTRACE__}
+        end
+
+      Span.add_error(span, :error, reason, stacktrace)
+      Tracer.close_span(span)
+      metadata = [crash_reason: {reason, stacktrace}, conn: %{owner: nil}]
+
+      ExUnit.CaptureLog.capture_log(fn ->
+        require Logger
+        Logger.error("Exception", metadata)
+      end)
+
+      :ok
+    end
+
+    test "does not report it again" do
+      Process.sleep(100)
       assert Test.Tracer.get(:create_span) == :error
     end
   end
 
-  describe "handle_event/3 with a conn, with an ignored process" do
-    setup %{pid: pid} do
-      Logger.add_translator({Murphy, :with_conn})
+  describe "handle_event/3, with the same error logged twice by a live process" do
+    setup do
+      setup_with_config(%{enable_error_backend: true})
+      stacktrace = [{__MODULE__, :report, 0, []}]
+      metadata = [crash_reason: {%RuntimeError{message: "Exception"}, stacktrace}]
 
-      Murphy.call(pid, fn ->
-        ignore_pid()
-        raise "Exception"
+      ExUnit.CaptureLog.capture_log(fn ->
+        require Logger
+        Logger.error("Exception", metadata)
+        Logger.error("Exception", metadata)
       end)
 
-      Logger.remove_translator({Murphy, :with_conn})
+      :ok
     end
 
-    test "does not create a span" do
-      assert Test.Tracer.get(:create_span) == :error
+    test "reports it both times, without suppressing its own reports" do
+      AppsignalTest.Utils.until(fn ->
+        assert {:ok, [_, _]} = Test.Tracer.get(:close_span)
+      end)
+
+      assert {:ok, [_, _]} = Test.Span.get(:add_error)
     end
   end
 
@@ -272,9 +477,5 @@ defmodule Appsignal.Error.BackendTest do
     else
       self()
     end
-  end
-
-  defp ignore_pid do
-    Tracer.ignore(pid())
   end
 end

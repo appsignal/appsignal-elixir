@@ -151,6 +151,13 @@ defmodule Appsignal.Phoenix.LiveViewTest do
       end
     end
 
+    test "does not ignore the trace" do
+      refute Enum.any?(
+               Appsignal.Test.Nif.get(:set_span_attribute_bool) |> elem_or_empty(),
+               &match?({_, "appsignal.ignore_trace", _}, &1)
+             )
+    end
+
     test "creates a root span" do
       assert {:ok, [{_, nil}]} = Test.Tracer.get(:create_span)
     end
@@ -190,8 +197,8 @@ defmodule Appsignal.Phoenix.LiveViewTest do
       assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
     end
 
-    test "ignores the process in the registry" do
-      assert Appsignal.Tracer.lookup(self()) == [{self(), :ignore}]
+    test "leaves no spans behind" do
+      assert Appsignal.Tracer.lookup(self()) == []
     end
   end
 
@@ -530,16 +537,19 @@ defmodule Appsignal.Phoenix.LiveViewTest do
 
   describe "handle_event_stop/4" do
     setup do
-      event = [:phoenix, :live_view, :mount, :stop]
+      attach_mount_handlers()
 
-      :telemetry.attach(
-        {__MODULE__, event},
-        event,
-        &Appsignal.Phoenix.LiveView.handle_event_stop/4,
-        :ok
+      :telemetry.execute(
+        [:phoenix, :live_view, :mount, :start],
+        %{system_time: 1_653_474_764_790_125_080},
+        %{
+          socket: %Phoenix.LiveView.Socket{view: __MODULE__},
+          params: %{foo: "bar"},
+          session: %{bar: "baz"},
+          uri: "http://localhost/",
+          telemetry_span_context: :mount
+        }
       )
-
-      Appsignal.Tracer.create_span("live_view")
 
       :telemetry.execute(
         [:phoenix, :live_view, :mount, :stop],
@@ -548,7 +558,8 @@ defmodule Appsignal.Phoenix.LiveViewTest do
           socket: %Phoenix.LiveView.Socket{view: __MODULE__},
           params: %{foo: "bar"},
           session: %{bar: "baz"},
-          uri: "http://localhost/"
+          uri: "http://localhost/",
+          telemetry_span_context: :mount
         }
       )
     end
@@ -561,17 +572,20 @@ defmodule Appsignal.Phoenix.LiveViewTest do
 
   describe "handle_event_exception/4" do
     setup do
-      event = [:phoenix, :live_view, :mount, :exception]
       reason = %RuntimeError{message: "Exception!"}
+      attach_mount_handlers()
 
-      :telemetry.attach(
-        {__MODULE__, event},
-        event,
-        &Appsignal.Phoenix.LiveView.handle_event_exception/4,
-        :ok
+      :telemetry.execute(
+        [:phoenix, :live_view, :mount, :start],
+        %{system_time: 1_653_474_764_790_125_080},
+        %{
+          socket: %Phoenix.LiveView.Socket{view: __MODULE__},
+          params: %{foo: "bar"},
+          session: %{bar: "baz"},
+          uri: "http://localhost/",
+          telemetry_span_context: :mount
+        }
       )
-
-      Appsignal.Tracer.create_span("live_view")
 
       :telemetry.execute(
         [:phoenix, :live_view, :mount, :exception],
@@ -581,6 +595,7 @@ defmodule Appsignal.Phoenix.LiveViewTest do
           params: %{foo: "bar"},
           session: %{bar: "baz"},
           uri: "http://localhost/",
+          telemetry_span_context: :mount,
           kind: :error,
           reason: reason,
           stacktrace: []
@@ -588,6 +603,13 @@ defmodule Appsignal.Phoenix.LiveViewTest do
       )
 
       [reason: reason]
+    end
+
+    test "does not ignore the trace" do
+      refute Enum.any?(
+               Appsignal.Test.Nif.get(:set_span_attribute_bool) |> elem_or_empty(),
+               &match?({_, "appsignal.ignore_trace", _}, &1)
+             )
     end
 
     test "adds an error to the current span", %{reason: reason} do
@@ -599,8 +621,161 @@ defmodule Appsignal.Phoenix.LiveViewTest do
                Test.Tracer.get(:close_span)
     end
 
-    test "ignores the process in the registry" do
-      assert Appsignal.Tracer.lookup(self()) == [{self(), :ignore}]
+    test "leaves no spans behind" do
+      assert Appsignal.Tracer.lookup(self()) == []
+    end
+  end
+
+  describe "handle_event_stop/4, with another span opened during the event" do
+    setup do
+      attach_mount_handlers()
+
+      :telemetry.execute(
+        [:phoenix, :live_view, :mount, :start],
+        %{system_time: 1_653_474_764_790_125_080},
+        %{
+          socket: %Phoenix.LiveView.Socket{view: __MODULE__},
+          params: %{foo: "bar"},
+          session: %{bar: "baz"},
+          uri: "http://localhost/",
+          telemetry_span_context: :mount
+        }
+      )
+
+      mount = Appsignal.Tracer.current_span()
+      other = Appsignal.Tracer.create_span("live_view", mount)
+
+      :telemetry.execute(
+        [:phoenix, :live_view, :mount, :stop],
+        %{duration: 100_000},
+        %{
+          socket: %Phoenix.LiveView.Socket{view: __MODULE__},
+          params: %{foo: "bar"},
+          session: %{bar: "baz"},
+          uri: "http://localhost/",
+          telemetry_span_context: :mount
+        }
+      )
+
+      [mount: mount, other: other]
+    end
+
+    test "closes the event's span", %{mount: mount} do
+      {:ok, closed} = Test.Tracer.get(:close_span)
+      assert Enum.any?(closed, &(elem(&1, 0) == mount))
+    end
+
+    test "leaves the other span open", %{other: other} do
+      {:ok, closed} = Test.Tracer.get(:close_span)
+      refute Enum.any?(closed, &(elem(&1, 0) == other))
+    end
+  end
+
+  describe "handle_event_exception/4, with another span opened during the event" do
+    setup do
+      attach_mount_handlers()
+
+      :telemetry.execute(
+        [:phoenix, :live_view, :mount, :start],
+        %{system_time: 1_653_474_764_790_125_080},
+        %{
+          socket: %Phoenix.LiveView.Socket{view: __MODULE__},
+          params: %{foo: "bar"},
+          session: %{bar: "baz"},
+          uri: "http://localhost/",
+          telemetry_span_context: :mount
+        }
+      )
+
+      mount = Appsignal.Tracer.current_span()
+      other = Appsignal.Tracer.create_span("live_view", mount)
+
+      :telemetry.execute(
+        [:phoenix, :live_view, :mount, :exception],
+        %{duration: 100_000},
+        %{
+          socket: %Phoenix.LiveView.Socket{view: __MODULE__},
+          params: %{foo: "bar"},
+          session: %{bar: "baz"},
+          uri: "http://localhost/",
+          telemetry_span_context: :mount,
+          kind: :error,
+          reason: %RuntimeError{message: "Exception!"},
+          stacktrace: []
+        }
+      )
+
+      [mount: mount, other: other]
+    end
+
+    test "adds the error to the event's span", %{mount: mount} do
+      assert {:ok, [{^mount, :error, %RuntimeError{}, []}]} = Test.Span.get(:add_error)
+    end
+
+    test "closes the event's span", %{mount: mount} do
+      {:ok, closed} = Test.Tracer.get(:close_span)
+      assert Enum.any?(closed, &(elem(&1, 0) == mount))
+    end
+
+    test "leaves the other span open", %{other: other} do
+      {:ok, closed} = Test.Tracer.get(:close_span)
+      refute Enum.any?(closed, &(elem(&1, 0) == other))
+    end
+  end
+
+  describe "handle_event_stop/4, with a span left open during the event" do
+    setup do
+      attach_mount_handlers()
+
+      :telemetry.execute(
+        [:phoenix, :live_view, :mount, :start],
+        %{system_time: 1_653_474_764_790_125_080},
+        %{
+          socket: %Phoenix.LiveView.Socket{view: __MODULE__},
+          params: %{foo: "bar"},
+          session: %{bar: "baz"},
+          uri: "http://localhost/",
+          telemetry_span_context: :mount
+        }
+      )
+
+      leaked =
+        Appsignal.Tracer.create_span("live_view", Appsignal.Tracer.current_span())
+
+      :telemetry.execute(
+        [:phoenix, :live_view, :mount, :stop],
+        %{duration: 100_000},
+        %{
+          socket: %Phoenix.LiveView.Socket{view: __MODULE__},
+          params: %{foo: "bar"},
+          session: %{bar: "baz"},
+          uri: "http://localhost/",
+          telemetry_span_context: :mount
+        }
+      )
+
+      [leaked: leaked]
+    end
+
+    test "closes the span left open", %{leaked: leaked} do
+      closed = Test.Nif.get!(:close_span_with_timestamp) |> Enum.map(&elem(&1, 0))
+      assert leaked.reference in closed
+    end
+
+    test "leaves no spans behind" do
+      assert Appsignal.Tracer.lookup(self()) == []
+    end
+  end
+
+  defp attach_mount_handlers do
+    for {suffix, handler} <- [
+          start: &Appsignal.Phoenix.LiveView.handle_live_view_event_start/4,
+          stop: &Appsignal.Phoenix.LiveView.handle_event_stop/4,
+          exception: &Appsignal.Phoenix.LiveView.handle_event_exception/4
+        ] do
+      event = [:phoenix, :live_view, :mount, suffix]
+      :telemetry.attach({__MODULE__, event}, event, handler, :ok)
+      on_exit(fn -> :telemetry.detach({__MODULE__, event}) end)
     end
   end
 
@@ -621,4 +796,7 @@ defmodule Appsignal.Phoenix.LiveViewTest do
     end)
     |> length() == 1
   end
+
+  defp elem_or_empty({:ok, list}), do: list
+  defp elem_or_empty(:error), do: []
 end

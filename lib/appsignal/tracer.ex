@@ -1,16 +1,21 @@
 defmodule Appsignal.Tracer do
+  require Logger
+
   alias Appsignal.Span
+  alias Appsignal.Tracer.Registry
 
   @monitor Application.compile_env(:appsignal, :appsignal_monitor, Appsignal.Monitor)
-
-  @table :"$appsignal_registry"
 
   @type option :: {:pid, pid} | {:start_time, integer}
   @type options :: [option]
 
   @doc false
   def start_link do
-    Agent.start_link(fn -> :ets.new(@table, [:named_table, :public, :duplicate_bag]) end,
+    Agent.start_link(
+      fn ->
+        Registry.new()
+        Appsignal.Error.Reported.new()
+      end,
       name: __MODULE__
     )
   end
@@ -48,23 +53,19 @@ defmodule Appsignal.Tracer do
   def create_span(namespace, nil, options) do
     pid = Keyword.get(options, :pid, self())
 
-    unless ignored?(pid) do
-      namespace
-      |> Span.create_root(pid, options[:start_time])
-      |> register()
-      |> on_create_span()
-    end
+    namespace
+    |> Span.create_root(pid, options[:start_time])
+    |> register(:own, nil, nil)
+    |> on_create_span()
   end
 
   def create_span(_namespace, parent, options) do
     pid = Keyword.get(options, :pid, self())
 
-    unless ignored?(pid) do
-      parent
-      |> Span.create_child(pid, options[:start_time])
-      |> register()
-      |> on_create_span()
-    end
+    parent
+    |> Span.create_child(pid, options[:start_time])
+    |> register(:own, Registry.trace_root(parent), Registry.anchor(parent, pid))
+    |> on_create_span()
   end
 
   @doc """
@@ -72,11 +73,7 @@ defmodule Appsignal.Tracer do
   """
   @spec lookup(pid()) :: list() | []
   def lookup(pid) do
-    try do
-      :ets.lookup(@table, pid)
-    rescue
-      ArgumentError -> []
-    end
+    Registry.lookup(pid)
   end
 
   @doc """
@@ -90,9 +87,7 @@ defmodule Appsignal.Tracer do
   """
   @spec current_span(pid()) :: Span.t() | nil
   def current_span(pid) do
-    pid
-    |> lookup()
-    |> current()
+    Registry.current(pid)
   end
 
   @doc """
@@ -106,9 +101,7 @@ defmodule Appsignal.Tracer do
   """
   @spec root_span(pid()) :: Span.t() | nil
   def root_span(pid) do
-    pid
-    |> lookup()
-    |> root()
+    Registry.root(pid)
   end
 
   @doc false
@@ -119,36 +112,18 @@ defmodule Appsignal.Tracer do
     }
   end
 
-  defp current({_pid, :ignore}), do: nil
-
-  defp current({_pid, span}), do: span
-
-  defp current(spans) when is_list(spans) do
-    spans
-    |> List.last()
-    |> current()
-  end
-
-  defp current(_), do: nil
-
-  defp root([{_pid, %Span{} = root} | _]), do: root
-
-  defp root(_), do: nil
-
   @spec close_span(Span.t() | nil) :: :ok | nil
   @doc """
   Closes a span and deregisters it.
 
   ## Example
-      Appsignal.Tracer.current_span()
-      |> Appsignal.Tracer.close_span()
+      span = Appsignal.Tracer.create_span("http_request")
+      # ...
+      Appsignal.Tracer.close_span(span)
 
   """
   def close_span(%Span{} = span) do
-    span
-    |> Span.close()
-    |> deregister()
-
+    Span.close(span)
     :ok
   end
 
@@ -156,42 +131,50 @@ defmodule Appsignal.Tracer do
 
   @spec close_span(Span.t() | nil, list()) :: :ok | nil
   @doc """
-  Closes a span and deregisters it. Takes an options list, which currently only
-  accepts a `List` with an `:end_time` integer.
+  Closes a span and deregisters it. Takes a keyword list of options, of which
+  only `:end_time` is used.
 
   ## Example
-      Appsignal.Tracer.current_span()
-      |> Appsignal.Tracer.close_span(end_time: :os.system_time())
+      span = Appsignal.Tracer.create_span("http_request")
+      # ...
+      Appsignal.Tracer.close_span(span, end_time: :os.system_time())
 
   """
   def close_span(span, options)
 
-  def close_span(%Span{} = span, end_time: end_time) do
-    span
-    |> Span.close(end_time)
-    |> deregister()
-
+  def close_span(%Span{} = span, options) when is_list(options) do
+    close_with(span, options[:end_time])
     :ok
   end
 
   def close_span(nil, _options), do: nil
 
   @doc """
-  Ignores the given process.
+  Does nothing. It used to stop the given process from creating spans.
   """
+  @deprecated "Use Appsignal.Tracer.ignore/0 in the process whose trace to ignore."
   @spec ignore(pid()) :: :ok
-  def ignore(pid) do
-    delete(pid)
-    insert({pid, :ignore}) && @monitor.add()
+  def ignore(_pid) do
+    Logger.warning(
+      "Appsignal.Tracer.ignore/1 no longer does anything. " <>
+        "Call Appsignal.Tracer.ignore/0 in the process whose trace to ignore."
+    )
+
     :ok
   end
 
   @doc """
-  Ignores the current process.
+  Ignores the current trace: the trace the current span belongs to is not
+  reported. Does nothing when there is no current span.
   """
   @spec ignore() :: :ok
   def ignore do
-    self() |> ignore()
+    case current_span() do
+      nil -> :ok
+      span -> Span.set_attribute(span, "appsignal.ignore_trace", true)
+    end
+
+    :ok
   end
 
   @doc """
@@ -199,14 +182,52 @@ defmodule Appsignal.Tracer do
   """
   @spec delete(pid()) :: :ok
   def delete(pid) do
-    try do
-      :ets.delete(@table, pid)
-    rescue
-      ArgumentError -> :ok
+    Registry.delete(pid)
+  end
+
+  @doc false
+  def close_all(span_or_pid, options \\ [])
+
+  def close_all(%Span{} = span, options) do
+    descendants = Registry.descendants(span)
+
+    Enum.each(descendants, fn descendant ->
+      Span.set_name_if_nil(descendant, "[unfinished transaction event]")
+      close_with(descendant, options[:end_time])
+    end)
+
+    close_with(span, options[:end_time])
+
+    if descendants != [] do
+      Appsignal.IntegrationLogger.debug(
+        "Appsignal.Tracer closed #{length(descendants)} spans left open under a span in #{inspect(span.pid)}"
+      )
     end
 
     :ok
   end
+
+  def close_all(nil, _options), do: nil
+
+  def close_all(pid, options) when is_pid(pid) do
+    spans = pid |> Registry.own_spans() |> Enum.reverse()
+
+    Enum.each(spans, fn {span, root?} ->
+      unless root?, do: Span.set_name_if_nil(span, "[unfinished transaction event]")
+      close_with(span, options[:end_time])
+    end)
+
+    if spans != [] do
+      Appsignal.IntegrationLogger.debug(
+        "Appsignal.Tracer closed #{length(spans)} spans left open in #{inspect(pid)}"
+      )
+    end
+
+    :ok
+  end
+
+  defp close_with(span, nil), do: Span.close(span)
+  defp close_with(span, end_time), do: Span.close(span, end_time)
 
   @doc false
   def register_current(span) do
@@ -223,42 +244,17 @@ defmodule Appsignal.Tracer do
     #     end)
     #     |> Stream.run()
 
-    register(%{span | pid: self()})
+    register(%{span | pid: self()}, :attached, Registry.trace_root(span), nil)
   end
 
-  defp register(%Span{pid: pid} = span) do
-    if insert({pid, span}) do
-      @monitor.add()
+  defp register(%Span{} = span, origin, trace_root, anchor) do
+    if Registry.insert(span, origin, trace_root, anchor) do
+      @monitor.add(span.pid)
       span
     end
   end
 
-  defp register(nil), do: nil
-
-  defp deregister(%Span{pid: pid} = span) do
-    try do
-      :ets.delete_object(@table, {pid, span})
-    rescue
-      ArgumentError -> false
-    end
-  end
-
-  defp ignored?(pid) when is_pid(pid) do
-    pid
-    |> lookup()
-    |> ignored?()
-  end
-
-  defp ignored?([{_pid, :ignore}]), do: true
-  defp ignored?(_), do: false
-
-  defp insert(span) do
-    try do
-      :ets.insert(@table, span)
-    rescue
-      ArgumentError -> nil
-    end
-  end
+  defp register(nil, _origin, _trace_root, _anchor), do: nil
 
   @spec on_create_span(Span.t() | nil) :: Span.t() | nil
   defp on_create_span(span) do

@@ -29,7 +29,6 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
                 )
                 |> @span.add_error(kind, reason, stack)
 
-              @tracer.ignore()
               :erlang.raise(kind, reason, stack)
           else
             result ->
@@ -126,6 +125,7 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
       |> @span.set_attribute("event", metadata[:event])
       |> @span.set_sample_data("params", metadata[:params])
       |> @span.set_sample_data("session_data", metadata[:session])
+      |> put_span(metadata)
     end
 
     def handle_live_component_event_start(
@@ -145,18 +145,31 @@ if Code.ensure_loaded?(Phoenix.LiveView) do
       if metadata[:socket] && metadata[:socket].view do
         @span.set_attribute(span, "view", Appsignal.Utils.module_name(metadata[:socket].view))
       end
+
+      put_span(span, metadata)
     end
 
-    def handle_event_stop(_event, _params, _metadata, _event_name) do
-      @tracer.close_span(@tracer.current_span(), end_time: @os.system_time())
+    def handle_event_stop(_event, _params, metadata, _event_name) do
+      @tracer.close_all(take_span(metadata), end_time: @os.system_time())
     end
 
     def handle_event_exception(_event, _params, metadata, _event_name) do
-      @tracer.current_span()
+      metadata
+      |> take_span()
       |> @span.add_error(metadata[:kind], metadata[:reason], metadata[:stacktrace])
-      |> @tracer.close_span(end_time: @os.system_time())
+      |> @tracer.close_all(end_time: @os.system_time())
+    end
 
-      @tracer.ignore()
+    # LiveView emits these events with `:telemetry.span/3`, which runs the
+    # handlers in the LiveView's process and ties the start and stop events
+    # together with `telemetry_span_context`.
+    defp put_span(span, metadata) do
+      _ = Process.put({__MODULE__, metadata[:telemetry_span_context]}, span)
+      span
+    end
+
+    defp take_span(metadata) do
+      Process.delete({__MODULE__, metadata[:telemetry_span_context]})
     end
 
     defp span_name(module, method, nil) do
