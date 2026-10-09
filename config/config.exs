@@ -44,7 +44,8 @@ if Mix.env() in [:bench, :test, :test_no_nif] do
         AppsignalTest.Phoenix.MountingEndpoint,
         AppsignalTest.Phoenix.Endpoint,
         AppsignalTest.Phoenix.BanditEndpoint,
-        AppsignalTest.Phoenix.CowboyEndpoint
+        AppsignalTest.Phoenix.CowboyEndpoint,
+        AppsignalTest.Phoenix.EndpointWithAppsignalPlug
       ] do
     config :appsignal, endpoint,
       secret_key_base: String.duplicate("appsignal", 8),

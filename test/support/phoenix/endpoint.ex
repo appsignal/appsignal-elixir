@@ -67,4 +67,13 @@ if Appsignal.Dependencies.present?(:phoenix) do
     plug(Plug.Telemetry, event_prefix: [:phoenix, :endpoint])
     plug(AppsignalTest.Phoenix.Endpoint)
   end
+
+  # The same application, with `Appsignal.Plug` in its endpoint, as
+  # applications that set up AppSignal for Phoenix 1.x and older have.
+  defmodule AppsignalTest.Phoenix.EndpointWithAppsignalPlug do
+    @moduledoc false
+    use Phoenix.Endpoint, otp_app: :appsignal
+    use Appsignal.Plug
+    use AppsignalTest.Phoenix.EndpointPlugs
+  end
 end
