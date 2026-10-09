@@ -290,7 +290,7 @@ if Appsignal.Dependencies.present?(:phoenix) do
                 [
                   # First attempt to set the name will fail
                   {%Span{}, nil},
-                  {%Span{}, "Elixir.MyModule#my_function"}
+                  {%Span{}, "MyModule#my_function"}
                 ]} =
                  Test.Span.get(:set_name_if_nil)
       end
