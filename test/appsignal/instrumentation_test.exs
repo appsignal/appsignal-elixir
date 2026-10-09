@@ -755,6 +755,39 @@ defmodule Appsignal.InstrumentationTest do
     end
   end
 
+  describe ".send_error/3, with a span open" do
+    setup do
+      outer = Tracer.create_span("http_request")
+
+      {exception, stack} =
+        try do
+          raise "Exception!"
+        rescue
+          exception -> {exception, __STACKTRACE__}
+        end
+
+      Appsignal.Instrumentation.send_error(exception, stack, fn span ->
+        send(self(), {:current, Tracer.current_span(), span})
+        span
+      end)
+
+      [outer: outer]
+    end
+
+    test "creates the error's span through the tracer, as a root" do
+      assert {:ok, [{"http_request", nil}]} = Test.Tracer.get(:create_span)
+    end
+
+    test "makes the error's span current while the function runs" do
+      assert_received {:current, span, span}
+    end
+
+    test "leaves the open span current afterwards", %{outer: outer} do
+      assert Tracer.current_span() == outer
+      assert Tracer.lookup(self()) == [{self(), outer}]
+    end
+  end
+
   describe ".send_error/2" do
     setup do
       {exception, stack} =
@@ -772,7 +805,7 @@ defmodule Appsignal.InstrumentationTest do
     end
 
     test "creates a root span" do
-      assert Test.Span.get(:create_root) == {:ok, [{"http_request", self()}]}
+      assert Test.Tracer.get(:create_span) == {:ok, [{"http_request", nil}]}
     end
 
     test "adds the error to the span", %{exception: exception, stack: stack} do
@@ -780,7 +813,7 @@ defmodule Appsignal.InstrumentationTest do
     end
 
     test "closes the span" do
-      assert {:ok, [{%Span{}}]} = Test.Span.get(:close)
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
     end
   end
 
@@ -802,7 +835,7 @@ defmodule Appsignal.InstrumentationTest do
     end
 
     test "creates a root span" do
-      assert Test.Span.get(:create_root) == {:ok, [{"http_request", self()}]}
+      assert Test.Tracer.get(:create_span) == {:ok, [{"http_request", nil}]}
     end
 
     test "adds the error to the span", %{reason: reason, stack: stack} do
@@ -810,7 +843,7 @@ defmodule Appsignal.InstrumentationTest do
     end
 
     test "closes the span" do
-      assert {:ok, [{%Span{}}]} = Test.Span.get(:close)
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
     end
   end
 
@@ -836,7 +869,7 @@ defmodule Appsignal.InstrumentationTest do
     end
 
     test "creates a root span" do
-      assert Test.Span.get(:create_root) == {:ok, [{"http_request", self()}]}
+      assert Test.Tracer.get(:create_span) == {:ok, [{"http_request", nil}]}
     end
 
     test "adds the error to the span", %{exception: exception, stack: stack} do
@@ -844,7 +877,7 @@ defmodule Appsignal.InstrumentationTest do
     end
 
     test "closes the span" do
-      assert {:ok, [{%Span{}}]} = Test.Span.get(:close)
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
     end
 
     test "runs the function" do
@@ -875,7 +908,7 @@ defmodule Appsignal.InstrumentationTest do
     end
 
     test "creates a root span" do
-      assert Test.Span.get(:create_root) == {:ok, [{"http_request", self()}]}
+      assert Test.Tracer.get(:create_span) == {:ok, [{"http_request", nil}]}
     end
 
     test "adds the error to the span", %{reason: reason, stack: stack} do
@@ -883,7 +916,7 @@ defmodule Appsignal.InstrumentationTest do
     end
 
     test "closes the span" do
-      assert {:ok, [{%Span{}}]} = Test.Span.get(:close)
+      assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
     end
 
     test "runs the function" do
