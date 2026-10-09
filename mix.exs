@@ -54,7 +54,7 @@ defmodule Appsignal.Mixfile do
       ],
       dialyzer: [
         plt_file: {:no_warn, "priv/plts/dialyzer.plt"},
-        plt_add_apps: [:mix],
+        plt_add_apps: [:mix, :ex_unit],
         ignore_warnings: ".dialyzer_ignore.exs"
       ]
     ] ++ dependency_set_paths()
@@ -155,14 +155,6 @@ defmodule Appsignal.Mixfile do
         false -> "~> 0.4 or ~> 1.0"
       end
 
-    # httpoison 3.0 depends on hackney 4.0, which pulls in quic and requires
-    # OTP 26 or later. Cap httpoison at 2.x on older OTP releases.
-    httpoison_version =
-      case versions.otp < 26 do
-        true -> "~> 2.0"
-        false -> "~> 2.0 or ~> 3.0"
-      end
-
     mint_dependency =
       case Version.compare(versions.elixir, "1.15.0") do
         :lt ->
@@ -171,71 +163,6 @@ defmodule Appsignal.Mixfile do
         _ ->
           []
       end
-
-    plug_version =
-      case Version.compare(versions.elixir, "1.14.0") do
-        :lt ->
-          "~> 1.18 and < 1.19.0"
-
-        _ ->
-          # plug 1.20.0 requires Elixir ~> 1.15, so cap it on 1.14.
-          case Version.compare(versions.elixir, "1.15.0") do
-            :lt -> "~> 1.18 and < 1.20.0"
-            _ -> "~> 1.18"
-          end
-      end
-
-    # Phoenix 1.8 requires Elixir 1.15. Hex does not take the Elixir version
-    # into account when it resolves dependencies, so cap Phoenix below 1.8 on
-    # older Elixir versions.
-    phoenix_version =
-      case Version.compare(versions.elixir, "1.15.0") do
-        :lt -> "~> 1.7 and < 1.8.0"
-        _ -> "~> 1.7"
-      end
-
-    phoenix_live_view_version =
-      case Version.compare(versions.elixir, "1.14.0") do
-        :lt -> ">= 0.17.12 and < 1.1.0"
-        _ -> ">= 0.17.12 and < 2.0.0"
-      end
-
-    # phoenix_template is a transitive dependency. Version 1.1.0 requires
-    # Elixir 1.16 and uses a bitstring pattern that older Elixirs cannot
-    # compile, so pin to the last version that does compile there.
-    phoenix_template_dependency =
-      case Version.compare(versions.elixir, "1.15.0") do
-        :lt -> [{:phoenix_template, ">= 1.0.0 and < 1.1.0", optional: true}]
-        _ -> []
-      end
-
-    integrations = integrations(versions)
-
-    plug_dependencies =
-      case :plug in integrations do
-        true -> [{:plug, plug_version, optional: true}]
-        false -> []
-      end
-
-    phoenix_dependencies =
-      case :phoenix in integrations do
-        true ->
-          [
-            {:phoenix, phoenix_version, optional: true},
-            {:phoenix_live_view, phoenix_live_view_version, optional: true}
-          ] ++ phoenix_template_dependency
-
-        false ->
-          []
-      end
-
-    httpoison_dependencies =
-      case :httpoison in integrations do
-        true -> [{:httpoison, httpoison_version, optional: true}]
-        false -> []
-      end
-
-    integration_dependencies = plug_dependencies ++ phoenix_dependencies ++ httpoison_dependencies
 
     credo_version =
       case Version.compare(versions.elixir, "1.13.0") do
@@ -271,7 +198,7 @@ defmodule Appsignal.Mixfile do
       {:telemetry, telemetry_version}
     ] ++
       logger_backends_dependency ++
-      hpax_dependency ++ mint_dependency ++ integration_dependencies
+      hpax_dependency ++ mint_dependency
   end
 
   defp verify_publishable!(deps) do
@@ -301,12 +228,6 @@ defmodule Appsignal.Mixfile do
       """)
     end
   end
-
-  # Dependency sets declare these libraries themselves, at the versions they
-  # test, so the test environments leave out the package's requirements.
-  defp integrations(%{env: env}) when env in [:test, :test_no_nif], do: []
-  defp integrations(%{set: set}) when is_binary(set), do: []
-  defp integrations(_versions), do: [:plug, :phoenix, :httpoison]
 
   # A dependency set is a file in test/deps listing the third-party libraries
   # the test suite runs against, chosen by name with _APPSIGNAL_TEST_DEPS.
