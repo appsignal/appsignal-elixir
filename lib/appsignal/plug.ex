@@ -1,6 +1,8 @@
 if Code.ensure_loaded?(Plug.Conn) do
   defmodule Appsignal.Plug do
     @span Application.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
+    unless Code.ensure_loaded?(Plug.Conn),
+      do: @compile({:no_warn_undefined, [Plug.Conn, Plug.Exception]})
 
     @moduledoc """
     AppSignal's Plug instrumentation instruments calls to Plug applications to
@@ -95,7 +97,7 @@ if Code.ensure_loaded?(Plug.Conn) do
           end
         end
     """
-    def put_name(%Plug.Conn{} = conn, name) do
+    def put_name(%{__struct__: Plug.Conn} = conn, name) do
       Plug.Conn.put_private(conn, :appsignal_name, name)
     end
 
@@ -113,7 +115,7 @@ if Code.ensure_loaded?(Plug.Conn) do
     def handle_error(
           span,
           :error,
-          %Plug.Conn.WrapperError{conn: conn, reason: wrapped_reason, stack: stack},
+          %{__struct__: Plug.Conn.WrapperError, conn: conn, reason: wrapped_reason, stack: stack},
           _stack,
           _conn
         ) do

@@ -3,8 +3,9 @@ if Code.ensure_loaded?(Phoenix.Template.EExEngine) do
     alias Appsignal.Phoenix.Template
     alias Phoenix.Template.EExEngine
 
-    @behaviour Phoenix.Template.Engine
     @moduledoc false
+    unless Code.ensure_loaded?(Phoenix.Template.EExEngine),
+      do: @compile({:no_warn_undefined, Phoenix.Template.EExEngine})
 
     def compile(path, name) do
       path

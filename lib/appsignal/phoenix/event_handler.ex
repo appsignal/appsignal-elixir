@@ -118,7 +118,14 @@ if Code.ensure_loaded?(Phoenix) do
     def phoenix_router_dispatch_exception(
           _event,
           _measurements,
-          %{reason: %Plug.Conn.WrapperError{conn: conn, reason: reason, stack: stack}},
+          %{
+            reason: %{
+              __struct__: Plug.Conn.WrapperError,
+              conn: conn,
+              reason: reason,
+              stack: stack
+            }
+          },
           _config
         ) do
       add_error(@tracer.root_span(), conn, reason, stack)
@@ -136,7 +143,7 @@ if Code.ensure_loaded?(Phoenix) do
     defp add_error(
            span,
            conn,
-           %Phoenix.ActionClauseError{module: module, function: function} = reason,
+           %{__struct__: Phoenix.ActionClauseError, module: module, function: function} = reason,
            stack
          ) do
       span
