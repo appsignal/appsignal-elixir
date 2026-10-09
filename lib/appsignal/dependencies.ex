@@ -54,17 +54,6 @@ defmodule Appsignal.Dependencies do
     end
   end
 
-  def missing do
-    [
-      {:plug, Plug.Conn, Appsignal.Plug},
-      {:phoenix, Phoenix, Appsignal.Phoenix.EventHandler}
-    ]
-    |> Enum.filter(fn {_name, library, integration} ->
-      Code.ensure_loaded?(library) and not Code.ensure_loaded?(integration)
-    end)
-    |> Enum.map(fn {name, _library, _integration} -> name end)
-  end
-
   def log_conflicts(%{packages: packages, modules: modules}) do
     Logger.error("""
     AppSignal is disabled, because #{describe(packages, modules)}.
@@ -81,19 +70,6 @@ defmodule Appsignal.Dependencies do
         mix deps.get
 
     See https://docs.appsignal.com/elixir/installation/upgrade-from-2-to-3
-    """)
-  end
-
-  def log_missing([]), do: :ok
-
-  def log_missing(missing) do
-    names = Enum.map_join(missing, " and ", &library_name/1)
-
-    Logger.warning("""
-    #{names} is loaded, but AppSignal was compiled without its #{names} \
-    integration, so it is not instrumented. Recompile AppSignal with:
-
-        mix deps.compile appsignal --force
     """)
   end
 
@@ -122,9 +98,6 @@ defmodule Appsignal.Dependencies do
     verb = if length(packages) == 1, do: "is", else: "are"
     "#{installed} #{verb} installed alongside appsignal #{Application.spec(:appsignal, :vsn)}"
   end
-
-  defp library_name(:plug), do: "Plug"
-  defp library_name(:phoenix), do: "Phoenix"
 
   defp ebin do
     :appsignal

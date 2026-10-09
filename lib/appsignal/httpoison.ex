@@ -51,122 +51,109 @@ defmodule Appsignal.HTTPoison.Base do
   end
 end
 
-# Only define Appsignal.HTTPoison when HTTPoison is available.
-# This allows the library to compile cleanly for users who have not installed HTTPoison.
-httpoison_base =
-  Application.compile_env(:appsignal, :appsignal_httpoison_base, Elixir.HTTPoison.Base)
+defmodule Appsignal.HTTPoison do
+  @moduledoc false
+  unless Code.ensure_loaded?(HTTPoison), do: @compile({:no_warn_undefined, HTTPoison})
 
-case Code.ensure_compiled(httpoison_base) do
-  {:module, _} ->
-    defmodule Appsignal.HTTPoison do
-      @moduledoc false
-      unless Code.ensure_loaded?(HTTPoison), do: @compile({:no_warn_undefined, HTTPoison})
+  @httpoison Application.compile_env(:appsignal, :appsignal_httpoison, HTTPoison)
 
-      @httpoison Application.compile_env(:appsignal, :appsignal_httpoison, HTTPoison)
+  defdelegate request(request), to: HTTPoison
 
-      defdelegate request(request), to: HTTPoison
+  def request(method, url, body \\ "", headers \\ [], options \\ []) do
+    Appsignal.HTTPoison.Base.instrument(method, url, fn ->
+      @httpoison.request(method, url, body, headers, options)
+    end)
+  end
 
-      def request(method, url, body \\ "", headers \\ [], options \\ []) do
-        Appsignal.HTTPoison.Base.instrument(method, url, fn ->
-          @httpoison.request(method, url, body, headers, options)
-        end)
-      end
+  defdelegate request!(request), to: HTTPoison
 
-      defdelegate request!(request), to: HTTPoison
+  def request!(method, url, body \\ "", headers \\ [], options \\ []) do
+    Appsignal.HTTPoison.Base.instrument(method, url, fn ->
+      @httpoison.request!(method, url, body, headers, options)
+    end)
+  end
 
-      def request!(method, url, body \\ "", headers \\ [], options \\ []) do
-        Appsignal.HTTPoison.Base.instrument(method, url, fn ->
-          @httpoison.request!(method, url, body, headers, options)
-        end)
-      end
+  def get(url, headers \\ [], options \\ []) do
+    request(:get, url, "", headers, options)
+  end
 
-      def get(url, headers \\ [], options \\ []) do
-        request(:get, url, "", headers, options)
-      end
+  def get!(url, headers \\ [], options \\ []) do
+    request!(:get, url, "", headers, options)
+  end
 
-      def get!(url, headers \\ [], options \\ []) do
-        request!(:get, url, "", headers, options)
-      end
+  def head(url, headers \\ [], options \\ []) do
+    request(:head, url, "", headers, options)
+  end
 
-      def head(url, headers \\ [], options \\ []) do
-        request(:head, url, "", headers, options)
-      end
+  def head!(url, headers \\ [], options \\ []) do
+    request!(:head, url, "", headers, options)
+  end
 
-      def head!(url, headers \\ [], options \\ []) do
-        request!(:head, url, "", headers, options)
-      end
+  def delete(url, headers \\ [], options \\ []) do
+    request(:delete, url, "", headers, options)
+  end
 
-      def delete(url, headers \\ [], options \\ []) do
-        request(:delete, url, "", headers, options)
-      end
+  def delete!(url, headers \\ [], options \\ []) do
+    request!(:delete, url, "", headers, options)
+  end
 
-      def delete!(url, headers \\ [], options \\ []) do
-        request!(:delete, url, "", headers, options)
-      end
+  def options(url, headers \\ [], options \\ []) do
+    request(:options, url, "", headers, options)
+  end
 
-      def options(url, headers \\ [], options \\ []) do
-        request(:options, url, "", headers, options)
-      end
+  def options!(url, headers \\ [], options \\ []) do
+    request!(:options, url, "", headers, options)
+  end
 
-      def options!(url, headers \\ [], options \\ []) do
-        request!(:options, url, "", headers, options)
-      end
+  def put(url, body \\ "", headers \\ [], options \\ []) do
+    request(:put, url, body, headers, options)
+  end
 
-      def put(url, body \\ "", headers \\ [], options \\ []) do
-        request(:put, url, body, headers, options)
-      end
+  def put!(url, body \\ "", headers \\ [], options \\ []) do
+    request!(:put, url, body, headers, options)
+  end
 
-      def put!(url, body \\ "", headers \\ [], options \\ []) do
-        request!(:put, url, body, headers, options)
-      end
+  def post(url, body, headers \\ [], options \\ []) do
+    request(:post, url, body, headers, options)
+  end
 
-      def post(url, body, headers \\ [], options \\ []) do
-        request(:post, url, body, headers, options)
-      end
+  def post!(url, body, headers \\ [], options \\ []) do
+    request!(:post, url, body, headers, options)
+  end
 
-      def post!(url, body, headers \\ [], options \\ []) do
-        request!(:post, url, body, headers, options)
-      end
+  def patch(url, body, headers \\ [], options \\ []) do
+    request(:patch, url, body, headers, options)
+  end
 
-      def patch(url, body, headers \\ [], options \\ []) do
-        request(:patch, url, body, headers, options)
-      end
+  def patch!(url, body, headers \\ [], options \\ []) do
+    request!(:patch, url, body, headers, options)
+  end
 
-      def patch!(url, body, headers \\ [], options \\ []) do
-        request!(:patch, url, body, headers, options)
-      end
+  defdelegate start(), to: HTTPoison
+  defdelegate stream_next(response), to: HTTPoison
+  defdelegate transformer(target), to: HTTPoison
 
-      defdelegate start(), to: HTTPoison
-      defdelegate stream_next(response), to: HTTPoison
-      defdelegate transformer(target), to: HTTPoison
+  @deprecated "Use process_response_headers/1 instead"
+  def process_headers(headers), do: call_deprecated(:process_headers, [headers])
 
-      @deprecated "Use process_response_headers/1 instead"
-      def process_headers(headers), do: call_deprecated(:process_headers, [headers])
+  defdelegate process_request_body(body), to: HTTPoison
+  defdelegate process_request_headers(headers), to: HTTPoison
+  defdelegate process_request_options(options), to: HTTPoison
+  defdelegate process_request_params(params), to: HTTPoison
+  defdelegate process_request_url(url), to: HTTPoison
+  defdelegate process_response(response), to: HTTPoison
+  defdelegate process_response_body(body), to: HTTPoison
+  defdelegate process_response_chunk(chunk), to: HTTPoison
+  defdelegate process_response_headers(headers), to: HTTPoison
+  defdelegate process_response_status_code(status_code), to: HTTPoison
 
-      defdelegate process_request_body(body), to: HTTPoison
-      defdelegate process_request_headers(headers), to: HTTPoison
-      defdelegate process_request_options(options), to: HTTPoison
-      defdelegate process_request_params(params), to: HTTPoison
-      defdelegate process_request_url(url), to: HTTPoison
-      defdelegate process_response(response), to: HTTPoison
-      defdelegate process_response_body(body), to: HTTPoison
-      defdelegate process_response_chunk(chunk), to: HTTPoison
-      defdelegate process_response_headers(headers), to: HTTPoison
-      defdelegate process_response_status_code(status_code), to: HTTPoison
+  @deprecated "Use process_response_status_code/1 instead"
+  def process_status_code(status_code), do: call_deprecated(:process_status_code, [status_code])
 
-      @deprecated "Use process_response_status_code/1 instead"
-      def process_status_code(status_code),
-        do: call_deprecated(:process_status_code, [status_code])
+  @deprecated "Use process_request_url/1 instead"
+  def process_url(url), do: call_deprecated(:process_url, [url])
 
-      @deprecated "Use process_request_url/1 instead"
-      def process_url(url), do: call_deprecated(:process_url, [url])
-
-      # HTTPoison deprecates these hooks. A dynamic call keeps the compiler from
-      # warning about the deprecation here; `@deprecated` passes it on to callers.
-      defp call_deprecated(function, args), do: apply(HTTPoison, function, args)
-    end
-
-  {:error, _} ->
-    # Don't define Appsignal.HTTPoison if the base module isn't available.
-    :ok
+  # HTTPoison deprecates these hooks. A dynamic call keeps the compiler from
+  # warning about the deprecation here; `@deprecated` passes it on to callers.
+  defp call_deprecated(function, args), do: apply(HTTPoison, function, args)
 end
