@@ -269,6 +269,15 @@ if Appsignal.Dependencies.present?(:oban) do
       end
     end
 
+    describe "oban_job_stop/4, with an {:ok, value} result" do
+      test "sets the result attribute to ok" do
+        execute_job_start()
+        execute_job_stop(%{result: {:ok, "something"}})
+
+        assert attribute?("result", "ok")
+      end
+    end
+
     describe "oban_job_exception/4" do
       setup do
         fake_appsignal = start_supervised!(FakeAppsignal)
