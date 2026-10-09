@@ -6,7 +6,8 @@ for endpoint <- [
       AppsignalTest.Phoenix.MountingEndpoint,
       AppsignalTest.Phoenix.Endpoint,
       AppsignalTest.Phoenix.BanditEndpoint,
-      AppsignalTest.Phoenix.CowboyEndpoint
+      AppsignalTest.Phoenix.CowboyEndpoint,
+      AppsignalTest.Phoenix.EndpointWithAppsignalPlug
     ] do
   config :appsignal, endpoint,
     # Plug's cookie session store needs at least 64 bytes.
