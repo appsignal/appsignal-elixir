@@ -31,6 +31,10 @@ defmodule Appsignal.Phoenix.View do
 
   """
   defmacro __using__(_) do
+    if Appsignal.Phoenix.supported?(), do: instrumentation()
+  end
+
+  defp instrumentation do
     quote do
       Appsignal.IntegrationLogger.debug("AppSignal.Phoenix.View attached to #{__MODULE__}")
 

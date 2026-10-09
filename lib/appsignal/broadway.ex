@@ -9,6 +9,10 @@ defmodule Appsignal.Broadway do
   @moduledoc false
 
   def attach do
+    if Appsignal.Dependencies.match?(:broadway, ">= 1.0.0"), do: attach_handlers(), else: []
+  end
+
+  defp attach_handlers do
     handlers = %{
       [:broadway, :processor, :start] => &__MODULE__.broadway_processor_start/4,
       [:broadway, :processor, :stop] => &__MODULE__.broadway_processor_stop/4,

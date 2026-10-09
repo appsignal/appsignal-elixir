@@ -20,6 +20,10 @@ defmodule Appsignal.Phoenix.EventHandler do
   @request_root_key {__MODULE__, :request_root_span}
 
   def attach do
+    if Appsignal.Phoenix.supported?(), do: attach_handlers(), else: []
+  end
+
+  defp attach_handlers do
     handlers = %{
       [:phoenix, :endpoint, :start] => &__MODULE__.phoenix_endpoint_start/4,
       [:phoenix, :endpoint, :stop] => &__MODULE__.phoenix_endpoint_stop/4,

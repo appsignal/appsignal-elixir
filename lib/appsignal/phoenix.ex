@@ -20,4 +20,7 @@ defmodule Appsignal.Phoenix do
   @deprecated "Since AppSignal for Phoenix 2.3.0, Phoenix instrumentation is up automatically. The `use Appsignal.Phoenix` line is no longer needed and should be removed from your app's endpoint file."
   defmacro __using__(_) do
   end
+
+  @doc false
+  def supported?, do: Appsignal.Dependencies.match?(:phoenix, ">= 1.7.0")
 end

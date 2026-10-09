@@ -27,6 +27,10 @@ defmodule Appsignal.Plug do
 
   @doc false
   defmacro __using__(_) do
+    if Appsignal.Dependencies.match?(:plug, ">= 1.18.0"), do: instrumentation()
+  end
+
+  defp instrumentation do
     quote do
       require Logger
       Appsignal.IntegrationLogger.debug("AppSignal.Plug attached to #{__MODULE__}")

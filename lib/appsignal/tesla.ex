@@ -7,6 +7,10 @@ defmodule Appsignal.Tesla do
   @moduledoc false
 
   def attach do
+    if Appsignal.Dependencies.match?(:tesla, ">= 1.4.3"), do: attach_handlers(), else: []
+  end
+
+  defp attach_handlers do
     handlers = %{
       [:tesla, :request, :start] => &__MODULE__.tesla_request_start/4,
       [:tesla, :request, :stop] => &__MODULE__.tesla_request_stop/4,

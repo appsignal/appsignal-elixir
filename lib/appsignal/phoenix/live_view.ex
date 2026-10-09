@@ -55,6 +55,11 @@ defmodule Appsignal.Phoenix.LiveView do
   end
 
   def attach do
+    if Appsignal.Dependencies.match?(:phoenix_live_view, ">= 0.17.12"), do: attach_handlers()
+    :ok
+  end
+
+  defp attach_handlers do
     live_view_events = [
       [:phoenix, :live_view, :mount],
       [:phoenix, :live_view, :handle_params],

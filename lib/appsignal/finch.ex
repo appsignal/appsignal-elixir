@@ -7,6 +7,10 @@ defmodule Appsignal.Finch do
   @moduledoc false
 
   def attach do
+    if Appsignal.Dependencies.match?(:finch, ">= 0.12.0"), do: attach_handlers(), else: []
+  end
+
+  defp attach_handlers do
     handlers = %{
       [:finch, :request, :start] => &__MODULE__.finch_request_start/4,
       [:finch, :request, :stop] => &__MODULE__.finch_request_stop/4,
