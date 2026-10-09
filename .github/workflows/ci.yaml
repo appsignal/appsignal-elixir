@@ -154,6 +154,7 @@ jobs:
           - finch
           - httpoison
           - httpoison-2
+          - live_view-0
           - oban
           - phoenix
           - phoenix-1.7
@@ -470,6 +471,43 @@ jobs:
       - name: Run tests
         run: script/test httpoison-2
 
+  test_live_view-0:
+    name: test (live_view-0, ${{matrix.elixir}}, OTP ${{matrix.otp}})
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - elixir: '1.19'
+            otp: '28'
+          - elixir: '1.19'
+            otp: '27'
+          - elixir: '1.19'
+            otp: '26'
+          - elixir: '1.18'
+            otp: '27'
+          - elixir: '1.17'
+            otp: '27'
+          - elixir: '1.16'
+            otp: '26'
+          - elixir: '1.15'
+            otp: '26'
+          - elixir: '1.14'
+            otp: '25'
+          - elixir: '1.13'
+            otp: '24'
+    steps:
+      - name: Set up Erlang and Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          otp-version: ${{matrix.otp}}
+          elixir-version: ${{matrix.elixir}}
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Run tests
+        run: script/test live_view-0
+
   test_oban:
     name: test (oban, ${{matrix.elixir}}, OTP ${{matrix.otp}})
     needs: test
@@ -562,10 +600,6 @@ jobs:
             otp: '26'
           - elixir: '1.14'
             otp: '25'
-          - elixir: '1.13'
-            otp: '24'
-          - elixir: '1.12'
-            otp: '24'
     steps:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
@@ -670,6 +704,7 @@ jobs:
       - test_finch
       - test_httpoison
       - test_httpoison-2
+      - test_live_view-0
       - test_oban
       - test_phoenix
       - test_phoenix-1_7

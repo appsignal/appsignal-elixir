@@ -27,6 +27,10 @@
     plug: [elixir: "< 1.15"],
     # Phoenix 1.8 needs Elixir 1.15.
     phoenix: [elixir: "< 1.15"],
+    # LiveView 1.0 needs Elixir 1.14.
+    "phoenix-1.7": [elixir: "< 1.14"],
+    # LiveView 0.20 needs Elixir 1.13.
+    "live_view-0": [elixir: "< 1.13"],
     # Ecto 3.14 needs Elixir 1.14.
     ecto: [elixir: "< 1.14"],
     # Oban's tests use Ecto 3.14, which needs Elixir 1.14.

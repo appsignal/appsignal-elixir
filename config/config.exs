@@ -37,4 +37,30 @@ if Mix.env() in [:bench, :test, :test_no_nif] do
 
   config :appsignal,
     ecto_repos: [Appsignal.Test.Repo]
+
+  # The Phoenix application the tests run requests through, when the
+  # dependency set includes Phoenix.
+  for endpoint <- [
+        AppsignalTest.Phoenix.MountingEndpoint,
+        AppsignalTest.Phoenix.Endpoint,
+        AppsignalTest.Phoenix.BanditEndpoint,
+        AppsignalTest.Phoenix.CowboyEndpoint
+      ] do
+    config :appsignal, endpoint,
+      secret_key_base: String.duplicate("appsignal", 8),
+      pubsub_server: AppsignalTest.Phoenix.PubSub,
+      render_errors: [formats: [html: AppsignalTest.Phoenix.ErrorHTML], layout: false],
+      server: false
+  end
+
+  config :appsignal, AppsignalTest.Phoenix.BanditEndpoint,
+    adapter: Bandit.PhoenixAdapter,
+    http: [ip: {127, 0, 0, 1}, port: 0],
+    server: true
+
+  config :appsignal, AppsignalTest.Phoenix.CowboyEndpoint,
+    http: [ip: {127, 0, 0, 1}, port: 0],
+    server: true
+
+  config :phoenix, :json_library, Jason
 end
