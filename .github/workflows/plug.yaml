@@ -17,7 +17,7 @@ jobs:
   lint_compile:
     runs-on: ubuntu-latest
     env:
-      _APPSIGNAL_CI_PLUG_VERSION: "~> 1.18"
+      _APPSIGNAL_TEST_DEPS: plug
     steps:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
@@ -42,55 +42,22 @@ jobs:
           - "28"
           - "27"
           - "26"
-        plug:
-          - "~> 1.19"
-          - "~> 1.18.0"
         include:
           - elixir: "main"
             otp: "28"
-            plug: "~> 1.19"
           - elixir: "latest"
             otp: "28"
-            plug: "~> 1.19"
           - elixir: "1.18"
             otp: "27"
-            plug: "~> 1.19"
-          - elixir: "1.18"
-            otp: "27"
-            plug: "~> 1.18.0"
           - elixir: "1.17"
             otp: "27"
-            plug: "~> 1.19"
-          - elixir: "1.17"
-            otp: "27"
-            plug: "~> 1.18.0"
           - elixir: "1.16"
             otp: "26"
-            plug: "~> 1.19"
-          - elixir: "1.16"
-            otp: "26"
-            plug: "~> 1.18.0"
           - elixir: "1.15"
             otp: "26"
-            plug: "~> 1.19"
-          - elixir: "1.15"
-            otp: "26"
-            plug: "~> 1.18.0"
-          - elixir: "1.14"
-            otp: "25"
-            plug: "~> 1.19.0"
-          - elixir: "1.14"
-            otp: "25"
-            plug: "~> 1.18.0"
-          - elixir: "1.13"
-            otp: "24"
-            plug: "~> 1.18.0"
-          - elixir: "1.12"
-            otp: "24"
-            plug: "~> 1.18.0"
 
     env:
-      _APPSIGNAL_CI_PLUG_VERSION: ${{matrix.plug}}
+      _APPSIGNAL_TEST_DEPS: plug
     steps:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1

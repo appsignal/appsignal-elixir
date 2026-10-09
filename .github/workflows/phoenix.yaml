@@ -18,7 +18,7 @@ jobs:
   lint_compile:
     runs-on: ubuntu-latest
     env:
-      _APPSIGNAL_CI_PHOENIX_VERSION: "~> 1.8"
+      _APPSIGNAL_TEST_DEPS: phoenix
     steps:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
@@ -43,52 +43,49 @@ jobs:
           - "28"
           - "27"
           - "26"
-        phoenix:
-          - "~> 1.7.0"
-          - "~> 1.8"
+        set:
+          - phoenix-1.7
+          - phoenix
         include:
           - elixir: "main"
             otp: "28"
-            phoenix: "~> 1.8"
+            set: phoenix
           - elixir: "latest"
             otp: "28"
-            phoenix: "~> 1.8"
+            set: phoenix
           - elixir: "1.18"
             otp: "27"
-            phoenix: "~> 1.8"
+            set: phoenix
           - elixir: "1.18"
             otp: "27"
-            phoenix: "~> 1.7.0"
+            set: phoenix-1.7
           - elixir: "1.17"
             otp: "27"
-            phoenix: "~> 1.8"
+            set: phoenix
           - elixir: "1.17"
             otp: "27"
-            phoenix: "~> 1.7.0"
+            set: phoenix-1.7
           - elixir: "1.16"
             otp: "26"
-            phoenix: "~> 1.8"
+            set: phoenix
           - elixir: "1.16"
             otp: "26"
-            phoenix: "~> 1.7.0"
+            set: phoenix-1.7
           - elixir: "1.15"
             otp: "26"
-            phoenix: "~> 1.8"
+            set: phoenix
           - elixir: "1.15"
             otp: "26"
-            phoenix: "~> 1.7.0"
+            set: phoenix-1.7
           - elixir: "1.14"
             otp: "25"
-            phoenix: "~> 1.7.0"
-            plug: "~> 1.19.0"
+            set: phoenix-1.7
           - elixir: "1.13"
             otp: "24"
-            phoenix: "~> 1.7.0"
-            plug: "~> 1.18.0"
+            set: phoenix-1.7
           - elixir: "1.12"
             otp: "24"
-            phoenix: "~> 1.7.0"
-            plug: "~> 1.18.0"
+            set: phoenix-1.7
 
     steps:
       - name: Set up Erlang and Elixir
@@ -101,10 +98,8 @@ jobs:
       - name: Get dependencies
         run: mix deps.get
         env:
-          _APPSIGNAL_CI_PHOENIX_VERSION: ${{matrix.phoenix}}
-          _APPSIGNAL_CI_PLUG_VERSION: ${{matrix.plug}}
+          _APPSIGNAL_TEST_DEPS: ${{matrix.set}}
       - name: Run tests
         run: mix test
         env:
-          _APPSIGNAL_CI_PHOENIX_VERSION: ${{matrix.phoenix}}
-          _APPSIGNAL_CI_PLUG_VERSION: ${{matrix.plug}}
+          _APPSIGNAL_TEST_DEPS: ${{matrix.set}}
