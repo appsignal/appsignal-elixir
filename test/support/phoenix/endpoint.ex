@@ -11,6 +11,8 @@ if Appsignal.Dependencies.present?(:phoenix) do
           websocket: [connect_info: [session: @session_options]]
         )
 
+        socket("/socket", AppsignalTest.Phoenix.UserSocket, websocket: true)
+
         plug(:halt_before_router)
         plug(Plug.RequestId)
         plug(Plug.Telemetry, event_prefix: [:phoenix, :endpoint])
