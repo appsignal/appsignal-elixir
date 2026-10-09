@@ -11,6 +11,7 @@ for endpoint <- [
   config :appsignal, endpoint,
     # Plug's cookie session store needs at least 64 bytes.
     secret_key_base: "0000000000000000000000000000000000000000000000000000000000000000",
+    live_view: [signing_salt: "appsignal"],
     pubsub_server: AppsignalTest.Phoenix.PubSub,
     render_errors: [formats: [html: AppsignalTest.Phoenix.ErrorHTML], layout: false],
     server: false
