@@ -452,8 +452,10 @@ defmodule Appsignal.TracerContractTest do
       assert Tracer.current_span() == span
       assert Tracer.root_span() == span
     end
+  end
 
-    test "send_error ends its own root without touching the registry" do
+  describe "send_error" do
+    test "ends its own root and leaves the current span alone" do
       span = Tracer.create_span("http_request")
 
       error_span = Appsignal.send_error(%RuntimeError{message: "Exception!"}, [])
