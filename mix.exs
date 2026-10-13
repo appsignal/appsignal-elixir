@@ -40,7 +40,7 @@ defmodule Appsignal.Mixfile do
       description: description(),
       package: package(),
       homepage_url: "https://appsignal.com",
-      test_paths: test_paths(Mix.env()),
+      test_paths: ["test/appsignal", "test/mix"],
       elixir: "~> 1.12",
       compilers: compilers(Mix.env()),
       elixirc_paths: elixirc_paths(Mix.env()),
@@ -100,19 +100,10 @@ defmodule Appsignal.Mixfile do
 
   defp compilers(_), do: [:appsignal] ++ Mix.compilers()
 
-  defp test_paths(_) do
-    integrations = integrations(versions())
-
-    ["test/appsignal", "test/mix"] ++
-      if(:plug in integrations, do: ["test/plug"], else: []) ++
-      if(:phoenix in integrations, do: ["test/phoenix"], else: [])
-  end
-
   defp elixirc_paths(env) do
     case test?(env) do
       true ->
-        ["lib", "test/support"] ++
-          if :phoenix in integrations(versions()), do: ["test/phoenix/support"], else: []
+        ["lib", "test/support"]
 
       false ->
         ["lib"]

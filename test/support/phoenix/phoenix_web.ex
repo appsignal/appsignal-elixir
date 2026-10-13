@@ -32,7 +32,7 @@ if Appsignal.Dependencies.present?(:phoenix) do
     defmodule PhoenixWeb.View do
       @moduledoc false
       use Phoenix.View,
-        root: "test/phoenix/support",
+        root: "test/support/phoenix",
         namespace: AppsignalPhoenixExampleWeb
 
       use Appsignal.Phoenix.View

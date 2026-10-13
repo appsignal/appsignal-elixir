@@ -1,7 +1,7 @@
 if Appsignal.Dependencies.present?(:phoenix) do
-  defmodule Appsignal.Phoenix.Template.EExEngineTest do
+  defmodule Appsignal.Phoenix.Template.ExsEngineTest do
     use ExUnit.Case
-    alias Appsignal.{Phoenix.Template.EExEngine, Span, Test}
+    alias Appsignal.{Phoenix.Template.ExsEngine, Span, Test}
 
     setup do
       start_supervised!(Test.Nif)
@@ -10,8 +10,8 @@ if Appsignal.Dependencies.present?(:phoenix) do
       start_supervised!(Test.Monitor)
 
       return =
-        "test/phoenix/support/index.html.eex"
-        |> EExEngine.compile("name")
+        "test/support/phoenix/index.html.exs"
+        |> ExsEngine.compile("name")
         |> Code.eval_quoted()
 
       %{return: return}
@@ -22,7 +22,7 @@ if Appsignal.Dependencies.present?(:phoenix) do
     end
 
     test "sets the span's name" do
-      assert {:ok, [{%Span{}, "Render test/phoenix/support/index.html.eex"}]} =
+      assert {:ok, [{%Span{}, "Render test/support/phoenix/index.html.exs"}]} =
                Test.Span.get(:set_name)
     end
 
@@ -31,11 +31,11 @@ if Appsignal.Dependencies.present?(:phoenix) do
     end
 
     test "sets the span's title attribute" do
-      assert attribute("title", "test/phoenix/support/index.html.eex")
+      assert attribute("title", "test/support/phoenix/index.html.exs")
     end
 
     test "renders the template", %{return: return} do
-      assert {{:safe, ["<h1>Welcome to ", "Phoenix", "!</h1>\n"]}, _} = return
+      assert {"<h1>Welcome to Phoenix!</h1>\n", _} = return
     end
 
     test "closes the span" do
