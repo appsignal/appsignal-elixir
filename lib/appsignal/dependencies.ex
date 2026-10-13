@@ -34,6 +34,26 @@ defmodule Appsignal.Dependencies do
 
   def foreign?(_path, _ebin), do: false
 
+  def version(app) do
+    _ = Application.load(app)
+
+    case Application.spec(app, :vsn) do
+      nil -> nil
+      vsn -> to_string(vsn)
+    end
+  end
+
+  def present?(app), do: version(app) != nil
+
+  def match?(app, requirement) do
+    with version when is_binary(version) <- version(app),
+         {:ok, version} <- Version.parse(version) do
+      Version.match?(version, requirement, allow_pre: true)
+    else
+      _ -> false
+    end
+  end
+
   def missing do
     [
       {:plug, Plug.Conn, Appsignal.Plug},
@@ -78,15 +98,11 @@ defmodule Appsignal.Dependencies do
   end
 
   defp legacy_package(app) do
-    _ = Application.load(app)
-
-    case Application.spec(app, :vsn) do
+    case version(app) do
       nil ->
         []
 
-      vsn ->
-        version = to_string(vsn)
-
+      version ->
         case Version.parse(version) do
           {:ok, parsed} ->
             if Version.compare(parsed, "3.0.0") == :lt, do: [{app, version}], else: []

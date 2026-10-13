@@ -61,6 +61,54 @@ defmodule Appsignal.DependenciesTest do
     end
   end
 
+  describe "present?/1" do
+    test "with the library loaded" do
+      load_package(:appsignal_test_library, "1.7.0")
+
+      assert Dependencies.present?(:appsignal_test_library)
+    end
+
+    test "without the library" do
+      refute Dependencies.present?(:appsignal_test_library)
+    end
+  end
+
+  describe "match?/2" do
+    test "with a version that meets the requirement" do
+      load_package(:appsignal_test_library, "1.8.15")
+
+      assert Dependencies.match?(:appsignal_test_library, ">= 1.7.0")
+    end
+
+    test "with a pre-release of a version that meets the requirement" do
+      load_package(:appsignal_test_library, "1.9.0-rc.0")
+
+      assert Dependencies.match?(:appsignal_test_library, ">= 1.7.0")
+    end
+
+    test "with a version that does not meet the requirement" do
+      load_package(:appsignal_test_library, "1.6.16")
+
+      refute Dependencies.match?(:appsignal_test_library, ">= 1.7.0")
+    end
+
+    test "with a pre-release of the oldest version that meets the requirement" do
+      load_package(:appsignal_test_library, "1.7.0-rc.0")
+
+      refute Dependencies.match?(:appsignal_test_library, ">= 1.7.0")
+    end
+
+    test "with a version that cannot be parsed" do
+      load_package(:appsignal_test_library, "one point seven")
+
+      refute Dependencies.match?(:appsignal_test_library, ">= 1.7.0")
+    end
+
+    test "without the library" do
+      refute Dependencies.match?(:appsignal_test_library, ">= 0.0.0")
+    end
+  end
+
   describe "initialize/0 with appsignal_phoenix 2.x installed" do
     setup do
       start_supervised!(Appsignal.Test.Nif)
