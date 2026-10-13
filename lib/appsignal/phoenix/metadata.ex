@@ -24,6 +24,6 @@ defmodule Appsignal.Phoenix.Metadata do
   end
 
   defp root_view(socket) do
-    socket |> Map.get(:private, %{}) |> Map.get(:root_view) || Map.get(socket, :root_view)
+    socket |> Map.get(:private, %{}) |> Map.get(:root_view)
   end
 end

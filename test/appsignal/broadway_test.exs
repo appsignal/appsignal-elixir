@@ -104,20 +104,6 @@ if Appsignal.Dependencies.present?(:broadway) do
       end
     end
 
-    describe "broadway_processor_start/4, with pre-v1.0.0 metadata" do
-      setup do
-        :telemetry.execute(
-          [:broadway, :processor, :start],
-          %{system_time: 123_456_000},
-          sample_processor_metadata() |> Map.delete(:topology_name)
-        )
-      end
-
-      test "does not create a span" do
-        assert :error = Test.Tracer.get(:create_span)
-      end
-    end
-
     describe "broadway_processor_start/4, with an atom-named pipeline" do
       setup do
         execute_processor_start(%{
@@ -178,28 +164,6 @@ if Appsignal.Dependencies.present?(:broadway) do
       end
     end
 
-    describe "broadway_processor_stop/4, with pre-v1.0.0 metadata" do
-      setup do
-        execute_processor_start()
-
-        :telemetry.execute(
-          [:broadway, :processor, :stop],
-          %{duration: System.convert_time_unit(123, :millisecond, :native)},
-          sample_processor_stop_metadata() |> Map.delete(:topology_name)
-        )
-      end
-
-      test "does not set the message counts as span tags" do
-        refute attribute?("failed_messages", 1)
-        refute attribute?("successful_messages_to_ack", 2)
-        refute attribute?("successful_messages_to_forward", 3)
-      end
-
-      test "does not close the span" do
-        assert :error = Test.Tracer.get(:close_span)
-      end
-    end
-
     describe "broadway_processor_message_start/4" do
       setup do
         execute_message_start()
@@ -235,20 +199,6 @@ if Appsignal.Dependencies.present?(:broadway) do
         assert attribute?("topology_name", "MyApp.Pipeline")
         assert attribute?("producer", "MyApp.Producer")
         assert attribute?("processor", "MyApp.Pipeline.Broadway.Processor_default_0")
-      end
-    end
-
-    describe "broadway_processor_message_start/4, with pre-v1.0.0 metadata" do
-      setup do
-        :telemetry.execute(
-          [:broadway, :processor, :message, :start],
-          %{system_time: 123_456_000},
-          sample_message_metadata() |> Map.delete(:topology_name)
-        )
-      end
-
-      test "does not create a span" do
-        assert :error = Test.Tracer.get(:create_span)
       end
     end
 
@@ -299,25 +249,6 @@ if Appsignal.Dependencies.present?(:broadway) do
       end
     end
 
-    describe "broadway_processor_message_stop/4, with pre-v1.0.0 metadata" do
-      setup do
-        execute_message_start()
-        span = Tracer.current_span()
-
-        :telemetry.execute(
-          [:broadway, :processor, :message, :stop],
-          %{duration: 123_456_000},
-          sample_message_metadata() |> Map.delete(:topology_name)
-        )
-
-        [span: span]
-      end
-
-      test "does not close the span" do
-        assert :error = Test.Tracer.get(:close_span)
-      end
-    end
-
     describe "broadway_processor_message_exception/4" do
       setup do
         execute_message_start()
@@ -343,29 +274,6 @@ if Appsignal.Dependencies.present?(:broadway) do
 
       test "closes the span", %{span: span} do
         assert {:ok, [{^span}]} = Test.Tracer.get(:close_span)
-      end
-    end
-
-    describe "broadway_processor_message_exception/4, with pre-v1.0.0 metadata" do
-      setup do
-        execute_message_start()
-        span = Tracer.current_span()
-
-        :telemetry.execute(
-          [:broadway, :processor, :message, :exception],
-          %{duration: 123_456_000},
-          sample_message_metadata() |> Map.delete(:topology_name)
-        )
-
-        [span: span]
-      end
-
-      test "does not add an error to the span" do
-        assert :error = Test.Span.get(:add_error)
-      end
-
-      test "does not close the span" do
-        assert :error = Test.Tracer.get(:close_span)
       end
     end
 

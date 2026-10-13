@@ -52,68 +52,6 @@ defmodule Appsignal.FinchTest do
     end
   end
 
-  describe "finch_request_start/4, with an unsupported event shape" do
-    setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
-
-      :telemetry.execute(
-        [:finch, :request, :start],
-        %{},
-        # Finch 0.11 will emit events such as this, where the properties
-        # of the request are not contained in a `request` map.
-        %{
-          method: "GET",
-          scheme: :https,
-          path: "/",
-          host: "example.com",
-          port: 443
-        }
-      )
-    end
-
-    test "does not create a span" do
-      assert Test.Tracer.get(:create_span) == :error
-    end
-
-    test "does not detach the handler" do
-      assert attached?([:finch, :request, :start])
-    end
-  end
-
-  describe "finch_request_stop/4, with an unsupported event shape" do
-    setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
-
-      :telemetry.execute(
-        [:finch, :request, :stop],
-        %{},
-        # Finch 0.11 will emit events such as this, where the properties
-        # of the request are not contained in a `request` map.
-        %{
-          method: "GET",
-          scheme: :https,
-          path: "/",
-          host: "example.com",
-          port: 443
-        }
-      )
-    end
-
-    test "does not close a span" do
-      assert Test.Tracer.get(:close_span) == :error
-    end
-
-    test "does not detach the handler" do
-      assert attached?([:finch, :request, :stop])
-    end
-  end
-
   describe "finch_request_start/4, with an AppsignalFinch event" do
     setup do
       start_supervised!(Test.Nif)

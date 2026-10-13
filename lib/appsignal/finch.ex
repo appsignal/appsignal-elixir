@@ -43,22 +43,6 @@ defmodule Appsignal.Finch do
     end
   end
 
-  def finch_request_start(_event, _measurements, _metadata, _config) do
-    # In Finch versions 0.11 and below, the `request` events for `start` and
-    # `stop` (but not `exception`) are also emitted, but the events' meaning is
-    # different, and the metadata object provided does not contain a `request`
-    # key.
-    # The implementations of the event handling functions above this perform
-    # pattern matching on the presence of the `request` key, as a way to
-    # check that the event shape is correct, meaning that the event is from
-    # Finch version 0.12 or above.
-    # The nil-returning catch-all implementations of these functions exist to
-    # catch events emitted by Finch versions below 0.12 and do nothing,
-    # ensuring that a `FunctionClauseError` is not raised.
-
-    nil
-  end
-
   defp do_finch_request_start(nil, _name, _request), do: nil
 
   defp do_finch_request_start(parent, _name, request) do
@@ -76,10 +60,6 @@ defmodule Appsignal.Finch do
         @tracer.close_span(span)
       end
     end
-  end
-
-  def finch_request_stop(_event, _measurements, _metadata, _config) do
-    nil
   end
 
   defp has_prefix(name, prefix) when is_atom(name) do

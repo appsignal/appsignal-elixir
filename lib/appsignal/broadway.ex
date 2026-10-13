@@ -51,22 +51,7 @@ defmodule Appsignal.Broadway do
     end
   end
 
-  @doc """
-  Gatekeeper for Broadway v1.0.0 or above.
-
-  The content of Broadway telemetry events changed drastically in version 1.0.0,
-  where most of the current event structure was defined.
-
-  The presence of `topology_name`, within `metadata`, is a tell that we're in
-  the presence of a >=1.0.0 Broadway version.
-  """
   def broadway_processor_start(_event, _measurements, metadata, _config) do
-    if metadata[:topology_name] do
-      do_broadway_processor_start(metadata)
-    end
-  end
-
-  defp do_broadway_processor_start(metadata) do
     topology_name = topology_name(metadata[:topology_name])
 
     "broadway"
@@ -89,22 +74,7 @@ defmodule Appsignal.Broadway do
   defp processor_name(name) when is_atom(name) or is_binary(name), do: module_name(name)
   defp processor_name(name), do: inspect(name)
 
-  @doc """
-  Gatekeeper for Broadway v1.0.0 or above.
-
-  The content of Broadway telemetry events changed drastically in version 1.0.0,
-  where most of the current event structure was defined.
-
-  The presence of `topology_name`, within `metadata`, is a tell that we're in
-  the presence of a >=1.0.0 Broadway version.
-  """
   def broadway_processor_stop(_event, _measurements, metadata, _config) do
-    if metadata[:topology_name] do
-      do_broadway_processor_stop(metadata)
-    end
-  end
-
-  def do_broadway_processor_stop(metadata) do
     @tracer.current_span()
     |> set_attribute("failed_messages", metadata[:failed_messages], &length/1)
     |> set_attribute(
@@ -120,22 +90,7 @@ defmodule Appsignal.Broadway do
     |> @tracer.close_span()
   end
 
-  @doc """
-  Gatekeeper for Broadway v1.0.0 or above.
-
-  The content of Broadway telemetry events changed drastically in version 1.0.0,
-  where most of the current event structure was defined.
-
-  The presence of `topology_name`, within `metadata`, is a tell that we're in
-  the presence of a >=1.0.0 Broadway version.
-  """
   def broadway_processor_message_start(_event, _measurements, metadata, _config) do
-    if metadata[:topology_name] do
-      do_broadway_processor_message_start(metadata)
-    end
-  end
-
-  defp do_broadway_processor_message_start(metadata) do
     topology_name = topology_name(metadata[:topology_name])
 
     "broadway"
@@ -148,40 +103,19 @@ defmodule Appsignal.Broadway do
     |> set_attribute("topology_name", topology_name)
   end
 
-  @doc """
-  Gatekeeper for Broadway v1.0.0 or above.
-
-  The content of Broadway telemetry events changed drastically in version 1.0.0,
-  where most of the current event structure was defined.
-
-  The presence of `topology_name`, within `metadata`, is a tell that we're in
-  the presence of a >=1.0.0 Broadway version.
-  """
-  def broadway_processor_message_stop(_event, _measurements, metadata, _config) do
-    if metadata[:topology_name] do
-      @tracer.close_span(@tracer.current_span())
-    end
+  def broadway_processor_message_stop(_event, _measurements, _metadata, _config) do
+    @tracer.close_span(@tracer.current_span())
   end
 
-  @doc """
-  Gatekeeper for Broadway v1.0.0 or above.
-
-  The content of Broadway telemetry events changed drastically in version 1.0.0,
-  where most of the current event structure was defined.
-
-  The presence of `topology_name`, within `metadata`, is a tell that we're in
-  the presence of a >=1.0.0 Broadway version.
-  """
   def broadway_processor_message_exception(event, measurements, metadata, config) do
-    if metadata[:topology_name] do
-      do_broadway_processor_message_exception(metadata)
-      broadway_processor_message_stop(event, measurements, metadata, config)
-    end
-  end
+    @span.add_error(
+      @tracer.current_span(),
+      metadata[:kind],
+      metadata[:reason],
+      metadata[:stacktrace]
+    )
 
-  defp do_broadway_processor_message_exception(metadata) do
-    @tracer.current_span()
-    |> @span.add_error(metadata[:kind], metadata[:reason], metadata[:stacktrace])
+    broadway_processor_message_stop(event, measurements, metadata, config)
   end
 
   defp set_attribute(span, key, value, fun \\ & &1)
