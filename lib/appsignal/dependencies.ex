@@ -1,4 +1,4 @@
-defmodule Appsignal.Integrations do
+defmodule Appsignal.Dependencies do
   @moduledoc false
 
   require Logger
