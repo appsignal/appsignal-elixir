@@ -1,5 +1,18 @@
 # AppSignal for Elixir changelog
 
+## 2.18.2
+
+_Published on 2026-10-14._
+
+### Added
+
+- Automatically detect the application's revision from the `HEROKU_BUILD_COMMIT`
+  environment variable, which is set by Heroku at runtime [when the
+  `runtime-dyno-build-metadata` Heroku Labs
+  feature](https://devcenter.heroku.com/articles/dyno-metadata) is enabled.
+
+  (patch [e0367a5b](https://github.com/appsignal/appsignal-elixir/commit/e0367a5bbccf65bb0d920a5035cc909b56fe745b))
+
 ## 2.18.1
 
 _Published on 2026-10-02._
