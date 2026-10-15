@@ -39,7 +39,7 @@ if Code.ensure_loaded?(PhoenixWeb.View) do
       end
 
       test "sets the span's name" do
-        assert {:ok, [{%Span{}, "Render test/phoenix/support/index.html"}]} =
+        assert {:ok, [{%Span{}, "Render test/support/phoenix/index.html"}]} =
                  Test.Span.get(:set_name)
       end
 
@@ -48,7 +48,7 @@ if Code.ensure_loaded?(PhoenixWeb.View) do
       end
 
       test "sets the span's title attribute" do
-        assert attribute("title", "test/phoenix/support/index.html")
+        assert attribute("title", "test/support/phoenix/index.html")
       end
 
       test "renders the template", %{return: return} do
@@ -73,7 +73,7 @@ if Code.ensure_loaded?(PhoenixWeb.View) do
       end
 
       test "sets the span's name" do
-        assert {:ok, [{%Span{}, "Render test/phoenix/support/index.html"}]} =
+        assert {:ok, [{%Span{}, "Render test/support/phoenix/index.html"}]} =
                  Test.Span.get(:set_name)
       end
 
@@ -82,7 +82,7 @@ if Code.ensure_loaded?(PhoenixWeb.View) do
       end
 
       test "sets the span's title attribute" do
-        assert attribute("title", "test/phoenix/support/index.html")
+        assert attribute("title", "test/support/phoenix/index.html")
       end
 
       test "renders the template", %{return: return} do

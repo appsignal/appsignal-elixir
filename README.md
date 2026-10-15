@@ -87,19 +87,35 @@ MIX_ENV=test mix test
 MIX_ENV=test_no_nif mix test
 ```
 
-The test suites leave out Plug and Phoenix, to show that this package works in
-applications without them. To include the Plug or Phoenix integration and its
-tests, set the version of Plug or Phoenix to test against. Phoenix includes
-Plug.
+The test suites leave out the libraries this package integrates with, to show
+that it works in applications without them. To run the tests against those
+libraries, pick a dependency set from `test/deps` by name. Each set lists the
+libraries and versions to test against.
 
 ```shell
-_APPSIGNAL_CI_PLUG_VERSION="~> 1.19" mix test
-_APPSIGNAL_CI_PHOENIX_VERSION="~> 1.8" mix test
+_APPSIGNAL_TEST_DEPS=plug mix deps.get
+_APPSIGNAL_TEST_DEPS=plug mix test
 ```
 
-When switching between these, remove `mix.lock` and run `mix deps.get`, then
-run `mix compile --force`. Mix does not recompile this package when its
-optional dependencies change.
+Each set has its own lockfile, dependencies and build directory, under
+`deps/sets` and `_build/sets`, so switching between sets does not need a
+clean build.
+
+To run the tests without a set and with every set CI runs on the installed
+Elixir version, one after another:
+
+```shell
+elixir script/generate_ci.exs --local
+```
+
+CI runs each set on the Elixir and OTP versions listed in
+`.github/build_matrix.exs`, except the ones that file excludes it from. The CI
+workflow is generated from that file and the sets, so after changing either,
+regenerate the workflow:
+
+```shell
+elixir script/generate_ci.exs
+```
 
 ### Benchmarking
 

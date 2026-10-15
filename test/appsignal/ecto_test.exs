@@ -1,718 +1,720 @@
-defmodule Appsignal.EctoTest do
-  use ExUnit.Case
-  alias Appsignal.{Ecto, FakeAppsignal, Span, Test}
-  import AppsignalTest.Utils, only: [with_config: 2]
+if Appsignal.Dependencies.present?(:ecto) do
+  defmodule Appsignal.EctoTest do
+    use ExUnit.Case
+    alias Appsignal.{Ecto, FakeAppsignal, Span, Test}
+    import AppsignalTest.Utils, only: [with_config: 2]
 
-  test "is attached to the repo query event automatically" do
-    assert attached?([:appsignal, :test, :repo, :query])
-  end
-
-  test "is not attached automatically when :instrument_ecto is set to false" do
-    :telemetry.detach({Ecto, [:appsignal, :test, :repo, :query]})
-
-    with_config(%{instrument_ecto: false}, fn -> Appsignal.start([], []) end)
-
-    assert !attached?([:appsignal, :test, :repo, :query])
-
-    :ok = Ecto.attach()
-  end
-
-  test "attach/0 attaches to configured repos" do
-    assert with_config(
-             %{ecto_repos: [Appsignal.Test.RepoOne, Appsignal.Test.RepoTwo]},
-             &Ecto.attach/0
-           )
-
-    assert attached?([:appsignal, :test, :repo_one, :query])
-    assert attached?([:appsignal, :test, :repo_two, :query])
-  end
-
-  test "attach/2 attaches to events with custom prefixes" do
-    Application.put_env(:appsignal, Appsignal.Test.Repo, telemetry_prefix: [:my_repo])
-    Ecto.attach(:appsignal, Appsignal.Test.Repo)
-
-    assert attached?([:my_repo, :query])
-
-    Application.delete_env(:appsignal, Appsignal.Test.Repo, telemetry_prefix: :my_repo)
-  end
-
-  describe "handle_event/4, without a root span" do
-    setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
-
-      :telemetry.execute(
-        [:appsignal, :test, :repo, :query],
-        %{
-          decode_time: 2_204_000,
-          query_time: 5_386_000,
-          queue_time: 1_239_000,
-          total_time: 8_829_000
-        },
-        %{
-          params: [],
-          query:
-            "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0",
-          repo: Appsignal.Test.Repo,
-          result: :ok,
-          source: "users",
-          type: :ecto_sql_query
-        }
-      )
+    test "is attached to the repo query event automatically" do
+      assert attached?([:appsignal, :test, :repo, :query])
     end
 
-    test "does not create a span" do
-      assert Test.Tracer.get(:create_span) == :error
-    end
-  end
+    test "is not attached automatically when :instrument_ecto is set to false" do
+      :telemetry.detach({Ecto, [:appsignal, :test, :repo, :query]})
 
-  describe "handle_event/4, emitted metrics with a source" do
-    setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
-      fake_appsignal = start_supervised!(FakeAppsignal)
+      with_config(%{instrument_ecto: false}, fn -> Appsignal.start([], []) end)
 
-      :telemetry.execute(
-        [:appsignal, :test, :repo, :query],
-        %{
-          decode_time: 2_204_000,
-          query_time: 5_386_000,
-          queue_time: 1_239_000,
-          idle_time: 12_017_000,
-          total_time: 8_829_000
-        },
-        %{
-          params: [],
-          query:
-            "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0",
-          repo: Appsignal.Test.Repo,
-          result: :ok,
-          source: "users",
-          type: :ecto_sql_query
-        }
-      )
+      assert !attached?([:appsignal, :test, :repo, :query])
 
-      [fake_appsignal: fake_appsignal]
+      :ok = Ecto.attach()
     end
 
-    test "adds query_time with both hostname and source tags", %{fake_appsignal: f} do
-      assert [
-               %{value: 5.386, tags: %{repo: "Appsignal.Test.Repo", source: "users"}},
-               %{
-                 value: 5.386,
-                 tags: %{repo: "Appsignal.Test.Repo", hostname: "Bobs-MBP.example.com"}
-               }
-             ] = FakeAppsignal.get_distribution_values(f, "ecto_query_time")
+    test "attach/0 attaches to configured repos" do
+      assert with_config(
+               %{ecto_repos: [Appsignal.Test.RepoOne, Appsignal.Test.RepoTwo]},
+               &Ecto.attach/0
+             )
+
+      assert attached?([:appsignal, :test, :repo_one, :query])
+      assert attached?([:appsignal, :test, :repo_two, :query])
     end
 
-    test "adds decode_time with both hostname and source tags", %{fake_appsignal: f} do
-      assert [
-               %{value: 2.204, tags: %{repo: "Appsignal.Test.Repo", source: "users"}},
-               %{
-                 value: 2.204,
-                 tags: %{repo: "Appsignal.Test.Repo", hostname: "Bobs-MBP.example.com"}
-               }
-             ] = FakeAppsignal.get_distribution_values(f, "ecto_decode_time")
+    test "attach/2 attaches to events with custom prefixes" do
+      Application.put_env(:appsignal, Appsignal.Test.Repo, telemetry_prefix: [:my_repo])
+      Ecto.attach(:appsignal, Appsignal.Test.Repo)
+
+      assert attached?([:my_repo, :query])
+
+      Application.delete_env(:appsignal, Appsignal.Test.Repo, telemetry_prefix: :my_repo)
     end
 
-    test "adds total_time with both hostname and source tags", %{fake_appsignal: f} do
-      assert [
-               %{value: 8.829, tags: %{repo: "Appsignal.Test.Repo", source: "users"}},
-               %{
-                 value: 8.829,
-                 tags: %{repo: "Appsignal.Test.Repo", hostname: "Bobs-MBP.example.com"}
-               }
-             ] = FakeAppsignal.get_distribution_values(f, "ecto_total_time")
-    end
+    describe "handle_event/4, without a root span" do
+      setup do
+        start_supervised!(Test.Nif)
+        start_supervised!(Test.Tracer)
+        start_supervised!(Test.Span)
+        start_supervised!(Test.Monitor)
 
-    test "adds queue_time with hostname tags only", %{fake_appsignal: f} do
-      assert [
-               %{
-                 value: 1.239,
-                 tags: %{repo: "Appsignal.Test.Repo", hostname: "Bobs-MBP.example.com"}
-               }
-             ] = FakeAppsignal.get_distribution_values(f, "ecto_queue_time")
-    end
+        :telemetry.execute(
+          [:appsignal, :test, :repo, :query],
+          %{
+            decode_time: 2_204_000,
+            query_time: 5_386_000,
+            queue_time: 1_239_000,
+            total_time: 8_829_000
+          },
+          %{
+            params: [],
+            query:
+              "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0",
+            repo: Appsignal.Test.Repo,
+            result: :ok,
+            source: "users",
+            type: :ecto_sql_query
+          }
+        )
+      end
 
-    test "adds idle_time with hostname tags only", %{fake_appsignal: f} do
-      assert [
-               %{
-                 value: 12.017,
-                 tags: %{repo: "Appsignal.Test.Repo", hostname: "Bobs-MBP.example.com"}
-               }
-             ] = FakeAppsignal.get_distribution_values(f, "ecto_idle_time")
-    end
-  end
-
-  describe "handle_event/4, when the source is nil" do
-    setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
-      fake_appsignal = start_supervised!(FakeAppsignal)
-
-      :telemetry.execute(
-        [:appsignal, :test, :repo, :query],
-        %{
-          decode_time: 2_204_000,
-          query_time: 5_386_000,
-          queue_time: 1_239_000,
-          idle_time: 12_017_000,
-          total_time: 8_829_000
-        },
-        %{
-          params: [],
-          query: "begin",
-          repo: Appsignal.Test.Repo,
-          result: :ok,
-          source: nil,
-          type: :ecto_sql_query
-        }
-      )
-
-      [fake_appsignal: fake_appsignal]
-    end
-
-    test "skips source-tagged distributions", %{fake_appsignal: f} do
-      for metric <- ~w(ecto_query_time ecto_decode_time ecto_total_time) do
-        values = FakeAppsignal.get_distribution_values(f, metric)
-        assert length(values) == 1
-        assert hd(values).tags |> Map.has_key?(:source) |> Kernel.!()
+      test "does not create a span" do
+        assert Test.Tracer.get(:create_span) == :error
       end
     end
 
-    test "still emits hostname-tagged distributions", %{fake_appsignal: f} do
-      for metric <- ~w(ecto_query_time ecto_queue_time ecto_decode_time
+    describe "handle_event/4, emitted metrics with a source" do
+      setup do
+        start_supervised!(Test.Nif)
+        start_supervised!(Test.Tracer)
+        start_supervised!(Test.Span)
+        start_supervised!(Test.Monitor)
+        fake_appsignal = start_supervised!(FakeAppsignal)
+
+        :telemetry.execute(
+          [:appsignal, :test, :repo, :query],
+          %{
+            decode_time: 2_204_000,
+            query_time: 5_386_000,
+            queue_time: 1_239_000,
+            idle_time: 12_017_000,
+            total_time: 8_829_000
+          },
+          %{
+            params: [],
+            query:
+              "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0",
+            repo: Appsignal.Test.Repo,
+            result: :ok,
+            source: "users",
+            type: :ecto_sql_query
+          }
+        )
+
+        [fake_appsignal: fake_appsignal]
+      end
+
+      test "adds query_time with both hostname and source tags", %{fake_appsignal: f} do
+        assert [
+                 %{value: 5.386, tags: %{repo: "Appsignal.Test.Repo", source: "users"}},
+                 %{
+                   value: 5.386,
+                   tags: %{repo: "Appsignal.Test.Repo", hostname: "Bobs-MBP.example.com"}
+                 }
+               ] = FakeAppsignal.get_distribution_values(f, "ecto_query_time")
+      end
+
+      test "adds decode_time with both hostname and source tags", %{fake_appsignal: f} do
+        assert [
+                 %{value: 2.204, tags: %{repo: "Appsignal.Test.Repo", source: "users"}},
+                 %{
+                   value: 2.204,
+                   tags: %{repo: "Appsignal.Test.Repo", hostname: "Bobs-MBP.example.com"}
+                 }
+               ] = FakeAppsignal.get_distribution_values(f, "ecto_decode_time")
+      end
+
+      test "adds total_time with both hostname and source tags", %{fake_appsignal: f} do
+        assert [
+                 %{value: 8.829, tags: %{repo: "Appsignal.Test.Repo", source: "users"}},
+                 %{
+                   value: 8.829,
+                   tags: %{repo: "Appsignal.Test.Repo", hostname: "Bobs-MBP.example.com"}
+                 }
+               ] = FakeAppsignal.get_distribution_values(f, "ecto_total_time")
+      end
+
+      test "adds queue_time with hostname tags only", %{fake_appsignal: f} do
+        assert [
+                 %{
+                   value: 1.239,
+                   tags: %{repo: "Appsignal.Test.Repo", hostname: "Bobs-MBP.example.com"}
+                 }
+               ] = FakeAppsignal.get_distribution_values(f, "ecto_queue_time")
+      end
+
+      test "adds idle_time with hostname tags only", %{fake_appsignal: f} do
+        assert [
+                 %{
+                   value: 12.017,
+                   tags: %{repo: "Appsignal.Test.Repo", hostname: "Bobs-MBP.example.com"}
+                 }
+               ] = FakeAppsignal.get_distribution_values(f, "ecto_idle_time")
+      end
+    end
+
+    describe "handle_event/4, when the source is nil" do
+      setup do
+        start_supervised!(Test.Nif)
+        start_supervised!(Test.Tracer)
+        start_supervised!(Test.Span)
+        start_supervised!(Test.Monitor)
+        fake_appsignal = start_supervised!(FakeAppsignal)
+
+        :telemetry.execute(
+          [:appsignal, :test, :repo, :query],
+          %{
+            decode_time: 2_204_000,
+            query_time: 5_386_000,
+            queue_time: 1_239_000,
+            idle_time: 12_017_000,
+            total_time: 8_829_000
+          },
+          %{
+            params: [],
+            query: "begin",
+            repo: Appsignal.Test.Repo,
+            result: :ok,
+            source: nil,
+            type: :ecto_sql_query
+          }
+        )
+
+        [fake_appsignal: fake_appsignal]
+      end
+
+      test "skips source-tagged distributions", %{fake_appsignal: f} do
+        for metric <- ~w(ecto_query_time ecto_decode_time ecto_total_time) do
+          values = FakeAppsignal.get_distribution_values(f, metric)
+          assert length(values) == 1
+          assert hd(values).tags |> Map.has_key?(:source) |> Kernel.!()
+        end
+      end
+
+      test "still emits hostname-tagged distributions", %{fake_appsignal: f} do
+        for metric <- ~w(ecto_query_time ecto_queue_time ecto_decode_time
                        ecto_idle_time ecto_total_time) do
+          assert [
+                   %{tags: %{repo: "Appsignal.Test.Repo", hostname: "Bobs-MBP.example.com"}}
+                 ] = FakeAppsignal.get_distribution_values(f, metric)
+        end
+      end
+    end
+
+    describe "handle_event/4, when the source key is missing from metadata" do
+      setup do
+        start_supervised!(Test.Nif)
+        start_supervised!(Test.Tracer)
+        start_supervised!(Test.Span)
+        start_supervised!(Test.Monitor)
+        fake_appsignal = start_supervised!(FakeAppsignal)
+
+        :telemetry.execute(
+          [:appsignal, :test, :repo, :query],
+          %{
+            query_time: 5_386_000,
+            total_time: 5_386_000
+          },
+          %{
+            query: "SELECT 1",
+            repo: Appsignal.Test.Repo,
+            result: :ok,
+            type: :ecto_sql_query
+          }
+        )
+
+        [fake_appsignal: fake_appsignal]
+      end
+
+      test "does not crash and still emits hostname-tagged distributions", %{fake_appsignal: f} do
         assert [
                  %{tags: %{repo: "Appsignal.Test.Repo", hostname: "Bobs-MBP.example.com"}}
-               ] = FakeAppsignal.get_distribution_values(f, metric)
+               ] = FakeAppsignal.get_distribution_values(f, "ecto_query_time")
+
+        assert [
+                 %{tags: %{repo: "Appsignal.Test.Repo", hostname: "Bobs-MBP.example.com"}}
+               ] = FakeAppsignal.get_distribution_values(f, "ecto_total_time")
+      end
+
+      test "does not emit metrics whose measurements are missing", %{fake_appsignal: f} do
+        for metric <- ~w(ecto_queue_time ecto_decode_time ecto_idle_time) do
+          assert FakeAppsignal.get_distribution_values(f, metric) == []
+        end
       end
     end
-  end
 
-  describe "handle_event/4, when the source key is missing from metadata" do
-    setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
-      fake_appsignal = start_supervised!(FakeAppsignal)
+    describe "handle_event/4, when individual measurements are nil or missing" do
+      setup do
+        start_supervised!(Test.Nif)
+        start_supervised!(Test.Tracer)
+        start_supervised!(Test.Span)
+        start_supervised!(Test.Monitor)
+        fake_appsignal = start_supervised!(FakeAppsignal)
 
-      :telemetry.execute(
-        [:appsignal, :test, :repo, :query],
-        %{
-          query_time: 5_386_000,
-          total_time: 5_386_000
-        },
-        %{
-          query: "SELECT 1",
-          repo: Appsignal.Test.Repo,
-          result: :ok,
-          type: :ecto_sql_query
-        }
-      )
+        :telemetry.execute(
+          [:appsignal, :test, :repo, :query],
+          %{
+            # decode_time missing entirely
+            query_time: 5_386_000,
+            queue_time: 1_239_000,
+            idle_time: nil,
+            total_time: 8_829_000
+          },
+          %{
+            params: [],
+            query:
+              "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0",
+            repo: Appsignal.Test.Repo,
+            result: :ok,
+            source: "users",
+            type: :ecto_sql_query
+          }
+        )
 
-      [fake_appsignal: fake_appsignal]
-    end
+        [fake_appsignal: fake_appsignal]
+      end
 
-    test "does not crash and still emits hostname-tagged distributions", %{fake_appsignal: f} do
-      assert [
-               %{tags: %{repo: "Appsignal.Test.Repo", hostname: "Bobs-MBP.example.com"}}
-             ] = FakeAppsignal.get_distribution_values(f, "ecto_query_time")
+      test "skips the nil measurement", %{fake_appsignal: f} do
+        assert FakeAppsignal.get_distribution_values(f, "ecto_idle_time") == []
+      end
 
-      assert [
-               %{tags: %{repo: "Appsignal.Test.Repo", hostname: "Bobs-MBP.example.com"}}
-             ] = FakeAppsignal.get_distribution_values(f, "ecto_total_time")
-    end
+      test "skips the missing measurement", %{fake_appsignal: f} do
+        assert FakeAppsignal.get_distribution_values(f, "ecto_decode_time") == []
+      end
 
-    test "does not emit metrics whose measurements are missing", %{fake_appsignal: f} do
-      for metric <- ~w(ecto_queue_time ecto_decode_time ecto_idle_time) do
-        assert FakeAppsignal.get_distribution_values(f, metric) == []
+      test "still emits the present measurements", %{fake_appsignal: f} do
+        assert [_, _] = FakeAppsignal.get_distribution_values(f, "ecto_query_time")
+        assert [_] = FakeAppsignal.get_distribution_values(f, "ecto_queue_time")
+        assert [_, _] = FakeAppsignal.get_distribution_values(f, "ecto_total_time")
       end
     end
-  end
 
-  describe "handle_event/4, when individual measurements are nil or missing" do
-    setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
-      fake_appsignal = start_supervised!(FakeAppsignal)
+    describe "handle_event/4 and handle_query/4, with a root span from the tracer" do
+      setup do
+        start_supervised!(Test.Nif)
+        start_supervised!(Test.Tracer)
+        start_supervised!(Test.Span)
+        start_supervised!(Test.Monitor)
 
-      :telemetry.execute(
-        [:appsignal, :test, :repo, :query],
-        %{
-          # decode_time missing entirely
-          query_time: 5_386_000,
-          queue_time: 1_239_000,
-          idle_time: nil,
-          total_time: 8_829_000
-        },
-        %{
-          params: [],
-          query:
-            "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0",
-          repo: Appsignal.Test.Repo,
-          result: :ok,
-          source: "users",
-          type: :ecto_sql_query
-        }
-      )
+        span = Appsignal.Tracer.create_span("http_request")
 
-      [fake_appsignal: fake_appsignal]
+        :telemetry.execute(
+          [:appsignal, :test, :repo, :query],
+          %{
+            decode_time: 2_204_000,
+            query_time: 5_386_000,
+            queue_time: 1_239_000,
+            total_time: 8_829_000
+          },
+          %{
+            params: [],
+            query:
+              "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0",
+            repo: Appsignal.Test.Repo,
+            result: :ok,
+            source: "users",
+            type: :ecto_sql_query
+          }
+        )
+
+        %{parent: span}
+      end
+
+      test "creates a span with a parent and a start time", %{parent: parent} do
+        {:ok, [{"http_request", ^parent, start_time: time}]} = Test.Tracer.get(:create_span)
+        assert is_integer(time)
+      end
+
+      test "sets the span's name" do
+        assert {:ok, [{%Span{}, "Query Appsignal.Test.Repo"}]} = Test.Span.get(:set_name)
+      end
+
+      test "sets the span's category" do
+        assert attribute("appsignal:category", "query.ecto")
+      end
+
+      test "sets the span's body" do
+        assert {:ok,
+                [
+                  {%Span{},
+                   "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0"}
+                ]} = Test.Span.get(:set_sql)
+      end
+
+      test "closes the span with an end time" do
+        {:ok, [{_, _, start_time: start_time}]} = Test.Tracer.get(:create_span)
+        {:ok, [{%Span{}, end_time: end_time}]} = Test.Tracer.get(:close_span)
+        assert end_time - start_time == 8_829_000
+      end
     end
 
-    test "skips the nil measurement", %{fake_appsignal: f} do
-      assert FakeAppsignal.get_distribution_values(f, "ecto_idle_time") == []
+    describe "handle_event/4 and handle_query/4, with a root span passed via telemetry options" do
+      setup do
+        start_supervised!(Test.Nif)
+        start_supervised!(Test.Tracer)
+        start_supervised!(Test.Span)
+        start_supervised!(Test.Monitor)
+
+        span =
+          fn -> Appsignal.Tracer.create_span("http_request") end
+          |> Task.async()
+          |> Task.await()
+
+        :telemetry.execute(
+          [:appsignal, :test, :repo, :query],
+          %{
+            decode_time: 2_204_000,
+            query_time: 5_386_000,
+            queue_time: 1_239_000,
+            total_time: 8_829_000
+          },
+          %{
+            params: [],
+            query:
+              "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0",
+            repo: Appsignal.Test.Repo,
+            result: :ok,
+            source: "users",
+            type: :ecto_sql_query,
+            options: [
+              _appsignal_current_span: span
+            ]
+          }
+        )
+
+        %{parent: span}
+      end
+
+      test "creates a span with a parent and a start time", %{parent: parent} do
+        {:ok, [{"http_request", ^parent, start_time: time}]} = Test.Tracer.get(:create_span)
+        assert is_integer(time)
+      end
+
+      test "sets the span's name" do
+        assert {:ok, [{%Span{}, "Query Appsignal.Test.Repo"}]} = Test.Span.get(:set_name)
+      end
+
+      test "sets the span's category" do
+        assert attribute("appsignal:category", "query.ecto")
+      end
+
+      test "sets the span's body" do
+        assert {:ok,
+                [
+                  {%Span{},
+                   "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0"}
+                ]} = Test.Span.get(:set_sql)
+      end
+
+      test "closes the span with an end time" do
+        {:ok, [{_, _, start_time: start_time}]} = Test.Tracer.get(:create_span)
+        {:ok, [{%Span{}, end_time: end_time}]} = Test.Tracer.get(:close_span)
+        assert end_time - start_time == 8_829_000
+      end
     end
 
-    test "skips the missing measurement", %{fake_appsignal: f} do
-      assert FakeAppsignal.get_distribution_values(f, "ecto_decode_time") == []
+    describe "handle_event/4 and handle_commit/4, with a root span from the tracer and a root span passed via telemetry options" do
+      setup do
+        start_supervised!(Test.Nif)
+        start_supervised!(Test.Tracer)
+        start_supervised!(Test.Span)
+        start_supervised!(Test.Monitor)
+
+        telemetry_span =
+          fn -> Appsignal.Tracer.create_span("http_request") end
+          |> Task.async()
+          |> Task.await()
+
+        tracer_span = Appsignal.Tracer.create_span("http_request")
+
+        :telemetry.execute(
+          [:appsignal, :test, :repo, :query],
+          %{
+            decode_time: 2_204_000,
+            query_time: 5_386_000,
+            queue_time: 1_239_000,
+            total_time: 8_829_000
+          },
+          %{
+            params: [],
+            query: "commit",
+            repo: Appsignal.Test.Repo,
+            result: :ok,
+            source: "users",
+            type: :ecto_sql_query
+          }
+        )
+
+        %{telemetry_span: telemetry_span, tracer_span: tracer_span}
+      end
+
+      test "creates a span with the tracer span as the parent and a start time", %{
+        tracer_span: parent
+      } do
+        {:ok, [{"http_request", ^parent, start_time: time}]} = Test.Tracer.get(:create_span)
+        assert is_integer(time)
+      end
+
+      test "sets the span's name" do
+        assert {:ok, [{%Span{}, "Commit Appsignal.Test.Repo"}]} = Test.Span.get(:set_name)
+      end
+
+      test "sets the span's category" do
+        assert attribute("appsignal:category", "commit.ecto")
+      end
+
+      test "does not set the span's body" do
+        assert Test.Span.get(:set_sql) == :error
+      end
+
+      test "closes the span and the parent tracer span with an end time", %{tracer_span: parent} do
+        {:ok, [{_, _, start_time: start_time}]} = Test.Tracer.get(:create_span)
+
+        {:ok, [{^parent, end_time: end_time}, {%Span{}, end_time: end_time}]} =
+          Test.Tracer.get(:close_span)
+
+        assert end_time - start_time == 8_829_000
+      end
     end
 
-    test "still emits the present measurements", %{fake_appsignal: f} do
-      assert [_, _] = FakeAppsignal.get_distribution_values(f, "ecto_query_time")
-      assert [_] = FakeAppsignal.get_distribution_values(f, "ecto_queue_time")
-      assert [_, _] = FakeAppsignal.get_distribution_values(f, "ecto_total_time")
-    end
-  end
+    describe "handle_begin/4, with a root span" do
+      setup do
+        start_supervised!(Test.Nif)
+        start_supervised!(Test.Tracer)
+        start_supervised!(Test.Span)
+        start_supervised!(Test.Monitor)
 
-  describe "handle_event/4 and handle_query/4, with a root span from the tracer" do
-    setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
+        span = Appsignal.Tracer.create_span("http_request")
 
-      span = Appsignal.Tracer.create_span("http_request")
+        :telemetry.execute(
+          [:appsignal, :test, :repo, :query],
+          %{
+            decode_time: 2_204_000,
+            query_time: 5_386_000,
+            queue_time: 1_239_000,
+            total_time: 8_829_000
+          },
+          %{
+            params: [],
+            query: "begin",
+            repo: Appsignal.Test.Repo,
+            result: :ok,
+            source: "users",
+            type: :ecto_sql_query
+          }
+        )
 
-      :telemetry.execute(
-        [:appsignal, :test, :repo, :query],
-        %{
-          decode_time: 2_204_000,
-          query_time: 5_386_000,
-          queue_time: 1_239_000,
-          total_time: 8_829_000
-        },
-        %{
-          params: [],
-          query:
-            "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0",
-          repo: Appsignal.Test.Repo,
-          result: :ok,
-          source: "users",
-          type: :ecto_sql_query
-        }
-      )
+        %{parent: span}
+      end
 
-      %{parent: span}
-    end
+      test "creates a span with a parent and a start time", %{parent: parent} do
+        {:ok, [{"http_request", ^parent, start_time: time}]} = Test.Tracer.get(:create_span)
+        assert is_integer(time)
+      end
 
-    test "creates a span with a parent and a start time", %{parent: parent} do
-      {:ok, [{"http_request", ^parent, start_time: time}]} = Test.Tracer.get(:create_span)
-      assert is_integer(time)
-    end
+      test "sets the span's name" do
+        assert {:ok, [{%Span{}, "Transaction Appsignal.Test.Repo"}]} = Test.Span.get(:set_name)
+      end
 
-    test "sets the span's name" do
-      assert {:ok, [{%Span{}, "Query Appsignal.Test.Repo"}]} = Test.Span.get(:set_name)
-    end
+      test "sets the span's category" do
+        assert attribute("appsignal:category", "transaction.ecto")
+      end
 
-    test "sets the span's category" do
-      assert attribute("appsignal:category", "query.ecto")
-    end
+      test "does not set the span's body" do
+        assert Test.Span.get(:set_sql) == :error
+      end
 
-    test "sets the span's body" do
-      assert {:ok,
-              [
-                {%Span{},
-                 "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0"}
-              ]} = Test.Span.get(:set_sql)
+      test "does not close the span" do
+        assert Test.Tracer.get(:close_span) == :error
+      end
     end
 
-    test "closes the span with an end time" do
-      {:ok, [{_, _, start_time: start_time}]} = Test.Tracer.get(:create_span)
-      {:ok, [{%Span{}, end_time: end_time}]} = Test.Tracer.get(:close_span)
-      assert end_time - start_time == 8_829_000
-    end
-  end
+    describe "handle_commit/4, with a root span" do
+      setup do
+        start_supervised!(Test.Nif)
+        start_supervised!(Test.Tracer)
+        start_supervised!(Test.Span)
+        start_supervised!(Test.Monitor)
 
-  describe "handle_event/4 and handle_query/4, with a root span passed via telemetry options" do
-    setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
+        span = Appsignal.Tracer.create_span("http_request")
 
-      span =
-        fn -> Appsignal.Tracer.create_span("http_request") end
-        |> Task.async()
-        |> Task.await()
+        :telemetry.execute(
+          [:appsignal, :test, :repo, :query],
+          %{
+            decode_time: 2_204_000,
+            query_time: 5_386_000,
+            queue_time: 1_239_000,
+            total_time: 8_829_000
+          },
+          %{
+            params: [],
+            query: "commit",
+            repo: Appsignal.Test.Repo,
+            result: :ok,
+            source: "users",
+            type: :ecto_sql_query
+          }
+        )
 
-      :telemetry.execute(
-        [:appsignal, :test, :repo, :query],
-        %{
-          decode_time: 2_204_000,
-          query_time: 5_386_000,
-          queue_time: 1_239_000,
-          total_time: 8_829_000
-        },
-        %{
-          params: [],
-          query:
-            "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0",
-          repo: Appsignal.Test.Repo,
-          result: :ok,
-          source: "users",
-          type: :ecto_sql_query,
-          options: [
-            _appsignal_current_span: span
-          ]
-        }
-      )
+        %{parent: span}
+      end
 
-      %{parent: span}
-    end
+      test "creates a span with a parent and a start time", %{parent: parent} do
+        {:ok, [{"http_request", ^parent, start_time: time}]} = Test.Tracer.get(:create_span)
+        assert is_integer(time)
+      end
 
-    test "creates a span with a parent and a start time", %{parent: parent} do
-      {:ok, [{"http_request", ^parent, start_time: time}]} = Test.Tracer.get(:create_span)
-      assert is_integer(time)
-    end
+      test "sets the span's name" do
+        assert {:ok, [{%Span{}, "Commit Appsignal.Test.Repo"}]} = Test.Span.get(:set_name)
+      end
 
-    test "sets the span's name" do
-      assert {:ok, [{%Span{}, "Query Appsignal.Test.Repo"}]} = Test.Span.get(:set_name)
-    end
+      test "sets the span's category" do
+        assert attribute("appsignal:category", "commit.ecto")
+      end
 
-    test "sets the span's category" do
-      assert attribute("appsignal:category", "query.ecto")
-    end
+      test "does not set the span's body" do
+        assert Test.Span.get(:set_sql) == :error
+      end
 
-    test "sets the span's body" do
-      assert {:ok,
-              [
-                {%Span{},
-                 "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0"}
-              ]} = Test.Span.get(:set_sql)
+      test "closes the span and its parent with an end time", %{parent: parent} do
+        {:ok, [{_, _, start_time: start_time}]} = Test.Tracer.get(:create_span)
+
+        {:ok, [{^parent, end_time: end_time}, {%Span{}, end_time: end_time}]} =
+          Test.Tracer.get(:close_span)
+
+        assert end_time - start_time == 8_829_000
+      end
     end
 
-    test "closes the span with an end time" do
-      {:ok, [{_, _, start_time: start_time}]} = Test.Tracer.get(:create_span)
-      {:ok, [{%Span{}, end_time: end_time}]} = Test.Tracer.get(:close_span)
-      assert end_time - start_time == 8_829_000
-    end
-  end
+    describe "handle_rollback/4, with a root span" do
+      setup do
+        start_supervised!(Test.Nif)
+        start_supervised!(Test.Tracer)
+        start_supervised!(Test.Span)
+        start_supervised!(Test.Monitor)
 
-  describe "handle_event/4 and handle_commit/4, with a root span from the tracer and a root span passed via telemetry options" do
-    setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
+        span = Appsignal.Tracer.create_span("http_request")
 
-      telemetry_span =
-        fn -> Appsignal.Tracer.create_span("http_request") end
-        |> Task.async()
-        |> Task.await()
+        :telemetry.execute(
+          [:appsignal, :test, :repo, :query],
+          %{
+            decode_time: 2_204_000,
+            query_time: 5_386_000,
+            queue_time: 1_239_000,
+            total_time: 8_829_000
+          },
+          %{
+            params: [],
+            query: "rollback",
+            repo: Appsignal.Test.Repo,
+            result: :ok,
+            source: "users",
+            type: :ecto_sql_query
+          }
+        )
 
-      tracer_span = Appsignal.Tracer.create_span("http_request")
+        %{parent: span}
+      end
 
-      :telemetry.execute(
-        [:appsignal, :test, :repo, :query],
-        %{
-          decode_time: 2_204_000,
-          query_time: 5_386_000,
-          queue_time: 1_239_000,
-          total_time: 8_829_000
-        },
-        %{
-          params: [],
-          query: "commit",
-          repo: Appsignal.Test.Repo,
-          result: :ok,
-          source: "users",
-          type: :ecto_sql_query
-        }
-      )
+      test "creates a span with a parent and a start time", %{parent: parent} do
+        {:ok, [{"http_request", ^parent, start_time: time}]} = Test.Tracer.get(:create_span)
+        assert is_integer(time)
+      end
 
-      %{telemetry_span: telemetry_span, tracer_span: tracer_span}
-    end
+      test "sets the span's name" do
+        assert {:ok, [{%Span{}, "Rollback Appsignal.Test.Repo"}]} = Test.Span.get(:set_name)
+      end
 
-    test "creates a span with the tracer span as the parent and a start time", %{
-      tracer_span: parent
-    } do
-      {:ok, [{"http_request", ^parent, start_time: time}]} = Test.Tracer.get(:create_span)
-      assert is_integer(time)
-    end
+      test "sets the span's category" do
+        assert attribute("appsignal:category", "rollback.ecto")
+      end
 
-    test "sets the span's name" do
-      assert {:ok, [{%Span{}, "Commit Appsignal.Test.Repo"}]} = Test.Span.get(:set_name)
-    end
+      test "does not set the span's body" do
+        assert Test.Span.get(:set_sql) == :error
+      end
 
-    test "sets the span's category" do
-      assert attribute("appsignal:category", "commit.ecto")
-    end
+      test "closes the span and its parent with an end time", %{parent: parent} do
+        {:ok, [{_, _, start_time: start_time}]} = Test.Tracer.get(:create_span)
 
-    test "does not set the span's body" do
-      assert Test.Span.get(:set_sql) == :error
+        {:ok, [{^parent, end_time: end_time}, {%Span{}, end_time: end_time}]} =
+          Test.Tracer.get(:close_span)
+
+        assert end_time - start_time == 8_829_000
+      end
     end
 
-    test "closes the span and the parent tracer span with an end time", %{tracer_span: parent} do
-      {:ok, [{_, _, start_time: start_time}]} = Test.Tracer.get(:create_span)
+    describe "handle_event/4, when attaching the handler from outside the Ecto module" do
+      setup do
+        start_supervised!(Test.Nif)
+        start_supervised!(Test.Tracer)
+        start_supervised!(Test.Span)
+        start_supervised!(Test.Monitor)
 
-      {:ok, [{^parent, end_time: end_time}, {%Span{}, end_time: end_time}]} =
-        Test.Tracer.get(:close_span)
+        event = [:appsignal, :test, :repo, :outside]
+        :telemetry.attach({__MODULE__, event}, event, &Appsignal.Ecto.handle_event/4, :ok)
 
-      assert end_time - start_time == 8_829_000
-    end
-  end
+        span = Appsignal.Tracer.create_span("http_request")
 
-  describe "handle_begin/4, with a root span" do
-    setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
+        :telemetry.execute(
+          event,
+          %{
+            decode_time: 2_204_000,
+            query_time: 5_386_000,
+            queue_time: 1_239_000,
+            total_time: 8_829_000
+          },
+          %{
+            params: [],
+            query:
+              "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0",
+            repo: Appsignal.Test.Repo,
+            result: :ok,
+            source: "users",
+            type: :ecto_sql_query
+          }
+        )
 
-      span = Appsignal.Tracer.create_span("http_request")
+        %{parent: span}
+      end
 
-      :telemetry.execute(
-        [:appsignal, :test, :repo, :query],
-        %{
-          decode_time: 2_204_000,
-          query_time: 5_386_000,
-          queue_time: 1_239_000,
-          total_time: 8_829_000
-        },
-        %{
-          params: [],
-          query: "begin",
-          repo: Appsignal.Test.Repo,
-          result: :ok,
-          source: "users",
-          type: :ecto_sql_query
-        }
-      )
+      test "creates a span with a parent and a start time", %{parent: parent} do
+        {:ok, [{"http_request", ^parent, start_time: time}]} = Test.Tracer.get(:create_span)
+        assert is_integer(time)
+      end
 
-      %{parent: span}
-    end
+      test "sets the span's name" do
+        assert {:ok, [{%Span{}, "Query Appsignal.Test.Repo"}]} = Test.Span.get(:set_name)
+      end
 
-    test "creates a span with a parent and a start time", %{parent: parent} do
-      {:ok, [{"http_request", ^parent, start_time: time}]} = Test.Tracer.get(:create_span)
-      assert is_integer(time)
-    end
+      test "sets the span's category" do
+        assert attribute("appsignal:category", "query.ecto")
+      end
 
-    test "sets the span's name" do
-      assert {:ok, [{%Span{}, "Transaction Appsignal.Test.Repo"}]} = Test.Span.get(:set_name)
-    end
+      test "sets the span's body" do
+        assert {:ok,
+                [
+                  {%Span{},
+                   "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0"}
+                ]} = Test.Span.get(:set_sql)
+      end
 
-    test "sets the span's category" do
-      assert attribute("appsignal:category", "transaction.ecto")
-    end
-
-    test "does not set the span's body" do
-      assert Test.Span.get(:set_sql) == :error
-    end
-
-    test "does not close the span" do
-      assert Test.Tracer.get(:close_span) == :error
-    end
-  end
-
-  describe "handle_commit/4, with a root span" do
-    setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
-
-      span = Appsignal.Tracer.create_span("http_request")
-
-      :telemetry.execute(
-        [:appsignal, :test, :repo, :query],
-        %{
-          decode_time: 2_204_000,
-          query_time: 5_386_000,
-          queue_time: 1_239_000,
-          total_time: 8_829_000
-        },
-        %{
-          params: [],
-          query: "commit",
-          repo: Appsignal.Test.Repo,
-          result: :ok,
-          source: "users",
-          type: :ecto_sql_query
-        }
-      )
-
-      %{parent: span}
+      test "closes the span with an end time" do
+        {:ok, [{_, _, start_time: start_time}]} = Test.Tracer.get(:create_span)
+        {:ok, [{%Span{}, end_time: end_time}]} = Test.Tracer.get(:close_span)
+        assert end_time - start_time == 8_829_000
+      end
     end
 
-    test "creates a span with a parent and a start time", %{parent: parent} do
-      {:ok, [{"http_request", ^parent, start_time: time}]} = Test.Tracer.get(:create_span)
-      assert is_integer(time)
+    defp attribute(asserted_key, asserted_data) do
+      {:ok, attributes} = Test.Span.get(:set_attribute)
+
+      Enum.any?(attributes, fn {%Span{}, key, data} ->
+        key == asserted_key and data == asserted_data
+      end)
     end
 
-    test "sets the span's name" do
-      assert {:ok, [{%Span{}, "Commit Appsignal.Test.Repo"}]} = Test.Span.get(:set_name)
+    defp attached?(event) do
+      event
+      |> :telemetry.list_handlers()
+      |> Enum.any?(fn %{id: id} ->
+        id == {Appsignal.Ecto, event}
+      end)
     end
-
-    test "sets the span's category" do
-      assert attribute("appsignal:category", "commit.ecto")
-    end
-
-    test "does not set the span's body" do
-      assert Test.Span.get(:set_sql) == :error
-    end
-
-    test "closes the span and its parent with an end time", %{parent: parent} do
-      {:ok, [{_, _, start_time: start_time}]} = Test.Tracer.get(:create_span)
-
-      {:ok, [{^parent, end_time: end_time}, {%Span{}, end_time: end_time}]} =
-        Test.Tracer.get(:close_span)
-
-      assert end_time - start_time == 8_829_000
-    end
-  end
-
-  describe "handle_rollback/4, with a root span" do
-    setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
-
-      span = Appsignal.Tracer.create_span("http_request")
-
-      :telemetry.execute(
-        [:appsignal, :test, :repo, :query],
-        %{
-          decode_time: 2_204_000,
-          query_time: 5_386_000,
-          queue_time: 1_239_000,
-          total_time: 8_829_000
-        },
-        %{
-          params: [],
-          query: "rollback",
-          repo: Appsignal.Test.Repo,
-          result: :ok,
-          source: "users",
-          type: :ecto_sql_query
-        }
-      )
-
-      %{parent: span}
-    end
-
-    test "creates a span with a parent and a start time", %{parent: parent} do
-      {:ok, [{"http_request", ^parent, start_time: time}]} = Test.Tracer.get(:create_span)
-      assert is_integer(time)
-    end
-
-    test "sets the span's name" do
-      assert {:ok, [{%Span{}, "Rollback Appsignal.Test.Repo"}]} = Test.Span.get(:set_name)
-    end
-
-    test "sets the span's category" do
-      assert attribute("appsignal:category", "rollback.ecto")
-    end
-
-    test "does not set the span's body" do
-      assert Test.Span.get(:set_sql) == :error
-    end
-
-    test "closes the span and its parent with an end time", %{parent: parent} do
-      {:ok, [{_, _, start_time: start_time}]} = Test.Tracer.get(:create_span)
-
-      {:ok, [{^parent, end_time: end_time}, {%Span{}, end_time: end_time}]} =
-        Test.Tracer.get(:close_span)
-
-      assert end_time - start_time == 8_829_000
-    end
-  end
-
-  describe "handle_event/4, when attaching the handler from outside the Ecto module" do
-    setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
-
-      event = [:appsignal, :test, :repo, :outside]
-      :telemetry.attach({__MODULE__, event}, event, &Appsignal.Ecto.handle_event/4, :ok)
-
-      span = Appsignal.Tracer.create_span("http_request")
-
-      :telemetry.execute(
-        event,
-        %{
-          decode_time: 2_204_000,
-          query_time: 5_386_000,
-          queue_time: 1_239_000,
-          total_time: 8_829_000
-        },
-        %{
-          params: [],
-          query:
-            "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0",
-          repo: Appsignal.Test.Repo,
-          result: :ok,
-          source: "users",
-          type: :ecto_sql_query
-        }
-      )
-
-      %{parent: span}
-    end
-
-    test "creates a span with a parent and a start time", %{parent: parent} do
-      {:ok, [{"http_request", ^parent, start_time: time}]} = Test.Tracer.get(:create_span)
-      assert is_integer(time)
-    end
-
-    test "sets the span's name" do
-      assert {:ok, [{%Span{}, "Query Appsignal.Test.Repo"}]} = Test.Span.get(:set_name)
-    end
-
-    test "sets the span's category" do
-      assert attribute("appsignal:category", "query.ecto")
-    end
-
-    test "sets the span's body" do
-      assert {:ok,
-              [
-                {%Span{},
-                 "SELECT u0.\"id\", u0.\"name\", u0.\"inserted_at\", u0.\"updated_at\" FROM \"users\" AS u0"}
-              ]} = Test.Span.get(:set_sql)
-    end
-
-    test "closes the span with an end time" do
-      {:ok, [{_, _, start_time: start_time}]} = Test.Tracer.get(:create_span)
-      {:ok, [{%Span{}, end_time: end_time}]} = Test.Tracer.get(:close_span)
-      assert end_time - start_time == 8_829_000
-    end
-  end
-
-  defp attribute(asserted_key, asserted_data) do
-    {:ok, attributes} = Test.Span.get(:set_attribute)
-
-    Enum.any?(attributes, fn {%Span{}, key, data} ->
-      key == asserted_key and data == asserted_data
-    end)
-  end
-
-  defp attached?(event) do
-    event
-    |> :telemetry.list_handlers()
-    |> Enum.any?(fn %{id: id} ->
-      id == {Appsignal.Ecto, event}
-    end)
   end
 end
