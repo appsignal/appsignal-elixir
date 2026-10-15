@@ -17,9 +17,9 @@
     [elixir: "1.12", otp: ["24"]]
   ],
 
-  # Each dependency set, a file in test/deps, runs on every Elixir and OTP
-  # version above, except the ones it excludes here by Elixir or OTP
-  # requirement. A set that does not install cleanly on a version is
+  # Each dependency set, a file in test/deps other than all.exs, runs on every
+  # Elixir and OTP version above, except the ones it excludes here by Elixir
+  # or OTP requirement. A set that does not install cleanly on a version is
   # excluded there, rather than capping its dependencies, unless that would
   # leave the set's libraries untested on that version.
   exclude: [

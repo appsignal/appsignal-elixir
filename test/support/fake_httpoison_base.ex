@@ -24,6 +24,15 @@ defmodule FakeHTTPoisonBase do
       end
 
       defoverridable request: 5
+
+      def request!(method, url, body \\ "", headers \\ [], options \\ []) do
+        {:ok, response} = request(method, url, body, headers, options)
+        response
+      end
     end
   end
+end
+
+defmodule FakeHTTPoison do
+  use FakeHTTPoisonBase
 end

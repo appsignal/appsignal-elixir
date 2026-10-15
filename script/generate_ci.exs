@@ -104,12 +104,13 @@ defmodule GenerateCI do
   end
 
   # The dependency sets in test/deps, with the exclusions the matrix gives
-  # them.
+  # them. The `all` set is only for the Dialyzer job.
   defp sets(matrix) do
     sets =
       "test/deps/*.exs"
       |> Path.wildcard()
       |> Enum.map(&Path.basename(&1, ".exs"))
+      |> Enum.reject(&(&1 == "all"))
       |> Enum.sort()
 
     exclusions = Map.new(matrix[:exclude], fn {set, exclusion} -> {to_string(set), exclusion} end)
@@ -214,13 +215,15 @@ defmodule GenerateCI do
       ],
       lint_dialyzer: [
         "runs-on": "ubuntu-latest",
+        strategy: ["fail-fast": false, matrix: [set: ["", "all"]]],
+        env: [MIX_ENV: "test", _APPSIGNAL_TEST_DEPS: "${{matrix.set}}"],
         steps: [
           setup,
           [
             name: "PLT cache",
             uses: "actions/cache@v4",
             id: "plt_cache",
-            with: [key: "plt", path: "priv/plts"]
+            with: [key: "plt-${{matrix.set}}", path: "priv/plts"]
           ],
           checkout(),
           deps_get(),

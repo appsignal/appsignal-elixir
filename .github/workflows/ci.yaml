@@ -75,6 +75,15 @@ jobs:
 
   lint_dialyzer:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        set:
+          - ""
+          - all
+    env:
+      MIX_ENV: test
+      _APPSIGNAL_TEST_DEPS: ${{matrix.set}}
     steps:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
@@ -85,7 +94,7 @@ jobs:
         uses: actions/cache@v4
         id: plt_cache
         with:
-          key: plt
+          key: plt-${{matrix.set}}
           path: priv/plts
       - name: Checkout code
         uses: actions/checkout@v4

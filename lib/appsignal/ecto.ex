@@ -23,6 +23,10 @@ defmodule Appsignal.Ecto do
   application's configuration.
   """
   def attach do
+    if Appsignal.Dependencies.match?(:ecto_sql, ">= 3.0.0"), do: attach_repos(), else: :ok
+  end
+
+  defp attach_repos do
     otp_app =
       :appsignal
       |> Application.get_env(:config, %{})

@@ -7,6 +7,10 @@ defmodule Appsignal.Absinthe do
   @moduledoc false
 
   def attach do
+    if Appsignal.Dependencies.match?(:absinthe, ">= 1.6.0"), do: attach_handlers(), else: []
+  end
+
+  defp attach_handlers do
     handlers = %{
       [:absinthe, :execute, :operation, :start] => &__MODULE__.absinthe_execute_operation_start/4,
       [:absinthe, :execute, :operation, :stop] => &__MODULE__.absinthe_execute_operation_stop/4

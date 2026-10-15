@@ -21,6 +21,7 @@ if Mix.env() in [:bench, :test, :test_no_nif] do
   config :appsignal, ecto_repo: FakeEctoRepo
 
   config :appsignal, appsignal_httpoison_base: FakeHTTPoisonBase
+  config :appsignal, appsignal_httpoison: FakeHTTPoison
 
   config :appsignal, appsignal_monitor: Appsignal.Test.Monitor
   config :appsignal, appsignal_span: Appsignal.Test.Span
