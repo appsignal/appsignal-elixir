@@ -2,8 +2,9 @@
 #
 #     elixir script/generate_ci.exs
 #
-# With --local, runs the test suite against every dependency set the
-# installed Elixir version is tested with in CI, instead.
+# With --local, runs the test suite as CI does on the installed Elixir
+# version instead: in this project without a dependency set, then in
+# test/app without one and with every set the version is tested with.
 #
 #     elixir script/generate_ci.exs --local
 
@@ -72,11 +73,12 @@ defmodule GenerateCI do
           not excluded?(exclusions, row[:elixir], otp),
           do: set
 
+    runs = [:project, "none" | sets]
+
     failed =
-      Enum.reject([nil | sets], fn set ->
-        env = [{"_APPSIGNAL_TEST_DEPS", set && to_string(set)}]
-        IO.puts("\n==> Testing #{describe(set)}")
-        mix(["deps.get"], env) == 0 and mix(["test"], env) == 0
+      Enum.reject(runs, fn run ->
+        IO.puts("\n==> Testing #{describe(run)}")
+        run_tests(run)
       end)
 
     case failed do
@@ -93,13 +95,21 @@ defmodule GenerateCI do
     Enum.find(rows, &(minor(&1[:elixir]) == minor(version)))
   end
 
-  defp describe(nil), do: "without a dependency set"
-  defp describe(set), do: "with the #{set} dependency set"
+  defp describe(:project), do: "in this project without a dependency set"
+  defp describe("none"), do: "in test/app without a dependency set"
+  defp describe(set), do: "in test/app with the #{set} dependency set"
 
   defp minor(version), do: version |> String.split(".") |> Enum.take(2)
 
-  defp mix(args, env) do
-    {_output, status} = System.cmd("mix", args, env: env, into: IO.stream())
+  defp run_tests(:project) do
+    env = [{"_APPSIGNAL_TEST_DEPS", nil}]
+    run("mix", ["deps.get"], env) == 0 and run("mix", ["test"], env) == 0
+  end
+
+  defp run_tests(set), do: run("script/test", [set], []) == 0
+
+  defp run(command, args, env) do
+    {_output, status} = System.cmd(command, args, env: env, into: IO.stream())
     status
   end
 
@@ -145,7 +155,7 @@ defmodule GenerateCI do
   end
 
   defp workflow(matrix) do
-    set_jobs = for {set, exclusions} <- sets(matrix), do: set_job(matrix, set, exclusions)
+    set_jobs = for {set, exclusions} <- app_sets(matrix), do: set_job(matrix, set, exclusions)
 
     jobs =
       static_jobs(matrix) ++
@@ -295,6 +305,8 @@ defmodule GenerateCI do
      ]}
   end
 
+  # Runs the test suite in test/app, an application that depends on this
+  # package, with a dependency set or with none.
   defp set_job(matrix, set, exclusions) do
     rows =
       for row <- matrix[:elixir],
@@ -308,12 +320,10 @@ defmodule GenerateCI do
        needs: "test",
        "runs-on": "ubuntu-latest",
        strategy: ["fail-fast": false, matrix: [include: include(rows)]],
-       env: [_APPSIGNAL_TEST_DEPS: to_string(set)],
        steps: [
          setup_beam("${{matrix.elixir}}", "${{matrix.otp}}"),
          checkout(),
-         deps_get(),
-         [name: "Run tests", run: "mix test"]
+         [name: "Run tests", run: "script/test #{set}"]
        ]
      ]}
   end
@@ -324,7 +334,7 @@ defmodule GenerateCI do
     needs =
       ~w(validate-changesets lint_git lint_ci lint_format lint_credo lint_dialyzer
          lint_compile test_diagnose test_no_nif test) ++
-        Enum.map(sets(matrix), fn {set, _} -> to_string(set_job_id(set)) end)
+        Enum.map(app_sets(matrix), fn {set, _} -> to_string(set_job_id(set)) end)
 
     {:all,
      [
@@ -359,6 +369,9 @@ defmodule GenerateCI do
     do: [name: "Checkout code", uses: "actions/checkout@v4"] ++ options
 
   defp deps_get, do: [name: "Get dependencies", run: "mix deps.get"]
+
+  # The dependency sets test/app runs the test suite with, and none.
+  defp app_sets(matrix), do: [{"none", []} | sets(matrix)]
 
   defp set_job_id(set), do: String.to_atom("test_" <> String.replace(to_string(set), ".", "_"))
 

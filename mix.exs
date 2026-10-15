@@ -33,6 +33,8 @@ defmodule Appsignal.Mixfile do
   @version "2.18.1"
 
   def project do
+    warn_about_test_run()
+
     [
       app: :appsignal,
       version: @version,
@@ -238,6 +240,22 @@ defmodule Appsignal.Mixfile do
   # between sets does not resolve or compile another set's dependencies again.
   defp dependency_set do
     if as_dependency?(), do: nil, else: ci_version("_APPSIGNAL_TEST_DEPS")
+  end
+
+  # CI runs the tests with a dependency set in test/app, where this package
+  # compiles without the set's libraries, as it does in an application.
+  defp warn_about_test_run do
+    set = dependency_set()
+
+    if set && "test" in System.argv() do
+      Mix.shell().error("""
+      warning: this runs the tests with the #{set} dependency set in this \
+      project, which compiles AppSignal with the set's libraries, as no \
+      application does. CI runs them in test/app instead, with:
+
+          script/test #{set}
+      """)
+    end
   end
 
   defp dependency_set_deps do
