@@ -234,12 +234,14 @@ defmodule Appsignal.Mixfile do
   end
 
   # A dependency set is a file in test/deps listing the third-party libraries
-  # the test suite runs against, chosen by name with _APPSIGNAL_TEST_DEPS.
+  # the test suite runs against, chosen by name with _APPSIGNAL_TEST_DEPS, or
+  # `none` for none, as with script/test.
   # Its dependencies are test-only, so they never reach the published
   # package. Each set has its own lockfile and build directory, so switching
   # between sets does not resolve or compile another set's dependencies again.
   defp dependency_set do
-    if as_dependency?(), do: nil, else: ci_version("_APPSIGNAL_TEST_DEPS")
+    set = ci_version("_APPSIGNAL_TEST_DEPS")
+    if as_dependency?() or set == "none", do: nil, else: set
   end
 
   # CI runs the tests with a dependency set in test/app, where this package

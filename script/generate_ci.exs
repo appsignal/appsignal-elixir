@@ -225,7 +225,7 @@ defmodule GenerateCI do
       ],
       lint_dialyzer: [
         "runs-on": "ubuntu-latest",
-        strategy: ["fail-fast": false, matrix: [set: ["", "all"]]],
+        strategy: ["fail-fast": false, matrix: [set: ["none", "all"]]],
         env: [MIX_ENV: "test", _APPSIGNAL_TEST_DEPS: "${{matrix.set}}"],
         steps: [
           setup,
@@ -275,7 +275,7 @@ defmodule GenerateCI do
     {:lint_compile,
      [
        "runs-on": "ubuntu-latest",
-       strategy: ["fail-fast": false, matrix: [set: ["" | sets]]],
+       strategy: ["fail-fast": false, matrix: [set: ["none" | sets]]],
        env: [_APPSIGNAL_TEST_DEPS: "${{matrix.set}}"],
        steps: [
          lint_setup_beam(matrix),
