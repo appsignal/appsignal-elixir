@@ -106,7 +106,7 @@ defmodule GenerateCI do
     run("mix", ["deps.get"], env) == 0 and run("mix", ["test"], env) == 0
   end
 
-  defp run_tests(set), do: run("script/test", [set], []) == 0
+  defp run_tests(set), do: run(Path.expand("script/test"), [set], []) == 0
 
   defp run(command, args, env) do
     {_output, status} = System.cmd(command, args, env: env, into: IO.stream())
