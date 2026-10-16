@@ -79,7 +79,7 @@ jobs:
       fail-fast: false
       matrix:
         set:
-          - ""
+          - none
           - all
     env:
       MIX_ENV: test
@@ -147,7 +147,7 @@ jobs:
       fail-fast: false
       matrix:
         set:
-          - ""
+          - none
           - absinthe
           - broadway
           - ecto
@@ -212,6 +212,45 @@ jobs:
       - name: Run tests
         run: mix test
 
+  test_none:
+    name: test (none, ${{matrix.elixir}}, OTP ${{matrix.otp}})
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - elixir: '1.19'
+            otp: '28'
+          - elixir: '1.19'
+            otp: '27'
+          - elixir: '1.19'
+            otp: '26'
+          - elixir: '1.18'
+            otp: '27'
+          - elixir: '1.17'
+            otp: '27'
+          - elixir: '1.16'
+            otp: '26'
+          - elixir: '1.15'
+            otp: '26'
+          - elixir: '1.14'
+            otp: '25'
+          - elixir: '1.13'
+            otp: '24'
+          - elixir: '1.12'
+            otp: '24'
+    steps:
+      - name: Set up Erlang and Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          otp-version: ${{matrix.otp}}
+          elixir-version: ${{matrix.elixir}}
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Run tests
+        run: script/test none
+
   test_absinthe:
     name: test (absinthe, ${{matrix.elixir}}, OTP ${{matrix.otp}})
     needs: test
@@ -240,8 +279,6 @@ jobs:
             otp: '24'
           - elixir: '1.12'
             otp: '24'
-    env:
-      _APPSIGNAL_TEST_DEPS: absinthe
     steps:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
@@ -250,10 +287,8 @@ jobs:
           elixir-version: ${{matrix.elixir}}
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Get dependencies
-        run: mix deps.get
       - name: Run tests
-        run: mix test
+        run: script/test absinthe
 
   test_broadway:
     name: test (broadway, ${{matrix.elixir}}, OTP ${{matrix.otp}})
@@ -283,8 +318,6 @@ jobs:
             otp: '24'
           - elixir: '1.12'
             otp: '24'
-    env:
-      _APPSIGNAL_TEST_DEPS: broadway
     steps:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
@@ -293,10 +326,8 @@ jobs:
           elixir-version: ${{matrix.elixir}}
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Get dependencies
-        run: mix deps.get
       - name: Run tests
-        run: mix test
+        run: script/test broadway
 
   test_ecto:
     name: test (ecto, ${{matrix.elixir}}, OTP ${{matrix.otp}})
@@ -322,8 +353,6 @@ jobs:
             otp: '26'
           - elixir: '1.14'
             otp: '25'
-    env:
-      _APPSIGNAL_TEST_DEPS: ecto
     steps:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
@@ -332,10 +361,8 @@ jobs:
           elixir-version: ${{matrix.elixir}}
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Get dependencies
-        run: mix deps.get
       - name: Run tests
-        run: mix test
+        run: script/test ecto
 
   test_httpoison:
     name: test (httpoison, ${{matrix.elixir}}, OTP ${{matrix.otp}})
@@ -359,8 +386,6 @@ jobs:
             otp: '26'
           - elixir: '1.15'
             otp: '26'
-    env:
-      _APPSIGNAL_TEST_DEPS: httpoison
     steps:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
@@ -369,10 +394,8 @@ jobs:
           elixir-version: ${{matrix.elixir}}
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Get dependencies
-        run: mix deps.get
       - name: Run tests
-        run: mix test
+        run: script/test httpoison
 
   test_httpoison-2:
     name: test (httpoison-2, ${{matrix.elixir}}, OTP ${{matrix.otp}})
@@ -402,8 +425,6 @@ jobs:
             otp: '24'
           - elixir: '1.12'
             otp: '24'
-    env:
-      _APPSIGNAL_TEST_DEPS: httpoison-2
     steps:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
@@ -412,10 +433,8 @@ jobs:
           elixir-version: ${{matrix.elixir}}
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Get dependencies
-        run: mix deps.get
       - name: Run tests
-        run: mix test
+        run: script/test httpoison-2
 
   test_oban:
     name: test (oban, ${{matrix.elixir}}, OTP ${{matrix.otp}})
@@ -441,8 +460,6 @@ jobs:
             otp: '26'
           - elixir: '1.14'
             otp: '25'
-    env:
-      _APPSIGNAL_TEST_DEPS: oban
     steps:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
@@ -451,10 +468,8 @@ jobs:
           elixir-version: ${{matrix.elixir}}
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Get dependencies
-        run: mix deps.get
       - name: Run tests
-        run: mix test
+        run: script/test oban
 
   test_phoenix:
     name: test (phoenix, ${{matrix.elixir}}, OTP ${{matrix.otp}})
@@ -478,8 +493,6 @@ jobs:
             otp: '26'
           - elixir: '1.15'
             otp: '26'
-    env:
-      _APPSIGNAL_TEST_DEPS: phoenix
     steps:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
@@ -488,10 +501,8 @@ jobs:
           elixir-version: ${{matrix.elixir}}
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Get dependencies
-        run: mix deps.get
       - name: Run tests
-        run: mix test
+        run: script/test phoenix
 
   test_phoenix-1_7:
     name: test (phoenix-1.7, ${{matrix.elixir}}, OTP ${{matrix.otp}})
@@ -521,8 +532,6 @@ jobs:
             otp: '24'
           - elixir: '1.12'
             otp: '24'
-    env:
-      _APPSIGNAL_TEST_DEPS: phoenix-1.7
     steps:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
@@ -531,10 +540,8 @@ jobs:
           elixir-version: ${{matrix.elixir}}
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Get dependencies
-        run: mix deps.get
       - name: Run tests
-        run: mix test
+        run: script/test phoenix-1.7
 
   test_plug:
     name: test (plug, ${{matrix.elixir}}, OTP ${{matrix.otp}})
@@ -558,8 +565,6 @@ jobs:
             otp: '26'
           - elixir: '1.15'
             otp: '26'
-    env:
-      _APPSIGNAL_TEST_DEPS: plug
     steps:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
@@ -568,10 +573,8 @@ jobs:
           elixir-version: ${{matrix.elixir}}
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Get dependencies
-        run: mix deps.get
       - name: Run tests
-        run: mix test
+        run: script/test plug
 
   test_tesla:
     name: test (tesla, ${{matrix.elixir}}, OTP ${{matrix.otp}})
@@ -601,8 +604,6 @@ jobs:
             otp: '24'
           - elixir: '1.12'
             otp: '24'
-    env:
-      _APPSIGNAL_TEST_DEPS: tesla
     steps:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
@@ -611,10 +612,8 @@ jobs:
           elixir-version: ${{matrix.elixir}}
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Get dependencies
-        run: mix deps.get
       - name: Run tests
-        run: mix test
+        run: script/test tesla
 
   all:
     runs-on: ubuntu-latest
@@ -630,6 +629,7 @@ jobs:
       - test_diagnose
       - test_no_nif
       - test
+      - test_none
       - test_absinthe
       - test_broadway
       - test_ecto

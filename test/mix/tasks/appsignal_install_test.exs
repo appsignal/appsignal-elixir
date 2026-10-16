@@ -4,6 +4,8 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
   import AppsignalTest.Utils
   alias Appsignal.{FakeTransmitter, Test}
 
+  @otp_app Mix.Project.config()[:app]
+
   setup do
     start_supervised(Test.Tracer)
     start_supervised(Test.Span)
@@ -152,7 +154,7 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
       output = run_with_environment_config()
       assert String.contains?(output, "What is your preferred configuration method? [1]: ")
       assert String.contains?(output, "Configuring with environment variables.")
-      assert String.contains?(output, ~s(APPSIGNAL_OTP_APP="appsignal"))
+      assert String.contains?(output, ~s(APPSIGNAL_OTP_APP="#{@otp_app}"))
       assert String.contains?(output, ~s(APPSIGNAL_APP_NAME="AppSignal test suite app"))
       assert String.contains?(output, ~s(APPSIGNAL_APP_ENV="prod"))
       assert String.contains?(output, ~s(APPSIGNAL_PUSH_API_KEY="my_push_api_key"))
@@ -174,7 +176,7 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
                appsignal_config,
                ~s(import Config\n\n) <>
                  ~s(config :appsignal, :config,\n) <>
-                 ~s(  otp_app: :appsignal,\n) <>
+                 ~s(  otp_app: #{inspect(@otp_app)},\n) <>
                  ~s(  name: "AppSignal test suite app",\n) <>
                  ~s(  push_api_key: "my_push_api_key",\n) <> ~s(  env: Mix.env)
              )
@@ -214,7 +216,7 @@ defmodule Mix.Tasks.Appsignal.InstallTest do
                ~s(import Config\n\n) <>
                  ~s(config :appsignal, :config,\n) <>
                  ~s(  active: true,\n) <>
-                 ~s(  otp_app: :appsignal,\n) <>
+                 ~s(  otp_app: #{inspect(@otp_app)},\n) <>
                  ~s(  name: "AppSignal test suite app",\n) <>
                  ~s(  push_api_key: "my_push_api_key",\n) <> ~s(  env: Mix.env)
              )

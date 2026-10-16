@@ -33,6 +33,8 @@ defmodule Appsignal.Mixfile do
   @version "2.18.1"
 
   def project do
+    warn_about_test_run()
+
     [
       app: :appsignal,
       version: @version,
@@ -101,14 +103,16 @@ defmodule Appsignal.Mixfile do
   defp compilers(_), do: [:appsignal] ++ Mix.compilers()
 
   defp elixirc_paths(env) do
-    case test?(env) do
-      true ->
-        ["lib", "test/support"]
-
-      false ->
-        ["lib"]
+    cond do
+      as_dependency?() -> ["lib", "test/app/compile_probe.ex"]
+      test?(env) -> ["lib", "test/support"]
+      true -> ["lib"]
     end
   end
+
+  # test/app/mix.exs builds this package as a dependency of an application,
+  # which compiles the test support and installs the dependency set itself.
+  defp as_dependency?, do: System.get_env("_APPSIGNAL_AS_DEPENDENCY") == "true"
 
   defp test?(:test), do: true
   defp test?(:test_no_nif), do: true
@@ -230,11 +234,31 @@ defmodule Appsignal.Mixfile do
   end
 
   # A dependency set is a file in test/deps listing the third-party libraries
-  # the test suite runs against, chosen by name with _APPSIGNAL_TEST_DEPS.
+  # the test suite runs against, chosen by name with _APPSIGNAL_TEST_DEPS, or
+  # `none` for none, as with script/test.
   # Its dependencies are test-only, so they never reach the published
   # package. Each set has its own lockfile and build directory, so switching
   # between sets does not resolve or compile another set's dependencies again.
-  defp dependency_set, do: ci_version("_APPSIGNAL_TEST_DEPS")
+  defp dependency_set do
+    set = ci_version("_APPSIGNAL_TEST_DEPS")
+    if as_dependency?() or set == "none", do: nil, else: set
+  end
+
+  # CI runs the tests with a dependency set in test/app, where this package
+  # compiles without the set's libraries, as it does in an application.
+  defp warn_about_test_run do
+    set = dependency_set()
+
+    if set && "test" in System.argv() do
+      Mix.shell().error("""
+      warning: this runs the tests with the #{set} dependency set in this \
+      project, which compiles AppSignal with the set's libraries, as no \
+      application does. CI runs them in test/app instead, with:
+
+          script/test #{set}
+      """)
+    end
+  end
 
   defp dependency_set_deps do
     case dependency_set() do

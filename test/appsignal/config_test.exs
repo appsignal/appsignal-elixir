@@ -1385,7 +1385,7 @@ defmodule Appsignal.ConfigTest do
           assert Nif.env_get("_APPSIGNAL_IGNORE_NAMESPACES") == ~c"admin,private_namespace"
 
           assert Nif.env_get("_APPSIGNAL_LANGUAGE_INTEGRATION_VERSION") ==
-                   ~c"elixir-" ++ String.to_charlist(Mix.Project.config()[:version])
+                   ~c"elixir-" ++ Application.spec(:appsignal, :vsn)
 
           assert Nif.env_get("_APPSIGNAL_LOG") == ~c"stdout"
           assert Nif.env_get("_APPSIGNAL_LOG_LEVEL") == ~c"trace"
