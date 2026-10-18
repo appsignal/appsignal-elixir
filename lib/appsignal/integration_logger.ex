@@ -48,6 +48,8 @@ defmodule Appsignal.IntegrationLogger do
           do_log(:file, level, message)
           do_log(:stderr, level, message)
       end
+    else
+      :ok
     end
   end
 
