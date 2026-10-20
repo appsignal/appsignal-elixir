@@ -116,7 +116,8 @@ if Appsignal.Dependencies.present?(:absinthe) do
 
     # Pins current behaviour, not intended behaviour: a resolver that raises
     # leaves the operation's span open, without the error, as the process's
-    # current span. The skipped test below is the intended behaviour.
+    # current span. The skipped test below is the intended behaviour. See
+    # https://github.com/appsignal/appsignal-elixir/issues/1080.
     describe "a resolver that raises" do
       @tag leaves_spans_open: "Absinthe emits no stop event when a resolver raises"
       test "leaves the operation's span open and current" do
