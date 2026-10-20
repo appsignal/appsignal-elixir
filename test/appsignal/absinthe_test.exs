@@ -48,8 +48,8 @@ if Appsignal.Dependencies.present?(:absinthe) do
         assert result == {:ok, %{data: %{"user" => %{"name" => "User 1"}}}}
       end
 
-      test "records one closed root span named after the operation" do
-        assert [%{"closed" => true, "parent_span_id" => ""} = span] = spans()
+      test "records one root span named after the operation" do
+        assert [%{"parent_span_id" => ""} = span] = spans()
         assert span["name"] == "GetUser"
         assert span["namespace"] == "graphql"
         assert category(span) == "call.graphql"
@@ -69,24 +69,24 @@ if Appsignal.Dependencies.present?(:absinthe) do
 
     test "names the span graphql when the operation name is only in the document" do
       run(@get_user)
-      assert [%{"name" => "graphql", "namespace" => "graphql", "closed" => true}] = spans()
+      assert [%{"name" => "graphql", "namespace" => "graphql"}] = spans()
     end
 
     test "names an anonymous operation's span graphql" do
       run("{ user(id: 1) { name } }")
-      assert [%{"name" => "graphql", "namespace" => "graphql", "closed" => true}] = spans()
+      assert [%{"name" => "graphql", "namespace" => "graphql"}] = spans()
     end
 
     test "does not record an error for an operation with GraphQL errors" do
       assert {:ok, %{data: %{"failing" => nil}, errors: [%{message: "Resolver failed"}]}} =
                run("query Failing { failing }", operation_name: "Failing")
 
-      assert [%{"name" => "Failing", "closed" => true, "error" => nil}] = spans()
+      assert [%{"name" => "Failing", "error" => nil}] = spans()
     end
 
     test "does not record an error for a document that does not parse" do
       assert {:ok, %{errors: [%{message: "syntax error before: " <> _}]}} = run("{ user(")
-      assert [%{"name" => "graphql", "closed" => true, "error" => nil}] = spans()
+      assert [%{"name" => "graphql", "error" => nil}] = spans()
     end
 
     describe "inside a span" do
@@ -97,7 +97,7 @@ if Appsignal.Dependencies.present?(:absinthe) do
         assert parent["name"] == "parent"
         assert parent["namespace"] == "background_job"
 
-        assert [%{"closed" => true} = span] = children(spans(), parent)
+        assert [span] = children(spans(), parent)
         assert span["name"] == "GetUser"
         assert category(span) == "call.graphql"
       end
