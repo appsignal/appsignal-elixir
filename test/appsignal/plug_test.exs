@@ -69,7 +69,7 @@ if Appsignal.Dependencies.present?(:plug) do
           conn = var!(conn)
 
           conn
-          |> Appsignal.Plug.put_name("PlugWithAppsignal#custom_name")
+          |> Appsignal.Plug.put_name("PlugRouter#custom_name")
           |> send_resp(200, "Custom name!")
         end
 
@@ -103,14 +103,14 @@ if Appsignal.Dependencies.present?(:plug) do
     end
   end
 
-  defmodule PlugWithAppsignal do
+  defmodule PlugRouter do
     use Plug.Router
     use Appsignal.Plug
     use Plug.ErrorHandler
     use AppsignalTest.PlugRoutes
   end
 
-  defmodule PlugWithoutAppsignal do
+  defmodule UninstrumentedPlugRouter do
     use Plug.Router
     use Plug.ErrorHandler
     use AppsignalTest.PlugRoutes
@@ -128,7 +128,7 @@ if Appsignal.Dependencies.present?(:plug) do
 
       test "responds as the router does without Appsignal.Plug", %{conn: conn} do
         assert {conn.status, conn.resp_body, conn.resp_headers} ==
-                 respond(PlugWithoutAppsignal, :get, "/")
+                 respond(UninstrumentedPlugRouter, :get, "/")
 
         assert %Plug.Conn{state: :sent, assigns: %{overridden?: true}} = conn
       end
@@ -177,12 +177,12 @@ if Appsignal.Dependencies.present?(:plug) do
 
     test "names the span with Appsignal.Plug.put_name/2" do
       request(:get, "/custom_name")
-      assert [%{"name" => "PlugWithAppsignal#custom_name"}] = spans()
+      assert [%{"name" => "PlugRouter#custom_name"}] = spans()
     end
 
     test "names the span after the Phoenix controller and action in the conn" do
       request(:get, "/phoenix_action")
-      assert [%{"name" => "PlugWithAppsignal#phoenix_action"}] = spans()
+      assert [%{"name" => "PlugRouter#phoenix_action"}] = spans()
     end
 
     test "records a span instrumented inside the request as its child" do
@@ -205,7 +205,7 @@ if Appsignal.Dependencies.present?(:plug) do
         reason: reason
       } do
         assert {^kind, %Plug.Conn.WrapperError{reason: %RuntimeError{}}} =
-                 raised(PlugWithoutAppsignal, :get, "/exception?id=4")
+                 raised(UninstrumentedPlugRouter, :get, "/exception?id=4")
 
         assert %Plug.Conn.WrapperError{reason: %RuntimeError{message: "Exception!"}} = reason
       end
@@ -315,7 +315,7 @@ if Appsignal.Dependencies.present?(:plug) do
       end
 
       test "logs that it is used twice and records no span", %{conn: conn} do
-        log = ExUnit.CaptureLog.capture_log(fn -> PlugWithAppsignal.call(conn, []) end)
+        log = ExUnit.CaptureLog.capture_log(fn -> PlugRouter.call(conn, []) end)
 
         assert log =~
                  "Appsignal.Plug was included twice, disabling Appsignal.Plug. Please only `use Appsignal.Plug` once."
@@ -325,7 +325,7 @@ if Appsignal.Dependencies.present?(:plug) do
 
       test "still sends the response", %{conn: conn} do
         ExUnit.CaptureLog.capture_log(fn ->
-          send(self(), PlugWithAppsignal.call(conn, []))
+          send(self(), PlugRouter.call(conn, []))
         end)
 
         assert_received %Plug.Conn{state: :sent, status: 200}
@@ -334,7 +334,7 @@ if Appsignal.Dependencies.present?(:plug) do
 
     test "handles requests with nil request headers" do
       conn = %{conn(:get, "/") | req_headers: nil}
-      assert %Plug.Conn{state: :sent} = PlugWithAppsignal.call(conn, [])
+      assert %Plug.Conn{state: :sent} = PlugRouter.call(conn, [])
       assert [_span] = spans()
     end
 
@@ -458,15 +458,14 @@ if Appsignal.Dependencies.present?(:plug) do
     end
 
     defp start_server(:bandit) do
-      server = start_supervised!({Bandit, plug: PlugWithAppsignal, port: 0, startup_log: false})
+      server = start_supervised!({Bandit, plug: PlugRouter, port: 0, startup_log: false})
       {:ok, {_address, port}} = ThousandIsland.listener_info(server)
       port
     end
 
     defp start_server(:plug_cowboy) do
       start_supervised!(
-        {Plug.Cowboy,
-         scheme: :http, plug: PlugWithAppsignal, options: [port: 0, ref: __MODULE__.Cowboy]}
+        {Plug.Cowboy, scheme: :http, plug: PlugRouter, options: [port: 0, ref: __MODULE__.Cowboy]}
       )
 
       :ranch.get_port(__MODULE__.Cowboy)
@@ -479,7 +478,7 @@ if Appsignal.Dependencies.present?(:plug) do
         |> put_req_header("accept", "text/html")
 
       try do
-        %{conn: PlugWithAppsignal.call(conn, [])}
+        %{conn: PlugRouter.call(conn, [])}
       catch
         kind, reason -> %{conn: conn, kind: kind, reason: reason}
       end
