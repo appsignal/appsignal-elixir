@@ -1,0 +1,22 @@
+#!/bin/sh
+# Runs the tests in test/app, an application that depends on this package,
+# with a dependency set from test/deps, or with none. Any other arguments go
+# to `mix test`.
+#
+#     script/test phoenix test/appsignal/phoenix
+#     script/test none
+set -e
+
+if [ $# -eq 0 ]; then
+  echo "Usage: script/test <set|none> [mix test arguments]" >&2
+  exit 1
+fi
+
+cd "$(dirname "$0")/.."
+
+export MIX_EXS=test/app/mix.exs
+export _APPSIGNAL_TEST_DEPS="$1"
+shift
+
+mix deps.get
+mix test "$@"
