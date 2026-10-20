@@ -51,6 +51,20 @@ defmodule AppsignalTest.IntegrationCaseTest do
     end
   end
 
+  describe "attached?/2" do
+    test "is true for a handler attached under the module and event" do
+      event = [:appsignal_test, :attached]
+      :ok = :telemetry.attach({__MODULE__, event}, event, fn _, _, _, _ -> :ok end, nil)
+      on_exit(fn -> :telemetry.detach({__MODULE__, event}) end)
+
+      assert attached?(__MODULE__, event)
+    end
+
+    test "is false without such a handler" do
+      refute attached?(__MODULE__, [:appsignal_test, :not_attached])
+    end
+  end
+
   describe "check/4" do
     test "passes when nothing went wrong" do
       assert :ok = IntegrationCase.check([], [], [], %{})
