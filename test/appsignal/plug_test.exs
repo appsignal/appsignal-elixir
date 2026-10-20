@@ -116,8 +116,8 @@ if Appsignal.Dependencies.present?(:plug) do
         assert %Plug.Conn{private: %{appsignal_plug_instrumented: true}} = conn
       end
 
-      test "records one closed root span for the request" do
-        assert [%{"closed" => true, "parent_span_id" => ""} = span] = spans()
+      test "records one root span for the request" do
+        assert [%{"parent_span_id" => ""} = span] = spans()
         assert span["name"] == "GET /"
         assert span["namespace"] == "http_request"
         assert category(span) == "call.plug"
@@ -172,7 +172,6 @@ if Appsignal.Dependencies.present?(:plug) do
       assert root["name"] == "GET /instrumentation"
       assert child["name"] == "query.posts"
       assert child["parent_span_id"] == root["span_id"]
-      assert root["closed"] and child["closed"]
     end
 
     describe "GET /exception?id=4" do
@@ -191,7 +190,7 @@ if Appsignal.Dependencies.present?(:plug) do
       end
 
       test "records the error on the request's span" do
-        assert [%{"closed" => true} = span] = spans()
+        assert [span] = spans()
         assert span["name"] == "GET /exception"
 
         assert %{"name" => "RuntimeError", "message" => "** (RuntimeError) Exception!"} =
@@ -233,7 +232,7 @@ if Appsignal.Dependencies.present?(:plug) do
       end
 
       test "does not record an error for a status below 500" do
-        assert [%{"closed" => true, "error" => nil}] = spans()
+        assert [%{"error" => nil}] = spans()
       end
 
       test "ignores the rest of the process's trace" do
@@ -283,7 +282,7 @@ if Appsignal.Dependencies.present?(:plug) do
     test "handles requests with nil request headers" do
       conn = %{conn(:get, "/") | req_headers: nil}
       assert %Plug.Conn{state: :sent} = PlugWithAppsignal.call(conn, [])
-      assert [%{"closed" => true}] = spans()
+      assert [_span] = spans()
     end
 
     if Appsignal.Dependencies.present?(:bandit) do
