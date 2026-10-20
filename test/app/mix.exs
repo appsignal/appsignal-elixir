@@ -9,12 +9,7 @@ defmodule AppsignalTest.App.MixProject do
   use Mix.Project
 
   def project do
-    set =
-      case System.get_env("_APPSIGNAL_TEST_DEPS") do
-        nil -> "none"
-        "" -> "none"
-        set -> set
-      end
+    set = System.get_env("_APPSIGNAL_TEST_DEPS", "none")
 
     # Read by the package's mix.exs, which leaves out its test support and
     # dependency set when built as a dependency.

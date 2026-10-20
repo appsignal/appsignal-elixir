@@ -14,12 +14,9 @@ fi
 
 cd "$(dirname "$0")/.."
 
-dependency_set=$1
-shift
-[ "$dependency_set" = none ] && dependency_set=
-
 export MIX_EXS=test/app/mix.exs
-export _APPSIGNAL_TEST_DEPS="$dependency_set"
+export _APPSIGNAL_TEST_DEPS="$1"
+shift
 
 mix deps.get
 mix test "$@"
