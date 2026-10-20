@@ -41,6 +41,30 @@ defmodule Appsignal.DependenciesTest do
     end
   end
 
+  # Without HTTPoison, Plug and Phoenix in the dependency set, this checks
+  # that the package defines those integrations without them, as it must for
+  # applications that compile it before their own dependencies.
+  test "defines every integration module, with or without its library" do
+    for module <- [
+          Appsignal.HTTPoison,
+          Appsignal.HTTPoison.Base,
+          Appsignal.Plug,
+          Appsignal.Plug.Metadata,
+          Appsignal.Phoenix,
+          Appsignal.Phoenix.Channel,
+          Appsignal.Phoenix.EventHandler,
+          Appsignal.Phoenix.LiveView,
+          Appsignal.Phoenix.Metadata,
+          Appsignal.Phoenix.Template,
+          Appsignal.Phoenix.Template.EExEngine,
+          Appsignal.Phoenix.Template.ExsEngine,
+          Appsignal.Phoenix.View,
+          Appsignal.Phoenix.Instrumenter
+        ] do
+      assert Code.ensure_loaded?(module), "#{inspect(module)} is not defined"
+    end
+  end
+
   describe "foreign?/2" do
     test "for a module loaded from the given ebin directory" do
       refute Dependencies.foreign?(

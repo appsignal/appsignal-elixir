@@ -10,6 +10,10 @@ defmodule Appsignal.Oban do
   @moduledoc false
 
   def attach do
+    if Appsignal.Dependencies.match?(:oban, ">= 2.0.0"), do: attach_handlers(), else: []
+  end
+
+  defp attach_handlers do
     exception_handler =
       case Appsignal.Config.report_oban_errors() do
         "all" -> &__MODULE__.oban_job_exception/4

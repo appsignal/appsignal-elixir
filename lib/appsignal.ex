@@ -17,7 +17,6 @@ defmodule Appsignal do
 
   use Application
   alias Appsignal.Config
-  @compile {:no_warn_undefined, Appsignal.Phoenix.EventHandler}
   require Logger
 
   @doc false
@@ -25,7 +24,6 @@ defmodule Appsignal do
     import Supervisor.Spec, warn: false
 
     initialize()
-    Appsignal.Dependencies.log_missing(Appsignal.Dependencies.missing())
 
     if Config.error_backend_enabled?() do
       Appsignal.Error.Backend.attach()
@@ -76,8 +74,7 @@ defmodule Appsignal do
   end
 
   defp attach_phoenix do
-    if Config.instrument_phoenix?() and Appsignal.Dependencies.conflicts() == :ok and
-         Code.ensure_loaded?(Appsignal.Phoenix.EventHandler) do
+    if Config.instrument_phoenix?() and Appsignal.Dependencies.conflicts() == :ok do
       Appsignal.Phoenix.EventHandler.attach()
     end
   end

@@ -2,6 +2,13 @@ defmodule Appsignal.Ecto.Repo do
   @ecto_repo Application.compile_env(:appsignal, :ecto_repo, Ecto.Repo)
 
   defmacro __using__(opts) do
+    case Appsignal.Dependencies.match?(:ecto, ">= 3.4.0") do
+      true -> instrumentation(opts)
+      false -> quote(do: use(unquote(@ecto_repo), unquote(opts)))
+    end
+  end
+
+  defp instrumentation(opts) do
     quote do
       use unquote(@ecto_repo), unquote(opts)
 
