@@ -28,7 +28,7 @@ defmodule AppsignalTest.App.MixProject do
     ]
   end
 
-  def application, do: [extra_applications: [:logger, :inets]]
+  def application, do: [extra_applications: [:logger]]
 
   defp dependency_set("none"), do: []
 
