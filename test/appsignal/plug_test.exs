@@ -44,6 +44,22 @@ if Appsignal.Dependencies.present?(:plug) do
           throw(:thrown)
         end
 
+        get "/ignored" do
+          Appsignal.Tracer.ignore()
+          send_resp(var!(conn), 200, "Ignored!")
+        end
+
+        get "/leak" do
+          Appsignal.Tracer.create_span("leaked", Appsignal.Tracer.current_span())
+          send_resp(var!(conn), 200, "Leaked!")
+        end
+
+        get "/work_after_response" do
+          conn = send_resp(var!(conn), 200, "Sent!")
+          Process.sleep(200)
+          conn
+        end
+
         get "/task_exception" do
           Task.await(Task.async(fn -> raise "Exception in a task!" end))
           send_resp(var!(conn), 200, "Unreachable")
@@ -241,6 +257,14 @@ if Appsignal.Dependencies.present?(:plug) do
       assert span["name"] == ""
     end
 
+    # Pins current behaviour, not intended behaviour: a request that calls
+    # Tracer.ignore/0 is still reported. See
+    # https://github.com/appsignal/appsignal-elixir/issues/1089.
+    test "still records a request that calls Tracer.ignore/0" do
+      %{conn: %Plug.Conn{status: 200}} = request(:get, "/ignored")
+      assert [%{"name" => "GET /ignored", "closed" => true}] = spans()
+    end
+
     describe "GET /bad_request" do
       setup do
         request(:get, "/bad_request")
@@ -344,6 +368,40 @@ if Appsignal.Dependencies.present?(:plug) do
           assert {500, _body} = http_get(port, "/task_exception")
           assert_task_exception_span(unquote(server))
         end
+
+        if server == :plug_cowboy do
+          @tag leaves_spans_open: "the request's span, as its process is killed"
+        end
+
+        test "records a request whose client disconnects after the response", %{port: port} do
+          assert [200] =
+                   Task.await(
+                     Task.async(fn ->
+                       AppsignalTest.KeepAliveClient.get(port, ["/work_after_response"])
+                     end)
+                   )
+
+          assert_after_disconnect_span(unquote(server))
+        end
+
+        test "records a request after an ignored one on the same connection", %{port: port} do
+          assert [200, 200] = AppsignalTest.KeepAliveClient.get(port, ["/ignored", "/"])
+          assert_after_ignored_spans(unquote(server))
+        end
+
+        @tag leaves_spans_open: "the span the first request leaves open"
+        test "records a request after one that leaves a span open on the same connection", %{
+          port: port
+        } do
+          assert [200, 200] = AppsignalTest.KeepAliveClient.get(port, ["/leak", "/"])
+
+          [leaking, leaked, next] =
+            await_spans(&match?([%{"closed" => true}, _, %{"closed" => true}], &1))
+
+          assert leaked["parent_span_id"] == leaking["span_id"]
+          refute leaked["closed"]
+          assert_after_leak_span(unquote(server), leaked, next)
+        end
       end
     end
 
@@ -363,6 +421,40 @@ if Appsignal.Dependencies.present?(:plug) do
       assert [span] = await_spans(&match?([_], &1))
       refute span["closed"]
       assert span["error"] == nil
+    end
+
+    # Pins current behaviour, not intended behaviour: Cowboy stops the request's
+    # process when its client disconnects, so its span is never closed. See
+    # https://github.com/appsignal/appsignal-elixir/issues/1088.
+    defp assert_after_disconnect_span(:bandit) do
+      assert [%{"name" => "GET /work_after_response"}] =
+               await_spans(&match?([%{"closed" => true}], &1))
+    end
+
+    defp assert_after_disconnect_span(:plug_cowboy) do
+      Process.sleep(400)
+      assert [%{"name" => "", "closed" => false}] = spans()
+    end
+
+    # Pins current behaviour, not intended behaviour: on Bandit, which serves a
+    # connection's requests from one process, Tracer.ignore/0 and a span left
+    # open carry over to the next request. See
+    # https://github.com/appsignal/appsignal-elixir/issues/1089.
+    defp assert_after_ignored_spans(:bandit) do
+      assert [%{"name" => "GET /ignored"}] = await_spans(&match?([%{"closed" => true}], &1))
+    end
+
+    defp assert_after_ignored_spans(:plug_cowboy) do
+      assert [%{"name" => "GET /ignored"}, %{"name" => "GET /"}] =
+               await_spans(&match?([%{"closed" => true}, %{"closed" => true}], &1))
+    end
+
+    defp assert_after_leak_span(:bandit, leaked, next) do
+      assert next["parent_span_id"] == leaked["span_id"]
+    end
+
+    defp assert_after_leak_span(:plug_cowboy, _leaked, next) do
+      assert next["parent_span_id"] == ""
     end
 
     defp start_server(:bandit) do
