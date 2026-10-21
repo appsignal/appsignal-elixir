@@ -44,6 +44,11 @@ if Appsignal.Dependencies.present?(:plug) do
           throw(:thrown)
         end
 
+        get "/task_exception" do
+          Task.await(Task.async(fn -> raise "Exception in a task!" end))
+          send_resp(var!(conn), 200, "Unreachable")
+        end
+
         get "/custom_name" do
           conn = var!(conn)
 
@@ -212,14 +217,28 @@ if Appsignal.Dependencies.present?(:plug) do
       assert [%{"error" => %{"name" => "ArgumentError"}}] = spans()
     end
 
-    test "records an exit" do
+    # Pins current behaviour, not intended behaviour: an exit or a throw leaves
+    # the request's span without a name. See
+    # https://github.com/appsignal/appsignal-elixir/issues/1086.
+    test "records an exit without the request's name" do
       %{kind: :exit, reason: :exited} = request(:get, "/exit")
-      assert [%{"error" => %{"name" => ":exit", "message" => "** (exit) :exited"}}] = spans()
+
+      assert [%{"error" => %{"name" => ":exit", "message" => "** (exit) :exited"}} = span] =
+               spans()
+
+      assert span["name"] == ""
     end
 
-    test "records a throw" do
+    # Pins current behaviour, not intended behaviour: an exit or a throw leaves
+    # the request's span without a name. See
+    # https://github.com/appsignal/appsignal-elixir/issues/1086.
+    test "records a throw without the request's name" do
       %{kind: :throw, reason: :thrown} = request(:get, "/throw")
-      assert [%{"error" => %{"name" => ":throw", "message" => "** (throw) :thrown"}}] = spans()
+
+      assert [%{"error" => %{"name" => ":throw", "message" => "** (throw) :thrown"}} = span] =
+               spans()
+
+      assert span["name"] == ""
     end
 
     describe "GET /bad_request" do
@@ -233,6 +252,16 @@ if Appsignal.Dependencies.present?(:plug) do
 
       test "does not record an error for a status below 500" do
         assert [%{"error" => nil}] = spans()
+      end
+
+      # Pins current behaviour, not intended behaviour: the request's span is
+      # left without its name and data. See
+      # https://github.com/appsignal/appsignal-elixir/issues/1087.
+      test "records the request without its name or data" do
+        assert [span] = spans()
+        assert span["name"] == ""
+        assert category(span) == nil
+        refute Map.has_key?(span["sample_data"], "environment")
       end
 
       test "ignores the rest of the process's trace" do
@@ -285,14 +314,10 @@ if Appsignal.Dependencies.present?(:plug) do
       assert [_span] = spans()
     end
 
-    if Appsignal.Dependencies.present?(:bandit) do
-      describe "through a Bandit server" do
+    for server <- [:bandit, :plug_cowboy], Appsignal.Dependencies.present?(server) do
+      describe "through #{server}" do
         setup do
-          server =
-            start_supervised!({Bandit, plug: PlugWithAppsignal, port: 0, startup_log: false})
-
-          {:ok, {_address, port}} = ThousandIsland.listener_info(server)
-          [port: port]
+          [port: start_server(unquote(server))]
         end
 
         test "responds and records the request's span", %{port: port} do
@@ -310,7 +335,49 @@ if Appsignal.Dependencies.present?(:plug) do
           assert [%{"name" => "GET /exception", "error" => %{"name" => "RuntimeError"}}] =
                    await_spans(&match?([%{"closed" => true}], &1))
         end
+
+        if server == :plug_cowboy do
+          @tag leaves_spans_open: "the request's span, as its process is killed"
+        end
+
+        test "responds with an error to a request whose awaited task raises", %{port: port} do
+          assert {500, _body} = http_get(port, "/task_exception")
+          assert_task_exception_span(unquote(server))
+        end
       end
+    end
+
+    # Pins current behaviour, not intended behaviour: when a task the request
+    # awaits raises, Bandit records the exit on a span without the request's
+    # name, and Cowboy records nothing. See
+    # https://github.com/appsignal/appsignal-elixir/issues/1086 and
+    # https://github.com/appsignal/appsignal-elixir/issues/1088.
+    defp assert_task_exception_span(:bandit) do
+      assert [span] = await_spans(&match?([%{"closed" => true}], &1))
+      assert span["name"] == ""
+      assert span["error"]["name"] == ":exit"
+      assert span["error"]["message"] =~ "Exception in a task!"
+    end
+
+    defp assert_task_exception_span(:plug_cowboy) do
+      assert [span] = await_spans(&match?([_], &1))
+      refute span["closed"]
+      assert span["error"] == nil
+    end
+
+    defp start_server(:bandit) do
+      server = start_supervised!({Bandit, plug: PlugWithAppsignal, port: 0, startup_log: false})
+      {:ok, {_address, port}} = ThousandIsland.listener_info(server)
+      port
+    end
+
+    defp start_server(:plug_cowboy) do
+      start_supervised!(
+        {Plug.Cowboy,
+         scheme: :http, plug: PlugWithAppsignal, options: [port: 0, ref: __MODULE__.Cowboy]}
+      )
+
+      :ranch.get_port(__MODULE__.Cowboy)
     end
 
     defp request(method, path, params_or_body \\ nil) do
