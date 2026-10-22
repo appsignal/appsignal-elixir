@@ -1,5 +1,13 @@
 # AppSignal for Elixir changelog
 
+## 2.18.3
+
+_Published on 2026-10-22._
+
+### Security
+
+- Stop trusting certificates issued under the eMudhra intermediate certificate authorities whose private keys were [compromised in October 2026](https://bugzilla.mozilla.org/show_bug.cgi?id=2083449). The bundled CA certificates no longer include the emSign ECC Root CA - G3 root certificate, which those intermediates chain to. (patch [16dbdc27](https://github.com/appsignal/appsignal-elixir/commit/16dbdc2718e6618a9fae67db78b2c8482712907d), [dcd3d1fa](https://github.com/appsignal/appsignal-elixir/commit/dcd3d1fa3b12b07e903d51a0dc79dded7aba499a), [a27ae42c](https://github.com/appsignal/appsignal-elixir/commit/a27ae42ca32aceb11e93ecd2c18a53653bfeceb8))
+
 ## 2.18.2
 
 _Published on 2026-10-14._
