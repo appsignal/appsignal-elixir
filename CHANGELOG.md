@@ -1,5 +1,18 @@
 # AppSignal for Elixir changelog
 
+## 2.18.4
+
+_Published on 2026-10-23._
+
+### Security
+
+- Bump the bundled certificates that the agent uses when it can't open the
+  configured CA file. They no longer include the emSign ECC Root CA - G3 and AAA
+  Certificate Services root certificates, which [compromised eMudhra intermediate
+  certificates](https://bugzilla.mozilla.org/show_bug.cgi?id=2083449) chain to.
+
+  (patch [16dbdc27](https://github.com/appsignal/appsignal-elixir/commit/16dbdc2718e6618a9fae67db78b2c8482712907d), [dcd3d1fa](https://github.com/appsignal/appsignal-elixir/commit/dcd3d1fa3b12b07e903d51a0dc79dded7aba499a), [a27ae42c](https://github.com/appsignal/appsignal-elixir/commit/a27ae42ca32aceb11e93ecd2c18a53653bfeceb8), [445c5552](https://github.com/appsignal/appsignal-elixir/commit/445c5552837d1e61aed9a92a6fe1de8905a36fff), [db335309](https://github.com/appsignal/appsignal-elixir/commit/db3353093ec51f05abeddfa6fceb52bd4565d959), [86dd68ab](https://github.com/appsignal/appsignal-elixir/commit/86dd68ab57a666a1e6ecaaeefa95fd0438097444))
+
 ## 2.18.3
 
 _Published on 2026-10-22._
