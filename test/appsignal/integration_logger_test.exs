@@ -82,6 +82,16 @@ defmodule Appsignal.IntegrationLoggerTest do
     repeatedly(fn -> assert FakeFile.count() == 0 end)
   end
 
+  test "all methods return :ok when the message is below the config log level" do
+    with_config(%{log_level: "error"}, fn ->
+      assert :ok == Appsignal.IntegrationLogger.trace("trace!")
+      assert :ok == Appsignal.IntegrationLogger.debug("debug!")
+      assert :ok == Appsignal.IntegrationLogger.info("info!")
+      assert :ok == Appsignal.IntegrationLogger.warn("warning!")
+      assert :ok == Appsignal.IntegrationLogger.error("error!")
+    end)
+  end
+
   test "logs to file by default" do
     with_config(%{}, fn ->
       Appsignal.IntegrationLogger.info("info!")
