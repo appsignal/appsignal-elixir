@@ -137,7 +137,7 @@ defmodule AppsignalTest.IntegrationCase do
   # A detached handler stays detached for the rest of the run, which would
   # fail later tests for this test's reason.
   defp reattach(%{id: id, event_name: event, function: function, config: config}) do
-    :telemetry.attach(id, event, function, config)
+    _ = :telemetry.attach(id, event, function, config)
   end
 
   defp restart_recorder(recorder) do
