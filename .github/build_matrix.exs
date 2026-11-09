@@ -31,7 +31,7 @@
     ecto: [elixir: "< 1.14"],
     # Oban's tests use Ecto 3.14, which needs Elixir 1.14.
     oban: [elixir: "< 1.14"],
-    # HTTPoison 3 depends on hackney 4, which needs OTP 26.
-    httpoison: [otp: "< 26"]
+    # HTTPoison 3 depends on hackney 4, which needs OTP 27.
+    httpoison: [otp: "< 27"]
   ]
 ]
