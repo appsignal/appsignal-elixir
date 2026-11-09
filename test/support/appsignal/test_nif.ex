@@ -89,8 +89,10 @@ defmodule Appsignal.Test.Nif do
     Nif.close_span_with_timestamp(reference, sec, nsec)
   end
 
-  # The extension sends a span away when it closes, after which it can no
-  # longer be read, so its data is kept from just before.
+  # When a span is closed, the extension flushes it to the agent and forgets
+  # about it. In order to later assert against what the span's data was at the
+  # time when it was closed, we need to ask the extension to dump the span as a
+  # JSON right before it closes it.
   defp closing(reference) do
     {:ok, json} = Nif.span_to_json(reference)
     add(:closed_span, {reference, json})
