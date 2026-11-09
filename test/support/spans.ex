@@ -33,7 +33,8 @@ defmodule AppsignalTest.Spans do
 
   @doc """
   Waits until `fun` returns a truthy value for the spans created so far, and
-  returns the spans. By default, waits until every span is closed.
+  returns the spans. By default, waits until there is a span and every span
+  is closed.
 
   Spans created in other processes, such as a LiveView, a channel or a job,
   can still be open when the call that caused them returns.
@@ -59,7 +60,7 @@ defmodule AppsignalTest.Spans do
     end
   end
 
-  def all_closed?(spans), do: Enum.all?(spans, & &1["closed"])
+  def all_closed?(spans), do: spans != [] and Enum.all?(spans, & &1["closed"])
 
   def open_spans(spans \\ spans()), do: Enum.reject(spans, & &1["closed"])
 

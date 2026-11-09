@@ -40,6 +40,15 @@ defmodule AppsignalTest.IntegrationCaseTest do
       assert [%{"name" => "later", "closed" => true}] =
                await_spans(&match?([%{"closed" => true}], &1))
     end
+
+    test "waits for a span to be created by default" do
+      spawn(fn ->
+        Process.sleep(50)
+        Appsignal.instrument("later", fn -> :ok end)
+      end)
+
+      assert [%{"name" => "later", "closed" => true}] = await_spans()
+    end
   end
 
   describe "check/4" do
