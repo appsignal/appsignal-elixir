@@ -10,17 +10,17 @@ if Appsignal.Dependencies.present?(:plug_cowboy) do
       :ok
     end
 
-    describe "a request inside an instrumented function" do
+    describe "a request" do
       setup do
         [response: instrumented(fn -> request(:get, HTTPServer.url("/users/4?page=2")) end)]
       end
 
-      test "goes through", %{response: response} do
+      test "sends the request", %{response: response} do
         assert {:ok, %Finch.Response{status: 200, body: "OK"}} = response
         assert [%{method: "GET", path: "/users/4?page=2"}] = HTTPServer.requests()
       end
 
-      test "records a closed child span named after the method and origin" do
+      test "records a child span named after the method and origin" do
         [parent] = root_spans()
         assert [span] = children(spans(), parent)
         assert span["name"] == "GET #{HTTPServer.origin(HTTPServer.url())}"
@@ -68,12 +68,12 @@ if Appsignal.Dependencies.present?(:plug_cowboy) do
         assert {:error, %{__exception__: true, reason: :econnrefused}} = response
       end
 
-      test "closes the span without recording an error", %{url: url} do
+      test "records no error", %{url: url} do
         assert [%{"error" => nil}] = named(spans(), "GET #{HTTPServer.origin(url)}")
       end
     end
 
-    test "closes the span when the response handler raises" do
+    test "records no error when the response handler raises" do
       assert_raise RuntimeError, "Stream!", fn ->
         instrumented(fn ->
           :get

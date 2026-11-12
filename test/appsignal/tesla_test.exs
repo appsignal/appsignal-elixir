@@ -91,7 +91,7 @@ if Appsignal.Dependencies.present?(:tesla) and Appsignal.Dependencies.present?(:
         assert [%{method: "GET", path: "/api/users/4"}] = HTTPServer.requests()
       end
 
-      test "records a closed child span named after the templated URL" do
+      test "records a child span named after the templated URL" do
         [parent] = root_spans()
         assert [span] = children(spans(), parent)
         assert span["name"] == "GET https://example.com/api/users/:id"
@@ -257,7 +257,7 @@ if Appsignal.Dependencies.present?(:tesla) and Appsignal.Dependencies.present?(:
                named(spans(), "GET https://example.com/api/status/500")
     end
 
-    test "closes the span without recording an error when the connection is refused" do
+    test "records no error when the connection is refused" do
       client = Tesla.client([Tesla.Middleware.Telemetry], Tesla.Adapter.Mint)
       url = HTTPServer.refused_url()
 
@@ -265,7 +265,7 @@ if Appsignal.Dependencies.present?(:tesla) and Appsignal.Dependencies.present?(:
       assert [%{"error" => nil}] = named(spans(), "GET #{HTTPServer.origin(url)}")
     end
 
-    test "closes the span without recording an error when a later middleware raises" do
+    test "records no error when a later middleware raises" do
       client =
         Tesla.client(
           [Tesla.Middleware.Telemetry, fn _env, _next -> raise "Middleware!" end],

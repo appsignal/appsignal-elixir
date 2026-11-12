@@ -64,7 +64,7 @@ if Appsignal.Dependencies.present?(:httpoison) and Appsignal.Dependencies.presen
           assert %{"content-type" => "text/plain"} = request.headers
         end
 
-        test "records a closed child span named after the method and origin", %{
+        test "records a child span named after the method and origin", %{
           client: client
         } do
           instrumented(fn -> client.get(HTTPServer.url("/users/4?page=2")) end)
@@ -177,7 +177,7 @@ if Appsignal.Dependencies.present?(:httpoison) and Appsignal.Dependencies.presen
         assert HTTPServer.requests() == []
       end
 
-      test "closes the span without recording an error" do
+      test "records no error" do
         assert [%{"error" => nil}] =
                  named(spans(), "POST #{HTTPServer.origin(HTTPServer.url())}")
       end
