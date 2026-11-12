@@ -94,16 +94,63 @@ if Appsignal.Dependencies.present?(:broadway) do
     @pipeline "AppsignalTest.BroadwayPipeline"
     @processor "AppsignalTest.BroadwayPipeline.Broadway.Processor_default_0"
 
-    describe "a successful message" do
-      setup do
-        start_pipeline()
-        ref = Broadway.test_message(BroadwayPipeline, %{"id" => 1}, metadata: %{queue: "q"})
-        assert_receive {:ack, ^ref, [%Message{data: %{"id" => 1}}], []}
-        [spans: settle(2)]
+    setup context do
+      case Map.get(context, :pipeline, []) do
+        false -> :ok
+        opts -> start_supervised!({BroadwayPipeline, opts})
       end
 
-      test "records a root span for the processor", %{spans: spans} do
-        assert [span] = named(spans, "#{@pipeline}#prepare_messages")
+      :ok
+    end
+
+    describe "processing messages through Broadway" do
+      test "acknowledges a successful message" do
+        assert {[%Message{data: %{"id" => 1}}], []} = process(%{"id" => 1})
+      end
+
+      test "fails a message marked as failed" do
+        assert {[], [%Message{status: {:failed, "Failed!"}}]} = process("fail")
+      end
+
+      @tag :capture_log
+      test "fails a message whose handle_message/3 raises" do
+        assert {[], [%Message{status: {:error, %RuntimeError{message: "Exception!"}, _}}]} =
+                 process("raise")
+      end
+
+      @tag :capture_log
+      test "keeps processing messages after handle_message/3 raises" do
+        process("raise")
+        assert {[%Message{data: "data"}], []} = process("data")
+      end
+
+      @tag :capture_log
+      test "fails the message when prepare_messages/2 raises" do
+        assert {[], [%Message{status: {:error, %RuntimeError{message: "Prepare exception!"}, _}}]} =
+                 process("raise in prepare")
+      end
+
+      @tag pipeline: [batchers: true]
+      test "acknowledges a batch's messages" do
+        assert {[_, _], []} = process_batch(["one", "two"])
+      end
+
+      @tag :capture_log
+      @tag pipeline: [batchers: true]
+      test "fails a batch's messages when handle_batch/4 raises" do
+        assert {[],
+                [
+                  %Message{status: {:error, %RuntimeError{}, _}},
+                  %Message{status: {:error, %RuntimeError{}, _}}
+                ]} = process_batch(["one", "fail batch"])
+      end
+    end
+
+    describe "the processor's span" do
+      test "is a root span with the processor's attributes" do
+        process(%{"id" => 1})
+
+        assert [span] = named(closed_spans(2), "#{@pipeline}#prepare_messages")
         assert span["parent_span_id"] == ""
         assert span["namespace"] == "broadway"
         assert category(span) == "processor.broadway"
@@ -120,7 +167,79 @@ if Appsignal.Dependencies.present?(:broadway) do
                }
       end
 
-      test "records the message's span as a root span of its own", %{spans: spans} do
+      test "counts a message marked as failed, without an error" do
+        process("fail")
+
+        assert [span] = named(closed_spans(2), "#{@pipeline}#prepare_messages")
+        assert span["error"] == nil
+        assert span["attributes"]["failed_messages"] == 1
+        assert span["attributes"]["successful_messages_to_ack"] == 0
+      end
+
+      @tag :capture_log
+      test "counts a message whose handle_message/3 raises as failed, without an error" do
+        process("raise")
+
+        assert [span] = named(closed_spans(2), "#{@pipeline}#prepare_messages")
+        assert span["error"] == nil
+        assert span["attributes"]["failed_messages"] == 1
+      end
+
+      @tag :capture_log
+      test "counts the message as failed, without an error, when prepare_messages/2 raises" do
+        process("raise in prepare")
+
+        assert [span] = closed_spans(1)
+        assert span["name"] == "#{@pipeline}#prepare_messages"
+        assert span["error"] == nil
+        assert span["attributes"]["failed_messages"] == 1
+      end
+
+      test "has a span instrumented in prepare_messages/2 as its child" do
+        process("instrument in prepare")
+        spans = closed_spans(3)
+
+        [processor] = named(spans, "#{@pipeline}#prepare_messages")
+        assert [%{"name" => "Prepare messages"} = child] = children(spans, processor)
+        assert category(child) == "prepare.messages"
+      end
+
+      @tag pipeline: [batchers: true]
+      test "counts the messages it forwards to a batcher" do
+        process_batch(["one", "two"])
+
+        processors = named(closed_spans(4), "#{@pipeline}#prepare_messages")
+        assert length(processors) == 2
+
+        for processor <- processors do
+          assert processor["attributes"]["successful_messages_to_forward"] == 1
+          assert processor["attributes"]["successful_messages_to_ack"] == 0
+        end
+      end
+
+      @tag :capture_log
+      @tag pipeline: [batchers: true]
+      test "has no error when handle_batch/4 raises" do
+        process_batch(["one", "fail batch"])
+
+        processors = named(closed_spans(4), "#{@pipeline}#prepare_messages")
+        assert [%{"error" => nil}, %{"error" => nil}] = processors
+      end
+
+      @tag pipeline: [concurrency: 4]
+      test "counts every message, across concurrent processors" do
+        process_slow_messages(8)
+
+        processors = named(closed_messages(8), "#{@pipeline}#prepare_messages")
+        assert Enum.sum(Enum.map(processors, & &1["attributes"]["message_count"])) == 8
+      end
+    end
+
+    describe "the message's span" do
+      test "is a root span of its own trace, with the processor's attributes" do
+        process(%{"id" => 1})
+        spans = closed_spans(2)
+
         [processor] = named(spans, "#{@pipeline}#prepare_messages")
         assert [span] = named(spans, "#{@pipeline}#handle_message")
         assert span["parent_span_id"] == ""
@@ -136,8 +255,10 @@ if Appsignal.Dependencies.present?(:broadway) do
                }
       end
 
-      test "records the whole message as the span's params", %{spans: spans} do
-        [span] = named(spans, "#{@pipeline}#handle_message")
+      test "has the whole message as params" do
+        process(%{"id" => 1}, metadata: %{queue: "q"})
+
+        [span] = named(closed_spans(2), "#{@pipeline}#handle_message")
 
         assert %{
                  "acknowledger" => ["Elixir.Broadway.CallerAcknowledger", [pid, ref], "ok"],
@@ -152,51 +273,28 @@ if Appsignal.Dependencies.present?(:broadway) do
         assert pid == inspect(self())
         assert ref =~ "#Reference<"
       end
-    end
 
-    test "does not record the message as params when send_params is false" do
-      start_pipeline()
+      test "has no params when send_params is false" do
+        with_config(%{send_params: false}, fn ->
+          process("data")
 
-      with_config(%{send_params: false}, fn ->
-        ref = Broadway.test_message(BroadwayPipeline, "data")
-        assert_receive {:ack, ^ref, [_], []}
-        spans = settle(2)
-
-        assert [span] = named(spans, "#{@pipeline}#handle_message")
-        refute Map.has_key?(span["sample_data"], "params")
-      end)
-    end
-
-    test "records no error for a message marked as failed" do
-      start_pipeline()
-      ref = Broadway.test_message(BroadwayPipeline, "fail")
-      assert_receive {:ack, ^ref, [], [%Message{status: {:failed, "Failed!"}}]}
-      spans = settle(2)
-
-      assert [message] = named(spans, "#{@pipeline}#handle_message")
-      assert message["error"] == nil
-
-      assert [processor] = named(spans, "#{@pipeline}#prepare_messages")
-      assert processor["error"] == nil
-      assert processor["attributes"]["failed_messages"] == 1
-      assert processor["attributes"]["successful_messages_to_ack"] == 0
-    end
-
-    describe "a message whose handle_message/3 raises" do
-      @describetag :capture_log
-
-      setup do
-        start_pipeline()
-        ref = Broadway.test_message(BroadwayPipeline, "raise")
-
-        assert_receive {:ack, ^ref, [],
-                        [%Message{status: {:error, %RuntimeError{message: "Exception!"}, _}}]}
-
-        [spans: settle(2)]
+          assert [span] = named(closed_spans(2), "#{@pipeline}#handle_message")
+          refute Map.has_key?(span["sample_data"], "params")
+        end)
       end
 
-      test "records the error on the message's span", %{spans: spans} do
-        assert [span] = named(spans, "#{@pipeline}#handle_message")
+      test "has no error for a message marked as failed" do
+        process("fail")
+
+        assert [span] = named(closed_spans(2), "#{@pipeline}#handle_message")
+        assert span["error"] == nil
+      end
+
+      @tag :capture_log
+      test "has the error when handle_message/3 raises" do
+        process("raise")
+
+        assert [span] = named(closed_spans(2), "#{@pipeline}#handle_message")
 
         assert %{"name" => "RuntimeError", "message" => "** (RuntimeError) Exception!"} =
                  span["error"]
@@ -205,149 +303,98 @@ if Appsignal.Dependencies.present?(:broadway) do
         assert line =~ "AppsignalTest.BroadwayPipeline.handle_message/3"
       end
 
-      test "records the message as failed on the processor's span", %{spans: spans} do
-        assert [span] = named(spans, "#{@pipeline}#prepare_messages")
-        assert span["error"] == nil
-        assert span["attributes"]["failed_messages"] == 1
-      end
+      test "has a span instrumented in handle_message/3 as its child" do
+        process("instrument")
+        spans = closed_spans(3)
 
-      test "keeps processing messages" do
-        ref = Broadway.test_message(BroadwayPipeline, "data")
-        assert_receive {:ack, ^ref, [%Message{data: "data"}], []}
-        settle(4)
-      end
-    end
-
-    @tag :capture_log
-    test "records no error when prepare_messages/2 raises" do
-      start_pipeline()
-      ref = Broadway.test_message(BroadwayPipeline, "raise in prepare")
-
-      assert_receive {:ack, ^ref, [],
-                      [
-                        %Message{
-                          status: {:error, %RuntimeError{message: "Prepare exception!"}, _}
-                        }
-                      ]}
-
-      assert [span] = settle(1)
-      assert span["name"] == "#{@pipeline}#prepare_messages"
-      assert span["error"] == nil
-      assert span["attributes"]["failed_messages"] == 1
-    end
-
-    test "records a span instrumented in handle_message/3 as the message span's child" do
-      start_pipeline()
-      ref = Broadway.test_message(BroadwayPipeline, "instrument")
-      assert_receive {:ack, ^ref, [_], []}
-      spans = settle(3)
-
-      [message] = named(spans, "#{@pipeline}#handle_message")
-      assert [%{"name" => "Handle message"} = child] = children(spans, message)
-      assert category(child) == "handle.message"
-    end
-
-    test "records a span instrumented in prepare_messages/2 as the processor span's child" do
-      start_pipeline()
-      ref = Broadway.test_message(BroadwayPipeline, "instrument in prepare")
-      assert_receive {:ack, ^ref, [_], []}
-      spans = settle(3)
-
-      [processor] = named(spans, "#{@pipeline}#prepare_messages")
-      assert [%{"name" => "Prepare messages"} = child] = children(spans, processor)
-      assert category(child) == "prepare.messages"
-    end
-
-    describe "with a batcher" do
-      setup do
-        start_pipeline(batchers: true)
-      end
-
-      test "records the processor and message spans, and none for the batch" do
-        ref = Broadway.test_batch(BroadwayPipeline, ["one", "two"])
-        assert_receive {:ack, ^ref, [_, _], []}
-        spans = settle(4)
-
-        assert length(named(spans, "#{@pipeline}#handle_message")) == 2
-        processors = named(spans, "#{@pipeline}#prepare_messages")
-        assert length(processors) == 2
-
-        for processor <- processors do
-          assert processor["attributes"]["successful_messages_to_forward"] == 1
-          assert processor["attributes"]["successful_messages_to_ack"] == 0
-        end
+        [message] = named(spans, "#{@pipeline}#handle_message")
+        assert [%{"name" => "Handle message"} = child] = children(spans, message)
+        assert category(child) == "handle.message"
       end
 
       @tag :capture_log
-      test "records no error when handle_batch/4 raises" do
-        ref = Broadway.test_batch(BroadwayPipeline, ["one", "fail batch"])
+      @tag pipeline: [batchers: true]
+      test "has no error when handle_batch/4 raises" do
+        process_batch(["one", "fail batch"])
 
-        assert_receive {:ack, ^ref, [],
-                        [
-                          %Message{status: {:error, %RuntimeError{}, _}},
-                          %Message{status: {:error, %RuntimeError{}, _}}
-                        ]}
-
-        spans = settle(4)
-        assert Enum.all?(spans, &(&1["error"] == nil))
+        messages = named(closed_spans(4), "#{@pipeline}#handle_message")
+        assert [%{"error" => nil}, %{"error" => nil}] = messages
       end
-    end
 
-    test "records the spans of messages handled by concurrent processors" do
-      start_pipeline(concurrency: 4)
-      ref = Broadway.test_batch(BroadwayPipeline, List.duplicate("slow", 8))
-      assert receive_acked(ref, 8) == 8
-      spans = settle(&(length(named(&1, "#{@pipeline}#handle_message")) == 8))
+      @tag pipeline: [concurrency: 4]
+      test "names the processor that handled it, across concurrent processors" do
+        process_slow_messages(8)
 
-      messages = named(spans, "#{@pipeline}#handle_message")
-      processors = named(spans, "#{@pipeline}#prepare_messages")
-      assert Enum.sum(Enum.map(processors, & &1["attributes"]["message_count"])) == 8
+        messages = named(closed_messages(8), "#{@pipeline}#handle_message")
+        names = messages |> Enum.map(& &1["attributes"]["processor"]) |> Enum.uniq()
+        assert length(names) > 1
 
-      names = messages |> Enum.map(& &1["attributes"]["processor"]) |> Enum.uniq()
-      assert length(names) > 1
-
-      for name <- names do
-        assert name =~ ~r/^AppsignalTest\.BroadwayPipeline\.Broadway\.Processor_default_[0-3]$/
-      end
-    end
-
-    test "names the spans after a pipeline named with an atom" do
-      start_pipeline(name: :appsignal_broadway_test)
-      ref = Broadway.test_message(:appsignal_broadway_test, "data")
-      assert_receive {:ack, ^ref, [_], []}
-      spans = settle(2)
-
-      assert [processor] = named(spans, ":appsignal_broadway_test#prepare_messages")
-      assert [message] = named(spans, ":appsignal_broadway_test#handle_message")
-
-      for span <- [processor, message] do
-        assert span["attributes"]["topology_name"] == ":appsignal_broadway_test"
-
-        assert span["attributes"]["processor"] ==
-                 "appsignal_broadway_test.Broadway.Processor_default_0"
-      end
-    end
-
-    if Appsignal.Dependencies.match?(:broadway, ">= 1.1.0") do
-      test "names the spans after a pipeline registered under a via tuple" do
-        start_supervised!({Registry, keys: :unique, name: AppsignalTest.BroadwayRegistry})
-        name = {:via, Registry, {AppsignalTest.BroadwayRegistry, :registered}}
-        start_supervised!({AppsignalTest.BroadwayRegisteredPipeline, name: name})
-        ref = Broadway.test_message(name, "data")
-        assert_receive {:ack, ^ref, [_], []}
-        spans = settle(2)
-
-        assert [processor] = named(spans, ":registered#prepare_messages")
-        assert [message] = named(spans, ":registered#handle_message")
-
-        for span <- [processor, message] do
-          assert span["attributes"]["topology_name"] == ":registered"
-          assert span["attributes"]["processor"] == "Processor_default_0"
+        for name <- names do
+          assert name =~ ~r/^AppsignalTest\.BroadwayPipeline\.Broadway\.Processor_default_[0-3]$/
         end
       end
     end
 
-    describe "when :instrument_broadway is set to false" do
+    describe "naming the spans after the pipeline" do
+      @tag pipeline: [name: :appsignal_broadway_test]
+      test "named with an atom" do
+        process("data", to: :appsignal_broadway_test)
+        spans = closed_spans(2)
+
+        assert [processor] = named(spans, ":appsignal_broadway_test#prepare_messages")
+        assert [message] = named(spans, ":appsignal_broadway_test#handle_message")
+
+        for span <- [processor, message] do
+          assert span["attributes"]["topology_name"] == ":appsignal_broadway_test"
+
+          assert span["attributes"]["processor"] ==
+                   "appsignal_broadway_test.Broadway.Processor_default_0"
+        end
+      end
+
+      if Appsignal.Dependencies.match?(:broadway, ">= 1.1.0") do
+        @tag pipeline: false
+        test "registered under a via tuple" do
+          start_supervised!({Registry, keys: :unique, name: AppsignalTest.BroadwayRegistry})
+          name = {:via, Registry, {AppsignalTest.BroadwayRegistry, :registered}}
+          start_supervised!({AppsignalTest.BroadwayRegisteredPipeline, name: name})
+          process("data", to: name)
+          spans = closed_spans(2)
+
+          assert [processor] = named(spans, ":registered#prepare_messages")
+          assert [message] = named(spans, ":registered#handle_message")
+
+          for span <- [processor, message] do
+            assert span["attributes"]["topology_name"] == ":registered"
+            assert span["attributes"]["processor"] == "Processor_default_0"
+          end
+        end
+      end
+    end
+
+    describe "work that records no span" do
+      @tag pipeline: [batchers: true]
+      test "handling a batch in handle_batch/4" do
+        process_batch(["one", "two"])
+
+        names = Enum.map(closed_spans(4), & &1["name"])
+
+        assert Enum.frequencies(names) == %{
+                 "#{@pipeline}#prepare_messages" => 2,
+                 "#{@pipeline}#handle_message" => 2
+               }
+      end
+    end
+
+    describe "attaching the :telemetry handlers" do
+      test "attaches to Broadway's processor and message events" do
+        for event <- events() do
+          assert {Appsignal.Broadway, event} in handler_ids()
+        end
+      end
+    end
+
+    describe "attaching the :telemetry handlers, with instrument_broadway set to false" do
       @describetag :detaches_handlers
 
       setup do
@@ -359,19 +406,32 @@ if Appsignal.Dependencies.present?(:broadway) do
         :ok
       end
 
-      test "does not attach to Broadway events, and records no spans" do
+      test "does not attach to Broadway's processor and message events" do
         refute Enum.any?(handler_ids(), &match?({Appsignal.Broadway, _}, &1))
+      end
 
-        start_pipeline()
-        ref = Broadway.test_message(BroadwayPipeline, "data")
-        assert_receive {:ack, ^ref, [_], []}
+      test "records no span for a message" do
+        process("data")
         assert spans() == []
       end
     end
 
-    defp start_pipeline(opts \\ []) do
-      start_supervised!({BroadwayPipeline, opts})
-      :ok
+    defp process(data, opts \\ []) do
+      {pipeline, opts} = Keyword.pop(opts, :to, BroadwayPipeline)
+      ref = Broadway.test_message(pipeline, data, opts)
+      assert_receive {:ack, ^ref, successful, failed}
+      {successful, failed}
+    end
+
+    defp process_batch(data) do
+      ref = Broadway.test_batch(BroadwayPipeline, data)
+      assert_receive {:ack, ^ref, successful, failed}
+      {successful, failed}
+    end
+
+    defp process_slow_messages(count) do
+      ref = Broadway.test_batch(BroadwayPipeline, List.duplicate("slow", count))
+      assert receive_acked(ref, count) == count
     end
 
     defp receive_acked(ref, expected, acked \\ 0)
@@ -382,12 +442,24 @@ if Appsignal.Dependencies.present?(:broadway) do
       receive_acked(ref, expected, acked + length(successful))
     end
 
-    defp settle(count) when is_integer(count) do
-      settle(&(length(&1) == count))
+    defp closed_spans(count) do
+      await_spans(&(length(&1) == count and all_closed?(&1)))
     end
 
-    defp settle(fun) do
-      await_spans(&(fun.(&1) and all_closed?(&1)))
+    defp closed_messages(count) do
+      await_spans(
+        &(length(named(&1, "#{@pipeline}#handle_message")) == count and all_closed?(&1))
+      )
+    end
+
+    defp events do
+      [
+        [:broadway, :processor, :start],
+        [:broadway, :processor, :stop],
+        [:broadway, :processor, :message, :start],
+        [:broadway, :processor, :message, :stop],
+        [:broadway, :processor, :message, :exception]
+      ]
     end
 
     defp handler_ids, do: Enum.map(:telemetry.list_handlers([]), & &1.id)
@@ -407,22 +479,24 @@ defmodule Appsignal.Broadway.MetadataTest do
     :ok
   end
 
-  test "sets no producer attribute without producer metadata, as before Broadway 1.0.4" do
-    metadata = Map.delete(metadata(), :producer)
-    Appsignal.Broadway.broadway_processor_start([], %{}, metadata, :ok)
+  describe "events without producer metadata" do
+    test "set no producer attribute on the processor's span, as before Broadway 1.0.4" do
+      metadata = Map.delete(metadata(), :producer)
+      Appsignal.Broadway.broadway_processor_start([], %{}, metadata, :ok)
 
-    {:ok, attributes} = Test.Span.get(:set_attribute)
-    assert Enum.any?(attributes, &match?({%Span{}, "topology_name", "MyApp.Pipeline"}, &1))
-    refute Enum.any?(attributes, &match?({%Span{}, "producer", _}, &1))
-  end
+      {:ok, attributes} = Test.Span.get(:set_attribute)
+      assert Enum.any?(attributes, &match?({%Span{}, "topology_name", "MyApp.Pipeline"}, &1))
+      refute Enum.any?(attributes, &match?({%Span{}, "producer", _}, &1))
+    end
 
-  test "sets no producer attribute on a message's span without producer metadata, as before Broadway 1.3" do
-    metadata = metadata() |> Map.delete(:producer) |> Map.put(:message, %{data: "data"})
-    Appsignal.Broadway.broadway_processor_message_start([], %{}, metadata, :ok)
+    test "set no producer attribute on the message's span, as before Broadway 1.3" do
+      metadata = metadata() |> Map.delete(:producer) |> Map.put(:message, %{data: "data"})
+      Appsignal.Broadway.broadway_processor_message_start([], %{}, metadata, :ok)
 
-    {:ok, attributes} = Test.Span.get(:set_attribute)
-    assert Enum.any?(attributes, &match?({%Span{}, "topology_name", "MyApp.Pipeline"}, &1))
-    refute Enum.any?(attributes, &match?({%Span{}, "producer", _}, &1))
+      {:ok, attributes} = Test.Span.get(:set_attribute)
+      assert Enum.any?(attributes, &match?({%Span{}, "topology_name", "MyApp.Pipeline"}, &1))
+      refute Enum.any?(attributes, &match?({%Span{}, "producer", _}, &1))
+    end
   end
 
   defp metadata do
