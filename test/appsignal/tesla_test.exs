@@ -76,77 +76,17 @@ if Appsignal.Dependencies.present?(:tesla) and Appsignal.Dependencies.present?(:
       :ok
     end
 
-    describe "a use Tesla module with Telemetry before PathParams" do
-      setup do
-        response =
-          instrumented(fn ->
-            TeslaClientWithPathParams.get("/users/:id", opts: [path_params: [id: 4]])
-          end)
+    describe "sending a request through Tesla" do
+      test "sends the request from a use Tesla module" do
+        assert {:ok, %Tesla.Env{status: 200, body: "OK"}} =
+                 instrumented(fn ->
+                   TeslaClientWithPathParams.get("/users/:id", opts: [path_params: [id: 4]])
+                 end)
 
-        [response: response]
-      end
-
-      test "sends the request", %{response: response} do
-        assert {:ok, %Tesla.Env{status: 200, body: "OK"}} = response
         assert [%{method: "GET", path: "/api/users/4"}] = HTTPServer.requests()
       end
 
-      test "records a child span named after the templated URL" do
-        [parent] = root_spans()
-        assert [span] = children(spans(), parent)
-        assert span["name"] == "GET https://example.com/api/users/:id"
-        assert category(span) == "request.tesla"
-        assert span["error"] == nil
-      end
-    end
-
-    test "names the span after an OpenAPI-style templated URL" do
-      instrumented(fn ->
-        TeslaClientWithPathParams.get("/users/{id}", opts: [path_params: [id: 4]])
-      end)
-
-      assert [%{method: "GET", path: "/api/users/4"}] = HTTPServer.requests()
-      assert [_span] = named(spans(), "GET https://example.com/api/users/{id}")
-    end
-
-    test "names the span after the origin when PathParams runs before Telemetry" do
-      instrumented(fn ->
-        TeslaClientWithPathParamsFirst.get("/users/:id", opts: [path_params: [id: 4]])
-      end)
-
-      assert [%{method: "GET", path: "/api/users/4"}] = HTTPServer.requests()
-      assert [_span] = named(spans(), "GET https://example.com")
-    end
-
-    test "names the span after the templated URL when BaseUrl runs after Telemetry" do
-      instrumented(fn ->
-        TeslaClientWithBaseUrlLast.get("/users/:id", opts: [path_params: [id: 4]])
-      end)
-
-      assert [%{method: "GET", path: "/api/users/4"}] = HTTPServer.requests()
-      assert [_span] = named(spans(), "GET https://example.com/api/users/:id")
-    end
-
-    test "names the span after the origin of a URL that overrides the base URL" do
-      instrumented(fn ->
-        TeslaClientWithPathParams.get("https://other.example.com/users/:id",
-          opts: [path_params: [id: 4]]
-        )
-      end)
-
-      assert [%{method: "GET", path: "/users/4"}] = HTTPServer.requests()
-      assert [_span] = named(spans(), "GET https://other.example.com/users/:id")
-    end
-
-    test "leaves the query out of the span's name" do
-      instrumented(fn -> TeslaClientWithPathParams.get("/users", query: [page: 2]) end)
-
-      assert [%{method: "GET", path: "/api/users?page=2"}] = HTTPServer.requests()
-      assert [_span] = named(spans(), "GET https://example.com/api/users")
-    end
-
-    describe "a runtime client" do
-      test "names the span after the templated URL with Telemetry before PathParams" do
+      test "sends the request from a runtime client" do
         client =
           Tesla.client(
             [
@@ -163,7 +103,92 @@ if Appsignal.Dependencies.present?(:tesla) and Appsignal.Dependencies.present?(:
                    Tesla.post(client, "/users/:id", "name=Alice", opts: [path_params: [id: 4]])
                  end)
 
-        assert [%{method: "POST", path: "/api/users/4"}] = HTTPServer.requests()
+        assert [%{method: "POST", path: "/api/users/4", body: "name=Alice"}] =
+                 HTTPServer.requests()
+      end
+
+      test "returns the adapter's error for a refused connection" do
+        client = Tesla.client([Tesla.Middleware.Telemetry], Tesla.Adapter.Mint)
+
+        assert {:error, _reason} =
+                 instrumented(fn -> Tesla.get(client, HTTPServer.refused_url()) end)
+      end
+
+      test "raises a later middleware's error" do
+        assert_raise RuntimeError, "Middleware!", fn ->
+          instrumented(fn -> Tesla.get(raising_client(), HTTPServer.url()) end)
+        end
+      end
+    end
+
+    describe "the span recorded for a request" do
+      test "is a child span named after the templated URL" do
+        instrumented(fn ->
+          TeslaClientWithPathParams.get("/users/:id", opts: [path_params: [id: 4]])
+        end)
+
+        [parent] = root_spans()
+        assert [span] = children(spans(), parent)
+        assert span["name"] == "GET https://example.com/api/users/:id"
+        assert category(span) == "request.tesla"
+        assert span["error"] == nil
+      end
+
+      test "is named after an OpenAPI-style templated URL" do
+        instrumented(fn ->
+          TeslaClientWithPathParams.get("/users/{id}", opts: [path_params: [id: 4]])
+        end)
+
+        assert [_span] = named(spans(), "GET https://example.com/api/users/{id}")
+      end
+
+      test "is named after the origin when PathParams runs before Telemetry" do
+        instrumented(fn ->
+          TeslaClientWithPathParamsFirst.get("/users/:id", opts: [path_params: [id: 4]])
+        end)
+
+        assert [_span] = named(spans(), "GET https://example.com")
+      end
+
+      test "is named after the templated URL when BaseUrl runs after Telemetry" do
+        instrumented(fn ->
+          TeslaClientWithBaseUrlLast.get("/users/:id", opts: [path_params: [id: 4]])
+        end)
+
+        assert [_span] = named(spans(), "GET https://example.com/api/users/:id")
+      end
+
+      test "is named after the origin of a URL that overrides the base URL" do
+        instrumented(fn ->
+          TeslaClientWithPathParams.get("https://other.example.com/users/:id",
+            opts: [path_params: [id: 4]]
+          )
+        end)
+
+        assert [_span] = named(spans(), "GET https://other.example.com/users/:id")
+      end
+
+      test "leaves the query out of its name" do
+        instrumented(fn -> TeslaClientWithPathParams.get("/users", query: [page: 2]) end)
+
+        assert [_span] = named(spans(), "GET https://example.com/api/users")
+      end
+
+      test "is a child span named after the templated URL, for a runtime client with Telemetry before PathParams" do
+        client =
+          Tesla.client(
+            [
+              {Tesla.Middleware.BaseUrl, "https://example.com/api"},
+              Tesla.Middleware.Telemetry,
+              Tesla.Middleware.PathParams,
+              AppsignalTest.TeslaToServer
+            ],
+            Tesla.Adapter.Mint
+          )
+
+        instrumented(fn ->
+          Tesla.post(client, "/users/:id", "name=Alice", opts: [path_params: [id: 4]])
+        end)
 
         [parent] = root_spans()
         assert [span] = children(spans(), parent)
@@ -171,7 +196,7 @@ if Appsignal.Dependencies.present?(:tesla) and Appsignal.Dependencies.present?(:
         assert category(span) == "request.tesla"
       end
 
-      test "names the span after the origin with PathParams before Telemetry" do
+      test "is named after the origin, for a runtime client with PathParams before Telemetry" do
         client =
           Tesla.client(
             [
@@ -188,7 +213,7 @@ if Appsignal.Dependencies.present?(:tesla) and Appsignal.Dependencies.present?(:
         assert [_span] = named(spans(), "GET https://example.com")
       end
 
-      test "names the span after the base URL when BaseUrl runs after Telemetry" do
+      test "is named after the base URL, for a runtime client with BaseUrl after Telemetry" do
         client =
           Tesla.client(
             [
@@ -201,11 +226,10 @@ if Appsignal.Dependencies.present?(:tesla) and Appsignal.Dependencies.present?(:
 
         instrumented(fn -> Tesla.get(client, "/users/4") end)
 
-        assert [%{method: "GET", path: "/api/users/4"}] = HTTPServer.requests()
         assert [_span] = named(spans(), "GET https://example.com/api")
       end
 
-      test "names the span after the origin without BaseUrl or PathParams" do
+      test "is named after the origin, for a runtime client without BaseUrl or PathParams" do
         client =
           Tesla.client(
             [Tesla.Middleware.Telemetry, AppsignalTest.TeslaToServer],
@@ -214,11 +238,10 @@ if Appsignal.Dependencies.present?(:tesla) and Appsignal.Dependencies.present?(:
 
         instrumented(fn -> Tesla.get(client, "https://example.com/api/users/4") end)
 
-        assert [%{method: "GET", path: "/api/users/4"}] = HTTPServer.requests()
         assert [_span] = named(spans(), "GET https://example.com")
       end
 
-      test "names the span after the templated URL with a function middleware" do
+      test "is named after the templated URL, for a runtime client with a function middleware" do
         client =
           Tesla.client(
             [
@@ -235,80 +258,79 @@ if Appsignal.Dependencies.present?(:tesla) and Appsignal.Dependencies.present?(:
 
         assert [_span] = named(spans(), "GET https://example.com/api/users/:id")
       end
-    end
 
-    test "records no span outside an instrumented function" do
-      assert {:ok, %Tesla.Env{status: 200}} = TeslaClientWithPathParams.get("/users")
-      assert spans() == []
-    end
+      test "has no error for an error response" do
+        assert {:ok, %Tesla.Env{status: 500}} =
+                 instrumented(fn -> TeslaClientWithPathParams.get("/status/500") end)
 
-    test "records no span without the Telemetry middleware" do
-      assert {:ok, %Tesla.Env{status: 200}} =
-               instrumented(fn -> TeslaClientWithoutTelemetry.get("/users") end)
-
-      assert [%{"name" => "parent"}] = spans()
-    end
-
-    test "records no error for an error response" do
-      assert {:ok, %Tesla.Env{status: 500}} =
-               instrumented(fn -> TeslaClientWithPathParams.get("/status/500") end)
-
-      assert [%{"error" => nil}] =
-               named(spans(), "GET https://example.com/api/status/500")
-    end
-
-    test "records no error when the connection is refused" do
-      client = Tesla.client([Tesla.Middleware.Telemetry], Tesla.Adapter.Mint)
-      url = HTTPServer.refused_url()
-
-      assert {:error, _reason} = instrumented(fn -> Tesla.get(client, url) end)
-      assert [%{"error" => nil}] = named(spans(), "GET #{HTTPServer.origin(url)}")
-    end
-
-    test "records no error when a later middleware raises" do
-      client =
-        Tesla.client(
-          [Tesla.Middleware.Telemetry, fn _env, _next -> raise "Middleware!" end],
-          Tesla.Adapter.Mint
-        )
-
-      assert_raise RuntimeError, "Middleware!", fn ->
-        instrumented(fn -> Tesla.get(client, HTTPServer.url()) end)
+        assert [%{"error" => nil}] =
+                 named(spans(), "GET https://example.com/api/status/500")
       end
 
-      assert [%{"error" => nil}] = named(spans(), "GET #{HTTPServer.origin(HTTPServer.url())}")
-    end
+      test "has no error for a refused connection" do
+        client = Tesla.client([Tesla.Middleware.Telemetry], Tesla.Adapter.Mint)
+        url = HTTPServer.refused_url()
 
-    # Pins current behaviour, not intended behaviour: a request through the
-    # Finch adapter is recorded by both the Tesla and the Finch integration.
-    # See https://github.com/appsignal/appsignal-elixir/issues/1078.
-    test "records a request through the Finch adapter twice, as nested spans" do
-      start_supervised!({Finch, name: AppsignalTest.TeslaFinch})
+        instrumented(fn -> Tesla.get(client, url) end)
 
-      client =
-        Tesla.client(
-          [Tesla.Middleware.Telemetry],
-          {Tesla.Adapter.Finch, name: AppsignalTest.TeslaFinch}
-        )
+        assert [%{"error" => nil}] = named(spans(), "GET #{HTTPServer.origin(url)}")
+      end
 
-      assert {:ok, %Tesla.Env{status: 200}} =
-               instrumented(fn -> Tesla.get(client, HTTPServer.url("/users/4")) end)
+      test "has no error when a later middleware raises" do
+        assert_raise RuntimeError, fn ->
+          instrumented(fn -> Tesla.get(raising_client(), HTTPServer.url()) end)
+        end
 
-      [parent] = root_spans()
-      assert [tesla] = children(spans(), parent)
-      assert category(tesla) == "request.tesla"
-      assert [finch] = children(spans(), tesla)
-      assert category(finch) == "request.finch"
-      assert finch["name"] == tesla["name"]
-    end
+        assert [%{"error" => nil}] = named(spans(), "GET #{HTTPServer.origin(HTTPServer.url())}")
+      end
 
-    test "attaches to Tesla's request events" do
-      for event <- events() do
-        assert attached?(Appsignal.Tesla, event)
+      # Pins current behaviour, not intended behaviour: a request through the
+      # Finch adapter is recorded by both the Tesla and the Finch integration.
+      # See https://github.com/appsignal/appsignal-elixir/issues/1078.
+      test "is recorded twice, as nested spans, for a request through the Finch adapter" do
+        start_supervised!({Finch, name: AppsignalTest.TeslaFinch})
+
+        client =
+          Tesla.client(
+            [Tesla.Middleware.Telemetry],
+            {Tesla.Adapter.Finch, name: AppsignalTest.TeslaFinch}
+          )
+
+        assert {:ok, %Tesla.Env{status: 200}} =
+                 instrumented(fn -> Tesla.get(client, HTTPServer.url("/users/4")) end)
+
+        [parent] = root_spans()
+        assert [tesla] = children(spans(), parent)
+        assert category(tesla) == "request.tesla"
+        assert [finch] = children(spans(), tesla)
+        assert category(finch) == "request.finch"
+        assert finch["name"] == tesla["name"]
       end
     end
 
-    describe "with instrument_tesla set to false" do
+    describe "requests that record no span" do
+      test "outside an instrumented function" do
+        assert {:ok, %Tesla.Env{status: 200}} = TeslaClientWithPathParams.get("/users")
+        assert spans() == []
+      end
+
+      test "without the Telemetry middleware" do
+        assert {:ok, %Tesla.Env{status: 200}} =
+                 instrumented(fn -> TeslaClientWithoutTelemetry.get("/users") end)
+
+        assert [%{"name" => "parent"}] = spans()
+      end
+    end
+
+    describe "attaching the :telemetry handlers" do
+      test "attaches to Tesla's request events" do
+        for event <- events() do
+          assert attached?(Appsignal.Tesla, event)
+        end
+      end
+    end
+
+    describe "attaching the :telemetry handlers, with instrument_tesla set to false" do
       setup do
         Enum.each(events(), &:telemetry.detach({Appsignal.Tesla, &1}))
         with_config(%{instrument_tesla: false}, fn -> Appsignal.start([], []) end)
@@ -330,6 +352,13 @@ if Appsignal.Dependencies.present?(:tesla) and Appsignal.Dependencies.present?(:
     end
 
     defp instrumented(fun), do: Appsignal.instrument("parent", fun)
+
+    defp raising_client do
+      Tesla.client(
+        [Tesla.Middleware.Telemetry, fn _env, _next -> raise "Middleware!" end],
+        Tesla.Adapter.Mint
+      )
+    end
 
     defp events do
       [[:tesla, :request, :start], [:tesla, :request, :stop], [:tesla, :request, :exception]]

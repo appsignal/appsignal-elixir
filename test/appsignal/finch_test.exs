@@ -10,84 +10,86 @@ if Appsignal.Dependencies.present?(:plug_cowboy) do
       :ok
     end
 
-    describe "a request" do
-      setup do
-        [response: instrumented(fn -> request(:get, HTTPServer.url("/users/4?page=2")) end)]
-      end
+    describe "sending a request through Finch" do
+      test "sends the request" do
+        assert {:ok, %Finch.Response{status: 200, body: "OK"}} =
+                 instrumented(fn -> request(:get, HTTPServer.url("/users/4?page=2")) end)
 
-      test "sends the request", %{response: response} do
-        assert {:ok, %Finch.Response{status: 200, body: "OK"}} = response
         assert [%{method: "GET", path: "/users/4?page=2"}] = HTTPServer.requests()
       end
 
-      test "records a child span named after the method and origin" do
+      test "sends the request's method and body" do
+        instrumented(fn -> request(:post, HTTPServer.url("/users"), "name=Alice") end)
+
+        assert [%{method: "POST", body: "name=Alice"}] = HTTPServer.requests()
+      end
+
+      test "returns Finch's error for a refused connection" do
+        assert {:error, %{__exception__: true, reason: :econnrefused}} =
+                 instrumented(fn -> request(:get, HTTPServer.refused_url()) end)
+      end
+
+      test "raises the response handler's error" do
+        assert_raise RuntimeError, "Stream!", fn -> instrumented(&raising_stream/0) end
+      end
+    end
+
+    describe "the span recorded for a request" do
+      test "is a child span named after the method and origin" do
+        instrumented(fn -> request(:get, HTTPServer.url("/users/4?page=2")) end)
+
         [parent] = root_spans()
         assert [span] = children(spans(), parent)
         assert span["name"] == "GET #{HTTPServer.origin(HTTPServer.url())}"
         assert category(span) == "request.finch"
         assert span["error"] == nil
       end
-    end
 
-    test "names the span after the request's method" do
-      instrumented(fn -> request(:post, HTTPServer.url("/users"), "name=Alice") end)
+      test "is named after the request's method" do
+        instrumented(fn -> request(:post, HTTPServer.url("/users"), "name=Alice") end)
 
-      assert [_span] = named(spans(), "POST #{HTTPServer.origin(HTTPServer.url())}")
-      assert [%{method: "POST", body: "name=Alice"}] = HTTPServer.requests()
-    end
+        assert [_span] = named(spans(), "POST #{HTTPServer.origin(HTTPServer.url())}")
+      end
 
-    test "records the request as a child of the innermost span" do
-      Appsignal.instrument("outer", fn ->
-        Appsignal.instrument("inner", fn -> request(:get, HTTPServer.url()) end)
-      end)
+      test "is a child of the innermost span" do
+        Appsignal.instrument("outer", fn ->
+          Appsignal.instrument("inner", fn -> request(:get, HTTPServer.url()) end)
+        end)
 
-      [inner] = named(spans(), "inner")
-      assert [%{"name" => "GET " <> _}] = children(spans(), inner)
-    end
+        [inner] = named(spans(), "inner")
+        assert [%{"name" => "GET " <> _}] = children(spans(), inner)
+      end
 
-    test "records no span for a request outside an instrumented function" do
-      assert {:ok, %Finch.Response{status: 200}} = request(:get, HTTPServer.url())
-      assert spans() == []
-    end
+      test "has no error for an error response" do
+        assert {:ok, %Finch.Response{status: 500}} =
+                 instrumented(fn -> request(:get, HTTPServer.url("/status/500")) end)
 
-    test "records no error for an error response" do
-      assert {:ok, %Finch.Response{status: 500}} =
-               instrumented(fn -> request(:get, HTTPServer.url("/status/500")) end)
+        assert [%{"error" => nil}] =
+                 named(spans(), "GET #{HTTPServer.origin(HTTPServer.url())}")
+      end
 
-      assert [%{"error" => nil}] =
-               named(spans(), "GET #{HTTPServer.origin(HTTPServer.url())}")
-    end
-
-    describe "a request to a port that refuses connections" do
-      setup do
+      test "has no error for a refused connection" do
         url = HTTPServer.refused_url()
-        [url: url, response: instrumented(fn -> request(:get, url) end)]
-      end
+        instrumented(fn -> request(:get, url) end)
 
-      test "returns Finch's error", %{response: response} do
-        assert {:error, %{__exception__: true, reason: :econnrefused}} = response
-      end
-
-      test "records no error", %{url: url} do
         assert [%{"error" => nil}] = named(spans(), "GET #{HTTPServer.origin(url)}")
       end
+
+      test "has no error when the response handler raises" do
+        assert_raise RuntimeError, fn -> instrumented(&raising_stream/0) end
+
+        assert [%{"error" => nil}] =
+                 named(spans(), "GET #{HTTPServer.origin(HTTPServer.url())}")
+      end
     end
 
-    test "records no error when the response handler raises" do
-      assert_raise RuntimeError, "Stream!", fn ->
-        instrumented(fn ->
-          :get
-          |> Finch.build(HTTPServer.url())
-          |> Finch.stream(AppsignalTest.Finch, nil, fn _chunk, _acc -> raise "Stream!" end)
-        end)
+    describe "requests that record no span" do
+      test "outside an instrumented function" do
+        assert {:ok, %Finch.Response{status: 200}} = request(:get, HTTPServer.url())
+        assert spans() == []
       end
 
-      assert [%{"error" => nil}] =
-               named(spans(), "GET #{HTTPServer.origin(HTTPServer.url())}")
-    end
-
-    describe "AppSignal's own requests" do
-      test "are not recorded from the AppsignalFinch pool" do
+      test "from the AppsignalFinch pool" do
         # The AppsignalFinch pool connects with TLS options, so a plain HTTP
         # request through it exits.
         assert :badarg =
@@ -100,7 +102,7 @@ if Appsignal.Dependencies.present?(:plug_cowboy) do
         assert [%{"name" => "parent"}] = spans()
       end
 
-      test "are not recorded from a standalone transmitter's pool" do
+      test "from a standalone transmitter's pool" do
         instrumented(fn ->
           assert {:ok, %Finch.Response{status: 200}} =
                    Appsignal.Transmitter.request_standalone(:get, HTTPServer.url())
@@ -108,36 +110,38 @@ if Appsignal.Dependencies.present?(:plug_cowboy) do
 
         assert [%{"name" => "parent"}] = spans()
       end
-    end
 
-    test "records no span for a pool whose name starts with AppsignalFinch" do
-      start_supervised!({Finch, name: AppsignalFinchClient})
+      test "from a pool whose name starts with AppsignalFinch" do
+        start_supervised!({Finch, name: AppsignalFinchClient})
 
-      instrumented(fn ->
-        assert {:ok, %Finch.Response{status: 200}} =
-                 :get |> Finch.build(HTTPServer.url()) |> Finch.request(AppsignalFinchClient)
-      end)
+        instrumented(fn ->
+          assert {:ok, %Finch.Response{status: 200}} =
+                   :get |> Finch.build(HTTPServer.url()) |> Finch.request(AppsignalFinchClient)
+        end)
 
-      assert [%{"name" => "parent"}] = spans()
-    end
+        assert [%{"name" => "parent"}] = spans()
+      end
 
-    test "records no span for an asynchronous request" do
-      instrumented(fn ->
-        ref = :get |> Finch.build(HTTPServer.url()) |> Finch.async_request(AppsignalTest.Finch)
-        assert_receive {^ref, :done}
-      end)
+      test "made asynchronously" do
+        instrumented(fn ->
+          ref = :get |> Finch.build(HTTPServer.url()) |> Finch.async_request(AppsignalTest.Finch)
+          assert_receive {^ref, :done}
+        end)
 
-      assert [%{"name" => "parent"}] = spans()
-      assert [%{method: "GET"}] = HTTPServer.requests()
-    end
-
-    test "attaches to Finch's request events" do
-      for event <- events() do
-        assert attached?(Appsignal.Finch, event)
+        assert [%{"name" => "parent"}] = spans()
+        assert [%{method: "GET"}] = HTTPServer.requests()
       end
     end
 
-    describe "with instrument_finch set to false" do
+    describe "attaching the :telemetry handlers" do
+      test "attaches to Finch's request events" do
+        for event <- events() do
+          assert attached?(Appsignal.Finch, event)
+        end
+      end
+    end
+
+    describe "attaching the :telemetry handlers, with instrument_finch set to false" do
       setup do
         Enum.each(events(), &:telemetry.detach({Appsignal.Finch, &1}))
         with_config(%{instrument_finch: false}, fn -> Appsignal.start([], []) end)
@@ -164,6 +168,12 @@ if Appsignal.Dependencies.present?(:plug_cowboy) do
       method
       |> Finch.build(url, [], body)
       |> Finch.request(AppsignalTest.Finch)
+    end
+
+    defp raising_stream do
+      :get
+      |> Finch.build(HTTPServer.url())
+      |> Finch.stream(AppsignalTest.Finch, nil, fn _chunk, _acc -> raise "Stream!" end)
     end
 
     defp events do
