@@ -151,6 +151,7 @@ jobs:
           - absinthe
           - broadway
           - ecto
+          - finch
           - httpoison
           - httpoison-2
           - oban
@@ -363,6 +364,45 @@ jobs:
         uses: actions/checkout@v4
       - name: Run tests
         run: script/test ecto
+
+  test_finch:
+    name: test (finch, ${{matrix.elixir}}, OTP ${{matrix.otp}})
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - elixir: '1.19'
+            otp: '28'
+          - elixir: '1.19'
+            otp: '27'
+          - elixir: '1.19'
+            otp: '26'
+          - elixir: '1.18'
+            otp: '27'
+          - elixir: '1.17'
+            otp: '27'
+          - elixir: '1.16'
+            otp: '26'
+          - elixir: '1.15'
+            otp: '26'
+          - elixir: '1.14'
+            otp: '25'
+          - elixir: '1.13'
+            otp: '24'
+          - elixir: '1.12'
+            otp: '24'
+    steps:
+      - name: Set up Erlang and Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          otp-version: ${{matrix.otp}}
+          elixir-version: ${{matrix.elixir}}
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Run tests
+        run: script/test finch
 
   test_httpoison:
     name: test (httpoison, ${{matrix.elixir}}, OTP ${{matrix.otp}})
@@ -627,6 +667,7 @@ jobs:
       - test_absinthe
       - test_broadway
       - test_ecto
+      - test_finch
       - test_httpoison
       - test_httpoison-2
       - test_oban

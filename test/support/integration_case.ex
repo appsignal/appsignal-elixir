@@ -29,6 +29,7 @@ defmodule AppsignalTest.IntegrationCase do
   using do
     quote do
       import AppsignalTest.Spans
+      import AppsignalTest.IntegrationCase, only: [attached?: 2]
       @moduletag :skip_env_test_no_nif
     end
   end
@@ -64,6 +65,13 @@ defmodule AppsignalTest.IntegrationCase do
     end)
 
     :ok
+  end
+
+  @doc "Whether `module` has a `:telemetry` handler attached to `event`."
+  def attached?(module, event) do
+    event
+    |> :telemetry.list_handlers()
+    |> Enum.any?(&(&1.id == {module, event}))
   end
 
   @doc false
