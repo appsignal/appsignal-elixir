@@ -231,7 +231,8 @@ if Appsignal.Dependencies.present?(:broadway) do
         process_slow_messages(8)
 
         processors = named(closed_messages(8), "#{@pipeline}#prepare_messages")
-        assert Enum.sum(Enum.map(processors, & &1["attributes"]["message_count"])) == 8
+        message_count = Enum.sum(Enum.map(processors, & &1["attributes"]["message_count"]))
+        assert message_count == 8
       end
     end
 
