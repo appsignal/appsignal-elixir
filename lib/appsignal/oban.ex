@@ -278,7 +278,7 @@ defmodule Appsignal.Oban do
       :discard -> {"discard", nil}
       {:cancel, reason} -> {"cancel", oban_map_reason(reason)}
       {:discard, reason} -> {"discard", oban_map_reason(reason)}
-      {:ok, _} -> {:ok, nil}
+      {:ok, _} -> {"ok", nil}
       {:error, reason} -> {"error", oban_map_reason(reason)}
       {:snooze, reason} -> {"snooze", oban_map_reason(reason)}
       # A job can technically return anything that's not a valid Oban.Worker 'result' type.
