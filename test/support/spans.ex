@@ -68,6 +68,11 @@ defmodule AppsignalTest.Spans do
 
   def children(spans, %{"span_id" => id}), do: Enum.filter(spans, &(&1["parent_span_id"] == id))
 
+  @doc "The spans in the trace of `root`, other than `root` itself."
+  def in_trace(spans, %{"trace_id" => id} = root) do
+    Enum.filter(spans, &(&1["trace_id"] == id and &1 != root))
+  end
+
   def category(span), do: span["attributes"]["appsignal:category"]
 
   def named(spans, name), do: Enum.filter(spans, &(&1["name"] == name))
