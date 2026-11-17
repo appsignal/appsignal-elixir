@@ -38,59 +38,68 @@ if Appsignal.Dependencies.present?(:absinthe) do
     alias AppsignalTest.AbsintheSchema
 
     @get_user "query GetUser { user(id: 1) { name } }"
+    @create_user ~s|mutation CreateUser { createUser(name: "Jane") { id name } }|
 
-    describe "a named operation" do
-      setup do
-        [result: run(@get_user, operation_name: "GetUser")]
+    describe "running an operation through Absinthe" do
+      test "returns the operation's result" do
+        assert run(@get_user, operation_name: "GetUser") ==
+                 {:ok, %{data: %{"user" => %{"name" => "User 1"}}}}
       end
 
-      test "runs the operation", %{result: result} do
-        assert result == {:ok, %{data: %{"user" => %{"name" => "User 1"}}}}
+      test "returns a mutation's result" do
+        assert {:ok, %{data: %{"createUser" => %{"id" => "1", "name" => "Jane"}}}} =
+                 run(@create_user, operation_name: "CreateUser")
       end
 
-      test "records one root span named after the operation" do
+      test "returns a resolver's GraphQL errors" do
+        assert {:ok, %{data: %{"failing" => nil}, errors: [%{message: "Resolver failed"}]}} =
+                 run("query Failing { failing }", operation_name: "Failing")
+      end
+
+      test "returns the error for a document that does not parse" do
+        assert {:ok, %{errors: [%{message: "syntax error before: " <> _}]}} = run("{ user(")
+      end
+    end
+
+    describe "the span recorded for an operation" do
+      test "is a root span named after the operation" do
+        run(@get_user, operation_name: "GetUser")
+
         assert [%{"parent_span_id" => ""} = span] = spans()
         assert span["name"] == "GetUser"
         assert span["namespace"] == "graphql"
         assert category(span) == "call.graphql"
         assert span["error"] == nil
       end
-    end
 
-    test "names a mutation's span after the operation" do
-      assert {:ok, %{data: %{"createUser" => %{"id" => "1", "name" => "Jane"}}}} =
-               run(~s|mutation CreateUser { createUser(name: "Jane") { id name } }|,
-                 operation_name: "CreateUser"
-               )
+      test "is named after a mutation's operation" do
+        run(@create_user, operation_name: "CreateUser")
 
-      assert [%{"name" => "CreateUser", "namespace" => "graphql"} = span] = spans()
-      assert category(span) == "call.graphql"
-    end
+        assert [%{"name" => "CreateUser", "namespace" => "graphql"} = span] = spans()
+        assert category(span) == "call.graphql"
+      end
 
-    test "names the span graphql when the operation name is only in the document" do
-      run(@get_user)
-      assert [%{"name" => "graphql", "namespace" => "graphql"}] = spans()
-    end
+      test "is named graphql when the operation name is only in the document" do
+        run(@get_user)
+        assert [%{"name" => "graphql", "namespace" => "graphql"}] = spans()
+      end
 
-    test "names an anonymous operation's span graphql" do
-      run("{ user(id: 1) { name } }")
-      assert [%{"name" => "graphql", "namespace" => "graphql"}] = spans()
-    end
+      test "is named graphql for an anonymous operation" do
+        run("{ user(id: 1) { name } }")
+        assert [%{"name" => "graphql", "namespace" => "graphql"}] = spans()
+      end
 
-    test "does not record an error for an operation with GraphQL errors" do
-      assert {:ok, %{data: %{"failing" => nil}, errors: [%{message: "Resolver failed"}]}} =
-               run("query Failing { failing }", operation_name: "Failing")
+      test "has no error for an operation with GraphQL errors" do
+        run("query Failing { failing }", operation_name: "Failing")
+        assert [%{"name" => "Failing", "error" => nil}] = spans()
+      end
 
-      assert [%{"name" => "Failing", "error" => nil}] = spans()
-    end
+      test "has no error for a document that does not parse" do
+        run("{ user(")
+        assert [%{"name" => "graphql", "error" => nil}] = spans()
+      end
 
-    test "does not record an error for a document that does not parse" do
-      assert {:ok, %{errors: [%{message: "syntax error before: " <> _}]}} = run("{ user(")
-      assert [%{"name" => "graphql", "error" => nil}] = spans()
-    end
-
-    describe "inside a span" do
-      test "records the operation as a child span, keeping the parent's name and namespace" do
+      test "is a child of the current span, which keeps its name and namespace" do
         Appsignal.instrument("parent", fn -> run(@get_user, operation_name: "GetUser") end)
 
         assert [parent] = root_spans()
@@ -102,7 +111,7 @@ if Appsignal.Dependencies.present?(:absinthe) do
         assert category(span) == "call.graphql"
       end
 
-      test "names an unnamed root span after the operation" do
+      test "names the current root span after the operation when it has no name" do
         root = Tracer.create_span("http_request")
         run(@get_user, operation_name: "GetUser")
         Tracer.close_span(root)
@@ -134,7 +143,7 @@ if Appsignal.Dependencies.present?(:absinthe) do
       end
 
       @tag leaves_spans_open: "Absinthe emits no stop event when a resolver raises"
-      test "inside a span, leaves the operation's span open under the closed parent" do
+      test "leaves the operation's span open under the closed span it ran in" do
         assert_raise RuntimeError, fn ->
           Appsignal.instrument("parent", fn -> run("{ raising }") end)
         end
@@ -152,17 +161,30 @@ if Appsignal.Dependencies.present?(:absinthe) do
       end
     end
 
-    describe "when :instrument_absinthe is set to false" do
-      setup do
-        :telemetry.detach({Appsignal.Absinthe, [:absinthe, :execute, :operation, :start]})
-        :telemetry.detach({Appsignal.Absinthe, [:absinthe, :execute, :operation, :stop]})
+    describe "attaching the :telemetry handlers" do
+      test "attaches to Absinthe's operation events" do
+        for event <- events() do
+          assert attached?(Appsignal.Absinthe, event)
+        end
+      end
+    end
 
+    describe "attaching the :telemetry handlers, with instrument_absinthe set to false" do
+      @describetag :detaches_handlers
+
+      setup do
+        Enum.each(events(), &:telemetry.detach({Appsignal.Absinthe, &1}))
         with_config(%{instrument_absinthe: false}, fn -> Appsignal.start([], []) end)
         :ok
       end
 
-      @tag :detaches_handlers
-      test "records no spans" do
+      test "does not attach to Absinthe's operation events" do
+        for event <- events() do
+          refute attached?(Appsignal.Absinthe, event)
+        end
+      end
+
+      test "records no span for an operation" do
         assert {:ok, %{data: %{"user" => _}}} = run(@get_user, operation_name: "GetUser")
         assert spans() == []
       end
@@ -170,6 +192,10 @@ if Appsignal.Dependencies.present?(:absinthe) do
 
     defp run(document, options \\ []) do
       Absinthe.run(document, AbsintheSchema, options)
+    end
+
+    defp events do
+      [[:absinthe, :execute, :operation, :start], [:absinthe, :execute, :operation, :stop]]
     end
   end
 end

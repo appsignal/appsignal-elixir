@@ -121,23 +121,67 @@ if Appsignal.Dependencies.present?(:plug) do
     import Plug.Test
     import Plug.Conn, only: [put_req_header: 3]
 
-    describe "GET /" do
-      setup do
-        request(:get, "/")
-      end
+    setup context do
+      if context[:deactivated], do: deactivate(), else: :ok
+    end
 
-      test "responds as the router does without Appsignal.Plug", %{conn: conn} do
+    describe "handling a request, compared with the router without Appsignal.Plug" do
+      test "responds as the router without Appsignal.Plug does" do
+        %{conn: conn} = request(:get, "/")
+
         assert {conn.status, conn.resp_body, conn.resp_headers} ==
                  respond(UninstrumentedPlugRouter, :get, "/")
-
-        assert %Plug.Conn{state: :sent, assigns: %{overridden?: true}} = conn
       end
 
-      test "marks the conn as instrumented", %{conn: conn} do
-        assert %Plug.Conn{private: %{appsignal_plug_instrumented: true}} = conn
+      test "runs the router's own call/2" do
+        assert %{conn: %Plug.Conn{state: :sent, assigns: %{overridden?: true}}} =
+                 request(:get, "/")
       end
 
-      test "records one root span for the request" do
+      test "reraises an error as the router without Appsignal.Plug does" do
+        %{kind: kind, reason: reason} = request(:get, "/exception?id=4")
+
+        assert {^kind, %Plug.Conn.WrapperError{reason: %RuntimeError{}}} =
+                 raised(UninstrumentedPlugRouter, :get, "/exception?id=4")
+
+        assert %Plug.Conn.WrapperError{reason: %RuntimeError{message: "Exception!"}} = reason
+      end
+
+      test "reraises an error with a status below 500" do
+        assert %{reason: %Plug.Conn.WrapperError{reason: %Plug.BadRequestError{}}} =
+                 request(:get, "/bad_request")
+      end
+
+      test "marks the conn as instrumented" do
+        assert %{conn: %Plug.Conn{private: %{appsignal_plug_instrumented: true}}} =
+                 request(:get, "/")
+      end
+
+      test "sends the response for a request with nil request headers" do
+        conn = %{conn(:get, "/") | req_headers: nil}
+        assert %Plug.Conn{state: :sent} = PlugRouter.call(conn, [])
+      end
+
+      test "sends the response when Appsignal.Plug is used twice" do
+        ExUnit.CaptureLog.capture_log(fn ->
+          send(self(), PlugRouter.call(already_wrapped_conn(), []))
+        end)
+
+        assert_received %Plug.Conn{state: :sent, status: 200}
+      end
+
+      test "logs that Appsignal.Plug is used twice" do
+        log = ExUnit.CaptureLog.capture_log(fn -> PlugRouter.call(already_wrapped_conn(), []) end)
+
+        assert log =~
+                 "Appsignal.Plug was included twice, disabling Appsignal.Plug. Please only `use Appsignal.Plug` once."
+      end
+    end
+
+    describe "the span recorded for a request" do
+      test "is a root span named after the route" do
+        request(:get, "/")
+
         assert [%{"parent_span_id" => ""} = span] = spans()
         assert span["name"] == "GET /"
         assert span["namespace"] == "http_request"
@@ -145,7 +189,9 @@ if Appsignal.Dependencies.present?(:plug) do
         assert span["error"] == nil
       end
 
-      test "records the request environment" do
+      test "has the request's environment" do
+        request(:get, "/")
+
         assert [%{"sample_data" => %{"environment" => environment}}] = spans()
 
         assert environment == %{
@@ -158,59 +204,45 @@ if Appsignal.Dependencies.present?(:plug) do
                  "req_headers.accept" => "text/html"
                }
       end
-    end
 
-    test "names the span after the route, not the path" do
-      request(:get, "/users/4")
-      assert [%{"name" => "GET /users/:id"}] = spans()
-    end
+      test "is named after the route, not the path" do
+        request(:get, "/users/4")
+        assert [%{"name" => "GET /users/:id"}] = spans()
+      end
 
-    test "records the query parameters" do
-      request(:get, "/?id=4")
-      assert [%{"sample_data" => %{"params" => %{"id" => "4"}}}] = spans()
-    end
+      test "is named with Appsignal.Plug.put_name/2" do
+        request(:get, "/custom_name")
+        assert [%{"name" => "PlugRouter#custom_name"}] = spans()
+      end
 
-    test "records parameters passed as the request's params" do
-      request(:get, "/", %{id: "4"})
-      assert [%{"sample_data" => %{"params" => %{"id" => "4"}}}] = spans()
-    end
+      test "is named after the Phoenix controller and action in the conn" do
+        request(:get, "/phoenix_action")
+        assert [%{"name" => "PlugRouter#phoenix_action"}] = spans()
+      end
 
-    test "names the span with Appsignal.Plug.put_name/2" do
-      request(:get, "/custom_name")
-      assert [%{"name" => "PlugRouter#custom_name"}] = spans()
-    end
+      test "has the query parameters as params" do
+        request(:get, "/?id=4")
+        assert [%{"sample_data" => %{"params" => %{"id" => "4"}}}] = spans()
+      end
 
-    test "names the span after the Phoenix controller and action in the conn" do
-      request(:get, "/phoenix_action")
-      assert [%{"name" => "PlugRouter#phoenix_action"}] = spans()
-    end
+      test "has the parameters passed as the request's params" do
+        request(:get, "/", %{id: "4"})
+        assert [%{"sample_data" => %{"params" => %{"id" => "4"}}}] = spans()
+      end
 
-    test "records a span instrumented inside the request as its child" do
-      %{conn: conn} = request(:get, "/instrumentation")
-      assert %Plug.Conn{state: :sent, status: 200} = conn
+      test "has a span instrumented inside the request as its child" do
+        %{conn: conn} = request(:get, "/instrumentation")
+        assert %Plug.Conn{state: :sent, status: 200} = conn
 
-      assert [root, child] = spans()
-      assert root["name"] == "GET /instrumentation"
-      assert child["name"] == "query.posts"
-      assert child["parent_span_id"] == root["span_id"]
-    end
+        assert [root, child] = spans()
+        assert root["name"] == "GET /instrumentation"
+        assert child["name"] == "query.posts"
+        assert child["parent_span_id"] == root["span_id"]
+      end
 
-    describe "GET /exception?id=4" do
-      setup do
+      test "has the error when the request raises" do
         request(:get, "/exception?id=4")
-      end
 
-      test "reraises the error as the router does without Appsignal.Plug", %{
-        kind: kind,
-        reason: reason
-      } do
-        assert {^kind, %Plug.Conn.WrapperError{reason: %RuntimeError{}}} =
-                 raised(UninstrumentedPlugRouter, :get, "/exception?id=4")
-
-        assert %Plug.Conn.WrapperError{reason: %RuntimeError{message: "Exception!"}} = reason
-      end
-
-      test "records the error on the request's span" do
         assert [span] = spans()
         assert span["name"] == "GET /exception"
 
@@ -221,140 +253,123 @@ if Appsignal.Dependencies.present?(:plug) do
         assert span["sample_data"]["environment"]["status"] == 500
       end
 
-      test "ignores the rest of the process's trace" do
-        assert Appsignal.Tracer.lookup(self()) == [{self(), :ignore}]
+      test "has an Erlang error as its Elixir exception" do
+        %{kind: :error, reason: %Plug.Conn.WrapperError{reason: :badarg}} =
+          request(:get, "/badarg")
+
+        assert [%{"error" => %{"name" => "ArgumentError"}}] = spans()
       end
-    end
 
-    test "records an Erlang error by its Elixir exception" do
-      %{kind: :error, reason: %Plug.Conn.WrapperError{reason: :badarg}} =
-        request(:get, "/badarg")
+      # Pins current behaviour, not intended behaviour: an exit or a throw leaves
+      # the request's span without a name. See
+      # https://github.com/appsignal/appsignal-elixir/issues/1086.
+      test "has an exit as its error, without the request's name" do
+        %{kind: :exit, reason: :exited} = request(:get, "/exit")
 
-      assert [%{"error" => %{"name" => "ArgumentError"}}] = spans()
-    end
+        assert [%{"error" => %{"name" => ":exit", "message" => "** (exit) :exited"}} = span] =
+                 spans()
 
-    # Pins current behaviour, not intended behaviour: an exit or a throw leaves
-    # the request's span without a name. See
-    # https://github.com/appsignal/appsignal-elixir/issues/1086.
-    test "records an exit without the request's name" do
-      %{kind: :exit, reason: :exited} = request(:get, "/exit")
+        assert span["name"] == ""
+      end
 
-      assert [%{"error" => %{"name" => ":exit", "message" => "** (exit) :exited"}} = span] =
-               spans()
+      # Pins current behaviour, not intended behaviour: an exit or a throw leaves
+      # the request's span without a name. See
+      # https://github.com/appsignal/appsignal-elixir/issues/1086.
+      test "has a throw as its error, without the request's name" do
+        %{kind: :throw, reason: :thrown} = request(:get, "/throw")
 
-      assert span["name"] == ""
-    end
+        assert [%{"error" => %{"name" => ":throw", "message" => "** (throw) :thrown"}} = span] =
+                 spans()
 
-    # Pins current behaviour, not intended behaviour: an exit or a throw leaves
-    # the request's span without a name. See
-    # https://github.com/appsignal/appsignal-elixir/issues/1086.
-    test "records a throw without the request's name" do
-      %{kind: :throw, reason: :thrown} = request(:get, "/throw")
+        assert span["name"] == ""
+      end
 
-      assert [%{"error" => %{"name" => ":throw", "message" => "** (throw) :thrown"}} = span] =
-               spans()
-
-      assert span["name"] == ""
-    end
-
-    # Pins current behaviour, not intended behaviour: a request that calls
-    # Tracer.ignore/0 is still reported. See
-    # https://github.com/appsignal/appsignal-elixir/issues/1089.
-    test "still records a request that calls Tracer.ignore/0" do
-      %{conn: %Plug.Conn{status: 200}} = request(:get, "/ignored")
-      assert [%{"name" => "GET /ignored", "closed" => true}] = spans()
-    end
-
-    describe "GET /bad_request" do
-      setup do
+      test "has no error for a status below 500" do
         request(:get, "/bad_request")
-      end
-
-      test "reraises the error", %{reason: reason} do
-        assert %Plug.Conn.WrapperError{reason: %Plug.BadRequestError{}} = reason
-      end
-
-      test "does not record an error for a status below 500" do
         assert [%{"error" => nil}] = spans()
       end
 
       # Pins current behaviour, not intended behaviour: the request's span is
       # left without its name and data. See
       # https://github.com/appsignal/appsignal-elixir/issues/1087.
-      test "records the request without its name or data" do
+      test "has no name or data for a status below 500" do
+        request(:get, "/bad_request")
+
         assert [span] = spans()
         assert span["name"] == ""
         assert category(span) == nil
         refute Map.has_key?(span["sample_data"], "environment")
       end
 
-      test "ignores the rest of the process's trace" do
+      # Pins current behaviour, not intended behaviour: a request that calls
+      # Tracer.ignore/0 is still reported. See
+      # https://github.com/appsignal/appsignal-elixir/issues/1089.
+      test "is still recorded for a request that calls Tracer.ignore/0" do
+        %{conn: %Plug.Conn{status: 200}} = request(:get, "/ignored")
+        assert [%{"name" => "GET /ignored", "closed" => true}] = spans()
+      end
+
+      test "is recorded for a request with nil request headers" do
+        PlugRouter.call(%{conn(:get, "/") | req_headers: nil}, [])
+        assert [_span] = spans()
+      end
+    end
+
+    describe "the rest of the process's trace" do
+      test "is ignored after the request raises" do
+        request(:get, "/exception")
+        assert Appsignal.Tracer.lookup(self()) == [{self(), :ignore}]
+      end
+
+      test "is ignored after an error with a status below 500" do
+        request(:get, "/bad_request")
         assert Appsignal.Tracer.lookup(self()) == [{self(), :ignore}]
       end
     end
 
-    describe "when AppSignal is not active" do
-      setup :deactivate
-
-      test "records no spans and reraises the error" do
+    describe "requests that record no span" do
+      @tag :deactivated
+      test "when AppSignal is not active" do
         assert %{kind: :error, reason: %Plug.Conn.WrapperError{reason: %RuntimeError{}}} =
                  request(:get, "/exception")
 
         assert spans() == []
       end
-    end
 
-    describe "when Appsignal.Plug is used twice" do
-      setup do
-        conn =
-          :get
-          |> conn("/")
-          |> Plug.Conn.put_private(:appsignal_plug_instrumented, true)
-
-        [conn: conn]
-      end
-
-      test "logs that it is used twice and records no span", %{conn: conn} do
-        log = ExUnit.CaptureLog.capture_log(fn -> PlugRouter.call(conn, []) end)
-
-        assert log =~
-                 "Appsignal.Plug was included twice, disabling Appsignal.Plug. Please only `use Appsignal.Plug` once."
-
+      test "when Appsignal.Plug is used twice" do
+        ExUnit.CaptureLog.capture_log(fn -> PlugRouter.call(already_wrapped_conn(), []) end)
         assert spans() == []
       end
-
-      test "still sends the response", %{conn: conn} do
-        ExUnit.CaptureLog.capture_log(fn ->
-          send(self(), PlugRouter.call(conn, []))
-        end)
-
-        assert_received %Plug.Conn{state: :sent, status: 200}
-      end
-    end
-
-    test "handles requests with nil request headers" do
-      conn = %{conn(:get, "/") | req_headers: nil}
-      assert %Plug.Conn{state: :sent} = PlugRouter.call(conn, [])
-      assert [_span] = spans()
     end
 
     for server <- [:bandit, :plug_cowboy], Appsignal.Dependencies.present?(server) do
-      describe "through #{server}" do
+      describe "requests served by #{server}" do
         setup do
           [port: start_server(unquote(server))]
         end
 
-        test "responds and records the request's span", %{port: port} do
+        test "responds to each request", %{port: port} do
           assert {200, "Welcome"} = http_get(port, "/")
           assert {200, "User!"} = http_get(port, "/users/4")
+          await_spans()
+        end
+
+        test "records each request on its own span", %{port: port} do
+          http_get(port, "/")
+          http_get(port, "/users/4")
 
           assert [%{"name" => "GET /"} = root, %{"name" => "GET /users/:id"}] = await_spans()
           assert root["sample_data"]["environment"]["host"] == "localhost"
         end
 
-        test "sends the error handler's response and records the error", %{port: port} do
+        test "responds to an error with the error handler's response", %{port: port} do
           assert {500, body} = http_get(port, "/exception")
           assert body =~ "Exception!"
+          await_spans(&match?([%{"closed" => true}], &1))
+        end
+
+        test "records the error on the request's span", %{port: port} do
+          http_get(port, "/exception")
 
           assert [%{"name" => "GET /exception", "error" => %{"name" => "RuntimeError"}}] =
                    await_spans(&match?([%{"closed" => true}], &1))
@@ -510,10 +525,16 @@ if Appsignal.Dependencies.present?(:plug) do
       {status, to_string(body)}
     end
 
-    defp deactivate(_context) do
+    defp deactivate do
       config = Application.get_env(:appsignal, :config)
       Application.put_env(:appsignal, :config, %{config | active: false})
       on_exit(fn -> Application.put_env(:appsignal, :config, config) end)
+    end
+
+    defp already_wrapped_conn do
+      :get
+      |> conn("/")
+      |> Plug.Conn.put_private(:appsignal_plug_instrumented, true)
     end
   end
 
