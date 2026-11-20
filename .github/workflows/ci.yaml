@@ -36,8 +36,8 @@ jobs:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
         with:
-          otp-version: '28'
-          elixir-version: '1.19'
+          otp-version: '29'
+          elixir-version: '1.20'
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Generate the CI workflow
@@ -51,8 +51,8 @@ jobs:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
         with:
-          otp-version: '28'
-          elixir-version: '1.19'
+          otp-version: '29'
+          elixir-version: '1.20'
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Check code formatting
@@ -64,8 +64,8 @@ jobs:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
         with:
-          otp-version: '28'
-          elixir-version: '1.19'
+          otp-version: '29'
+          elixir-version: '1.20'
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Get dependencies
@@ -88,8 +88,8 @@ jobs:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
         with:
-          otp-version: '28'
-          elixir-version: '1.19'
+          otp-version: '29'
+          elixir-version: '1.20'
       - name: PLT cache
         uses: actions/cache@v4
         id: plt_cache
@@ -111,8 +111,8 @@ jobs:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
         with:
-          otp-version: '28'
-          elixir-version: '1.19'
+          otp-version: '29'
+          elixir-version: '1.20'
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
@@ -132,8 +132,8 @@ jobs:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
         with:
-          otp-version: '28'
-          elixir-version: '1.19'
+          otp-version: '29'
+          elixir-version: '1.20'
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Get dependencies
@@ -166,8 +166,8 @@ jobs:
       - name: Set up Erlang and Elixir
         uses: erlef/setup-beam@v1
         with:
-          otp-version: '28'
-          elixir-version: '1.19'
+          otp-version: '29'
+          elixir-version: '1.20'
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Get dependencies
@@ -181,12 +181,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - elixir: '1.19'
+          - elixir: '1.20'
+            otp: '29'
+          - elixir: '1.20'
             otp: '28'
-          - elixir: '1.19'
+          - elixir: '1.20'
             otp: '27'
           - elixir: '1.19'
-            otp: '26'
+            otp: '28'
           - elixir: '1.18'
             otp: '27'
           - elixir: '1.17'
@@ -218,12 +220,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - elixir: '1.19'
+          - elixir: '1.20'
+            otp: '29'
+          - elixir: '1.20'
             otp: '28'
-          - elixir: '1.19'
+          - elixir: '1.20'
             otp: '27'
           - elixir: '1.19'
-            otp: '26'
+            otp: '28'
           - elixir: '1.18'
             otp: '27'
           - elixir: '1.17'
@@ -253,12 +257,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - elixir: '1.19'
+          - elixir: '1.20'
+            otp: '29'
+          - elixir: '1.20'
             otp: '28'
-          - elixir: '1.19'
+          - elixir: '1.20'
             otp: '27'
           - elixir: '1.19'
-            otp: '26'
+            otp: '28'
           - elixir: '1.18'
             otp: '27'
           - elixir: '1.17'
@@ -288,12 +294,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - elixir: '1.19'
+          - elixir: '1.20'
+            otp: '29'
+          - elixir: '1.20'
             otp: '28'
-          - elixir: '1.19'
+          - elixir: '1.20'
             otp: '27'
           - elixir: '1.19'
-            otp: '26'
+            otp: '28'
           - elixir: '1.18'
             otp: '27'
           - elixir: '1.17'
@@ -323,12 +331,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - elixir: '1.19'
+          - elixir: '1.20'
+            otp: '29'
+          - elixir: '1.20'
             otp: '28'
-          - elixir: '1.19'
+          - elixir: '1.20'
             otp: '27'
           - elixir: '1.19'
-            otp: '26'
+            otp: '28'
           - elixir: '1.18'
             otp: '27'
           - elixir: '1.17'
@@ -358,12 +368,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - elixir: '1.19'
+          - elixir: '1.20'
+            otp: '29'
+          - elixir: '1.20'
             otp: '28'
-          - elixir: '1.19'
+          - elixir: '1.20'
             otp: '27'
           - elixir: '1.19'
-            otp: '26'
+            otp: '28'
           - elixir: '1.18'
             otp: '27'
           - elixir: '1.17'
@@ -393,10 +405,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - elixir: '1.20'
+            otp: '29'
+          - elixir: '1.20'
+            otp: '28'
+          - elixir: '1.20'
+            otp: '27'
           - elixir: '1.19'
             otp: '28'
-          - elixir: '1.19'
-            otp: '27'
           - elixir: '1.18'
             otp: '27'
           - elixir: '1.17'
@@ -420,12 +436,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - elixir: '1.19'
+          - elixir: '1.20'
+            otp: '29'
+          - elixir: '1.20'
             otp: '28'
-          - elixir: '1.19'
+          - elixir: '1.20'
             otp: '27'
           - elixir: '1.19'
-            otp: '26'
+            otp: '28'
           - elixir: '1.18'
             otp: '27'
           - elixir: '1.17'
@@ -455,12 +473,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - elixir: '1.19'
+          - elixir: '1.20'
+            otp: '29'
+          - elixir: '1.20'
             otp: '28'
-          - elixir: '1.19'
+          - elixir: '1.20'
             otp: '27'
           - elixir: '1.19'
-            otp: '26'
+            otp: '28'
           - elixir: '1.18'
             otp: '27'
           - elixir: '1.17'
@@ -490,12 +510,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - elixir: '1.19'
+          - elixir: '1.20'
+            otp: '29'
+          - elixir: '1.20'
             otp: '28'
-          - elixir: '1.19'
+          - elixir: '1.20'
             otp: '27'
           - elixir: '1.19'
-            otp: '26'
+            otp: '28'
           - elixir: '1.18'
             otp: '27'
           - elixir: '1.17'
@@ -525,12 +547,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - elixir: '1.19'
+          - elixir: '1.20'
+            otp: '29'
+          - elixir: '1.20'
             otp: '28'
-          - elixir: '1.19'
+          - elixir: '1.20'
             otp: '27'
           - elixir: '1.19'
-            otp: '26'
+            otp: '28'
           - elixir: '1.18'
             otp: '27'
           - elixir: '1.17'
@@ -558,12 +582,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - elixir: '1.19'
+          - elixir: '1.20'
+            otp: '29'
+          - elixir: '1.20'
             otp: '28'
-          - elixir: '1.19'
+          - elixir: '1.20'
             otp: '27'
           - elixir: '1.19'
-            otp: '26'
+            otp: '28'
           - elixir: '1.18'
             otp: '27'
           - elixir: '1.17'
@@ -593,12 +619,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - elixir: '1.19'
+          - elixir: '1.20'
+            otp: '29'
+          - elixir: '1.20'
             otp: '28'
-          - elixir: '1.19'
+          - elixir: '1.20'
             otp: '27'
           - elixir: '1.19'
-            otp: '26'
+            otp: '28'
           - elixir: '1.18'
             otp: '27'
           - elixir: '1.17'
@@ -626,12 +654,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - elixir: '1.19'
+          - elixir: '1.20'
+            otp: '29'
+          - elixir: '1.20'
             otp: '28'
-          - elixir: '1.19'
+          - elixir: '1.20'
             otp: '27'
           - elixir: '1.19'
-            otp: '26'
+            otp: '28'
           - elixir: '1.18'
             otp: '27'
           - elixir: '1.17'
