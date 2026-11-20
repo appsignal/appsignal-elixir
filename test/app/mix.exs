@@ -18,7 +18,7 @@ defmodule AppsignalTest.App.MixProject do
     [
       app: :appsignal_test_app,
       version: "0.0.0",
-      elixir: "~> 1.12",
+      elixir: "~> 1.14",
       elixirc_paths: ["test/support"],
       test_paths: ["test/appsignal", "test/mix"],
       deps: [{:appsignal, path: ".", env: :test} | dependency_set(set)],

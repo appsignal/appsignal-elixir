@@ -653,44 +653,14 @@ defmodule Mix.Appsignal.Helper do
     env == "1" || env == "true"
   end
 
-  if System.otp_release() >= "23" do
-    defp tls_options, do: [versions: :ssl.versions()[:supported]]
-  else
-    defp tls_options do
-      [
-        depth: 4,
-        ciphers: ciphers(),
-        honor_cipher_order: :undefined
-      ]
-    end
+  defp tls_options, do: [versions: :ssl.versions()[:supported]]
 
-    if System.otp_release() >= "20.3" do
-      defp ciphers, do: :ssl.cipher_suites(:default, :"tlsv1.2")
-    else
-      defp ciphers, do: :ssl.cipher_suites()
-    end
-  end
-
-  if System.otp_release() >= "21" do
-    defp customize_hostname_check_or_verify_fun do
-      [
-        customize_hostname_check: [
-          match_fun: :public_key.pkix_verify_hostname_match_fun(:https)
-        ]
+  defp customize_hostname_check_or_verify_fun do
+    [
+      customize_hostname_check: [
+        match_fun: :public_key.pkix_verify_hostname_match_fun(:https)
       ]
-    end
-  else
-    defp customize_hostname_check_or_verify_fun do
-      [
-        verify_fun:
-          {fn
-             _, :valid, state -> {:valid, state}
-             _, :valid_peer, state -> {:valid, state}
-             _, {:extension, _}, state -> {:unknown, state}
-             _, reason, _ -> {:fail, reason}
-           end, self()}
-      ]
-    end
+    ]
   end
 
   def root? do

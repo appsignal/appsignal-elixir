@@ -122,41 +122,14 @@ defmodule Appsignal.Transmitter do
     end
   end
 
-  if System.otp_release() >= "23" do
-    defp tls_options, do: [versions: :ssl.versions()[:supported]]
-  else
-    defp tls_options do
-      [
-        depth: 4,
-        ciphers: ciphers(),
-        honor_cipher_order: :undefined
-      ]
-    end
+  defp tls_options, do: [versions: :ssl.versions()[:supported]]
 
-    # OTP 21+ is required for Elixir 1.11+, so we always use the new API
-    defp ciphers, do: :ssl.cipher_suites(:default, :"tlsv1.2")
-  end
-
-  if System.otp_release() >= "21" do
-    defp customize_hostname_check_or_verify_fun do
-      [
-        customize_hostname_check: [
-          match_fun: :public_key.pkix_verify_hostname_match_fun(:https)
-        ]
+  defp customize_hostname_check_or_verify_fun do
+    [
+      customize_hostname_check: [
+        match_fun: :public_key.pkix_verify_hostname_match_fun(:https)
       ]
-    end
-  else
-    defp customize_hostname_check_or_verify_fun do
-      [
-        verify_fun:
-          {fn
-             _, :valid, state -> {:valid, state}
-             _, :valid_peer, state -> {:valid, state}
-             _, {:extension, _}, state -> {:unknown, state}
-             _, reason, _ -> {:fail, reason}
-           end, self()}
-      ]
-    end
+    ]
   end
 
   defp packaged_ca_file_path do

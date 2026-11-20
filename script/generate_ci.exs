@@ -245,7 +245,7 @@ defmodule GenerateCI do
         "runs-on": "ubuntu-latest",
         steps: [
           setup,
-          [name: "Set up Ruby", uses: "ruby/setup-ruby@v1", with: ["ruby-version": "3.3.3"]],
+          [name: "Set up Ruby", uses: "ruby/setup-ruby@v1", with: ["ruby-version": "3.3.13"]],
           checkout(with: [submodules: true]),
           deps_get(),
           [name: "Run tests", run: "LANGUAGE=elixir test/integration/diagnose/bin/test"]

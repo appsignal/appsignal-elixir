@@ -6,10 +6,9 @@ otp = String.to_integer(System.otp_release())
 # Hex does not take a dependency's Elixir requirement into account, so cap
 # Plug where its newer releases no longer compile.
 plug =
-  cond do
-    Version.match?(elixir, "< 1.14.0") -> "~> 1.18.0"
-    Version.match?(elixir, "< 1.15.0") -> "~> 1.19.0"
-    true -> "~> 1.18"
+  case Version.match?(elixir, "< 1.15.0") do
+    true -> "~> 1.19.0"
+    false -> "~> 1.18"
   end
 
 # Cowboy 2.19 and newer need cowlib 2.20, and ranch 2.3 needs OTP 27, as does

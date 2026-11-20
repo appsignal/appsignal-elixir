@@ -43,7 +43,7 @@ defmodule Appsignal.Mixfile do
       package: package(),
       homepage_url: "https://appsignal.com",
       test_paths: ["test/appsignal", "test/mix"],
-      elixir: "~> 1.12",
+      elixir: "~> 1.14",
       compilers: compilers(Mix.env()),
       elixirc_paths: elixirc_paths(Mix.env()),
       deps: deps() ++ dependency_set_deps(),
@@ -153,12 +153,6 @@ defmodule Appsignal.Mixfile do
         _ -> "~> 0.19"
       end
 
-    telemetry_version =
-      case versions.otp < 21 do
-        true -> "~> 0.4"
-        false -> "~> 0.4 or ~> 1.0"
-      end
-
     mint_dependency =
       case Version.compare(versions.elixir, "1.15.0") do
         :lt ->
@@ -166,12 +160,6 @@ defmodule Appsignal.Mixfile do
 
         _ ->
           []
-      end
-
-    credo_version =
-      case Version.compare(versions.elixir, "1.13.0") do
-        :lt -> "1.7.6"
-        _ -> "~> 1.7"
       end
 
     logger_backends_dependency =
@@ -197,9 +185,9 @@ defmodule Appsignal.Mixfile do
       {:jason, "~> 1.0"},
       {:decorator, "~> 1.2.3 or ~> 1.3"},
       {:ex_doc, "~> 0.12", only: :dev, runtime: false},
-      {:credo, credo_version, only: [:test, :dev], runtime: false},
+      {:credo, "~> 1.7", only: [:test, :dev], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
-      {:telemetry, telemetry_version}
+      {:telemetry, "~> 0.4 or ~> 1.0"}
     ] ++
       logger_backends_dependency ++
       hpax_dependency ++ mint_dependency
