@@ -70,8 +70,6 @@ defmodule Appsignal.Utils.ArgumentCleaner do
     "[#{do_clean_list(argument, recurse)}]"
   end
 
-  def clean(_, _), do: "any()"
-
   defp do_clean_tuple(_, 0), do: "..."
 
   defp do_clean_tuple(tuple, recurse) do
