@@ -12,9 +12,7 @@
     [elixir: "1.17", otp: ["27"]],
     [elixir: "1.16", otp: ["26"]],
     [elixir: "1.15", otp: ["26"]],
-    [elixir: "1.14", otp: ["25"]],
-    [elixir: "1.13", otp: ["24"]],
-    [elixir: "1.12", otp: ["24"]]
+    [elixir: "1.14", otp: ["26"]]
   ],
 
   # Each dependency set, a file in test/deps other than all.exs, runs on every
