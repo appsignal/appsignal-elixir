@@ -103,7 +103,7 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: "3.3.3"
+          ruby-version: "3.3.13"
       - name: Checkout code
         uses: actions/checkout@v4
         with:
@@ -155,11 +155,7 @@ jobs:
           - elixir: "1.15"
             otp: "26"
           - elixir: "1.14"
-            otp: "25"
-          - elixir: "1.13"
-            otp: "24"
-          - elixir: "1.12"
-            otp: "24"
+            otp: "26"
 
     steps:
       - name: Set up Erlang and Elixir
