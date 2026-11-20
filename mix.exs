@@ -157,9 +157,9 @@ defmodule Appsignal.Mixfile do
       end
 
     # httpoison 3.0 depends on hackney 4.0, which pulls in quic and requires
-    # OTP 26 or later. Cap httpoison at 2.x on older OTP releases.
+    # OTP 27 or later. Cap httpoison at 2.x on older OTP releases.
     httpoison_version =
-      case versions.otp < 26 do
+      case versions.otp < 27 do
         true -> "~> 2.0"
         false -> "~> 2.0 or ~> 3.0"
       end
