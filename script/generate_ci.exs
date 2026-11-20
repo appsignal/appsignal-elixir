@@ -228,12 +228,17 @@ defmodule GenerateCI do
         strategy: ["fail-fast": false, matrix: [set: ["none", "all"]]],
         env: [MIX_ENV: "test", _APPSIGNAL_TEST_DEPS: "${{matrix.set}}"],
         steps: [
-          setup,
+          setup ++ [id: "setup_beam"],
           [
             name: "PLT cache",
             uses: "actions/cache@v4",
             id: "plt_cache",
-            with: [key: "plt-${{matrix.set}}", path: "priv/plts"]
+            with: [
+              key:
+                "plt-${{steps.setup_beam.outputs.otp-version}}-" <>
+                  "${{steps.setup_beam.outputs.elixir-version}}-${{matrix.set}}",
+              path: "priv/plts"
+            ]
           ],
           checkout(),
           deps_get(),

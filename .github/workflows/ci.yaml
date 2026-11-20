@@ -90,11 +90,12 @@ jobs:
         with:
           otp-version: '29'
           elixir-version: '1.20'
+        id: setup_beam
       - name: PLT cache
         uses: actions/cache@v4
         id: plt_cache
         with:
-          key: plt-${{matrix.set}}
+          key: plt-${{steps.setup_beam.outputs.otp-version}}-${{steps.setup_beam.outputs.elixir-version}}-${{matrix.set}}
           path: priv/plts
       - name: Checkout code
         uses: actions/checkout@v4
