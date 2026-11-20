@@ -36,4 +36,6 @@ if Mix.env() in [:bench, :test, :test_no_nif] do
 
   config :appsignal,
     ecto_repos: [Appsignal.Test.Repo]
+
+  import_config "phoenix.exs"
 end

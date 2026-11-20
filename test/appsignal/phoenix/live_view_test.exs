@@ -1,607 +1,288 @@
 if Appsignal.Dependencies.present?(:phoenix) do
+  defmodule AppsignalTest.LiveViewHelpers do
+    @moduledoc false
+    import ExUnit.Callbacks
+
+    def start_endpoint(_context) do
+      start_supervised!({Phoenix.PubSub, name: AppsignalTest.Phoenix.PubSub})
+      start_supervised!(AppsignalTest.Phoenix.Endpoint)
+      :ok
+    end
+
+    def attach_live_view(_context) do
+      Appsignal.Phoenix.LiveView.attach()
+      on_exit(&detach_live_view/0)
+      :ok
+    end
+
+    def detach_live_view do
+      for %{id: {Appsignal.Phoenix.LiveView, _} = id} <- :telemetry.list_handlers([]) do
+        :telemetry.detach(id)
+      end
+    end
+
+    def live_view_spans(spans, module) do
+      name = inspect(module)
+      Enum.filter(spans, &String.starts_with?(&1["name"], name <> "#"))
+    end
+
+    def with_category(spans, category) do
+      Enum.filter(spans, &(AppsignalTest.Spans.category(&1) == category))
+    end
+
+    # LiveView renders ids and signed session tokens that differ between views
+    # and renders.
+    def normalize(html) do
+      html
+      |> String.replace(~r/ (id|data-phx-[a-z]+)="[^"]*"/, "")
+      |> String.replace(~r/phx-[A-Za-z0-9_-]+/, "phx-id")
+    end
+  end
+
   defmodule Appsignal.Phoenix.LiveViewTest do
-    use ExUnit.Case
-    alias Appsignal.{Span, Test}
+    use AppsignalTest.IntegrationCase
+    import Phoenix.ConnTest
+    import Phoenix.LiveViewTest
+    import AppsignalTest.LiveViewHelpers
+    alias AppsignalTest.Phoenix.{CounterComponent, CounterLive}
 
-    def __live__, do: %{log: :info}
+    @endpoint AppsignalTest.Phoenix.Endpoint
 
-    setup do
-      start_supervised!(Test.Nif)
-      start_supervised!(Test.Tracer)
-      start_supervised!(Test.Span)
-      start_supervised!(Test.Monitor)
+    setup [:start_endpoint, :attach_live_view]
 
-      %{
-        socket: %Phoenix.LiveView.Socket{
-          endpoint: PhoenixWeb.Endpoint,
-          id: 1,
-          private: %{
-            root_view: PhoenixWeb.LiveView
-          },
-          router: PhoenixWeb.Router,
-          view: PhoenixWeb.LiveView
-        }
-      }
-    end
-
-    describe "instrument/4" do
-      setup %{socket: socket} do
-        %{return: PhoenixWeb.LiveView.mount(%{}, socket)}
+    describe "rendering a LiveView through Phoenix" do
+      test "renders the LiveView over HTTP" do
+        assert html_response(get(build_conn(), "/live?x=1"), 200) =~ "Count: 0"
       end
 
-      test "calls the passed function, and returns its return", %{return: return} do
-        assert {:ok, %Phoenix.LiveView.Socket{}} = return
+      test "renders an event's result" do
+        {:ok, view, _html} = live(build_conn(), "/live?x=1")
+        assert render_click(view, "increment", %{"by" => "1"}) =~ "Count: 1"
       end
 
-      test "creates a root span" do
-        assert {:ok, [{_, nil}]} = Test.Tracer.get(:create_span)
+      test "renders a component's event's result" do
+        {:ok, view, _html} = live(build_conn(), "/live?x=1")
+        assert view |> element("#component-increment") |> render_click() =~ "Component: 1"
       end
 
-      test "sets the span's name" do
-        assert {:ok, [{%Span{}, "PhoenixWeb.LiveView#mount"}]} = Test.Span.get(:set_name)
-      end
+      test "crashes the LiveView with the event's error" do
+        {:ok, view, _html} = live(build_conn(), "/live?x=1")
+        Process.flag(:trap_exit, true)
 
-      test "sets the span's namespace" do
-        assert {:ok, [{%Span{}, "live_view"}]} = Test.Span.get(:set_namespace)
-      end
-
-      test "sets the span's sample data" do
-        assert_sample_data("environment", %{
-          "endpoint" => PhoenixWeb.Endpoint,
-          "id" => 1,
-          "root_view" => PhoenixWeb.LiveView,
-          "router" => PhoenixWeb.Router,
-          "view" => PhoenixWeb.LiveView
-        })
-      end
-
-      test "closes the span" do
-        assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
+        assert {{%RuntimeError{message: "Exception in the LiveView!"}, _stack}, _call} =
+                 catch_exit(render_click(view, "raise"))
       end
     end
 
-    describe "instrument/4, when a root span exists" do
-      setup %{socket: socket} do
-        %{
-          parent: Appsignal.Tracer.create_span("live_view"),
-          return: PhoenixWeb.LiveView.mount(%{}, socket)
-        }
+    describe "the spans recorded for the initial HTTP render" do
+      setup do
+        get(build_conn(), "/live?x=1")
+        :ok
       end
 
-      test "creates a child span", %{parent: parent} do
-        assert {:ok, [{_, ^parent}]} = Test.Tracer.get(:create_span)
+      test "include a root span named after the route, with the request's parameters" do
+        assert [request | _] = root_spans()
+        assert request["name"] == "GET /live"
+        assert request["sample_data"]["params"] == %{"x" => "1"}
       end
 
-      test "sets the span's namespace" do
-        assert {:ok, [{%Span{}, "live_view"}]} = Test.Span.get(:set_namespace)
-      end
-    end
+      test "include the static render, in the request's trace" do
+        assert [request | _] = root_spans()
+        assert [_dispatch, render] = in_trace(spans(), request)
 
-    describe "instrument/5" do
-      setup %{socket: socket} do
-        %{return: PhoenixWeb.LiveView.mount(%{"body" => "Hello world!"}, socket)}
+        assert render["name"] ==
+                 ~s(Render "template" (html\) template from Phoenix.LiveView.Static)
       end
 
-      test "calls the passed function, and returns its return", %{return: return} do
-        assert {:ok, %Phoenix.LiveView.Socket{}} = return
-      end
+      test "include mount, handle_params and the component's update, each as its own trace" do
+        live_view = live_view_spans(spans(), CounterLive)
+        component = live_view_spans(spans(), CounterComponent)
 
-      test "creates a root span" do
-        assert {:ok, [{_, nil}]} = Test.Tracer.get(:create_span)
-      end
+        assert ["mount.live_view", "handle_params.live_view"] = Enum.map(live_view, &category/1)
+        assert ["update.live_component"] = Enum.map(component, &category/1)
 
-      test "sets the span's name" do
-        assert {:ok, [{%Span{}, "PhoenixWeb.LiveView#mount"}]} = Test.Span.get(:set_name)
-      end
-
-      test "sets the span's namespace" do
-        assert {:ok, [{%Span{}, "live_view"}]} = Test.Span.get(:set_namespace)
-      end
-
-      test "sets the span's parameters" do
-        assert_sample_data("params", %{"body" => "Hello world!"})
-      end
-
-      test "sets the span's sample data" do
-        assert_sample_data("environment", %{
-          "endpoint" => PhoenixWeb.Endpoint,
-          "id" => 1,
-          "root_view" => PhoenixWeb.LiveView,
-          "router" => PhoenixWeb.Router,
-          "view" => PhoenixWeb.LiveView
-        })
-      end
-
-      test "closes the span" do
-        assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
-      end
-    end
-
-    describe "instrument/5, when an error is raised" do
-      setup %{socket: socket} do
-        try do
-          PhoenixWeb.LiveView.mount(%{"body" => "Exception!"}, socket)
-        catch
-          kind, reason -> %{kind: kind, reason: reason, stack: __STACKTRACE__}
+        for span <- live_view ++ component do
+          assert span["parent_span_id"] == ""
+          assert span["namespace"] == "live_view"
         end
-      end
 
-      test "creates a root span" do
-        assert {:ok, [{_, nil}]} = Test.Tracer.get(:create_span)
-      end
-
-      test "sets the span's name" do
-        assert {:ok, [{%Span{}, "PhoenixWeb.LiveView#mount"}]} = Test.Span.get(:set_name)
-      end
-
-      test "sets the span's namespace" do
-        assert {:ok, [{%Span{}, "live_view"}]} = Test.Span.get(:set_namespace)
-      end
-
-      test "sets the span's parameters" do
-        assert_sample_data("params", %{"body" => "Exception!"})
-      end
-
-      test "sets the span's sample data" do
-        assert_sample_data("environment", %{
-          "endpoint" => PhoenixWeb.Endpoint,
-          "id" => 1,
-          "root_view" => PhoenixWeb.LiveView,
-          "router" => PhoenixWeb.Router,
-          "view" => PhoenixWeb.LiveView
-        })
-      end
-
-      test "reraises the error", %{kind: kind, reason: reason} do
-        assert kind == :error
-        assert %RuntimeError{} = reason
-      end
-
-      test "adds the error to the span", %{reason: reason, stack: stack} do
-        assert {:ok, [{%Span{}, :error, ^reason, ^stack}]} = Test.Span.get(:add_error)
-      end
-
-      test "closes the span" do
-        assert {:ok, [{%Span{}}]} = Test.Tracer.get(:close_span)
-      end
-
-      test "ignores the process in the registry" do
-        assert Appsignal.Tracer.lookup(self()) == [{self(), :ignore}]
+        assert spans() |> Enum.map(& &1["trace_id"]) |> Enum.uniq() |> length() == 4
       end
     end
 
-    describe "attach/0" do
+    describe "the spans recorded for a connected LiveView" do
       setup do
-        Appsignal.Phoenix.LiveView.attach()
-
-        on_exit(fn ->
-          :ok =
-            :telemetry.detach(
-              {Appsignal.Phoenix.LiveView, [:phoenix, :live_view, :mount, :start]}
-            )
-
-          :ok =
-            :telemetry.detach({Appsignal.Phoenix.LiveView, [:phoenix, :live_view, :mount, :stop]})
-
-          :ok =
-            :telemetry.detach(
-              {Appsignal.Phoenix.LiveView, [:phoenix, :live_view, :mount, :exception]}
-            )
-
-          :ok =
-            :telemetry.detach(
-              {Appsignal.Phoenix.LiveView, [:phoenix, :live_view, :handle_params, :start]}
-            )
-
-          :ok =
-            :telemetry.detach(
-              {Appsignal.Phoenix.LiveView, [:phoenix, :live_view, :handle_params, :stop]}
-            )
-
-          :ok =
-            :telemetry.detach(
-              {Appsignal.Phoenix.LiveView, [:phoenix, :live_view, :handle_params, :exception]}
-            )
-
-          :ok =
-            :telemetry.detach(
-              {Appsignal.Phoenix.LiveView, [:phoenix, :live_view, :handle_event, :start]}
-            )
-
-          :ok =
-            :telemetry.detach(
-              {Appsignal.Phoenix.LiveView, [:phoenix, :live_view, :handle_event, :stop]}
-            )
-
-          :ok =
-            :telemetry.detach(
-              {Appsignal.Phoenix.LiveView, [:phoenix, :live_view, :handle_event, :exception]}
-            )
-
-          :ok =
-            :telemetry.detach(
-              {Appsignal.Phoenix.LiveView, [:phoenix, :live_view, :render, :start]}
-            )
-
-          :ok =
-            :telemetry.detach(
-              {Appsignal.Phoenix.LiveView, [:phoenix, :live_view, :render, :stop]}
-            )
-
-          :ok =
-            :telemetry.detach(
-              {Appsignal.Phoenix.LiveView, [:phoenix, :live_view, :render, :exception]}
-            )
-
-          :ok =
-            :telemetry.detach(
-              {Appsignal.Phoenix.LiveView, [:phoenix, :live_component, :handle_event, :start]}
-            )
-
-          :ok =
-            :telemetry.detach(
-              {Appsignal.Phoenix.LiveView, [:phoenix, :live_component, :handle_event, :stop]}
-            )
-
-          :ok =
-            :telemetry.detach(
-              {Appsignal.Phoenix.LiveView, [:phoenix, :live_component, :handle_event, :exception]}
-            )
-
-          :ok =
-            :telemetry.detach(
-              {Appsignal.Phoenix.LiveView, [:phoenix, :live_component, :update, :start]}
-            )
-
-          :ok =
-            :telemetry.detach(
-              {Appsignal.Phoenix.LiveView, [:phoenix, :live_component, :update, :stop]}
-            )
-
-          :ok =
-            :telemetry.detach(
-              {Appsignal.Phoenix.LiveView, [:phoenix, :live_component, :update, :exception]}
-            )
-        end)
+        {:ok, view, _html} = live(build_conn(), "/live?x=1")
+        [view: view]
       end
 
-      test "attach/0 attaches to LiveView and LiveComponent events" do
-        assert attached?([:phoenix, :live_view, :mount, :start])
-        assert attached?([:phoenix, :live_view, :mount, :stop])
-        assert attached?([:phoenix, :live_view, :mount, :exception])
-        assert attached?([:phoenix, :live_view, :handle_params, :start])
-        assert attached?([:phoenix, :live_view, :handle_params, :stop])
-        assert attached?([:phoenix, :live_view, :handle_params, :exception])
-        assert attached?([:phoenix, :live_view, :handle_event, :start])
-        assert attached?([:phoenix, :live_view, :handle_event, :stop])
-        assert attached?([:phoenix, :live_view, :handle_event, :exception])
-        assert attached?([:phoenix, :live_view, :render, :start])
-        assert attached?([:phoenix, :live_view, :render, :stop])
-        assert attached?([:phoenix, :live_view, :render, :exception])
-        assert attached?([:phoenix, :live_component, :handle_event, :start])
-        assert attached?([:phoenix, :live_component, :handle_event, :stop])
-        assert attached?([:phoenix, :live_component, :handle_event, :exception])
-        assert attached?([:phoenix, :live_component, :update, :start])
-        assert attached?([:phoenix, :live_component, :update, :stop])
-        assert attached?([:phoenix, :live_component, :update, :exception])
+      test "include its mount, with the parameters and session", %{view: view} do
+        _ = render(view)
+
+        assert [_static, connected] =
+                 spans()
+                 |> live_view_spans(CounterLive)
+                 |> with_category("mount.live_view")
+
+        assert connected["name"] == "AppsignalTest.Phoenix.CounterLive#mount"
+        assert connected["sample_data"]["params"] == %{"x" => "1"}
+        assert is_map(connected["sample_data"]["session_data"])
+      end
+
+      test "include its renders", %{view: view} do
+        _ = render(view)
+        assert [_ | _] = with_category(spans(), "render.live_view")
+      end
+
+      test "include an event, with its parameters", %{view: view} do
+        render_click(view, "increment", %{"by" => "1"})
+
+        assert [event] = with_category(spans(), "handle_event.live_view")
+        assert event["name"] == "AppsignalTest.Phoenix.CounterLive#handle_event (increment)"
+        assert event["attributes"]["event"] == "increment"
+        assert event["sample_data"]["params"] == %{"by" => "1"}
+      end
+
+      test "include a component's event, with the LiveView it belongs to", %{view: view} do
+        view |> element("#component-increment") |> render_click()
+
+        assert [event] = with_category(spans(), "handle_event.live_component")
+        assert event["name"] == "AppsignalTest.Phoenix.CounterComponent#handle_event (increment)"
+        assert event["attributes"]["view"] == "AppsignalTest.Phoenix.CounterLive"
+      end
+
+      test "include each callback as its own trace", %{view: view} do
+        render_click(view, "increment")
+        live_view = live_view_spans(spans(), CounterLive)
+
+        assert Enum.all?(live_view, &(&1["parent_span_id"] == ""))
+
+        assert live_view |> Enum.map(& &1["trace_id"]) |> Enum.uniq() |> length() ==
+                 length(live_view)
+      end
+
+      test "include an event with the error raised in it", %{view: view} do
+        Process.flag(:trap_exit, true)
+        catch_exit(render_click(view, "raise"))
+
+        assert [event] = with_category(spans(), "handle_event.live_view")
+        assert event["error"]["name"] == "RuntimeError"
+      end
+
+      test "include a component's event with the error raised in it", %{view: view} do
+        Process.flag(:trap_exit, true)
+        catch_exit(view |> element("#component-raise") |> render_click())
+
+        assert [event] = with_category(spans(), "handle_event.live_component")
+        assert event["error"]["name"] == "RuntimeError"
+      end
+    end
+  end
+
+  defmodule Appsignal.Phoenix.LiveViewInstrumentTest do
+    use AppsignalTest.IntegrationCase
+    import Phoenix.ConnTest
+    import Phoenix.LiveViewTest
+    import AppsignalTest.LiveViewHelpers
+    alias AppsignalTest.Phoenix.ManualLive
+
+    @endpoint AppsignalTest.Phoenix.Endpoint
+
+    setup :start_endpoint
+
+    describe "rendering a LiveView with the instrument helpers, compared with one without them" do
+      test "renders as the LiveView without them does" do
+        {:ok, view, html} = live(build_conn(), "/live/manual")
+        {:ok, uninstrumented, uninstrumented_html} = live(build_conn(), "/live/uninstrumented")
+
+        assert normalize(html) == normalize(uninstrumented_html)
+
+        assert normalize(render_click(view, "increment")) ==
+                 normalize(render_click(uninstrumented, "increment"))
+      end
+
+      test "crashes the LiveView with the event's error" do
+        {:ok, view, _html} = live(build_conn(), "/live/manual")
+        Process.flag(:trap_exit, true)
+
+        assert {{%RuntimeError{message: "Exception in the LiveView!"}, _}, _} =
+                 catch_exit(render_click(view, "raise"))
       end
     end
 
-    describe "handle_live_view_event_start/4, with a mount event" do
+    describe "the spans recorded with the instrument helpers" do
       setup do
-        event = [:phoenix, :live_view, :mount, :start]
-
-        :telemetry.attach(
-          {__MODULE__, event},
-          event,
-          &Appsignal.Phoenix.LiveView.handle_live_view_event_start/4,
-          :ok
-        )
-
-        :telemetry.execute(
-          [:phoenix, :live_view, :mount, :start],
-          %{monotonic_time: -576_457_566_461_433_920, system_time: 1_653_474_764_790_125_080},
-          %{
-            params: %{foo: "bar"},
-            session: %{bar: "baz"},
-            socket: %Phoenix.LiveView.Socket{view: __MODULE__},
-            uri: "http://localhost/"
-          }
-        )
+        {:ok, view, _html} = live(build_conn(), "/live/manual")
+        [view: view]
       end
 
-      test "creates a root span with a namespace and a start time" do
-        assert {:ok, [{"live_view", nil, [start_time: 1_653_474_764_790_125_080]}]} =
-                 Test.Tracer.get(:create_span)
+      test "include the mount, as a root span in the live_view namespace" do
+        assert [_static, connected] = live_view_spans(spans(), ManualLive)
+        assert connected["name"] == "AppsignalTest.Phoenix.ManualLive#mount"
+        assert connected["attributes"]["appsignal.namespace"] == "live_view"
+        assert connected["parent_span_id"] == ""
+        assert category(connected) == "AppsignalTest.Phoenix.ManualLive#mount"
+
+        assert %{"view" => "Elixir.AppsignalTest.Phoenix.ManualLive"} =
+                 connected["sample_data"]["environment"]
       end
 
-      test "sets the span's name" do
-        assert {:ok, [{%Span{}, "Appsignal.Phoenix.LiveViewTest#mount"}]} =
-                 Test.Span.get(:set_name)
+      test "include an event, with its parameters", %{view: view} do
+        render_click(view, "increment", %{"by" => "1"})
+
+        assert [event] = named(spans(), "AppsignalTest.Phoenix.ManualLive#handle_event")
+        assert event["sample_data"]["params"] == %{"by" => "1"}
       end
 
-      test "sets the span's category" do
-        assert {:ok, attributes} = Test.Span.get(:set_attribute)
+      test "include an event with the error raised in it", %{view: view} do
+        Process.flag(:trap_exit, true)
+        catch_exit(render_click(view, "raise"))
 
-        assert Enum.any?(attributes, fn {%Span{}, key, data} ->
-                 key == "appsignal:category" and data == "mount.live_view"
-               end)
-      end
-
-      test "sets the span's params" do
-        assert {:ok, attributes} = Test.Span.get(:set_sample_data)
-
-        assert Enum.any?(attributes, fn {%Span{}, key, data} ->
-                 key == "params" and data == %{foo: "bar"}
-               end)
-      end
-
-      test "sets the span's session data" do
-        assert {:ok, attributes} = Test.Span.get(:set_sample_data)
-
-        assert Enum.any?(attributes, fn {%Span{}, key, data} ->
-                 key == "session_data" and data == %{bar: "baz"}
-               end)
+        assert [event] = named(spans(), "AppsignalTest.Phoenix.ManualLive#handle_event")
+        assert event["error"]["name"] == "RuntimeError"
       end
     end
 
-    describe "handle_live_view_event_start/4, with a handle_event event" do
+    describe "the spans recorded with the instrument helpers and the automatic instrumentation" do
+      setup :attach_live_view
+
       setup do
-        event = [:phoenix, :live_view, :handle_event, :start]
-
-        :telemetry.attach(
-          {__MODULE__, event},
-          event,
-          &Appsignal.Phoenix.LiveView.handle_live_view_event_start/4,
-          :ok
-        )
-
-        :telemetry.execute(
-          [:phoenix, :live_view, :handle_event, :start],
-          %{monotonic_time: -576_457_566_461_433_920, system_time: 1_653_474_764_790_125_080},
-          %{
-            params: %{foo: "bar"},
-            socket: %Phoenix.LiveView.Socket{view: __MODULE__},
-            event: "some_event"
-          }
-        )
+        {:ok, view, _html} = live(build_conn(), "/live/manual")
+        [view: view]
       end
 
-      test "creates a root span with a namespace and a start time" do
-        assert {:ok, [{"live_view", nil, [start_time: 1_653_474_764_790_125_080]}]} =
-                 Test.Tracer.get(:create_span)
+      test "include each callback twice, the helper's span inside the automatic one" do
+        assert [automatic, helper | _] =
+                 spans() |> live_view_spans(ManualLive) |> Enum.drop(2)
+
+        assert category(automatic) == "mount.live_view"
+        assert helper["parent_span_id"] == automatic["span_id"]
       end
 
-      test "sets the span's name" do
-        assert {:ok, [{%Span{}, "Appsignal.Phoenix.LiveViewTest#handle_event (some_event)"}]} =
-                 Test.Span.get(:set_name)
-      end
+      # Pins current behaviour, not intended behaviour: with the instrument/5
+      # helpers and attach/0 both instrumenting a callback, the automatic event
+      # span stays open when the helper's block raises. See
+      # https://github.com/appsignal/appsignal-elixir/issues/1082.
+      @tag leaves_spans_open: "the automatic event span when the helper's block raises"
+      test "leave the automatic event span open when the helper's block raises", %{view: view} do
+        Process.flag(:trap_exit, true)
+        catch_exit(render_click(view, "raise"))
 
-      test "sets the span's category" do
-        assert {:ok, attributes} = Test.Span.get(:set_attribute)
+        [automatic, helper] =
+          raise_event_spans(await_spans(&match?([_, %{"closed" => true}], raise_event_spans(&1))))
 
-        assert Enum.any?(attributes, fn {%Span{}, key, data} ->
-                 key == "appsignal:category" and data == "handle_event.live_view"
-               end)
-      end
-
-      test "sets the span's params" do
-        assert {:ok, attributes} = Test.Span.get(:set_sample_data)
-
-        assert Enum.any?(attributes, fn {%Span{}, key, data} ->
-                 key == "params" and data == %{foo: "bar"}
-               end)
+        refute automatic["closed"]
+        assert automatic["error"] == nil
+        assert helper["error"]["name"] == "RuntimeError"
       end
     end
 
-    describe "handle_live_component_event_start/4, with a handle_event event" do
-      setup do
-        event = [:phoenix, :live_component, :handle_event, :start]
-
-        :telemetry.attach(
-          {__MODULE__, event},
-          event,
-          &Appsignal.Phoenix.LiveView.handle_live_component_event_start/4,
-          :ok
-        )
-
-        :telemetry.execute(
-          [:phoenix, :live_component, :handle_event, :start],
-          %{monotonic_time: -576_457_566_461_433_920, system_time: 1_653_474_764_790_125_080},
-          %{
-            params: %{foo: "bar"},
-            socket: %Phoenix.LiveView.Socket{view: __MODULE__},
-            component: AppsignalTest.SomeLiveComponent,
-            event: "some_event"
-          }
-        )
-      end
-
-      test "creates a root span with a namespace and a start time" do
-        assert {:ok, [{"live_view", nil, [start_time: 1_653_474_764_790_125_080]}]} =
-                 Test.Tracer.get(:create_span)
-      end
-
-      test "sets the span's name" do
-        assert {:ok, [{%Span{}, "AppsignalTest.SomeLiveComponent#handle_event (some_event)"}]} =
-                 Test.Span.get(:set_name)
-      end
-
-      test "sets the span's category" do
-        assert {:ok, attributes} = Test.Span.get(:set_attribute)
-
-        assert Enum.any?(attributes, fn {%Span{}, key, data} ->
-                 key == "appsignal:category" and data == "handle_event.live_component"
-               end)
-      end
-
-      test "sets the span's view tag" do
-        assert {:ok, attributes} = Test.Span.get(:set_attribute)
-
-        assert Enum.any?(attributes, fn {%Span{}, key, data} ->
-                 key == "view" and data == "Appsignal.Phoenix.LiveViewTest"
-               end)
-      end
-
-      test "sets the span's params" do
-        assert {:ok, attributes} = Test.Span.get(:set_sample_data)
-
-        assert Enum.any?(attributes, fn {%Span{}, key, data} ->
-                 key == "params" and data == %{foo: "bar"}
-               end)
-      end
-    end
-
-    describe "handle_live_component_event_start/4, with an update event" do
-      setup do
-        event = [:phoenix, :live_component, :update, :start]
-
-        :telemetry.attach(
-          {__MODULE__, event},
-          event,
-          &Appsignal.Phoenix.LiveView.handle_live_component_event_start/4,
-          :ok
-        )
-
-        :telemetry.execute(
-          [:phoenix, :live_component, :update, :start],
-          %{monotonic_time: -576_457_566_461_433_920, system_time: 1_653_474_764_790_125_080},
-          %{
-            params: %{foo: "bar"},
-            socket: %Phoenix.LiveView.Socket{view: __MODULE__},
-            component: AppsignalTest.SomeLiveComponent,
-            assigns_sockets: [{{}, %Phoenix.LiveView.Socket{view: __MODULE__}}]
-          }
-        )
-      end
-
-      test "creates a root span with a namespace and a start time" do
-        assert {:ok, [{"live_view", nil, [start_time: 1_653_474_764_790_125_080]}]} =
-                 Test.Tracer.get(:create_span)
-      end
-
-      test "sets the span's name" do
-        assert {:ok, [{%Span{}, "AppsignalTest.SomeLiveComponent#update"}]} =
-                 Test.Span.get(:set_name)
-      end
-
-      test "sets the span's category" do
-        assert {:ok, attributes} = Test.Span.get(:set_attribute)
-
-        assert Enum.any?(attributes, fn {%Span{}, key, data} ->
-                 key == "appsignal:category" and data == "update.live_component"
-               end)
-      end
-
-      test "sets the span's view tag" do
-        assert {:ok, attributes} = Test.Span.get(:set_attribute)
-
-        assert Enum.any?(attributes, fn {%Span{}, key, data} ->
-                 key == "view" and data == "Appsignal.Phoenix.LiveViewTest"
-               end)
-      end
-
-      test "sets the span's params" do
-        assert {:ok, attributes} = Test.Span.get(:set_sample_data)
-
-        assert Enum.any?(attributes, fn {%Span{}, key, data} ->
-                 key == "params" and data == %{foo: "bar"}
-               end)
-      end
-    end
-
-    describe "handle_event_stop/4" do
-      setup do
-        event = [:phoenix, :live_view, :mount, :stop]
-
-        :telemetry.attach(
-          {__MODULE__, event},
-          event,
-          &Appsignal.Phoenix.LiveView.handle_event_stop/4,
-          :ok
-        )
-
-        Appsignal.Tracer.create_span("live_view")
-
-        :telemetry.execute(
-          [:phoenix, :live_view, :mount, :stop],
-          %{duration: 100_000},
-          %{
-            socket: %Phoenix.LiveView.Socket{view: __MODULE__},
-            params: %{foo: "bar"},
-            session: %{bar: "baz"},
-            uri: "http://localhost/"
-          }
-        )
-      end
-
-      test "closes the span with an end time" do
-        assert {:ok, [{%Span{}, [end_time: 1_653_474_764_790_125_080]}]} =
-                 Test.Tracer.get(:close_span)
-      end
-    end
-
-    describe "handle_event_exception/4" do
-      setup do
-        event = [:phoenix, :live_view, :mount, :exception]
-        reason = %RuntimeError{message: "Exception!"}
-
-        :telemetry.attach(
-          {__MODULE__, event},
-          event,
-          &Appsignal.Phoenix.LiveView.handle_event_exception/4,
-          :ok
-        )
-
-        Appsignal.Tracer.create_span("live_view")
-
-        :telemetry.execute(
-          [:phoenix, :live_view, :mount, :exception],
-          %{duration: 100_000},
-          %{
-            socket: %Phoenix.LiveView.Socket{view: __MODULE__},
-            params: %{foo: "bar"},
-            session: %{bar: "baz"},
-            uri: "http://localhost/",
-            kind: :error,
-            reason: reason,
-            stacktrace: []
-          }
-        )
-
-        [reason: reason]
-      end
-
-      test "adds an error to the current span", %{reason: reason} do
-        assert {:ok, [{%Span{}, :error, ^reason, []}]} = Test.Span.get(:add_error)
-      end
-
-      test "closes the span with an end time" do
-        assert {:ok, [{%Span{}, [end_time: 1_653_474_764_790_125_080]}]} =
-                 Test.Tracer.get(:close_span)
-      end
-
-      test "ignores the process in the registry" do
-        assert Appsignal.Tracer.lookup(self()) == [{self(), :ignore}]
-      end
-    end
-
-    defp assert_sample_data(asserted_key, asserted_data) do
-      {:ok, sample_data} = Test.Span.get(:set_sample_data_if_nil)
-
-      assert Enum.any?(sample_data, fn {%Span{}, key, data} ->
-               key == asserted_key and data == asserted_data
-             end)
-    end
-
-    defp attached?(event) do
-      event
-      |> :telemetry.list_handlers()
-      |> Enum.filter(fn handler ->
-        {module, _} = handler.id
-        module == Appsignal.Phoenix.LiveView
-      end)
-      |> length() == 1
+    defp raise_event_spans(spans) do
+      Enum.filter(
+        spans,
+        &(&1["attributes"]["event"] == "raise" or
+            &1["name"] == "AppsignalTest.Phoenix.ManualLive#handle_event")
+      )
     end
   end
 end
