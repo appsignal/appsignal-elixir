@@ -15,9 +15,10 @@ defmodule Appsignal.Nif do
 
     case :erlang.load_nif(path, 1) do
       :ok ->
-        :ok
+        :persistent_term.put({__MODULE__, :loaded?}, true)
 
       {:error, {:load_failed, reason}} ->
+        :persistent_term.put({__MODULE__, :loaded?}, false)
         arch = :erlang.system_info(:system_architecture)
 
         IO.warn(
@@ -129,7 +130,7 @@ defmodule Appsignal.Nif do
   end
 
   def loaded? do
-    _loaded()
+    :persistent_term.get({__MODULE__, :loaded?}, false)
   end
 
   def create_root_span(namespace) do

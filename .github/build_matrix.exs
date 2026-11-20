@@ -11,7 +11,8 @@
   # takes it. The lint jobs run on the newest Elixir, with the first OTP
   # version in its row.
   elixir: [
-    [elixir: "1.19", otp: ["28", "27", "26"]],
+    [elixir: "1.20", otp: ["29", "28", "27"]],
+    [elixir: "1.19", otp: ["28"]],
     [elixir: "1.18", otp: ["27"]],
     [elixir: "1.17", otp: ["27"]],
     [elixir: "1.16", otp: ["26"]],
