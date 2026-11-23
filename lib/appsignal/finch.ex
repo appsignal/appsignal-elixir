@@ -1,6 +1,4 @@
 defmodule Appsignal.Finch do
-  require Logger
-
   @tracer Application.compile_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
   @span Application.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
 
@@ -17,19 +15,7 @@ defmodule Appsignal.Finch do
       [:finch, :request, :exception] => &__MODULE__.finch_request_stop/4
     }
 
-    for {event, fun} <- handlers do
-      case :telemetry.attach({__MODULE__, event}, event, fun, :ok) do
-        :ok ->
-          _ = Appsignal.IntegrationLogger.debug("Appsignal.Finch attached to #{inspect(event)}")
-
-          :ok
-
-        {:error, _} = error ->
-          Logger.warning("Appsignal.Finch not attached to #{inspect(event)}: #{inspect(error)}")
-
-          error
-      end
-    end
+    Appsignal.Telemetry.attach(__MODULE__, handlers)
   end
 
   def finch_request_start(

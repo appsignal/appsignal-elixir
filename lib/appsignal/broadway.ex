@@ -1,6 +1,4 @@
 defmodule Appsignal.Broadway do
-  require Logger
-
   @tracer Application.compile_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
   @span Application.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
 
@@ -22,33 +20,7 @@ defmodule Appsignal.Broadway do
         &__MODULE__.broadway_processor_message_exception/4
     }
 
-    for {event, fun} <- handlers do
-      detach = :telemetry.detach({__MODULE__, event})
-      attach = :telemetry.attach({__MODULE__, event}, event, fun, :ok)
-
-      case {detach, attach} do
-        {:ok, :ok} ->
-          _ =
-            Appsignal.IntegrationLogger.debug(
-              "Appsignal.Broadway reattached to #{inspect(event)}"
-            )
-
-          :ok
-
-        {{:error, :not_found}, :ok} ->
-          _ =
-            Appsignal.IntegrationLogger.debug("Appsignal.Broadway attached to #{inspect(event)}")
-
-          :ok
-
-        {_, {:error, _} = error} ->
-          Logger.warning(
-            "Appsignal.Broadway not attached to #{inspect(event)}: #{inspect(error)}"
-          )
-
-          error
-      end
-    end
+    Appsignal.Telemetry.attach(__MODULE__, handlers)
   end
 
   def broadway_processor_start(_event, _measurements, metadata, _config) do
