@@ -56,6 +56,7 @@ defmodule Appsignal.Broadway do
 
     "broadway"
     |> @tracer.create_span()
+    |> then(&Appsignal.Telemetry.put_span({__MODULE__, :processor}, metadata, &1))
     |> @span.set_name("#{topology_name}#prepare_messages")
     |> @span.set_attribute("appsignal:category", "processor.broadway")
     |> set_attribute("message_count", metadata[:messages], &length/1)
@@ -75,7 +76,8 @@ defmodule Appsignal.Broadway do
   defp processor_name(name), do: inspect(name)
 
   def broadway_processor_stop(_event, _measurements, metadata, _config) do
-    @tracer.current_span()
+    {__MODULE__, :processor}
+    |> Appsignal.Telemetry.take_span(metadata)
     |> set_attribute("failed_messages", metadata[:failed_messages], &length/1)
     |> set_attribute(
       "successful_messages_to_ack",
@@ -95,6 +97,7 @@ defmodule Appsignal.Broadway do
 
     "broadway"
     |> @tracer.create_span()
+    |> then(&Appsignal.Telemetry.put_span({__MODULE__, :message}, metadata, &1))
     |> @span.set_name("#{topology_name}#handle_message")
     |> @span.set_attribute("appsignal:category", "processor_message.broadway")
     |> @span.set_sample_data("params", metadata[:message])
@@ -103,19 +106,15 @@ defmodule Appsignal.Broadway do
     |> set_attribute("topology_name", topology_name)
   end
 
-  def broadway_processor_message_stop(_event, _measurements, _metadata, _config) do
-    @tracer.close_span(@tracer.current_span())
+  def broadway_processor_message_stop(_event, _measurements, metadata, _config) do
+    Appsignal.Telemetry.close_span({__MODULE__, :message}, metadata)
   end
 
-  def broadway_processor_message_exception(event, measurements, metadata, config) do
-    @span.add_error(
-      @tracer.current_span(),
-      metadata[:kind],
-      metadata[:reason],
-      metadata[:stacktrace]
-    )
-
-    broadway_processor_message_stop(event, measurements, metadata, config)
+  def broadway_processor_message_exception(_event, _measurements, metadata, _config) do
+    {__MODULE__, :message}
+    |> Appsignal.Telemetry.take_span(metadata)
+    |> @span.add_error(metadata[:kind], metadata[:reason], metadata[:stacktrace])
+    |> @tracer.close_span()
   end
 
   defp set_attribute(span, key, value, fun \\ & &1)

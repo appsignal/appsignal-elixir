@@ -60,6 +60,13 @@ if Appsignal.Dependencies.present?(:broadway) do
 
           message
 
+        "leak" ->
+          "http_request"
+          |> Appsignal.Tracer.create_span(Appsignal.Tracer.current_span())
+          |> Appsignal.Span.set_name("leaked")
+
+          message
+
         _ ->
           message
       end
@@ -309,6 +316,21 @@ if Appsignal.Dependencies.present?(:broadway) do
 
         assert [line | _] = Jason.decode!(span["error"]["backtrace_json"])
         assert line =~ "AppsignalTest.BroadwayPipeline.handle_message/3"
+      end
+
+      @tag leaves_spans_open: "the span handle_message/3 opens"
+      test "is closed, as is the processor's span, when handle_message/3 leaves a span open" do
+        process("leak")
+
+        spans =
+          await_spans(&(length(&1) == 3 and Enum.count(&1, fn span -> span["closed"] end) == 2))
+
+        [processor] = named(spans, "#{@pipeline}#prepare_messages")
+        [message] = named(spans, "#{@pipeline}#handle_message")
+        assert processor["closed"]
+        assert processor["attributes"]["successful_messages_to_ack"] == 1
+        assert message["closed"]
+        assert [%{"name" => "leaked", "closed" => false}] = children(spans, message)
       end
 
       test "has a span instrumented in handle_message/3 as its child" do
