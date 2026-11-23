@@ -187,7 +187,7 @@ defmodule Appsignal.Mixfile do
       {:ex_doc, "~> 0.12", only: :dev, runtime: false},
       {:credo, "~> 1.7", only: [:test, :dev], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
-      {:telemetry, "~> 0.4 or ~> 1.0"}
+      {:telemetry, "~> 0.4.3 or ~> 1.0"}
     ] ++
       logger_backends_dependency ++
       hpax_dependency ++ mint_dependency
