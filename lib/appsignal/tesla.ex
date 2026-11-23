@@ -35,10 +35,11 @@ defmodule Appsignal.Tesla do
   def tesla_request_start(
         _event,
         _measurements,
-        %{env: env},
+        %{env: env} = metadata,
         _config
       ) do
-    do_tesla_request_start(@tracer.current_span(), env)
+    span = do_tesla_request_start(@tracer.current_span(), env)
+    Appsignal.Telemetry.put_span(__MODULE__, metadata, span)
   end
 
   defp do_tesla_request_start(nil, _env), do: nil
@@ -167,7 +168,7 @@ defmodule Appsignal.Tesla do
     end)
   end
 
-  def tesla_request_stop(_event, _measurements, _metadata, _config) do
-    @tracer.close_span(@tracer.current_span())
+  def tesla_request_stop(_event, _measurements, metadata, _config) do
+    Appsignal.Telemetry.close_span(__MODULE__, metadata)
   end
 end

@@ -284,6 +284,30 @@ if Appsignal.Dependencies.present?(:tesla) and Appsignal.Dependencies.present?(:
         assert [%{"error" => nil}] = named(spans(), "GET #{HTTPServer.origin(HTTPServer.url())}")
       end
 
+      @tag leaves_spans_open: "the span a later middleware opens"
+      test "is closed when a later middleware leaves a span open" do
+        client =
+          Tesla.client(
+            [
+              Tesla.Middleware.Telemetry,
+              fn env, next ->
+                "http_request"
+                |> Appsignal.Tracer.create_span(Appsignal.Tracer.current_span())
+                |> Appsignal.Span.set_name("leaked")
+
+                Tesla.run(env, next)
+              end
+            ],
+            Tesla.Adapter.Mint
+          )
+
+        instrumented(fn -> Tesla.get(client, HTTPServer.url()) end)
+
+        assert [request] = named(spans(), "GET #{HTTPServer.origin(HTTPServer.url())}")
+        assert request["closed"]
+        assert [%{"name" => "leaked", "closed" => false}] = children(spans(), request)
+      end
+
       # Pins current behaviour, not intended behaviour: a request through the
       # Finch adapter is recorded by both the Tesla and the Finch integration.
       # See https://github.com/appsignal/appsignal-elixir/issues/1078.
