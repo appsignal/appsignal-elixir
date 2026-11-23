@@ -18,6 +18,7 @@ defmodule Appsignal.Phoenix.EventHandler do
   @route_key {__MODULE__, :route}
   @root_span_data_key {__MODULE__, :root_span_data_set}
   @request_root_key {__MODULE__, :request_root_span}
+  @stopped_endpoints_key {__MODULE__, :stopped_endpoints}
 
   def attach do
     if Appsignal.Phoenix.supported?(), do: attach_handlers(), else: []
@@ -72,16 +73,19 @@ defmodule Appsignal.Phoenix.EventHandler do
   end
 
   def phoenix_endpoint_stop(_event, _measurements, metadata, _config) do
-    span = pop(@endpoint_key)
-
     # This event fires from a `register_before_send` callback, so it arrives
-    # before the router dispatch stop event does. The root span has to be
-    # described here, because it is closed below and cannot be described
-    # afterwards.
+    # before the router dispatch stop event does, and before an error page's
+    # `[:phoenix, :error_rendered]` event.
     _ = Process.put(@root_span_data_key, true)
     _root_span = set_span_data(request_root(), with_route(metadata))
 
-    @tracer.close_span(span)
+    # The action, or the error handling around it, is still running while a
+    # router dispatch is open, so the endpoint span is closed once that ends.
+    if Process.get(@dispatch_key, []) == [] do
+      @tracer.close_span(pop(@endpoint_key))
+    else
+      Process.put(@stopped_endpoints_key, Process.get(@stopped_endpoints_key, 0) + 1)
+    end
   end
 
   def phoenix_router_dispatch_start(_event, _measurements, metadata, _config) do
@@ -116,6 +120,17 @@ defmodule Appsignal.Phoenix.EventHandler do
     _root_span = set_root_span_data_unless_set(metadata)
 
     @tracer.close_all(span)
+    close_stopped_endpoints()
+  end
+
+  defp close_stopped_endpoints do
+    if Process.get(@dispatch_key, []) == [] do
+      stopped = Process.delete(@stopped_endpoints_key)
+
+      for _ <- 1..(stopped || 0)//1 do
+        @tracer.close_span(pop(@endpoint_key))
+      end
+    end
   end
 
   def phoenix_router_dispatch_exception(
@@ -319,7 +334,8 @@ defmodule Appsignal.Phoenix.EventHandler do
         @render_key,
         @route_key,
         @root_span_data_key,
-        @request_root_key
+        @request_root_key,
+        @stopped_endpoints_key
       ],
       &Process.delete/1
     )

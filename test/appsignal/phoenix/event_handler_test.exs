@@ -175,15 +175,13 @@ if Appsignal.Dependencies.present?(:phoenix) do
         assert dispatch["closed"]
       end
 
-      # Pins current behaviour, not intended behaviour: the root span closes when
-      # a chunked response starts, before the action streams it. See
-      # https://github.com/appsignal/appsignal-elixir/issues/1085.
-      test "closes before the action streams a chunked response" do
+      test "closes after the action streams a chunked response" do
         get(build_conn(), "/chunked")
 
         assert_received {:streaming, [root, dispatch]}
-        assert root["closed"]
+        refute root["closed"]
         refute dispatch["closed"]
+        assert [%{"closed" => true}, %{"closed" => true}] = spans()
       end
     end
 
