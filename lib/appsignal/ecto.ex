@@ -143,38 +143,37 @@ defmodule Appsignal.Ecto do
   defp handle_begin(current_span, total_time, repo) do
     time = :os.system_time()
 
-    # Intentionally leave span open to be closed
-    # by `handle_commit/3` or `handle_rollback/3`
     "http_request"
     |> @tracer.create_span(current_span, start_time: time - total_time)
     |> @span.set_name("Transaction #{module_name(repo)}")
     |> @span.set_attribute("appsignal:category", "transaction.ecto")
+    |> then(&Appsignal.Telemetry.put_span({__MODULE__, :transaction, repo}, %{}, &1))
   end
 
-  defp handle_commit(current_span, total_time, repo) do
-    time = :os.system_time()
-
-    "http_request"
-    |> @tracer.create_span(current_span, start_time: time - total_time)
-    |> @span.set_name("Commit #{module_name(repo)}")
-    |> @span.set_attribute("appsignal:category", "commit.ecto")
-    |> @tracer.close_span(end_time: time)
-
-    # Close span created by `handle_begin/3`
-    @tracer.close_span(current_span, end_time: time)
+  defp handle_commit(_current_span, total_time, repo) do
+    close_transaction(repo, total_time, "Commit", "commit.ecto")
   end
 
-  defp handle_rollback(current_span, total_time, repo) do
-    time = :os.system_time()
+  defp handle_rollback(_current_span, total_time, repo) do
+    close_transaction(repo, total_time, "Rollback", "rollback.ecto")
+  end
 
-    "http_request"
-    |> @tracer.create_span(current_span, start_time: time - total_time)
-    |> @span.set_name("Rollback #{module_name(repo)}")
-    |> @span.set_attribute("appsignal:category", "rollback.ecto")
-    |> @tracer.close_span(end_time: time)
+  defp close_transaction(repo, total_time, name, category) do
+    case Appsignal.Telemetry.take_span({__MODULE__, :transaction, repo}, %{}) do
+      nil ->
+        nil
 
-    # Close span created by `handle_begin/3`
-    @tracer.close_span(current_span, end_time: time)
+      transaction ->
+        time = :os.system_time()
+
+        "http_request"
+        |> @tracer.create_span(transaction, start_time: time - total_time)
+        |> @span.set_name("#{name} #{module_name(repo)}")
+        |> @span.set_attribute("appsignal:category", category)
+        |> @tracer.close_span(end_time: time)
+
+        @tracer.close_span(transaction, end_time: time)
+    end
   end
 
   defp handle_query(current_span, total_time, repo, query) do

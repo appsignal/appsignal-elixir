@@ -189,6 +189,23 @@ if Appsignal.Dependencies.present?(:ecto_sql) do
         assert Appsignal.Tracer.current_span() == nil
       end
 
+      @tag leaves_spans_open: "the span the transaction opens"
+      test "include a closed transaction span with the commit inside it when the transaction leaves a span open" do
+        instrumented(fn ->
+          Repo.transaction(fn ->
+            "http_request"
+            |> Appsignal.Tracer.create_span(Appsignal.Tracer.current_span())
+            |> Appsignal.Span.set_name("leaked")
+          end)
+        end)
+
+        assert [_root, transaction, leaked, commit] = spans()
+        assert %{"name" => "Transaction Appsignal.Test.Repo", "closed" => true} = transaction
+        assert %{"name" => "leaked", "closed" => false} = leaked
+        assert commit["name"] == "Commit Appsignal.Test.Repo"
+        assert commit["parent_span_id"] == transaction["span_id"]
+      end
+
       test "include a rollback span inside the transaction span, for a rollback" do
         instrumented(&roll_back_insert/0)
 
