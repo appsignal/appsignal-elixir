@@ -330,7 +330,7 @@ defmodule Appsignal.TracerContractTest do
       assert Tracer.close_span(span, end_time: 1_588_936_027_128_939_000) == :ok
 
       assert [{reference, 1_588_936_027, 128_939_000}] =
-               Test.Nif.get!(:close_span_with_timestamp)
+               nif_calls(:close_span_with_timestamp, [span.reference])
 
       assert reference == span.reference
       assert Tracer.lookup(self()) == []
@@ -404,7 +404,7 @@ defmodule Appsignal.TracerContractTest do
       Span.close(span, 1_588_936_027_128_939_000)
 
       assert [{reference, 1_588_936_027, 128_939_000}] =
-               Test.Nif.get!(:close_span_with_timestamp)
+               nif_calls(:close_span_with_timestamp, [span.reference])
 
       assert reference == span.reference
       assert Tracer.lookup(self()) == []
@@ -677,5 +677,11 @@ defmodule Appsignal.TracerContractTest do
     on_exit(fn ->
       {:ok, _} = Supervisor.restart_child(Appsignal.Supervisor, Tracer)
     end)
+  end
+
+  # `Appsignal.Monitor` ends the spans that earlier tests' processes left open
+  # through the same Nif, in the background, while a test runs.
+  defp nif_calls(key, references) do
+    for call <- Test.Nif.get!(key), elem(call, 0) in references, do: call
   end
 end

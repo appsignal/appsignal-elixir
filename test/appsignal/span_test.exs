@@ -915,7 +915,7 @@ defmodule AppsignalSpanTest do
 
     test ".closes the span through the Nif", %{span: %Span{reference: reference} = span} do
       Span.close(span)
-      assert [{^reference}] = Test.Nif.get!(:close_span)
+      assert [{^reference}] = nif_calls(:close_span, [reference])
     end
   end
 
@@ -935,7 +935,7 @@ defmodule AppsignalSpanTest do
     test ".closes the span through the Nif", %{span: %Span{reference: reference} = span} do
       time = :os.system_time()
       Span.close(span, time)
-      assert [{^reference, _sec, _nsec}] = Test.Nif.get!(:close_span_with_timestamp)
+      assert [{^reference, _sec, _nsec}] = nif_calls(:close_span_with_timestamp, [reference])
     end
   end
 
@@ -978,5 +978,11 @@ defmodule AppsignalSpanTest do
     on_exit(fn ->
       Application.put_env(:appsignal, :config, config)
     end)
+  end
+
+  # `Appsignal.Monitor` ends the spans that earlier tests' processes left open
+  # through the same Nif, in the background, while a test runs.
+  defp nif_calls(key, references) do
+    for call <- Test.Nif.get!(key), elem(call, 0) in references, do: call
   end
 end

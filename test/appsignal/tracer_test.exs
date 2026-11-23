@@ -282,7 +282,7 @@ defmodule Appsignal.TracerTest do
 
     test "closes the span through the Nif", %{span: %Span{reference: reference} = span} do
       Tracer.close_span(span)
-      assert [{^reference}] = Test.Nif.get!(:close_span)
+      assert [{^reference}] = nif_calls(:close_span, [reference])
     end
   end
 
@@ -569,5 +569,11 @@ defmodule Appsignal.TracerTest do
   def custom_on_create_fun_parent(span) do
     root = Tracer.root_span(span.pid)
     Appsignal.Span.set_sample_data(root, "custom_data", %{foo: "bar"})
+  end
+
+  # `Appsignal.Monitor` ends the spans that earlier tests' processes left open
+  # through the same Nif, in the background, while a test runs.
+  defp nif_calls(key, references) do
+    for call <- Test.Nif.get!(key), elem(call, 0) in references, do: call
   end
 end

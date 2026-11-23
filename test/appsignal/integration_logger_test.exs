@@ -6,7 +6,17 @@ defmodule Appsignal.IntegrationLoggerTest do
     Application.delete_env(:appsignal, :"$log_file_path")
     start_supervised!(FakeIO)
     start_supervised!(FakeFile)
+    suspend_monitor()
     :ok
+  end
+
+  # `Appsignal.Monitor` logs through the integration logger in the background,
+  # for processes that other tests started, which these tests would count.
+  defp suspend_monitor do
+    if monitor = Process.whereis(Appsignal.Monitor) do
+      :ok = :sys.suspend(monitor)
+      on_exit(fn -> :sys.resume(monitor) end)
+    end
   end
 
   test "all methods log messages when config log level is trace" do
