@@ -172,7 +172,7 @@ defmodule Appsignal.Ecto do
         |> @span.set_attribute("appsignal:category", category)
         |> @tracer.close_span(end_time: time)
 
-        @tracer.close_span(transaction, end_time: time)
+        @tracer.close_all(transaction, end_time: time)
     end
   end
 

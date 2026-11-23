@@ -318,19 +318,17 @@ if Appsignal.Dependencies.present?(:broadway) do
         assert line =~ "AppsignalTest.BroadwayPipeline.handle_message/3"
       end
 
-      @tag leaves_spans_open: "the span handle_message/3 opens"
-      test "is closed, as is the processor's span, when handle_message/3 leaves a span open" do
+      test "is closed, as are the processor's span and the span handle_message/3 leaves open" do
         process("leak")
 
-        spans =
-          await_spans(&(length(&1) == 3 and Enum.count(&1, fn span -> span["closed"] end) == 2))
+        spans = closed_spans(3)
 
         [processor] = named(spans, "#{@pipeline}#prepare_messages")
         [message] = named(spans, "#{@pipeline}#handle_message")
         assert processor["closed"]
         assert processor["attributes"]["successful_messages_to_ack"] == 1
         assert message["closed"]
-        assert [%{"name" => "leaked", "closed" => false}] = children(spans, message)
+        assert [%{"name" => "leaked", "closed" => true}] = children(spans, message)
       end
 
       test "has a span instrumented in handle_message/3 as its child" do

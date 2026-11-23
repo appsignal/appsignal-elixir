@@ -76,14 +76,14 @@ defmodule Appsignal.TelemetryTest do
     assert Test.Tracer.get(:close_span) == :error
   end
 
-  test "closes a kept span that is no longer the current span" do
+  test "closes a kept span and the spans left open under it" do
     span = Tracer.create_span("http_request")
     Telemetry.put_span(:handler, %{}, span)
-    left_open = Tracer.create_span("http_request", span)
+    _left_open = Tracer.create_span("http_request", span)
 
     Telemetry.close_span(:handler, %{})
 
     assert Test.Tracer.get!(:close_span) == [{span}]
-    assert Tracer.current_span() == left_open
+    assert Tracer.lookup(self()) == []
   end
 end

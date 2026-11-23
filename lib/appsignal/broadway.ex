@@ -89,7 +89,7 @@ defmodule Appsignal.Broadway do
       metadata[:successful_messages_to_forward],
       &length/1
     )
-    |> @tracer.close_span()
+    |> @tracer.close_all()
   end
 
   def broadway_processor_message_start(_event, _measurements, metadata, _config) do
@@ -114,7 +114,7 @@ defmodule Appsignal.Broadway do
     {__MODULE__, :message}
     |> Appsignal.Telemetry.take_span(metadata)
     |> @span.add_error(metadata[:kind], metadata[:reason], metadata[:stacktrace])
-    |> @tracer.close_span()
+    |> @tracer.close_all()
   end
 
   defp set_attribute(span, key, value, fun \\ & &1)

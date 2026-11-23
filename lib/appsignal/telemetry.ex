@@ -34,7 +34,7 @@ defmodule Appsignal.Telemetry do
   def close_span(id, metadata) do
     case take_span(id, metadata) do
       nil -> nil
-      span -> @tracer.close_span(span)
+      span -> @tracer.close_all(span)
     end
   end
 

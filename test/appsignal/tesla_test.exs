@@ -284,8 +284,7 @@ if Appsignal.Dependencies.present?(:tesla) and Appsignal.Dependencies.present?(:
         assert [%{"error" => nil}] = named(spans(), "GET #{HTTPServer.origin(HTTPServer.url())}")
       end
 
-      @tag leaves_spans_open: "the span a later middleware opens"
-      test "is closed when a later middleware leaves a span open" do
+      test "is closed with the span a later middleware leaves open" do
         client =
           Tesla.client(
             [
@@ -305,7 +304,7 @@ if Appsignal.Dependencies.present?(:tesla) and Appsignal.Dependencies.present?(:
 
         assert [request] = named(spans(), "GET #{HTTPServer.origin(HTTPServer.url())}")
         assert request["closed"]
-        assert [%{"name" => "leaked", "closed" => false}] = children(spans(), request)
+        assert [%{"name" => "leaked", "closed" => true}] = children(spans(), request)
       end
 
       # Pins current behaviour, not intended behaviour: a request through the

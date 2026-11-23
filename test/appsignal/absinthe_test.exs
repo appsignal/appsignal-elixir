@@ -109,13 +109,12 @@ if Appsignal.Dependencies.present?(:absinthe) do
         assert [%{"name" => "graphql", "error" => nil}] = spans()
       end
 
-      @tag leaves_spans_open: "the span the resolver opens"
-      test "is closed when a resolver leaves a span open" do
+      test "is closed with the span a resolver leaves open" do
         run("query Leaking { leaking }", operation_name: "Leaking")
 
         assert [operation, leaked] = spans()
         assert %{"name" => "Leaking", "closed" => true} = operation
-        assert %{"name" => "leaked", "closed" => false} = leaked
+        assert %{"name" => "leaked", "closed" => true} = leaked
         assert leaked["parent_span_id"] == operation["span_id"]
       end
 

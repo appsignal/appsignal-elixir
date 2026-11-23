@@ -82,13 +82,12 @@ if Appsignal.Dependencies.present?(:plug_cowboy) do
                  named(spans(), "GET #{HTTPServer.origin(HTTPServer.url())}")
       end
 
-      @tag leaves_spans_open: "the span the response handler opens"
-      test "is closed when the response handler leaves a span open" do
+      test "is closed with the span the response handler leaves open" do
         instrumented(&leaking_stream/0)
 
         assert [request] = named(spans(), "GET #{HTTPServer.origin(HTTPServer.url())}")
         assert request["closed"]
-        assert [%{"name" => "leaked", "closed" => false}] = children(spans(), request)
+        assert [%{"name" => "leaked", "closed" => true}] = children(spans(), request)
       end
     end
 

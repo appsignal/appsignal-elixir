@@ -143,7 +143,7 @@ defmodule Appsignal.Oban do
       end
     end
 
-    @tracer.close_span(span)
+    @tracer.close_all(span)
 
     increment_job_stop_counter(worker, queue, state)
 
@@ -169,7 +169,7 @@ defmodule Appsignal.Oban do
     (Appsignal.Telemetry.take_span({__MODULE__, :job}, metadata) || do_oban_job_start(metadata))
     |> @span.set_attribute("state", to_string(state))
     |> @span.add_error(kind, reason, stacktrace)
-    |> @tracer.close_span()
+    |> @tracer.close_all()
 
     increment_job_stop_counter(worker, queue, state)
 

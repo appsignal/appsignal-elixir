@@ -132,12 +132,11 @@ if Appsignal.Dependencies.present?(:oban) do
                  run(%{result: "other"})
       end
 
-      @tag leaves_spans_open: "the span the job opens"
-      test "is closed, with its state, when the job leaves a span open" do
+      test "is closed, with its state, and so is the span the job leaves open" do
         assert [span] = run(%{result: "leak"})
         assert span["closed"]
         assert span["attributes"]["state"] == "success"
-        assert [%{"name" => "leaked", "closed" => false}] = children(spans(), span)
+        assert [%{"name" => "leaked", "closed" => true}] = children(spans(), span)
       end
 
       test "has the error for a job that raises" do
