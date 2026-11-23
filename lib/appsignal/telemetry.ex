@@ -32,17 +32,17 @@ defmodule Appsignal.Telemetry do
   end
 
   def close_span(id, metadata) do
-    case pop_span(id, metadata) do
+    case take_span(id, metadata) do
       nil -> nil
       span -> @tracer.close_span(span)
     end
   end
 
-  defp pop_span(id, %{telemetry_span_context: context}) do
+  def take_span(id, %{telemetry_span_context: context}) do
     Process.delete({__MODULE__, id, context})
   end
 
-  defp pop_span(id, _metadata) do
+  def take_span(id, _metadata) do
     case Process.get({__MODULE__, id}, []) do
       [span] ->
         Process.delete({__MODULE__, id})

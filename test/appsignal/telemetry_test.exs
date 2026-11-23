@@ -67,6 +67,15 @@ defmodule Appsignal.TelemetryTest do
     end
   end
 
+  test "takes a kept span without closing it" do
+    span = Tracer.create_span("http_request")
+    Telemetry.put_span(:handler, %{telemetry_span_context: :first}, span)
+
+    assert Telemetry.take_span(:handler, %{telemetry_span_context: :first}) == span
+    assert Telemetry.get_span(:handler, %{telemetry_span_context: :first}) == nil
+    assert Test.Tracer.get(:close_span) == :error
+  end
+
   test "closes a kept span that is no longer the current span" do
     span = Tracer.create_span("http_request")
     Telemetry.put_span(:handler, %{}, span)
