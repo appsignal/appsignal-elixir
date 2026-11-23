@@ -50,6 +50,7 @@ defmodule Appsignal.Absinthe do
 
     "graphql"
     |> @tracer.create_span(@tracer.current_span())
+    |> then(&Appsignal.Telemetry.put_span(__MODULE__, metadata, &1))
     |> @span.set_name(operation_name || "graphql")
     |> @span.set_attribute("appsignal:category", "call.graphql")
 
@@ -64,7 +65,7 @@ defmodule Appsignal.Absinthe do
     end
   end
 
-  def absinthe_execute_operation_stop(_event, _measurements, _metadata, _config) do
-    @tracer.close_span(@tracer.current_span())
+  def absinthe_execute_operation_stop(_event, _measurements, metadata, _config) do
+    Appsignal.Telemetry.close_span(__MODULE__, metadata)
   end
 end
