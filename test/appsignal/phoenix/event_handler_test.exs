@@ -342,11 +342,7 @@ if Appsignal.Dependencies.present?(:phoenix) do
     end
 
     describe "a request that raises in a plug" do
-      # Pins current behaviour, not intended behaviour: when a plug in the
-      # endpoint raises, the request is recorded without its name, its request
-      # data or the error. See
-      # https://github.com/appsignal/appsignal-elixir/issues/1084.
-      test "records the request without its name, data or error when a plug in the endpoint raises" do
+      test "records the request and the error, without a name, when a plug in the endpoint raises" do
         assert_raise RuntimeError, "Exception in the endpoint!", fn ->
           get(build_conn(), "/raise_in_endpoint")
         end
@@ -354,16 +350,13 @@ if Appsignal.Dependencies.present?(:phoenix) do
         assert [root, render] = spans()
         assert root["closed"]
         assert root["name"] == ""
-        refute Map.has_key?(root["sample_data"], "environment")
-        assert root["error"] == nil
+        assert root["sample_data"]["environment"]["status"] == 500
+        assert root["error"]["name"] == "RuntimeError"
         assert render["parent_span_id"] == root["span_id"]
         assert render["name"] =~ ~s(Render "500")
       end
 
-      # Pins current behaviour, not intended behaviour: when the request body
-      # fails to parse, the request is recorded without its name or its request
-      # data. See https://github.com/appsignal/appsignal-elixir/issues/1084.
-      test "records the request without its name or data when the request body fails to parse" do
+      test "records the request, without a name or an error, when the request body fails to parse" do
         conn = Plug.Conn.put_req_header(build_conn(), "content-type", "application/json")
 
         assert_raise Plug.Parsers.ParseError, fn -> post(conn, "/", "{") end
@@ -371,16 +364,13 @@ if Appsignal.Dependencies.present?(:phoenix) do
         assert [root, render] = spans()
         assert root["closed"]
         assert root["name"] == ""
-        refute Map.has_key?(root["sample_data"], "environment")
+        assert root["sample_data"]["environment"]["status"] == 400
         assert root["error"] == nil
         assert render["parent_span_id"] == root["span_id"]
         assert render["name"] =~ ~s(Render "400")
       end
 
-      # Pins current behaviour, not intended behaviour: the error a pipeline
-      # plug raises is not recorded. See
-      # https://github.com/appsignal/appsignal-elixir/issues/1084.
-      test "records the request without the error when a pipeline plug raises" do
+      test "records the request and the error when a pipeline plug raises" do
         assert_raise RuntimeError, "Exception in a pipeline!", fn ->
           get(build_conn(), "/raise_in_pipeline")
         end
@@ -389,7 +379,7 @@ if Appsignal.Dependencies.present?(:phoenix) do
         assert root["closed"]
         assert root["name"] == "GET /raise_in_pipeline"
         assert root["sample_data"]["environment"]["status"] == 500
-        assert root["error"] == nil
+        assert root["error"]["name"] == "RuntimeError"
         assert dispatch["closed"]
       end
 
@@ -424,10 +414,7 @@ if Appsignal.Dependencies.present?(:phoenix) do
         assert dispatch["parent_span_id"] == mounted["span_id"]
       end
 
-      # Pins current behaviour, not intended behaviour: when a plug in the
-      # mounted endpoint raises, the request is recorded without its name or the
-      # error. See https://github.com/appsignal/appsignal-elixir/issues/1084.
-      test "records the request without its name or error when a plug in the mounted endpoint raises" do
+      test "records the error, without a name, when a plug in the mounted endpoint raises" do
         assert_raise RuntimeError, "Exception in the endpoint!", fn ->
           dispatch(build_conn(), MountingEndpoint, :get, "/raise_in_endpoint")
         end
@@ -435,7 +422,7 @@ if Appsignal.Dependencies.present?(:phoenix) do
         assert [root, mounted, _render] = spans()
         assert root["closed"]
         assert root["name"] == ""
-        assert root["error"] == nil
+        assert root["error"]["name"] == "RuntimeError"
         assert mounted["closed"]
       end
 
@@ -548,6 +535,17 @@ if Appsignal.Dependencies.present?(:phoenix) do
         end
 
         if app == :bandit do
+          # Cowboy stops the request process once a client that closes its
+          # connection has the response, which can be before
+          # `[:phoenix, :error_rendered]` arrives.
+          test "records the error of a request whose pipeline plug raises", %{endpoint: endpoint} do
+            assert {500, _} = http_get(endpoint, "/raise_in_pipeline")
+
+            [root | _] = await_spans()
+            assert root["name"] == "GET /raise_in_pipeline"
+            assert root["error"]["name"] == "RuntimeError"
+          end
+
           # Pins current behaviour, not intended behaviour: when a task the
           # action awaits raises, Bandit records the error on a root span
           # without a name. See

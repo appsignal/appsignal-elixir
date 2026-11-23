@@ -221,10 +221,29 @@ defmodule Appsignal.Phoenix.EventHandler do
   # and sending the error page can close the endpoint span first. Nested
   # endpoints and forwarded routers each push a span, so close the outermost one
   # still open.
-  def phoenix_error_rendered(_event, _measurements, _metadata, _config) do
-    _ = @tracer.close_all(outermost(@endpoint_key) || outermost(@dispatch_key))
+  def phoenix_error_rendered(_event, _measurements, metadata, _config) do
+    case outermost(@endpoint_key) || outermost(@dispatch_key) do
+      nil ->
+        nil
+
+      span ->
+        request_root()
+        |> set_span_data(%{conn: %{metadata.conn | status: metadata.status}})
+        |> add_rendered_error(metadata)
+
+        @tracer.close_all(span)
+    end
+
     forget()
   end
+
+  # Errors with a status below 500 are not recorded, as with `Appsignal.Plug`.
+  defp add_rendered_error(span, %{status: status, kind: kind, reason: reason, stacktrace: stack})
+       when status >= 500 do
+    @span.add_error(span, kind, reason, stack)
+  end
+
+  defp add_rendered_error(span, _metadata), do: span
 
   defp outermost(key), do: key |> Process.get([]) |> List.last()
 
