@@ -81,6 +81,15 @@ if Appsignal.Dependencies.present?(:plug_cowboy) do
         assert [%{"error" => nil}] =
                  named(spans(), "GET #{HTTPServer.origin(HTTPServer.url())}")
       end
+
+      @tag leaves_spans_open: "the span the response handler opens"
+      test "is closed when the response handler leaves a span open" do
+        instrumented(&leaking_stream/0)
+
+        assert [request] = named(spans(), "GET #{HTTPServer.origin(HTTPServer.url())}")
+        assert request["closed"]
+        assert [%{"name" => "leaked", "closed" => false}] = children(spans(), request)
+      end
     end
 
     describe "requests that record no span" do
@@ -174,6 +183,22 @@ if Appsignal.Dependencies.present?(:plug_cowboy) do
       :get
       |> Finch.build(HTTPServer.url())
       |> Finch.stream(AppsignalTest.Finch, nil, fn _chunk, _acc -> raise "Stream!" end)
+    end
+
+    defp leaking_stream do
+      :get
+      |> Finch.build(HTTPServer.url())
+      |> Finch.stream(AppsignalTest.Finch, nil, fn
+        {:status, _}, acc ->
+          "http_request"
+          |> Appsignal.Tracer.create_span(Appsignal.Tracer.current_span())
+          |> Appsignal.Span.set_name("leaked")
+
+          acc
+
+        _chunk, acc ->
+          acc
+      end)
     end
 
     defp events do
