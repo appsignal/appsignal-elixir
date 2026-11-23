@@ -1,5 +1,13 @@
 # AppSignal for Elixir changelog
 
+## 2.18.5
+
+_Published on 2026-11-23._
+
+### Fixed
+
+- Fix the compiler warnings AppSignal emits when compiled on Elixir 1.20. (patch [aa1e52e5](https://github.com/appsignal/appsignal-elixir/commit/aa1e52e51cd56c6489d5dac3b2e3aef24f8ab3cd))
+
 ## 2.18.4
 
 _Published on 2026-10-23._
