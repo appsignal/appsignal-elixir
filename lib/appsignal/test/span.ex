@@ -3,11 +3,6 @@ defmodule Appsignal.Test.Span do
   use Appsignal.Test.Wrapper
   alias Appsignal.Span
 
-  def create_root(namespace, pid) do
-    add(:create_root, {namespace, pid})
-    Span.create_root(namespace, pid)
-  end
-
   def add_error(span, exception, stacktrace) do
     add(:add_error, {span, exception, stacktrace})
     Span.add_error(span, exception, stacktrace)
@@ -16,6 +11,11 @@ defmodule Appsignal.Test.Span do
   def add_error(span, kind, reason, stacktrace) do
     add(:add_error, {span, kind, reason, stacktrace})
     Span.add_error(span, kind, reason, stacktrace)
+  end
+
+  def add_error(span, kind, reason, stacktrace, options) do
+    add(:add_error, {span, kind, reason, stacktrace})
+    Span.add_error(span, kind, reason, stacktrace, options)
   end
 
   def set_name(span, name) do

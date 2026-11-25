@@ -5,7 +5,9 @@ defmodule AppsignalTest.Spans do
 
   Each span is a map with the extension's keys: `"name"`, `"namespace"`,
   `"attributes"`, `"sample_data"`, `"error"`, `"span_id"`, `"parent_span_id"`,
-  `"trace_id"` and `"closed"`. Sample data values are decoded from JSON.
+  `"trace_id"` and `"closed"`, and `"abandoned"` when AppSignal's monitor
+  ended the span because the process holding it exited with it open. Sample
+  data values are decoded from JSON.
   """
 
   import ExUnit.Assertions
@@ -22,12 +24,16 @@ defmodule AppsignalTest.Spans do
     # Read after the open spans: a span another process closes in between can
     # no longer be read, but its data is recorded before it closes.
     closed = Map.new(recorded(:closed_span))
+    abandoned = abandoned()
 
     for reference <- references do
-      case Map.fetch(closed, reference) do
-        {:ok, json} -> json |> decode() |> Map.put("closed", true)
-        :error -> decode(open[reference])
-      end
+      span =
+        case Map.fetch(closed, reference) do
+          {:ok, json} -> json |> decode() |> Map.put("closed", true)
+          :error -> decode(open[reference])
+        end
+
+      if MapSet.member?(abandoned, reference), do: Map.put(span, "abandoned", true), else: span
     end
   end
 
@@ -64,6 +70,12 @@ defmodule AppsignalTest.Spans do
 
   def open_spans(spans \\ spans()), do: Enum.reject(spans, & &1["closed"])
 
+  @doc """
+  Whether the code that opened `span` left it open: it is still open, or
+  AppSignal's monitor ended it once the process holding it exited.
+  """
+  def left_open?(span), do: !span["closed"] or span["abandoned"] == true
+
   def root_spans(spans \\ spans()), do: Enum.filter(spans, &(&1["parent_span_id"] == ""))
 
   def children(spans, %{"span_id" => id}), do: Enum.filter(spans, &(&1["parent_span_id"] == id))
@@ -73,9 +85,29 @@ defmodule AppsignalTest.Spans do
     Enum.filter(spans, &(&1["trace_id"] == id and &1 != root))
   end
 
+  @doc """
+  Whether a span in the trace of `root`, or `root` itself, marks the trace to
+  be dropped, as `Appsignal.Tracer.ignore/0` does.
+  """
+  def trace_ignored?(spans, root) do
+    Enum.any?(
+      [root | in_trace(spans, root)],
+      &(&1["attributes"]["appsignal.ignore_trace"] == true)
+    )
+  end
+
   def category(span), do: span["attributes"]["appsignal:category"]
 
   def named(spans, name), do: Enum.filter(spans, &(&1["name"] == name))
+
+  defp abandoned do
+    with pid when is_pid(pid) <- Process.whereis(Test.Tracer),
+         {:ok, calls} <- Test.Tracer.get(:close_abandoned) do
+      for {_pid, spans} <- calls, span <- spans, into: MapSet.new(), do: span.reference
+    else
+      _ -> MapSet.new()
+    end
+  end
 
   defp recorded(key) do
     case Test.Nif.get(key) do

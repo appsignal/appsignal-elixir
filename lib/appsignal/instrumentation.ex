@@ -11,7 +11,7 @@ defmodule Appsignal.Instrumentation do
       try do
         call_with_optional_argument(fun, span)
       after
-        @tracer.close_span(span)
+        @tracer.close_all(span)
       end
 
     result
@@ -76,7 +76,7 @@ defmodule Appsignal.Instrumentation do
       try do
         call_with_optional_argument(fun, span)
       after
-        @tracer.close_span(span)
+        @tracer.close_all(span)
       end
 
     result
@@ -112,10 +112,11 @@ defmodule Appsignal.Instrumentation do
   with the created `Appsignal.Span` before closing it.
   """
   def send_error(%_{__exception__: true} = exception, stacktrace, fun) when is_function(fun) do
-    @span.create_root("http_request", self())
+    "http_request"
+    |> @tracer.create_span(nil)
     |> @span.add_error(exception, stacktrace)
     |> fun.()
-    |> @span.close()
+    |> close_error_span()
   end
 
   @spec send_error(Exception.kind(), any(), Exception.stacktrace()) :: Appsignal.Span.t() | nil
@@ -124,10 +125,16 @@ defmodule Appsignal.Instrumentation do
   end
 
   def send_error(kind, reason, stacktrace, fun) do
-    @span.create_root("http_request", self())
+    "http_request"
+    |> @tracer.create_span(nil)
     |> @span.add_error(kind, reason, stacktrace)
     |> fun.()
-    |> @span.close()
+    |> close_error_span()
+  end
+
+  defp close_error_span(span) do
+    _ = @tracer.close_span(span)
+    span
   end
 
   defp call_with_optional_argument(fun, _argument) when is_function(fun, 0), do: fun.()

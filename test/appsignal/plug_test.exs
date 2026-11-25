@@ -261,27 +261,29 @@ if Appsignal.Dependencies.present?(:plug) do
       end
 
       # Pins current behaviour, not intended behaviour: an exit or a throw leaves
-      # the request's span without a name. See
+      # the request's span without the request's name. See
       # https://github.com/appsignal/appsignal-elixir/issues/1086.
+      @tag leaves_unnamed_actions: "an exit leaves the request without its name"
       test "has an exit as its error, without the request's name" do
         %{kind: :exit, reason: :exited} = request(:get, "/exit")
 
         assert [%{"error" => %{"name" => ":exit", "message" => "** (exit) :exited"}} = span] =
                  spans()
 
-        assert span["name"] == ""
+        assert span["name"] == "[unnamed action]"
       end
 
       # Pins current behaviour, not intended behaviour: an exit or a throw leaves
-      # the request's span without a name. See
+      # the request's span without the request's name. See
       # https://github.com/appsignal/appsignal-elixir/issues/1086.
+      @tag leaves_unnamed_actions: "an throw leaves the request without its name"
       test "has a throw as its error, without the request's name" do
         %{kind: :throw, reason: :thrown} = request(:get, "/throw")
 
         assert [%{"error" => %{"name" => ":throw", "message" => "** (throw) :thrown"}} = span] =
                  spans()
 
-        assert span["name"] == ""
+        assert span["name"] == "[unnamed action]"
       end
 
       test "has no error for a status below 500" do
@@ -301,12 +303,10 @@ if Appsignal.Dependencies.present?(:plug) do
         refute Map.has_key?(span["sample_data"], "environment")
       end
 
-      # Pins current behaviour, not intended behaviour: a request that calls
-      # Tracer.ignore/0 is still reported. See
-      # https://github.com/appsignal/appsignal-elixir/issues/1089.
-      test "is still recorded for a request that calls Tracer.ignore/0" do
+      test "is marked as ignored for a request that calls Tracer.ignore/0" do
         %{conn: %Plug.Conn{status: 200}} = request(:get, "/ignored")
-        assert [%{"name" => "GET /ignored", "closed" => true}] = spans()
+        assert [%{"name" => "GET /ignored", "closed" => true} = span] = spans()
+        assert trace_ignored?([span], span)
       end
 
       test "is recorded for a request with nil request headers" do
@@ -315,15 +315,15 @@ if Appsignal.Dependencies.present?(:plug) do
       end
     end
 
-    describe "the rest of the process's trace" do
-      test "is ignored after the request raises" do
+    describe "the process's registered spans" do
+      test "are gone after the request raises" do
         request(:get, "/exception")
-        assert Appsignal.Tracer.lookup(self()) == [{self(), :ignore}]
+        assert Appsignal.Tracer.lookup(self()) == []
       end
 
-      test "is ignored after an error with a status below 500" do
+      test "are gone after an error with a status below 500" do
         request(:get, "/bad_request")
-        assert Appsignal.Tracer.lookup(self()) == [{self(), :ignore}]
+        assert Appsignal.Tracer.lookup(self()) == []
       end
     end
 
@@ -379,6 +379,11 @@ if Appsignal.Dependencies.present?(:plug) do
           @tag leaves_spans_open: "the request's span, as its process is killed"
         end
 
+        if server == :bandit do
+          @tag leaves_unnamed_actions:
+                 "an awaited task's exit leaves the request without its name"
+        end
+
         test "responds with an error to a request whose awaited task raises", %{port: port} do
           assert {500, _body} = http_get(port, "/task_exception")
           assert_task_exception_span(unquote(server))
@@ -401,45 +406,52 @@ if Appsignal.Dependencies.present?(:plug) do
 
         test "records a request after an ignored one on the same connection", %{port: port} do
           assert [200, 200] = AppsignalTest.KeepAliveClient.get(port, ["/ignored", "/"])
-          assert_after_ignored_spans(unquote(server))
+
+          assert [ignored, next] = await_spans(&(length(&1) == 2 and all_closed?(&1)))
+          assert trace_ignored?([ignored], ignored)
+          assert next["name"] == "GET /"
+          refute trace_ignored?([next], next)
         end
 
-        @tag leaves_spans_open: "the span the first request leaves open"
+        @tag leaves_unnamed_spans: "the span the first request leaves open"
         test "records a request after one that leaves a span open on the same connection", %{
           port: port
         } do
           assert [200, 200] = AppsignalTest.KeepAliveClient.get(port, ["/leak", "/"])
 
-          [leaking, leaked, next] =
-            await_spans(&match?([%{"closed" => true}, _, %{"closed" => true}], &1))
+          [leaking, leaked, next] = await_spans(&(length(&1) == 3 and all_closed?(&1)))
 
           assert leaked["parent_span_id"] == leaking["span_id"]
-          refute leaked["closed"]
-          assert_after_leak_span(unquote(server), leaked, next)
+          refute leaked["abandoned"]
+          assert leaked["name"] == "[unnamed span]"
+          assert next["parent_span_id"] == ""
+          assert next["name"] == "GET /"
         end
       end
     end
 
     # Pins current behaviour, not intended behaviour: when a task the request
     # awaits raises, Bandit records the exit on a span without the request's
-    # name, and Cowboy records nothing. See
+    # name. Cowboy stops the request's process, so its span is only ended by
+    # AppSignal's monitor, without the request's name or the error. See
     # https://github.com/appsignal/appsignal-elixir/issues/1086 and
     # https://github.com/appsignal/appsignal-elixir/issues/1088.
     defp assert_task_exception_span(:bandit) do
       assert [span] = await_spans(&match?([%{"closed" => true}], &1))
-      assert span["name"] == ""
+      assert span["name"] == "[unnamed action]"
       assert span["error"]["name"] == ":exit"
       assert span["error"]["message"] =~ "Exception in a task!"
     end
 
     defp assert_task_exception_span(:plug_cowboy) do
-      assert [span] = await_spans(&match?([_], &1))
-      refute span["closed"]
+      assert [span] = await_spans(&match?([%{"abandoned" => true}], &1))
+      assert span["name"] == ""
       assert span["error"] == nil
     end
 
     # Pins current behaviour, not intended behaviour: Cowboy stops the request's
-    # process when its client disconnects, so its span is never closed. See
+    # process when its client disconnects, so its span is only ended by
+    # AppSignal's monitor, without the request's name. See
     # https://github.com/appsignal/appsignal-elixir/issues/1088.
     defp assert_after_disconnect_span(:bandit) do
       assert [%{"name" => "GET /work_after_response"}] =
@@ -447,29 +459,7 @@ if Appsignal.Dependencies.present?(:plug) do
     end
 
     defp assert_after_disconnect_span(:plug_cowboy) do
-      Process.sleep(400)
-      assert [%{"name" => "", "closed" => false}] = spans()
-    end
-
-    # Pins current behaviour, not intended behaviour: on Bandit, which serves a
-    # connection's requests from one process, Tracer.ignore/0 and a span left
-    # open carry over to the next request. See
-    # https://github.com/appsignal/appsignal-elixir/issues/1089.
-    defp assert_after_ignored_spans(:bandit) do
-      assert [%{"name" => "GET /ignored"}] = await_spans(&match?([%{"closed" => true}], &1))
-    end
-
-    defp assert_after_ignored_spans(:plug_cowboy) do
-      assert [%{"name" => "GET /ignored"}, %{"name" => "GET /"}] =
-               await_spans(&match?([%{"closed" => true}, %{"closed" => true}], &1))
-    end
-
-    defp assert_after_leak_span(:bandit, leaked, next) do
-      assert next["parent_span_id"] == leaked["span_id"]
-    end
-
-    defp assert_after_leak_span(:plug_cowboy, _leaked, next) do
-      assert next["parent_span_id"] == ""
+      assert [%{"name" => ""}] = await_spans(&match?([%{"abandoned" => true}], &1))
     end
 
     defp start_server(:bandit) do

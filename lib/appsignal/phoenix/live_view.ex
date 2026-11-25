@@ -28,7 +28,6 @@ defmodule Appsignal.Phoenix.LiveView do
               )
               |> @span.add_error(kind, reason, stack)
 
-            @tracer.ignore()
             :erlang.raise(kind, reason, stack)
         else
           result ->
@@ -159,8 +158,6 @@ defmodule Appsignal.Phoenix.LiveView do
     @tracer.current_span()
     |> @span.add_error(metadata[:kind], metadata[:reason], metadata[:stacktrace])
     |> @tracer.close_span(end_time: @os.system_time())
-
-    @tracer.ignore()
   end
 
   defp span_name(module, method, nil) do

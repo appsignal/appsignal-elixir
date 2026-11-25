@@ -26,10 +26,6 @@ if Appsignal.Dependencies.present?(:phoenix) do
         assert get(build_conn(), "/chunked").resp_body == "Hello, chunks!"
       end
 
-      # Pins current behaviour, not intended behaviour: the router dispatch span
-      # stays open after the request raises. See
-      # https://github.com/appsignal/appsignal-elixir/issues/1084.
-      @tag leaves_spans_open: "the router dispatch span after an error"
       test "raises the action's error" do
         assert_raise RuntimeError, "Exception!", fn -> get(build_conn(), "/exception?id=4") end
       end
@@ -156,14 +152,14 @@ if Appsignal.Dependencies.present?(:phoenix) do
         assert second["sample_data"]["tags"] == nil
       end
 
-      # Pins current behaviour, not intended behaviour: a request that calls
-      # Tracer.ignore/0 is still reported, without its name. See
-      # https://github.com/appsignal/appsignal-elixir/issues/1089.
-      test "is still recorded, without its name, when the action calls Tracer.ignore/0" do
+      test "is marked as ignored when the action calls Tracer.ignore/0" do
         assert get(build_conn(), "/ignored").resp_body =~ "Hello, ignored!"
 
-        assert [%{"name" => "", "closed" => true}, %{"closed" => true}] = spans()
-        assert Appsignal.Tracer.lookup(self()) == [{self(), :ignore}]
+        spans = spans()
+        assert [root | _] = root_spans(spans)
+        assert root["name"] == "AppsignalTest.Phoenix.PageController#ignored"
+        assert trace_ignored?(spans, root)
+        assert Appsignal.Tracer.lookup(self()) == []
       end
 
       # Pins current behaviour, not intended behaviour: the endpoint span stays
@@ -261,16 +257,12 @@ if Appsignal.Dependencies.present?(:phoenix) do
       end
     end
 
-    # Pins current behaviour, not intended behaviour: the router dispatch span
-    # stays open after the request raises. See
-    # https://github.com/appsignal/appsignal-elixir/issues/1084.
     describe "a request that raises in its action" do
       setup do
         assert_raise RuntimeError, fn -> get(build_conn(), "/exception?id=4") end
         :ok
       end
 
-      @tag leaves_spans_open: "the router dispatch span after an error"
       test "records the error on the closed root span" do
         assert [root, _dispatch] = spans()
         assert root["closed"]
@@ -285,29 +277,22 @@ if Appsignal.Dependencies.present?(:phoenix) do
       # Pins current behaviour, not intended behaviour: the error sample has no
       # response status. See
       # https://github.com/appsignal/appsignal-elixir/issues/1093.
-      @tag leaves_spans_open: "the router dispatch span after an error"
       test "records the request without its response status" do
         assert [root, _dispatch] = spans()
         assert root["sample_data"]["environment"]["status"] == nil
       end
 
-      @tag leaves_spans_open: "the router dispatch span after an error"
-      test "leaves the router dispatch span open" do
-        assert [%{"closed" => true}, %{"closed" => false} = dispatch] = spans()
+      test "closes the router dispatch span" do
+        assert [%{"closed" => true}, %{"closed" => true} = dispatch] = spans()
         assert category(dispatch) == "call.phoenix_router_dispatch"
       end
 
-      @tag leaves_spans_open: "the router dispatch span after an error"
-      test "ignores the rest of the process's trace" do
-        assert Appsignal.Tracer.lookup(self()) == [{self(), :ignore}]
+      test "leaves no spans registered in the process" do
+        assert Appsignal.Tracer.lookup(self()) == []
       end
     end
 
     describe "a request that fails in its action with something other than a RuntimeError" do
-      # Pins current behaviour, not intended behaviour: the router dispatch span
-      # stays open after the request raises. See
-      # https://github.com/appsignal/appsignal-elixir/issues/1084.
-      @tag leaves_spans_open: "the router dispatch span after an error"
       test "records a Phoenix.ActionClauseError on a root span named after the action" do
         assert_raise Phoenix.ActionClauseError, fn -> get(build_conn(), "/requires_id") end
 
@@ -316,50 +301,41 @@ if Appsignal.Dependencies.present?(:phoenix) do
         assert root["error"]["name"] == "Phoenix.ActionClauseError"
       end
 
-      # Pins current behaviour, not intended behaviour: the router dispatch span
-      # stays open after the request raises. See
-      # https://github.com/appsignal/appsignal-elixir/issues/1084.
-      @tag leaves_spans_open: "the router dispatch span after an error"
       test "records an error raised while rendering a template" do
         assert_raise ArgumentError, fn -> get(build_conn(), "/broken_template") end
 
         assert [root, dispatch, render] = spans()
         assert root["error"]["name"] == "ArgumentError"
         assert render["closed"]
-        refute dispatch["closed"]
+        assert dispatch["closed"]
       end
 
       # Pins current behaviour, not intended behaviour: an exit or a throw leaves
-      # the root span without a name, and the router dispatch span open. See
-      # https://github.com/appsignal/appsignal-elixir/issues/1086 and
-      # https://github.com/appsignal/appsignal-elixir/issues/1084.
-      @tag leaves_spans_open: "the router dispatch span after an error"
+      # the root span without a name. See
+      # https://github.com/appsignal/appsignal-elixir/issues/1086.
+      @tag leaves_unnamed_actions: "an exit leaves the request without its name"
       test "records an exit as an ErlangError, without the request's name" do
         assert :exited = catch_exit(get(build_conn(), "/exit"))
 
         assert [root, _dispatch] = spans()
-        assert root["name"] == ""
+        assert root["name"] == "[unnamed action]"
         assert root["error"]["name"] == "ErlangError"
       end
 
       # Pins current behaviour, not intended behaviour: an exit or a throw leaves
-      # the root span without a name, and the router dispatch span open. See
-      # https://github.com/appsignal/appsignal-elixir/issues/1086 and
-      # https://github.com/appsignal/appsignal-elixir/issues/1084.
-      @tag leaves_spans_open: "the router dispatch span after an error"
+      # the root span without a name. See
+      # https://github.com/appsignal/appsignal-elixir/issues/1086.
+      @tag leaves_unnamed_actions: "a throw leaves the request without its name"
       test "records a throw as an ErlangError, without the request's name" do
         assert :thrown = catch_throw(get(build_conn(), "/throw"))
 
         assert [root, _dispatch] = spans()
-        assert root["name"] == ""
+        assert root["name"] == "[unnamed action]"
         assert root["error"]["name"] == "ErlangError"
       end
 
       # Pins current behaviour, not intended behaviour: an error below 500 is
-      # recorded, and the router dispatch span stays open. See
-      # https://github.com/appsignal/appsignal-elixir/issues/1087 and
-      # https://github.com/appsignal/appsignal-elixir/issues/1084.
-      @tag leaves_spans_open: "the router dispatch span after an error"
+      # recorded. See https://github.com/appsignal/appsignal-elixir/issues/1087.
       test "records an error below 500 raised in an action" do
         assert_raise Plug.BadRequestError, fn -> get(build_conn(), "/bad_request") end
 
@@ -369,37 +345,45 @@ if Appsignal.Dependencies.present?(:phoenix) do
       end
     end
 
-    # Pins current behaviour, not intended behaviour: a plug that raises in the
-    # endpoint or in a router pipeline leaves a span open, and its error is not
-    # recorded. See https://github.com/appsignal/appsignal-elixir/issues/1084.
     describe "a request that raises in a plug" do
-      @tag leaves_spans_open: "the endpoint span after a plug in the endpoint raises"
-      test "leaves the root span open without the error when a plug in the endpoint raises" do
+      # Pins current behaviour, not intended behaviour: when a plug in the
+      # endpoint raises, the request is recorded without its name, its request
+      # data or the error. See
+      # https://github.com/appsignal/appsignal-elixir/issues/1084.
+      test "records the request without its name, data or error when a plug in the endpoint raises" do
         assert_raise RuntimeError, "Exception in the endpoint!", fn ->
           get(build_conn(), "/raise_in_endpoint")
         end
 
         assert [root, render] = spans()
-        refute root["closed"]
+        assert root["closed"]
+        assert root["name"] == ""
+        refute Map.has_key?(root["sample_data"], "environment")
         assert root["error"] == nil
         assert render["parent_span_id"] == root["span_id"]
         assert render["name"] =~ ~s(Render "500")
       end
 
-      @tag leaves_spans_open: "the endpoint span after a plug in the endpoint raises"
-      test "leaves the root span open when the request body fails to parse" do
+      # Pins current behaviour, not intended behaviour: when the request body
+      # fails to parse, the request is recorded without its name or its request
+      # data. See https://github.com/appsignal/appsignal-elixir/issues/1084.
+      test "records the request without its name or data when the request body fails to parse" do
         conn = Plug.Conn.put_req_header(build_conn(), "content-type", "application/json")
 
         assert_raise Plug.Parsers.ParseError, fn -> post(conn, "/", "{") end
 
         assert [root, render] = spans()
-        refute root["closed"]
+        assert root["closed"]
+        assert root["name"] == ""
+        refute Map.has_key?(root["sample_data"], "environment")
         assert root["error"] == nil
         assert render["parent_span_id"] == root["span_id"]
         assert render["name"] =~ ~s(Render "400")
       end
 
-      @tag leaves_spans_open: "the router dispatch span after a pipeline plug raises"
+      # Pins current behaviour, not intended behaviour: the error a pipeline
+      # plug raises is not recorded. See
+      # https://github.com/appsignal/appsignal-elixir/issues/1084.
       test "records the request without the error when a pipeline plug raises" do
         assert_raise RuntimeError, "Exception in a pipeline!", fn ->
           get(build_conn(), "/raise_in_pipeline")
@@ -410,11 +394,10 @@ if Appsignal.Dependencies.present?(:phoenix) do
         assert root["name"] == "GET /raise_in_pipeline"
         assert root["sample_data"]["environment"]["status"] == 500
         assert root["error"] == nil
-        refute dispatch["closed"]
+        assert dispatch["closed"]
       end
 
-      @tag leaves_spans_open: "the router dispatch span after a pipeline plug raises"
-      test "leaves the router dispatch span open when CSRF protection rejects the request" do
+      test "records the request without an error when CSRF protection rejects it" do
         conn = Plug.Conn.put_private(build_conn(), :plug_skip_csrf_protection, false)
 
         assert_raise Plug.CSRFProtection.InvalidCSRFTokenError, fn -> post(conn, "/csrf") end
@@ -424,7 +407,7 @@ if Appsignal.Dependencies.present?(:phoenix) do
         assert root["name"] == "POST /csrf"
         assert root["sample_data"]["environment"]["status"] == 403
         assert root["error"] == nil
-        refute dispatch["closed"]
+        assert dispatch["closed"]
       end
     end
 
@@ -446,33 +429,29 @@ if Appsignal.Dependencies.present?(:phoenix) do
       end
 
       # Pins current behaviour, not intended behaviour: when a plug in the
-      # mounted endpoint raises, the outer endpoint's span stays open, without
-      # the error. See https://github.com/appsignal/appsignal-elixir/issues/1084.
-      @tag leaves_spans_open: "the outer endpoint span after a plug in the mounted one raises"
-      test "leaves the outer endpoint span open when a plug in the mounted endpoint raises" do
+      # mounted endpoint raises, the request is recorded without its name or the
+      # error. See https://github.com/appsignal/appsignal-elixir/issues/1084.
+      test "records the request without its name or error when a plug in the mounted endpoint raises" do
         assert_raise RuntimeError, "Exception in the endpoint!", fn ->
           dispatch(build_conn(), MountingEndpoint, :get, "/raise_in_endpoint")
         end
 
         assert [root, mounted, _render] = spans()
-        refute root["closed"]
+        assert root["closed"]
+        assert root["name"] == ""
         assert root["error"] == nil
         assert mounted["closed"]
       end
 
-      # Pins current behaviour, not intended behaviour: when the action raises,
-      # the mounted endpoint's span and the router dispatch span stay open. See
-      # https://github.com/appsignal/appsignal-elixir/issues/1084.
-      @tag leaves_spans_open: "the mounted endpoint and router dispatch spans after an error"
-      test "leaves the mounted endpoint and router dispatch spans open when the action raises" do
+      test "closes the mounted endpoint and router dispatch spans when the action raises" do
         assert_raise RuntimeError, "Exception!", fn ->
           dispatch(build_conn(), MountingEndpoint, :get, "/exception")
         end
 
         assert [root, mounted, dispatch] = spans()
         assert root["error"]["name"] == "RuntimeError"
-        refute mounted["closed"]
-        refute dispatch["closed"]
+        assert mounted["closed"]
+        assert dispatch["closed"]
       end
     end
   end
@@ -508,18 +487,10 @@ if Appsignal.Dependencies.present?(:phoenix) do
                  ] = Enum.map(root_spans(spans), & &1["name"])
         end
 
-        # Pins current behaviour, not intended behaviour: the router dispatch
-        # span stays open after the request raises. See
-        # https://github.com/appsignal/appsignal-elixir/issues/1084.
-        @tag leaves_spans_open: "the router dispatch span after an error"
         test "responds to an error with the error page", %{endpoint: endpoint} do
           assert {500, "Internal Server Error"} = http_get(endpoint, "/exception")
         end
 
-        # Pins current behaviour, not intended behaviour: the router dispatch
-        # span stays open after the request raises. See
-        # https://github.com/appsignal/appsignal-elixir/issues/1084.
-        @tag leaves_spans_open: "the router dispatch span after an error"
         test "records the error on the root span", %{endpoint: endpoint} do
           http_get(endpoint, "/exception")
 
@@ -529,10 +500,6 @@ if Appsignal.Dependencies.present?(:phoenix) do
           assert root["error"]["name"] == "RuntimeError"
         end
 
-        # Pins current behaviour, not intended behaviour: the router dispatch
-        # span stays open after the request raises. See
-        # https://github.com/appsignal/appsignal-elixir/issues/1084.
-        @tag leaves_spans_open: "the router dispatch span after an error"
         test "records a request after a failed one", %{endpoint: endpoint} do
           assert {500, _} = http_get(endpoint, "/exception")
           assert {200, _} = http_get(endpoint, "/users/4")
@@ -548,7 +515,41 @@ if Appsignal.Dependencies.present?(:phoenix) do
                  ] = root_spans(spans)
         end
 
-        @tag leaves_spans_open: "the spans of a request whose awaited task raises"
+        test "records a request after an ignored one on the same connection", %{
+          endpoint: endpoint
+        } do
+          assert [200, 200] = keep_alive_get(endpoint, ["/ignored", "/users/4"])
+
+          spans = await_spans(&(length(&1) == 5 and all_closed?(&1)))
+          assert [ignored, next] = root_spans(spans)
+          assert trace_ignored?(spans, ignored)
+          assert next["name"] == "AppsignalTest.Phoenix.PageController#index"
+          refute trace_ignored?(spans, next)
+        end
+
+        @tag leaves_unnamed_spans: "the span the first request leaves open"
+        test "records a request after one that leaves a span open on the same connection", %{
+          endpoint: endpoint
+        } do
+          assert [200, 200] = keep_alive_get(endpoint, ["/leak", "/users/4"])
+
+          [_root, dispatch, leaked, next_root, _next_dispatch] =
+            await_spans(&(length(&1) == 5 and all_closed?(&1)))
+
+          assert leaked["parent_span_id"] == dispatch["span_id"]
+          refute leaked["abandoned"]
+          assert leaked["name"] == "[unnamed span]"
+          assert next_root["parent_span_id"] == ""
+          assert next_root["name"] == "AppsignalTest.Phoenix.PageController#index"
+        end
+
+        if app == :plug_cowboy do
+          @tag leaves_spans_open: "the spans of a request whose process is stopped"
+        else
+          @tag leaves_unnamed_actions:
+                 "an awaited task's exit leaves the request without its name"
+        end
+
         test "responds with an error to a request whose awaited task raises", %{
           endpoint: endpoint
         } do
@@ -558,95 +559,39 @@ if Appsignal.Dependencies.present?(:phoenix) do
         if app == :bandit do
           # Pins current behaviour, not intended behaviour: when a task the
           # action awaits raises, Bandit records the error on a root span
-          # without a name and leaves the router dispatch span open. See
-          # https://github.com/appsignal/appsignal-elixir/issues/1086 and
-          # https://github.com/appsignal/appsignal-elixir/issues/1084.
-          @tag leaves_spans_open: "the router dispatch span after an error"
+          # without a name. See
+          # https://github.com/appsignal/appsignal-elixir/issues/1086.
+          @tag leaves_unnamed_actions:
+                 "an awaited task's exit leaves the request without its name"
           test "records the error of an awaited task without the request's name", %{
             endpoint: endpoint
           } do
             http_get(endpoint, "/task_exception")
 
             [root, dispatch] =
-              await_spans(fn spans -> match?([%{"closed" => true}, _], spans) end)
+              await_spans(&match?([%{"closed" => true}, %{"closed" => true}], &1))
 
-            assert root["name"] == ""
+            assert root["name"] == "[unnamed action]"
             assert root["error"]["name"] == "ErlangError"
             assert root["error"]["message"] =~ "Exception in a task!"
-            refute dispatch["closed"]
-          end
-
-          # Pins current behaviour, not intended behaviour: Bandit serves a
-          # connection's requests from one process, so Tracer.ignore/0 carries
-          # over to the next request. See
-          # https://github.com/appsignal/appsignal-elixir/issues/1089.
-          test "records no request after an ignored one on the same connection", %{
-            endpoint: endpoint
-          } do
-            assert [200, 200] = keep_alive_get(endpoint, ["/ignored", "/users/4"])
-
-            assert [%{"name" => ""}, _dispatch] =
-                     await_spans(&match?([%{"closed" => true}, %{"closed" => true}], &1))
-          end
-
-          # Pins current behaviour, not intended behaviour: Bandit serves a
-          # connection's requests from one process, so a span left open becomes
-          # the parent of the next request. See
-          # https://github.com/appsignal/appsignal-elixir/issues/1089.
-          @tag leaves_spans_open: "the span the first request leaves open"
-          test "records a request after one that leaves a span open under that span", %{
-            endpoint: endpoint
-          } do
-            assert [200, 200] = keep_alive_get(endpoint, ["/leak", "/users/4"])
-
-            [_root, dispatch, leaked, next_root, _next_dispatch] =
-              await_spans(&match?([_, _, _, %{"closed" => true}, %{"closed" => true}], &1))
-
-            assert leaked["parent_span_id"] == dispatch["span_id"]
-            refute leaked["closed"]
-            assert next_root["parent_span_id"] == leaked["span_id"]
-            assert next_root["name"] == ""
+            assert dispatch["closed"]
           end
         else
           # Pins current behaviour, not intended behaviour: when a task the
-          # action awaits raises, Cowboy stops the request's process, which
-          # leaves its spans open without the error. See
+          # action awaits raises, Cowboy stops the request's process, so its
+          # spans are only ended by AppSignal's monitor, without the request's
+          # name or the error. See
           # https://github.com/appsignal/appsignal-elixir/issues/1088.
           @tag leaves_spans_open: "the spans of a request whose process Cowboy stops"
-          test "leaves the spans of a request whose awaited task raises open, without the error",
+          test "leaves the spans of a request whose awaited task raises to the monitor, without the error",
                %{endpoint: endpoint} do
             http_get(endpoint, "/task_exception")
 
-            assert [root, dispatch] = await_spans(&match?([_, _], &1))
-            refute root["closed"]
+            assert [root, _dispatch] =
+                     await_spans(&match?([%{"abandoned" => true}, %{"abandoned" => true}], &1))
+
+            assert root["name"] == ""
             assert root["error"] == nil
-            refute dispatch["closed"]
-          end
-
-          test "records a request after an ignored one on the same connection", %{
-            endpoint: endpoint
-          } do
-            assert [200, 200] = keep_alive_get(endpoint, ["/ignored", "/users/4"])
-
-            spans = await_spans(&(length(&1) == 4 and all_closed?(&1)))
-
-            assert ["", "AppsignalTest.Phoenix.PageController#index"] =
-                     Enum.map(root_spans(spans), & &1["name"])
-          end
-
-          @tag leaves_spans_open: "the span the first request leaves open"
-          test "records a request after one that leaves a span open on its own root span", %{
-            endpoint: endpoint
-          } do
-            assert [200, 200] = keep_alive_get(endpoint, ["/leak", "/users/4"])
-
-            [_root, dispatch, leaked, next_root, _next_dispatch] =
-              await_spans(&match?([_, _, _, %{"closed" => true}, %{"closed" => true}], &1))
-
-            assert leaked["parent_span_id"] == dispatch["span_id"]
-            refute leaked["closed"]
-            assert next_root["parent_span_id"] == ""
-            assert next_root["name"] == "AppsignalTest.Phoenix.PageController#index"
           end
         end
       end

@@ -5,7 +5,8 @@ defmodule AppsignalTest.IntegrationCase do
 
   After each test, it fails the test when:
 
-    * a span the test created is still open. Tag a test with
+    * a span the test created was left open: it is still open, or AppSignal's
+      monitor had to end it once the process holding it exited. Tag a test with
       `leaves_spans_open: "why"` when an open span is the behaviour it pins.
       A tagged test fails when it leaves no span open, so the tag goes once
       that behaviour is fixed.
@@ -16,6 +17,12 @@ defmodule AppsignalTest.IntegrationCase do
       again afterwards.
     * any `:telemetry` handler raised, as reported by the
       `[:telemetry, :handler, :failure]` event.
+    * a child span closed with neither a name nor a category, which AppSignal
+      names `[unnamed span]`. Tag a test with `leaves_unnamed_spans: "why"`
+      when that is the behaviour it pins. A tagged test fails when it leaves none.
+    * a root span closed with an error but no name, which AppSignal names
+      `[unnamed action]`. Tag a test with `leaves_unnamed_actions: "why"` when
+      that is the behaviour it pins. A tagged test fails when it leaves none.
 
   The tests read spans back from the extension, so they do not run in the
   `test_no_nif` environment.
@@ -55,13 +62,15 @@ defmodule AppsignalTest.IntegrationCase do
       handler_failures = Agent.get(failures, & &1)
       Agent.stop(failures)
 
-      open = open_spans_after()
+      open = spans_left_open()
+      unnamed = named("[unnamed span]") -- open
+      unnamed_actions = named("[unnamed action]") -- open
       detached = handlers -- appsignal_handlers()
       Enum.each(detached, &reattach/1)
 
       Enum.each(@recorders, &stop_recorder/1)
 
-      check(handler_failures, open, Enum.map(detached, & &1.id), tags)
+      check(handler_failures, open, Enum.map(detached, & &1.id), tags, unnamed, unnamed_actions)
     end)
 
     :ok
@@ -79,10 +88,11 @@ defmodule AppsignalTest.IntegrationCase do
     Agent.update(failures, &[metadata | &1])
   end
 
-  defp open_spans_after do
+  defp spans_left_open do
     # Spans in other processes can close shortly after the test's last call.
     deadline = System.monotonic_time(:millisecond) + 1_000
     wait_for_open_spans(deadline)
+    Enum.filter(AppsignalTest.Spans.spans(), &AppsignalTest.Spans.left_open?/1)
   end
 
   defp wait_for_open_spans(deadline) do
@@ -101,14 +111,16 @@ defmodule AppsignalTest.IntegrationCase do
   end
 
   @doc false
-  def check(handler_failures, open, detached, tags) do
+  def check(handler_failures, open, detached, tags, unnamed \\ [], unnamed_actions \\ []) do
     problems =
       Enum.reject(
         [
           handler_failures != [] &&
             "A :telemetry handler raised:\n\n#{inspect(handler_failures, pretty: true)}",
           open_problem(open, Map.has_key?(tags, :leaves_spans_open)),
-          detached_problem(detached, Map.has_key?(tags, :detaches_handlers))
+          detached_problem(detached, Map.has_key?(tags, :detaches_handlers)),
+          unnamed_problem(unnamed, Map.has_key?(tags, :leaves_unnamed_spans)),
+          unnamed_actions_problem(unnamed_actions, Map.has_key?(tags, :leaves_unnamed_actions))
         ],
         &(&1 in [false, nil])
       )
@@ -126,6 +138,24 @@ defmodule AppsignalTest.IntegrationCase do
     do: "Spans left open:\n\n#{inspect(open, pretty: true)}"
 
   defp open_problem(_open, _tagged), do: nil
+
+  defp unnamed_problem([], true),
+    do: "The test is tagged leaves_unnamed_spans, but left no unnamed span. Remove the tag."
+
+  defp unnamed_problem(unnamed, false) when unnamed != [],
+    do: "Spans without a name or category:\n\n#{inspect(unnamed, pretty: true)}"
+
+  defp unnamed_problem(_unnamed, _tagged), do: nil
+
+  defp unnamed_actions_problem([], true),
+    do: "The test is tagged leaves_unnamed_actions, but left no unnamed action. Remove the tag."
+
+  defp unnamed_actions_problem(unnamed, false) when unnamed != [],
+    do: "Root spans with an error and no name:\n\n#{inspect(unnamed, pretty: true)}"
+
+  defp unnamed_actions_problem(_unnamed, _tagged), do: nil
+
+  defp named(name), do: AppsignalTest.Spans.named(AppsignalTest.Spans.spans(), name)
 
   defp detached_problem([], true),
     do: "The test is tagged detaches_handlers, but detached no handler. Remove the tag."

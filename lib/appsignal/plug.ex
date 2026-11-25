@@ -58,14 +58,13 @@ defmodule Appsignal.Plug do
             _ =
               span
               |> Appsignal.Plug.handle_error(kind, reason, stack, conn)
-              |> @tracer.close_span()
+              |> @tracer.close_all()
 
-            @tracer.ignore()
             :erlang.raise(kind, reason, stack)
         else
           conn ->
             _ = Appsignal.Plug.set_conn_data(span, conn)
-            @tracer.close_span(span)
+            @tracer.close_all(span)
             Plug.Conn.put_private(conn, :appsignal_plug_instrumented, true)
         end
       end
@@ -126,7 +125,8 @@ defmodule Appsignal.Plug do
   end
 
   @doc false
-  def handle_error(span, _kind, %{plug_status: status}, _stack, _conn) when status < 500 do
+  def handle_error(span, _kind, %{plug_status: status}, stack, _conn) when status < 500 do
+    _ = Appsignal.Error.Reported.record(span, stack)
     span
   end
 

@@ -1,5 +1,7 @@
 defmodule Appsignal.Span do
   alias Appsignal.{Config, Nif, Span}
+  alias Appsignal.Error.Reported
+  alias Appsignal.Tracer.Registry
 
   defstruct [:reference, :pid]
 
@@ -74,7 +76,7 @@ defmodule Appsignal.Span do
     if Config.active?() do
       {:ok, reference} = @nif.create_child_span(parent)
 
-      %Span{reference: reference, pid: pid}
+      label_child(%Span{reference: reference, pid: pid})
     end
   end
 
@@ -85,7 +87,7 @@ defmodule Appsignal.Span do
 
       {:ok, reference} = @nif.create_child_span_with_timestamp(parent, sec, nsec)
 
-      %Span{reference: reference, pid: pid}
+      label_child(%Span{reference: reference, pid: pid})
     end
   end
 
@@ -101,7 +103,7 @@ defmodule Appsignal.Span do
   def set_name(%Span{reference: reference} = span, name)
       when is_reference(reference) and is_binary(name) do
     :ok = @nif.set_span_name(reference, name)
-    span
+    label_name(span, name)
   end
 
   def set_name(span, _name), do: span
@@ -118,7 +120,7 @@ defmodule Appsignal.Span do
   def set_name_if_nil(%Span{reference: reference} = span, name)
       when is_reference(reference) and is_binary(name) do
     :ok = @nif.set_span_name_if_nil(reference, name)
-    span
+    label_name(span, name)
   end
 
   def set_name_if_nil(span, _name), do: span
@@ -180,6 +182,7 @@ defmodule Appsignal.Span do
   def set_attribute(%Span{reference: reference} = span, key, value)
       when is_binary(key) and is_binary(value) do
     :ok = @nif.set_span_attribute_string(reference, key, value)
+    if key == "appsignal:category" and value != "", do: Registry.label(span, :category)
     span
   end
 
@@ -298,6 +301,12 @@ defmodule Appsignal.Span do
 
   """
   def add_error(span, kind, reason, stacktrace) do
+    add_error(span, kind, reason, stacktrace, record: true)
+  end
+
+  @doc false
+  def add_error(span, kind, reason, stacktrace, options) do
+    if Keyword.get(options, :record, true), do: Reported.record(span, stacktrace)
     {name, message, formatted_stacktrace} = Appsignal.Error.metadata(kind, reason, stacktrace)
     do_add_error(span, name, message, formatted_stacktrace)
   end
@@ -318,12 +327,14 @@ defmodule Appsignal.Span do
       end
 
   """
-  def add_error(span, %_{__exception__: true, plug_status: status}, _stacktrace)
+  def add_error(span, %_{__exception__: true, plug_status: status}, stacktrace)
       when status < 500 do
+    Reported.record(span, stacktrace)
     span
   end
 
   def add_error(span, %_{__exception__: true} = exception, stacktrace) do
+    Reported.record(span, stacktrace)
     {name, message, formatted_stacktrace} = Appsignal.Error.metadata(exception, stacktrace)
     do_add_error(span, name, message, formatted_stacktrace)
   end
@@ -338,6 +349,7 @@ defmodule Appsignal.Span do
         Appsignal.Utils.DataEncoder.encode(stacktrace)
       )
 
+    Registry.label(span, :error)
     span
   end
 
@@ -348,11 +360,14 @@ defmodule Appsignal.Span do
   Close an `Appsignal.Span`.
 
   ## Example
-      Appsignal.Tracer.root_span()
-      |> Span.close()
+      span = Appsignal.Tracer.create_span("http_request")
+      # ...
+      Appsignal.Span.close(span)
   """
   def close(%Span{reference: reference} = span) do
+    name_if_unnamed(span)
     :ok = @nif.close_span(reference)
+    Registry.remove(span)
     span
   end
 
@@ -363,17 +378,44 @@ defmodule Appsignal.Span do
   Close an `Appsignal.Span` with an explicit end time.
 
   ## Example
-      Appsignal.Tracer.root_span()
-      |> Span.close(span, :os.system_time())
+      span = Appsignal.Tracer.create_span("http_request")
+      # ...
+      Appsignal.Span.close(span, :os.system_time())
   """
   def close(%Span{reference: reference} = span, end_time) do
     sec = :erlang.convert_time_unit(end_time, :native, :second)
     nsec = :erlang.convert_time_unit(end_time, :native, :nanosecond) - sec * 1_000_000_000
+    name_if_unnamed(span)
     :ok = @nif.close_span_with_timestamp(reference, sec, nsec)
+    Registry.remove(span)
     span
   end
 
   def close(nil, _end_time), do: nil
+
+  defp label_child(span) do
+    Registry.label(span, :child)
+    span
+  end
+
+  # A child span with neither a name nor a category has nothing to show it by.
+  # A root span without a name is not reported, unless it has an error, and
+  # then it needs a name to be grouped under.
+  defp name_if_unnamed(%Span{reference: reference} = span) do
+    case Registry.labels(span) do
+      %{name: true} -> :ok
+      %{child: true, category: false} -> @nif.set_span_name(reference, "[unnamed span]")
+      %{child: false, error: true} -> @nif.set_span_name(reference, "[unnamed action]")
+      _ -> :ok
+    end
+  end
+
+  defp label_name(span, ""), do: span
+
+  defp label_name(span, _name) do
+    Registry.label(span, :name)
+    span
+  end
 
   @doc false
   def to_map(%Span{reference: reference}) do

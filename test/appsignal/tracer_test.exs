@@ -36,30 +36,6 @@ defmodule Appsignal.TracerTest do
     end
   end
 
-  describe "create_span/1, when ignored" do
-    setup [:ignore_process, :create_root_span]
-
-    test "returns nil", %{span: span} do
-      assert span == nil
-    end
-
-    test "does not register a span" do
-      assert Tracer.lookup(self()) == [{self(), :ignore}]
-    end
-  end
-
-  describe "create_span/1 in other process when ignored" do
-    setup [:set_pid, :ignore_process_with_pid, :create_root_span_in_other_process]
-
-    test "returns nil", %{span: span} do
-      assert span == nil
-    end
-
-    test "does not register a span", %{pid: pid} do
-      assert Tracer.lookup(pid) == [{pid, :ignore}]
-    end
-  end
-
   describe "create_span/1, without the registry" do
     setup [:terminate_registry, :create_root_span]
 
@@ -93,18 +69,6 @@ defmodule Appsignal.TracerTest do
 
     test "registers the span without overwriting its parent", %{span: span, parent: parent} do
       assert Tracer.lookup(self()) == [{self(), parent}, {self(), span}]
-    end
-  end
-
-  describe "create_span/2, when ignored" do
-    setup [:create_root_span, :ignore_process, :create_child_span]
-
-    test "returns nil", %{span: span} do
-      assert span == nil
-    end
-
-    test "does not register a span" do
-      assert Tracer.lookup(self()) == [{self(), :ignore}]
     end
   end
 
@@ -210,14 +174,6 @@ defmodule Appsignal.TracerTest do
     end
   end
 
-  describe "current_span/1, when the process is ignored" do
-    setup :ignore_process
-
-    test "returns nil" do
-      assert Tracer.current_span() == nil
-    end
-  end
-
   describe "root_span/0, when no span exists" do
     test "returns nil" do
       assert Tracer.root_span() == nil
@@ -254,14 +210,6 @@ defmodule Appsignal.TracerTest do
     end
   end
 
-  describe "root_span/1, when the process is ignored" do
-    setup :ignore_process
-
-    test "returns nil" do
-      assert Tracer.root_span() == nil
-    end
-  end
-
   describe "close_span/1, when passing a nil" do
     test "returns nil" do
       assert Tracer.close_span(nil) == nil
@@ -282,7 +230,7 @@ defmodule Appsignal.TracerTest do
 
     test "closes the span through the Nif", %{span: %Span{reference: reference} = span} do
       Tracer.close_span(span)
-      assert [{^reference}] = Test.Nif.get!(:close_span)
+      assert [{^reference}] = nif_calls(:close_span, [reference])
     end
   end
 
@@ -370,77 +318,8 @@ defmodule Appsignal.TracerTest do
     end
   end
 
-  describe "ignore/0" do
-    setup :ignore_process
-
-    test "returns nil", %{return: return} do
-      assert return == :ok
-    end
-
-    test "marks a pid as ignored" do
-      assert Tracer.lookup(self()) == [{self(), :ignore}]
-    end
-
-    test "creates a process monitor" do
-      assert Test.Monitor.get!(:add) == [{self()}]
-    end
-  end
-
-  describe "ignore/0, with an open span" do
-    setup [:create_root_span, :ignore_process]
-
-    test "returns nil", %{return: return} do
-      assert return == :ok
-    end
-
-    test "removes existing spans" do
-      assert Tracer.lookup(self()) == [{self(), :ignore}]
-    end
-  end
-
   describe "ignore/0, without the registry" do
     setup [:create_root_span, :terminate_registry, :ignore_process]
-
-    test "returns nil", %{return: return} do
-      assert return == :ok
-    end
-  end
-
-  describe "ignore/1" do
-    setup [:set_pid, :ignore_process_with_pid]
-
-    test "returns nil", %{return: return} do
-      assert return == :ok
-    end
-
-    test "marks a pid as ignored", %{pid: pid} do
-      assert Tracer.lookup(pid) == [{pid, :ignore}]
-    end
-
-    test "creates a process monitor" do
-      assert Test.Monitor.get!(:add) == [{self()}]
-    end
-  end
-
-  describe "ignore/1, with an open span" do
-    setup [:set_pid, :create_root_span_in_other_process, :ignore_process_with_pid]
-
-    test "returns nil", %{return: return} do
-      assert return == :ok
-    end
-
-    test "removes existing spans", %{pid: pid} do
-      assert Tracer.lookup(pid) == [{pid, :ignore}]
-    end
-  end
-
-  describe "ignore/1, without the registry" do
-    setup [
-      :set_pid,
-      :create_root_span_in_other_process,
-      :terminate_registry,
-      :ignore_process_with_pid
-    ]
 
     test "returns nil", %{return: return} do
       assert return == :ok
@@ -550,10 +429,6 @@ defmodule Appsignal.TracerTest do
     [return: Tracer.ignore()]
   end
 
-  defp ignore_process_with_pid(%{pid: pid}) do
-    [return: Tracer.ignore(pid)]
-  end
-
   defp terminate_registry(_) do
     :ok = Supervisor.terminate_child(Appsignal.Supervisor, Tracer)
 
@@ -569,5 +444,11 @@ defmodule Appsignal.TracerTest do
   def custom_on_create_fun_parent(span) do
     root = Tracer.root_span(span.pid)
     Appsignal.Span.set_sample_data(root, "custom_data", %{foo: "bar"})
+  end
+
+  # `Appsignal.Monitor` ends the spans that earlier tests' processes left open
+  # through the same Nif, in the background, while a test runs.
+  defp nif_calls(key, references) do
+    for call <- Test.Nif.get!(key), elem(call, 0) in references, do: call
   end
 end

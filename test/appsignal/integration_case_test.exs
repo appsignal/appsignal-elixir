@@ -65,7 +65,7 @@ defmodule AppsignalTest.IntegrationCaseTest do
     end
   end
 
-  describe "check/4" do
+  describe "check/6" do
     test "passes when nothing went wrong" do
       assert :ok = IntegrationCase.check([], [], [], %{})
     end
@@ -92,6 +92,48 @@ defmodule AppsignalTest.IntegrationCaseTest do
                    ~r/tagged leaves_spans_open, but left no span open/,
                    fn ->
                      IntegrationCase.check([], [], [], %{leaves_spans_open: "why"})
+                   end
+    end
+
+    test "fails when a span has neither a name nor a category" do
+      assert_raise ExUnit.AssertionError, ~r/Spans without a name or category/, fn ->
+        IntegrationCase.check([], [], [], %{}, [%{"name" => "[unnamed span]"}])
+      end
+    end
+
+    test "passes when a test tagged leaves_unnamed_spans leaves an unnamed span" do
+      assert :ok =
+               IntegrationCase.check([], [], [], %{leaves_unnamed_spans: "why"}, [
+                 %{"name" => "[unnamed span]"}
+               ])
+    end
+
+    test "fails when a test tagged leaves_unnamed_spans leaves no unnamed span" do
+      assert_raise ExUnit.AssertionError,
+                   ~r/tagged leaves_unnamed_spans, but left no unnamed span/,
+                   fn ->
+                     IntegrationCase.check([], [], [], %{leaves_unnamed_spans: "why"})
+                   end
+    end
+
+    test "fails when a root span has an error but no name" do
+      assert_raise ExUnit.AssertionError, ~r/Root spans with an error and no name/, fn ->
+        IntegrationCase.check([], [], [], %{}, [], [%{"name" => "[unnamed action]"}])
+      end
+    end
+
+    test "passes when a test tagged leaves_unnamed_actions leaves an unnamed action" do
+      assert :ok =
+               IntegrationCase.check([], [], [], %{leaves_unnamed_actions: "why"}, [], [
+                 %{"name" => "[unnamed action]"}
+               ])
+    end
+
+    test "fails when a test tagged leaves_unnamed_actions leaves no unnamed action" do
+      assert_raise ExUnit.AssertionError,
+                   ~r/tagged leaves_unnamed_actions, but left no unnamed action/,
+                   fn ->
+                     IntegrationCase.check([], [], [], %{leaves_unnamed_actions: "why"})
                    end
     end
 
