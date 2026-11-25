@@ -313,22 +313,24 @@ if Appsignal.Dependencies.present?(:phoenix) do
       # Pins current behaviour, not intended behaviour: an exit or a throw leaves
       # the root span without a name. See
       # https://github.com/appsignal/appsignal-elixir/issues/1086.
+      @tag leaves_unnamed_actions: "an exit leaves the request without its name"
       test "records an exit as an ErlangError, without the request's name" do
         assert :exited = catch_exit(get(build_conn(), "/exit"))
 
         assert [root, _dispatch] = spans()
-        assert root["name"] == ""
+        assert root["name"] == "[unnamed action]"
         assert root["error"]["name"] == "ErlangError"
       end
 
       # Pins current behaviour, not intended behaviour: an exit or a throw leaves
       # the root span without a name. See
       # https://github.com/appsignal/appsignal-elixir/issues/1086.
+      @tag leaves_unnamed_actions: "a throw leaves the request without its name"
       test "records a throw as an ErlangError, without the request's name" do
         assert :thrown = catch_throw(get(build_conn(), "/throw"))
 
         assert [root, _dispatch] = spans()
-        assert root["name"] == ""
+        assert root["name"] == "[unnamed action]"
         assert root["error"]["name"] == "ErlangError"
       end
 
@@ -525,6 +527,7 @@ if Appsignal.Dependencies.present?(:phoenix) do
           refute trace_ignored?(spans, next)
         end
 
+        @tag leaves_unnamed_spans: "the span the first request leaves open"
         test "records a request after one that leaves a span open on the same connection", %{
           endpoint: endpoint
         } do
@@ -535,12 +538,16 @@ if Appsignal.Dependencies.present?(:phoenix) do
 
           assert leaked["parent_span_id"] == dispatch["span_id"]
           refute leaked["abandoned"]
+          assert leaked["name"] == "[unnamed span]"
           assert next_root["parent_span_id"] == ""
           assert next_root["name"] == "AppsignalTest.Phoenix.PageController#index"
         end
 
         if app == :plug_cowboy do
           @tag leaves_spans_open: "the spans of a request whose process is stopped"
+        else
+          @tag leaves_unnamed_actions:
+                 "an awaited task's exit leaves the request without its name"
         end
 
         test "responds with an error to a request whose awaited task raises", %{
@@ -554,6 +561,8 @@ if Appsignal.Dependencies.present?(:phoenix) do
           # action awaits raises, Bandit records the error on a root span
           # without a name. See
           # https://github.com/appsignal/appsignal-elixir/issues/1086.
+          @tag leaves_unnamed_actions:
+                 "an awaited task's exit leaves the request without its name"
           test "records the error of an awaited task without the request's name", %{
             endpoint: endpoint
           } do
@@ -562,7 +571,7 @@ if Appsignal.Dependencies.present?(:phoenix) do
             [root, dispatch] =
               await_spans(&match?([%{"closed" => true}, %{"closed" => true}], &1))
 
-            assert root["name"] == ""
+            assert root["name"] == "[unnamed action]"
             assert root["error"]["name"] == "ErlangError"
             assert root["error"]["message"] =~ "Exception in a task!"
             assert dispatch["closed"]

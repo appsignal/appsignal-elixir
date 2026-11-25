@@ -4,9 +4,37 @@ defmodule Appsignal.Tracer.Registry do
   alias Appsignal.Span
 
   @spans __MODULE__.Spans
+  @labels __MODULE__.Labels
 
   def new do
+    :ets.new(@labels, [:named_table, :public, :set])
     :ets.new(@spans, [:named_table, :public, :ordered_set])
+  end
+
+  # Whether a span is a child, and was given a name, a category or an error,
+  # kept here rather than read back from the span, which a span backend need
+  # not support. One row per span: `{reference, child, name, category, error}`.
+  @label_positions %{child: 2, name: 3, category: 4, error: 5}
+
+  def label(%Span{reference: reference}, label) do
+    position = Map.fetch!(@label_positions, label)
+
+    :ets.update_element(@labels, reference, {position, true}) ||
+      :ets.insert(@labels, put_elem({reference, false, false, false, false}, position - 1, true))
+  rescue
+    ArgumentError -> false
+  end
+
+  def labels(%Span{reference: reference}) do
+    case :ets.lookup(@labels, reference) do
+      [{_reference, child, name, category, error}] ->
+        %{child: child, name: name, category: category, error: error}
+
+      [] ->
+        %{child: false, name: false, category: false, error: false}
+    end
+  rescue
+    ArgumentError -> %{child: false, name: false, category: false, error: false}
   end
 
   def insert(%Span{pid: pid} = span, origin, trace_root, anchor) do
@@ -20,6 +48,8 @@ defmodule Appsignal.Tracer.Registry do
   end
 
   def remove(%Span{pid: pid, reference: reference}) do
+    forget_labels(reference)
+
     removed = registrations(pid, reference)
 
     case Enum.find(removed, &match?({_, :own, _, _, _}, &1)) do
@@ -115,6 +145,12 @@ defmodule Appsignal.Tracer.Registry do
     @spans
     |> :ets.select([{{{pid, :_}, :_, :_, :_, reference}, [], [{:element, 1, :"$_"}]}])
     |> Enum.each(&:ets.update_element(@spans, &1, {5, anchor}))
+  end
+
+  defp forget_labels(reference) do
+    :ets.delete(@labels, reference)
+  rescue
+    ArgumentError -> false
   end
 
   defp registrations(pid, reference) do

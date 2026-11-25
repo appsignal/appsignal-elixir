@@ -685,6 +685,43 @@ defmodule Appsignal.TracerContractTest do
       assert ended_at <= removed - div(delay, 2)
     end
 
+    test "names a child without a name or category as unnamed, and leaves the root's name alone" do
+      {pid, root, child} = spawn_with_spans(fn -> :ok end)
+
+      until(fn -> assert Tracer.lookup(pid) == [] end)
+
+      names = Test.Nif.get(:set_span_name) |> elem(1)
+      assert {child.reference, "[unnamed span]"} in names
+      refute Enum.any?(names, fn {reference, _name} -> reference == root.reference end)
+    end
+
+    test "leaves a child with a category without a name" do
+      test_pid = self()
+
+      pid =
+        spawn(fn ->
+          root = Tracer.create_span("http_request")
+
+          child =
+            "http_request"
+            |> Tracer.create_span(root)
+            |> Span.set_attribute("appsignal:category", "call.phoenix_router_dispatch")
+
+          send(test_pid, {:child, child})
+        end)
+
+      assert_receive {:child, child}
+      until(fn -> assert Tracer.lookup(pid) == [] end)
+
+      names =
+        case Test.Nif.get(:set_span_name) do
+          {:ok, names} -> names
+          :error -> []
+        end
+
+      refute Enum.any?(names, fn {reference, _name} -> reference == child.reference end)
+    end
+
     test "has its spans ended when it crashes" do
       ExUnit.CaptureLog.capture_log(fn ->
         {pid, root, child} = spawn_with_spans(fn -> raise "Exception" end)
@@ -739,6 +776,47 @@ defmodule Appsignal.TracerContractTest do
 
       assert closed_references() == [scope.reference, child.reference, grandchild.reference]
       assert Tracer.lookup(self()) == [{self(), root}, {self(), sibling}]
+    end
+
+    test "names its open descendants without a name or category as unnamed, and leaves its own name alone" do
+      scope = Tracer.create_span("http_request")
+      child = Tracer.create_span("http_request", scope)
+
+      Tracer.close_all(scope)
+
+      assert {:ok, names} = Test.Nif.get(:set_span_name)
+      assert {child.reference, "[unnamed span]"} in names
+      refute Enum.any?(names, fn {reference, _name} -> reference == scope.reference end)
+    end
+
+    test "leaves an open descendant with a category without a name" do
+      scope = Tracer.create_span("http_request")
+
+      child =
+        "http_request"
+        |> Tracer.create_span(scope)
+        |> Span.set_attribute("appsignal:category", "call.phoenix_router_dispatch")
+
+      Tracer.close_all(scope)
+
+      names =
+        case Test.Nif.get(:set_span_name) do
+          {:ok, names} -> names
+          :error -> []
+        end
+
+      refute Enum.any?(names, fn {reference, _name} -> reference == child.reference end)
+    end
+
+    test "leaves the name of a named open descendant" do
+      scope = Tracer.create_span("http_request")
+      child = "http_request" |> Tracer.create_span(scope) |> Span.set_name("Named")
+
+      Tracer.close_all(scope)
+
+      assert {:ok, names} = Test.Nif.get(:set_span_name)
+      assert {child.reference, "Named"} in names
+      refute {child.reference, "[unnamed span]"} in names
     end
 
     test "closes a descendant whose own parent closed before it" do
@@ -827,6 +905,58 @@ defmodule Appsignal.TracerContractTest do
     test "returns nil for nil" do
       assert Tracer.close_all(nil) == nil
       assert Tracer.close_all(nil, end_time: 1) == nil
+    end
+  end
+
+  describe "closing a span without a name" do
+    test "names a child without a name or category as unnamed" do
+      root = Tracer.create_span("http_request")
+      child = Tracer.create_span("http_request", root)
+
+      Tracer.close_span(child)
+
+      assert {child.reference, "[unnamed span]"} in Test.Nif.get!(:set_span_name)
+    end
+
+    test "leaves a child with a category without a name" do
+      root = Tracer.create_span("http_request")
+
+      child =
+        "http_request"
+        |> Tracer.create_span(root)
+        |> Span.set_attribute("appsignal:category", "query.ecto")
+
+      Tracer.close_span(child)
+
+      assert span_names(child) == []
+    end
+
+    test "leaves a root without an error unnamed" do
+      root = Tracer.create_span("http_request")
+
+      Tracer.close_span(root)
+
+      assert span_names(root) == []
+    end
+
+    test "names a root with an error as an unnamed action" do
+      root = "http_request" |> Tracer.create_span() |> Span.add_error(:error, :reason, [])
+
+      Tracer.close_span(root)
+
+      assert {root.reference, "[unnamed action]"} in Test.Nif.get!(:set_span_name)
+    end
+
+    test "leaves the name of a root with an error" do
+      root =
+        "http_request"
+        |> Tracer.create_span()
+        |> Span.set_name("Named")
+        |> Span.add_error(:error, :reason, [])
+
+      Tracer.close_span(root)
+
+      assert span_names(root) == ["Named"]
     end
   end
 
@@ -937,5 +1067,12 @@ defmodule Appsignal.TracerContractTest do
   # through the same Nif, in the background, while a test runs.
   defp nif_calls(key, references) do
     for call <- Test.Nif.get!(key), elem(call, 0) in references, do: call
+  end
+
+  defp span_names(span) do
+    case Test.Nif.get(:set_span_name) do
+      {:ok, names} -> for {reference, name} <- names, reference == span.reference, do: name
+      :error -> []
+    end
   end
 end

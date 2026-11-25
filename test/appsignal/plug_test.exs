@@ -261,27 +261,29 @@ if Appsignal.Dependencies.present?(:plug) do
       end
 
       # Pins current behaviour, not intended behaviour: an exit or a throw leaves
-      # the request's span without a name. See
+      # the request's span without the request's name. See
       # https://github.com/appsignal/appsignal-elixir/issues/1086.
+      @tag leaves_unnamed_actions: "an exit leaves the request without its name"
       test "has an exit as its error, without the request's name" do
         %{kind: :exit, reason: :exited} = request(:get, "/exit")
 
         assert [%{"error" => %{"name" => ":exit", "message" => "** (exit) :exited"}} = span] =
                  spans()
 
-        assert span["name"] == ""
+        assert span["name"] == "[unnamed action]"
       end
 
       # Pins current behaviour, not intended behaviour: an exit or a throw leaves
-      # the request's span without a name. See
+      # the request's span without the request's name. See
       # https://github.com/appsignal/appsignal-elixir/issues/1086.
+      @tag leaves_unnamed_actions: "an throw leaves the request without its name"
       test "has a throw as its error, without the request's name" do
         %{kind: :throw, reason: :thrown} = request(:get, "/throw")
 
         assert [%{"error" => %{"name" => ":throw", "message" => "** (throw) :thrown"}} = span] =
                  spans()
 
-        assert span["name"] == ""
+        assert span["name"] == "[unnamed action]"
       end
 
       test "has no error for a status below 500" do
@@ -377,6 +379,11 @@ if Appsignal.Dependencies.present?(:plug) do
           @tag leaves_spans_open: "the request's span, as its process is killed"
         end
 
+        if server == :bandit do
+          @tag leaves_unnamed_actions:
+                 "an awaited task's exit leaves the request without its name"
+        end
+
         test "responds with an error to a request whose awaited task raises", %{port: port} do
           assert {500, _body} = http_get(port, "/task_exception")
           assert_task_exception_span(unquote(server))
@@ -406,6 +413,7 @@ if Appsignal.Dependencies.present?(:plug) do
           refute trace_ignored?([next], next)
         end
 
+        @tag leaves_unnamed_spans: "the span the first request leaves open"
         test "records a request after one that leaves a span open on the same connection", %{
           port: port
         } do
@@ -415,6 +423,7 @@ if Appsignal.Dependencies.present?(:plug) do
 
           assert leaked["parent_span_id"] == leaking["span_id"]
           refute leaked["abandoned"]
+          assert leaked["name"] == "[unnamed span]"
           assert next["parent_span_id"] == ""
           assert next["name"] == "GET /"
         end
@@ -429,7 +438,7 @@ if Appsignal.Dependencies.present?(:plug) do
     # https://github.com/appsignal/appsignal-elixir/issues/1088.
     defp assert_task_exception_span(:bandit) do
       assert [span] = await_spans(&match?([%{"closed" => true}], &1))
-      assert span["name"] == ""
+      assert span["name"] == "[unnamed action]"
       assert span["error"]["name"] == ":exit"
       assert span["error"]["message"] =~ "Exception in a task!"
     end
