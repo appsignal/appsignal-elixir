@@ -31,6 +31,15 @@ defmodule Appsignal.TelemetryTest do
       assert Telemetry.take_stacked_span(:handler) == nil
     end
 
+    test "are all taken at once, newest first, without the starts that kept no span" do
+      Telemetry.put_stacked_span(:handler, :outer)
+      Telemetry.put_stacked_span(:handler, nil)
+      Telemetry.put_stacked_span(:handler, :inner)
+
+      assert Telemetry.take_stacked_spans(:handler) == [:inner, :outer]
+      assert Telemetry.take_stacked_spans(:handler) == []
+    end
+
     test "keep a start that kept no span, so that its stop takes nothing" do
       Telemetry.put_stacked_span(:handler, :outer)
       Telemetry.put_stacked_span(:handler, nil)

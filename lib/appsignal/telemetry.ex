@@ -128,4 +128,12 @@ defmodule Appsignal.Telemetry do
         nil
     end
   end
+
+  # Newest first.
+  def take_stacked_spans(id) do
+    case Process.delete({__MODULE__, id}) do
+      nil -> []
+      spans -> Enum.reject(spans, &is_nil/1)
+    end
+  end
 end
