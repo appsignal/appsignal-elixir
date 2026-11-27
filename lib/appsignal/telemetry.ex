@@ -12,6 +12,36 @@ defmodule Appsignal.Telemetry do
   # are kept last in, first out per handler, for events without one. A start
   # that opened no span keeps `nil`, so that its stop takes nothing.
 
+  def attach(module, handlers) do
+    for {event, fun} <- handlers do
+      id = {module, event}
+      detach = :telemetry.detach(id)
+
+      case {detach, :telemetry.attach(id, event, fun, :ok)} do
+        {:ok, :ok} ->
+          _ =
+            Appsignal.IntegrationLogger.debug(
+              "#{inspect(module)} reattached to #{inspect(event)}"
+            )
+
+          :ok
+
+        {{:error, :not_found}, :ok} ->
+          _ =
+            Appsignal.IntegrationLogger.debug("#{inspect(module)} attached to #{inspect(event)}")
+
+          :ok
+
+        {_, {:error, _} = error} ->
+          Appsignal.IntegrationLogger.warn(
+            "#{inspect(module)} not attached to #{inspect(event)}: #{inspect(error)}"
+          )
+
+          error
+      end
+    end
+  end
+
   def put_span(id, %{telemetry_span_context: context}, span),
     do: put_correlated_span(id, context, span)
 

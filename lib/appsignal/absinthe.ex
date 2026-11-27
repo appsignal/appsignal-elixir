@@ -1,6 +1,4 @@
 defmodule Appsignal.Absinthe do
-  require Logger
-
   @tracer Application.compile_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
   @span Application.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
 
@@ -16,33 +14,7 @@ defmodule Appsignal.Absinthe do
       [:absinthe, :execute, :operation, :stop] => &__MODULE__.absinthe_execute_operation_stop/4
     }
 
-    for {event, fun} <- handlers do
-      detach = :telemetry.detach({__MODULE__, event})
-      attach = :telemetry.attach({__MODULE__, event}, event, fun, :ok)
-
-      case {detach, attach} do
-        {:ok, :ok} ->
-          _ =
-            Appsignal.IntegrationLogger.debug(
-              "Appsignal.Absinthe reattached to #{inspect(event)}"
-            )
-
-          :ok
-
-        {{:error, :not_found}, :ok} ->
-          _ =
-            Appsignal.IntegrationLogger.debug("Appsignal.Absinthe attached to #{inspect(event)}")
-
-          :ok
-
-        {_, {:error, _} = error} ->
-          Logger.warning(
-            "Appsignal.Absinthe not attached to #{inspect(event)}: #{inspect(error)}"
-          )
-
-          error
-      end
-    end
+    Appsignal.Telemetry.attach(__MODULE__, handlers)
   end
 
   def absinthe_execute_operation_start(_event, _measurements, metadata, _config) do

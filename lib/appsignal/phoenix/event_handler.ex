@@ -3,8 +3,6 @@ defmodule Appsignal.Phoenix.EventHandler do
   @span Application.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
   @moduledoc false
 
-  require Logger
-
   # Each start handler remembers the span it created, so that its stop handler
   # closes that span rather than whichever span happens to be the current one.
   # Anything else opening a span in between, such as a call to
@@ -36,24 +34,7 @@ defmodule Appsignal.Phoenix.EventHandler do
       [:phoenix, :error_rendered] => &__MODULE__.phoenix_error_rendered/4
     }
 
-    for {event, fun} <- handlers do
-      case :telemetry.attach({__MODULE__, event}, event, fun, :ok) do
-        :ok ->
-          _ =
-            Appsignal.IntegrationLogger.debug(
-              "Appsignal.Phoenix.EventHandler attached to #{inspect(event)}"
-            )
-
-          :ok
-
-        {:error, _} = error ->
-          Logger.warning(
-            "Appsignal.Phoenix.EventHandler not attached to #{inspect(event)}: #{inspect(error)}"
-          )
-
-          error
-      end
-    end
+    Appsignal.Telemetry.attach(__MODULE__, handlers)
   end
 
   def phoenix_endpoint_start(_event, _measurements, _metadata, _config) do
