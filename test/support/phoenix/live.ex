@@ -40,6 +40,16 @@ if Appsignal.Dependencies.present?(:phoenix) do
       raise "Exception in the LiveView!"
     end
 
+    def handle_event("leak", _params, socket) do
+      Appsignal.Tracer.create_span("leaked", Appsignal.Tracer.current_span())
+      {:noreply, socket}
+    end
+
+    def handle_event("leak_and_raise", _params, _socket) do
+      Appsignal.Tracer.create_span("leaked", Appsignal.Tracer.current_span())
+      raise "Exception in the LiveView!"
+    end
+
     def render(assigns) do
       ~H"""
       <div>

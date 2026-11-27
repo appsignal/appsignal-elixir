@@ -1,6 +1,4 @@
 defmodule Appsignal.Tesla do
-  require Logger
-
   @tracer Application.compile_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
   @span Application.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
 
@@ -17,28 +15,17 @@ defmodule Appsignal.Tesla do
       [:tesla, :request, :exception] => &__MODULE__.tesla_request_stop/4
     }
 
-    for {event, fun} <- handlers do
-      case :telemetry.attach({__MODULE__, event}, event, fun, :ok) do
-        :ok ->
-          _ = Appsignal.IntegrationLogger.debug("Appsignal.Tesla attached to #{inspect(event)}")
-
-          :ok
-
-        {:error, _} = error ->
-          Logger.warning("Appsignal.Tesla not attached to #{inspect(event)}: #{inspect(error)}")
-
-          error
-      end
-    end
+    Appsignal.Telemetry.attach(__MODULE__, handlers)
   end
 
   def tesla_request_start(
         _event,
         _measurements,
-        %{env: env},
+        %{env: env} = metadata,
         _config
       ) do
-    do_tesla_request_start(@tracer.current_span(), env)
+    span = do_tesla_request_start(@tracer.current_span(), env)
+    Appsignal.Telemetry.put_span(__MODULE__, metadata, span)
   end
 
   defp do_tesla_request_start(nil, _env), do: nil
@@ -167,7 +154,7 @@ defmodule Appsignal.Tesla do
     end)
   end
 
-  def tesla_request_stop(_event, _measurements, _metadata, _config) do
-    @tracer.close_span(@tracer.current_span())
+  def tesla_request_stop(_event, _measurements, metadata, _config) do
+    __MODULE__ |> Appsignal.Telemetry.take_span(metadata) |> @tracer.close_all()
   end
 end

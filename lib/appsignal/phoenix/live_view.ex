@@ -59,61 +59,32 @@ defmodule Appsignal.Phoenix.LiveView do
   end
 
   defp attach_handlers do
-    live_view_events = [
-      [:phoenix, :live_view, :mount],
-      [:phoenix, :live_view, :handle_params],
-      [:phoenix, :live_view, :handle_event],
-      [:phoenix, :live_view, :render]
-    ]
+    handlers = %{
+      [:phoenix, :live_view, :mount, :start] => &__MODULE__.handle_live_view_event_start/4,
+      [:phoenix, :live_view, :handle_params, :start] =>
+        &__MODULE__.handle_live_view_event_start/4,
+      [:phoenix, :live_view, :handle_event, :start] => &__MODULE__.handle_live_view_event_start/4,
+      [:phoenix, :live_view, :render, :start] => &__MODULE__.handle_live_view_event_start/4,
+      [:phoenix, :live_component, :handle_event, :start] =>
+        &__MODULE__.handle_live_component_event_start/4,
+      [:phoenix, :live_component, :update, :start] =>
+        &__MODULE__.handle_live_component_event_start/4,
+      [:phoenix, :live_view, :mount, :stop] => &__MODULE__.handle_event_stop/4,
+      [:phoenix, :live_view, :mount, :exception] => &__MODULE__.handle_event_exception/4,
+      [:phoenix, :live_view, :handle_params, :stop] => &__MODULE__.handle_event_stop/4,
+      [:phoenix, :live_view, :handle_params, :exception] => &__MODULE__.handle_event_exception/4,
+      [:phoenix, :live_view, :handle_event, :stop] => &__MODULE__.handle_event_stop/4,
+      [:phoenix, :live_view, :handle_event, :exception] => &__MODULE__.handle_event_exception/4,
+      [:phoenix, :live_view, :render, :stop] => &__MODULE__.handle_event_stop/4,
+      [:phoenix, :live_view, :render, :exception] => &__MODULE__.handle_event_exception/4,
+      [:phoenix, :live_component, :handle_event, :stop] => &__MODULE__.handle_event_stop/4,
+      [:phoenix, :live_component, :handle_event, :exception] =>
+        &__MODULE__.handle_event_exception/4,
+      [:phoenix, :live_component, :update, :stop] => &__MODULE__.handle_event_stop/4,
+      [:phoenix, :live_component, :update, :exception] => &__MODULE__.handle_event_exception/4
+    }
 
-    live_component_events = [
-      [:phoenix, :live_component, :handle_event],
-      [:phoenix, :live_component, :update]
-    ]
-
-    Enum.each(live_view_events, fn event ->
-      name = Enum.join(event, ".")
-
-      _ =
-        :telemetry.attach(
-          {__MODULE__, event ++ [:start]},
-          event ++ [:start],
-          &__MODULE__.handle_live_view_event_start/4,
-          name
-        )
-    end)
-
-    Enum.each(live_component_events, fn event ->
-      name = Enum.join(event, ".")
-
-      _ =
-        :telemetry.attach(
-          {__MODULE__, event ++ [:start]},
-          event ++ [:start],
-          &__MODULE__.handle_live_component_event_start/4,
-          name
-        )
-    end)
-
-    Enum.each(live_view_events ++ live_component_events, fn event ->
-      name = Enum.join(event, ".")
-
-      _ =
-        :telemetry.attach(
-          {__MODULE__, event ++ [:stop]},
-          event ++ [:stop],
-          &__MODULE__.handle_event_stop/4,
-          name
-        )
-
-      _ =
-        :telemetry.attach(
-          {__MODULE__, event ++ [:exception]},
-          event ++ [:exception],
-          &__MODULE__.handle_event_exception/4,
-          name
-        )
-    end)
+    Appsignal.Telemetry.attach(__MODULE__, handlers)
   end
 
   def handle_live_view_event_start(
@@ -129,6 +100,7 @@ defmodule Appsignal.Phoenix.LiveView do
     |> @span.set_attribute("event", metadata[:event])
     |> @span.set_sample_data("params", metadata[:params])
     |> @span.set_sample_data("session_data", metadata[:session])
+    |> then(&Appsignal.Telemetry.put_span(__MODULE__, metadata, &1))
   end
 
   def handle_live_component_event_start(
@@ -148,16 +120,21 @@ defmodule Appsignal.Phoenix.LiveView do
     if metadata[:socket] && metadata[:socket].view do
       @span.set_attribute(span, "view", Appsignal.Utils.module_name(metadata[:socket].view))
     end
+
+    Appsignal.Telemetry.put_span(__MODULE__, metadata, span)
   end
 
-  def handle_event_stop(_event, _params, _metadata, _event_name) do
-    @tracer.close_span(@tracer.current_span(), end_time: @os.system_time())
+  def handle_event_stop(_event, _params, metadata, _event_name) do
+    __MODULE__
+    |> Appsignal.Telemetry.take_span(metadata)
+    |> @tracer.close_all(end_time: @os.system_time())
   end
 
   def handle_event_exception(_event, _params, metadata, _event_name) do
-    @tracer.current_span()
+    __MODULE__
+    |> Appsignal.Telemetry.take_span(metadata)
     |> @span.add_error(metadata[:kind], metadata[:reason], metadata[:stacktrace])
-    |> @tracer.close_span(end_time: @os.system_time())
+    |> @tracer.close_all(end_time: @os.system_time())
   end
 
   defp span_name(module, method, nil) do

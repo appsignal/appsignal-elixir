@@ -16,7 +16,9 @@ defmodule AppsignalTest.IntegrationCase do
       which fails when it detaches none. Either way, the handler is attached
       again afterwards.
     * any `:telemetry` handler raised, as reported by the
-      `[:telemetry, :handler, :failure]` event.
+      `[:telemetry, :handler, :failure]` event, or by the
+      `[:appsignal, :handler, :failure]` event for the handlers
+      `Appsignal.Telemetry` keeps attached.
     * a child span closed with neither a name nor a category, which AppSignal
       names `[unnamed span]`. Tag a test with `leaves_unnamed_spans: "why"`
       when that is the behaviour it pins. A tagged test fails when it leaves none.
@@ -50,9 +52,9 @@ defmodule AppsignalTest.IntegrationCase do
     {:ok, failures} = Agent.start(fn -> [] end)
 
     :ok =
-      :telemetry.attach(
+      :telemetry.attach_many(
         {__MODULE__, :handler_failures},
-        [:telemetry, :handler, :failure],
+        [[:telemetry, :handler, :failure], [:appsignal, :handler, :failure]],
         &__MODULE__.record_failure/4,
         failures
       )

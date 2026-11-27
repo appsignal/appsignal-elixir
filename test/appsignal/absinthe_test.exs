@@ -21,6 +21,16 @@ if Appsignal.Dependencies.present?(:absinthe) do
       field :raising, :string do
         resolve(fn _args, _resolution -> raise "Resolver raised" end)
       end
+
+      field :leaking, :string do
+        resolve(fn _args, _resolution ->
+          "http_request"
+          |> Appsignal.Tracer.create_span(Appsignal.Tracer.current_span())
+          |> Appsignal.Span.set_name("leaked")
+
+          {:ok, "leaked"}
+        end)
+      end
     end
 
     mutation do
@@ -97,6 +107,15 @@ if Appsignal.Dependencies.present?(:absinthe) do
       test "has no error for a document that does not parse" do
         run("{ user(")
         assert [%{"name" => "graphql", "error" => nil}] = spans()
+      end
+
+      test "is closed with the span a resolver leaves open" do
+        run("query Leaking { leaking }", operation_name: "Leaking")
+
+        assert [operation, leaked] = spans()
+        assert %{"name" => "Leaking", "closed" => true} = operation
+        assert %{"name" => "leaked", "closed" => true} = leaked
+        assert leaked["parent_span_id"] == operation["span_id"]
       end
 
       test "is a child of the current span, which keeps its name and namespace" do

@@ -24,6 +24,14 @@ if Appsignal.Dependencies.present?(:oban) do
     defp result("snooze"), do: {:snooze, 60}
     defp result("other"), do: "something else"
 
+    defp result("leak") do
+      "http_request"
+      |> Appsignal.Tracer.create_span(Appsignal.Tracer.current_span())
+      |> Appsignal.Span.set_name("leaked")
+
+      :ok
+    end
+
     defp result("query") do
       Appsignal.Test.Repo.all(AppsignalTest.Ecto.Movie)
       :ok
@@ -122,6 +130,13 @@ if Appsignal.Dependencies.present?(:oban) do
       test "has an ok result for a job that returns something else" do
         assert [%{"attributes" => %{"state" => "success", "result" => "ok"}}] =
                  run(%{result: "other"})
+      end
+
+      test "is closed, with its state, and so is the span the job leaves open" do
+        assert [span] = run(%{result: "leak"})
+        assert span["closed"]
+        assert span["attributes"]["state"] == "success"
+        assert [%{"name" => "leaked", "closed" => true}] = children(spans(), span)
       end
 
       test "has the error for a job that raises" do

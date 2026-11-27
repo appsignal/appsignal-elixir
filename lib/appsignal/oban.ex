@@ -1,6 +1,4 @@
 defmodule Appsignal.Oban do
-  require Logger
-
   @tracer Application.compile_env(:appsignal, :appsignal_tracer, Appsignal.Tracer)
   @span Application.compile_env(:appsignal, :appsignal_span, Appsignal.Span)
   @appsignal Application.compile_env(:appsignal, :appsignal, Appsignal)
@@ -30,27 +28,7 @@ defmodule Appsignal.Oban do
       [:oban, :engine, :insert_job, :exception] => &__MODULE__.oban_insert_job_stop/4
     }
 
-    for {event, fun} <- handlers do
-      detach = :telemetry.detach({__MODULE__, event})
-      attach = :telemetry.attach({__MODULE__, event}, event, fun, :ok)
-
-      case {detach, attach} do
-        {:ok, :ok} ->
-          _ = Appsignal.IntegrationLogger.debug("Appsignal.Oban reattached to #{inspect(event)}")
-
-          :ok
-
-        {{:error, :not_found}, :ok} ->
-          _ = Appsignal.IntegrationLogger.debug("Appsignal.Oban attached to #{inspect(event)}")
-
-          :ok
-
-        {_, {:error, _} = error} ->
-          Logger.warning("Appsignal.Oban not attached to #{inspect(event)}: #{inspect(error)}")
-
-          error
-      end
-    end
+    Appsignal.Telemetry.attach(__MODULE__, handlers)
   end
 
   def oban_job_start(
@@ -59,7 +37,7 @@ defmodule Appsignal.Oban do
         metadata,
         _config
       ) do
-    do_oban_job_start(metadata)
+    Appsignal.Telemetry.put_span({__MODULE__, :job}, metadata, do_oban_job_start(metadata))
   end
 
   defp do_oban_job_start(
@@ -126,7 +104,8 @@ defmodule Appsignal.Oban do
     state = Map.get(metadata, :state, "success")
 
     span =
-      @tracer.current_span()
+      {__MODULE__, :job}
+      |> Appsignal.Telemetry.take_span(metadata)
       |> @span.set_attribute("state", to_string(state))
 
     # The `:result` metadata key was added in Oban v2.5.0.
@@ -142,7 +121,7 @@ defmodule Appsignal.Oban do
       end
     end
 
-    @tracer.close_span(span)
+    @tracer.close_all(span)
 
     increment_job_stop_counter(worker, queue, state)
 
@@ -165,10 +144,10 @@ defmodule Appsignal.Oban do
     # If not present, assume the job failed.
     state = Map.get(metadata, :state, "failure")
 
-    (@tracer.current_span() || do_oban_job_start(metadata))
+    (Appsignal.Telemetry.take_span({__MODULE__, :job}, metadata) || do_oban_job_start(metadata))
     |> @span.set_attribute("state", to_string(state))
     |> @span.add_error(kind, reason, stacktrace)
-    |> @tracer.close_span()
+    |> @tracer.close_all()
 
     increment_job_stop_counter(worker, queue, state)
 
@@ -188,7 +167,8 @@ defmodule Appsignal.Oban do
   end
 
   def oban_insert_job_start(_event, _measurements, metadata, _config) do
-    do_oban_insert_job_start(@tracer.current_span, metadata)
+    span = do_oban_insert_job_start(@tracer.current_span(), metadata)
+    Appsignal.Telemetry.put_span({__MODULE__, :insert_job}, metadata, span)
   end
 
   def do_oban_insert_job_start(nil, _metadata), do: nil
@@ -211,8 +191,8 @@ defmodule Appsignal.Oban do
     end
   end
 
-  def oban_insert_job_stop(_event, _measurements, _metadata, _config) do
-    @tracer.close_span(@tracer.current_span())
+  def oban_insert_job_stop(_event, _measurements, metadata, _config) do
+    {__MODULE__, :insert_job} |> Appsignal.Telemetry.take_span(metadata) |> @tracer.close_all()
   end
 
   defp increment_job_stop_counter(worker, queue, state) do
