@@ -25,6 +25,7 @@ if Mix.env() in [:bench, :test, :test_no_nif] do
   config :appsignal, appsignal_tracer_nif: Appsignal.Test.Nif
 
   config :appsignal, deletion_delay: 100
+  config :appsignal, report_handler_failures: true
   config :appsignal, appsignal_checkin_heartbeat_interval_milliseconds: 10
 
   config :appsignal, :config,

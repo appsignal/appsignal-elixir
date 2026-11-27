@@ -17,7 +17,7 @@ defmodule Appsignal.Telemetry do
       id = {module, event}
       detach = :telemetry.detach(id)
 
-      case {detach, :telemetry.attach(id, event, fun, :ok)} do
+      case {detach, :telemetry.attach(id, event, &__MODULE__.handle_event/4, {id, fun})} do
         {:ok, :ok} ->
           _ =
             Appsignal.IntegrationLogger.debug(
@@ -40,6 +40,46 @@ defmodule Appsignal.Telemetry do
           error
       end
     end
+  end
+
+  # `:telemetry` detaches a handler for good when it raises, so the rest of
+  # the application's events would go uninstrumented. A raising handler stays
+  # attached instead.
+  @doc false
+  def handle_event(event, measurements, metadata, {id, fun}) do
+    fun.(event, measurements, metadata, :ok)
+  catch
+    kind, reason ->
+      stacktrace = __STACKTRACE__
+      log_failure(id, event, kind, reason, stacktrace)
+      report_failure(id, event, kind, reason, stacktrace)
+  end
+
+  defp log_failure(id, event, kind, reason, stacktrace) do
+    message =
+      "#{inspect(elem(id, 0))} failed to handle #{inspect(event)}: " <>
+        Exception.format(kind, reason, stacktrace)
+
+    if :persistent_term.get({__MODULE__, :failed, id}, false) do
+      Appsignal.IntegrationLogger.debug(message)
+    else
+      :persistent_term.put({__MODULE__, :failed, id}, true)
+      Appsignal.IntegrationLogger.error(message)
+    end
+  end
+
+  # Only the test suite listens for this event, to fail a test whose handler
+  # raised. It has the metadata of `[:telemetry, :handler, :failure]`.
+  if Application.compile_env(:appsignal, :report_handler_failures, false) do
+    defp report_failure(id, event, kind, reason, stacktrace) do
+      :telemetry.execute(
+        [:appsignal, :handler, :failure],
+        %{monotonic_time: System.monotonic_time(), system_time: System.system_time()},
+        %{handler_id: id, event_name: event, kind: kind, reason: reason, stacktrace: stacktrace}
+      )
+    end
+  else
+    defp report_failure(_id, _event, _kind, _reason, _stacktrace), do: :ok
   end
 
   def put_span(id, %{telemetry_span_context: context}, span),
