@@ -176,6 +176,30 @@ if Appsignal.Dependencies.present?(:phoenix) do
         assert [event] = with_category(spans(), "handle_event.live_component")
         assert event["error"]["name"] == "RuntimeError"
       end
+
+      @tag leaves_unnamed_spans: "the span the event leaves open"
+      test "include an event that leaves a span open, with that span under it", %{view: view} do
+        render_click(view, "leak")
+
+        assert [event] = with_category(spans(), "handle_event.live_view")
+        assert event["closed"]
+        assert [leaked] = Enum.filter(spans(), &(&1["parent_span_id"] == event["span_id"]))
+        assert leaked["closed"]
+      end
+
+      @tag leaves_unnamed_spans: "the span the event leaves open"
+      test "include an event that leaves a span open with the error raised in it", %{
+        view: view
+      } do
+        Process.flag(:trap_exit, true)
+        catch_exit(render_click(view, "leak_and_raise"))
+
+        assert [event] = with_category(spans(), "handle_event.live_view")
+        assert event["closed"]
+        assert event["error"]["name"] == "RuntimeError"
+        assert [leaked] = Enum.filter(spans(), &(&1["parent_span_id"] == event["span_id"]))
+        assert leaked["error"] == nil
+      end
     end
   end
 

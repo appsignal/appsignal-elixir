@@ -100,6 +100,7 @@ defmodule Appsignal.Phoenix.LiveView do
     |> @span.set_attribute("event", metadata[:event])
     |> @span.set_sample_data("params", metadata[:params])
     |> @span.set_sample_data("session_data", metadata[:session])
+    |> then(&Appsignal.Telemetry.put_span(__MODULE__, metadata, &1))
   end
 
   def handle_live_component_event_start(
@@ -119,16 +120,21 @@ defmodule Appsignal.Phoenix.LiveView do
     if metadata[:socket] && metadata[:socket].view do
       @span.set_attribute(span, "view", Appsignal.Utils.module_name(metadata[:socket].view))
     end
+
+    Appsignal.Telemetry.put_span(__MODULE__, metadata, span)
   end
 
-  def handle_event_stop(_event, _params, _metadata, _event_name) do
-    @tracer.close_span(@tracer.current_span(), end_time: @os.system_time())
+  def handle_event_stop(_event, _params, metadata, _event_name) do
+    __MODULE__
+    |> Appsignal.Telemetry.take_span(metadata)
+    |> @tracer.close_all(end_time: @os.system_time())
   end
 
   def handle_event_exception(_event, _params, metadata, _event_name) do
-    @tracer.current_span()
+    __MODULE__
+    |> Appsignal.Telemetry.take_span(metadata)
     |> @span.add_error(metadata[:kind], metadata[:reason], metadata[:stacktrace])
-    |> @tracer.close_span(end_time: @os.system_time())
+    |> @tracer.close_all(end_time: @os.system_time())
   end
 
   defp span_name(module, method, nil) do
