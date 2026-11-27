@@ -35,11 +35,12 @@ defmodule Appsignal.Finch do
   def finch_request_start(
         _event,
         _measurements,
-        %{name: name, request: request},
+        %{name: name, request: request} = metadata,
         _config
       ) do
     if !has_prefix(name, "AppsignalFinch") do
-      do_finch_request_start(@tracer.current_span(), name, request)
+      span = do_finch_request_start(@tracer.current_span(), name, request)
+      Appsignal.Telemetry.put_span(__MODULE__, metadata, span)
     end
   end
 
@@ -54,11 +55,9 @@ defmodule Appsignal.Finch do
     |> @span.set_attribute("appsignal:category", "request.finch")
   end
 
-  def finch_request_stop(_event, _measurements, %{name: name, request: _request}, _config) do
+  def finch_request_stop(_event, _measurements, %{name: name} = metadata, _config) do
     if !has_prefix(name, "AppsignalFinch") do
-      if span = @tracer.current_span() do
-        @tracer.close_span(span)
-      end
+      __MODULE__ |> Appsignal.Telemetry.take_span(metadata) |> @tracer.close_all()
     end
   end
 
